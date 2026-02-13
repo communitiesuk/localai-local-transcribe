@@ -4,6 +4,6 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "prsdb-vpc-${var.environment_name}"
+    Name = "minute-vpc-${var.environment_name}"
   }
 }
