@@ -1,7 +1,7 @@
 module "maintenance_page_bucket" {
   source                        = "../s3_bucket"
-  bucket_name                   = "prsdb-maintenance-page-${var.environment_name}"
-  access_log_bucket_name        = "prsdb-maintenance-page-access-logs-${var.environment_name}"
+  bucket_name                   = "minute-maintenance-page-${var.environment_name}"
+  access_log_bucket_name        = "minute-maintenance-page-access-logs-${var.environment_name}"
   access_s3_log_expiration_days = 700
   policy                        = data.aws_iam_policy_document.maintenance_page.json
 }
