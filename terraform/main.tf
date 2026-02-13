@@ -80,3 +80,10 @@ module "certificates" {
   cloudfront_domain_name    = local.app_host
   load_balancer_domain_name = local.load_balancer_domain_name
 }
+
+module "ecr" {
+  source = "./modules/ecr"
+
+  environment_name = local.environment_name
+  image_retention_count = 10
+}
