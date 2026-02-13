@@ -28,7 +28,7 @@ locals {
     "ec2",
     "monitoring",
     "logs",
-    "s3tables",
+    #"s3tables", # Doesn't appear to exist anymore?
     "cloudtrail",
     "sns",
     "sqs",
