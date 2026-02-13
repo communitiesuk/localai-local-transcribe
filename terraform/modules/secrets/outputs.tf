@@ -17,5 +17,5 @@ output "redis_password" {
 
 output "secrets_kms_key_arn" {
   description = "ARN of the KMS key used to encrypt the secrets"
-  value       = aws_kms_key.prsdb_webapp_secrets.arn
+  value       = aws_kms_key.minute_webapp_secrets.arn
 }
