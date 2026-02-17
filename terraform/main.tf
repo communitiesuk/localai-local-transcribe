@@ -84,25 +84,25 @@ module "certificates" {
 module "ecr" {
   source = "./modules/ecr"
 
-  environment_name = local.environment_name
+  environment_name      = local.environment_name
   image_retention_count = 10
 }
 
 module "secrets" {
   source = "./modules/secrets"
 
-  environment_name = local.environment_name
+  environment_name               = local.environment_name
   webapp_task_execution_role_arn = module.ecr.ecs_task_execution_role_arn
-  webapp_task_execution_role_id = module.ecr.ecs_task_execution_role_id
+  webapp_task_execution_role_id  = module.ecr.ecs_task_execution_role_id
 }
 
 module "bastion" {
   source = "./modules/bastion"
 
   bastion_subnet_ids = module.networking.private_subnets[*].id
-  environment_name = local.environment_name
-  main_vpc_id = module.networking.vpc.id
-  vpc_cidr_block = module.networking.vpc.cidr_block
+  environment_name   = local.environment_name
+  main_vpc_id        = module.networking.vpc.id
+  vpc_cidr_block     = module.networking.vpc.cidr_block
 
   bastion_ssm_patch_cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
 }
