@@ -19,14 +19,17 @@ terraform {
 
 locals {
   environment_name = "production"
+  multi_az         = false
 
   frontend_port = 3000
   backend_port  = 8080
+  database_port = 5432
 
   app_host                  = "minute.communities.gov.uk"    # Placeholder
   load_balancer_domain_name = "lb.minute.communities.gov.uk" # Placeholder
 
   cloudwatch_log_exipiration_days = 90
+  database_allocated_storage      = 50
 }
 
 provider "aws" {
@@ -105,4 +108,20 @@ module "bastion" {
   vpc_cidr_block     = module.networking.vpc.cidr_block
 
   bastion_ssm_patch_cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
+}
+
+module "database" {
+  source = "./modules/rds"
+
+  environment_name = local.environment_name
+  database_password               = module.secrets.database_password.result
+  database_port                   = local.database_port
+  allocated_storage               = local.database_allocated_storage
+  backup_retention_period         = 7
+  db_subnet_group_name            = module.networking.db_subnet_group_name
+  instance_class                  = "db.t4g.small"
+  multi_az                        = local.multi_az
+  vpc_id                          = module.networking.vpc.id
+  webapp_task_execution_role_name = module.ecr.webapp_ecs_task_role_name
+  bastion_group_id                = module.bastion.security_group_id
 }
