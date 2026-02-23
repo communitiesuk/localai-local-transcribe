@@ -28,7 +28,7 @@ We have confirmed that CMKs are implemented for primary data storage and secret 
 
 | Component | Encryption Strategy | Resource / Logic |
 | :--- | :--- | :--- |
-| **S3 Buckets** | CMK (SSE-KMS) | `terraform/s3.tf` passes a specific `kms_key` ARN to the `app_bucket` module to encrypt the data bucket. |
+| **S3 Buckets** | CMK (SSE-KMS) | `terraform/s3.tf` passes `kms_key_arn` to the `app_bucket` module to encrypt the data bucket. |
 | **RDS (Aurora)** | CMK (Storage Encrypted) | `terraform/rds.tf` passes the `kms_key_arn` to the `rds` module to encrypt the database cluster. |
 | **SSM Parameters** | `SecureString` with CMK | `terraform/secrets.tf` explicitly uses the platform KMS key for all `SecureString` parameter definitions. |
 
