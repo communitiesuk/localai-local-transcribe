@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Enum
+from sqlalchemy import TIMESTAMP, Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
@@ -50,10 +50,10 @@ class ContentSource(StrEnum):
     INITIAL_GENERATION = auto()
 
 
-class GuardrailType(StrEnum):
-    HALLUCINATION = auto()
-    TOXICITY = auto()
-    COMPLETENESS = auto()
+#  class GuardrailType(StrEnum):
+#     HALLUCINATION = auto()
+#     TOXICITY = auto()
+#     COMPLETENESS = auto()
 
 
 class MinuteVersion(BaseTableMixin, table=True):
@@ -228,7 +228,7 @@ class GuardrailResult(BaseTableMixin, table=True):
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     minute_version_id: UUID | None = Field(default=None, foreign_key="minute_version.id", ondelete="CASCADE")
     minute_version: "MinuteVersion" = Relationship(back_populates="guardrail_results")
-    guardrail_type: GuardrailType = Field(sa_column=Column(Enum(GuardrailType)), description="Type of check")
+    #   guardrail_type: GuardrailType = Field(sa_column=Column(Enum(GuardrailType)), description="Type of check")
     passed: bool = Field(description="Whether the guardrail check passed")
     score: float | None = Field(default=None, description="Confidence Score assigned by the guardrail check")
     reasoning: str | None = Field(default=None, description="Reasoning behind the guardrail result")

@@ -120,7 +120,7 @@ async def list_minute_versions(
             guardrail_results=[
                 GuardrailResultResponse(
                     id=guardrail_result.id,
-                    guardrail_type=guardrail_result.guardrail_type,
+                    #    guardrail_type=guardrail_result.guardrail_type,
                     passed=guardrail_result.passed,
                     score=guardrail_result.score,
                     reasoning=guardrail_result.reasoning,
@@ -170,7 +170,7 @@ async def create_minute_version(
         guardrail_results=[
             GuardrailResultResponse(
                 id=guardrail_result.id,
-                guardrail_type=guardrail_result.guardrail_type,
+                #    guardrail_type=guardrail_result.guardrail_type,
                 passed=guardrail_result.passed,
                 score=guardrail_result.score,
                 reasoning=guardrail_result.reasoning,

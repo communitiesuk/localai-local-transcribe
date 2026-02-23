@@ -11,7 +11,6 @@ from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import (
     DialogueEntry,
     GuardrailResult,
-    GuardrailType,
     Hallucination,
     JobStatus,
     Minute,
@@ -71,7 +70,7 @@ class MinuteHandlerService:
 
             guardrail_result = GuardrailResult(
                 minute_version_id=minute_version_id,
-                guardrail_type=GuardrailType.HALLUCINATION,
+                #   guardrail_type=GuardrailType.HALLUCINATION,
                 passed=passed,
                 score=score.score,
                 reasoning=score.reasoning,
@@ -84,7 +83,7 @@ class MinuteHandlerService:
         with SessionLocal() as session:
             guardrail_result = GuardrailResult(
                 minute_version_id=minute_version_id,
-                guardrail_type=GuardrailType.HALLUCINATION,
+                #   guardrail_type=GuardrailType.HALLUCINATION,
                 passed=False,
                 score=0.0,
                 reasoning="System Error: Could not verify accuracy.",
@@ -366,9 +365,7 @@ class MinuteHandlerService:
         minute: str,
         transcript: list[DialogueEntry],
     ) -> GuardrailScore:
-        # Use FAST model (Gemini Flash / Llama 3) for speed
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-
         return await chatbot.structured_chat(
             messages=get_accuracy_check_messages(minute, transcript),
             response_format=GuardrailScore,

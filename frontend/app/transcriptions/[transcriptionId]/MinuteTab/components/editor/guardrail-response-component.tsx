@@ -3,14 +3,12 @@ import { GuardrailResultResponse } from '@/lib/client'
 import { HallucinationsList } from './HallucinationsList'
 import { VerifiedGuardrailsList } from './VerifiedGuardrailsList'
 import { WarningsList } from './WarningsList'
+import { GUARDRAIL_THRESHOLD } from '@/settings/constants'
 
 interface GuardrailProps {
   guardrailResults: GuardrailResultResponse[]
   hallucinations?: any[] | null // Assuming type is handled in the sub-component
 }
-
-const GUARDRAIL_THRESHOLD =
-  Number(process.env.NEXT_PUBLIC_GUARDRAIL_THRESHOLD) || 0.8
 
 export function GuardrailResponseComponent({
   guardrailResults = [],

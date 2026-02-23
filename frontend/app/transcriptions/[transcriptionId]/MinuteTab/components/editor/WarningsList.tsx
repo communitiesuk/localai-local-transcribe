@@ -34,7 +34,7 @@ export function WarningsList({
             <span
               className={`font-medium capitalize ${result.passed ? 'text-yellow-800' : 'text-red-800'}`}
             >
-              {formatLabel(result.guardrail_type)}:
+              {formatLabel('Accuracy Audit')}:
             </span>
             <span
               className={`rounded border px-1 text-xs font-bold uppercase ${
