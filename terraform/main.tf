@@ -21,11 +21,11 @@ locals {
   environment_name = "production"
   multi_az         = false
 
-  frontend_port = 3000
-  backend_port = 8080
-  database_port = 5432
+  frontend_port               = 3000
+  backend_port                = 8080
+  database_port               = 5432
   max_transcription_processes = 1
-  max_llm_proccesses = 1
+  max_llm_proccesses          = 1
 
   database_username = "postgres"
 
@@ -98,7 +98,7 @@ module "ecr" {
 module "secrets" {
   source = "./modules/secrets"
 
-  environment_name               = local.environment_name
+  environment_name = local.environment_name
 }
 
 module "bastion" {
@@ -115,52 +115,52 @@ module "bastion" {
 module "database" {
   source = "./modules/rds"
 
-  environment_name = local.environment_name
-  database_username               = local.database_username
-  database_password               = module.secrets.database_password.result
-  database_port                   = local.database_port
-  allocated_storage               = local.database_allocated_storage
-  backup_retention_period         = 7
-  db_subnet_group_name            = module.networking.db_subnet_group_name
-  instance_class                  = "db.t4g.small"
-  multi_az                        = local.multi_az
-  vpc_id                          = module.networking.vpc.id
+  environment_name                 = local.environment_name
+  database_username                = local.database_username
+  database_password                = module.secrets.database_password.result
+  database_port                    = local.database_port
+  allocated_storage                = local.database_allocated_storage
+  backup_retention_period          = 7
+  db_subnet_group_name             = module.networking.db_subnet_group_name
+  instance_class                   = "db.t4g.small"
+  multi_az                         = local.multi_az
+  vpc_id                           = module.networking.vpc.id
   backend_task_execution_role_name = module.ecs.backend_execution_task_name
-  bastion_group_id                = module.bastion.security_group_id
+  bastion_group_id                 = module.bastion.security_group_id
 }
 
 module "ecs" {
   count  = var.task_definition_created ? 1 : 0
   source = "./modules/ecs"
 
-  environment_name          = local.environment_name
+  environment_name            = local.environment_name
   frontend_task_desired_count = 1
-  backend_task_desired_count = 1
-  worker_task_desired_count = 1
-  frontend_port             = local.frontend_port
-  backend_port              = local.backend_port
+  backend_task_desired_count  = 1
+  worker_task_desired_count   = 1
+  frontend_port               = local.frontend_port
+  backend_port                = local.backend_port
 
-  database_port             = local.database_port
-  database_host             = module.database.database_url
-  database_user             = local.database_username
-  database_password         = module.secrets.database_password.result
+  database_port     = local.database_port
+  database_host     = module.database.database_url
+  database_user     = local.database_username
+  database_password = module.secrets.database_password.result
 
-  lb_target_group_arn       = module.frontdoor.load_balancer.target_group_arn
-  lb_security_group_id      = module.frontdoor.load_balancer.security_group_id
-  db_security_group_id      = module.database.rds_security_group_id
-  private_subnet_ids        = module.networking.private_subnets[*].id
-  vpc_id                    = module.networking.vpc.id
-  app_url                   = local.app_host
+  lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
+  lb_security_group_id = module.frontdoor.load_balancer.security_group_id
+  db_security_group_id = module.database.rds_security_group_id
+  private_subnet_ids   = module.networking.private_subnets[*].id
+  vpc_id               = module.networking.vpc.id
+  app_url              = local.app_host
 
-  frontend_image_name       = "${module.ecr.ecr_frontend_repository_url}:${var.image_tag}"
-  backend_image_name        = "${module.ecr.ecr_backend_repository_url}:${var.image_tag}"
-  worker_image_name         = "${module.ecr.ecr_worker_repository_url}:${var.image_tag}"
-  image_tag = "latest"
+  frontend_image_name = "${module.ecr.ecr_frontend_repository_url}:${var.image_tag}"
+  backend_image_name  = "${module.ecr.ecr_backend_repository_url}:${var.image_tag}"
+  worker_image_name   = "${module.ecr.ecr_worker_repository_url}:${var.image_tag}"
+  image_tag           = "latest"
 
-  llm_deadletter_queue_name = ""
-  llm_queue_name = ""
-  max_llm_processes = 0
-  max_transcription_processes = 0
+  llm_deadletter_queue_name           = ""
+  llm_queue_name                      = ""
+  max_llm_processes                   = 0
+  max_transcription_processes         = 0
   transcription_deadletter_queue_name = ""
-  transcription_queue_name = ""
+  transcription_queue_name            = ""
 }
