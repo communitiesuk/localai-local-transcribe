@@ -24,21 +24,16 @@ if api_key:
 else:
     logging.info("No Eleven Labs API key found. Using a placeholder for audio generation.")
 
-# Set transcript_file to an existing transcript within the
-# transcripts dir and select your desired model
-
-# main()
-
-"""
-The pattern below can be used to combine stored transcribed audio and 
-sound-effect files into a single mixed audio track.
-
-"""
-speech_name, audio_bytes = mp3_to_bytes(f"eleven_labs/{audio_file}")
-sfx_name, sfx_bytes = mp3_to_bytes(f"background_sfx/{audio_sfx}")
-mix_audio_with_effects(audio_bytes, sfx_bytes, speech_name, sfx_name)
 
 
-def main() -> None:
+# combine stored transcribed audio and sound-effect files into a single mixed audio track
+def mix_audio_with_fx()->None:
+    speech_name, audio_bytes = mp3_to_bytes(f"eleven_labs/{audio_file}")
+    sfx_name, sfx_bytes = mp3_to_bytes(f"background_sfx/{audio_sfx}") #background sfx generated on the elevenLabs platform & manually added to file
+    mix_audio_with_effects(audio_bytes, sfx_bytes, speech_name, sfx_name)
+
+
+#workflow to utilise eleven text to speech service
+def eleven_tts() -> None:
     transcript = get_transcripts(transcript_file)
     eleven_text_to_speech(api_key or "", transcript, transcript_file, model_id)

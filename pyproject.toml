@@ -193,10 +193,7 @@ known-first-party = ["backend", "frontend"]
 "*/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003"]
 
 [tool.mypy]
-# packages = ["evals"] 
-namespace_packages = true
 explicit_package_bases = true
-
 warn_unused_configs = true
 warn_return_any = true
 warn_unused_ignores = true
