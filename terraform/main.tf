@@ -126,6 +126,7 @@ module "database" {
   multi_az                         = local.multi_az
   vpc_id                           = module.networking.vpc.id
   backend_task_execution_role_name = module.ecs.backend_execution_task_name
+  worker_task_execution_role_name  = module.ecs.worker_execution_task_name
   bastion_group_id                 = module.bastion.security_group_id
 }
 
