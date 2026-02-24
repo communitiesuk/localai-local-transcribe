@@ -131,7 +131,7 @@ module "database" {
 }
 
 module "sqs" {
-  source = "./modules/sqs"
+  source           = "./modules/sqs"
   environment_name = local.environment_name
 
   worker_task_execution_role_name  = module.ecs.worker_execution_task_name
@@ -171,6 +171,6 @@ module "ecs" {
   transcription_queue_name            = module.sqs.transcription_queue_name
   transcription_deadletter_queue_name = module.sqs.transcription_deadletter_queue_name
 
-  max_llm_processes                   = 0
-  max_transcription_processes         = 0
+  max_llm_processes           = 0
+  max_transcription_processes = 0
 }
