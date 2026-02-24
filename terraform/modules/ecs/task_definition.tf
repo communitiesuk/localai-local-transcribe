@@ -57,16 +57,34 @@ locals {
     }, {
       name  = "AZURE_TRANSCRIPTION_CONTAINER_NAME"
       value = "transcriptions"
-    }, { name = "FAST_LLM_PROVIDER"   value = "gemini" },
-    { name = "FAST_LLM_MODEL_NAME" value = "gemini-2.5-flash-lite" },
-    { name = "BEST_LLM_PROVIDER"   value = "gemini" },
-    { name = "BEST_LLM_MODEL_NAME" value = "gemini-2.5-flash" },
+    }, {
+      name = "FAST_LLM_PROVIDER"
+      value = "gemini"
+    }, {
+      name = "FAST_LLM_MODEL_NAME"
+      value = "gemini-2.5-flash-lite"
+    }, {
+      name = "BEST_LLM_PROVIDER"
+      value = "gemini"
+    }, {
+      name = "BEST_LLM_MODEL_NAME"
+      value = "gemini-2.5-flash"
+    },
   ]
   frontend_environment_variables = [
-    { name = "ENVIRONMENT" value = terraform.workspace },
-    { name = "APP_NAME" value = "minute-frontend" },
-    { name = "PORT" value = var.frontend_port },
-    { name = "REPO" value = "minute" }, {
+    {
+      name = "ENVIRONMENT"
+      value = terraform.workspace
+    }, {
+      name = "APP_NAME"
+      value = "minute-frontend"
+    }, {
+      name = "PORT"
+      value = var.frontend_port
+    }, {
+      name = "REPO"
+      value = "minute"
+    }, {
       name  = "BACKEND_HOST"
       value = "http://${aws_service_discovery_service.backend_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${var.backend_port}"
     },
