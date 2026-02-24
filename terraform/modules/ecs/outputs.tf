@@ -27,3 +27,8 @@ output "backend_execution_task_name" {
   value = aws_iam_role.ecs_task_execution.name
   description = "The name of the task execution role used by the backend ecs task"
 }
+
+output "worker_execution_task_name" {
+  value = aws_iam_role.ecs_task_execution.name
+  description = "The name of the task execution role used by the worker ecs task"
+}
