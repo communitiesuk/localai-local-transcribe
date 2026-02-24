@@ -164,7 +164,6 @@ module "ecs" {
   frontend_image_name = "${module.ecr.ecr_frontend_repository_url}:${var.image_tag}"
   backend_image_name  = "${module.ecr.ecr_backend_repository_url}:${var.image_tag}"
   worker_image_name   = "${module.ecr.ecr_worker_repository_url}:${var.image_tag}"
-  image_tag           = "latest"
 
   llm_queue_name                      = module.sqs.llm_queue_name
   llm_deadletter_queue_name           = module.sqs.llm_deadletter_queue_name
