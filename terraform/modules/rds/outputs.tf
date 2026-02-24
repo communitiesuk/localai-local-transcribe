@@ -8,9 +8,9 @@ output "database_username_ssm_parameter_arn" {
   description = "The ARN of the SSM parameter containing the database username"
 }
 
-output "database_url_ssm_parameter_arn" {
-  value       = aws_ssm_parameter.database_url.arn
-  description = "The ARN of the SSM parameter containing the database URL"
+output "database_url" {
+  value       = "${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
+  description = "The database URL"
 }
 
 output "database_identifier" {

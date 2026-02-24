@@ -9,7 +9,7 @@ resource "aws_db_instance" "main" {
   delete_automated_backups        = false
   deletion_protection             = true # needs to be set to false and applied if you need to delete the DB
   engine                          = "postgres"
-  engine_version                  = "16.8"
+  engine_version                  = "18.2"
   final_snapshot_identifier       = "${var.environment_name}-database-final-snapshot"
   instance_class                  = var.instance_class
   maintenance_window              = var.maintenance_window
@@ -19,7 +19,7 @@ resource "aws_db_instance" "main" {
   publicly_accessible             = false
   storage_encrypted               = true
   storage_type                    = "gp2"
-  username                        = "postgres"
+  username                        = var.database_username
   vpc_security_group_ids          = [aws_security_group.main.id]
   performance_insights_enabled    = true
   performance_insights_kms_key_id = aws_kms_key.performance_insights.arn

@@ -3,9 +3,3 @@ resource "aws_ssm_parameter" "database_username" {
   type  = "String"
   value = aws_db_instance.main.username
 }
-
-resource "aws_ssm_parameter" "database_url" {
-  name  = "${var.environment_name}-minute-database-url"
-  type  = "String"
-  value = "${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
-}
