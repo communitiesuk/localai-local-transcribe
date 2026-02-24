@@ -7,6 +7,12 @@ variable "environment_name" {
   }
 }
 
+variable "database_username" {
+  description = "username for the database"
+  type        = string
+  sensitive   = true
+}
+
 variable "database_password" {
   description = "password for the database"
   type        = string
@@ -60,8 +66,8 @@ variable "vpc_id" {
   description = "The ID of the VPC to be associated with"
 }
 
-variable "webapp_task_execution_role_name" {
-  description = "Name of the IAM role for the webapp ECS task execution"
+variable "backend_task_execution_role_name" {
+  description = "Name of the IAM role for the backend ECS task execution"
   type        = string
 }
 variable "bastion_group_id" {

@@ -21,7 +21,7 @@ resource "aws_iam_policy" "rds_data_access" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "webapp_database_access" {
-  role       = var.webapp_task_execution_role_name
+resource "aws_iam_role_policy_attachment" "backend_database_access" {
+  role       = var.backend_task_execution_role_name
   policy_arn = aws_iam_policy.rds_data_access.arn
 }

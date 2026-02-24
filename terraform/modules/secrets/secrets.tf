@@ -1,6 +1,6 @@
 resource "aws_secretsmanager_secret" "database_password" {
   name                    = "tf-${var.environment_name}-minute-database-password"
-  description             = "Password for minute webapp database user"
+  description             = "Password for minute backend database user"
   recovery_window_in_days = 0
   kms_key_id              = aws_kms_key.minute_webapp_secrets.arn
 }
