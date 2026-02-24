@@ -132,3 +132,46 @@ variable "llm_deadletter_queue_name" {
   description = "name of llm deadletter sqs queue"
   type = string
 }
+
+variable "llm_deadletter_queue_name" {
+  description = "name of llm deadletter sqs queue"
+  type = string
+}
+
+variable "frontend_task_cpu" {
+  description = "CPU units for the frontend ECS task definition"
+  type        = number
+  default     = 2048
+}
+
+variable "backend_task_cpu" {
+  description = "CPU units for the backend ECS task definition"
+  type        = number
+  default     = 2048
+}
+
+variable "worker_task_cpu" {
+  description = "CPU units for the backend ECS task definition"
+  type        = number
+  default     = 4096
+}
+
+variable "frontend_task_memory" {
+  description = "Memory for the frontend ECS task definition"
+  type        = number
+  default     = 2048
+}
+
+variable "backend_task_memory" {
+  description = "Memory for the backend ECS task definition"
+  type        = number
+  default     = 2048
+}
+
+variable "worker_task_memory" {
+  description = "Memory for the backend ECS task definition"
+  type        = number
+  default     = 8192
+}
+
+

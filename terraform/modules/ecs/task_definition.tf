@@ -93,9 +93,9 @@ locals {
 
 resource "aws_ecs_task_definition" "frontend" {
   family             = "frontend-${var.environment_name}"
-  cpu                = 2048
+  cpu                = var.frontend_task_cpu
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
-  memory = 2048 #MiB
+  memory             = var.frontend_task_memory
   network_mode       = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   task_role_arn      = aws_iam_role.frontend_ecs_task.arn
@@ -139,9 +139,9 @@ resource "aws_ecs_task_definition" "frontend" {
 
 resource "aws_ecs_task_definition" "backend" {
   family             = "backend-${var.environment_name}"
-  cpu                = 2048
+  cpu                = var.backend_task_cpu
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
-  memory = 2048 #MiB
+  memory             = var.backend_task_memory #MiB
   network_mode       = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   task_role_arn      = aws_iam_role.backend_ecs_task.arn
@@ -187,9 +187,9 @@ resource "aws_ecs_task_definition" "backend" {
 
 resource "aws_ecs_task_definition" "worker" {
   family             = "worker-${var.environment_name}"
-  cpu                = 4096
+  cpu                = var.worker_task_cpu
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
-  memory = 8192 #MiB
+  memory = var.worker_task_memory #MiB
   network_mode       = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   task_role_arn      = aws_iam_role.worker_ecs_task.arn
