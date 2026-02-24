@@ -70,6 +70,12 @@ variable "backend_task_execution_role_name" {
   description = "Name of the IAM role for the backend ECS task execution"
   type        = string
 }
+
+variable "worker_task_execution_role_name" {
+  description = "Name of the IAM role for the worker ECS task execution"
+  type        = string
+}
+
 variable "bastion_group_id" {
   type        = string
   description = "The id of the bastion security group"

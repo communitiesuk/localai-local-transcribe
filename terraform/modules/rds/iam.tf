@@ -25,3 +25,8 @@ resource "aws_iam_role_policy_attachment" "backend_database_access" {
   role       = var.backend_task_execution_role_name
   policy_arn = aws_iam_policy.rds_data_access.arn
 }
+
+resource "aws_iam_role_policy_attachment" "worker_database_access" {
+  role       = var.worker_task_execution_role_name
+  policy_arn = aws_iam_policy.rds_data_access.arn
+}
