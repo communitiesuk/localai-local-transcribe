@@ -33,6 +33,7 @@ locals {
   load_balancer_domain_name = "lb.minute.communities.gov.uk" # Placeholder
 
   cloudwatch_log_exipiration_days = 90
+  access_s3_log_expiration_days   = 90
   database_allocated_storage      = 50
 }
 
@@ -172,4 +173,13 @@ module "ecs" {
 
   max_llm_processes           = 0
   max_transcription_processes = 0
+}
+
+module "s3" {
+  source = "./modules/s3_bucket"
+
+  app_host = local.app_host
+  environment_name = local.environment_name
+  force_destroy = "false"
+  access_s3_log_expiration_days = local.access_s3_log_expiration_days
 }
