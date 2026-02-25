@@ -12,7 +12,9 @@
     "prettier:fix": "prettier --write .",
     "prettier:check": "prettier --check .",
     "test": "vitest run",
-    "test:cov": "vitest run --coverage"
+    "test:cov": "vitest run --coverage",
+    "test:integration": "playwright test",
+    "test:integration:install": "playwright install --with-deps chromium"
   },
   "dependencies": {
     "@hey-api/client-next": "^0.5.1",
@@ -68,6 +70,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@playwright/test": "^1.41.2",
     "@vitest/coverage-v8": "^4.0.17",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.3.3",
