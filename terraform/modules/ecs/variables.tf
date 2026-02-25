@@ -133,11 +133,6 @@ variable "llm_deadletter_queue_name" {
   type = string
 }
 
-variable "llm_deadletter_queue_name" {
-  description = "name of llm deadletter sqs queue"
-  type = string
-}
-
 variable "frontend_task_cpu" {
   description = "CPU units for the frontend ECS task definition"
   type        = number
