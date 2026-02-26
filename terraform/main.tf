@@ -100,6 +100,13 @@ module "secrets" {
   source = "./modules/secrets"
 
   environment_name = local.environment_name
+
+  frontend_task_execution_role_arn = module.ecs.frontend_execution_task_arn
+  frontend_task_execution_role_id = module.ecs.frontend_execution_task_id
+  backend_task_execution_role_arn = module.ecs.backend_execution_task_arn
+  backend_task_execution_role_id = module.ecs.backend_execution_task_id
+  worker_task_execution_role_arn = module.ecs.worker_execution_task_arn
+  worker_task_execution_role_id = module.ecs.worker_execution_task_id
 }
 
 module "bastion" {

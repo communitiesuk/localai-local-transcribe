@@ -7,12 +7,32 @@ variable "environment_name" {
   }
 }
 
-variable "webapp_task_execution_role_arn" {
-  description = "ARN of the IAM role for the webapp ECS task execution"
+variable "frontend_task_execution_role_arn" {
+  description = "ARN of the IAM role for the frontend ECS task execution"
   type        = string
 }
 
-variable "webapp_task_execution_role_id" {
-  description = "ID of the IAM role for the webapp ECS task execution"
+variable "backend_task_execution_role_arn" {
+  description = "ARN of the IAM role for the backend ECS task execution"
+  type        = string
+}
+
+variable "worker_task_execution_role_arn" {
+  description = "ARN of the IAM role for the worker ECS task execution"
+  type        = string
+}
+
+variable "frontend_task_execution_role_id" {
+  description = "id of the IAM role for the frontend ECS task execution"
+  type        = string
+}
+
+variable "backend_task_execution_role_id" {
+  description = "id of the IAM role for the backend ECS task execution"
+  type        = string
+}
+
+variable "worker_task_execution_role_id" {
+  description = "id of the IAM role for the worker ECS task execution"
   type        = string
 }
