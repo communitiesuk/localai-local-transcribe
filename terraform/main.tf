@@ -147,7 +147,6 @@ module "sqs" {
 }
 
 module "ecs" {
-  count  = var.task_definition_created ? 1 : 0
   source = "./modules/ecs"
 
   environment_name            = local.environment_name
