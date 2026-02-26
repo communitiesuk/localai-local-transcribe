@@ -102,11 +102,11 @@ module "secrets" {
   environment_name = local.environment_name
 
   frontend_task_execution_role_arn = module.ecs.frontend_execution_task_arn
-  frontend_task_execution_role_id = module.ecs.frontend_execution_task_id
-  backend_task_execution_role_arn = module.ecs.backend_execution_task_arn
-  backend_task_execution_role_id = module.ecs.backend_execution_task_id
-  worker_task_execution_role_arn = module.ecs.worker_execution_task_arn
-  worker_task_execution_role_id = module.ecs.worker_execution_task_id
+  frontend_task_execution_role_id  = module.ecs.frontend_execution_task_id
+  backend_task_execution_role_arn  = module.ecs.backend_execution_task_arn
+  backend_task_execution_role_id   = module.ecs.backend_execution_task_id
+  worker_task_execution_role_arn   = module.ecs.worker_execution_task_arn
+  worker_task_execution_role_id    = module.ecs.worker_execution_task_id
 }
 
 module "bastion" {
@@ -185,8 +185,8 @@ module "ecs" {
 module "s3" {
   source = "./modules/s3_bucket"
 
-  app_host = local.app_host
-  environment_name = local.environment_name
-  force_destroy = "false"
+  app_host                      = local.app_host
+  environment_name              = local.environment_name
+  force_destroy                 = "false"
   access_s3_log_expiration_days = local.access_s3_log_expiration_days
 }
