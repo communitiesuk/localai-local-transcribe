@@ -1,33 +1,44 @@
-variable "environment_name" {
-  description = "must be one of: integration, test, nft, or production"
+variable "bucket_name" {
   type        = string
-  validation {
-    condition     = contains(["integration", "test", "nft", "production"], var.environment_name)
-    error_message = "Environment must be one of: integration, test"
-  }
+  description = "The name of the bucket to create"
+}
+
+variable "access_log_bucket_name" {
+  type        = string
+  description = "The name of the accompanying log bucket"
+}
+
+variable "kms_key_arn" {
+  type        = string
+  default     = null
+  description = "Optional. KMS key to encrypt bucket and access logs bucket."
 }
 
 variable "force_destroy" {
-  description = "Whether to force destroy the bucket when it contains objects. This should be set to true for non-production environments to avoid issues with leftover objects preventing bucket deletion."
-  type        = string
-  validation {
-    condition     = contains(["true", "false"], var.force_destroy)
-    error_message = "force_destroy must be either 'true' or 'false'"
-  }
+  description = "Allow the buckets to be destroyed by Terraform even if they are not empty."
+  type        = bool
+  default     = false
 }
 
-variable "kms_key" {
-  description = "Optional. KMS key to encrypt bucket and access logs bucket."
+variable "noncurrent_version_expiration_days" {
+  type        = number
+  description = "Set to null to skip creating a bucket lifecycle configuration"
+  default     = 180
+}
+
+variable "access_s3_log_expiration_days" {
+  type        = number
+  description = "The number of days to retain s3 access logs"
+}
+
+variable "policy" {
+  description = "optional policy json to append to default bucket enforce ssl policy"
   type        = string
   default     = null
 }
 
-variable "access_s3_log_expiration_days" {
-  description = "The number of days to retain s3 access logs"
-  type        = number
-}
-
-variable "app_host" {
-  description = "Application url"
-  type        = string
+variable "object_lock_enabled" {
+  description = "Whether the bucket is configured to allow AWS Object Lock"
+  type        = bool
+  default     = false
 }
