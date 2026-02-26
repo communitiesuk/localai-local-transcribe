@@ -13,4 +13,5 @@ variable "task_definition_created" {
 variable "image_tag" {
   description = "The image tag to be used for all of frontend, backend, and worker"
   type        = string
+  default     = "latest"
 }
