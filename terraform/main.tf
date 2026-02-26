@@ -182,11 +182,11 @@ module "ecs" {
   max_transcription_processes = 0
 }
 
-module "s3" {
-  source = "./modules/s3_bucket"
+module "uploads_bucket" {
+  source = "./modules/uploads_bucket"
 
   app_host                      = local.app_host
   environment_name              = local.environment_name
-  force_destroy                 = "false"
   access_s3_log_expiration_days = local.access_s3_log_expiration_days
+  force_destroy                 = false
 }

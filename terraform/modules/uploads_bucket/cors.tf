@@ -1,5 +1,5 @@
 resource "aws_s3_bucket_cors_configuration" "cors" {
-  bucket = aws_s3_bucket.minute_bucket.id
+  bucket = module.uploads_bucket.bucket_id
 
   expected_bucket_owner = data.aws_caller_identity.current.account_id #deprecated field
 
