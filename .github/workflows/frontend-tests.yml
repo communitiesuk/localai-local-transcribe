@@ -33,6 +33,14 @@ jobs:
         run: |
           npm run test:cov 2>&1 | tee test-output.txt
 
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: npm run test:integration:install
+
+      - name: Run frontend integration tests
+        working-directory: frontend
+        run: npm run test:integration
+
       - name: Upload frontend coverage HTML
         uses: actions/upload-artifact@v4
         if: always()
@@ -46,6 +54,20 @@ jobs:
         with:
           name: frontend-coverage-xml
           path: frontend/coverage/cobertura-coverage.xml 
+
+      - name: Upload Playwright HTML report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-playwright-report
+          path: frontend/playwright-report
+
+      - name: Upload Playwright test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-playwright-test-results
+          path: frontend/test-results
 
       - name: Coverage summary
         if: always()

@@ -11,8 +11,9 @@
     "openapi-ts": "openapi-ts",
     "prettier:fix": "prettier --write .",
     "prettier:check": "prettier --check .",
-    "test": "vitest run",
-    "test:cov": "vitest run --coverage",
+    "test": "vitest run && playwright test",
+    "test:unit": "vitest run",
+    "test:unit:cov": "vitest run --coverage",
     "test:integration": "playwright test",
     "test:integration:install": "playwright install --with-deps chromium"
   },
