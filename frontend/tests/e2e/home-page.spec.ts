@@ -18,10 +18,6 @@ test('home page renders hero, CTA, and mocked recent meeting', async ({
   await expect(homePage.recentMeetingsHeading()).toBeVisible()
   await expect(homePage.retentionNotice()).toBeVisible()
 
-  // log the html to the console
-  const html = await page.content()
-  console.log(html)
-
   await expect(
     homePage.transcriptionItemTitle('Quarterly planning meeting')
   ).toBeVisible()
