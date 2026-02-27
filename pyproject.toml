@@ -87,6 +87,7 @@ python-multipart = "^0.0.20"
 i-dot-ai-utilities = "^0.4.4"
 azure-servicebus = "^7.14.2"
 mypy-boto3-sqs = "^1.42.3"
+ailg-evals = {path = "evals", develop = true}
 
 [tool.poetry.group.backend.dependencies]
 pyjwt = "^2.9.0"
@@ -219,7 +220,5 @@ ignore_missing_imports = true
 module = "ffmpeg.*"
 ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = ["evals.audio_generation.transcripts.transcript_utils.*"]
-ignore_missing_imports = true
+
 

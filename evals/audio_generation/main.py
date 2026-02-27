@@ -15,7 +15,7 @@ load_dotenv()
 
 api_key = os.getenv("ELEVEN_LABS_API_KEY")
 model_id = "eleven_v3"
-transcript_file = "jordan-alex.txt"
+transcript_file = "two-teens.txt"
 audio_file = "jordan-alex.mp3"
 audio_sfx = "noise_on_a_typical_metro.mp3"
 
@@ -37,3 +37,6 @@ def mix_audio_with_fx()->None:
 def eleven_tts() -> None:
     transcript = get_transcripts(transcript_file)
     eleven_text_to_speech(api_key or "", transcript, transcript_file, model_id)
+
+if __name__ == "__main__":
+    eleven_tts()

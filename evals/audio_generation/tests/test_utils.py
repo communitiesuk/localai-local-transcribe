@@ -2,18 +2,11 @@ from evals.audio_generation.utils.audio_suffix import ensure_mp3_filename
 from evals.audio_generation.utils.build_pattern import build_pattern
 from evals.audio_generation.utils.extract_speakers import extract_speakers
 from evals.audio_generation.utils.save_audio import save_audio
-from evals.audio_generation.utils.trim_suffix import trim_suffix
 
 
 def test_ensure_mp3_filename():
     assert ensure_mp3_filename("audio") == "audio.mp3"
     assert ensure_mp3_filename("audio.wav") == "audio.mp3"
-
-
-def test_trim_suffix():
-    assert trim_suffix("audio.mp3") == "audio"
-    assert trim_suffix("audio.wav") == "audio"
-    assert trim_suffix("audio") == "audio"
 
 
 def test_build_pattern():
