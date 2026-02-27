@@ -82,7 +82,11 @@ resource "aws_iam_policy" "push_worker_images" {
 data "aws_iam_policy_document" "describe_images" {
   statement {
     actions   = ["ecr:DescribeImages"]
-    resources = [aws_ecr_repository.main.arn]
+    resources = [
+      aws_ecr_repository.frontend.arn,
+      aws_ecr_repository.backend.arn,
+      aws_ecr_repository.worker.arn
+    ]
     effect    = "Allow"
   }
 
