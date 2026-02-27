@@ -50,7 +50,7 @@ data "aws_iam_policy_document" "bastion_logs_assume_role" {
     condition {
       test     = "ArnLike"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:bastion-log/*"]
+      values   = ["arn:aws:ec2:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:bastion-log/*"]
     }
   }
 }
