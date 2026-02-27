@@ -173,9 +173,12 @@ resource "aws_ecs_task_definition" "backend" {
         }
       }
 
-      environment = merge(local.shared_environment_variables, {
-        "APP_NAME" : "minute-backend",
-      })
+      environment = concat(local.shared_environment_variables, [
+        {
+        name  = "APP_NAME"
+        value ="minute-backend"
+        }
+      ])
     }
   ])
 
@@ -213,10 +216,16 @@ resource "aws_ecs_task_definition" "worker" {
         }
       }
 
-      environment = merge(local.shared_environment_variables, {
-        "APP_NAME" : "minute-worker",
-        "AUTH_API_URL" : "unused", # Worker settings need refactoring so we can remove this
-      })
+      environment = concat(local.shared_environment_variables, [
+        {
+          name  = "APP_NAME"
+          value ="minute-worker"
+        },
+        {
+          name  = "AUTH_API_URL"
+          value = "unused", # Worker settings need refactoring so we can remove this
+        }
+      ])
     }
   ])
 
