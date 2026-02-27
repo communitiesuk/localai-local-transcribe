@@ -31,7 +31,11 @@ resource "aws_kms_key_policy" "kms_webapp_secrets_decrypt_policy" {
 }
 
 resource "aws_iam_role_policy" "secret_access" {
-  for_each = toset([var.frontend_task_execution_role_id, var.backend_task_execution_role_id, var.worker_task_execution_role_id])
+  for_each = {
+    frontend = var.frontend_task_execution_role_id
+    backend  = var.backend_task_execution_role_id
+    worker   = var.worker_task_execution_role_id
+  }
 
   name = "${var.environment_name}-secret-access"
   role = each.value
