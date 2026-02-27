@@ -1,3 +1,6 @@
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "ecs_task_execution_assume_role" {
   statement {
     effect  = "Allow"
@@ -79,4 +82,27 @@ resource "aws_iam_role_policy_attachment" "backend_task_allow_ecs_exec" {
 resource "aws_iam_role_policy_attachment" "worker_task_allow_ecs_exec" {
   role       = aws_iam_role.worker_ecs_task.name
   policy_arn = aws_iam_policy.allow_ecs_exec.arn
+}
+
+data "aws_iam_policy_document" "transcribe_access" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "transcribe:GetTranscriptionJob",
+      "transcribe:StartTranscriptionJob",
+    ]
+    resources = [
+      "arn:aws:transcribe:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:transcription-job/minute-*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "transcribe_access" {
+  name   = "${var.environment_name}-transcribe-access"
+  policy = data.aws_iam_policy_document.transcribe_access.json
+}
+
+resource "aws_iam_role_policy_attachment" "transcribe_access" {
+  role       = aws_iam_role.worker_ecs_task.name
+  policy_arn = aws_iam_policy.transcribe_access.arn
 }
