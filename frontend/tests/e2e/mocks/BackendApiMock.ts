@@ -3,14 +3,9 @@ import { Page } from '@playwright/test'
 export class BackendApiMock {
   constructor(private page: Page) {}
 
-  async mockHomePageSuccess() {
-    await this.abortPosthog()
-    await this.mockCurrentUser()
-    await this.mockTranscriptions()
-  }
-
-  private async mockCurrentUser() {
+  async mockCurrentUser() {
     await this.page.route('**/api/proxy/users/me', async (route) => {
+      console.log('Mocking current user API response')
       const { pathname } = new URL(route.request().url())
 
       if (pathname !== '/api/proxy/users/me') {
@@ -32,7 +27,7 @@ export class BackendApiMock {
     })
   }
 
-  private async mockTranscriptions() {
+  async mockTranscriptions() {
     await this.page.route('**/api/proxy/transcriptions*', async (route) => {
       const { pathname } = new URL(route.request().url())
 
@@ -63,10 +58,7 @@ export class BackendApiMock {
     })
   }
 
-  private async abortPosthog() {
-    await this.page.route('https://eu.i.posthog.com/**', async (route) => {
-      await route.abort()
-    })
+  async abortPosthog() {
     await this.page.route('https://*.posthog.com/**', async (route) => {
       await route.abort()
     })

@@ -2,25 +2,32 @@ import { expect, test } from '@playwright/test'
 import { BackendApiMock } from './mocks/BackendApiMock'
 import { HomePage } from './pages/HomePage'
 
-test('home page renders hero, CTA, and mocked recent meeting', async ({
-  page,
-}) => {
-  const backendApiMock = new BackendApiMock(page)
-  await backendApiMock.mockHomePageSuccess()
+test.describe('Home page', () => {
+  test('shows main page elements', async ({ page }) => {
+    const backendMock = new BackendApiMock(page)
+    await backendMock.abortPosthog()
+    await backendMock.mockCurrentUser()
+    await backendMock.mockTranscriptions()
 
-  const homePage = new HomePage(page)
-  await homePage.goto()
+    const homePage = new HomePage(page)
 
-  await expect(homePage.heading()).toBeVisible()
-  await expect(homePage.newMeetingCta()).toBeVisible()
-  await expect(homePage.newMeetingCta()).toHaveAttribute('href', '/new')
+    await homePage.goto()
 
-  await expect(homePage.recentMeetingsHeading()).toBeVisible()
-  await expect(homePage.retentionNotice()).toBeVisible()
+    await expect(homePage.templatesLink()).toBeVisible()
+    await expect(homePage.settingsLink()).toHaveCount(2) // One in the header and one in the recent meetings section
+    await expect(homePage.heading()).toBeVisible()
+    await expect(homePage.newMeetingCta()).toBeVisible()
+    await expect(homePage.newMeetingCta()).toHaveAttribute('href', '/new')
 
-  await expect(
-    homePage.transcriptionItemTitle('Quarterly planning meeting')
-  ).toBeVisible()
+    await expect(homePage.recentMeetingsHeading()).toBeVisible()
+    await expect(homePage.retentionNotice()).toBeVisible()
 
-  await expect(homePage.transcriptionItemLink('transcription-1')).toBeVisible()
+    await expect(
+      homePage.transcriptionItemTitle('Quarterly planning meeting')
+    ).toBeVisible()
+
+    await expect(
+      homePage.transcriptionItemLink('transcription-1')
+    ).toBeVisible()
+  })
 })

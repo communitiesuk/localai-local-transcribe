@@ -7,6 +7,14 @@ export class HomePage {
     await this.page.goto('/')
   }
 
+  templatesLink(): Locator {
+    return this.page.getByRole('link', { name: 'Templates' })
+  }
+
+  settingsLink(): Locator {
+    return this.page.getByRole('link', { name: 'Settings' })
+  }
+
   heading(): Locator {
     return this.page.getByRole('heading', {
       name: 'AI transcription and drafting service',
