@@ -8,11 +8,6 @@ output "ecs_cluster_name" {
   description = "The name of the ECS cluster for this environment"
 }
 
-output "ecs_security_group_ids" {
-  value       = [aws_security_group.ecs.id]
-  description = "List of security group IDs attached to the ECS tasks"
-}
-
 output "backend_execution_task_name" {
   value = aws_iam_role.ecs_task_execution.name
   description = "The name of the task execution role used by the backend ecs task"

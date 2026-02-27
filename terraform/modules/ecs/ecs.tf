@@ -23,7 +23,7 @@ resource "aws_ecs_service" "frontend" {
   }
 
   network_configuration {
-    security_groups  = [aws_security_group.ecs.id]
+    security_groups  = [aws_security_group.frontend.id]
     subnets          = var.private_subnet_ids
     assign_public_ip = false
   }
@@ -48,7 +48,7 @@ resource "aws_ecs_service" "backend" {
   }
 
   network_configuration {
-    security_groups  = [aws_security_group.ecs.id]
+    security_groups  = [aws_security_group.backend.id]
     subnets          = var.private_subnet_ids
     assign_public_ip = false
   }
@@ -67,7 +67,7 @@ resource "aws_ecs_service" "worker" {
   task_definition                    = "minute-worker-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
 
   network_configuration {
-    security_groups  = [aws_security_group.ecs.id]
+    security_groups  = [aws_security_group.worker.id]
     subnets          = var.private_subnet_ids
     assign_public_ip = false
   }
