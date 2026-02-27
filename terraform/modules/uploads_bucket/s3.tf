@@ -6,4 +6,6 @@ module "uploads_bucket" {
   access_s3_log_expiration_days = var.access_s3_log_expiration_days
   force_destroy = var.force_destroy
   kms_key_arn = var.kms_key
+
+  policy = data.aws_iam_policy_document.uploads_bucket.json
 }
