@@ -17,7 +17,7 @@ resource "aws_ecs_service" "frontend" {
   task_definition                    = "minute-frontend-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
 
   load_balancer {
-    container_name   = "minute_frontend"
+    container_name   = "frontend"
     container_port   = var.frontend_port
     target_group_arn = var.lb_target_group_arn
   }
@@ -40,12 +40,6 @@ resource "aws_ecs_service" "backend" {
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
   task_definition                    = "minute-backend-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
-
-  load_balancer {
-    container_name   = "minute_frontend"
-    container_port   = var.backend_port
-    target_group_arn = var.lb_target_group_arn
-  }
 
   network_configuration {
     security_groups  = [aws_security_group.backend.id]

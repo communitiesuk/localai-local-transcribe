@@ -34,9 +34,9 @@ variable "vpc_id" {
   description = "The ID of the VPC to be associated with."
 }
 
-variable "application_port" {
+variable "frontend_port" {
   type        = number
-  description = "The network port the application runs on"
+  description = "The network port the frontend runs on, this alb assumes the frontend will internally proxy requests to the backend as needed"
 }
 
 # TODO: PRSD-574 - Reinstate when ECS has been configured
