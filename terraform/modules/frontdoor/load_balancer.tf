@@ -45,20 +45,23 @@ resource "aws_security_group" "load_balancer" {
   }
 }
 
-resource "aws_lb_target_group" "main" {
+resource "aws_lb_target_group" "frontend" {
   name                          = var.environment_name
-  port                          = var.application_port
+  port                          = var.frontend_port
   protocol                      = "HTTP"
   vpc_id                        = var.vpc_id
   target_type                   = "ip"
   load_balancing_algorithm_type = "least_outstanding_requests"
 
   health_check {
-    path                = "/healthcheck"
-    protocol            = "HTTP"
     healthy_threshold   = 2
+    interval            = 300
+    protocol            = "HTTP"
+    matcher             = "200"
+    timeout             = 70
+    path                = "/health"
     unhealthy_threshold = 5
-    timeout             = 10
+    port                = var.frontend_port
   }
 }
 
@@ -67,7 +70,7 @@ resource "aws_lb_listener_rule" "forward" {
   listener_arn = aws_lb_listener.https[0].arn
 
   action {
-    target_group_arn = aws_lb_target_group.main.id
+    target_group_arn = aws_lb_target_group.frontend.id
     type             = "forward"
   }
 

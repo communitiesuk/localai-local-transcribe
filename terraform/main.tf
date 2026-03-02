@@ -67,7 +67,7 @@ module "frontdoor" {
   environment_name  = local.environment_name
   public_subnet_ids = module.networking.public_subnets[*].id
   vpc_id            = module.networking.vpc.id
-  application_port  = local.frontend_port
+  frontend_port     = local.frontend_port
   cloudfront_domain_names = [
     local.app_host,
   ]
