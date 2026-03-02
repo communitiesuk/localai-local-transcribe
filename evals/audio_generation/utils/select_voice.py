@@ -1,6 +1,6 @@
 from typing import List
 
-DEFAULT_VOICES = [
+default_voices = [
     "qimfC2HPDJhhTmdOzs2z",  # Eastern European man
     "hhDdiMwM9dWfw6qEFzju",  # Young Mancunian
 ]
@@ -17,9 +17,9 @@ voice_map = {
 
 PYTHONHASHSEED = 0
 
-def get_voice_for_speaker(speaker: str, fallback_pool: List[str] = DEFAULT_VOICES) -> str:
+def get_voice_for_speaker(speaker: str, fallback_pool: List[str] = default_voices) -> str:
     # if speaker in voice_map:
     #     return voice_map[speaker]
 
     # assign a fallback voice 
-    return fallback_pool[hash(speaker) % len(fallback_pool)]
+    return fallback_pool[hash(speaker) % len(default_voices)]

@@ -5,18 +5,14 @@ from pathlib import Path
 from pydub import AudioSegment  # type: ignore
 
 
-def mix_audio_with_effects(
+def mix_audio_with_background(
     speech_audio: bytes, effects_audio: bytes, speech_name: str, sfx_name: str
 ) -> AudioSegment:
     """
     Mixes the speech audio with the background sound effects audio using pydub.
 
     """
-    caller_frame = inspect.stack()[1]
-    caller_file = Path(caller_frame.filename)
-    caller_dir = caller_file.parent
-
-    audio_dir = caller_dir / "audio_transformation" / "mixed_audio_files"
+    audio_dir = Path(__file__).parent / "mixed_audio_files"
     audio_dir.mkdir(parents=True, exist_ok=True)
 
     # Load the speech and effects audio into AudioSegment objects
