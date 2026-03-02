@@ -1,22 +1,14 @@
 import { expect, test } from '@playwright/test'
 import { SettingsPage } from './pages/SettingsPage'
-import { BackendApiMock } from './mocks/BackendApiMock'
 
 test.describe('Settings page', () => {
   test('shows setting page elements', async ({ page }) => {
-    const backendMock = new BackendApiMock(page)
-    await backendMock.mockCurrentUser()
-
     const settingsPage = new SettingsPage(page)
     await settingsPage.goto()
-
     await expect(settingsPage.heading()).toBeVisible()
     await expect(settingsPage.saveButton()).toBeVisible()
   })
   test('retention settings reflects user', async ({ page }) => {
-    const backendMock = new BackendApiMock(page)
-    await backendMock.mockCurrentUser()
-
     const settingsPage = new SettingsPage(page)
     await settingsPage.goto()
 

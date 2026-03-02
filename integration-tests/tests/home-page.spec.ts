@@ -1,14 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { BackendApiMock } from './mocks/BackendApiMock'
 import { HomePage } from './pages/HomePage'
 
 test.describe('Home page', () => {
   test('shows main page elements', async ({ page }) => {
-    const backendMock = new BackendApiMock(page)
-    await backendMock.abortPosthog()
-    await backendMock.mockCurrentUser()
-    await backendMock.mockTranscriptions()
-
     const homePage = new HomePage(page)
 
     await homePage.goto()

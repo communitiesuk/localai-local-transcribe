@@ -11,11 +11,9 @@
     "openapi-ts": "openapi-ts",
     "prettier:fix": "prettier --write .",
     "prettier:check": "prettier --check .",
-    "test": "vitest run && playwright test",
+    "test": "vitest run",
     "test:unit": "vitest run",
-    "test:unit:cov": "vitest run --coverage",
-    "test:integration": "playwright test",
-    "test:integration:install": "playwright install --with-deps chromium"
+    "test:unit:cov": "vitest run --coverage"
   },
   "dependencies": {
     "@hey-api/client-next": "^0.5.1",
@@ -65,7 +63,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@hey-api/openapi-ts": "^0.93.0",
-    "@playwright/test": "^1.41.2",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.16",
     "@types/file-saver": "^2.0.7",
