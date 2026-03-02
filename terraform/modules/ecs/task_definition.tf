@@ -179,6 +179,14 @@ resource "aws_ecs_task_definition" "backend" {
         value ="minute-backend"
         }
       ])
+
+      healthCheck = {
+        command     = ["CMD-SHELL", "curl --fail http://localhost:${ var.backend_port }/healthcheck"]
+        interval    = 60
+        retries     = 3
+        startPeriod = 30
+        timeout     = 5
+      }
     }
   ])
 
@@ -226,6 +234,14 @@ resource "aws_ecs_task_definition" "worker" {
           value = "unused", # Worker settings need refactoring so we can remove this
         }
       ])
+
+      healthCheck = {
+        command     = ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
+        interval    = 60
+        retries     = 3
+        startPeriod = 60
+        timeout     = 5
+      }
     }
   ])
 
