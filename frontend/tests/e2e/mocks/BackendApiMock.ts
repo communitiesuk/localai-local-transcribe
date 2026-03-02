@@ -117,4 +117,72 @@ export class BackendApiMock {
       }
     })
   }
+
+  /**
+   * Mocks the backend API endpoint for retrieving meeting minute templates.
+   * 
+   * Intercepts requests to `/api/proxy/templates` and returns a predefined list of template objects
+   * containing template metadata such as name, description, category, and agenda usage requirements.
+   * 
+   * @async
+   * @returns {Promise<void>}
+   * 
+   * @example
+   * await backendApiMock.mockTemplates();
+   */
+  async mockTemplates() {
+    await this.page.route('**/api/proxy/templates', async (route) => {
+      const { pathname } = new URL(route.request().url())
+
+      if (pathname !== '/api/proxy/templates') {
+        await route.fallback()
+        return
+      }
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            name: 'Cabinet',
+            description: 'Formal minutes following cabinet meeting structure',
+            category: 'Formal Minutes',
+            agenda_usage: 'optional',
+          },
+          {
+            name: 'Care Assessment V2',
+            description:
+              'Enhanced Social care assessment template based on Care Act Eligibility Criteria',
+            category: 'Social Care',
+            agenda_usage: 'not_used',
+          },
+          {
+            name: 'Delivery',
+            description: 'Formal minutes following the delivery style guide',
+            category: 'Formal Minutes',
+            agenda_usage: 'not_used',
+          },
+          {
+            name: "Short 'n' Sweet",
+            description: 'Executive summary of the meeting + action items',
+            category: 'Common',
+            agenda_usage: 'not_used',
+          },
+          {
+            name: 'General',
+            description:
+              'Standard meeting summary with key points, decisions, and action items',
+            category: 'Common',
+            agenda_usage: 'optional',
+          },
+          {
+            name: 'Planning Committee',
+            description: 'Planning committee minutes template',
+            category: 'Formal Minutes',
+            agenda_usage: 'required',
+          },
+        ]),
+      })
+    })
+  }
 }
