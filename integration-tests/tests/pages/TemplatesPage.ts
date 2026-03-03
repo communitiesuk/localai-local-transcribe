@@ -1,5 +1,11 @@
 import { Locator, Page } from '@playwright/test'
 
+export interface Template {
+  name: string
+  description: string
+  content: string
+}
+
 export class TemplatesPage {
   constructor(private page: Page) {}
 
@@ -13,11 +19,36 @@ export class TemplatesPage {
     })
   }
 
-  documentTemplateItem(): Locator {
-    return this.page.getByText('Document Template', { exact: true })
+  async createDocumentTemplate(template: Template) {
+    await this.page
+      .getByRole('link', { name: 'Create a new template' })
+      .first()
+      .click()
+
+    await this.page
+      .getByRole('textbox', { name: 'Name your template' })
+      .fill(template.name)
+    await this.page
+      .getByRole('textbox', { name: 'A description to help' })
+      .fill(template.description)
+    await this.page.getByTestId('template-content-editor').click()
+    await this.page.keyboard.type(template.content)
+
+    await this.page.getByRole('button', { name: 'Save' }).click()
   }
 
-  formTemplateItem(): Locator {
-    return this.page.getByText('Form Template', { exact: true })
+  async deleteDocumentTemplate() {
+    // Click Delete twice - once on template card, then on modal confirmation
+    // Brittle selector - assumes you want to delete the first template
+    await this.page.getByRole('button', { name: 'Delete' }).first().click()
+    await this.page.getByRole('button', { name: 'Delete' }).click()
+  }
+
+  documentTemplateItem(title: string): Locator {
+    return this.page.getByText(title, { exact: true })
+  }
+
+  formTemplateItem(title: string): Locator {
+    return this.page.getByText(title, { exact: true })
   }
 }
