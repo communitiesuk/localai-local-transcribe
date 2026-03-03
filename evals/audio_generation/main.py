@@ -1,7 +1,9 @@
 import logging
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
+
 from evals.audio_generation.audio_transformation.audio_background import (
     mix_audio_with_background,
     mp3_to_bytes,
@@ -16,8 +18,10 @@ load_dotenv()
 api_key = os.getenv("ELEVEN_LABS_API_KEY")
 model_id = "eleven_v3"
 transcript_file = "jordan-alex.txt"
-audio_file = "jordan-alex.mp3"
-audio_sfx = "noise_on_a_typical_metro.mp3"
+
+audio_dir = Path("eleven_labs/generated_audio_files")
+audio_file = Path("jordan-alex.mp3")
+audio_sfx = Path("noise_on_a_typical_metro.mp3")
 
 if api_key:
     logging.info("Eleven Labs API key found. Using Eleven Labs for audio generation.")
@@ -25,18 +29,22 @@ else:
     logging.info("No Eleven Labs API key found. Using a placeholder for audio generation.")
 
 
-
-# Call function to combine stored transcribed audio and sound-effect files into a single mixed audio track
-def audio_with_background_fx()->None:
-    speech_name, audio_bytes = mp3_to_bytes(f"eleven_labs/{audio_file}")
-    sfx_name, sfx_bytes = mp3_to_bytes(f"background_sfx/{audio_sfx}") # background sfx files were generated on the elevenLabs platform & manually added to file
+# Call function to combine stored audio dialogue and
+# sound-effect files into a single mixed audio track
+def audio_with_background_fx() -> None:
+    speech_name, audio_bytes = mp3_to_bytes(audio_dir / audio_file)
+    sfx_name, sfx_bytes = mp3_to_bytes(
+        Path("background_sfx") / audio_sfx
+    )  # background sfx files were generated on the elevenLabs
+    # platform & manually added to file
     mix_audio_with_background(audio_bytes, sfx_bytes, speech_name, sfx_name)
 
 
-#Call flow to utilise eleven text to speech service
+# Call flow to utilise eleven text to speech service
 def eleven_tts() -> None:
     transcript = get_transcripts(transcript_file)
     eleven_text_to_speech(api_key or "", transcript, transcript_file, model_id)
+
 
 if __name__ == "__main__":
     eleven_tts()

@@ -16,3 +16,8 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 package-mode = false
+[dependency-groups]
+dev = [
+    "pydub (>=0.25.1,<0.26.0)",
+    "elevenlabs (>=2.37.0,<3.0.0)"
+]

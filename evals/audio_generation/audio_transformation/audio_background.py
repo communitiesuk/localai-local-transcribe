@@ -1,4 +1,3 @@
-import inspect
 import io
 from pathlib import Path
 
@@ -39,15 +38,12 @@ def mp3_to_bytes(mp3_path: str | Path) -> tuple[str, bytes]:
     """
     Reads an MP3 file and returns its name and content as bytes.
     """
-
-    caller_file = Path(inspect.stack()[1].filename)
-    caller_dir = caller_file.parent
-
-    path = (caller_dir / mp3_path).resolve()
+    audio_gen_root = Path(__file__).parent.parent.resolve()
+    path = (audio_gen_root / mp3_path).resolve()
 
     if not path.exists():
         raise FileNotFoundError(f"MP3 file not found: {path}")
 
-    name = Path(mp3_path).stem
+    file_name = path.stem
 
-    return name.split("_", 1)[0], path.read_bytes()
+    return file_name.split("_", 1)[0], path.read_bytes()

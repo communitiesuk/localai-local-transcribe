@@ -1,9 +1,10 @@
 import logging
 import re
-from pathlib import Path
 import typing
+from pathlib import Path
 
 from elevenlabs.client import ElevenLabs
+
 from evals.audio_generation.utils.build_pattern import build_pattern
 from evals.audio_generation.utils.extract_speakers import extract_speakers
 from evals.audio_generation.utils.save_audio import save_audio
@@ -23,7 +24,7 @@ def eleven_text_to_speech(
         logger.warning("No Eleven Labs API key provided. Audio generation will be skipped.")
         return
 
-    client = ElevenLabs(api_key=api_key) 
+    client = ElevenLabs(api_key=api_key)
 
     speakers = extract_speakers(transcript_content)
     regex_pattern = build_pattern(speakers)
@@ -33,9 +34,9 @@ def eleven_text_to_speech(
     for speaker, text, _ in dialogue_entries:
         voice_id = get_voice_for_speaker(speaker)
 
-        audio : typing.Iterator[bytes] = client.text_to_speech.convert( 
+        audio: typing.Iterator[bytes] = client.text_to_speech.convert(
             text=text.strip(),
-            voice_id=voice_id ,
+            voice_id=voice_id,
             model_id=model_id,
             output_format="mp3_44100_128",
         )

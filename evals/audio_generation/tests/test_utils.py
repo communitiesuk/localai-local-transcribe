@@ -2,6 +2,7 @@ from evals.audio_generation.utils.build_pattern import build_pattern
 from evals.audio_generation.utils.extract_speakers import extract_speakers
 from evals.audio_generation.utils.save_audio import save_audio
 
+
 def test_build_pattern():
     speakers = ["Alice", "Bob"]
     pattern = build_pattern(speakers)
