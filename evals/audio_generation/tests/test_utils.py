@@ -11,10 +11,13 @@ def test_build_pattern():
 
 def test_save_audio(tmp_path):
     audio_bytes = b"test audio data"
-    output_file = tmp_path / "output.mp3"
-    saved_path = save_audio(audio_bytes, str(output_file))
-    assert saved_path == str(output_file)
-    assert output_file.read_bytes() == audio_bytes
+    output_file = "output.mp3"
+
+    saved_path = save_audio(audio_bytes, output_file, target_dir=tmp_path)
+    expected_path = tmp_path / output_file
+
+    assert saved_path == str(expected_path)
+    assert expected_path.read_bytes() == audio_bytes
 
 
 def test_extract_speakers():
