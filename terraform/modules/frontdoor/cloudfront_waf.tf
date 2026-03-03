@@ -25,7 +25,7 @@ resource "aws_wafv2_web_acl" "main" {
     for_each = length(var.ip_allowlist) > 0 ? [{}] : []
     content {
       name     = "ip-allowlist"
-      priority = 2
+      priority = 1
       action {
         block {
           custom_response {
@@ -55,7 +55,7 @@ resource "aws_wafv2_web_acl" "main" {
 
   rule {
     name     = "aws-managed-rules-amazon-ip-reputation-list"
-    priority = 3
+    priority = 2
 
     override_action {
       none {}
