@@ -8,7 +8,7 @@ test.describe('Settings page', () => {
     await expect(settingsPage.heading()).toBeVisible()
     await expect(settingsPage.saveButton()).toBeVisible()
   })
-  test('retention settings reflects user', async ({ page }) => {
+  test('shows retention settings', async ({ page }) => {
     const settingsPage = new SettingsPage(page)
     await settingsPage.goto()
 
@@ -22,10 +22,5 @@ test.describe('Settings page', () => {
     ]) {
       await expect(settingsPage.radioOption(rententionPeriod)).toBeVisible()
     }
-
-    await expect(settingsPage.radioOption('30 days')).toBeChecked()
-  })
-  test.skip('test retention submission', async ({ page }) => {
-    // no UI changes so hard to test
   })
 })

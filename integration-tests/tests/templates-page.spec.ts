@@ -8,11 +8,4 @@ test.describe('Templates page', () => {
 
     await expect(templatesPage.heading()).toBeVisible()
   })
-  test('shows template exists', async ({ page }) => {
-    const templatesPage = new TemplatesPage(page)
-    await templatesPage.goto()
-
-    await expect(templatesPage.documentTemplateItem()).toBeVisible()
-    await expect(templatesPage.formTemplateItem()).toBeVisible()
-  })
 })

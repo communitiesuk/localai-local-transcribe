@@ -13,7 +13,7 @@ test.describe('Upload a file page', () => {
     await expect(uploadAFilePage.fileUploadInput()).toBeVisible()
   })
 
-  test('shows minuting controls when a file is provided', async ({ page }) => {
+  test('reveals minuting controls after file upload', async ({ page }) => {
     const uploadAFilePage = new UploadAFile(page)
 
     await uploadAFilePage.goto()

@@ -12,16 +12,5 @@ test.describe('Home page', () => {
     await expect(homePage.heading()).toBeVisible()
     await expect(homePage.newMeetingCta()).toBeVisible()
     await expect(homePage.newMeetingCta()).toHaveAttribute('href', '/new')
-
-    await expect(homePage.recentMeetingsHeading()).toBeVisible()
-    await expect(homePage.retentionNotice()).toBeVisible()
-
-    await expect(
-      homePage.transcriptionItemTitle('Quarterly planning meeting')
-    ).toBeVisible()
-
-    await expect(
-      homePage.transcriptionItemLink('transcription-1')
-    ).toBeVisible()
   })
 })

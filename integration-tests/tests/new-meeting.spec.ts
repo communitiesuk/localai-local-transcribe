@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { NewMeeting } from './pages/NewMeeting'
 
 test.describe('New meeting page', () => {
-  test('shows main page elements', async ({ page }) => {
+  test('shows new meeting page elements', async ({ page }) => {
     const newMeetingPage = new NewMeeting(page)
 
     await newMeetingPage.goto()
