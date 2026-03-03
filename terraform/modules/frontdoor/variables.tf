@@ -55,12 +55,6 @@ variable "load_balancer_domain_name" {
   description = "MHCLG delegated domain name for alb"
 }
 
-variable "geolocation_allow_list" {
-  type        = list(string)
-  description = "List of allowed locations - geo restrictions disabled when set to null"
-  default     = null
-}
-
 variable "ip_allowlist" {
   type        = list(string)
   description = "List of allowed IPs - if empty then no ip restrictions are applied"
