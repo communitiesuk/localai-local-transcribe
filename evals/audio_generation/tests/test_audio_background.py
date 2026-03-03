@@ -1,5 +1,6 @@
 import pytest
-from evals.audio_generation.audio_transformation import audio_background 
+from evals.audio_generation.audio_transformation import audio_background
+
 
 def test_mp3_to_bytes_reads_file(tmp_path, monkeypatch):
     audio_gen_root = tmp_path
