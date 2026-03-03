@@ -123,8 +123,8 @@ resource "aws_cloudfront_distribution" "main" {
 
   restrictions {
     geo_restriction {
-      restriction_type = var.geolocation_allow_list != null ? "whitelist" : "none"
-      locations        = var.geolocation_allow_list != null ? var.geolocation_allow_list : [] # todo: set it
+      restriction_type = "whitelist"
+      locations        = ["GB"]
     }
   }
 
