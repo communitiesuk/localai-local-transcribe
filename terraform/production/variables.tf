@@ -4,26 +4,8 @@ variable "ssl_certs_created" {
   default     = true
 }
 
-variable "task_definition_created" {
-  description = "Indicates whether the initial task definition has been created"
-  type        = bool
-  default     = true
-}
-
-variable "alarm_email_address" {
-  description = "Email address to receive CloudWatch alarm notifications"
+variable "image_tag" {
+  description = "The image tag to be used for all of frontend, backend, and worker"
   type        = string
-  sensitive   = true
-}
-
-variable "ip_restrictions_on" {
-  description = "Enable IP restrictions for the web application"
-  type        = bool
-  default     = false
-}
-
-variable "maintenance_mode_on" {
-  type        = bool
-  description = "Indicates whether maintenance mode is on"
-  default     = false
+  default     = "latest"
 }
