@@ -1,8 +1,8 @@
 variable "environment_name" {
-  description = "must be one of: integration, test, nft, or production"
+  description = "must be one of: integration, test, staging, or production"
   type        = string
   validation {
-    condition     = contains(["integration", "test", "nft", "production"], var.environment_name)
+    condition     = contains(["integration", "test", "staging", "production"], var.environment_name)
     error_message = "Environment must be one of: integration, test"
   }
 }
