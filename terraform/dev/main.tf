@@ -29,8 +29,8 @@ locals {
 
   database_username = "postgres"
 
-  app_host                  = "development.minute.test.communities.gov.uk"
-  load_balancer_domain_name = "lb.development.minute.test.communities.gov.uk"
+  app_host                  = "development.minute.test.communities.gov.uk" # placeholder
+  load_balancer_domain_name = "lb.development.minute.test.communities.gov.uk" # placeholder
 
   cloudwatch_log_exipiration_days = 90
   access_s3_log_expiration_days   = 90
