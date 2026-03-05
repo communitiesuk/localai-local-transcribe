@@ -4,11 +4,11 @@ variable "ssl_certs_created" {
 }
 
 variable "environment_name" {
-  description = "must be one of: integration, test, staging, or production"
+  description = "must be one of: development, or staging"
   type        = string
   validation {
-    condition     = contains(["integration", "test", "staging", "production"], var.environment_name)
-    error_message = "Environment must be one of: integration, test"
+    condition     = contains(["development", "staging"], var.environment_name)
+    error_message = "Environment must be one of: development, staging"
   }
 }
 

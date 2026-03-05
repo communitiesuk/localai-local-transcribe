@@ -12,13 +12,13 @@ terraform {
     bucket         = "minute-tfstate"
     dynamodb_table = "tfstate-lock"
     encrypt        = true
-    key            = "minute-infra-prod"
+    key            = "minute-infra-dev"
     region         = "eu-west-2"
   }
 }
 
 locals {
-  environment_name = "production"
+  environment_name = "development"
   multi_az         = false
 
   frontend_port               = 3000
@@ -29,8 +29,8 @@ locals {
 
   database_username = "postgres"
 
-  app_host                  = "minute.communities.gov.uk"    # Placeholder
-  load_balancer_domain_name = "lb.minute.communities.gov.uk" # Placeholder
+  app_host                  = "development.minute.test.communities.gov.uk"
+  load_balancer_domain_name = "lb.development.minute.test.communities.gov.uk"
 
   cloudwatch_log_exipiration_days = 90
   access_s3_log_expiration_days   = 90
