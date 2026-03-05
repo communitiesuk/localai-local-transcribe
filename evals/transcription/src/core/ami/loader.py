@@ -31,16 +31,13 @@ def _load_utterances_for_meetings(
     dataset = load_dataset(AMI_DATASET_NAME, config, split=split)
     utterances_by_meeting: DefaultDict[str, List[RawDatasetRow]] = defaultdict(list)
     for row in dataset:
-        r = row
-        meeting_id = r["meeting_id"]
+        meeting_id = row["meeting_id"]
         if meeting_id in required_meetings:
-            utterances_by_meeting[meeting_id].append(r)
+            utterances_by_meeting[meeting_id].append(RawDatasetRow(**row))
     return utterances_by_meeting
 
 
-def _apply_cutoff(
-    utterances: List[RawDatasetRow], cutoff_time: float | None
-) -> List[RawDatasetRow]:
+def _apply_cutoff(utterances: List[RawDatasetRow], cutoff_time: float | None) -> List[RawDatasetRow]:
     """
     Applies a cutoff time to the list of utterances, keeping only those that fit within the cutoff.
     """
@@ -140,9 +137,7 @@ class AMIDatasetLoader(DatasetProtocol):
         logger.info("Dataset preparation complete: %d samples ready", self.num_of_samples)
         return self.samples
 
-    def _load_required_utterances(
-        self, segments: List[MeetingSegment]
-    ) -> DefaultDict[str, List[RawDatasetRow]]:
+    def _load_required_utterances(self, segments: List[MeetingSegment]) -> DefaultDict[str, List[RawDatasetRow]]:
         """
         Checks if all required segments are already cached. If so, returns an empty dict.
         Otherwise, loads the necessary utterances for the required meetings and returns them
