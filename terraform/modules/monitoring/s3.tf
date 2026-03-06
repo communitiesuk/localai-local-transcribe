@@ -1,8 +1,8 @@
 module "s3_bucket" {
   source = "../s3_bucket"
 
-  access_log_bucket_name             = "prsdb-cloudtrail-${var.environment_name}-access-logs"
-  bucket_name                        = "prsdb-cloudtrail-${var.environment_name}"
+  access_log_bucket_name             = "minute-cloudtrail-${var.environment_name}-access-logs"
+  bucket_name                        = "minute-cloudtrail-${var.environment_name}"
   access_s3_log_expiration_days      = var.cloudwatch_log_expiration_days
   policy                             = data.aws_iam_policy_document.bucket_policy.json
   kms_key_arn                        = aws_kms_key.main.arn
@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "bucket_policy" {
       test     = "StringEquals"
       variable = "aws:SourceArn"
       values = [
-        "arn:aws:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/prsd-cloudtrail-${var.environment_name}"
+        "arn:aws:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/minute-cloudtrail-${var.environment_name}"
       ]
     }
   }
@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "bucket_policy" {
       test     = "StringEquals"
       variable = "aws:SourceArn"
       values = [
-        "arn:aws:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/prsd-cloudtrail-${var.environment_name}"
+        "arn:aws:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/minute-cloudtrail-${var.environment_name}"
       ]
     }
   }

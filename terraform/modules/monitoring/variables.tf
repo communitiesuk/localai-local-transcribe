@@ -22,9 +22,9 @@ variable "ecs_cluster_name" {
   type        = string
 }
 
-variable "ecs_service_name" {
-  description = "Name of ECS service to create alarms for"
-  type        = string
+variable "ecs_service_names" {
+  description = "Names of ECS service to create alarms for"
+  type        = list(string)
 }
 
 variable "database_identifier" {
@@ -35,11 +35,6 @@ variable "database_identifier" {
 variable "database_allocated_storage" {
   description = "Allocated storage of RDS instance to create alarms for"
   type        = number
-}
-
-variable "elasticache_cluster_ids" {
-  description = "IDs of ElastiCache clusters to create alarms for"
-  type        = set(string)
 }
 
 variable "alb_name" {
