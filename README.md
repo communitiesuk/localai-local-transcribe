@@ -57,6 +57,14 @@ Note:
   - AZURE_APIM_API_VERSION in the format `yyyy-mm-dd`
 - The `AZURE_APIM_ACCESS_TOKEN` is short lived and so must be regenerated every 2 hours.
 
+**Automated token refresh:**
+
+```bash
+source ./scripts/get-apim-token.sh
+```
+
+This script fetches a fresh Azure APIM token and updates `.env` automatically. Requires Azure CLI (`az`) and `AZURE_TOKEN_SCOPE` set in `.env`.
+
 ##### In `common/settings.py`:
 
 - Update `FAST_LLM_PROVIDER`, `FAST_LLM_MODEL_NAME`, `BEST_LLM_PROVIDER`, and `BEST_LLM_MODEL_NAME` correspondingly.
