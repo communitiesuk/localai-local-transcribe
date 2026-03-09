@@ -111,6 +111,10 @@ jiwer = "^3.0.0"
 soundfile = "^0.12.0"
 librosa = "^0.10.0"
 
+[tool.poetry.group.characteristics-evals.dependencies]
+pyyaml = "^6.0.2"
+jinja2 = "^3.1.4"
+
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"
 pre-commit = "^3.8.0"

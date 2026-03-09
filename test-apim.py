@@ -19,7 +19,7 @@ DEPLOYMENT_ID = "minute-gpt4o"
 API_VERSION = "2024-10-21"
 TOKEN_SCOPE = "api://api.azc.test.communities.gov.uk/.default"  # noqa: S105
 SUBSCRIPTION_KEY = settings.AZURE_APIM_SUBSCRIPTION_KEY or ""
-BASE_URL = "https://api.azc.test.communities.gov.uk/minute/openai001"
+BASE_URL = "https://api.azc.test.communities.gov.uk"
 
 
 def get_access_token() -> str:
