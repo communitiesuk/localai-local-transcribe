@@ -29,7 +29,7 @@ locals {
 
   database_username = "postgres"
 
-  app_host                  = "development.minute.test.communities.gov.uk" # placeholder
+  app_host                  = "development.minute.test.communities.gov.uk"    # placeholder
   load_balancer_domain_name = "lb.development.minute.test.communities.gov.uk" # placeholder
 
   cloudwatch_log_exipiration_days = 90
@@ -194,15 +194,19 @@ module "uploads_bucket" {
 module "monitoring" {
   source = "../modules/monitoring"
 
-  environment_name   = local.environment_name
+  providers = {
+    aws.us-east-1 = aws.us-east-1
+  }
+
+  environment_name               = local.environment_name
   cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
-  alarm_email_address = var.alarm_email_address
-  alb_name = module.frontdoor.load_balancer.name
-  alb_arn_suffix = module.frontdoor.load_balancer.arn_suffix
-  alb_target_group_arn_suffix = module.frontdoor.load_balancer.arn_suffix
-  ecs_cluster_name = module.ecs.ecs_cluster_name // TODO are there multiple ecs clusters?
-  ecs_service_name = null // TODO there are multiple ecs services
-  database_allocated_storage = local.database_allocated_storage
-  database_identifier = module.database.database_identifier
-  waf_acl_name = module.frontdoor.waf_acl_name
+  alarm_email_address            = var.alarm_email_address
+  alb_name                       = module.frontdoor.load_balancer.name
+  alb_arn_suffix                 = module.frontdoor.load_balancer.arn_suffix
+  alb_target_group_arn_suffix    = module.frontdoor.load_balancer.arn_suffix
+  ecs_cluster_name               = module.ecs.ecs_cluster_name
+  ecs_service_names              = [module.ecs.frontend_service_name, module.ecs.backend_service_name, module.ecs.worker_service_name]
+  database_allocated_storage     = local.database_allocated_storage
+  database_identifier            = module.database.database_identifier
+  waf_acl_name                   = module.frontdoor.waf_acl_name
 }

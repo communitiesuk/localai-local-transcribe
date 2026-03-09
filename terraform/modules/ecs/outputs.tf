@@ -47,3 +47,18 @@ output "worker_execution_task_arn" {
   value = aws_iam_role.ecs_task_execution.arn
   description = "The arn of the task execution role used by the worker ecs task"
 }
+
+output "frontend_service_name" {
+  description = "The name of the frontend ecs service"
+  value = aws_ecs_service.frontend.name
+}
+
+output "backend_service_name" {
+  description = "The name of the backend ecs service"
+  value = aws_ecs_service.backend.name
+}
+
+output "worker_service_name" {
+  description = "The name of the worker ecs service"
+  value = aws_ecs_service.worker.name
+}

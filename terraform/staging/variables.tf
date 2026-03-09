@@ -9,3 +9,9 @@ variable "image_tag" {
   type        = string
   default     = "latest"
 }
+
+variable "alarm_email_address" {
+  description = "Email address to receive CloudWatch alarm notifications"
+  type        = string
+  sensitive   = true
+}

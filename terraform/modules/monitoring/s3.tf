@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "bucket_policy" {
       test     = "StringEquals"
       variable = "aws:SourceArn"
       values = [
-        "arn:aws:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/minute-cloudtrail-${var.environment_name}"
+        "arn:aws:cloudtrail:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:trail/minute-cloudtrail-${var.environment_name}"
       ]
     }
   }
@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "bucket_policy" {
       test     = "StringEquals"
       variable = "aws:SourceArn"
       values = [
-        "arn:aws:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/minute-cloudtrail-${var.environment_name}"
+        "arn:aws:cloudtrail:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:trail/minute-cloudtrail-${var.environment_name}"
       ]
     }
   }
