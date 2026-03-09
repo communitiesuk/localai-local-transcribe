@@ -2,6 +2,12 @@
 
 set -euo pipefail
 
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is not installed. Please install jq to continue." >&2
+    echo "Install with: brew install jq (macOS) or apt-get install jq (Linux)" >&2
+    exit 1
+fi
+
 ENV_FILE=".env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "Error: $ENV_FILE not found. Please create it from .env.example" >&2
@@ -34,7 +40,7 @@ TOKEN_JSON=$(az account get-access-token --scope "$TOKEN_SCOPE" --output json 2>
     fi
 }
 
-ACCESS_TOKEN=$(echo "$TOKEN_JSON" | python3 -c "import sys, json; print(json.load(sys.stdin)['accessToken'])")
+ACCESS_TOKEN=$(echo "$TOKEN_JSON" | jq -r '.accessToken')
 
 if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
     echo "Error: Failed to retrieve access token" >&2
