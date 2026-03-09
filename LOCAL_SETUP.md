@@ -39,7 +39,7 @@ cp .env.local .env
 Before moving on to the next step, edit the .env file and add: WHISPLY_HF_TOKEN=hf_your_token
 ```bash
 # Run worker locally
-./run-worker-local.sh
+./scripts/run-worker-local.sh
 ```
 
 ### Access the app at http://localhost:3000

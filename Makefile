@@ -153,7 +153,7 @@ tf_auto_apply:  ## Auto apply terraform
 ## Release app
 .PHONY: release
 release: 
-	chmod +x ./release.sh && ./release.sh $(env)
+	chmod +x ./scripts/release.sh && ./scripts/release.sh $(env)
 
 generate_api_types:
 	cd frontend && npm run openapi-ts

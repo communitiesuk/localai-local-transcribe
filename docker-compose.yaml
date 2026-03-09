@@ -142,7 +142,7 @@ services:
     volumes:
       # Here you mount your setup file so it will be executed
       # when the container starts
-      - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
+      - ./scripts/localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
     environment:
       - AWS_DEFAULT_REGION=eu-west-2
     healthcheck:
