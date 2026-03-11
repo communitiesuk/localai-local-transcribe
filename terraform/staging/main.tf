@@ -29,7 +29,7 @@ locals {
 
   database_username = "postgres"
 
-  app_host                  = "staging.minute.test.communities.gov.uk" # placeholder
+  app_host                  = "staging.minute.test.communities.gov.uk"    # placeholder
   load_balancer_domain_name = "lb.staging.minute.test.communities.gov.uk" # placeholder
 
   cloudwatch_log_exipiration_days = 90
@@ -51,7 +51,8 @@ module "networking" {
   vpc_cidr_block               = "10.1.0.0/16"
   environment_name             = local.environment_name
   number_of_availability_zones = 2
-  number_of_isolated_subnets   = 2 # RDS requires there to be 2 subnets in different AZs even when multi-AZ is disabled
+  number_of_isolated_subnets   = 2
+  # RDS requires there to be 2 subnets in different AZs even when multi-AZ is disabled
 
   vpc_flow_cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
 }
@@ -205,8 +206,13 @@ module "monitoring" {
   alb_arn_suffix                 = module.frontdoor.load_balancer.arn_suffix
   alb_target_group_arn_suffix    = module.frontdoor.load_balancer.arn_suffix
   ecs_cluster_name               = module.ecs.ecs_cluster_name
-  ecs_service_names              = [module.ecs.frontend_service_name, module.ecs.backend_service_name, module.ecs.worker_service_name]
-  database_allocated_storage     = local.database_allocated_storage
-  database_identifier            = module.database.database_identifier
-  waf_acl_name                   = module.frontdoor.waf_acl_name
+  ecs_service_names = [
+    module.ecs.frontend_service_name, module.ecs.backend_service_name,
+    module.ecs.worker_service_name
+  ]
+  database_allocated_storage          = local.database_allocated_storage
+  database_identifier                 = module.database.database_identifier
+  waf_acl_name                        = module.frontdoor.waf_acl_name
+  llm_deadletter_queue_name           = module.sqs.llm_deadletter_queue_name
+  transcription_deadletter_queue_name = module.sqs.transcription_deadletter_queue_name
 }
