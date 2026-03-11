@@ -8,13 +8,13 @@ locals {
       value = var.backend_port
     }, {
       name  = "REPO"
-      value = "minute"
+      value = "local-transcribe"
     }, {
       name  = "APP_URL"
       value = var.app_url
     }, {
       name  = "DOCKER_BUILDER_CONTAINER"
-      value = "minute"
+      value = "local-transcribe"
     }, {
       name  = "POSTGRES_HOST"
       value = "jdbc:postgresql://${var.database_host}"
@@ -77,13 +77,13 @@ locals {
       value = terraform.workspace
     }, {
       name = "APP_NAME"
-      value = "minute-frontend"
+      value = "local-transcribe-frontend"
     }, {
       name = "PORT"
       value = var.frontend_port
     }, {
       name = "REPO"
-      value = "minute"
+      value = "local-transcribe"
     }, {
       name  = "BACKEND_HOST"
       value = "http://${aws_service_discovery_service.backend_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${var.backend_port}"
@@ -176,7 +176,7 @@ resource "aws_ecs_task_definition" "backend" {
       environment = concat(local.shared_environment_variables, [
         {
         name  = "APP_NAME"
-        value ="minute-backend"
+        value ="local-transcribe-backend"
         }
       ])
 
@@ -227,7 +227,7 @@ resource "aws_ecs_task_definition" "worker" {
       environment = concat(local.shared_environment_variables, [
         {
           name  = "APP_NAME"
-          value ="minute-worker"
+          value ="local-transcribe-worker"
         },
         {
           name  = "AUTH_API_URL"

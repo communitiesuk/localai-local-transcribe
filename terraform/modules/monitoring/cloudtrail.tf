@@ -1,5 +1,5 @@
 resource "aws_cloudtrail" "main" {
-  name                          = "minute-cloudtrail-${var.environment_name}"
+  name                          = "local-transcribe-cloudtrail-${var.environment_name}"
   s3_bucket_name                = module.s3_bucket.bucket
   kms_key_id                    = aws_kms_key.main.arn
   include_global_service_events = true
@@ -12,7 +12,7 @@ resource "aws_cloudtrail" "main" {
 module "cloudtrail_cloudwatch_group" {
   source = "../encrypted_log_group"
 
-  log_group_name     = "minute-cloudtrail-${var.environment_name}"
+  log_group_name     = "local-transcribe-cloudtrail-${var.environment_name}"
   log_retention_days = var.cloudwatch_log_expiration_days
 }
 

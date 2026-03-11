@@ -9,10 +9,10 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "minute-tfstate"
+    bucket         = "local-transcribe-tfstate"
     dynamodb_table = "tfstate-lock"
     encrypt        = true
-    key            = "minute-infra-staging"
+    key            = "local-transcribe-infra-staging"
     region         = "eu-west-2"
   }
 }
@@ -29,8 +29,8 @@ locals {
 
   database_username = "postgres"
 
-  app_host                  = "staging.minute.test.communities.gov.uk"    # placeholder
-  load_balancer_domain_name = "lb.staging.minute.test.communities.gov.uk" # placeholder
+  app_host                  = "staging.local-transcribe.test.communities.gov.uk"    # placeholder
+  load_balancer_domain_name = "lb.staging.local-transcribe.test.communities.gov.uk" # placeholder
 
   cloudwatch_log_exipiration_days = 90
   access_s3_log_expiration_days   = 90

@@ -4,6 +4,6 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "minute-vpc-${var.environment_name}"
+    Name = "local-transcribe-vpc-${var.environment_name}"
   }
 }

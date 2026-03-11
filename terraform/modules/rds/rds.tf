@@ -1,7 +1,7 @@
 #tfsec:ignore:AVD-AWS-0176:iam authentication not suitable as tokens only last 15minutes, password authentication preferred
 resource "aws_db_instance" "main" {
   identifier                      = "${var.environment_name}-database"
-  db_name                         = "minutedb"
+  db_name                         = "localtranscribedb"
   allocated_storage               = var.allocated_storage #units are GiB
   backup_retention_period         = var.backup_retention_period
   backup_window                   = var.backup_window

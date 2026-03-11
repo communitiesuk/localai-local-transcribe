@@ -14,7 +14,7 @@ resource "aws_ecs_service" "frontend" {
   force_new_deployment               = true
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
-  task_definition                    = "minute-frontend-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
+  task_definition                    = "local-transcribe-frontend-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
 
   load_balancer {
     container_name   = "frontend"
@@ -39,7 +39,7 @@ resource "aws_ecs_service" "backend" {
   force_new_deployment               = true
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
-  task_definition                    = "minute-backend-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
+  task_definition                    = "local-transcribe-backend-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
 
   network_configuration {
     security_groups  = [aws_security_group.backend.id]
@@ -58,7 +58,7 @@ resource "aws_ecs_service" "worker" {
   force_new_deployment               = true
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
-  task_definition                    = "minute-worker-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
+  task_definition                    = "local-transcribe-worker-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
 
   network_configuration {
     security_groups  = [aws_security_group.worker.id]
@@ -68,13 +68,13 @@ resource "aws_ecs_service" "worker" {
 }
 
 resource "aws_service_discovery_private_dns_namespace" "private_dns_namespace" {
-  name        = "minute-internal"
-  description = "minute private dns namespace"
+  name        = "local-transcribe-internal"
+  description = "local-transcribe private dns namespace"
   vpc         = var.vpc_id
 }
 
 resource "aws_service_discovery_service" "backend_service_discovery_service" {
-  name = "minute-backend"
+  name = "local-transcribe-backend"
 
   dns_config {
     namespace_id = aws_service_discovery_private_dns_namespace.private_dns_namespace.id

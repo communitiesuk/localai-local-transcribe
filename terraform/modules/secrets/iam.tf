@@ -9,7 +9,7 @@ data "aws_iam_policy_document" "kms_secrets_decrypt" {
 
     actions = ["kms:Decrypt"]
 
-    resources = [aws_kms_key.minute_secrets.arn]
+    resources = [aws_kms_key.local_transcribe_secrets.arn]
   }
 
   # Required to allow the KMS key to be managed after creation: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html#key-policy-default-allow-root-enable-iam
@@ -21,12 +21,12 @@ data "aws_iam_policy_document" "kms_secrets_decrypt" {
 
     actions = ["kms:*"]
 
-    resources = [aws_kms_key.minute_secrets.arn]
+    resources = [aws_kms_key.local_transcribe_secrets.arn]
   }
 }
 
 resource "aws_kms_key_policy" "kms_webapp_secrets_decrypt_policy" {
-  key_id = aws_kms_key.minute_secrets.key_id
+  key_id = aws_kms_key.local_transcribe_secrets.key_id
   policy = data.aws_iam_policy_document.kms_secrets_decrypt.json
 }
 

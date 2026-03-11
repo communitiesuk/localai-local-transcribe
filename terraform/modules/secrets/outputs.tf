@@ -11,5 +11,5 @@ output "database_password_secret_arn" {
 
 output "secrets_kms_key_arn" {
   description = "ARN of the KMS key used to encrypt the secrets"
-  value       = aws_kms_key.minute_secrets.arn
+  value       = aws_kms_key.local_transcribe_secrets.arn
 }
