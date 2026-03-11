@@ -56,3 +56,13 @@ variable "waf_acl_name" {
   description = "Name of WAF web ACL to create alarms for"
   type        = string
 }
+
+variable "transcription_deadletter_queue_name" {
+  description = "Name of the SQS queue for transcriptions, to create alarms for"
+  type        = string
+}
+
+variable "llm_deadletter_queue_name" {
+  description = "Name of the SQS queue for LLM processing, to create alarms for"
+  type        = string
+}

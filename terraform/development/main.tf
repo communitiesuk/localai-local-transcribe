@@ -198,15 +198,17 @@ module "monitoring" {
     aws.us-east-1 = aws.us-east-1
   }
 
-  environment_name               = local.environment_name
-  cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
-  alarm_email_address            = var.alarm_email_address
-  alb_name                       = module.frontdoor.load_balancer.name
-  alb_arn_suffix                 = module.frontdoor.load_balancer.arn_suffix
-  alb_target_group_arn_suffix    = module.frontdoor.load_balancer.arn_suffix
-  ecs_cluster_name               = module.ecs.ecs_cluster_name
-  ecs_service_names              = [module.ecs.frontend_service_name, module.ecs.backend_service_name, module.ecs.worker_service_name]
-  database_allocated_storage     = local.database_allocated_storage
-  database_identifier            = module.database.database_identifier
-  waf_acl_name                   = module.frontdoor.waf_acl_name
+  environment_name                    = local.environment_name
+  cloudwatch_log_expiration_days      = local.cloudwatch_log_exipiration_days
+  alarm_email_address                 = var.alarm_email_address
+  alb_name                            = module.frontdoor.load_balancer.name
+  alb_arn_suffix                      = module.frontdoor.load_balancer.arn_suffix
+  alb_target_group_arn_suffix         = module.frontdoor.load_balancer.arn_suffix
+  ecs_cluster_name                    = module.ecs.ecs_cluster_name
+  ecs_service_names                   = [module.ecs.frontend_service_name, module.ecs.backend_service_name, module.ecs.worker_service_name]
+  database_allocated_storage          = local.database_allocated_storage
+  database_identifier                 = module.database.database_identifier
+  waf_acl_name                        = module.frontdoor.waf_acl_name
+  llm_deadletter_queue_name           = module.sqs.llm_deadletter_queue_name
+  transcription_deadletter_queue_name = module.sqs.transcription_deadletter_queue_name
 }
