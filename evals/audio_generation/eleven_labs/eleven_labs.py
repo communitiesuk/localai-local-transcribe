@@ -13,9 +13,7 @@ from evals.audio_generation.utils.select_voice import get_voice_for_speaker
 logger = logging.getLogger(__name__)
 
 
-def eleven_text_to_speech(
-    api_key: str, transcript_content: str, transcript_file: str, model_id: str
-) -> None:
+def eleven_text_to_speech(api_key: str, transcript_content: str, transcript_file: str, model_id: str) -> None:
     """
     Converts text to speech using the Eleven Labs API.
     """
@@ -28,7 +26,7 @@ def eleven_text_to_speech(
 
     speakers = extract_speakers(transcript_content)
     regex_pattern = build_pattern(speakers)
-    dialogue_entries = re.findall(regex_pattern, transcript_content, flags=re.S)
+    dialogue_entries = re.findall(regex_pattern, transcript_content, flags=re.DOTALL)
 
     audio_segments = []
     for speaker, text, _ in dialogue_entries:
@@ -55,4 +53,4 @@ def eleven_text_to_speech(
 
     # Save to file
     saved_path = save_audio(full_audio, output_file, target_dir=target_dir)
-    logger.info(f"Audio saved to {saved_path}")
+    logger.info("Audio saved to %s", saved_path)

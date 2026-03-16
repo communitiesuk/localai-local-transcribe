@@ -1,7 +1,7 @@
 import io
 from pathlib import Path
 
-from pydub import AudioSegment  # type: ignore
+from pydub import AudioSegment
 
 
 def mix_audio_with_background(
@@ -42,7 +42,8 @@ def mp3_to_bytes(mp3_path: str | Path) -> tuple[str, bytes]:
     path = (audio_gen_root / mp3_path).resolve()
 
     if not path.exists():
-        raise FileNotFoundError(f"MP3 file not found: {path}")
+        msg = f"MP3 file not found: {path}"
+        raise FileNotFoundError(msg)
 
     file_name = path.stem
 
