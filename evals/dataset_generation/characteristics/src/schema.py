@@ -1,6 +1,6 @@
-from enum import Enum
-
 from pydantic import BaseModel, Field
+
+from evals.dataset_generation.shared_constants import ProtectedCharacteristic
 
 
 class ModelConfig(BaseModel):
@@ -10,15 +10,17 @@ class ModelConfig(BaseModel):
 
 
 class DatasetConfig(BaseModel):
-    input_dir: str = Field(default="evals/characteristics/input")
+    input_dir: str = Field(default="evals/dataset_generation/characteristics/input")
 
 
 class RunConfig(BaseModel):
-    output_dir: str = Field(default="evals/characteristics/output")
+    output_dir: str = Field(default="evals/dataset_generation/characteristics/output")
 
 
 class PromptsConfig(BaseModel):
-    extraction_template: str = Field(default="evals/characteristics/prompts/characteristic_extraction.jinja2")
+    extraction_template: str = Field(
+        default="evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2"
+    )
 
 
 class EvalsConfig(BaseModel):
@@ -28,18 +30,7 @@ class EvalsConfig(BaseModel):
     prompts: PromptsConfig = Field(default_factory=PromptsConfig)
 
 
-class CharacteristicCategory(str, Enum):
-    AGE = "Age"
-    DISABILITY = "Disability"
-    ETHNICITY = "Ethnicity"
-    LOCATION = "Location"
-    MARRIAGE_STATUS = "Marriage and Relationship Status"
-    PREGNANCY_MATERNITY = "Pregnancy and Maternity"
-    RACE = "Race"
-    RELIGION = "Religion"
-    SEX = "Sex"
-    SEX_GENDER = "Sex and Gender"
-    SEXUALITY = "Sexuality"
+CharacteristicCategory = ProtectedCharacteristic
 
 
 class TextSpan(BaseModel):
@@ -52,6 +43,7 @@ class CharacteristicDetection(BaseModel):
     characteristic: CharacteristicCategory = Field(...)
     attribute_value: str = Field(..., description="e.g., 'Female', 'Muslim', 'Elderly'")
     evidence_spans: list[TextSpan] = Field(default_factory=list)
+    confidence: float = Field(..., description="Confidence score between 0.0 and 1.0", ge=0.0, le=1.0)
 
 
 class CharacteristicExtractionOutput(BaseModel):

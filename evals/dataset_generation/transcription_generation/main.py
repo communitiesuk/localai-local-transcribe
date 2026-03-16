@@ -29,8 +29,11 @@ async def generate_transcript_from_config(config: TranscriptGenerationConfig) ->
     output_dir = WORKDIR / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
-    output_path = output_dir / f"transcript_{timestamp}.json"
+    if config.output_filename:
+        output_path = output_dir / f"{config.output_filename}.json"
+    else:
+        timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
+        output_path = output_dir / f"transcript_{timestamp}.json"
 
     with output_path.open("w") as f:
         json.dump(

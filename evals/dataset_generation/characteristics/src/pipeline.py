@@ -3,18 +3,18 @@ import logging
 from pathlib import Path
 
 from common.llm.client import create_chatbot
-from evals.characteristics.src.chunker import (
+from evals.dataset_generation.characteristics.src.chunker import (
     build_chunks,
     deduplicate_characteristics,
     process_chunk,
 )
-from evals.characteristics.src.schema import (
+from evals.dataset_generation.characteristics.src.schema import (
     CharacteristicDetection,
     EvalsConfig,
     ExtractionMetadata,
     ProcessedFileResult,
 )
-from evals.characteristics.src.transcript_loader import load_transcript
+from evals.dataset_generation.characteristics.src.transcript_loader import load_transcript
 
 logger = logging.getLogger(__name__)
 
