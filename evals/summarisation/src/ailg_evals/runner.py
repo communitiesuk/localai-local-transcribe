@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import datetime, timezone
+from collections.abc import Iterable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
 
 import dspy
 import orjson
@@ -12,6 +12,7 @@ from datasets import load_dataset
 from dspy.evaluate import Evaluate
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
+from pydantic import SecretStr
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .config import AppConfig, ModelConfig
@@ -28,7 +29,7 @@ from .schemas import (
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _ms(start_s: float, end_s: float) -> int:
@@ -78,10 +79,10 @@ def _to_dspy_devset(examples: list[DialogExample]) -> list[dspy.Example]:
 def _build_llm(model_cfg: ModelConfig) -> ChatOpenAI:
     return ChatOpenAI(
         base_url=model_cfg.base_url,
-        api_key=model_cfg.api_key,
+        api_key=SecretStr(model_cfg.api_key),
         model=model_cfg.model,
         temperature=model_cfg.temperature,
-        max_tokens=model_cfg.max_tokens,
+        max_completion_tokens=model_cfg.max_tokens,
         timeout=model_cfg.timeout_s,
     )
 
@@ -107,8 +108,11 @@ def _summarize_one(
     summary_resp = summarizer_llm.invoke(summarize_msg)
     t1 = time.perf_counter()
 
+    content = summary_resp.content
+    summary_text = content.strip() if isinstance(content, str) else " ".join(str(item) for item in content).strip()
+
     candidate = DialogSummary(
-        summary=summary_resp.content.strip(),
+        summary=summary_text,
         model=cfg.model.model,
         prompt_version=prompt_version,
         generation_config=GenerationConfig(
@@ -131,11 +135,12 @@ def _evaluate_metrics(
     return out
 
 
-def _maybe_flush_records(
-    results_path: Path, records: list[dict[str, Any]], *, flush_every: int
-) -> None:
+def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
-        write_jsonl(results_path, records)
+        write_jsonl(
+            results_path,
+            (r.model_dump(by_alias=True) for r in records),
+        )
         records.clear()
 
 
@@ -166,14 +171,14 @@ def run_eval(
     metrics = build_metrics(cfg)
     summarize_prompt, _ = _build_prompts()
 
-    records: list[dict[str, Any]] = []
+    records: list[EvalRecord] = []
     summarize_ms_values: list[int] = []
     judge_ms_values: list[int] = []
     metric_names = [m.name for m in metrics]
     metric_scores: dict[str, list[float]] = {name: [] for name in metric_names}
 
     class _Program:
-        def __call__(self, *, dialogue: str):
+        def __call__(self, *, dialogue: str) -> dspy.Prediction:
             candidate, summarize_ms = _summarize_one(
                 cfg=cfg,
                 summarizer_llm=summarizer_llm,
@@ -183,14 +188,14 @@ def run_eval(
                 prompt_version=prompt_version,
             )
             summarize_ms_values.append(summarize_ms)
-            return dspy.Prediction(summary=candidate.summary, _candidate=candidate)
+            return dspy.Prediction(summary=candidate.summary, candidate=candidate)
 
     program = _Program()
 
-    def _metric(gold, pred, trace=None):
+    def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
         ex = DialogExample(
-            example_id=str(getattr(gold, "example_id")),
-            dialogue=str(getattr(gold, "dialogue")),
+            example_id=str(gold.example_id),
+            dialogue=str(gold.dialogue),
             reference_summary=getattr(gold, "reference_summary", None),
         )
 
@@ -203,7 +208,7 @@ def run_eval(
         for name, res in metrics_out.items():
             metric_scores[name].append(res.score)
 
-        candidate = getattr(pred, "_candidate")
+        candidate = pred.candidate
         rec = EvalRecord(
             run_id=run_id,
             timestamp=_now(),
@@ -216,23 +221,21 @@ def run_eval(
             },
             error=None,
         )
-        records.append(rec.model_dump(by_alias=True))
+        records.append(rec)
         _maybe_flush_records(results_path, records, flush_every=25)
 
-        # Return a scalar score for DSPy evaluation.
         if metric_names:
             return float(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
         return 0.0
 
-    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5)
+    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5, provide_traceback=True)
     overall_score = evaluator(program, metric=_metric)
 
     if records:
-        write_jsonl(results_path, records)
+        write_jsonl(results_path, [r.model_dump(by_alias=True) for r in records])
 
     metrics_summary = {
-        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0}
-        for name, vals in metric_scores.items()
+        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0} for name, vals in metric_scores.items()
     }
     summary = {
         "run_id": run_id,
