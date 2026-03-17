@@ -1,0 +1,12 @@
+
+{
+  "incomplete-property-reminder": {
+    "schedule_expression": "cron(0 8 * * ? *)"
+  },
+  "ngd-address-update": {
+    "schedule_expression": "cron(0 1 * * ? *)"
+  },
+  "delete-incomplete-properties": {
+    "schedule_expression": "cron(30 1 * * ? *)"
+  }
+}
