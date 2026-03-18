@@ -17,7 +17,6 @@ def eleven_text_to_speech(api_key: str, transcript_content: str, transcript_file
     """
     Converts text to speech using the Eleven Labs API.
     """
-
     if not api_key:
         logger.warning("No Eleven Labs API key provided. Audio generation will be skipped.")
         return
@@ -36,21 +35,16 @@ def eleven_text_to_speech(api_key: str, transcript_content: str, transcript_file
             text=text.strip(),
             voice_id=voice_id,
             model_id=model_id,
-            output_format="mp3_44100_128",
         )
         audio_bytes = b"".join(audio)
         audio_segments.append(audio_bytes)
 
-    # Combine audio entries
     full_audio = b"".join(audio_segments)
 
-    # Trim file name to create output file name
     output_file = Path(transcript_file).stem + ".mp3"
 
-    # Define eleven_labs generated_audio_files folder
     eleven_labs_dir = Path(__file__).parent.resolve()
     target_dir = eleven_labs_dir / "generated_audio_files"
 
-    # Save to file
     saved_path = save_audio(full_audio, output_file, target_dir=target_dir)
     logger.info("Audio saved to %s", saved_path)

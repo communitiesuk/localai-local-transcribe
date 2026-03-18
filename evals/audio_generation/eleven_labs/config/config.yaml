@@ -1,0 +1,13 @@
+
+voices:
+  social_care_worker: snf0TZa0mc0w5XBI
+  storyteller: AZnzlk1XvdvUeBnXmlld
+
+default_voices:
+    - qimfC2HPDJhhTmdOzs2z  # Eastern European man
+    - hhDdiMwM9dWfw6qEFzju  # Young Mancunian
+
+background_volume_offset: -10  # increase/decrease background volume by this many dB against baseline  
+
+
+

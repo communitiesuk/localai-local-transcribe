@@ -16,7 +16,6 @@ def save_audio(
     """
 
     if target_dir is None:
-        # audio_generation dir's root
         audio_gen_root = Path(__file__).parent.parent.resolve()
         target_dir = audio_gen_root / "generated_audio_files"
 

@@ -24,3 +24,6 @@ runs/
 # Editor
 .vscode/
 .idea/
+
+#Audio files
+*.mp3
