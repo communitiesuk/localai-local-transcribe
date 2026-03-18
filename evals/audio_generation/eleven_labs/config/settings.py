@@ -1,9 +1,13 @@
 import os
 import re
 import yaml
+from dotenv import load_dotenv
 from pathlib import Path
 
 config_path = Path(__file__).parent / "config.yaml"
+ROOT = Path(__file__).resolve().parents[4]
+dotenv_path = ROOT / ".env"
+load_dotenv(dotenv_path)
 
 with open(config_path) as f:
     _config = yaml.safe_load(f)
