@@ -1,6 +1,8 @@
 import io
 from pathlib import Path
+
 from pydub import AudioSegment
+
 from evals.audio_generation.eleven_labs.config.settings import BACKGROUND_VOLUME_OFFSET
 
 
@@ -16,8 +18,8 @@ def mix_audio_with_background(
     # Load the speech and effects audio into AudioSegment objects
     dialogue = AudioSegment.from_mp3(io.BytesIO(speech_audio))
     background = AudioSegment.from_mp3(io.BytesIO(effects_audio))
-  
-    background = background + BACKGROUND_VOLUME_OFFSET  
+
+    background = background + BACKGROUND_VOLUME_OFFSET
 
     # Loop background to match or exceed dialogue length
     if len(background) < len(dialogue):

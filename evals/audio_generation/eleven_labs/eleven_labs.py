@@ -2,10 +2,12 @@ import logging
 import re
 import typing
 from pathlib import Path
+
 from elevenlabs.client import ElevenLabs
-from evals.audio_generation.utils.parsing_utils import extract_speakers, build_pattern, save_audio
-from evals.audio_generation.utils.select_voice import get_voice_for_speaker
+
 from evals.audio_generation.transcripts.transcript_util import get_transcripts
+from evals.audio_generation.utils.parsing_utils import build_pattern, extract_speakers, save_audio
+from evals.audio_generation.utils.select_voice import get_voice_for_speaker
 
 logger = logging.getLogger(__name__)
 
@@ -13,20 +15,18 @@ logger = logging.getLogger(__name__)
 def eleven_text_to_speech(api_key: str, transcript_file: str, model_id: str) -> None:
     """
     Convert transcript to speech using Eleven Labs TTS.
-    
     Parameters:
         api_key: Eleven Labs API key
         transcript_file: Path to the transcript text file
         model_id: Voice/model to use for TTS
     """
-    
+
     if not api_key:
         logger.warning("No Eleven Labs API key provided. Audio generation will be skipped.")
         return
-    
+
     transcript_content = get_transcripts(transcript_file)
     transcript_path = Path(transcript_file)
-
 
     client = ElevenLabs(api_key=api_key)
 

@@ -10,7 +10,6 @@ def extract_speakers(transcript: str) -> list[str]:
     return list(dict.fromkeys(speakers))
 
 
-
 def save_audio(
     full_audio: bytes,
     output_file: str | Path,
@@ -38,8 +37,6 @@ def save_audio(
 
     path.write_bytes(full_audio)
     return str(path)
-
-
 
 
 def build_pattern(speakers: list[str]) -> str:

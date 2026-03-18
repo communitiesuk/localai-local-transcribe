@@ -1,5 +1,4 @@
-
-from evals.audio_generation.eleven_labs.config.settings import VOICE_MAP, DEFAULT_VOICES
+from evals.audio_generation.eleven_labs.config.settings import DEFAULT_VOICES, VOICE_MAP
 
 PYTHONHASHSEED = 0
 
