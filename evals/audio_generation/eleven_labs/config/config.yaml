@@ -7,7 +7,11 @@ default_voices:
     - qimfC2HPDJhhTmdOzs2z  # Eastern European man
     - hhDdiMwM9dWfw6qEFzju  # Young Mancunian
 
-background_volume_offset: -10  # increase/decrease background volume by this many dB against baseline  
+background_volume_offset: -10  # increase/decrease background volume by this many dB against baseline 
 
+transcript_file: "jordan-alex.txt"
 
+eleven_labs:
+  api_key_env: ELEVEN_LABS_API_KEY
+  model_id : "eleven_v3"
 

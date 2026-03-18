@@ -1,3 +1,5 @@
+import os
+import re
 import yaml
 from pathlib import Path
 
@@ -8,4 +10,8 @@ with open(config_path) as f:
 
 VOICE_MAP = _config["voices"]
 DEFAULT_VOICES=_config["default_voices"]
-BACKGROUND_VOLUME_OFFSET = _config["background_volume_reduction_db"]
+BACKGROUND_VOLUME_OFFSET = _config["background_volume_offset"]
+TRANSCRIPT_FILE = _config["transcript_file"]
+
+ELEVEN_LABS_MODEL_ID = _config["eleven_labs"]["model_id"]
+ELEVEN_LABS_API_KEY = os.getenv(_config["eleven_labs"]["api_key_env"])

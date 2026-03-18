@@ -27,3 +27,4 @@ runs/
 
 #Audio files
 *.mp3
+generated_audio_files/
