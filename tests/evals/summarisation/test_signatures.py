@@ -1,6 +1,6 @@
 import dspy
 
-from evals.summarisation.src.signatures import DialogSumSignature, JudgeRatingSignature
+from evals.summarisation.src.common.signatures import DialogSumSignature, JudgeRatingSignature
 
 
 def test_contract_dialog_sum_signature_extends_dspy_signature():
