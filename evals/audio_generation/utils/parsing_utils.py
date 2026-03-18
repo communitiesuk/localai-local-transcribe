@@ -18,7 +18,7 @@ def save_audio(
     """
     Saves audio bytes to a file.
 
-    By default, saves to `audio_generation/generated_audio_files` directory.
+    By default, saves to `audio_generation/output` directory.
     The caller can override this by passing `target_dir`.
 
     Returns the absolute path to the saved file as a string.
@@ -26,7 +26,7 @@ def save_audio(
 
     if target_dir is None:
         audio_gen_root = Path(__file__).parent.parent.resolve()
-        target_dir = audio_gen_root / "generated_audio_files"
+        target_dir = audio_gen_root / "output"
 
     target_dir.mkdir(parents=True, exist_ok=True)
 

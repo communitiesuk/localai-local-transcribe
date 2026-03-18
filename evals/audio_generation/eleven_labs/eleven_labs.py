@@ -51,7 +51,7 @@ def eleven_text_to_speech(api_key: str, transcript_file: str, model_id: str) -> 
     output_file = Path(transcript_path).stem + ".mp3"
 
     eleven_labs_dir = Path(__file__).parent.resolve()
-    target_dir = eleven_labs_dir / "generated_audio_files"
+    target_dir = eleven_labs_dir / "output"
 
     saved_path = save_audio(full_audio, output_file, target_dir=target_dir)
     logger.info("Audio saved to %s", saved_path)

@@ -9,7 +9,7 @@ default_voices:
 
 background_volume_offset: -10  # increase/decrease background volume by this many dB against baseline 
 
-transcript_file: "jordan-alex.txt"
+transcript_file: "two-teens.txt"
 
 eleven_labs:
   api_key_env: ELEVEN_LABS_API_KEY
