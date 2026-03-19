@@ -17,9 +17,8 @@ def mix_audio_with_background(
 
     # Load the speech and effects audio into AudioSegment objects
     dialogue = AudioSegment.from_mp3(io.BytesIO(speech_audio))
-    background = AudioSegment.from_mp3(io.BytesIO(effects_audio))
-
-    background = background + BACKGROUND_VOLUME_OFFSET
+    background : AudioSegment = AudioSegment.from_mp3(io.BytesIO(effects_audio))
+    background_offset : AudioSegment = background + BACKGROUND_VOLUME_OFFSET
 
     # Loop background to match or exceed dialogue length
     if len(background) < len(dialogue):
@@ -28,7 +27,7 @@ def mix_audio_with_background(
 
         background = background[: len(dialogue)]
 
-    final = background.overlay(dialogue)
+    final  : AudioSegment = background_offset.overlay(dialogue)
     output_path = audio_dir / f"{speech_name}_mixed{sfx_name}.mp3"
     final.export(output_path, format="mp3")
 
