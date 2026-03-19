@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-
+from evals.audio_generation.src.settings import AUDIO_GEN_DIR
 
 def extract_speakers(transcript: str) -> list[str]:
     """
@@ -16,7 +16,7 @@ def save_audio(
     target_dir: Path | None = None,
 ) -> str:
     """
-    Saves audio bytes to a file.
+    Saves audio bytes to a file as mp3.
 
     By default, saves to `audio_generation/output` directory.
     The caller can override this by passing `target_dir`.
@@ -25,21 +25,26 @@ def save_audio(
     """
 
     if target_dir is None:
-        audio_gen_root = Path(__file__).parent.parent.resolve()
-        target_dir = audio_gen_root / "output"
+        target_dir = AUDIO_GEN_DIR / "output"
+    else:
+        target_dir = Path(target_dir)
+
+        if not target_dir.is_absolute():
+            target_dir = AUDIO_GEN_DIR / target_dir
 
     target_dir.mkdir(parents=True, exist_ok=True)
 
     # Full path to output file
     path = target_dir / output_file
-    if path.suffix == "":
+    if path.suffix != ".mp3":
         path = path.with_suffix(".mp3")
 
     path.write_bytes(full_audio)
-    return str(path)
+    return str(path.resolve())
 
 
 def build_pattern(speakers: list[str]) -> str:
     escaped = [re.escape(s) for s in speakers]
     group = "|".join(escaped)
     return rf"({group}):\s*(.+?)(?=({group}):|$)"
+

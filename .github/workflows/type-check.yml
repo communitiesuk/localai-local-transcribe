@@ -30,10 +30,6 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install --no-root --no-ansi --with dev
-  
-    - name: Install ElevenLabs SDK
-      run: |
-        poetry run pip install elevenlabs
 
     - name: Run mypy
       run: |

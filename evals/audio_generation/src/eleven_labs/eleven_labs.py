@@ -5,9 +5,11 @@ from pathlib import Path
 
 from elevenlabs.client import ElevenLabs
 
-from evals.audio_generation.transcripts.transcript_util import get_transcripts
-from evals.audio_generation.utils.parsing_utils import build_pattern, extract_speakers, save_audio
-from evals.audio_generation.utils.select_voice import get_voice_for_speaker
+from evals.audio_generation.src.transcripts.transcript_util import get_transcripts
+from evals.audio_generation.src.utils.parsing_utils import build_pattern, extract_speakers, save_audio
+from evals.audio_generation.src.utils.select_voice import get_voice_for_speaker
+from evals.audio_generation.src.settings import OUTPUT_DIR
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,10 +50,9 @@ def eleven_text_to_speech(api_key: str, transcript_file: str, model_id: str) -> 
 
     full_audio = b"".join(audio_segments)
 
-    output_file = Path(transcript_path).stem + ".mp3"
+    output_file = f"{transcript_path.stem}.mp3"
 
-    eleven_labs_dir = Path(__file__).parent.resolve()
-    target_dir = eleven_labs_dir / "output"
+    eleven_labs_tts_dir = OUTPUT_DIR / "eleven_labs_tts_output"
 
-    saved_path = save_audio(full_audio, output_file, target_dir=target_dir)
+    saved_path = save_audio(full_audio, output_file, target_dir=eleven_labs_tts_dir)
     logger.info("Audio saved to %s", saved_path)

@@ -4,9 +4,17 @@ from pathlib import Path
 import yaml
 from dotenv import load_dotenv
 
-config_path = Path(__file__).parent / "config.yaml"
-ROOT = Path(__file__).resolve().parents[4]
-dotenv_path = ROOT / ".env"
+AUDIO_GEN_DIR = Path(__file__).resolve().parents[1]
+PROJECT_ROOT_DIR = AUDIO_GEN_DIR.parents[1]
+
+INPUT_DIR = AUDIO_GEN_DIR / "input"
+OUTPUT_DIR = AUDIO_GEN_DIR / "output"
+CONFIG_DIR = AUDIO_GEN_DIR / "configs"
+PROMPTS_DIR = AUDIO_GEN_DIR / "prompts"
+
+config_path = CONFIG_DIR / "config.yaml"
+
+dotenv_path = PROJECT_ROOT_DIR / ".env"
 load_dotenv(dotenv_path)
 
 with Path(config_path).open(encoding="utf-8") as f:

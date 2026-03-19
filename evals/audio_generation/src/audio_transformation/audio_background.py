@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pydub import AudioSegment
 
-from evals.audio_generation.eleven_labs.config.settings import BACKGROUND_VOLUME_OFFSET
+from evals.audio_generation.src.settings import BACKGROUND_VOLUME_OFFSET, OUTPUT_DIR, AUDIO_GEN_DIR
 
 
 def mix_audio_with_background(
@@ -12,8 +12,8 @@ def mix_audio_with_background(
     """
     Mixes the speech audio with the background sound effects audio using pydub.
     """
-    audio_dir = Path(__file__).parent / "output"
-    audio_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = OUTPUT_DIR
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Load the speech and effects audio into AudioSegment objects
     dialogue = AudioSegment.from_mp3(io.BytesIO(speech_audio))
@@ -28,7 +28,7 @@ def mix_audio_with_background(
         background = background[: len(dialogue)]
 
     final  : AudioSegment = background_offset.overlay(dialogue)
-    output_path = audio_dir / f"{speech_name}_mixed{sfx_name}.mp3"
+    output_path = output_dir / f"{speech_name}_mixed{sfx_name}.mp3"
     final.export(output_path, format="mp3")
 
     return final
@@ -37,8 +37,9 @@ def mix_audio_with_background(
 def mp3_to_bytes(mp3_path: str | Path) -> tuple[str, bytes]:
     """
     Reads an MP3 file and returns its name and content as bytes.
+    mp3_path may be derived from either the input or output dir
     """
-    audio_gen_root = Path(__file__).parent.parent.resolve()
+    audio_gen_root = AUDIO_GEN_DIR
     path = (audio_gen_root / mp3_path).resolve()
 
     if not path.exists():
