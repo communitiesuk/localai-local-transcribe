@@ -4,7 +4,7 @@ import { ReactElement } from 'react'
 export default async function TemplatesLayout({
   children,
 }: {
-  children: ReactElement
+  children: ReactElement<any>
 }) {
   return (
     <div className="p-6 pt-1">
