@@ -1,5 +1,7 @@
-from pydub import AudioSegment
 import io
+
+from pydub import AudioSegment
+
 
 def get_audio_duration(audio_bytes: bytes) -> float:
     """

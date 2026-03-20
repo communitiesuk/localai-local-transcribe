@@ -1,13 +1,13 @@
 import json
 from pathlib import Path
-from typing import List
+
 from evals.audio_generation.src.utils.dialogue import DialogueEntry
 
 
-def write_dialogue(entries: List[DialogueEntry], output_path: Path) -> None:
-    '''
+def write_dialogue(entries: list[DialogueEntry], output_path: Path) -> None:
+    """
     Writes the provided dialogue to file matching the data contract
-    '''
+    """
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     data = [

@@ -1,9 +1,10 @@
 import re
 from pathlib import Path
-from typing import List
+
 from evals.audio_generation.src.utils.dialogue import DialogueEntry
 
-def parse_transcript(file_path: str | Path) -> List[DialogueEntry]:
+
+def parse_transcript(file_path: str | Path) -> list[DialogueEntry]:
     content = Path(file_path).read_text(encoding="utf-8")
 
     pattern = r"(.*?):\s*\n(.*?)(?=\n.*?:|\Z)"
