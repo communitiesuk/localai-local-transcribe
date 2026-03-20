@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from evals.audio_generation.src.utils.parsing_utils import build_pattern, extract_speakers, save_audio
 
 
@@ -12,10 +14,13 @@ def test_save_audio(tmp_path):
     output_file = "output.mp3"
 
     saved_path = save_audio(audio_bytes, output_file, target_dir=tmp_path)
-    expected_path = tmp_path / output_file
+    saved_path = Path(saved_path)
 
-    assert saved_path == str(expected_path)
-    assert expected_path.read_bytes() == audio_bytes
+    assert saved_path.parent == tmp_path
+    assert saved_path.suffix == ".mp3"
+    assert saved_path.stem.startswith("output_")
+
+    assert saved_path.read_bytes() == audio_bytes
 
 
 def test_extract_speakers():

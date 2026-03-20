@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
+
 
 class TTSAdapter(ABC):
-    
     @abstractmethod
-    def generate_audio(self, transcript_file : str | Path)-> bytes:
-        """Returns audio bytes from a tts provider"""
-    pass
+    def text_to_speech(self, text: str, voice_id: str) -> bytes:
+        """Convert text to speech and return audio bytes."""

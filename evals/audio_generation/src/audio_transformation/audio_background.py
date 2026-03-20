@@ -7,9 +7,10 @@ from evals.audio_generation.src.settings import AUDIO_GEN_DIR, BACKGROUND_VOLUME
 from evals.audio_generation.src.utils.parsing_utils import make_timestamp
 
 
-def mix_audio_with_background(
-    speech_audio: bytes, effects_audio: bytes, speech_name: str, sfx_name: str
-) -> AudioSegment:
+def mix_audio_with_background(speech_audio: bytes, effects_audio: bytes, speech_name: str, sfx_name: str) -> Path:
+    """
+    Overlays two audio files saving the return the file. Returns the output's file path
+    """
     output_dir = OUTPUT_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -29,7 +30,7 @@ def mix_audio_with_background(
     output_path = output_dir / f"{speech_name}_mixed_{sfx_name}_{make_timestamp()}.mp3"
     final.export(output_path, format="mp3")
 
-    return final
+    return output_path
 
 
 def mp3_to_bytes(mp3_path: str | Path) -> tuple[str, bytes]:

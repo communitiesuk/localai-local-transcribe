@@ -1,6 +1,8 @@
-from evals.audio_generation.src.settings import INPUT_DIR, OUTPUT_DIR
-from evals.audio_generation.src.audio_transformation.audio_background import mix_audio_with_background
 from pathlib import Path
+
+from evals.audio_generation.src.audio_transformation.audio_background import mix_audio_with_background, mp3_to_bytes
+from evals.audio_generation.src.settings import INPUT_DIR, OUTPUT_DIR
+
 
 def audio_with_background_fx(
     transcript_file: str | Path,

@@ -41,7 +41,7 @@ def save_audio(
     path = target_dir / output_file
     if path.suffix != ".mp3":
         path = path.with_suffix(".mp3")
-    
+
     path = path.with_stem(f"{path.stem}_{make_timestamp()}")
 
     path.write_bytes(full_audio)
