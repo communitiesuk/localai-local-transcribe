@@ -114,7 +114,6 @@ librosa = "^0.10.0"
 [tool.poetry.group.evals-audio_generation.dependencies]
 elevenlabs = ">=2.35.0,<3.0.0"
 pydub = ">=0.25.1,<0.26.0"
-simpleaudio = ">=1.0.4,<2.0.0"
 
 [tool.poetry.group.evals-summarisation.dependencies]
 datasets = "^3.6.0"
