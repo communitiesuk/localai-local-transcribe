@@ -1,6 +1,7 @@
-from evals.audio_generation.eleven_labs.config.settings import DEFAULT_VOICES, VOICE_MAP
+from evals.audio_generation.src.settings import DEFAULT_VOICES, VOICE_MAP
 
 PYTHONHASHSEED = 0
+
 
 def get_voice_for_speaker(speaker: str, fallback_pool: list[str] = DEFAULT_VOICES) -> str:
     if speaker in VOICE_MAP:

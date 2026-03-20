@@ -12,16 +12,16 @@ OUTPUT_DIR = AUDIO_GEN_DIR / "output"
 CONFIG_DIR = AUDIO_GEN_DIR / "configs"
 PROMPTS_DIR = AUDIO_GEN_DIR / "prompts"
 
-config_path = CONFIG_DIR / "config.yaml"
+config_file = CONFIG_DIR / "config.yaml"
 
 dotenv_path = PROJECT_ROOT_DIR / ".env"
 load_dotenv(dotenv_path)
 
-with Path(config_path).open(encoding="utf-8") as f:
+with Path(config_file).open(encoding="utf-8") as f:
     _config = yaml.safe_load(f)
 
 VOICE_MAP: dict[str, str] = _config["voices"]
-DEFAULT_VOICES : list[str] = _config["default_voices"]
+DEFAULT_VOICES: list[str] = _config["default_voices"]
 BACKGROUND_VOLUME_OFFSET = _config["background_volume_offset"]
 TRANSCRIPT_FILE = _config["transcript_file"]
 

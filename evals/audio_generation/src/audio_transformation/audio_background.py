@@ -3,32 +3,30 @@ from pathlib import Path
 
 from pydub import AudioSegment
 
-from evals.audio_generation.src.settings import BACKGROUND_VOLUME_OFFSET, OUTPUT_DIR, AUDIO_GEN_DIR
+from evals.audio_generation.src.settings import AUDIO_GEN_DIR, BACKGROUND_VOLUME_OFFSET, OUTPUT_DIR
+from evals.audio_generation.src.utils.parsing_utils import make_timestamp
 
 
 def mix_audio_with_background(
     speech_audio: bytes, effects_audio: bytes, speech_name: str, sfx_name: str
 ) -> AudioSegment:
-    """
-    Mixes the speech audio with the background sound effects audio using pydub.
-    """
     output_dir = OUTPUT_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load the speech and effects audio into AudioSegment objects
     dialogue = AudioSegment.from_mp3(io.BytesIO(speech_audio))
-    background : AudioSegment = AudioSegment.from_mp3(io.BytesIO(effects_audio))
-    background_offset : AudioSegment = background + BACKGROUND_VOLUME_OFFSET
+    background = AudioSegment.from_mp3(io.BytesIO(effects_audio))
 
-    # Loop background to match or exceed dialogue length
+    background = background + BACKGROUND_VOLUME_OFFSET
+
     if len(background) < len(dialogue):
         loops_needed = (len(dialogue) // len(background)) + 1
-        background = background * loops_needed
-
+        background = (background * loops_needed)[: len(dialogue)]
+    else:
         background = background[: len(dialogue)]
 
-    final  : AudioSegment = background_offset.overlay(dialogue)
-    output_path = output_dir / f"{speech_name}_mixed{sfx_name}.mp3"
+    final: AudioSegment = dialogue.overlay(background)
+
+    output_path = output_dir / f"{speech_name}_mixed_{sfx_name}_{make_timestamp()}.mp3"
     final.export(output_path, format="mp3")
 
     return final

@@ -1,6 +1,9 @@
 import re
+from datetime import UTC, datetime
 from pathlib import Path
-from evals.audio_generation.src.settings import AUDIO_GEN_DIR
+
+from evals.audio_generation.src.settings import AUDIO_GEN_DIR, INPUT_DIR
+
 
 def extract_speakers(transcript: str) -> list[str]:
     """
@@ -38,6 +41,8 @@ def save_audio(
     path = target_dir / output_file
     if path.suffix != ".mp3":
         path = path.with_suffix(".mp3")
+    
+    path = path.with_stem(f"{path.stem}_{make_timestamp()}")
 
     path.write_bytes(full_audio)
     return str(path.resolve())
@@ -48,3 +53,16 @@ def build_pattern(speakers: list[str]) -> str:
     group = "|".join(escaped)
     return rf"({group}):\s*(.+?)(?=({group}):|$)"
 
+
+def make_timestamp() -> str:
+    return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+
+
+def get_transcripts(file_name: str) -> str:
+    transcript_file = INPUT_DIR / "transcripts" / file_name
+
+    if not transcript_file.is_file():
+        error_message = f"Transcript file not found: {transcript_file}"
+        raise FileNotFoundError(error_message)
+
+    return transcript_file.read_text(encoding="utf-8")
