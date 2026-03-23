@@ -7,4 +7,4 @@ def get_voice_for_speaker(speaker: str, default_voices: list[str] = DEFAULT_VOIC
     if speaker in VOICE_MAP:
         return VOICE_MAP[speaker]
 
-    return fallback_pool[hash(speaker) % len(default_voices)]
+    return default_voices[hash(speaker) % len(default_voices)]
