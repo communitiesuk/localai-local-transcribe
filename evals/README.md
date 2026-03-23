@@ -151,3 +151,106 @@ flowchart TD
 ### Output
 
 Generated transcripts are saved to: `evals/dataset_generation/transcription_generation/output/transcript_<timestamp>.json`
+
+
+# Audio Generation
+
+## Eleven Labs
+
+This module generates speech audio from transcript files using ElevenLabs.
+
+### Setup
+#### Environment variables
+
+Set your ElevenLabs API key in your root .env file:
+
+```bash
+ELEVEN_LABS_API_KEY=your_api_key
+```
+
+### Input data
+
+ Place transcript files in:
+
+```evals/audio_generation/input/transcripts/```
+
+Each transcript should follow the expected format (see Data Contract). Example input within the configs directory.
+
+### Configuration
+#### Models
+Specify a model in the config:
+
+- eleven_flash_v2_5 (default)
+- eleven_turbo_v2_5
+- eleven_multilingual_v2
+- eleven_v3
+
+### Voices
+The system uses predefined public voices by default.
+
+Custom voices can be configured by adding their IDs to the voices section in the config.
+
+### Usage
+Run the pipeline:
+
+```bash
+poetry run python evals/audio_generation/src/main.py
+
+```
+
+### Output
+
+Generated audio files are saved to:
+
+```evals/audio_generation/output/```
+
+
+### Audio Transformation
+
+This module combines generated speech audio with background sound effects to produce a single mixed audio track.
+
+#### Overview
+
+The workflow:
+
+1. Loads a generated speech audio file (from output/)
+2. Loads a background sound effect file (from input/)
+3. Adjusts background volume
+4. Loops or trims the background to match the speech duration
+5. Overlays both tracks
+6. Saves the final mixed audio to output/
+
+
+### Usage
+
+```
+audio_with_background_fx(
+    transcript_file="two-teens.mp3",
+    sfx_file="background_sfx/cafe_ambience.mp3",
+)
+```
+
+#### Inputs
+- transcript_file
+
+    Path to a generated audio file (relative to output/)
+- sfx_file
+    
+    Path to a background sound effect file (relative to input/)
+
+
+#### Output
+
+A new mixed audio file is saved to:
+
+```evals/audio_generation/output/```
+
+File format:
+
+``{speech_name}_mixed_{sfx_name}_{timestamp}.mp3```
+
+
+#### Notes
+- Background audio is automatically looped or trimmed to match speech length
+- Volume is adjusted using a predefined offset (config variable ```background_volume_offset```)
+- File names are normalized using the base name (prefix before _)

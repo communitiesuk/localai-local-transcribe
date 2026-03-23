@@ -3,8 +3,8 @@ from evals.audio_generation.src.settings import DEFAULT_VOICES, VOICE_MAP
 PYTHONHASHSEED = 0
 
 
-def get_voice_for_speaker(speaker: str, fallback_pool: list[str] = DEFAULT_VOICES) -> str:
+def get_voice_for_speaker(speaker: str, default_voices: list[str] = DEFAULT_VOICES) -> str:
     if speaker in VOICE_MAP:
         return VOICE_MAP[speaker]
 
-    return fallback_pool[hash(speaker) % len(fallback_pool)]
+    return fallback_pool[hash(speaker) % len(default_voices)]

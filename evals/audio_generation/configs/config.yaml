@@ -4,8 +4,8 @@ voices:
   storyteller: AZnzlk1XvdvUeBnXmlld
 
 default_voices:
-    - qimfC2HPDJhhTmdOzs2z  # Eastern European man
-    - hhDdiMwM9dWfw6qEFzju  # Young Mancunian
+    - 21m00Tcm4TlvDq8ikWAM # Rachel - calm female voice 
+    - EXAVITQu4vr4xnSDxMaL # Bella - soft female voice
 
 background_volume_offset: -10  # increase/decrease background volume by this many dB against baseline 
 
