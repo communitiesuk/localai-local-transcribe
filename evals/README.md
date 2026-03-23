@@ -224,24 +224,9 @@ Generated audio files are saved to:
 
 ### Audio Transformation
 
-This module combines generated speech audio with background sound effects to produce a single mixed audio track.
-
-#### Overview
-
-The workflow:
-
-1. Loads a generated speech audio file (from output/)
-2. Loads a background sound effect file (from input/)
-3. Adjusts background volume
-4. Loops or trims the background to match the speech duration
-5. Overlays both tracks
-6. Saves the final mixed audio to output/
-
-
-### Usage
-
 #### Generate TTS with background audio
 
+### Usage
 To generate speech and apply background sound effects:
 
 ```bash
