@@ -192,21 +192,28 @@ The system uses predefined public voices by default.
 Custom voices can be configured by adding their IDs to the voices section in the config.
 
 ### Usage
+
+This tool uses a hybrid design:
+
+- Core generation is config-driven (TTS pipeline)
+- CLI is used only to toggle execution modes
+
+All inputs (transcripts, models, voices, background SFX) are configured via the config file.
+
+#### Generate TTS audio (default)
+
 With configs set, run the pipeline:
 
 ```bash
 poetry run python evals/audio_generation/src/main.py
 
 ```
+This will:
 
-Alternatively, provide arguments via the CLI
+- Load transcript from config
+- Generate speech audio using ElevenLabs
+- Save output to evals/audio_generation/output/
 
-#### Generate speech (TTS)
-
-```bash
-poetry run python evals/audio_generation/src/main.py tts \
-  --transcript target_file.json
-  ```
 
 ### Output
 
@@ -233,18 +240,24 @@ The workflow:
 
 ### Usage
 
-Run via CLI:
-#### Mix audio with background sound effects
+#### Generate TTS with background audio
+
+To generate speech and apply background sound effects:
 
 ```bash
-poetry run python evals/audio_generation/src/main.py mix \
-  --audio audio_file.mp3 \
-  --background background_sfx/background_file.mp3
+poetry run python evals/audio_generation/src/main.py with-background-sfx
   ```
 
-  Arguments should reference files relative to:
-- `output/` for generated audio
-- `input/` for background sound effects
+This will:
+
+- Generate speech audio from the configured transcript
+- Load background sound effect from config
+- Mix both audio tracks
+
+#### Inputs:
+
+- audio: file in output/ generated during tts operation
+- background: file in input/
 
 
 #### Output

@@ -8,6 +8,7 @@ default_voices:
     - EXAVITQu4vr4xnSDxMaL # Bella - soft female voice
 
 background_volume_offset: -10  # increase/decrease background volume by this many dB against baseline 
+background_sfx_file: "cafe_ambience.mp3"
 
 transcript_file: "two-teens.json"
 

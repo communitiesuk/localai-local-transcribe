@@ -1,10 +1,16 @@
 import argparse
 import json
+from argparse import Namespace
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 from evals.audio_generation.src.settings import AUDIO_GEN_DIR, INPUT_DIR
 from evals.audio_generation.src.utils.dialogue import DialogueEntry
+
+
+class AudioArgs(Namespace):
+    mode: str | None
 
 
 def save_audio(
@@ -38,7 +44,7 @@ def save_audio(
     full_output_path = full_output_path.with_stem(f"{full_output_path.stem}_{make_timestamp()}")
 
     full_output_path.write_bytes(full_audio)
-    return str(full_output_path.resolve())
+    return str(full_output_path.relative_to(AUDIO_GEN_DIR))
 
 
 def make_timestamp() -> str:
@@ -68,15 +74,17 @@ def get_transcripts(file_name: str) -> list[DialogueEntry]:
     ]
 
 
-def parse_args():
+def parse_args() -> AudioArgs:
     parser = argparse.ArgumentParser(description="Audio generation CLI")
-    subparsers = parser.add_subparsers(dest="command", required=True)
 
-    tts_parser = subparsers.add_parser("tts", help="Generate speech from transcript")
-    tts_parser.add_argument("--transcript", required=True)
+    parser.add_argument(
+        "mode",
+        nargs="?",
+        default=None,
+        choices=[None, "with-background-sfx"],
+        help="Optional: add 'with-background-sfx' to mix audio",
+    )
 
-    mix_parser = subparsers.add_parser("mix", help="Mix speech with background")
-    mix_parser.add_argument("--audio", required=True, help="Speech audio file")
-    mix_parser.add_argument("--background", required=True, help="SFX file")
+    args = parser.parse_args(namespace=AudioArgs())
 
-    return parser.parse_args()
+    return cast(AudioArgs, args)

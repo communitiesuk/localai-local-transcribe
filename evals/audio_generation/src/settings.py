@@ -24,6 +24,7 @@ VOICE_MAP: dict[str, str] = _config["voices"]
 DEFAULT_VOICES: list[str] = _config["default_voices"]
 BACKGROUND_VOLUME_OFFSET = _config["background_volume_offset"]
 TRANSCRIPT_FILE = _config["transcript_file"]
+BACKGROUND_SFX_FILE = _config["background_sfx_file"]
 
 ELEVEN_LABS_MODEL_ID = _config["eleven_labs"]["model_id"]
 ELEVEN_LABS_API_KEY = os.getenv(_config["eleven_labs"]["api_key_env"])
