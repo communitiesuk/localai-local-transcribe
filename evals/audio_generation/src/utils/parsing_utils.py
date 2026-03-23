@@ -1,16 +1,9 @@
-import re
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
 from evals.audio_generation.src.settings import AUDIO_GEN_DIR, INPUT_DIR
-
-
-def extract_speakers(transcript: str) -> list[str]:
-    """
-    Matches any "Name:" at the start of a line and returns a list of unique speaker names
-    """
-    speakers = re.findall(r"^([A-Za-z0-9 _-]+):", transcript, flags=re.MULTILINE)
-    return list(dict.fromkeys(speakers))
+from evals.audio_generation.src.utils.dialogue import DialogueEntry
 
 
 def save_audio(
@@ -37,32 +30,38 @@ def save_audio(
 
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # Full path to output file
-    path = target_dir / output_file
-    if path.suffix != ".mp3":
-        path = path.with_suffix(".mp3")
+    full_output_path = target_dir / output_file
+    if full_output_path.suffix != ".mp3":
+        full_output_path = full_output_path.with_suffix(".mp3")
 
-    path = path.with_stem(f"{path.stem}_{make_timestamp()}")
+    full_output_path = full_output_path.with_stem(f"{full_output_path.stem}_{make_timestamp()}")
 
-    path.write_bytes(full_audio)
-    return str(path.resolve())
-
-
-def build_pattern(speakers: list[str]) -> str:
-    escaped = [re.escape(s) for s in speakers]
-    group = "|".join(escaped)
-    return rf"({group}):\s*(.+?)(?=({group}):|$)"
+    full_output_path.write_bytes(full_audio)
+    return str(full_output_path.resolve())
 
 
 def make_timestamp() -> str:
     return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
 
-def get_transcripts(file_name: str) -> str:
+def get_transcripts(file_name: str) -> list[DialogueEntry]:
+    """
+    Returns transcript data as a list of DialogueEntry objects.
+    """
     transcript_file = INPUT_DIR / "transcripts" / file_name
 
     if not transcript_file.is_file():
         error_message = f"Transcript file not found: {transcript_file}"
         raise FileNotFoundError(error_message)
 
-    return transcript_file.read_text(encoding="utf-8")
+    data = json.loads(transcript_file.read_text(encoding="utf-8"))
+
+    return [
+        DialogueEntry(
+            speaker=entry["speaker"],
+            text=entry["text"].strip(),
+            start_time=float(entry["start_time"]),
+            end_time=float(entry["end_time"]),
+        )
+        for entry in data
+    ]

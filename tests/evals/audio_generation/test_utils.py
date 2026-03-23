@@ -1,12 +1,6 @@
 from pathlib import Path
 
-from evals.audio_generation.src.utils.parsing_utils import build_pattern, extract_speakers, save_audio
-
-
-def test_build_pattern():
-    speakers = ["Alice", "Bob"]
-    pattern = build_pattern(speakers)
-    assert pattern == r"(Alice|Bob):\s*(.+?)(?=(Alice|Bob):|$)"
+from evals.audio_generation.src.utils.parsing_utils import save_audio
 
 
 def test_save_audio(tmp_path):
@@ -21,9 +15,3 @@ def test_save_audio(tmp_path):
     assert saved_path.stem.startswith("output_")
 
     assert saved_path.read_bytes() == audio_bytes
-
-
-def test_extract_speakers():
-    transcript = "Alice: Hello\nBob: Hi\nAlice: How are you?"
-    speakers = extract_speakers(transcript)
-    assert set(speakers) == {"Alice", "Bob"}

@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 
 from evals.audio_generation.src.settings import OUTPUT_DIR
@@ -6,8 +5,6 @@ from evals.audio_generation.src.tts_adapters.base import TTSAdapter
 from evals.audio_generation.src.utils.audio_duration import get_audio_duration
 from evals.audio_generation.src.utils.dialogue import DialogueEntry
 from evals.audio_generation.src.utils.parsing_utils import (
-    build_pattern,
-    extract_speakers,
     get_transcripts,
     make_timestamp,
     save_audio,
@@ -24,22 +21,23 @@ def generate_eleven_tts_audio(
     Full pipeline: transcript → audio file + structured dialogue output
     Returns saved file path
     """
-    transcript_content = get_transcripts(transcript_file)
+
+    transcript_data: list[DialogueEntry] = get_transcripts(transcript_file)
+    if not transcript_data:
+        error_message = "Transcript is empty — nothing to process"
+        raise ValueError(error_message)
+
     transcript_path = Path(transcript_file)
 
-    speakers = extract_speakers(transcript_content)
-    regex_pattern = build_pattern(speakers)
-    dialogue_entries = re.findall(regex_pattern, transcript_content, flags=re.DOTALL)
-
-    audio_segments = []
+    audio_segments: list[bytes] = []
     dialogue_output: list[DialogueEntry] = []
 
     current_time = 0.0
 
-    for speaker, text, _ in dialogue_entries:
-        voice_id = get_voice_for_speaker(speaker)
+    for entry in transcript_data:
+        voice_id = get_voice_for_speaker(entry.speaker)
 
-        audio_bytes = adapter.text_to_speech(text, voice_id)
+        audio_bytes = adapter.text_to_speech(entry.text, voice_id)
 
         duration = get_audio_duration(audio_bytes)
 
@@ -48,8 +46,8 @@ def generate_eleven_tts_audio(
 
         dialogue_output.append(
             DialogueEntry(
-                speaker=speaker,
-                text=text.strip(),
+                speaker=entry.speaker,
+                text=entry.text,
                 start_time=start_time,
                 end_time=end_time,
             )
@@ -60,11 +58,13 @@ def generate_eleven_tts_audio(
 
     full_audio = b"".join(audio_segments)
 
-    output_file = f"{transcript_path.stem}_{make_timestamp()}.mp3"
+    timestamp = make_timestamp()
+
+    output_file = f"{transcript_path.stem}_{timestamp}.mp3"
     target_dir = OUTPUT_DIR / "eleven_labs_tts"
 
     audio_path = save_audio(full_audio, output_file, target_dir=target_dir)
 
-    write_dialogue(dialogue_output, OUTPUT_DIR / "transcripts" / f"{transcript_path.stem}_{make_timestamp()}.json")
+    write_dialogue(dialogue_output, OUTPUT_DIR / "transcripts" / f"{transcript_path.stem}_{timestamp}.json")
 
     return audio_path

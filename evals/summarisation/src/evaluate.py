@@ -17,23 +17,6 @@ app = typer.Typer()
 config_path_arg = typer.Option(DEFAULT_CONFIG, "--config", exists=True, dir_okay=False, readable=True)
 
 
-# @app.callback(invoke_without_command=True)
-# def run(
-#     config: Path = config_path_arg,
-# ) -> None:
-#     cfg = load_config(config)
-#     run_id, results_path, summary_path = run_eval(
-#         cfg,
-#         split=cfg.run.split,
-#         limit=cfg.run.limit,
-#         prompt_version=cfg.run.prompt_version,
-#     )
-
-#     typer.echo(f"run_id={run_id}")
-#     typer.echo(f"results={results_path}")
-#     typer.echo(f"summary={summary_path}")
-
-
 @app.callback(invoke_without_command=True)
 def run(
     config: Path = config_path_arg,
@@ -55,11 +38,8 @@ def run(
     except Exception as e:
         typer.echo("❌ Error occurred during run", err=True)
         typer.echo(f"Error: {e}", err=True)
-
-        # Full traceback (very useful for debugging)
         traceback.print_exc()
-
-        raise  # re-raise so CLI still exits with failure
+        raise
 
 
 if __name__ == "__main__":
