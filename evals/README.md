@@ -158,6 +158,7 @@ Generated transcripts are saved to: `evals/dataset_generation/transcription_gene
 ## Eleven Labs
 
 This module generates speech audio from transcript files using ElevenLabs.
+The CLI supports separate operations for speech generation and audio transformation.
 
 ### Setup
 #### Environment variables
@@ -191,12 +192,21 @@ The system uses predefined public voices by default.
 Custom voices can be configured by adding their IDs to the voices section in the config.
 
 ### Usage
-Run the pipeline:
+With configs set, run the pipeline:
 
 ```bash
 poetry run python evals/audio_generation/src/main.py
 
 ```
+
+Alternatively, provide arguments via the CLI
+
+#### Generate speech (TTS)
+
+```bash
+poetry run python evals/audio_generation/src/main.py tts \
+  --transcript target_file.json
+  ```
 
 ### Output
 
@@ -223,20 +233,18 @@ The workflow:
 
 ### Usage
 
-```
-audio_with_background_fx(
-    transcript_file="two-teens.mp3",
-    sfx_file="background_sfx/cafe_ambience.mp3",
-)
-```
+Run via CLI:
+#### Mix audio with background sound effects
 
-#### Inputs
-- transcript_file
+```bash
+poetry run python evals/audio_generation/src/main.py mix \
+  --audio audio_file.mp3 \
+  --background background_sfx/background_file.mp3
+  ```
 
-    Path to a generated audio file (relative to output/)
-- sfx_file
-    
-    Path to a background sound effect file (relative to input/)
+  Arguments should reference files relative to:
+- `output/` for generated audio
+- `input/` for background sound effects
 
 
 #### Output

@@ -1,3 +1,4 @@
+import argparse
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -65,3 +66,17 @@ def get_transcripts(file_name: str) -> list[DialogueEntry]:
         )
         for entry in data
     ]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Audio generation CLI")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    tts_parser = subparsers.add_parser("tts", help="Generate speech from transcript")
+    tts_parser.add_argument("--transcript", required=True)
+
+    mix_parser = subparsers.add_parser("mix", help="Mix speech with background")
+    mix_parser.add_argument("--audio", required=True, help="Speech audio file")
+    mix_parser.add_argument("--background", required=True, help="SFX file")
+
+    return parser.parse_args()

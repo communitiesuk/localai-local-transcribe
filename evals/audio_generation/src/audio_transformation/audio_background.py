@@ -1,10 +1,13 @@
 import io
+import logging
 from pathlib import Path
 
 from pydub import AudioSegment
 
 from evals.audio_generation.src.settings import AUDIO_GEN_DIR, BACKGROUND_VOLUME_OFFSET, OUTPUT_DIR
 from evals.audio_generation.src.utils.parsing_utils import make_timestamp
+
+logger = logging.getLogger(__name__)
 
 
 def mix_audio_with_background(speech_audio: bytes, effects_audio: bytes, speech_name: str, sfx_name: str) -> Path:
@@ -29,6 +32,8 @@ def mix_audio_with_background(speech_audio: bytes, effects_audio: bytes, speech_
 
     output_path = output_dir / f"{speech_name}_mixed_{sfx_name}_{make_timestamp()}.mp3"
     final.export(output_path, format="mp3")
+
+    logger.info("Mixed audio saved to %s", output_path)
 
     return output_path
 
