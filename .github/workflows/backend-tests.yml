@@ -53,10 +53,6 @@ jobs:
 
       - name: Start services
         run: docker compose up -d db localstack --wait
-      
-      - name: Show LocalStack logs
-        if: failure()
-        run: docker compose logs localstack
 
       - name: Run database migrations
         run: poetry run alembic upgrade head
