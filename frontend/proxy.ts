@@ -13,7 +13,7 @@ const PUBLIC_PATHS = [
   '/support',
 ]
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   try {
     const { pathname } = req.nextUrl
 
