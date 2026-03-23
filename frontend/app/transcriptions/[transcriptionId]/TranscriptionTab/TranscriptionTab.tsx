@@ -31,8 +31,8 @@ export function TranscriptionTab({
     handleSubmit,
     formState: { isDirty },
     reset,
-    watch,
     setValue,
+    getValues,
   } = methods
 
   const transcriptionString = useMemo(
@@ -51,9 +51,9 @@ export function TranscriptionTab({
   useEffect(() => {
     if (isDirty) {
       handleSubmit(saveTranscription)()
-      reset(watch())
+      reset(getValues())
     }
-  }, [handleSubmit, isDirty, saveTranscription, reset, watch])
+  }, [handleSubmit, isDirty, saveTranscription, reset, getValues])
 
   const { fields, update } = useFieldArray({ control, name: 'entries' })
 

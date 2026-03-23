@@ -21,7 +21,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useEffect, useState } from 'react'
-import { useController, useForm } from 'react-hook-form'
+import { useController, useForm, useWatch } from 'react-hook-form'
 
 type CreateMinuteForm = {
   template: Template
@@ -52,7 +52,8 @@ export function NewMinuteDialog({
   }, [agenda, form, open])
   const queryClient = useQueryClient()
 
-  const selectedTemplate = form.watch('template')
+  const selectedTemplate = useWatch({ name: 'template', control: form.control })
+  const agendaValue = useWatch({ name: 'agenda', control: form.control })
 
   const { mutate: createMinute } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
@@ -147,8 +148,7 @@ Agenda item 3
               className="bg-blue-500 hover:bg-blue-800 active:bg-yellow-400"
               disabled={
                 !selectedTemplate ||
-                (selectedTemplate.agenda_usage == 'required' &&
-                  !form.watch('agenda'))
+                (selectedTemplate.agenda_usage == 'required' && !agendaValue)
               }
             >
               Generate minute
