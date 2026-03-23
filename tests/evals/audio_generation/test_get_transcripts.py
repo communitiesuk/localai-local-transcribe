@@ -1,16 +1,13 @@
 import json
-from unittest.mock import patch
 
 from evals.audio_generation.src.utils.parsing_utils import get_transcripts
 
 
-@patch("evals.audio_generation.src.utils.parsing_utils.INPUT_DIR")
-@patch("evals.audio_generation.src.utils.parsing_utils.Path")
-def test_get_transcripts(mock_path, mock_input_dir):
-    mock_input_dir.__truediv__.return_value = mock_path
+def test_get_transcripts(tmp_path):
+    transcripts_dir = tmp_path / "transcripts"
+    transcripts_dir.mkdir()
 
-    mock_transcript_file = mock_path / "test_transcript.json"
-    mock_transcript_file.is_file.return_value = True
+    file = transcripts_dir / "test_transcript.json"
 
     mock_json = [
         {
@@ -21,12 +18,13 @@ def test_get_transcripts(mock_path, mock_input_dir):
         }
     ]
 
-    mock_transcript_file.read_text.return_value = json.dumps(mock_json)
+    file.write_text(json.dumps(mock_json))
+
+    from evals.audio_generation.src.utils import parsing_utils
+
+    parsing_utils.INPUT_DIR = tmp_path
 
     result = get_transcripts("test_transcript.json")
-
-    mock_transcript_file.is_file.assert_called_once()
-    mock_transcript_file.read_text.assert_called_once() 
 
     assert len(result) == 1
     assert result[0].speaker == "Alice"
