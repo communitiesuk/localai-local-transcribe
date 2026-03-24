@@ -12,7 +12,6 @@ services:
       - ELASTICMQ_URL=http://elasticmq:9324 
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
-      - LOCALSTACK_URL=http://elasticmq:9324
 
     depends_on:
       db:
@@ -64,7 +63,6 @@ services:
       - ELASTICMQ_URL=http://elasticmq:9324 
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
-      - LOCALSTACK_URL=http://elasticmq:9324
     stop_grace_period: 10s
     depends_on:
       db:

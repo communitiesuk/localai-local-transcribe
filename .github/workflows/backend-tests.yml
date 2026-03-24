@@ -12,8 +12,8 @@ on:
 
 env:
   ENVIRONMENT: test
-  USE_LOCALSTACK: true
-  LOCALSTACK_URL: http://localhost:9324
+  USE_ELASTICMQ: true
+  ELASTICMQ_URL: http://localhost:9324
 
 jobs:
   backend:
@@ -51,7 +51,7 @@ jobs:
         run:  poetry sync
 
       - name: Install dependencies
-        run: poetry install --no-root --no-ansi --with dev -vvv
+        run: poetry install --no-root --no-ansi --with dev 
 
       - name: Copy env file
         run: cp .env.example .env

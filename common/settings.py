@@ -86,10 +86,10 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_PROJECT: str | None = Field(description="Google Cloud project ID", default=None)
     GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
-    # if using LOCALSTACK for development (recommended)
-    USE_LOCALSTACK: bool = Field(description="Use LocalStack for local AWS services emulation in dev", default=True)
-    LOCALSTACK_URL: str = Field(
-        description="LocalStack service URL for local AWS services emulation", default="http://elasticmq:9324"
+    # ELASTICMQ for development 
+    USE_ELASTICMQ: bool = Field(description="Use ELASTICMQ for local AWS Queue emulation in dev", default=True)
+    ELASTICMQ_URL: str = Field(
+        description="ELASTICMQ service URL for local AWS services emulation", default="http://elasticmq:9324"
     )
 
     TRANSCRIPTION_SERVICES: list[str] = Field(
