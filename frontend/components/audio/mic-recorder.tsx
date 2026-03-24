@@ -79,6 +79,8 @@ function MicRecorderComponent({
   const form = useFormContext<TranscriptionForm>()
   const { removeRecording, addRecording, updateRecording } = useRecordingDb()
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const [mediaRecorderStream, setMediaRecorderStream] =
+    useState<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
   const [isRecording, setIsRecording] = useState(false)
@@ -89,6 +91,7 @@ function MicRecorderComponent({
     }
     micStreamRef.current = null
     mediaRecorderRef.current = null
+    setMediaRecorderStream(null)
 
     setIsRecording(false)
     releaseWakeLock()
@@ -108,6 +111,7 @@ function MicRecorderComponent({
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(micStream, options)
       mediaRecorderRef.current = mediaRecorder
+      setMediaRecorderStream(mediaRecorder.stream)
 
       mediaRecorder.onstart = async () => {
         const recordingId = await addRecording(new Blob())
@@ -300,7 +304,7 @@ function MicRecorderComponent({
       ) : (
         <div className="flex flex-col space-y-2">
           <RecordingControl
-            stream={mediaRecorderRef.current?.stream || null}
+            stream={mediaRecorderStream}
             isRecording={isRecording}
             onStopRecording={stopRecording}
             onPauseStateChange={handlePauseStateChange}
