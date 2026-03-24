@@ -134,27 +134,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
-
-  # localstack: # LocalStack container
-  #   image: localstack/localstack:latest
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - 4566:4566
-  #     - 4510-4559:4510-4559
-  #   volumes:
-  #     # Here you mount your setup file so it will be executed
-  #     # when the container starts
-  #     - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
-  #   environment:
-  #     - AWS_DEFAULT_REGION=eu-west-2
-  #   healthcheck:
-  #     test: ["CMD", "test", "-f", "/ready.txt"]
-  #     interval: 1m30s
-  #     timeout: 30s
-  #     retries: 5
-  #     start_period: 30s
-  #:
+      
   elasticmq:
     image: softwaremill/elasticmq
     ports:
