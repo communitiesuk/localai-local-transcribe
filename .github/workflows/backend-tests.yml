@@ -42,17 +42,17 @@ jobs:
       - name: Configure Poetry to create .venv in project
         run: poetry config virtualenvs.in-project true
 
+      - name: Sync dependencies
+        run:  poetry sync
+
       - name: Install dependencies
-        run: poetry install --no-root --no-ansi --with dev --sync
+        run: poetry install --no-root --no-ansi --with dev -vvv
 
       - name: Copy env file
         run: cp .env.example .env
 
       - name: Create test data directory
         run: mkdir -p .data/test_audio/normal
-
-      # - name: Start services
-      #   run: docker compose up -d db localstack --wait
 
       - name: Start services
         run: docker compose up -d db elasticmq --wait
