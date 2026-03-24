@@ -10,7 +10,11 @@ export const AudioWav = ({ count = 10 }) => {
         const x = 10 + i * (lineWidth + spacing) + lineWidth / 2
         const minHeight = 20
         const maxHeight = svgHeight - 20
-        const randomHeight = Math.random() * (maxHeight - minHeight) + minHeight
+
+        // Use a deterministic pseudo-random function to generate heights,
+        // to avoid calling an impure random function during rendering.
+        const pseudoRandom = Math.sin(i * 0.5) * 0.5 + 0.5 // Generates a value between 0 and 1
+        const randomHeight = pseudoRandom * (maxHeight - minHeight) + minHeight
         const y1 = (svgHeight - randomHeight) / 2
         const y2 = y1 + randomHeight
 
