@@ -86,7 +86,7 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_PROJECT: str | None = Field(description="Google Cloud project ID", default=None)
     GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
-    # ELASTICMQ for development 
+    # ELASTICMQ for development
     USE_ELASTICMQ: bool = Field(description="Use ELASTICMQ for local AWS Queue emulation in dev", default=True)
     ELASTICMQ_URL: str = Field(
         description="ELASTICMQ service URL for local AWS services emulation", default="http://elasticmq:9324"
@@ -190,12 +190,6 @@ class Settings(BaseSettings):
         description="HuggingFace token required for Whisply speaker diarization",
     )
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434/v1")
-
-    # ElasticMQ
-    USE_ELASTICMQ: bool = Field(description="Use ElasticMQ for local SQS testing", default=True)
-    ELASTICMQ_URL: str = Field(
-        description="ElasticMQ service URL for local SQS testing", default="http://localhost:9324"
-    )
 
     # use a dotenv file for local development
     if dotenv_detected:
