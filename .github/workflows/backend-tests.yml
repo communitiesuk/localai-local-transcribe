@@ -51,8 +51,11 @@ jobs:
       - name: Create test data directory
         run: mkdir -p .data/test_audio/normal
 
+      # - name: Start services
+      #   run: docker compose up -d db localstack --wait
+
       - name: Start services
-        run: docker compose up -d db localstack --wait
+        run: docker compose up -d db elasticmq --wait
 
       - name: Run database migrations
         run: poetry run alembic upgrade head

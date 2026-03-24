@@ -89,7 +89,7 @@ class Settings(BaseSettings):
     # if using LOCALSTACK for development (recommended)
     USE_LOCALSTACK: bool = Field(description="Use LocalStack for local AWS services emulation in dev", default=True)
     LOCALSTACK_URL: str = Field(
-        description="LocalStack service URL for local AWS services emulation", default="http://localhost:4566"
+        description="LocalStack service URL for local AWS services emulation", default="http://elasticmq:9324"
     )
 
     TRANSCRIPTION_SERVICES: list[str] = Field(
@@ -190,6 +190,12 @@ class Settings(BaseSettings):
         description="HuggingFace token required for Whisply speaker diarization",
     )
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434/v1")
+
+    # ElasticMQ
+    USE_ELASTICMQ: bool = Field(description="Use ElasticMQ for local SQS testing", default=True)
+    ELASTICMQ_URL: str = Field(
+        description="ElasticMQ service URL for local SQS testing", default="http://localhost:9324"
+    )
 
     # use a dotenv file for local development
     if dotenv_detected:
