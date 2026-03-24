@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Any type used instead of SQSClient - mypy-boto3-sqs plugin should not be installed in production
 def get_sqs_client() -> Any:
-    if settings.USE_LOCALSTACK and settings.ENVIRONMENT.lower() == "local":
+    if settings.USE_LOCALSTACK and settings.ENVIRONMENT.lower() in ["local", "test"]:
         return boto3.client(
             "sqs",
             aws_access_key_id="YOUR_ACCESS_KEY_ID",

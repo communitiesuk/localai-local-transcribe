@@ -10,6 +10,11 @@ on:
         required: true
         type: string
 
+env:
+  ENVIRONMENT: test
+  USE_LOCALSTACK: true
+  LOCALSTACK_URL: http://localhost:9324
+
 jobs:
   backend:
     runs-on: ubuntu-latest
