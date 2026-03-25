@@ -13,7 +13,6 @@ on:
 env:
   ENVIRONMENT: test
   USE_ELASTICMQ: true
-  ELASTICMQ_URL: http://localhost:9324
 
 jobs:
   backend:

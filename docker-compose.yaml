@@ -9,7 +9,6 @@ services:
       - .env
     environment:
       - POSTGRES_HOST=db
-      - ELASTICMQ_URL=http://elasticmq:9324 
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
 
