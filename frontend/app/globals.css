@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import 'node_modules/govuk-frontend/dist/govuk/govuk-frontend.min.css';
+@import 'govuk-frontend/dist/govuk/govuk-frontend.min.css';
 @plugin "@tailwindcss/typography";
 @custom-variant dark (&:is(.dark *));
 
