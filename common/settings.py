@@ -87,7 +87,7 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
     # ELASTICMQ for development
-    USE_ELASTICMQ: bool = Field(description="Use ELASTICMQ for local AWS Queue emulation in dev", default=True)
+    USE_ELASTICMQ: bool = Field(description="Use ElasticMQ for local AWS SQS emulation in dev", default=True)
     ELASTICMQ_URL: str = Field(
         description="ELASTICMQ service URL for local AWS services emulation", default="http://elasticmq:9324"
     )

@@ -17,7 +17,7 @@ services:
       db:
         condition: service_healthy
       elasticmq:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - type: bind
         source: ./.data

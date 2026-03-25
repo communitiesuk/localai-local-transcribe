@@ -128,4 +128,4 @@ echo ""
 echo "Starting worker (Ctrl+C to stop)..."
 echo ""
 
-exec poetry run python worker/main.py
+ELASTICMQ_URL=http://localhost:9324 exec poetry run python worker/main.py
