@@ -12,16 +12,19 @@ export default function AudioPlayerComponent({
   const [isPlaying, setPlaying] = useState(false)
   const [time, setTime] = useState(0)
   const [duration, setDuration] = useState<number>()
-  const [audioUrl, setAudioUrl] = useState<string>()
 
+  const audioUrl = useMemo(() => URL.createObjectURL(audioBlob), [audioBlob])
   const filename = useMemo(
     () => `audio-file.${getFileExtensionFromBlob(audioBlob)}`,
     [audioBlob]
   )
 
   useEffect(() => {
+    return () => URL.revokeObjectURL(audioUrl)
+  }, [audioUrl])
+
+  useEffect(() => {
     const src = URL.createObjectURL(audioBlob)
-    setAudioUrl(src)
     if (!ref.current) {
       ref.current = new Audio()
     }

@@ -35,7 +35,7 @@ import {
 } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 
 type MinuteEditorForm = {
   html: string
@@ -85,7 +85,7 @@ export function MinuteEditor({
       form.setValue('html', minuteVersion.html_content)
     }
   }, [form, minuteVersion])
-  const htmlContent = form.watch('html')
+  const htmlContent = useWatch({ name: 'html', control: form.control })
   const contentToCopy = useMemo(() => {
     return htmlContent?.replaceAll(citationRegexWithSpace, '') || ''
   }, [htmlContent])

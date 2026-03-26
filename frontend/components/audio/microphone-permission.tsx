@@ -59,6 +59,12 @@ export function MicrophonePermission({
   }, [getAudioDevices, onError])
 
   useEffect(() => {
+    // requestMicrophonePermission sets state synchronously before its first await,
+    // which the linter flags as a cascading render risk. This is acceptable here —
+    // the effect only re-runs if onError or onPermissionGranted change, and the
+    // synchronous setState (setIsRequesting/setPermissionDenied) is a trivial
+    // UI state reset, not an expensive cascading render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     requestMicrophonePermission()
   }, [requestMicrophonePermission])
 
