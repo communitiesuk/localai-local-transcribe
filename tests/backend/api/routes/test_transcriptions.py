@@ -22,6 +22,7 @@ async def test_create_transcription_success(
     mocker,
     mock_session_with_recording,
     mock_user,
+    mock_storage_service,  # noqa: ARG001
     mock_transcription_queue_service,
     transcription_request,
 ):
