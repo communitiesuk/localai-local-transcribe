@@ -6,16 +6,21 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+
 # Virtual environments (uv)
 .venv/
+
 # OS
 .DS_Store
+
 # Tooling caches
 .ruff_cache/
 .mypy_cache/
 .pytest_cache/
+
 # Project outputs
 runs/
+
 # Editor
 .vscode/
 .idea/
