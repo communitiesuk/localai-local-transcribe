@@ -1,7 +1,8 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'govuk-frontend/dist/govuk/govuk-frontend.min.css';
-@plugin "@tailwindcss/typography";
+
+@plugin '@tailwindcss/typography';
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -78,14 +79,6 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
-
-@media print {
-  :root {
-    --govuk-text-colour: var(--govuk-print-text-colour, #000);
-  }
-}
-
-
 
 .dark {
   --background: oklch(0.145 0 0);
@@ -170,29 +163,24 @@
 }
 
 .editor-content {
-  /* Add any global styles for your editor here */
   line-height: 1.4;
-  /* Increased line spacing */
   padding: 10px;
 }
 
 .editor-content p {
   margin: 0;
-  /* Remove paragraph margins */
 }
 
 .editor-content ul,
 .editor-content ol {
   padding-left: 1.5em;
   margin: 0 0 0.5em 0;
-  /* Add some bottom margin to lists */
 }
 
 .editor-content li {
   position: relative;
   padding-left: 0.5em;
   margin-bottom: 0.25em;
-  /* Add some spacing between list items */
 }
 
 .editor-content li::before {
@@ -265,7 +253,6 @@
 
 .editor-content p + p {
   margin-top: 1em;
-  /* Add margin only between consecutive paragraphs */
 }
 
 .editor-content pre > code {

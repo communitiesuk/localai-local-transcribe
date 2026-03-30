@@ -1,4 +1,4 @@
-import { Footer } from '@/components/layout/footer'
+import Footer from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'

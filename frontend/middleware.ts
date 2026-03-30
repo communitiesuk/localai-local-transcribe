@@ -10,8 +10,7 @@ const PUBLIC_PATHS = [
   '/generic-error',
   '/monitoring',
   '/privacy',
-  '/support',
-  '/logout',
+  '/support'
 ]
 
 export async function middleware(req: NextRequest) {

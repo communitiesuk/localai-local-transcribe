@@ -2,6 +2,11 @@ import { withSentryConfig } from '@sentry/nextjs'
 
 let nextConfig = {
   output: 'standalone',
+  experimental: {
+    outputFileTracingIncludes: {
+      '/assets/**/*': ['./node_modules/govuk-frontend/dist/govuk/assets/**/*'],
+    },
+  },
 }
 
 const sentryConfig = {
