@@ -1736,6 +1736,29 @@ files = [
 ]
 
 [[package]]
+name = "elevenlabs"
+version = "2.40.0"
+description = ""
+optional = false
+python-versions = "<4.0,>=3.8"
+groups = ["dev"]
+files = [
+    {file = "elevenlabs-2.40.0-py3-none-any.whl", hash = "sha256:56e7939da45eff180e9deeeb84ff25dd616a47d55f179f102d964fc8207146f5"},
+    {file = "elevenlabs-2.40.0.tar.gz", hash = "sha256:84eaf10819950cbacc643b5ecf80400e5b67bb3af79394be9ee70e8d361d4b27"},
+]
+
+[package.dependencies]
+httpx = ">=0.21.2"
+pydantic = ">=1.9.2"
+pydantic-core = ">=2.18.2"
+requests = ">=2.20"
+typing_extensions = ">=4.0.0"
+websockets = ">=11.0"
+
+[package.extras]
+pyaudio = ["pyaudio (>=0.2.14)"]
+
+[[package]]
 name = "executing"
 version = "2.2.1"
 description = "Get the currently executing AST node of a frame, and other information"
@@ -10470,7 +10493,7 @@ version = "16.0"
 description = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
 optional = false
 python-versions = ">=3.10"
-groups = ["worker"]
+groups = ["dev", "worker"]
 files = [
     {file = "websockets-16.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:04cdd5d2d1dacbad0a7bf36ccbcd3ccd5a30ee188f2560b7a62a30d14107b31a"},
     {file = "websockets-16.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:8ff32bb86522a9e5e31439a58addbb0166f0204d64066fb955265c4e214160f0"},
@@ -11137,4 +11160,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "74dad8e99c24b7550aeef0bc90346778c6b122cf525b6d182a1ddc2a337495f4"
+content-hash = "9d86d122389519f6643ed8c7ef18e6073aee26b8545eb4b683949193a4228fbe"
