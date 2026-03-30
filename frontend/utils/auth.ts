@@ -1,18 +1,18 @@
+import { AlbJwtVerifier } from 'aws-jwt-verify'
+
 export type UserAuthorisationResult = {
   email: string
   isAuthorised: boolean
   authReason: string
 }
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const payload = token.split('.')[1]
-    const decoded = Buffer.from(payload, 'base64url').toString('utf8')
-    return JSON.parse(decoded)
-  } catch {
-    return null
-  }
-}
+const verifier =
+  process.env.ENVIRONMENT !== 'local'
+    ? AlbJwtVerifier.create({
+        albArn: process.env.ALB_ARN!,
+        issuer: process.env.OIDC_ISSUER!,
+      })
+    : null
 
 export async function parseAuthToken(
   token: string
@@ -23,12 +23,7 @@ export async function parseAuthToken(
   }
 
   try {
-    const payload = decodeJwtPayload(token)
-
-    if (!payload) {
-      console.error('Failed to decode JWT payload')
-      return null
-    }
+    const payload = await verifier!.verify(token)
 
     const email = payload.email as string | undefined
     if (!email) {
@@ -38,7 +33,7 @@ export async function parseAuthToken(
 
     return { email, isAuthorised: true, authReason: 'OIDC' }
   } catch (error) {
-    console.error('Error parsing auth token:', error)
+    console.error('Error verifying auth token:', error)
     return null
   }
 }
