@@ -5,7 +5,6 @@ name: tests
 env:
   DOCKER_BUILDKIT: 1
 
-
 on:
   push:
     paths:
@@ -25,10 +24,10 @@ on:
       - "dependabot/**"
       - "security/**"
 
-  pull_request: 
-    branches: 
+  pull_request:
+    branches:
       - development
-      
+
   workflow_dispatch:
 
 jobs:
@@ -36,13 +35,12 @@ jobs:
     uses: ./.github/workflows/backend-tests.yml
     with:
       python_version: "3.12"
-      poetry_version: "2.3.2"
+      poetry_version: "2.3.3"
     secrets: inherit
 
   frontend_tests:
     uses: ./.github/workflows/frontend-tests.yml
     secrets: inherit
-
 
   worker:
     if: ${{ false && always() }}
