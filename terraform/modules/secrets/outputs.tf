@@ -13,3 +13,13 @@ output "secrets_kms_key_arn" {
   description = "ARN of the KMS key used to encrypt the secrets"
   value       = aws_kms_key.local_transcribe_secrets.arn
 }
+
+output "oidc_client_id_name" {
+  description = "SSM parameter name for the OIDC client ID."
+  value       = aws_ssm_parameter.oidc_client_id.arn
+}
+
+output "oidc_client_secret_name" {
+  description = "SSM parameter name for the OIDC client secret."
+  value       = aws_ssm_parameter.oidc_client_secret.arn
+}

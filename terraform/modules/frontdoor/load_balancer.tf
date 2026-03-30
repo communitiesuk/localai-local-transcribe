@@ -1,4 +1,8 @@
 #tfsec:ignore:aws-elb-alb-not-public:the load balancer must be exposed to the internet in order to communicate with cloudfront
+locals {
+  gds_ia_issuer   = "https://sso.service.security.gov.uk"
+}
+
 resource "aws_lb" "main" {
   name                       = "alb-${var.environment_name}"
   drop_invalid_header_fields = true
@@ -65,13 +69,46 @@ resource "aws_lb_target_group" "frontend" {
   }
 }
 
-resource "aws_lb_listener_rule" "forward" {
+
+data "aws_ssm_parameter" "oidc_client_id" {
+  name            = var.oidc_client_id_name
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "oidc_client_secret" {
+  name            = var.oidc_client_secret_name
+  with_decryption = true
+}
+
+resource "aws_lb_listener_rule" "authentication" {
   count        = var.ssl_certs_created ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
 
   action {
+    type = "authenticate-oidc"
+
+    authenticate_oidc {
+      client_id              = data.aws_ssm_parameter.oidc_client_id.value
+      issuer                 = local.gds_ia_issuer
+      authorization_endpoint = "${local.gds_ia_issuer}/auth/oidc"
+      token_endpoint         = "${local.gds_ia_issuer}/auth/token"
+      user_info_endpoint     = "${local.gds_ia_issuer}/auth/profile"
+      session_cookie_name    = "X-Amzn-Oidc-Data"
+      client_secret          = data.aws_ssm_parameter.oidc_client_secret.value
+      scope                  = "openid profile email"
+      session_timeout        = 604800
+    }
+  }
+
+  action {
     target_group_arn = aws_lb_target_group.frontend.id
     type             = "forward"
+  }
+
+  condition {
+    host_header {
+      values = [var.app_host]
+    }
   }
 
   condition {

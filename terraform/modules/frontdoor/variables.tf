@@ -76,3 +76,18 @@ variable "maintenance_mode_on" {
   description = "Indicates whether maintenance mode is on"
   default     = false
 }
+
+variable "oidc_client_id_name" {
+  description = "SSM parameter name for the Internal Access OIDC client ID."
+  type        = string
+}
+
+variable "oidc_client_secret_name" {
+  description = "SSM parameter name for the Internal Access OIDC client secret."
+  type        = string
+}
+
+variable "app_host" {
+  description = "The MHCLG delegated domain name for the application, used in host header condition for the load balancer listener rule"
+  type = string
+}

@@ -1,5 +1,5 @@
 locals {
-  shared_environment_variables = [
+  shared_worker_backend_environment_variables = [
     {
       name  = "ENVIRONMENT"
       value = terraform.workspace
@@ -27,9 +27,6 @@ locals {
     }, {
       name  = "POSTGRES_PASSWORD"
       value = var.database_password
-    }, {
-      name  = "AUTH_PROVIDER_PUBLIC_KEY"
-      value = "placeholder"
     }, {
       name  = "AZURE_OPENAI_API_VERSION"
       value = "2024-10-21"
@@ -128,6 +125,13 @@ resource "aws_ecs_task_definition" "frontend" {
       }
 
       environment = local.frontend_environment_variables
+
+      secrets = [
+        {
+          name = "AUTH_API_URL",
+          valueFrom = var.auth_api_invoke_url_ssm_arn
+        }
+      ]
     }
   ])
 
@@ -173,12 +177,19 @@ resource "aws_ecs_task_definition" "backend" {
         }
       }
 
-      environment = concat(local.shared_environment_variables, [
+      environment = concat(local.shared_worker_backend_environment_variables, [
         {
         name  = "APP_NAME"
         value ="local-transcribe-backend"
         }
       ])
+
+      secrets = [
+        {
+          name = "AUTH_API_URL",
+          valueFrom = var.auth_api_invoke_url_ssm_arn
+        }
+      ]
 
       healthCheck = {
         command     = ["CMD-SHELL", "curl --fail http://localhost:${ var.backend_port }/healthcheck"]
@@ -224,7 +235,7 @@ resource "aws_ecs_task_definition" "worker" {
         }
       }
 
-      environment = concat(local.shared_environment_variables, [
+      environment = concat(local.shared_worker_backend_environment_variables, [
         {
           name  = "APP_NAME"
           value ="local-transcribe-worker"
