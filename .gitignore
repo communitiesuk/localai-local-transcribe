@@ -12,6 +12,7 @@ __pycache__/
 Brewfile.lock.json
 *.pdf
 .mypy_cache
+.ruff_cache
 
 # Terraform
 **/.terraform/*
@@ -114,6 +115,19 @@ config/google-credentials.json
 
 #testing
 .coverage
+.coverage.*
 htmlcov/
 coverage.xml
 .pytest_cache/
+
+# Evals
+**/runs/
+**/results/
+**/datasets/
+**/input/
+**/output/
+**/*.wav
+**/*.mp3
+**/*.m4a
+
+
