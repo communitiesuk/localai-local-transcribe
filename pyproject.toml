@@ -63,7 +63,7 @@ packages = [
     {include = "backend"},
     {include = "common"},
 ]
-requires-poetry = "=2.3.2"
+requires-poetry = "=2.3.3"
 
 # add common dependencies here
 [tool.poetry.dependencies]
@@ -83,7 +83,7 @@ sentry-sdk = {extras = ["fastapi"], version = "^2.18.0"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
 asyncpg = "^0.30.0"
 markdownify = "^1.2.0"
-python-multipart = "^0.0.20"
+python-multipart = "^0.0.22"
 i-dot-ai-utilities = "^0.4.4"
 azure-servicebus = "^7.14.2"
 mypy-boto3-sqs = "^1.42.3"
@@ -105,15 +105,11 @@ azure-identity = "^1.23.1"
 [tool.poetry.group.local-dev.dependencies]
 whisply = "^0.13.1"
 
-[tool.poetry.group.evals.dependencies]
+[tool.poetry.group.evals-transcription.dependencies]
 datasets = "^3.0.0"
 jiwer = "^3.0.0"
 soundfile = "^0.12.0"
 librosa = "^0.10.0"
-
-[tool.poetry.group.characteristics-evals.dependencies]
-pyyaml = "^6.0.2"
-jinja2 = "^3.1.4"
 
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"
@@ -173,20 +169,17 @@ line-length = 120
 target-version = 'py312'
 fix = true
 
-[tool.ruff.format]
-exclude = ["data/*"]
-
 [tool.ruff.lint]
 select = [
     "A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
     "ARG", "ASYNC", "BLE", "COM", "DJ", "DTZ", "EM", "EXE", "FURB",
     "ICN", "INT", "ISC", "LOG", "NPY", "PD", "PGH", "PIE", "PL",
-    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT",
-    "TCH", "TD", "TID", "UP", "YTT"
+    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT", 
+    "TD", "TID", "UP", "YTT", "TCH"
 ]
-# TODO: Decide on a structure for evals folder and add ruff support properly
-exclude = ["out/*", "viewer/*", "alembic/*", "evals/src/*"]
-ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912"]
+
+exclude = ["out/*", "viewer/*", "alembic/*"]
+ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912", "TC001", "TC002", "TC003"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["backend", "frontend"]
@@ -207,12 +200,21 @@ strict_optional = true
 check_untyped_defs = true
 no_implicit_optional = true
 ignore_missing_imports = false
-
 # terraform: non production diagram scripts using untyped diagrams 
-# TODO: Add mypy support for viewer folder or remove if deprecated
-exclude = ["alembic/*", "tests/*", "viewer/*"]
+# TODO: Decide on a structure for evals and viewer folder and add mypy support properly
+exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*"]
+
 
 [[tool.mypy.overrides]]
-module = ["datasets.*", "dspy", "dspy.*", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
+module = ["datasets.*", "dspy.*", "dspy", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["scipy.optimize"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["pydub.*", "pydub"]
+ignore_missing_imports = true
+follow_untyped_imports = true
 

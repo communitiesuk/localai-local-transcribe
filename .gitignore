@@ -121,13 +121,12 @@ coverage.xml
 .pytest_cache/
 
 # Evals
-**/runs/
-**/results/
-**/datasets/
-**/input/
-**/output/
+evals/**/runs/
+evals/**/results/
+evals/**/datasets/
+evals/**/input/
+evals/**/output/
 **/*.wav
 **/*.mp3
 **/*.m4a
-
 

@@ -17,7 +17,7 @@ import { ArrowRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Suspense, useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 function NewTemplateContent() {
@@ -66,7 +66,7 @@ function NewTemplateContent() {
       },
     })
   }
-  const templateType = form.watch('type')
+  const templateType = useWatch({ name: 'type', control: form.control })
   const onSelectExample = (example: TemplateData) => {
     form.setValue('name', example.name, { shouldDirty: true })
     form.setValue('description', example.description, { shouldDirty: true })

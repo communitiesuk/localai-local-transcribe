@@ -1,4 +1,5 @@
 'use client'
+import { use } from 'react'
 
 import AudioPlayerComponent from '@/components/audio/audio-player'
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
@@ -11,11 +12,13 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2, TriangleAlert } from 'lucide-react'
 import { FormProvider } from 'react-hook-form'
 
-export default function RecordingPage({
-  params: { recordingId },
-}: {
-  params: { recordingId: string }
+export default function RecordingPage(props: {
+  params: Promise<{ recordingId: string }>
 }) {
+  const params = use(props.params)
+
+  const { recordingId } = params
+
   const { getRecording } = useRecordingDb()
   const {
     data: recording,
