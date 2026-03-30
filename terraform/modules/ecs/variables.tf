@@ -168,8 +168,3 @@ variable "worker_task_memory" {
   type        = number
   default     = 8192
 }
-
-variable "auth_api_invoke_url_ssm_arn" {
-  description = "SSM parameter ARN for the auth API invoke URL"
-  type        = string
-}

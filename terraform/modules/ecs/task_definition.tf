@@ -125,13 +125,6 @@ resource "aws_ecs_task_definition" "frontend" {
       }
 
       environment = local.frontend_environment_variables
-
-      secrets = [
-        {
-          name = "AUTH_API_URL",
-          valueFrom = var.auth_api_invoke_url_ssm_arn
-        }
-      ]
     }
   ])
 
@@ -184,13 +177,6 @@ resource "aws_ecs_task_definition" "backend" {
         }
       ])
 
-      secrets = [
-        {
-          name = "AUTH_API_URL",
-          valueFrom = var.auth_api_invoke_url_ssm_arn
-        }
-      ]
-
       healthCheck = {
         command     = ["CMD-SHELL", "curl --fail http://localhost:${ var.backend_port }/healthcheck"]
         interval    = 60
@@ -240,10 +226,6 @@ resource "aws_ecs_task_definition" "worker" {
           name  = "APP_NAME"
           value ="local-transcribe-worker"
         },
-        {
-          name  = "AUTH_API_URL"
-          value = "unused", # Worker settings need refactoring so we can remove this
-        }
       ])
 
       healthCheck = {

@@ -179,7 +179,6 @@ module "ecs" {
 
   max_llm_processes           = 0
   max_transcription_processes = 0
-  auth_api_invoke_url_ssm_arn = module.secrets. #QQ
 }
 
 module "uploads_bucket" {
