@@ -39,23 +39,13 @@ export default function RecordingControl({
   const dataArrayRef = useRef<Uint8Array | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const [showStopDialog, setShowStopDialog] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  const [mediaTracks, setMediaTracks] = useState<MediaStreamTrack[]>([])
+  const [localIsPaused, setLocalIsPaused] = useState(false)
 
-  // Initialize media tracks from the stream if available
-  useEffect(() => {
-    if (stream) {
-      const tracks = stream.getAudioTracks()
-      setMediaTracks(tracks)
-    }
-  }, [stream])
-
-  // Handle the recorder controls isPaused state if available
-  useEffect(() => {
-    if (recorderControls?.isPaused !== undefined) {
-      setIsPaused(recorderControls.isPaused)
-    }
-  }, [recorderControls?.isPaused])
+  const mediaTracks = stream ? stream.getAudioTracks() : []
+  const isPaused =
+    recorderControls?.isPaused !== undefined
+      ? recorderControls.isPaused
+      : localIsPaused
 
   useEffect(() => {
     // Check if we have a valid stream with audio tracks
@@ -314,7 +304,7 @@ export default function RecordingControl({
         const newTrack = track
         newTrack.enabled = !newPausedState
       })
-      setIsPaused(newPausedState)
+      setLocalIsPaused(newPausedState)
       if (onPauseStateChange) {
         onPauseStateChange(newPausedState)
       }

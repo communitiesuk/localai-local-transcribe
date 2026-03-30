@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import logging
-from typing import Any, TypeVar, cast
+from typing import Any, cast
 
 from openai import AsyncAzureOpenAI
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
@@ -8,9 +10,9 @@ from openai.types.chat.chat_completion import Choice
 from common.settings import get_settings
 
 from .base import ModelAdapter
+from .llm_constants import MAX_TOKENS, TEMPERATURE
 
 settings = get_settings()
-T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +35,7 @@ class OpenAIModelAdapter(ModelAdapter):
         )
         self._kwargs = kwargs
 
-    async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+    async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         response = await self.async_azure_client.beta.chat.completions.parse(
             model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),
@@ -50,8 +52,8 @@ class OpenAIModelAdapter(ModelAdapter):
         response = await self.async_azure_client.chat.completions.create(
             model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),
-            temperature=0.0,
-            max_tokens=16384,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
         )
         choice = response.choices[0]
         self.choice_incomplete(choice, response)
