@@ -66,6 +66,15 @@ locals {
     }, {
       name = "BEST_LLM_MODEL_NAME"
       value = "gemini-2.5-flash"
+    }, {
+      name  = "ALB_ARN"
+      value = var.alb_arn
+    }, {
+      name  = "OIDC_ISSUER"
+      value = var.oidc_issuer
+    }, {
+      name  = "AWS_REGION"
+      value = var.aws_region
     },
   ]
   frontend_environment_variables = [
@@ -84,6 +93,12 @@ locals {
     }, {
       name  = "BACKEND_HOST"
       value = "http://${aws_service_discovery_service.backend_service_discovery_service.name}.${aws_service_discovery_private_dns_namespace.private_dns_namespace.name}:${var.backend_port}"
+    }, {
+      name  = "ALB_ARN"
+      value = var.alb_arn
+    }, {
+      name  = "OIDC_ISSUER"
+      value = var.oidc_issuer
     },
   ]
 }

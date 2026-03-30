@@ -19,6 +19,7 @@ terraform {
 
 locals {
   environment_name = "development"
+  aws_region       = "eu-west-2"
   multi_az         = false
 
   frontend_port               = 3000
@@ -179,6 +180,9 @@ module "ecs" {
 
   max_llm_processes           = 0
   max_transcription_processes = 0
+  alb_arn                     = module.frontdoor.load_balancer.arn
+  oidc_issuer                 = module.frontdoor.oidc_issuer
+  aws_region                  = local.aws_region
 }
 
 module "uploads_bucket" {

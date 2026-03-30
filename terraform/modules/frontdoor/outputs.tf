@@ -21,3 +21,8 @@ output "waf_acl_name" {
   description = "The name of the WAF Web ACL"
   value       = aws_wafv2_web_acl.main.name
 }
+
+output "oidc_issuer" {
+  description = "The OIDC issuer URL used for ALB authentication"
+  value       = local.gds_ia_issuer
+}

@@ -168,3 +168,18 @@ variable "worker_task_memory" {
   type        = number
   default     = 8192
 }
+
+variable "alb_arn" {
+  description = "ARN of the Application Load Balancer, used for JWT signer validation"
+  type        = string
+}
+
+variable "oidc_issuer" {
+  description = "OIDC issuer URL, used for JWT issuer validation"
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region, used to construct the ALB public key endpoint URL"
+  type        = string
+}
