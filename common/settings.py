@@ -35,13 +35,6 @@ class Settings(BaseSettings):
     AWS_ACCOUNT_ID: str | None = Field(description="AWS account ID", default=None)
     AWS_REGION: str | None = Field(description="AWS region", default=None)
 
-    # if using i.AI Auth API
-    REPO: str = Field(description="The name of the GitHub repository")
-    AUTH_API_URL: str = Field(description="The hostname of the Auth API")
-    AUTH_API_REQUEST_TIMEOUT: int | None = Field(
-        description="The timeout in seconds to wait for auth response", default=None
-    )
-
     ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
 
