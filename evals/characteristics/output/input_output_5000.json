@@ -1,0 +1,130 @@
+{
+  "version": "1.0",
+  "detected_characteristics": [
+    {
+      "characteristic": "Location",
+      "attribute_value": "Iran, United Kingdom, USA",
+      "evidence_spans": [
+        {
+          "start_index": 43,
+          "end_index": 63,
+          "text": "the murderous Islamic Republic"
+        },
+        {
+          "start_index": 136,
+          "end_index": 142,
+          "text": "in the UK"
+        },
+        {
+          "start_index": 1111,
+          "end_index": 1123,
+          "text": "from California"
+        }
+      ]
+    },
+    {
+      "characteristic": "Religion",
+      "attribute_value": "Islamic context and devotion",
+      "evidence_spans": [
+        {
+          "start_index": 43,
+          "end_index": 63,
+          "text": "the murderous Islamic Republic"
+        },
+        {
+          "start_index": 794,
+          "end_index": 832,
+          "text": "religious families who can lose their lives, be killed by their brothers"
+        }
+      ]
+    },
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Female",
+      "evidence_spans": [
+        {
+          "start_index": 1432,
+          "end_index": 1445,
+          "text": "female desire to be free"
+        }
+      ]
+    },
+    {
+      "characteristic": "Age",
+      "attribute_value": "80 years old",
+      "evidence_spans": [
+        {
+          "start_index": 160,
+          "end_index": 173,
+          "text": "At 80 years old"
+        }
+      ]
+    },
+    {
+      "characteristic": "Marriage and Relationship Status",
+      "attribute_value": "Concerns with virginity in relation to marriage",
+      "evidence_spans": [
+        {
+          "start_index": 5041,
+          "end_index": 5207,
+          "text": "They tell you always, if a woman is not virgin, she is finished. But my mother took that worry away... One woman told me that Women Without Men saved her. She was suffering so much from not being a virgin. After she read it, she was so happy. She realised it\u2019s not that important that her life will pass without her virginity, that marriage is possible without virginity."
+        }
+      ]
+    },
+    {
+      "characteristic": "Age",
+      "attribute_value": "Age disparity in relationship, younger individual",
+      "evidence_spans": [
+        {
+          "start_index": 5063,
+          "end_index": 5095,
+          "text": "Did she help her sister, 13 years younger, understand her body?"
+        }
+      ]
+    },
+    {
+      "characteristic": "Sex and Gender",
+      "attribute_value": "Cultural perceptions and gender roles",
+      "evidence_spans": [
+        {
+          "start_index": 5201,
+          "end_index": 5355,
+          "text": "Even younger women don\u2019t make relationships with men so easily... women have been trained to think that, if they have sex, they are different from other women."
+        }
+      ]
+    },
+    {
+      "characteristic": "Location",
+      "attribute_value": "San Francisco, Iranian community",
+      "evidence_spans": [
+        {
+          "start_index": 5921,
+          "end_index": 5963,
+          "text": "For the past 20 years, Parsipur has lived in an Iranian community near San Francisco."
+        }
+      ]
+    },
+    {
+      "characteristic": "Religion",
+      "attribute_value": "Cultural practices associated with Persian and Islamic traditions",
+      "evidence_spans": [
+        {
+          "start_index": 5978,
+          "end_index": 6058,
+          "text": "celebrates the Persian new year Nowruz with a traditional haft sin spread... The thoughts and ideas I had are fading. I\u2019m not in Iran, so I can\u2019t write something new."
+        },
+        {
+          "start_index": 6110,
+          "end_index": 6188,
+          "text": "About the current protests... The women of Iran have changed so much, so many without hijab. They don\u2019t care what the Islamic Republic thinks."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "model_used": "gpt-4o",
+    "prompt_version": "characteristic_extraction",
+    "total_chunks_processed": 2,
+    "failed_chunks": []
+  }
+}

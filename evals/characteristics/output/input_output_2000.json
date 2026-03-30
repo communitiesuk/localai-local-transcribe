@@ -1,0 +1,276 @@
+{
+  "version": "1.0",
+  "detected_characteristics": [
+    {
+      "characteristic": "Religion",
+      "attribute_value": "Islamic Context",
+      "evidence_spans": [
+        {
+          "start_index": 68,
+          "end_index": 88,
+          "text": "murderous Islamic Republic"
+        }
+      ]
+    },
+    {
+      "characteristic": "Religion",
+      "attribute_value": "Religious or Pious",
+      "evidence_spans": [
+        {
+          "start_index": 876,
+          "end_index": 887,
+          "text": "pious Faezeh"
+        },
+        {
+          "start_index": 897,
+          "end_index": 913,
+          "text": "shatters her faith"
+        }
+      ]
+    },
+    {
+      "characteristic": "Sex and Gender",
+      "attribute_value": "Female",
+      "evidence_spans": [
+        {
+          "start_index": 876,
+          "end_index": 887,
+          "text": "pious Faezeh"
+        },
+        {
+          "start_index": 908,
+          "end_index": 913,
+          "text": "her faith"
+        }
+      ]
+    },
+    {
+      "characteristic": "Disability",
+      "attribute_value": "Trauma or Stress",
+      "evidence_spans": [
+        {
+          "start_index": 889,
+          "end_index": 895,
+          "text": "rape shatters"
+        }
+      ]
+    },
+    {
+      "characteristic": "Sex and Gender",
+      "attribute_value": "Female Social Policing",
+      "evidence_spans": [
+        {
+          "start_index": 233,
+          "end_index": 251,
+          "text": "policing of women\u2019s bodies"
+        },
+        {
+          "start_index": 954,
+          "end_index": 971,
+          "text": "policing of women\u2019s bodies"
+        }
+      ]
+    },
+    {
+      "characteristic": "Sexuality",
+      "attribute_value": "Sex Worker Context",
+      "evidence_spans": [
+        {
+          "start_index": 915,
+          "end_index": 921,
+          "text": "sex worker"
+        }
+      ]
+    },
+    {
+      "characteristic": "Pregnancy and Maternity",
+      "attribute_value": "Opportunities for Women",
+      "evidence_spans": [
+        {
+          "start_index": 993,
+          "end_index": 1020,
+          "text": "temporary refuge from marriage, male control"
+        }
+      ]
+    },
+    {
+      "characteristic": "Age",
+      "attribute_value": "Older person",
+      "evidence_spans": [
+        {
+          "start_index": 2514,
+          "end_index": 2585,
+          "text": "still afraid of what the Islamic Republic might do to her in exile, in her old age"
+        }
+      ]
+    },
+    {
+      "characteristic": "Ethnicity",
+      "attribute_value": "Iranian",
+      "evidence_spans": [
+        {
+          "start_index": 2068,
+          "end_index": 2076,
+          "text": "Iran"
+        },
+        {
+          "start_index": 2629,
+          "end_index": 2635,
+          "text": "Iranians"
+        }
+      ]
+    },
+    {
+      "characteristic": "Religion",
+      "attribute_value": "Islamic religious beliefs",
+      "evidence_spans": [
+        {
+          "start_index": 2229,
+          "end_index": 2254,
+          "text": "The Islamic Republic wanted to scare and punish me"
+        },
+        {
+          "start_index": 2297,
+          "end_index": 2346,
+          "text": "the wife of the Islamic Republic official, said that the book was anti Islamic."
+        }
+      ]
+    },
+    {
+      "characteristic": "Marriage and Relationship Status",
+      "attribute_value": "Married Young",
+      "evidence_spans": [
+        {
+          "start_index": 4064,
+          "end_index": 4077,
+          "text": "was married at 13"
+        }
+      ]
+    },
+    {
+      "characteristic": "Age",
+      "attribute_value": "Young Age",
+      "evidence_spans": [
+        {
+          "start_index": 4064,
+          "end_index": 4077,
+          "text": "was married at 13"
+        }
+      ]
+    },
+    {
+      "characteristic": "Pregnancy and Maternity",
+      "attribute_value": "Mother at Young Age",
+      "evidence_spans": [
+        {
+          "start_index": 4155,
+          "end_index": 4189,
+          "text": "was told she was six months pregnant"
+        }
+      ]
+    },
+    {
+      "characteristic": "Religion",
+      "attribute_value": "Modern Lifestyle",
+      "evidence_spans": [
+        {
+          "start_index": 4257,
+          "end_index": 4283,
+          "text": "her mother was modern"
+        },
+        {
+          "start_index": 4290,
+          "end_index": 4312,
+          "text": "didn\u2019t wear a chador"
+        }
+      ]
+    },
+    {
+      "characteristic": "Race",
+      "attribute_value": "Iranian",
+      "evidence_spans": [
+        {
+          "start_index": 4705,
+          "end_index": 4709,
+          "text": "Iran"
+        }
+      ]
+    },
+    {
+      "characteristic": "Marriage and Relationship Status",
+      "attribute_value": "Preference for white marriages",
+      "evidence_spans": [
+        {
+          "start_index": 6252,
+          "end_index": 6279,
+          "text": "rise of \u201cwhite marriages,\u201d"
+        },
+        {
+          "start_index": 6309,
+          "end_index": 6341,
+          "text": "living together without formal registration"
+        }
+      ]
+    },
+    {
+      "characteristic": "Location",
+      "attribute_value": "San Francisco",
+      "evidence_spans": [
+        {
+          "start_index": 6394,
+          "end_index": 6408,
+          "text": "near San Francisco"
+        }
+      ]
+    },
+    {
+      "characteristic": "Location",
+      "attribute_value": "Iran",
+      "evidence_spans": [
+        {
+          "start_index": 6495,
+          "end_index": 6499,
+          "text": "Iran"
+        },
+        {
+          "start_index": 6643,
+          "end_index": 6647,
+          "text": "Iran"
+        }
+      ]
+    },
+    {
+      "characteristic": "Religion",
+      "attribute_value": "Islamic Republic Context",
+      "evidence_spans": [
+        {
+          "start_index": 6342,
+          "end_index": 6422,
+          "text": "\u201cThe Islamic Republic doesn\u2019t know. Nobody checks."
+        },
+        {
+          "start_index": 6648,
+          "end_index": 6720,
+          "text": "\u201cThe women of Iran have changed so much, so many without hijab. They don\u2019t care what the Islamic Republic thinks.\u201d"
+        }
+      ]
+    },
+    {
+      "characteristic": "Religion",
+      "attribute_value": "Celebrates Persian New Year Nowruz",
+      "evidence_spans": [
+        {
+          "start_index": 6465,
+          "end_index": 6497,
+          "text": "celebrates the Persian new year Nowruz with a traditional haft sin spread"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "model_used": "gpt-4o",
+    "prompt_version": "characteristic_extraction",
+    "total_chunks_processed": 4,
+    "failed_chunks": []
+  }
+}
