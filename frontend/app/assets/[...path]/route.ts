@@ -27,7 +27,10 @@ export async function GET(
     return new NextResponse('Forbidden', { status: 403 })
   }
 
-  if (fs.existsSync(absoluteFilePath) && fs.lstatSync(absoluteFilePath).isFile()) {
+  if (
+    fs.existsSync(absoluteFilePath) &&
+    fs.lstatSync(absoluteFilePath).isFile()
+  ) {
     const fileBuffer = fs.readFileSync(absoluteFilePath)
     const extension = path.extname(absoluteFilePath).toLowerCase()
 

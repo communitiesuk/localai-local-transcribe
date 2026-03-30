@@ -10,7 +10,7 @@ const PUBLIC_PATHS = [
   '/generic-error',
   '/monitoring',
   '/privacy',
-  '/support'
+  '/support',
 ]
 
 export async function proxy(req: NextRequest) {
