@@ -13,7 +13,7 @@ from backend.api.routes.transcriptions import (
     list_transcriptions,
     save_transcription,
 )
-from common.database.postgres_models import Transcription
+from common.database.postgres_models import Minute, MinuteVersion, Transcription
 from common.types import RecordingCreateRequest
 
 
@@ -27,20 +27,27 @@ async def test_create_transcription_success(
     transcription_request,
 ):
     """Test successful creation of a transcription job."""
-    mock_transcription = Mock()
-    mock_transcription.id = uuid.uuid4()
-    mocker.patch("backend.api.routes.transcriptions.Transcription", return_value=mock_transcription)
 
-    mock_minute = Mock()
-    mock_minute.id = uuid.uuid4()
-    mocker.patch("backend.api.routes.transcriptions.Minute", return_value=mock_minute)
-    mocker.patch("backend.api.routes.transcriptions.MinuteVersion")
+    mock_transcription_obj = Mock(spec=Transcription)
+    mock_transcription_obj.id = uuid.uuid4()
+
+    mock_minute_obj = Mock(spec=Minute)
+    mock_minute_obj.id = uuid.uuid4()
+
+    mock_minute_version_obj = Mock(spec=MinuteVersion)
+    mock_minute_version_obj.id = uuid.uuid4()
+
+    mocker.patch("backend.api.routes.transcriptions.Transcription", return_value=mock_transcription_obj)
+    mocker.patch("backend.api.routes.transcriptions.Minute", return_value=mock_minute_obj)
+    mocker.patch("backend.api.routes.transcriptions.MinuteVersion", return_value=mock_minute_version_obj)
 
     response = await create_transcription(transcription_request, mock_session_with_recording, mock_user)
 
-    assert response.id == mock_transcription.id
-    assert mock_session_with_recording.add.call_count == 3
-    mock_session_with_recording.commit.assert_awaited()
+    assert response.id == mock_transcription_obj.id
+    assert mock_session_with_recording.add.call_count == 3  # Transcription, Minute, MinuteVersion
+    mock_session_with_recording.add.assert_any_call(mock_transcription_obj)
+    mock_session_with_recording.add.assert_any_call(mock_minute_obj)
+    mock_session_with_recording.add.assert_any_call(mock_minute_version_obj)
     mock_transcription_queue_service.publish_message.assert_called()
 
 
@@ -62,7 +69,12 @@ async def test_create_transcription_file_not_found(
 
 
 @pytest.mark.asyncio
-async def test_create_recording_different_file_extensions(mocker, mock_session, mock_user):
+async def test_create_recording_different_file_extensions(
+    mocker,
+    mock_session,
+    mock_user,
+    mock_storage_service_recording,  # NOQA: ARG001
+):
     """Test creating recordings with different file extensions to ensure they are handled correctly."""
 
     for file_ext in ["mp3", "wav", "m4a", "webm"]:
@@ -123,11 +135,6 @@ async def test_save_transcription_success(mock_session, mock_user, mock_transcri
     mock_session.get.assert_awaited_once_with(Transcription, mock_transcription.id)
     mock_session.commit.assert_awaited_once()
     mock_session.refresh.assert_awaited_once_with(mock_transcription)
-
-
-@pytest.mark.asyncio
-async def test_list_get_delete_transcription(mocker, mock_session, mock_user, mock_transcription):
-    """Test listing, getting, and deleting a transcription."""
 
 
 @pytest.mark.asyncio
