@@ -1,20 +1,21 @@
 import uuid
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import pytest
-from datetime import datetime, UTC
 from fastapi import HTTPException
 
 from backend.api.routes.minutes import (
-    list_minutes_for_transcription,
     create_minute,
-    get_minute,
-    list_minute_versions,
     create_minute_version,
-    get_minute_version,
     delete_minute_version,
+    get_minute,
+    get_minute_version,
+    list_minute_versions,
+    list_minutes_for_transcription,
 )
+
 
 @pytest.fixture
 def mock_user():
@@ -64,10 +65,11 @@ def mock_minute_version(mock_minute):
     mock_minute_version.minute = mock_minute
     return mock_minute_version
 
+
 @pytest.mark.parametrize("handle_exception", [False, True])
 @pytest.mark.asyncio
-async def test_list_minutes_for_transcription_success(mock_session, mock_user, mock_minute,handle_exception):
-    """ Test listing minutes for a transcription returns the correct data. """
+async def test_list_minutes_for_transcription_success(mock_session, mock_user, mock_minute, handle_exception):
+    """Test listing minutes for a transcription returns the correct data."""
     transcription = Mock()
     transcription.user_id = mock_user.id
     mock_session.get.return_value = transcription
@@ -81,16 +83,16 @@ async def test_list_minutes_for_transcription_success(mock_session, mock_user, m
         with pytest.raises(HTTPException):
             await list_minutes_for_transcription(mock_minute.transcription_id, mock_session, mock_user)
     else:
-
         result = await list_minutes_for_transcription(mock_minute.transcription_id, mock_session, mock_user)
         assert len(result) == 1
         assert result[0].id == mock_minute.id
         assert result[0].template_name == mock_minute.template_name
 
+
 @pytest.mark.parametrize("handle_exception", [False, True])
 @pytest.mark.asyncio
 async def test_create_minute_success(mocker, mock_session, mock_user, handle_exception):
-    """ Test creating a minute for a transcription successfully creates the minute and minute version. """
+    """Test creating a minute for a transcription successfully creates the minute and minute version."""
     transcription = Mock()
     transcription.user_id = mock_user.id
     mock_session.get.return_value = transcription
@@ -110,9 +112,10 @@ async def test_create_minute_success(mocker, mock_session, mock_user, handle_exc
     if handle_exception:
         mock_session.get.return_value = None
         with pytest.raises(HTTPException):
-            await create_minute(transcription_id=mock_minute_obj.id, request=request, session=mock_session, user=mock_user)
+            await create_minute(
+                transcription_id=mock_minute_obj.id, request=request, session=mock_session, user=mock_user
+            )
     else:
-
         await create_minute(transcription_id=mock_minute_obj.id, request=request, session=mock_session, user=mock_user)
 
         assert mock_session.add.call_count == 2
@@ -122,7 +125,7 @@ async def test_create_minute_success(mocker, mock_session, mock_user, handle_exc
 
 @pytest.mark.asyncio
 async def test_get_minute_success(mock_session, mock_user, mock_minute):
-    """ Test retrieving a minute by ID returns the correct minute. """
+    """Test retrieving a minute by ID returns the correct minute."""
     exec_result = Mock()
     exec_result.first.return_value = mock_minute
     mock_session.exec.return_value = exec_result
@@ -158,14 +161,13 @@ async def test_list_minute_versions_success(
 
 @pytest.mark.asyncio
 async def test_create_minute_version_success(mocker, mock_session, mock_user, mock_minute, mock_minute_version):
-    """ Test creating a minute version successfully creates the version and returns the correct response. """
+    """Test creating a minute version successfully creates the version and returns the correct response."""
     mocker.patch("backend.api.routes.minutes.get_minute", return_value=mock_minute)
 
     mock_session.commit = AsyncMock()
     mock_session.refresh = AsyncMock()
     mock_minute_version.html_content = "<p>test_create_minute_version_success</p>"
 
-    mock_llm = mocker.patch("backend.api.routes.minutes.llm_queue_service")
     mocker.patch("backend.api.routes.minutes.MinuteVersion", return_value=mock_minute_version)
 
     request = SimpleNamespace(content_source="initial_generation", html_content="<p>x</p>", ai_edit_instructions=None)
@@ -178,11 +180,11 @@ async def test_create_minute_version_success(mocker, mock_session, mock_user, mo
 @pytest.mark.parametrize("handle_exception", [False, True])
 @pytest.mark.asyncio
 async def test_get_minute_version_success(mock_session, mock_user, mock_minute_version, handle_exception):
-    """ Test retrieving a minute version by ID returns the correct version. """
+    """Test retrieving a minute version by ID returns the correct version."""
     exec_result = Mock()
 
     if handle_exception:
-        mock_minute_version.minute.transcription.user_id = uuid.uuid4()  
+        mock_minute_version.minute.transcription.user_id = uuid.uuid4()
         exec_result.first.return_value = mock_minute_version
         mock_session.exec.return_value = exec_result
         with pytest.raises(HTTPException):
@@ -200,12 +202,11 @@ async def test_get_minute_version_success(mock_session, mock_user, mock_minute_v
 async def test_delete_minute_version_success(mock_session, mock_user, mock_minute_version, handle_exception):
     exec_result = Mock()
     if handle_exception:
-        mock_minute_version.minute.transcription.user_id = uuid.uuid4()  
+        mock_minute_version.minute.transcription.user_id = uuid.uuid4()
         exec_result.first.return_value = mock_minute_version
         mock_session.exec.return_value = exec_result
         with pytest.raises(HTTPException):
             await delete_minute_version(mock_minute_version.id, mock_session, mock_user)
-        
 
     else:
         exec_result.first.return_value = mock_minute_version
