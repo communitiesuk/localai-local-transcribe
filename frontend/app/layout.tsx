@@ -12,8 +12,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Minute',
-  description: 'Minutes and transcriptions',
+  title: 'Local Transcribe',
+  description: 'Summaries and transcriptions',
 }
 
 export default function RootLayout({
@@ -23,6 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.className}>
+      <head>
+        <link rel="stylesheet" href="/govuk-frontend.min.css" />
+      </head>
       <body>
         <TanstackQueryProvider>
           <PosthogProvider>
