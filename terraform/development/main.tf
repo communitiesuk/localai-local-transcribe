@@ -77,6 +77,9 @@ module "frontdoor" {
   load_balancer_certificate_arn  = module.certificates.load_balancer_certificate_arn
   cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
   use_aws_shield_advanced        = true
+  app_host                       = local.app_host
+  oidc_client_id_name            = module.secrets.oidc_client_id_name
+  oidc_client_secret_name        = module.secrets.oidc_client_secret_name
 }
 
 module "certificates" {
