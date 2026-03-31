@@ -2,9 +2,16 @@ import { withSentryConfig } from '@sentry/nextjs'
 
 let nextConfig = {
   output: 'standalone',
+  sassOptions: {
+    includePaths: ['./node_modules'],
+    quietDeps: true,
+  },
+  outputFileTracingIncludes: {
+    '/assets/**/*': ['./node_modules/govuk-frontend/dist/govuk/assets/**/*'],
+  },
   experimental: {
-    outputFileTracingIncludes: {
-      '/assets/**/*': ['./node_modules/govuk-frontend/dist/govuk/assets/**/*'],
+    turbo: {
+      root: '..',
     },
   },
 }

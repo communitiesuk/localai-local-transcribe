@@ -1,4 +1,8 @@
-// Override the IE8 media query hack before importing
-$govuk-ie8-breakpoints: false !default;
+// Configure the path for GOV.UK Frontend assets.
+// We use a root-relative path that will be handled by the bundler's alias configuration.
+$govuk-assets-path: "/assets/";
+$govuk-ie8-breakpoints: false;
 
-@import 'node_modules/govuk-frontend/dist/govuk/base';
+// Import all of GOV.UK Frontend
+// Using @import for compatibility with the library's internal structure
+@import "govuk-frontend/dist/govuk/index";
