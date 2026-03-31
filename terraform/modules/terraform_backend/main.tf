@@ -31,20 +31,6 @@ module "state_bucket" {
   access_s3_log_expiration_days      = 700
 }
 
-# Encryption/recovery not required - lock not sensitive
-# tfsec:ignore:aws-dynamodb-enable-at-rest-encryption tfsec:ignore:aws-dynamodb-enable-recovery tfsec:ignore:aws-dynamodb-table-customer-key
-resource "aws_dynamodb_table" "terraform_state_lock" {
-  name           = "tfstate-lock-${var.environment_name}"
-  read_capacity  = 1
-  write_capacity = 1
-  hash_key       = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-}
-
 # Access to Terraform state, should be enough to do a terraform plan along with ReadOnlyAccess
 # tfsec:ignore:aws-iam-no-policy-wildcards
 data "aws_iam_policy_document" "terraform_state_read_only" {
@@ -67,17 +53,6 @@ data "aws_iam_policy_document" "terraform_state_read_only" {
       "kms:GenerateDataKey",
     ]
     resources = [aws_kms_key.state_bucket_encryption_key.arn]
-  }
-
-  statement {
-    sid = "TFStateLock"
-    actions = [
-      "dynamodb:DescribeTable",
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:DeleteItem",
-    ]
-    resources = [aws_dynamodb_table.terraform_state_lock.arn]
   }
 
   statement {

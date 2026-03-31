@@ -10,7 +10,7 @@ terraform {
 
   backend "s3" {
     bucket         = "local-transcribe-tfstate-dev"
-    dynamodb_table = "tfstate-lock-dev"
+    use_lockfile   = true
     encrypt        = true
     key            = "local-transcribe-infra-dev-tfstate"
     region         = "eu-west-2"
