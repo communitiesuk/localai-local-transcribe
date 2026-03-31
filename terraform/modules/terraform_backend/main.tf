@@ -1,10 +1,10 @@
 terraform {
-  required_version = "~>1.9.1"
+  required_version = "~>1.14.0"
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~>5.0"
+      version = "~>6.5"
     }
   }
 }
@@ -24,8 +24,8 @@ resource "aws_kms_alias" "state_bucket_encryption_key" {
 
 module "state_bucket" {
   source                             = "../s3_bucket"
-  bucket_name                        = "prsdb-tfstate-${var.environment_name}"
-  access_log_bucket_name             = "prsdb-tfstate-access-logs-${var.environment_name}"
+  bucket_name                        = "local-transcribe-tfstate-${var.environment_name}"
+  access_log_bucket_name             = "local-transcribe-tfstate-access-logs-${var.environment_name}"
   kms_key_arn                        = aws_kms_key.state_bucket_encryption_key.arn
   noncurrent_version_expiration_days = 700
   access_s3_log_expiration_days      = 700
