@@ -24,8 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.className}>
-      <head>
-      </head>
+      <head></head>
       <body>
         <TanstackQueryProvider>
           <PosthogProvider>
