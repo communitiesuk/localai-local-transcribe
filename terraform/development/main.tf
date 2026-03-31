@@ -9,11 +9,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "local-transcribe-tfstate"
-    dynamodb_table = "tfstate-lock"
-    encrypt        = true
-    key            = "local-transcribe-infra-dev"
-    region         = "eu-west-2"
+    bucket       = "local-transcribe-tfstate-development"
+    use_lockfile = true
+    encrypt      = true
+    key          = "local-transcribe-infra-development"
+    region       = "eu-west-2"
   }
 }
 

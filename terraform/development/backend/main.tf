@@ -12,7 +12,7 @@ terraform {
     bucket         = "local-transcribe-tfstate-development"
     use_lockfile   = true
     encrypt        = true
-    key            = "local-transcribe-infra-development-tfstate"
+    key            = "local-transcribe-state-infra-development"
     region         = "eu-west-2"
   }
 }
