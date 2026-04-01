@@ -21,7 +21,7 @@ data "aws_iam_policy_document" "push_frontend_images" {
 }
 
 resource "aws_iam_policy" "push_frontend_images" {
-  name   = "ecr-push-images"
+  name   = "ecr-push-frontend-images"
   policy = data.aws_iam_policy_document.push_frontend_images.json
 }
 
@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "push_backend_images" {
 }
 
 resource "aws_iam_policy" "push_backend_images" {
-  name   = "ecr-push-images"
+  name   = "ecr-push-backend-images"
   policy = data.aws_iam_policy_document.push_backend_images.json
 }
 
@@ -75,7 +75,7 @@ data "aws_iam_policy_document" "push_worker_images" {
 }
 
 resource "aws_iam_policy" "push_worker_images" {
-  name   = "ecr-push-images"
+  name   = "ecr-push-worker-images"
   policy = data.aws_iam_policy_document.push_worker_images.json
 }
 
