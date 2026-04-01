@@ -183,3 +183,9 @@ variable "aws_region" {
   description = "AWS region, used to construct the ALB public key endpoint URL"
   type        = string
 }
+
+variable "ssl_certs_created" {
+  description = "Indicates whether ssl certificates have already been manually created"
+  type        = bool
+  default     = false
+}

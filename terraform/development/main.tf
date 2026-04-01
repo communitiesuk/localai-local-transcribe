@@ -198,6 +198,7 @@ module "ecs" {
   alb_arn                     = module.frontdoor.load_balancer.arn
   oidc_issuer                 = module.frontdoor.oidc_issuer
   aws_region                  = local.aws_region
+  ssl_certs_created           = var.ssl_certs_created
 }
 
 module "uploads_bucket" {

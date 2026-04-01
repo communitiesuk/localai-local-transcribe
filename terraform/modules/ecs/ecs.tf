@@ -16,10 +16,13 @@ resource "aws_ecs_service" "frontend" {
   scheduling_strategy                = "REPLICA"
   task_definition                    = aws_ecs_task_definition.frontend.arn
 
-  load_balancer {
-    container_name   = "frontend"
-    container_port   = var.frontend_port
-    target_group_arn = var.lb_target_group_arn
+  dynamic "load_balancer" {
+    for_each = var.ssl_certs_created ? [{}] : []
+    content {
+      container_name   = "frontend"
+      container_port   = var.frontend_port
+      target_group_arn = var.lb_target_group_arn
+    }
   }
 
   network_configuration {
