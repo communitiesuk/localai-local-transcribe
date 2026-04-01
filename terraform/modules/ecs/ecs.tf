@@ -14,7 +14,7 @@ resource "aws_ecs_service" "frontend" {
   force_new_deployment               = true
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
-  task_definition                    = "local-transcribe-frontend-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
+  task_definition                    = aws_ecs_task_definition.frontend.arn
 
   load_balancer {
     container_name   = "frontend"
@@ -39,7 +39,7 @@ resource "aws_ecs_service" "backend" {
   force_new_deployment               = true
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
-  task_definition                    = "local-transcribe-backend-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
+  task_definition                    = aws_ecs_task_definition.backend.arn
 
   network_configuration {
     security_groups  = [aws_security_group.backend.id]
@@ -58,7 +58,7 @@ resource "aws_ecs_service" "worker" {
   force_new_deployment               = true
   launch_type                        = "FARGATE"
   scheduling_strategy                = "REPLICA"
-  task_definition                    = "local-transcribe-worker-${var.environment_name}" # Task family name - gets the latest ACTIVE revision
+  task_definition                    = aws_ecs_task_definition.worker.arn
 
   network_configuration {
     security_groups  = [aws_security_group.worker.id]
