@@ -154,13 +154,13 @@ variable "worker_task_cpu" {
 variable "frontend_task_memory" {
   description = "Memory for the frontend ECS task definition"
   type        = number
-  default     = 2048
+  default     = 4096
 }
 
 variable "backend_task_memory" {
   description = "Memory for the backend ECS task definition"
   type        = number
-  default     = 2048
+  default     = 4096
 }
 
 variable "worker_task_memory" {
