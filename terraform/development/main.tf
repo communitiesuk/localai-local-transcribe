@@ -76,7 +76,19 @@ module "frontdoor" {
   cloudfront_certificate_arn     = module.certificates.cloudfront_certificate_arn
   load_balancer_certificate_arn  = module.certificates.load_balancer_certificate_arn
   cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
-  use_aws_shield_advanced        = true
+
+  use_aws_shield_advanced        = false
+  ip_allowlist = [
+    # Softwire
+    "31.221.86.178/32",
+    "167.98.33.82/32",
+    "87.224.105.250/32",
+    "87.224.116.242/32",
+    "45.150.142.210/32",
+    # MHCLG
+    "4.158.35.41/32",
+  ]
+
   app_host                       = local.app_host
   oidc_client_id_name            = module.secrets.oidc_client_id_name
   oidc_client_secret_name        = module.secrets.oidc_client_secret_name
