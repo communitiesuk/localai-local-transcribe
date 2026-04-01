@@ -17,7 +17,7 @@ resource "aws_ecs_service" "frontend" {
   task_definition                    = aws_ecs_task_definition.frontend.arn
 
   dynamic "load_balancer" {
-    for_each = var.ssl_certs_created ? [{}] : []
+    for_each = var.lb_listener_exists ? [{}] : []
     content {
       container_name   = "frontend"
       container_port   = var.frontend_port

@@ -184,8 +184,8 @@ variable "aws_region" {
   type        = string
 }
 
-variable "ssl_certs_created" {
-  description = "Indicates whether ssl certificates have already been manually created"
+variable "lb_listener_exists" {
+  description = "Indicates whether the load balancer listener has been created"
   type        = bool
   default     = false
 }
