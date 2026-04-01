@@ -25,7 +25,7 @@ resource "aws_cloudfront_distribution" "main" {
       http_port              = 80
       https_port             = 443
       origin_protocol_policy = var.ssl_certs_created ? "https-only" : "http-only"
-      origin_ssl_protocols   = ["TLSv1.3"]
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
 
     custom_header {
