@@ -52,7 +52,7 @@ resource "aws_ecs_service" "backend" {
 }
 
 resource "aws_ecs_service" "worker" {
-  name                               = "${var.environment_name}-backend"
+  name                               = "${var.environment_name}-worker"
   cluster                            = aws_ecs_cluster.main.arn
   deployment_maximum_percent         = 200
   deployment_minimum_healthy_percent = 100 # There should always be at least the desired count running during a deployment
