@@ -26,5 +26,6 @@
     ]
   },
   "js/ts.implicitProjectConfig.checkJs": true,
-  "python.analysis.typeCheckingMode": "standard"
+  "python.analysis.typeCheckingMode": "standard",
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }
