@@ -5,7 +5,7 @@ locals {
       value = terraform.workspace
     }, {
       name  = "PORT"
-      value = var.backend_port
+      value = tostring(var.backend_port)
     }, {
       name  = "REPO"
       value = "local-transcribe"
@@ -20,7 +20,7 @@ locals {
       value = "jdbc:postgresql://${var.database_host}"
     }, {
       name  = "POSTGRES_PORT"
-      value = var.database_port
+      value = tostring(var.database_port)
     }, {
       name  = "POSTGRES_USER"
       value = var.database_user
@@ -47,10 +47,10 @@ locals {
       value = "[\"azure_stt_synchronous\",\"azure_stt_batch\"]"
     }, {
       name  = "MAX_TRANSCRIPTION_PROCESSES"
-      value = var.max_transcription_processes
+      value = tostring(var.max_transcription_processes)
     }, {
       name  = "MAX_LLM_PROCESSES"
-      value = var.max_llm_processes
+      value = tostring(var.max_llm_processes)
     }, {
       name  = "AZURE_TRANSCRIPTION_CONTAINER_NAME"
       value = "transcriptions"
@@ -86,7 +86,7 @@ locals {
       value = "local-transcribe-frontend"
     }, {
       name = "PORT"
-      value = var.frontend_port
+      value = tostring(var.frontend_port)
     }, {
       name = "REPO"
       value = "local-transcribe"
