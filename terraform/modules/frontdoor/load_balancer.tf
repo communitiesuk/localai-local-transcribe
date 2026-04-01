@@ -71,11 +71,13 @@ resource "aws_lb_target_group" "frontend" {
 
 
 data "aws_ssm_parameter" "oidc_client_id" {
+  count           = var.ssl_certs_created ? 1 : 0
   name            = var.oidc_client_id_name
   with_decryption = true
 }
 
 data "aws_ssm_parameter" "oidc_client_secret" {
+  count           = var.ssl_certs_created ? 1 : 0
   name            = var.oidc_client_secret_name
   with_decryption = true
 }
@@ -88,13 +90,13 @@ resource "aws_lb_listener_rule" "authentication" {
     type = "authenticate-oidc"
 
     authenticate_oidc {
-      client_id              = data.aws_ssm_parameter.oidc_client_id.value
+      client_id              = data.aws_ssm_parameter.oidc_client_id[0].value
       issuer                 = local.gds_ia_issuer
       authorization_endpoint = "${local.gds_ia_issuer}/auth/oidc"
       token_endpoint         = "${local.gds_ia_issuer}/auth/token"
       user_info_endpoint     = "${local.gds_ia_issuer}/auth/profile"
       session_cookie_name    = "X-Amzn-Oidc-Data"
-      client_secret          = data.aws_ssm_parameter.oidc_client_secret.value
+      client_secret          = data.aws_ssm_parameter.oidc_client_secret[0].value
       scope                  = "openid profile email"
       session_timeout        = 604800
     }
