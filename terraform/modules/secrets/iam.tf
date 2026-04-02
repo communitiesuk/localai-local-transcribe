@@ -51,6 +51,16 @@ resource "aws_iam_role_policy" "secret_access" {
         Resource = [
           aws_secretsmanager_secret.database_password.arn,
         ]
+      },
+      {
+        Action = [
+          "ssm:GetParameters"
+        ]
+        Effect = "Allow"
+        Resource = [
+          aws_ssm_parameter.azure_speech_key.arn,
+          aws_ssm_parameter.azure_speech_region.arn,
+        ]
       }
     ]
   })
