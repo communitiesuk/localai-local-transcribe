@@ -23,7 +23,9 @@ export async function parseAuthToken(
   }
 
   try {
-    const payload = await verifier!.verify(token)
+    const payload = await verifier!.verify(token, {
+      clientId: process.env.OIDC_CLIENT_ID!,
+    })
 
     const email = payload.email as string | undefined
     if (!email) {
