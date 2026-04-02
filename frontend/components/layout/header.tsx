@@ -65,17 +65,6 @@ export const Header = () => {
             <Settings size="1rem" /> Settings
           </NavButton>
         </div>
-        <div className="flex items-center" style={{ gridArea: 'nav' }}>
-          <NavButton href="/">
-            <Home size="1rem" /> Home
-          </NavButton>
-          <NavButton href="/templates">
-            <FileText size="1rem" /> Templates
-          </NavButton>
-          <NavButton href="/settings">
-            <Settings size="1rem" /> Settings
-          </NavButton>
-        </div>
       </div>
     </>
   )
