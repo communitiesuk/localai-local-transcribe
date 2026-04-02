@@ -17,3 +17,8 @@ output "database_identifier" {
   value       = aws_db_instance.main.identifier
   description = "The identifier of the DB instance"
 }
+
+output "database_name" {
+  value       = aws_db_instance.main.db_name
+  description = "The name of the database"
+}

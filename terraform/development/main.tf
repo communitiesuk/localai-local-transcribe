@@ -174,6 +174,7 @@ module "ecs" {
 
   database_port     = local.database_port
   database_host     = module.database.database_url
+  database_name     = module.database.database_name
   database_user     = local.database_username
   database_password = module.secrets.database_password.result
 

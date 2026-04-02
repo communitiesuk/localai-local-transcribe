@@ -28,6 +28,9 @@ locals {
       name  = "POSTGRES_PASSWORD"
       value = var.database_password
     }, {
+      name  = "POSTGRES_DB"
+      value = var.database_name
+    }, {
       name  = "AZURE_OPENAI_API_VERSION"
       value = "2024-10-21"
     }, {
