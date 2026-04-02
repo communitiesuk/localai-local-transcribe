@@ -10,7 +10,6 @@ from common.database.postgres_models import DialogueEntry
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.minute_handler_service import MinuteGenerationFailedError
 from common.types import EditMessageData, TaskType, TranscriptionJobMessageData, WorkerMessage
-from tests.worker.mocks import llm_queue, stopped, transcription_queue  # noqa: F401
 from worker.ray_recieve_service import _RayLlmService, _RayTranscriptionService
 
 # Test Messages

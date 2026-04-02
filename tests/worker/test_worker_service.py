@@ -6,7 +6,6 @@ from unittest.mock import Mock
 
 import pytest
 
-from tests.worker.mocks import actor, llm_queue, transcription_queue  # noqa: F401
 from worker.worker_service import WorkerService, create_worker_service
 
 
