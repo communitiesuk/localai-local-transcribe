@@ -123,7 +123,7 @@ async def delete_chats(transcription_id: uuid.UUID, session: SQLSessionDep, curr
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Transcription not found")
-    await session.exec(delete(Chat).where(Chat.transcription_id == transcription_id))
+    await session.exec(delete(Chat).where(Chat.transcription_id == transcription_id)) # type: ignore[arg-type]
 
     # Delete the transcription
     await session.commit()
