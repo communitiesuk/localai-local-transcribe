@@ -31,7 +31,9 @@ export class TemplatesPage {
     await this.page
       .getByRole('textbox', { name: 'A description to help' })
       .fill(template.description)
-    await this.page.getByTestId('template-content-editor').click()
+
+    // TODO: change this when the accessibility issue on the rich text editor is resolved
+    await this.page.getByRole('textbox').nth(2).click()
     await this.page.keyboard.type(template.content)
 
     await this.page.getByRole('button', { name: 'Save' }).click()

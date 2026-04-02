@@ -8,7 +8,7 @@ test.describe('Home page', () => {
     await homePage.goto()
 
     await expect(homePage.templatesLink()).toBeVisible()
-    await expect(homePage.settingsLink()).toHaveCount(2) // One in the header and one in the recent meetings section
+    await expect(homePage.settingsLink()).toHaveCount(1)
     await expect(homePage.heading()).toBeVisible()
     await expect(homePage.newMeetingCta()).toBeVisible()
     await expect(homePage.newMeetingCta()).toHaveAttribute('href', '/new')
