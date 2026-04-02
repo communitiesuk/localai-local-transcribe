@@ -1,8 +1,9 @@
 resource "aws_ssm_parameter" "oidc_client_name" {
-  type   = "SecureString"
-  key_id = aws_kms_key.local_transcribe_secrets.arn
-  name   = "/local-transcribe/oidc_secrets/client_name"
-  value  = "placeholder" # Update value in SSM - Do not hardcode
+  type        = "SecureString"
+  key_id      = aws_kms_key.local_transcribe_secrets.arn
+  name        = "/local-transcribe/oidc_secrets/client_name"
+  description = "OIDC client ID for local-transcribe"
+  value       = "placeholder" # Update value in SSM - Do not hardcode
 
   lifecycle {
     ignore_changes = [value]
@@ -10,10 +11,11 @@ resource "aws_ssm_parameter" "oidc_client_name" {
 }
 
 resource "aws_ssm_parameter" "oidc_client_secret" {
-  type   = "SecureString"
-  key_id = aws_kms_key.local_transcribe_secrets.arn
-  name   = "/local-transcribe/oidc_secrets/client_secret"
-  value  = "placeholder" # Update value in SSM - Do not hardcode
+  type        = "SecureString"
+  key_id      = aws_kms_key.local_transcribe_secrets.arn
+  name        = "/local-transcribe/oidc_secrets/client_secret"
+  description = "OIDC client secret for local-transcribe"
+  value       = "placeholder" # Update value in SSM - Do not hardcode
 
   lifecycle {
     ignore_changes = [value]
