@@ -80,6 +80,16 @@ locals {
       value = var.aws_region
     },
   ]
+  shared_worker_backend_secrets = [
+    {
+      name      = "AZURE_SPEECH_KEY"
+      valueFrom = var.azure_speech_key_arn
+    },
+    {
+      name      = "AZURE_SPEECH_REGION"
+      valueFrom = var.azure_speech_region_arn
+    },
+  ]
   frontend_environment_variables = [
     {
       name = "ENVIRONMENT"
@@ -195,6 +205,8 @@ resource "aws_ecs_task_definition" "backend" {
         }
       ])
 
+      secrets = local.shared_worker_backend_secrets
+
       healthCheck = {
         command     = ["CMD-SHELL", "curl --fail http://localhost:${ var.backend_port }/healthcheck"]
         interval    = 60
@@ -245,6 +257,8 @@ resource "aws_ecs_task_definition" "worker" {
           value ="local-transcribe-worker"
         },
       ])
+
+      secrets = local.shared_worker_backend_secrets
 
       healthCheck = {
         command     = ["CMD-SHELL", "poetry run python worker/healthcheck.py"]

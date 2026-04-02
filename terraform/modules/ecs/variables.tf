@@ -189,6 +189,16 @@ variable "aws_region" {
   type        = string
 }
 
+variable "azure_speech_key_arn" {
+  description = "ARN of the SSM parameter containing the Azure Speech key"
+  type        = string
+}
+
+variable "azure_speech_region_arn" {
+  description = "ARN of the SSM parameter containing the Azure Speech region"
+  type        = string
+}
+
 variable "lb_listener_exists" {
   description = "Indicates whether the load balancer listener has been created"
   type        = bool

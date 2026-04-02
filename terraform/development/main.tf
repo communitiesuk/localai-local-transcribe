@@ -200,6 +200,9 @@ module "ecs" {
   oidc_issuer                 = module.frontdoor.oidc_issuer
   aws_region                  = local.aws_region
   lb_listener_exists          = var.ssl_certs_created
+
+  azure_speech_key_arn    = module.secrets.azure_speech_key_arn
+  azure_speech_region_arn = module.secrets.azure_speech_region_arn
 }
 
 module "uploads_bucket" {
