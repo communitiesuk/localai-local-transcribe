@@ -9,8 +9,8 @@ output "database_username_ssm_parameter_arn" {
 }
 
 output "database_url" {
-  value       = "${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
-  description = "The database URL"
+  value       = aws_db_instance.main.address
+  description = "The database host address"
 }
 
 output "database_identifier" {

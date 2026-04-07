@@ -17,7 +17,7 @@ locals {
       value = "local-transcribe"
     }, {
       name  = "POSTGRES_HOST"
-      value = "jdbc:postgresql://${var.database_host}"
+      value = var.database_host
     }, {
       name  = "POSTGRES_PORT"
       value = tostring(var.database_port)
