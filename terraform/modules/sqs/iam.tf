@@ -26,11 +26,11 @@ resource "aws_iam_policy" "sqs_access" {
 }
 
 resource "aws_iam_role_policy_attachment" "backend_sqs_access" {
-  role       = var.backend_task_execution_role_name
+  role       = var.backend_task_role_name
   policy_arn = aws_iam_policy.sqs_access.arn
 }
 
 resource "aws_iam_role_policy_attachment" "worker_sqs_access" {
-  role       = var.worker_task_execution_role_name
+  role       = var.worker_task_role_name
   policy_arn = aws_iam_policy.sqs_access.arn
 }

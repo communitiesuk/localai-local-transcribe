@@ -158,8 +158,8 @@ module "sqs" {
   source           = "../modules/sqs"
   environment_name = local.environment_name
 
-  worker_task_execution_role_name  = module.ecs.worker_execution_task_name
-  backend_task_execution_role_name = module.ecs.backend_execution_task_name
+  worker_task_role_name  = module.ecs.worker_task_role_name
+  backend_task_role_name = module.ecs.backend_task_role_name
 }
 
 module "ecs" {
