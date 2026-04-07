@@ -37,7 +37,9 @@ async def test_no_restart_with_pending_task(monkeypatch, actor, transcription_qu
 
     pending_future = asyncio.Future()
     futures = [pending_future]
-    service.calls = ["old_call"]
+
+    initial_call = object()
+    service.calls = [initial_call]
 
     async def mock_wait_with_pending_task(futures, timeout=None):  # noqa: ARG001, ASYNC109
         return set(), {pending_future}  # return failed, pending
@@ -48,7 +50,7 @@ async def test_no_restart_with_pending_task(monkeypatch, actor, transcription_qu
     await service._check_and_restart_tasks(futures)  # noqa: SLF001
 
     # test the call and future is the same
-    assert service.calls[0] == "old_call"
+    assert service.calls[0] == initial_call
     assert futures[0] is pending_future
 
 
@@ -61,18 +63,24 @@ async def test_restart_with_finished_task(monkeypatch, actor, transcription_queu
     finished_future = asyncio.Future()
     finished_future.set_result(None)
     futures = [finished_future]
-    service.calls = ["old_call"]
+
+    initial_call = object()
+    service.calls = [initial_call]  # will be replaced by new_call
 
     async def mock_wait_with_finished_task(futures, timeout=None):  # noqa: ARG001, ASYNC109
         return {finished_future}, set()  # return failed, pending
 
     monkeypatch.setattr("asyncio.wait", mock_wait_with_finished_task)
 
+    new_call = object()
+    actor.process.remote.return_value = new_call
+
     # restart the worker
     await service._check_and_restart_tasks(futures)  # noqa: SLF001
 
     # confirm new worker started, and return is wrapped in a future
-    assert service.calls[0] == "call"
+    actor.process.remote.assert_called_once()
+    assert service.calls[0] is new_call
     assert isinstance(futures[0], asyncio.Future)
 
 

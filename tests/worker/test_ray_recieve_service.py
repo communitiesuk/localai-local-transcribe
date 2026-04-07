@@ -1,6 +1,3 @@
-# ruff: noqa: F811
-# needed for pytest fixtures
-
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
