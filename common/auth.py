@@ -1,24 +1,23 @@
-from i_dot_ai_utilities.auth.auth_api import AuthApiClient, UserAuthorisationResult
+import logging
+from dataclasses import dataclass
+
+import jwt
 
 from common.services.exceptions import MissingAuthTokenError
-from common.settings import get_settings, get_structured_logger
+from common.settings import get_settings
 
 settings = get_settings()
-logger = get_structured_logger()
+logger = logging.getLogger(__name__)
 
-auth_client = AuthApiClient(
-    app_name=settings.REPO,
-    auth_api_url=settings.AUTH_API_URL,
-    logger=logger,
-    timeout=settings.AUTH_API_REQUEST_TIMEOUT or 5,
-)
+
+@dataclass
+class UserAuthorisationResult:
+    email: str
+    is_authorised: bool
+    auth_reason: str = ""
 
 
 def __load_dummy_user_info() -> UserAuthorisationResult:
-    """
-    Returns a dummy UserAuthorisationResult, as one would be received from the Auth API's /token/authorise endpoint.
-    Used for local testing.
-    """
     return UserAuthorisationResult(
         email="test@test.co.uk",
         is_authorised=True,
@@ -28,7 +27,7 @@ def __load_dummy_user_info() -> UserAuthorisationResult:
 
 def get_user_info(auth_token: str | None) -> UserAuthorisationResult:
     """
-    Retrieve user metadata, including the user email and whether they should have access to the app.
+    Retrieve user metadata from the x-amzn-oidc-data JWT injected by the ALB.
     """
     if settings.ENVIRONMENT == "local":
         return __load_dummy_user_info()
@@ -37,7 +36,12 @@ def get_user_info(auth_token: str | None) -> UserAuthorisationResult:
         raise MissingAuthTokenError
 
     try:
-        return auth_client.get_user_authorisation_info(auth_token)
+        payload = jwt.decode(auth_token, options={"verify_signature": False}, algorithms=["ES256"])
+        email = payload.get("email")
+        if not email:
+            msg = "No email found in JWT payload"
+            raise ValueError(msg)
+        return UserAuthorisationResult(email=email, is_authorised=True)
     except Exception:
         logger.exception("Error occurred when authorising user")
         raise
@@ -45,7 +49,7 @@ def get_user_info(auth_token: str | None) -> UserAuthorisationResult:
 
 def is_authorised_user(auth_token: str) -> bool:
     """
-    A simple wrapper function to call the Auth API and check the user is permitted to access the resource.
+    A simple wrapper function to check the user is permitted to access the resource.
     """
     try:
         return get_user_info(auth_token).is_authorised

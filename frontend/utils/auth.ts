@@ -1,34 +1,18 @@
-import {
-  AuthApiClient,
-  createAuthUtils,
-  type UserAuthorisationResult,
-} from '@i-dot-ai-npm/utilities'
-
-// Logger configuration
-const logger = console
-
-// Validate required environment variables
-// Don't expect an AUTH_API_URL if you're running dev locally / running frontend tests
-const authApiUrl =
-  process.env.AUTH_API_URL ||
-  (process.env.NODE_ENV === 'development' ? 'development' : undefined)
-
-if (!authApiUrl) {
-  throw new Error('AUTH_API_URL is not defined in the environment variables.')
+export type UserAuthorisationResult = {
+  email: string
+  isAuthorised: boolean
+  authReason: string
 }
 
-process.env.AUTH_API_URL = authApiUrl
-
-// Initialize AuthApiClient
-const authClient = new AuthApiClient({
-  appName: process.env.REPO || 'unknown',
-  authApiUrl: process.env.AUTH_API_URL,
-  logger: logger,
-  timeout: 5000,
-})
-
-// Create auth utilities
-const { getUserInfo } = createAuthUtils(authClient, logger)
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const payload = token.split('.')[1]
+    const decoded = Buffer.from(payload, 'base64url').toString('utf8')
+    return JSON.parse(decoded)
+  } catch {
+    return null
+  }
+}
 
 export async function parseAuthToken(
   token: string
@@ -39,23 +23,20 @@ export async function parseAuthToken(
   }
 
   try {
-    const userInfo = await getUserInfo(token)
+    const payload = decodeJwtPayload(token)
 
-    if (!userInfo) {
-      console.error('Failed to get user info from token')
+    if (!payload) {
+      console.error('Failed to decode JWT payload')
       return null
     }
 
-    if (!userInfo.email) {
-      console.error('No email found in user info')
+    const email = payload.email as string | undefined
+    if (!email) {
+      console.error('No email found in JWT payload')
       return null
     }
 
-    return {
-      email: userInfo.email,
-      isAuthorised: userInfo.isAuthorised,
-      authReason: userInfo.authReason,
-    }
+    return { email, isAuthorised: true, authReason: 'OIDC' }
   } catch (error) {
     console.error('Error parsing auth token:', error)
     return null
