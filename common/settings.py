@@ -24,17 +24,6 @@ else:
     logger.info("No .env file was detected. Using environment variables as is")
 
 
-def elasticmq_url() -> str:
-    url = os.getenv("ELASTICMQ_URL")
-    if url:
-        return url
-
-    if Path("/.dockerenv").exists():
-        return "http://elasticmq:9324"
-
-    return "http://localhost:9324"
-
-
 class Settings(BaseSettings):
     POSTGRES_HOST: str = Field(description="PostgreSQL database host")
     POSTGRES_PORT: int = Field(description="PostgreSQL database port")
@@ -102,7 +91,7 @@ class Settings(BaseSettings):
     # ELASTICMQ for development
     USE_ELASTICMQ: bool = Field(description="Use ElasticMQ for local AWS SQS emulation in dev", default=True)
     ELASTICMQ_URL: str = Field(
-        description="ELASTICMQ service URL for local AWS services emulation", default_factory=elasticmq_url
+        description="ELASTICMQ service URL for local AWS services emulation", default="http://localhost:9324"
     )
 
     TRANSCRIPTION_SERVICES: list[str] = Field(
