@@ -1,6 +1,3 @@
-# ruff: noqa: F811
-# needed for pytest fixtures
-
 import asyncio
 from unittest.mock import Mock
 
@@ -11,16 +8,26 @@ from worker.worker_service import WorkerService, create_worker_service
 
 @pytest.mark.asyncio
 async def test_worker_service_initialisation(monkeypatch, actor, transcription_queue, llm_queue):
-    monkeypatch.setattr("worker.worker_service.RayTranscriptionService.remote", Mock(return_value=actor))
-    monkeypatch.setattr("worker.worker_service.RayLlmService.remote", Mock(return_value=actor))
+    transcription_processes = 2
+    llm_processes = 3
 
-    monkeypatch.setattr("worker.worker_service.settings.MAX_TRANSCRIPTION_PROCESSES", 2)
-    monkeypatch.setattr("worker.worker_service.settings.MAX_LLM_PROCESSES", 3)
+    transcription_remote = Mock(return_value=actor)
+    llm_remote = Mock(return_value=actor)
+
+    monkeypatch.setattr("worker.worker_service.RayTranscriptionService.remote", transcription_remote)
+    monkeypatch.setattr("worker.worker_service.RayLlmService.remote", llm_remote)
+
+    monkeypatch.setattr("worker.worker_service.settings.MAX_TRANSCRIPTION_PROCESSES", transcription_processes)
+    monkeypatch.setattr("worker.worker_service.settings.MAX_LLM_PROCESSES", llm_processes)
 
     service = WorkerService(transcription_queue, llm_queue)
 
-    assert len(service.actors) == 5
-    assert len(service.calls) == 5
+    assert transcription_remote.call_count == transcription_processes
+    assert llm_remote.call_count == llm_processes
+
+    expected_total = transcription_processes + llm_processes
+    assert len(service.actors) == expected_total
+    assert len(service.calls) == expected_total
 
 
 @pytest.mark.asyncio
@@ -28,7 +35,6 @@ async def test_no_restart_with_pending_task(monkeypatch, actor, transcription_qu
     service = WorkerService(transcription_queue, llm_queue)
     service.actors = [actor]
 
-    # mock a pending job
     pending_future = asyncio.Future()
     futures = [pending_future]
     service.calls = ["old_call"]
