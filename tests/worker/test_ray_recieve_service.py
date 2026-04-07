@@ -54,7 +54,7 @@ async def test_process_with_transcript(transcription_service, transcription_queu
 
     transcription_job = TranscriptionJobMessageData(
         transcription_service="service",
-        transcript=TEST_DIALOGUE,  # make transcript available
+        transcript=TEST_DIALOGUE,
     )
     monkeypatch.setattr(
         "worker.ray_recieve_service.TranscriptionHandlerService.process_transcription",
@@ -68,7 +68,7 @@ async def test_process_with_transcript(transcription_service, transcription_queu
 
     await transcription_service.process()
 
-    # check llm job is qeued and current transcription job is completed
+    # check llm job is queued and current transcription job is completed
     llm_queue.publish_message.assert_called_once()
     transcription_queue.complete_message.assert_called_once_with(RECEIPT_HANDLE)
 
@@ -88,7 +88,7 @@ async def test_process_without_transcript_requeue(transcription_service, transcr
 
     await transcription_service.process()
 
-    # check transcription job is re-qeued and current transcription job is completed
+    # check transcription job is requeued and current transcription job is completed
     transcription_queue.publish_message.assert_called_once()
     transcription_queue.complete_message.assert_called_once_with(RECEIPT_HANDLE)
 

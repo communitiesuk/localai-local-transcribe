@@ -7,7 +7,7 @@ import pytest
 def stopped():
     stopped = Mock()
     stopped.get = AsyncMock()
-    # run once (Flase) then stop (True)
+    # run once (False) then stop (True)
     stopped.get.remote = AsyncMock(side_effect=[False, True])
     return stopped
 
