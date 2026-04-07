@@ -1,7 +1,5 @@
 import logging
-import os
 from functools import lru_cache
-from pathlib import Path
 
 import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
