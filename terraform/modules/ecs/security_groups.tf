@@ -28,6 +28,15 @@ resource "aws_security_group" "worker" {
   }
 }
 
+resource "aws_vpc_security_group_ingress_rule" "frontend_ingress_from_bastion" {
+  description                  = "Allow frontend ingress on port ${var.frontend_port} from the bastion"
+  ip_protocol                  = "tcp"
+  from_port                    = var.frontend_port
+  to_port                      = var.frontend_port
+  referenced_security_group_id = var.bastion_sg_id
+  security_group_id            = aws_security_group.frontend.id
+}
+
 resource "aws_vpc_security_group_ingress_rule" "frontend_ingress_from_load_balancer" {
   description                  = "Allow frontend ingress on port ${var.frontend_port} from the load balancer"
   ip_protocol                  = "tcp"

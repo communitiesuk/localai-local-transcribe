@@ -204,3 +204,8 @@ variable "lb_listener_exists" {
   type        = bool
   default     = false
 }
+
+variable "bastion_sg_id" {
+  description = "id of the bastion security group, used to allow direct access for testing"
+  type        = string
+}

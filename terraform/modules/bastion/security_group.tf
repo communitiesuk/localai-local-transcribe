@@ -19,4 +19,12 @@ resource "aws_security_group" "bastion" {
     cidr_blocks = [var.vpc_cidr_block]
     description = "Allow bastion access to postgres port within the VPC"
   }
+
+  egress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr_block]
+    description = "Allow bastion access to frontend port within the VPC"
+  }
 }
