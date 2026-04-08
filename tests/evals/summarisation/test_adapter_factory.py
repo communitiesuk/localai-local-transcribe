@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from evals.summarisation.src.adapter_factory import build_azure_apim_adapter
+from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
 
 
 @pytest.mark.parametrize(

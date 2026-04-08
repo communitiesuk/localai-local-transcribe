@@ -106,7 +106,7 @@ async function convertHTMLToWordAndDownload(
 ): Promise<void> {
   const processedHtml = preprocessHtml(htmlContent, transcript)
   const result = await asBlob(processedHtml)
-  const blob = result instanceof Blob ? result : new Blob([result])
+  const blob = result instanceof Blob ? result : new Blob([result as BlobPart])
 
   saveAs(blob, fileName)
 }
