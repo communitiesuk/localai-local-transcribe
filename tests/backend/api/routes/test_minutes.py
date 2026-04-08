@@ -137,7 +137,8 @@ async def test_create_minute_success(mocker, mock_session, test_minute, test_min
         user=test_user,
     )
 
-    assert mock_session.add.call_count == 2
+    mock_session.add.assert_any_call(minute)
+    mock_session.add.assert_any_call(minute_version)
     mock_session.commit.assert_awaited()
     llm.publish_message.assert_called()
 
