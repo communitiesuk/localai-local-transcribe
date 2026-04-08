@@ -6,8 +6,8 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env
-      required: false
+      - path: .env
+        required: false
     environment:
       - POSTGRES_HOST=db
       - STORAGE_SERVICE_NAME=local
@@ -70,7 +70,7 @@ services:
       elasticmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
+      test: ["CMD-SHELL", "/app/.venv/bin/python worker/healthcheck.py"]
       interval: 60s
       retries: 3
       start_period: 60s
@@ -78,7 +78,7 @@ services:
     develop:
       watch:
         - path: ./worker
-          target: /app/backend
+          target: /app/worker
           action: sync+restart
         - path: ./common
           target: /app/common
