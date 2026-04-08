@@ -2,7 +2,7 @@ locals {
   shared_worker_backend_environment_variables = [
     {
       name  = "ENVIRONMENT"
-      value = terraform.workspace
+      value = var.environment
     }, {
       name  = "PORT"
       value = tostring(var.backend_port)
