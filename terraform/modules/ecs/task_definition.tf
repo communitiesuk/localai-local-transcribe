@@ -4,6 +4,9 @@ locals {
       name  = "ENVIRONMENT"
       value = var.environment
     }, {
+      name  = "USE_ELASTICMQ"
+      value = "false"
+    }, {
       name  = "PORT"
       value = tostring(var.backend_port)
     }, {
