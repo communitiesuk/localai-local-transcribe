@@ -6,10 +6,10 @@ from pathlib import Path
 
 import typer
 
-from evals.summarisation.src.config import load_config
-from evals.summarisation.src.runner import run_eval
+from evals.summarisation.src.common import load_config
+from evals.summarisation.src.optimisation.runner import run_eval
 
-WORKDIR = Path(__file__).resolve().parent.parent
+WORKDIR = Path(__file__).resolve().parent.parent.parent
 DEFAULT_CONFIG = WORKDIR / "configs" / "smoke-test.yaml"
 
 app = typer.Typer()

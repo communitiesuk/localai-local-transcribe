@@ -1,13 +1,15 @@
 run:
-  eval_type: standard
-  output_dir: evals/summarisation/output
+  eval_type: bias
+  input_dir: evals/dataset_generation/counterfactual_generation/output
+  output_dir: evals/summarisation/output/bias
   seed: 0
   split: test
   limit: null
   prompt_version: dev
+  num_iterations: 5
 
 dataset:
-  name: knkarthick/dialogsum
+  name: counterfactual
   config: default
   dialogue_field: dialogue
   reference_summary_field: summary
@@ -22,5 +24,5 @@ metrics:
   - coherence
 
 prompts:
-  summarizer_template_path: evals/summarisation/prompts/summarize.j2
+  summarizer_template_name: General
   judge_template_path: evals/summarisation/prompts/judge.j2
