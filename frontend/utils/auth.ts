@@ -8,9 +8,16 @@ import {
 const logger = console
 
 // Validate required environment variables
-if (!process.env.AUTH_API_URL) {
+// Don't expect an AUTH_API_URL if you're running dev locally / running frontend tests
+const authApiUrl =
+  process.env.AUTH_API_URL ||
+  (process.env.NODE_ENV === 'development' ? 'development' : undefined)
+
+if (!authApiUrl) {
   throw new Error('AUTH_API_URL is not defined in the environment variables.')
 }
+
+process.env.AUTH_API_URL = authApiUrl
 
 // Initialize AuthApiClient
 const authClient = new AuthApiClient({
