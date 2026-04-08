@@ -7,6 +7,9 @@ locals {
       name  = "USE_ELASTICMQ"
       value = "false"
     }, {
+      name  = "DATA_S3_BUCKET"
+      value = var.data_s3_bucket_name
+    }, {
       name  = "PORT"
       value = tostring(var.backend_port)
     }, {

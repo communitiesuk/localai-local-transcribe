@@ -214,3 +214,8 @@ variable "environment" {
   description = "the environment name passed to the frontend container"
   type        = string
 }
+
+variable "data_s3_bucket_name" {
+  description = "name of the S3 bucket for data storage"
+  type        = string
+}
