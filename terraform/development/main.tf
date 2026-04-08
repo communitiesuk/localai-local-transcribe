@@ -194,8 +194,8 @@ module "ecs" {
   transcription_queue_name            = module.sqs.transcription_queue_name
   transcription_deadletter_queue_name = module.sqs.transcription_deadletter_queue_name
 
-  max_llm_processes           = 0
-  max_transcription_processes = 0
+  max_llm_processes           = local.max_llm_proccesses
+  max_transcription_processes = local.max_transcription_processes
   alb_arn                     = module.frontdoor.load_balancer.arn
   oidc_issuer                 = module.frontdoor.oidc_issuer
   aws_region                  = local.aws_region
