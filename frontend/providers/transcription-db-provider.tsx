@@ -107,7 +107,7 @@ export function RecordingDbProvider({ children }: RecordingDbProviderProps) {
         transaction.onsuccess = (event) => {
           resolve((event.target as IDBRequest)?.result || undefined)
         }
-        transaction.onerror = (ev) => {
+        transaction.onerror = () => {
           reject(new Error('Error getting recording'))
         }
       })

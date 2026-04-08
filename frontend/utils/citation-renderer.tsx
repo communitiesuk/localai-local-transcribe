@@ -31,11 +31,9 @@ export function CitationContent({
   onCitationClick: (index: number, rect: DOMRect) => void
 }) {
   const regex = /^\d+$/
-  let match: RegExpExecArray | null
-  match = regex.exec(href || '')
+  const match = regex.exec(href || '')
   if (match !== null) {
     const idx = match.index
-    const text = match[0]
     const citationNumber = parseInt(match[0], 10)
     return (
       <span

@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { DialogueEntry } from '@/lib/client'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
-import { Controller, FormProvider, useForm } from 'react-hook-form'
+import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form'
 
 export const RatingButton = ({
   minuteVersionId,
@@ -71,7 +71,7 @@ const RatingForm = ({
   useEffect(() => {
     form.setValue('rating', initialValue)
   }, [form, initialValue])
-  const rating = form.watch('rating')
+  const rating = useWatch({ name: 'rating', control: form.control })
   const onSubmit = useCallback(
     ({ rating, comment, shareContent }: RatingFormData) => {
       if (rating) {
