@@ -36,3 +36,8 @@ variable "worker_task_execution_role_name" {
   description = "Name of the IAM role for the worker ECS task execution"
   type        = string
 }
+
+variable "backend_task_role_name" {
+  description = "Name of the IAM role for the backend ECS task"
+  type        = string
+}
