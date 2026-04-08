@@ -25,8 +25,7 @@ COPY backend/__init__.py backend/__init__.py
 COPY worker worker
 
 # Install again to include the root project
-RUN poetry install --with worker --without dev --no-interaction --no-ansi
-
+RUN /app/.venv/bin/pip install --no-deps .
 
 # ==========================================
 # Stage 2: Runner

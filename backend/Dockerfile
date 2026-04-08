@@ -27,8 +27,7 @@ COPY alembic alembic
 COPY alembic.ini alembic.ini
 
 # Install again to include the root project and path dependencies
-RUN poetry install --with backend --without dev --no-interaction --no-ansi
-
+RUN /app/.venv/bin/pip install --no-deps .
 
 # ==========================================
 # Stage 2: Runner
