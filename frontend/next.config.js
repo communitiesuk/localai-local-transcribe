@@ -9,12 +9,10 @@ let nextConfig = {
   outputFileTracingIncludes: {
     '/assets/**/*': ['./node_modules/govuk-frontend/dist/govuk/assets/**/*'],
   },
-  experimental: {
-    turbo: {
-      root: '..',
-    },
-  },
-}
+
+    serverComponentsExternalPackages: ['require-in-the-middle'],
+  }
+
 
 const sentryConfig = {
   // For all available options, see:
