@@ -9,15 +9,20 @@ let nextConfig = {
   outputFileTracingIncludes: {
     '/assets/**/*': ['./node_modules/govuk-frontend/dist/govuk/assets/**/*'],
   },
-
-    serverComponentsExternalPackages: ['require-in-the-middle'],
-  }
-
+}
 
 const sentryConfig = {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
-
+  webpack: {
+    treeShaking: {
+      removeDebugLogging: true,
+    },
+    automaticVercelMonitors: true,
+    reactComponentAnnotation: {
+      enabled: true,
+    },
+  },
   org: 'incubator-for-ai',
   project: 'minute',
 
