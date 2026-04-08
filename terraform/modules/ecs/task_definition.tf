@@ -84,6 +84,9 @@ locals {
     }, {
       name  = "AWS_REGION"
       value = var.aws_region
+    }, {
+      name  = "AWS_ACCOUNT_ID"
+      value = data.aws_caller_identity.current.account_id
     },
   ]
   shared_worker_backend_secrets = [
