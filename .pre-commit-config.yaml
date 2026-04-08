@@ -3,6 +3,7 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
         name: Check for files larger than 5 MB
@@ -33,7 +34,7 @@ repos:
       # - id: python-tests
       #   name: Run Python tests
       #   entry: poetry run pytest
-      #   language: system
+      #   language: system  
       #   types: [python]
       #   pass_filenames: false
 

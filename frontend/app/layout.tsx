@@ -1,4 +1,4 @@
-import { Footer } from '@/components/layout/footer'
+import Footer from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
@@ -8,12 +8,13 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import './globals.css'
+import './govuk.scss'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Minute',
-  description: 'Minutes and transcriptions',
+  title: 'Local Transcribe',
+  description: 'Summaries and transcriptions',
 }
 
 export default function RootLayout({
@@ -23,6 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.className}>
+      <head></head>
       <body>
         <TanstackQueryProvider>
           <PosthogProvider>
