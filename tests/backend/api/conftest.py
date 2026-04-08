@@ -1,20 +1,13 @@
-import pytest
 import uuid
 from datetime import UTC, datetime
-from fastapi import HTTPException
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
-from common.database.postgres_models import (
-    ContentSource,
-    JobStatus,
-    Minute,
-    MinuteVersion,
-    Transcription,
-    User,
-    Chat
-)
+
+import pytest
+
+from common.database.postgres_models import Chat, ContentSource, JobStatus, Minute, MinuteVersion, Transcription, User
 
 make_email = "tests@local-transcribe.gov.uk"
+
 
 @pytest.fixture
 def make_user() -> User:
@@ -94,6 +87,4 @@ def make_chat(uid=None, user_content="hello", assistant_content="world", status=
         status=status,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
-    )       
-
-
+    )
