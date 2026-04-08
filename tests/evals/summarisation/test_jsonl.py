@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from evals.summarisation.src.jsonl import write_jsonl
+from evals.summarisation.src.common.jsonl import write_jsonl
 
 
 def test_write_jsonl_single_record(tmp_path):
