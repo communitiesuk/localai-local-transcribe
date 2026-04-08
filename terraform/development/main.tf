@@ -182,6 +182,7 @@ module "ecs" {
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
   db_security_group_id = module.database.rds_security_group_id
   bastion_sg_id        = module.bastion.security_group_id
+  environment          = "local" # Set to local to bypass authentication
   private_subnet_ids   = module.networking.private_subnets[*].id
   vpc_id               = module.networking.vpc.id
   app_url              = local.app_host

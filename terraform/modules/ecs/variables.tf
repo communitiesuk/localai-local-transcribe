@@ -209,3 +209,8 @@ variable "bastion_sg_id" {
   description = "id of the bastion security group, used to allow direct access for testing"
   type        = string
 }
+
+variable "environment" {
+  description = "the environment name passed to the frontend container"
+  type        = string
+}

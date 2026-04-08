@@ -93,7 +93,7 @@ locals {
   frontend_environment_variables = [
     {
       name = "ENVIRONMENT"
-      value = terraform.workspace
+      value = var.environment
     }, {
       name = "APP_NAME"
       value = "local-transcribe-frontend"
