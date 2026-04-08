@@ -53,7 +53,7 @@ locals {
       value = var.llm_deadletter_queue_name
     }, {
       name  = "TRANSCRIPTION_SERVICES"
-      value = "[\"azure_stt_synchronous\",\"azure_stt_batch\"]"
+      value = "[\"aws_transcribe\"]"
     }, {
       name  = "MAX_TRANSCRIPTION_PROCESSES"
       value = tostring(var.max_transcription_processes)
