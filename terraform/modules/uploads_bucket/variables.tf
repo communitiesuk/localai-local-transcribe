@@ -32,8 +32,8 @@ variable "app_host" {
   type        = string
 }
 
-variable "worker_task_execution_role_name" {
-  description = "Name of the IAM role for the worker ECS task execution"
+variable "worker_task_role_name" {
+  description = "Name of the IAM role for the worker ECS task"
   type        = string
 }
 

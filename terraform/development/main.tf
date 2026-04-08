@@ -215,7 +215,7 @@ module "uploads_bucket" {
   environment_name                = local.environment_name
   access_s3_log_expiration_days   = local.access_s3_log_expiration_days
   force_destroy                   = false
-  worker_task_execution_role_name = module.ecs.worker_execution_task_name
+  worker_task_role_name = module.ecs.worker_task_role_name
   backend_task_role_name          = module.ecs.backend_task_role_name
 }
 
