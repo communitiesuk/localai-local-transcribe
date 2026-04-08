@@ -49,6 +49,10 @@ resource "aws_ecs_service" "backend" {
     subnets          = var.private_subnet_ids
     assign_public_ip = false
   }
+
+  service_registries {
+    registry_arn = aws_service_discovery_service.backend_service_discovery_service.arn
+  }
 }
 
 resource "aws_ecs_service" "worker" {
