@@ -3,67 +3,51 @@ import { NavButton } from '@/components/layout/nav-button'
 import { FileText, Home, Settings } from 'lucide-react'
 import Link from 'next/link'
 
-export const Header = async () => {
+export const Header = () => {
   return (
     <>
-      <header className="flex h-[64px] items-center justify-between border-b border-gray-200 bg-black px-8 dark:border-gray-800">
+      <header className="flex h-[64px] items-center justify-between bg-[var(--govuk-brand-colour)] px-8">
         <div className="flex items-center">
           <Link
             href="/"
-            target="_blank"
-            className="font-gds-transport flex items-center gap-3 text-3xl text-white"
+            // !flex forces the flex layout, overriding GDS inline styles
+            className="govuk-header__homepage-link !flex items-center gap-3 hover:!no-underline"
           >
+            {/* SVG sits directly inside the flex container. shrink-0 stops it from resizing */}
             <svg
               width="32"
-              height="32"
-              viewBox="0 0 32 32"
-              fill="white"
+              height="30"
+              viewBox="0 0 64 60"
+              fill="currentColor"
               focusable="false"
               aria-hidden="true"
+              className="shrink-0"
             >
-              <path d="M22.6 10.4c-1 .4-2-.1-2.4-1-.4-.9.1-2 1-2.4.9-.4 2 .1 2.4 1s-.1 2-1 2.4m-5.9 6.7c-.9.4-2-.1-2.4-1-.4-.9.1-2 1-2.4.9-.4 2 .1 2.4 1s-.1 2-1 2.4m10.8-3.7c-1 .4-2-.1-2.4-1-.4-.9.1-2 1-2.4.9-.4 2 .1 2.4 1s0 2-1 2.4m3.3 4.8c-1 .4-2-.1-2.4-1-.4-.9.1-2 1-2.4.9-.4 2 .1 2.4 1s-.1 2-1 2.4M17 4.7l2.3 1.2V2.5l-2.3.7-.2-.2.9-3h-3.4l.9 3-.2.2c-.1.1-2.3-.7-2.3-.7v3.4L15 4.7c.1.1.1.2.2.2l-1.3 4c-.1.2-.1.4-.1.6 0 1.1.8 2 1.9 2.2h.7c1-.2 1.9-1.1 1.9-2.1 0-.2 0-.4-.1-.6l-1.3-4c-.1-.2 0-.2.1-.3m-7.6 5.7c.9.4 2-.1 2.4-1 .4-.9-.1-2-1-2.4-.9-.4-2 .1-2.4 1s0 2 1 2.4m-5 3c.9.4 2-.1 2.4-1 .4-.9-.1-2-1-2.4-.9-.4-2 .1-2.4 1s.1 2 1 2.4m-3.2 4.8c.9.4 2-.1 2.4-1 .4-.9-.1-2-1-2.4-.9-.4-2 .1-2.4 1s0 2 1 2.4m14.8 11c4.4 0 8.6.3 12.3.8 1.1-4.5 2.4-7 3.7-8.8l-2.5-.9c.2 1.3.3 1.9 0 2.7-.4-.4-.8-1.1-1.1-2.3l-1.2 4c.7-.5 1.3-.8 2-.9-1.1 2.5-2.6 3.1-3.5 3-1.1-.2-1.7-1.2-1.5-2.1.3-1.2 1.5-1.5 2.1-.1 1.1-2.3-.8-3-2-2.3 1.9-1.9 2.1-3.5.6-5.6-2.1 1.6-2.1 3.2-1.2 5.5-1.2-1.4-3.2-.6-2.5 1.6.9-1.4 2.1-.5 1.9.8-.2 1.1-1.7 2.1-3.5 1.9-2.7-.2-2.9-2.1-2.9-3.6.7-.1 1.9.5 2.9 1.9l.4-4.3c-1.1 1.1-2.1 1.4-3.2 1.4.4-1.2 2.1-3 2.1-3h-5.4s1.7 1.9 2.1 3c-1.1 0-2.1-.2-3.2-1.4l.4 4.3c1-1.4 2.2-2 2.9-1.9-.1 1.5-.2 3.4-2.9 3.6-1.9.2-3.4-.8-3.5-1.9-.2-1.3 1-2.2 1.9-.8.7-2.3-1.2-3-2.5-1.6.9-2.2.9-3.9-1.2-5.5-1.5 2-1.3 3.7.6 5.6-1.2-.7-3.1 0-2 2.3.6-1.4 1.8-1.1 2.1.1.2.9-.3 1.9-1.5 2.1-.9.2-2.4-.5-3.5-3 .6 0 1.2.3 2 .9l-1.2-4c-.3 1.1-.7 1.9-1.1 2.3-.3-.8-.2-1.4 0-2.7l-2.9.9C1.3 23 2.6 25.5 3.7 30c3.7-.5 7.9-.8 12.3-.8" />
+              <circle cx="20" cy="17.6" r="3.7" />
+              <circle cx="10.2" cy="23.5" r="3.7" />
+              <circle cx="3.7" cy="33.2" r="3.7" />
+              <circle cx="31.7" cy="30.6" r="3.7" />
+              <circle cx="43.3" cy="17.6" r="3.7" />
+              <circle cx="53.2" cy="23.5" r="3.7" />
+              <circle cx="59.7" cy="33.2" r="3.7" />
+              <path d="M33.1,9.8c.2-.1.3-.3.5-.5l4.6,2.4v-6.8l-4.6,1.5c-.1-.2-.3-.3-.5-.5l1.9-5.9h-6.7l1.9,5.9c-.2.1-.3.3-.5.5l-4.6-1.5v6.8l4.6-2.4c.1.2.3.3.5.5l-2.6,8c-.9,2.8,1.2,5.7,4.1,5.7h0c3,0,5.1-2.9,4.1-5.7l-2.6-8ZM37,37.9s-3.4,3.8-4.1,6.1c2.2,0,4.2-.5,6.4-2.8l-.7,8.5c-2-2.8-4.4-4.1-5.7-3.8.1,3.1.5,6.7,5.8,7.2,3.7.3,6.7-1.5,7-3.8.4-2.6-2-4.3-3.7-1.6-1.4-4.5,2.4-6.1,4.9-3.2-1.9-4.5-1.8-7.7,2.4-10.9,3,4,2.6,7.3-1.2,11.1,2.4-1.3,6.2,0,4,4.6-1.2-2.8-3.7-2.2-4.2.2-.3,1.7.7,3.7,3,4.2,1.9.3,4.7-.9,7-5.9-1.3,0-2.4.7-3.9,1.7l2.4-8c.6,2.3,1.4,3.7,2.2,4.5.6-1.6.5-2.8,0-5.3l5,1.8c-2.6,3.6-5.2,8.7-7.3,17.5-7.4-1.1-15.7-1.7-24.5-1.7h0c-8.8,0-17.1.6-24.5,1.7-2.1-8.9-4.7-13.9-7.3-17.5l5-1.8c-.5,2.5-.6,3.7,0,5.3.8-.8,1.6-2.3,2.2-4.5l2.4,8c-1.5-1-2.6-1.7-3.9-1.7,2.3,5,5.2,6.2,7,5.9,2.3-.4,3.3-2.4,3-4.2-.5-2.4-3-3.1-4.2-.2-2.2-4.6,1.6-6,4-4.6-3.7-3.7-4.2-7.1-1.2-11.1,4.2,3.2,4.3,6.4,2.4,10.9,2.5-2.8,6.3-1.3,4.9,3.2-1.8-2.7-4.1-1-3.7,1.6.3,2.3,3.3,4.1,7,3.8,5.4-.5,5.7-4.2,5.8-7.2-1.3-.2-3.7,1-5.7,3.8l-.7-8.5c2.2,2.3,4.2,2.7,6.4,2.8-.7-2.3-4.1-6.1-4.1-6.1h10.6,0Z" />
             </svg>
-            <span className="font-gds-transport text-3xl text-white">
-              Minute
+
+            {/* !mb-0 overrides a subtle negative margin inside the GOV.UK CSS */}
+            <span className="govuk-header__product-name !mb-0">
+              Local Transcribe
             </span>
           </Link>
         </div>
+
         <div>
-          <Link
-            href="https://ai.gov.uk"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg
-              width="65"
-              height="40"
-              aria-label="i.AI"
-              focusable="false"
-              viewBox="0 0 167 105"
-            >
-              <g id="Layer_2" data-name="Layer 2">
-                <g id="Layer_1-2" data-name="Layer 1">
-                  <rect y="24.937" width="22" fill="#fff" height="80" x="0" />
-                  <rect
-                    fill="#c50878"
-                    x="144.87"
-                    width="21.82"
-                    height="104.15"
-                  />
-                  <circle r="11" cx="11" fill="#fff" cy="11" />
-                  <path
-                    fill="#c50878"
-                    d="M122.1,104.15,115,83.7H79.41l-6.75,20.45H48.52L87.06,0H108.6l38.15,104.15ZM97.44,27.8,85.76,63.55h23.1Z"
-                  />
-                  <circle r="11" cx="36.700001" fill="#fff" cy="93.682587" />
-                </g>
-              </g>
-            </svg>
+          <Link href="#" className="govuk-link govuk-link--inverse font-bold">
+            Sign out
           </Link>
         </div>
       </header>
 
-      <div className="header-grid w-full items-center border-b px-6 py-1">
+      <div className="header-grid w-full items-center border-b border-[var(--govuk-border-colour)] px-6 py-1">
         <div
           className="flex items-center justify-center"
           style={{ gridArea: 'alpha' }}

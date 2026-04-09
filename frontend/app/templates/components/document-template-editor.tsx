@@ -133,7 +133,11 @@ const ControlledEditor = ({
     <div>
       <TemplateEditorToolbar editor={editor} />
       <div className="rounded-xl rounded-t-none border border-t-0 shadow">
-        <EditorContent editor={editor} className="editor-content" />
+        <EditorContent
+          editor={editor}
+          className="editor-content"
+          data-testid="template-content-editor"
+        />
       </div>
     </div>
   )
