@@ -1,0 +1,36 @@
+name: Setup Python and Poetry
+description: Common setup for Python and Poetry with caching
+
+inputs:
+  python-version:
+    description: Python version to use
+    required: true
+  poetry-version:
+    description: Poetry version to use
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Set up Poetry
+      uses: abatilo/actions-poetry@v2
+      with:
+        poetry-version: ${{ inputs.poetry-version }}
+
+    - name: Cache virtualenv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          venv-${{ runner.os }}-${{ inputs.python-version }}-
+          venv-${{ runner.os }}-
+
+    - name: Configure Poetry to create .venv in project
+      shell: bash
+      run: poetry config virtualenvs.in-project true

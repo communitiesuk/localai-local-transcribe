@@ -24,23 +24,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/python-poetry-setup
         with:
           python-version: ${{ inputs.python_version }}
-
-      - name: Set up Poetry
-        uses: abatilo/actions-poetry@v2
-        with:
           poetry-version: ${{ inputs.poetry_version }}
 
       - name: Configure Poetry to create .venv in project
         run: poetry config virtualenvs.in-project true
 
-      - name: Cache virtualenv 
-        uses: actions/cache@v4 
-        with: 
-          path: .venv 
+      - name: Cache virtualenv
+        uses: actions/cache@v4
+        with:
+          path: .venv
           key: venv-${{ runner.os }}-${{ inputs.python_version }}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
             venv-${{ runner.os }}-${{ inputs.python_version }}-

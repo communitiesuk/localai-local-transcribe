@@ -1,0 +1,61 @@
+name: Evals Summarisation Smoke Test
+
+on:
+  workflow_call:
+    inputs: 
+      python_version: 
+        required: true
+        type: string
+      poetry_version: 
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      python_version:
+        description: 'Python version'
+        required: false
+        default: '3.12'
+      poetry_version:
+        description: 'Poetry version'
+        required: false
+        default: '2.3.3'
+
+env:
+  ENVIRONMENT: test
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python and Poetry
+        uses: ./.github/actions/python-poetry-setup
+        with:
+          python-version: ${{ inputs.python_version }}
+          poetry-version: ${{ inputs.poetry_version }}
+
+      - name: Install dependencies
+        run: poetry sync --no-root --no-ansi --with evals-summarisation
+
+      - name: Copy env file
+        run: cp .env.example .env
+
+      - name: Run summarisation smoke test
+        env:
+          AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_DEPLOYMENT: ${{ secrets.AZURE_DEPLOYMENT }}
+          AZURE_API_VERSION: ${{ secrets.AZURE_API_VERSION }}
+        run: poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/smoke-test.yaml
+
+      - name: Upload smoke test output
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: summarisation-smoke-test-output
+          path: evals/summarisation/output/
+          retention-days: 7
