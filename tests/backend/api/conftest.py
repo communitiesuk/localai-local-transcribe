@@ -88,5 +88,3 @@ def make_chat(uid=None, user_content="hello", assistant_content="world", status=
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
     )
-
-    
