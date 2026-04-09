@@ -7,7 +7,6 @@ services:
       - "8080:8080"
     env_file:
       - path: .env
-        required: false
     environment:
       - POSTGRES_HOST=db
       - STORAGE_SERVICE_NAME=local
@@ -71,7 +70,7 @@ services:
       elasticmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "/app/.venv/bin/python worker/healthcheck.py"]
+      test: ["CMD-SHELL", "python worker/healthcheck.py"]
       interval: 60s
       retries: 3
       start_period: 60s
