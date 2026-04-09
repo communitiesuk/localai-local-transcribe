@@ -14,7 +14,7 @@ from backend.api.routes.transcriptions import (
     list_transcriptions,
     save_transcription,
 )
-from common.database.postgres_models import Transcription
+from common.database.postgres_models import JobStatus, Transcription
 from common.types import RecordingCreateRequest
 
 
@@ -85,11 +85,6 @@ async def test_create_recording_different_file_extensions(
     mock_recording.s3_file_key = f"uploads/{mock_user.email}/file.{file_format}"
 
     mocker.patch("backend.api.routes.transcriptions.Recording", return_value=mock_recording)
-
-    mock_session.refresh = AsyncMock()
-    mock_session.add.reset_mock()
-    mock_session.commit.reset_mock()
-
     mocker.patch("backend.api.routes.transcriptions.get_file_s3_key", return_value=mock_recording.s3_file_key)
 
     response = await create_recording(request, mock_session, mock_user)
@@ -97,6 +92,7 @@ async def test_create_recording_different_file_extensions(
     assert response.id == mock_recording.id
     assert file_format in mock_recording.s3_file_key
     mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -113,16 +109,10 @@ async def test_get_recordings_for_transcription_unauthorized(mock_session, mock_
 
 @pytest.mark.asyncio
 async def test_get_recordings_for_transcription_success(
-    mock_session,
-    mock_user,
-    mock_transcription,
-    mock_storage_service,
+    mock_session, mock_user, mock_transcription, mock_storage_service, mock_recording
 ):
     mock_user.id = mock_transcription.user_id
 
-    mock_recording = Mock()
-    mock_recording.id = uuid.uuid4()
-    mock_recording.s3_file_key = "file.mp3"
     mock_recording.created_datetime = datetime.now(UTC)
 
     mock_result = Mock()
@@ -143,19 +133,15 @@ async def test_get_recordings_for_transcription_success(
 async def test_save_transcription_success(mock_session, mock_user, mock_transcription, transcription_patch_request):
     """Test successful save/update of a transcription"""
     mock_transcription.user_id = mock_user.id
-    mock_transcription.title = "Local Transcription"
+    mock_transcription.title = "Local Transcribe"
     mock_transcription.dialogue_entries = [{"speaker": "user_one", "text": "Hello World"}]
 
     mock_session.get = AsyncMock(return_value=mock_transcription)
-    mock_session.commit = AsyncMock()
-    mock_session.refresh = AsyncMock()
-
-    assert mock_transcription.title == "Local Transcription"
 
     response = await save_transcription(mock_transcription.id, transcription_patch_request, mock_session, mock_user)
 
     assert response is mock_transcription
-    assert mock_transcription.title == "Mocked Transcription Title"
+    assert mock_transcription.title == transcription_patch_request.title
     assert mock_transcription.dialogue_entries == transcription_patch_request.dialogue_entries
 
     mock_session.get.assert_awaited_once_with(Transcription, mock_transcription.id)
@@ -168,15 +154,15 @@ async def test_list_transcriptions(mock_session, mock_user, mock_transcription):
     mock_session.exec = AsyncMock()
     mock_session.exec.side_effect = [Mock(one=Mock(return_value=1)), Mock(all=Mock(return_value=[mock_transcription]))]
     mock_transcription.dialogue_entries = [{"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0}]
-    mock_transcription.status = "completed"
+    mock_transcription.status = JobStatus.COMPLETED
     mock_transcription.title = "Test Title"
-    mock_transcription.created_datetime = mock_transcription.created_datetime
 
     result = await list_transcriptions(mock_session, mock_user, page=1, page_size=20)
     assert result.total_count == 1
     assert result.items[0].title == "Test Title"
-    assert result.items[0].status == "completed"
+    assert result.items[0].status == JobStatus.COMPLETED
     assert result.total_pages == 1
+    assert result.items[0].created_datetime == mock_transcription.created_datetime
 
 
 @pytest.mark.asyncio
