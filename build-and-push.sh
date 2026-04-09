@@ -50,16 +50,65 @@ for SERVICE in "${SERVICES[@]}"; do
 
   echo ""
   echo "Building ${SERVICE}..."
-  docker build -t "$LOCAL_TAG" -f "${REPO_ROOT}/${SERVICE}/Dockerfile" "$REPO_ROOT"
+  docker build -q -t "$LOCAL_TAG" -f "${REPO_ROOT}/${SERVICE}/Dockerfile" "$REPO_ROOT"
 
-  echo "Tagging ${SERVICE}..."
   docker tag "$LOCAL_TAG" "${REPO}:${TAG}"
 
   echo "Pushing ${SERVICE}..."
-  docker push "${REPO}:${TAG}"
+  docker push --quiet "${REPO}:${TAG}"
 
   echo "${SERVICE} pushed as ${REPO}:${TAG}"
 done
 
 echo ""
-echo "Done."
+echo "Planning Terraform..."
+cd "${REPO_ROOT}/terraform/development"
+TF_VARS=(-var="alarm_email_address=harry.best@softwire.com" -var="image_tag=${TAG}" -var="ssl_certs_created=false")
+terraform plan "${TF_VARS[@]}" -out=tfplan 2>/dev/null | grep -v ": Refreshing state\|: Reading\|: Still reading\|: Read complete"
+
+echo ""
+read -r -p "Apply the above plan? [y/N] " confirm
+[[ "$confirm" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 1; }
+
+echo "Applying..."
+terraform apply -auto-approve tfplan
+rm -f tfplan
+cd "$REPO_ROOT"
+
+echo ""
+echo "Waiting for frontend service to stabilise..."
+aws ecs wait services-stable \
+  --cluster "${ENVIRONMENT}-app" \
+  --services "${ENVIRONMENT}-frontend" \
+  --region "$REGION"
+
+echo ""
+echo "Looking up frontend task IP..."
+TASK_ARN=$(aws ecs list-tasks \
+  --cluster "${ENVIRONMENT}-app" \
+  --family "frontend-${ENVIRONMENT}" \
+  --query 'taskArns[0]' \
+  --output text \
+  --region "$REGION")
+
+ENI_ID=$(aws ecs describe-tasks \
+  --cluster "${ENVIRONMENT}-app" \
+  --tasks "$TASK_ARN" \
+  --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+  --output text \
+  --region "$REGION")
+
+FRONTEND_IP=$(aws ec2 describe-network-interfaces \
+  --network-interface-ids "$ENI_ID" \
+  --query 'NetworkInterfaces[0].PrivateIpAddress' \
+  --output text \
+  --region "$REGION")
+
+echo "Frontend IP: ${FRONTEND_IP}"
+echo ""
+echo "Opening tunnel on http://localhost:3000 ..."
+aws ssm start-session \
+  --target i-0fe1661b5b3211bab \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters "{\"host\":[\"${FRONTEND_IP}\"],\"portNumber\":[\"3000\"],\"localPortNumber\":[\"3000\"]}" \
+  --region "$REGION"
