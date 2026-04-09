@@ -1,5 +1,5 @@
-import datetime
 import uuid
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -14,53 +14,39 @@ from backend.api.routes.transcriptions import (
     list_transcriptions,
     save_transcription,
 )
-from common.database.postgres_models import Minute, MinuteVersion, Transcription
+from common.database.postgres_models import Transcription
 from common.types import RecordingCreateRequest
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("handle_exception", [False, True])
-async def test_create_transcription(
-    handle_exception,
+async def test_create_transcription_success(
     mocker,
     mock_session_with_recording,
     mock_user,
-    mock_storage_service,
     mock_transcription_queue_service,
     transcription_request,
+    mock_storage_service,  # NOQA: ARG001
 ):
-    """Test successful and failure cases of transcription creation."""
+    mock_transcription = Mock()
+    mock_transcription.id = uuid.uuid4()
 
-    mock_transcription_obj = Mock(spec=Transcription)
-    mock_transcription_obj.id = uuid.uuid4()
+    mock_minute = Mock()
+    mock_minute.id = uuid.uuid4()
 
-    mock_minute_obj = Mock(spec=Minute)
-    mock_minute_obj.id = uuid.uuid4()
+    mock_minute_version = Mock()
+    mock_minute_version.id = uuid.uuid4()
 
-    mock_minute_version_obj = Mock(spec=MinuteVersion)
-    mock_minute_version_obj.id = uuid.uuid4()
+    mocker.patch("backend.api.routes.transcriptions.Transcription", return_value=mock_transcription)
+    mocker.patch("backend.api.routes.transcriptions.Minute", return_value=mock_minute)
+    mocker.patch("backend.api.routes.transcriptions.MinuteVersion", return_value=mock_minute_version)
 
-    mocker.patch("backend.api.routes.transcriptions.Transcription", return_value=mock_transcription_obj)
-    mocker.patch("backend.api.routes.transcriptions.Minute", return_value=mock_minute_obj)
-    mocker.patch("backend.api.routes.transcriptions.MinuteVersion", return_value=mock_minute_version_obj)
+    response = await create_transcription(transcription_request, mock_session_with_recording, mock_user)
 
-    if handle_exception:
-        mock_storage_service.check_object_exists.return_value = False
-
-        with pytest.raises(HTTPException) as exception_info:
-            await create_transcription(transcription_request, mock_session_with_recording, mock_user)
-
-        assert exception_info.value.status_code == 404
-
-    else:
-        response = await create_transcription(transcription_request, mock_session_with_recording, mock_user)
-
-        assert response.id == mock_transcription_obj.id
-        assert mock_session_with_recording.add.call_count == 3
-        mock_session_with_recording.add.assert_any_call(mock_transcription_obj)
-        mock_session_with_recording.add.assert_any_call(mock_minute_obj)
-        mock_session_with_recording.add.assert_any_call(mock_minute_version_obj)
-        mock_transcription_queue_service.publish_message.assert_called()
+    assert response.id == mock_transcription.id
+    mock_session_with_recording.add.assert_any_call(mock_transcription)
+    mock_session_with_recording.add.assert_any_call(mock_minute)
+    mock_session_with_recording.add.assert_any_call(mock_minute_version)
+    mock_transcription_queue_service.publish_message.assert_called()
 
 
 @pytest.mark.asyncio
@@ -80,44 +66,44 @@ async def test_create_transcription_file_not_found(
     assert "Recording file not found in S3" in exception_info.value.detail
 
 
+@pytest.mark.parametrize("file_format", ["mp3", "wav", "m4a", "webm"])
 @pytest.mark.asyncio
 async def test_create_recording_different_file_extensions(
     mocker,
     mock_session,
     mock_user,
-    mock_storage_service_recording,  # NOQA: ARG001
+    mock_storage_service,  # NOQA: ARG001
+    file_format,
+    mock_recording,
 ):
     """Test creating recordings with different file extensions to ensure they are handled correctly."""
 
-    for file_ext in ["mp3", "wav", "m4a", "webm"]:
-        request = RecordingCreateRequest(file_extension=file_ext)
+    request = RecordingCreateRequest(file_extension=file_format)
 
-        mock_recording = Mock()
-        mock_recording.id = uuid.uuid4()
-        mock_recording.user_id = mock_user.id
-        mock_recording.s3_file_key = f"uploads/{mock_user.email}/file.{file_ext}"
+    mock_recording.id = uuid.uuid4()
+    mock_recording.user_id = mock_user.id
+    mock_recording.s3_file_key = f"uploads/{mock_user.email}/file.{file_format}"
 
-        mocker.patch("backend.api.routes.transcriptions.Recording", return_value=mock_recording)
+    mocker.patch("backend.api.routes.transcriptions.Recording", return_value=mock_recording)
 
-        mock_session.refresh = AsyncMock()
-        mock_session.add.reset_mock()
-        mock_session.commit.reset_mock()
+    mock_session.refresh = AsyncMock()
+    mock_session.add.reset_mock()
+    mock_session.commit.reset_mock()
 
-        mocker.patch("backend.api.routes.transcriptions.get_file_s3_key", return_value=mock_recording.s3_file_key)
+    mocker.patch("backend.api.routes.transcriptions.get_file_s3_key", return_value=mock_recording.s3_file_key)
 
-        response = await create_recording(request, mock_session, mock_user)
+    response = await create_recording(request, mock_session, mock_user)
 
-        assert response.id == mock_recording.id
-        assert file_ext in mock_recording.s3_file_key
-        mock_session.add.assert_called_once()
+    assert response.id == mock_recording.id
+    assert file_format in mock_recording.s3_file_key
+    mock_session.add.assert_called_once()
 
 
 @pytest.mark.asyncio
 async def test_get_recordings_for_transcription_unauthorized(mock_session, mock_user, mock_transcription):
     """Test error when user tries to access another user's transcription"""
-    mock_transcription.user_id = 9
+    mock_transcription.user_id = uuid.uuid4()
     mock_session.get = AsyncMock(return_value=mock_transcription)
-    mock_user.id = 1
 
     with pytest.raises(HTTPException) as exception_info:
         await get_recordings_for_transcription(mock_transcription.id, mock_session, mock_user)
@@ -137,7 +123,7 @@ async def test_get_recordings_for_transcription_success(
     mock_recording = Mock()
     mock_recording.id = uuid.uuid4()
     mock_recording.s3_file_key = "file.mp3"
-    mock_recording.created_datetime = datetime.datetime.now(datetime.UTC)
+    mock_recording.created_datetime = datetime.now(UTC)
 
     mock_result = Mock()
     mock_result.all.return_value = [mock_recording]
@@ -145,7 +131,6 @@ async def test_get_recordings_for_transcription_success(
     mock_session.get = AsyncMock(return_value=mock_transcription)
     mock_session.exec = AsyncMock(return_value=mock_result)
 
-    mock_storage_service.check_object_exists.return_value = True
     mock_storage_service.generate_presigned_url_get_object = AsyncMock(return_value="signed-url")
     response = await get_recordings_for_transcription(mock_transcription.id, mock_session, mock_user)
 
@@ -169,7 +154,7 @@ async def test_save_transcription_success(mock_session, mock_user, mock_transcri
 
     response = await save_transcription(mock_transcription.id, transcription_patch_request, mock_session, mock_user)
 
-    assert isinstance(response, Transcription) or response == mock_transcription
+    assert response is mock_transcription
     assert mock_transcription.title == "Mocked Transcription Title"
     assert mock_transcription.dialogue_entries == transcription_patch_request.dialogue_entries
 
@@ -196,6 +181,7 @@ async def test_list_transcriptions(mock_session, mock_user, mock_transcription):
 
 @pytest.mark.asyncio
 async def test_get_transcription_success(mock_session, mock_user, mock_transcription):
+    mock_transcription.user_id = mock_user.id
     mock_session.get = AsyncMock(return_value=mock_transcription)
     response = await get_transcription(mock_transcription.id, mock_session, mock_user)
     assert response.id == mock_transcription.id
@@ -214,10 +200,11 @@ async def test_get_transcription_not_found(mock_session, mock_user):
 
 @pytest.mark.asyncio
 async def test_delete_transcription(mock_session, mock_user, mock_transcription):
+    mock_transcription.user_id = mock_user.id
     mock_session.get = AsyncMock(return_value=mock_transcription)
-    mock_session.delete = AsyncMock()
-    mock_session.commit = AsyncMock()
+
     await delete_transcription(mock_transcription.id, mock_session, mock_user)
+
     mock_session.delete.assert_awaited_once_with(mock_transcription)
     mock_session.commit.assert_awaited_once()
 
@@ -226,5 +213,6 @@ async def test_delete_transcription(mock_session, mock_user, mock_transcription)
 async def test_delete_transcription_not_found(mock_session, mock_user):
     mock_session.get = AsyncMock(return_value=None)
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as exc:
         await delete_transcription(uuid.uuid4(), mock_session, mock_user)
+    assert exc.value.status_code == 404
