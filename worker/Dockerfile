@@ -6,9 +6,11 @@ FROM python:3.12-slim AS builder
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies and Poetry
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-RUN pip install --no-cache-dir poetry
+
+
+# Install Poetry and ensure it's in the PATH
+RUN pip install --no-cache-dir poetry==2.3.3
+ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
 
@@ -17,7 +19,8 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 
 # Copy dependency files first
 COPY pyproject.toml poetry.lock README.md ./
-RUN poetry install --with worker --without dev --no-interaction --no-ansi --no-root
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --with worker --without dev --no-interaction --no-ansi --no-root
 
 # Copy application code
 COPY common common
@@ -25,7 +28,7 @@ COPY backend/__init__.py backend/__init__.py
 COPY worker worker
 
 # Install again to include the root project
-RUN /app/.venv/bin/pip install --no-deps .
+RUN /app/.venv/bin/pip install --no-cache-dir --no-deps .
 
 # ==========================================
 # Stage 2: Runner
@@ -37,13 +40,21 @@ ENV RAY_ROTATION_BACKUP_COUNT=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Install ffmpeg in the runner
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -g 1000 appuser && \
+    useradd -u 1000 -g appuser -m -s /bin/bash appuser
 
 WORKDIR /app
 
 # Copy the fully built virtual environment from the builder
 COPY --from=builder /app/.venv /app/.venv
+COPY --chown=appuser:appuser . .
+
+
 # Put the virtual environment on the path
 ENV PATH="/app/.venv/bin:$PATH"
 
@@ -53,5 +64,7 @@ COPY backend/__init__.py backend/__init__.py
 COPY worker worker
 
 RUN chmod +x worker/entrypoint.sh
+USER appuser
 
+ENV PATH="/app/.venv/bin:$PATH"
 CMD ["worker/entrypoint.sh"]

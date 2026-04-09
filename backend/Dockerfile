@@ -6,28 +6,18 @@ FROM python:3.12-slim AS builder
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies and Poetry
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# Install Poetry and ensure it's in the PATH
 RUN pip install --no-cache-dir poetry==2.3.3
+ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
-
-# Tell Poetry to create the virtualenv inside the project directory (/app/.venv)
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
-
-# Copy only dependency files first (for Docker layer caching)
+RUN poetry --version
 COPY pyproject.toml poetry.lock README.md ./
-RUN poetry install --with backend --without dev --no-interaction --no-ansi --no-root
-
-# Copy application code
-COPY backend backend
-COPY common common
-COPY worker/__init__.py worker/__init__.py
-COPY alembic alembic
-COPY alembic.ini alembic.ini
-
-# Install again to include the root project and path dependencies
-RUN /app/.venv/bin/pip install --no-deps .
+RUN poetry config virtualenvs.in-project true && \
+    poetry install --with backend --without dev --no-interaction --no-ansi --no-root
+COPY . .
+RUN /app/.venv/bin/pip install --no-cache-dir --no-deps .
 
 # ==========================================
 # Stage 2: Runner
@@ -37,21 +27,24 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# Create the user first
+RUN groupadd -g 1000 appuser && \
+    useradd -u 1000 -g appuser -m -s /bin/bash appuser
+
 WORKDIR /app
 
-# Copy the completely built virtual environment from the builder
-COPY --from=builder /app/.venv /app/.venv
-# Put the virtual environment on the path
+# Copy the venv from builder and fix ownership
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+
+# Copy your source code (Only need this ONCE)
+COPY --chown=appuser:appuser . .
+
+# Set path and permissions
 ENV PATH="/app/.venv/bin:$PATH"
-
-# Copy the application code
-COPY backend backend
-COPY common common
-COPY worker/__init__.py worker/__init__.py
-COPY alembic alembic
-COPY alembic.ini alembic.ini
-
 RUN chmod +x backend/entrypoint.sh
+
+# Finally switch to the user
+USER appuser
 
 EXPOSE 8080
 ENTRYPOINT ["backend/entrypoint.sh"]
