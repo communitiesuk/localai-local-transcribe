@@ -26,54 +26,54 @@ def make_mock_get(transcription, chat):
 
 
 @pytest.mark.asyncio
-async def test_list_chat_success(mock_session, make_user, make_chat, make_transcription):
-    make_transcription.user_id = make_user.id
+async def test_list_chat_success(mock_session, mock_user, mock_chat, mock_transcription):
+    mock_transcription.user_id = mock_user.id
 
     result = Mock()
-    result.all.return_value = [make_chat]
+    result.all.return_value = [mock_chat]
 
-    mock_session.get.return_value = make_transcription
+    mock_session.get.return_value = mock_transcription
     mock_session.exec.return_value = result
 
-    res = await list_chat(make_transcription.id, mock_session, make_user)
+    res = await list_chat(mock_transcription.id, mock_session, mock_user)
 
     assert len(res.chat) == 1
-    assert res.chat[0].id == make_chat.id
+    assert res.chat[0].id == mock_chat.id
     mock_session.exec.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_list_chat_raises_when_transcription_not_found(mock_session, make_user, make_transcription):
+async def test_list_chat_raises_when_transcription_not_found(mock_session, mock_user, mock_transcription):
     mock_session.get.return_value = None
 
     with pytest.raises(HTTPException) as exc:
-        await list_chat(make_transcription.id, mock_session, make_user)
+        await list_chat(mock_transcription.id, mock_session, mock_user)
     assert exc.value.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_create_chat_success(
-    mock_session, make_user, patch_llm_queue_service, make_transcription, mocker, make_chat
+    mock_session, mock_user, patch_llm_queue_service, mock_transcription, mocker, mock_chat
 ):
-    make_transcription.user_id = make_user.id
-    mock_session.get.return_value = make_transcription
+    mock_transcription.user_id = mock_user.id
+    mock_session.get.return_value = mock_transcription
 
     req = SimpleNamespace(user_content="hello")
-    mocker.patch("backend.api.routes.chat.Chat", return_value=make_chat)
+    mocker.patch("backend.api.routes.chat.Chat", return_value=mock_chat)
 
-    res = await create_chat(make_transcription.id, req, mock_session, make_user)
+    res = await create_chat(mock_transcription.id, req, mock_session, mock_user)
 
-    assert res.id == make_chat.id
-    mock_session.add.assert_called_once_with(make_chat)
+    assert res.id == mock_chat.id
+    mock_session.add.assert_called_once_with(mock_chat)
     mock_session.commit.assert_awaited_once()
-    mock_session.refresh.assert_awaited_once_with(make_chat)
+    mock_session.refresh.assert_awaited_once_with(mock_chat)
     patch_llm_queue_service.publish_message.assert_called_once_with(ANY)
 
 
 @pytest.mark.asyncio
 async def test_create_chat_raises_when_transcription_not_found(
     mock_session,
-    make_user,
+    mock_user,
     mocker,
 ):
     mock_session.get.return_value = None
@@ -82,18 +82,18 @@ async def test_create_chat_raises_when_transcription_not_found(
     mocker.patch("backend.api.routes.chat.Chat", return_value=Mock())
 
     with pytest.raises(HTTPException) as exc:
-        await create_chat(uuid.uuid4(), req, mock_session, make_user)
+        await create_chat(uuid.uuid4(), req, mock_session, mock_user)
     assert exc.value.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_create_chat_raises_when_user_does_not_match_transcription(
     mock_session,
-    make_user,
-    make_transcription,
+    mock_user,
+    mock_transcription,
     mocker,
 ):
-    transcription = make_transcription
+    transcription = mock_transcription
     transcription.user_id = uuid.uuid4()
     mock_session.get.return_value = transcription
 
@@ -101,86 +101,87 @@ async def test_create_chat_raises_when_user_does_not_match_transcription(
     mocker.patch("backend.api.routes.chat.Chat", return_value=Mock())
 
     with pytest.raises(HTTPException) as exc:
-        await create_chat(transcription.id, req, mock_session, make_user)
+        await create_chat(transcription.id, req, mock_session, mock_user)
     assert exc.value.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_chat_raises_when_transcription_not_found(
     mock_session,
-    make_user,
-    make_chat,
+    mock_user,
+    mock_chat,
 ):
-    mock_session.get.side_effect = make_mock_get(None, make_chat)
+    mock_session.get.side_effect = make_mock_get(None, mock_chat)
 
     with pytest.raises(HTTPException) as exc:
-        await get_chat(uuid.uuid4(), uuid.uuid4(), mock_session, make_user)
+        await get_chat(uuid.uuid4(), uuid.uuid4(), mock_session, mock_user)
     assert exc.value.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_chat_raises_when_user_does_not_match_transcription(
     mock_session,
-    make_user,
-    make_transcription,
-    make_chat,
+    mock_user,
+    mock_transcription,
+    mock_chat,
 ):
-    make_transcription.user_id = uuid.uuid4()
-    mock_session.get.side_effect = make_mock_get(make_transcription, make_chat)
+    mock_transcription.user_id = uuid.uuid4()
+    mock_session.get.side_effect = make_mock_get(mock_transcription, mock_chat)
 
     with pytest.raises(HTTPException) as exc:
-        await get_chat(make_transcription.id, make_chat.id, mock_session, make_user)
+        await get_chat(mock_transcription.id, mock_chat.id, mock_session, mock_user)
     assert exc.value.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_chat_raises_when_chat_not_found(
     mock_session,
-    make_user,
-    make_transcription,
+    mock_user,
+    mock_transcription,
 ):
-    make_transcription.user_id = make_user.id
-    mock_session.get.side_effect = make_mock_get(make_transcription, None)
+    mock_transcription.user_id = mock_user.id
+    mock_session.get.side_effect = make_mock_get(mock_transcription, None)
 
-    with pytest.raises(HTTPException):
-        await get_chat(make_transcription.id, uuid.uuid4(), mock_session, make_user)
+    with pytest.raises(HTTPException) as exc:
+        await get_chat(mock_transcription.id, uuid.uuid4(), mock_session, mock_user)
+    assert exc.value.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_chat_success(
     mock_session,
-    make_user,
-    make_transcription,
-    make_chat,
+    mock_user,
+    mock_transcription,
+    mock_chat,
 ):
-    make_transcription.user_id = make_user.id
-    mock_session.get.side_effect = make_mock_get(make_transcription, make_chat)
+    mock_transcription.user_id = mock_user.id
+    mock_session.get.side_effect = make_mock_get(mock_transcription, mock_chat)
 
-    res = await get_chat(make_transcription.id, make_chat.id, mock_session, make_user)
+    res = await get_chat(mock_transcription.id, mock_chat.id, mock_session, mock_user)
 
-    assert res.id == make_chat.id
-    assert res.user_content == make_chat.user_content
+    assert res.id == mock_chat.id
+    assert res.user_content == mock_chat.user_content
 
 
 @pytest.mark.asyncio
-async def test_delete_chat_success(mock_session, make_user, make_chat, make_transcription):
-    make_transcription.user_id = make_user.id
+async def test_delete_chat_success(mock_session, mock_user, mock_chat, mock_transcription):
+    mock_transcription.user_id = mock_user.id
 
-    mock_session.get = AsyncMock(side_effect=[make_transcription, make_chat])
+    mock_session.get = AsyncMock(side_effect=[mock_transcription, mock_chat])
 
     await delete_chat(
-        make_transcription.id,
-        make_chat.id,
+        mock_transcription.id,
+        mock_chat.id,
         mock_session,
-        make_user,
+        mock_user,
     )
 
-    mock_session.delete.assert_awaited_once_with(make_chat)
+    mock_session.delete.assert_awaited_once_with(mock_chat)
     mock_session.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_delete_chat_transcription_not_found(mock_session, make_user):
+async def test_delete_chat_transcription_not_found(mock_session, mock_user):
     mock_session.get = AsyncMock(return_value=None)
 
     with pytest.raises(HTTPException) as exc:
@@ -188,24 +189,24 @@ async def test_delete_chat_transcription_not_found(mock_session, make_user):
             uuid.uuid4(),
             uuid.uuid4(),
             mock_session,
-            make_user,
+            mock_user,
         )
 
     assert exc.value.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_delete_chats_and_not_found(mock_session, make_user, make_transcription):
-    make_transcription.user_id = make_user.id
+async def test_chat_not_found_after_delete(mock_session, mock_user, mock_transcription):
+    mock_transcription.user_id = mock_user.id
 
-    mock_session.get.return_value = make_transcription
+    mock_session.get.return_value = mock_transcription
     exec_result = Mock()
     mock_session.exec.return_value = exec_result
-    await delete_chats(make_transcription.id, mock_session, make_user)
+    await delete_chats(mock_transcription.id, mock_session, mock_user)
     mock_session.exec.assert_awaited()
     mock_session.commit.assert_awaited()
 
     mock_session.get.return_value = None
     with pytest.raises(HTTPException) as exc:
-        await delete_chats(make_transcription.id, mock_session, make_user)
+        await delete_chats(mock_transcription.id, mock_session, mock_user)
     assert exc.value.status_code == 404

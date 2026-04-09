@@ -17,19 +17,18 @@ from backend.api.routes.minutes import (
 
 
 @pytest.mark.asyncio
-async def test_list_minutes_for_transcription_success(mock_session, make_minute, make_user):
-    minute = make_minute
-    minute.transcription_id = make_user.id
+async def test_list_minutes_for_transcription_success(mock_session, mock_minute, mock_user):
+    minute = mock_minute
 
     transcription = Mock()
-    transcription.user_id = make_user.id
+    transcription.user_id = mock_user.id
     mock_session.get.return_value = transcription
 
     exec_result = Mock()
     exec_result.all.return_value = [minute]
     mock_session.exec.return_value = exec_result
 
-    result = await list_minutes_for_transcription(minute.transcription_id, mock_session, make_user)
+    result = await list_minutes_for_transcription(minute.transcription_id, mock_session, mock_user)
 
     assert len(result) == 1
     assert result[0].id == minute.id
@@ -37,25 +36,25 @@ async def test_list_minutes_for_transcription_success(mock_session, make_minute,
 
 
 @pytest.mark.asyncio
-async def test_list_minutes_for_transcription_not_found(mock_session, make_minute, make_user):
+async def test_list_minutes_for_transcription_not_found(mock_session, mock_user):
     mock_session.get.return_value = None
-    minute = make_minute
+    transcription_id = uuid.uuid4()
 
     with pytest.raises(HTTPException) as exc_info:
-        await list_minutes_for_transcription(minute, mock_session, make_user)
+        await list_minutes_for_transcription(transcription_id, mock_session, mock_user)
     assert exc_info.value.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_create_minute_success(mocker, mock_session, make_minute, make_minute_version, make_user):
+async def test_create_minute_success(mocker, mock_session, mock_minute, mock_minute_version, mock_user):
     """Test creating a minute successfully creates the minute and minute version."""
 
     transcription = Mock()
-    transcription.user_id = make_user.id
+    transcription.user_id = mock_user.id
     mock_session.get.return_value = transcription
 
-    minute = make_minute
-    minute_version = make_minute_version
+    minute = mock_minute
+    minute_version = mock_minute_version
 
     mocker.patch("backend.api.routes.minutes.Minute", return_value=minute)
     mocker.patch("backend.api.routes.minutes.MinuteVersion", return_value=minute_version)
@@ -68,7 +67,7 @@ async def test_create_minute_success(mocker, mock_session, make_minute, make_min
         transcription_id=minute.id,
         request=request,
         session=mock_session,
-        user=make_user,
+        user=mock_user,
     )
 
     mock_session.add.assert_any_call(minute)
@@ -78,9 +77,9 @@ async def test_create_minute_success(mocker, mock_session, make_minute, make_min
 
 
 @pytest.mark.asyncio
-async def test_create_minute_transcription_not_found(mock_session, make_minute, make_user):
+async def test_create_minute_transcription_not_found(mock_session, mock_minute, mock_user):
     """Test create_minute raises HTTPException when transcription is missing."""
-    minute = make_minute
+    minute = mock_minute
 
     mock_session.get.return_value = None
 
@@ -91,19 +90,19 @@ async def test_create_minute_transcription_not_found(mock_session, make_minute, 
             transcription_id=minute.id,
             request=request,
             session=mock_session,
-            user=make_user,
+            user=mock_user,
         )
     assert exc_info.value.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_get_minute_success(mock_session, make_minute, make_transcription, make_user):
+async def test_get_minute_success(mock_session, mock_minute, mock_transcription, mock_user):
     """Test retrieving a minute by ID returns the correct minute."""
 
-    transcription = make_transcription
-    transcription.user_id = make_user.id
+    transcription = mock_transcription
+    transcription.user_id = mock_user.id
 
-    minute = make_minute
+    minute = mock_minute
     minute.transcription_id = transcription.id
 
     minute.transcription = transcription
@@ -114,61 +113,61 @@ async def test_get_minute_success(mock_session, make_minute, make_transcription,
     exec_result.first.return_value = minute
     mock_session.exec.return_value = exec_result
 
-    result = await get_minute(minute.id, mock_session, make_user)
+    result = await get_minute(minute.id, mock_session, mock_user)
 
     assert result is minute
 
 
 @pytest.mark.asyncio
 async def test_list_minute_versions_success(
-    mock_session, make_minute, make_minute_version, make_transcription, make_user
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
 ):
     exec_result = Mock()
 
-    transcription = make_transcription
-    transcription.user_id = make_user.id
+    transcription = mock_transcription
+    transcription.user_id = mock_user.id
 
-    minute = make_minute
+    minute = mock_minute
     minute.transcription_id = transcription.id
     minute.transcription = transcription
 
-    minute_version = make_minute_version
+    minute_version = mock_minute_version
     minute.minute_versions = [minute_version]
 
     exec_result.first.return_value = minute
     mock_session.exec.return_value = exec_result
 
-    result = await list_minute_versions(minute.id, mock_session, make_user)
+    result = await list_minute_versions(minute.id, mock_session, mock_user)
 
     assert len(result) == 1
     assert result[0].id == minute_version.id
 
 
 @pytest.mark.asyncio
-async def test_list_minute_versions_not_found(mock_session, make_minute, make_user):
-    minute = make_minute
+async def test_list_minute_versions_not_found(mock_session, mock_minute, mock_user):
+    minute = mock_minute
 
     exec_result = Mock()
     exec_result.first.return_value = None
     mock_session.exec.return_value = exec_result
 
     with pytest.raises(HTTPException) as exc_info:
-        await list_minute_versions(minute.id, mock_session, make_user)
+        await list_minute_versions(minute.id, mock_session, mock_user)
 
     assert exc_info.value.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_create_minute_version_success(mocker, mock_session, make_minute, make_minute_version, make_user):
+async def test_create_minute_version_success(mocker, mock_session, mock_minute, mock_minute_version, mock_user):
     """Test creating a minute version successfully creates the version and returns the correct response."""
 
-    minute = make_minute
-    minute_version = make_minute_version
+    minute = mock_minute
+    minute_version = mock_minute_version
 
     mock_session.commit = AsyncMock()
     mock_session.refresh = AsyncMock()
 
-    expected_html_content = "<p>make_create_minute_version_success</p>"
+    expected_html_content = "<p>mock_create_minute_version_success</p>"
     minute_version.html_content = expected_html_content
 
     mocker.patch("backend.api.routes.minutes.get_minute", return_value=minute)
@@ -176,23 +175,23 @@ async def test_create_minute_version_success(mocker, mock_session, make_minute, 
 
     request = SimpleNamespace(content_source="initial_generation", html_content="<p>x</p>", ai_edit_instructions=None)
 
-    result = await create_minute_version(minute.id, request, mock_session, make_user)
+    result = await create_minute_version(minute.id, request, mock_session, mock_user)
     assert result.minute_id == minute.id
     assert result.html_content == expected_html_content
 
 
 @pytest.mark.asyncio
 async def test_delete_minute_version_success(
-    mock_session, make_minute, make_minute_version, make_transcription, make_user
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
 ):
-    transcription = make_transcription
-    transcription.user_id = make_user.id
+    transcription = mock_transcription
+    transcription.user_id = mock_user.id
 
-    minute = make_minute
+    minute = mock_minute
     minute.transcription = transcription
     minute.transcription_id = transcription.id
 
-    minute_version = make_minute_version
+    minute_version = mock_minute_version
     minute_version.minute = minute
     minute_version.minute_id = minute.id
 
@@ -200,7 +199,7 @@ async def test_delete_minute_version_success(
     exec_result.first.return_value = minute_version
     mock_session.exec.return_value = exec_result
 
-    await delete_minute_version(minute_version.id, mock_session, make_user)
+    await delete_minute_version(minute_version.id, mock_session, mock_user)
 
     mock_session.delete.assert_awaited_once_with(minute_version)
     mock_session.commit.assert_awaited_once()
@@ -208,13 +207,13 @@ async def test_delete_minute_version_success(
 
 @pytest.mark.asyncio
 async def test_delete_minute_version_unauthorized(
-    mock_session, make_minute, make_minute_version, make_transcription, make_user
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
 ):
-    minute = make_minute
-    minute.transcription = make_transcription
+    minute = mock_minute
+    minute.transcription = mock_transcription
     minute.transcription_id = uuid.uuid4()
 
-    minute_version = make_minute_version
+    minute_version = mock_minute_version
     minute_version.minute = minute
     minute_version.minute.transcription.user_id = uuid.uuid4()
 
@@ -223,23 +222,23 @@ async def test_delete_minute_version_unauthorized(
     mock_session.exec.return_value = exec_result
 
     with pytest.raises(HTTPException) as exc_info:
-        await delete_minute_version(minute_version.id, mock_session, make_user)
+        await delete_minute_version(minute_version.id, mock_session, mock_user)
 
     assert exc_info.value.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_get_minute_version_success(
-    mock_session, make_minute, make_minute_version, make_transcription, make_user
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
 ):
-    transcription = make_transcription
-    transcription.user_id = make_user.id
+    transcription = mock_transcription
+    transcription.user_id = mock_user.id
 
-    minute = make_minute
+    minute = mock_minute
     minute.transcription = transcription
     minute.transcription_id = transcription.id
 
-    minute_version = make_minute_version
+    minute_version = mock_minute_version
     minute_version.minute = minute
     minute_version.minute_id = minute.id
 
@@ -247,21 +246,21 @@ async def test_get_minute_version_success(
     exec_result.first.return_value = minute_version
     mock_session.exec.return_value = exec_result
 
-    result = await get_minute_version(minute_version.id, mock_session, make_user)
+    result = await get_minute_version(minute_version.id, mock_session, mock_user)
     assert result is minute_version
 
 
 @pytest.mark.asyncio
 async def test_get_minute_version_unauthorized(
-    mock_session, make_minute, make_minute_version, make_transcription, make_user
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
 ):
-    transcription = make_transcription
+    transcription = mock_transcription
     transcription.user_id = uuid.uuid4()
 
-    minute = make_minute
+    minute = mock_minute
     minute.transcription = transcription
 
-    minute_version = make_minute_version
+    minute_version = mock_minute_version
     minute_version.minute = minute
 
     exec_result = Mock()
@@ -269,6 +268,6 @@ async def test_get_minute_version_unauthorized(
     mock_session.exec.return_value = exec_result
 
     with pytest.raises(HTTPException) as exc_info:
-        await get_minute_version(minute_version.id, mock_session, make_user)
+        await get_minute_version(minute_version.id, mock_session, mock_user)
 
     assert exc_info.value.status_code == 404

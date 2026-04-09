@@ -6,19 +6,19 @@ import pytest
 
 from common.database.postgres_models import Chat, ContentSource, JobStatus, Minute, MinuteVersion, Transcription, User
 
-make_email = "tests@local-transcribe.gov.uk"
+mock_email = "tests@local-transcribe.gov.uk"
 
 
 @pytest.fixture
-def make_user() -> User:
+def mock_user() -> User:
     return User(
         id=uuid.uuid4(),
-        email=make_email,
+        email=mock_email,
     )
 
 
 @pytest.fixture
-def make_minute() -> Minute:
+def mock_minute() -> Minute:
     return Minute(
         id=uuid.uuid4(),
         created_datetime=datetime.now(tz=UTC),
@@ -32,11 +32,11 @@ def make_minute() -> Minute:
 
 
 @pytest.fixture
-def make_minute_version(make_minute) -> MinuteVersion:
+def mock_minute_version(mock_minute) -> MinuteVersion:
     return MinuteVersion(
         id=uuid.uuid4(),
-        minute_id=make_minute.id,
-        minute=make_minute,
+        minute_id=mock_minute.id,
+        minute=mock_minute,
         status=JobStatus.COMPLETED,
         created_datetime=datetime.now(tz=UTC),
         updated_datetime=datetime.now(tz=UTC),
@@ -47,7 +47,7 @@ def make_minute_version(make_minute) -> MinuteVersion:
 
 
 @pytest.fixture
-def make_transcription(make_minute) -> Transcription:
+def mock_transcription(mock_minute) -> Transcription:
     return Transcription(
         id=uuid.uuid4(),
         user_id=uuid.uuid4(),
@@ -55,7 +55,7 @@ def make_transcription(make_minute) -> Transcription:
         status=JobStatus.COMPLETED,
         created_datetime=datetime.now(tz=UTC),
         updated_datetime=datetime.now(tz=UTC),
-        minutes=[make_minute],
+        minutes=[mock_minute],
     )
 
 
@@ -79,7 +79,7 @@ def patch_llm_queue_service(monkeypatch):
 
 
 @pytest.fixture
-def make_chat(uid=None, user_content="hello", assistant_content="world", status="completed") -> Chat:
+def mock_chat(uid=None, user_content="hello", assistant_content="world", status="completed") -> Chat:
     return Chat(
         id=uid or uuid.uuid4(),
         user_content=user_content,
