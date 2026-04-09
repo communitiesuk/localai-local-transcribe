@@ -12,6 +12,7 @@ services:
       - POSTGRES_HOST=db
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
+      - ELASTICMQ_URL=http://elasticmq:9324
 
     depends_on:
       db:

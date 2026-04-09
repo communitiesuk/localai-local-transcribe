@@ -13,7 +13,7 @@ import { Transcription } from '@/lib/client'
 import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { AudioWaveform } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export function MinuteTab({ transcription }: { transcription: Transcription }) {
   const { data: minutes = [], isLoading } = useQuery({
@@ -25,9 +25,10 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
   })
   // Only see most recent minute of each template type
   const [selectedMinute, setSelectedMinute] = useState(0)
-  useEffect(() => {
-    setSelectedMinute(0)
-  }, [minutes])
+  const safeSelectedMinute = Math.min(
+    selectedMinute,
+    Math.max(minutes.length - 1, 0)
+  )
 
   if (isLoading) {
     return (
@@ -51,10 +52,12 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
     <>
       <div className="mb-4 flex flex-wrap gap-2">
         <Select
-          value={`${selectedMinute}`}
+          value={`${safeSelectedMinute}`}
           onValueChange={(v) => setSelectedMinute(Number(v))}
         >
-          <SelectTrigger>{minutes[selectedMinute].template_name}</SelectTrigger>
+          <SelectTrigger>
+            {minutes[safeSelectedMinute].template_name}
+          </SelectTrigger>
           <SelectContent>
             {minutes.map((minute, index) => {
               const date = new Date(minute.updated_datetime)
@@ -73,12 +76,12 @@ export function MinuteTab({ transcription }: { transcription: Transcription }) {
         </Select>
         <NewMinuteDialog
           transcriptionId={transcription.id!}
-          agenda={minutes[selectedMinute].agenda ?? undefined}
+          agenda={minutes[safeSelectedMinute].agenda ?? undefined}
         />
       </div>
       <MinuteEditor
         transcription={transcription}
-        minute={minutes[selectedMinute]}
+        minute={minutes[safeSelectedMinute]}
       />
     </>
   )

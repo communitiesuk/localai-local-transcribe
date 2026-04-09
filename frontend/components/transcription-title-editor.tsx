@@ -9,7 +9,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Edit } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 
 export const TranscriptionTitleEditor = ({
   transcriptionId,
@@ -30,6 +30,7 @@ export const TranscriptionTitleEditor = ({
   const { mutate: saveTranscription } = useMutation({
     ...saveTranscriptionTranscriptionsTranscriptionIdPatchMutation(),
   })
+  const titleValue = useWatch({ name: 'title', control: form.control })
   const onSubmit = useCallback(
     ({ title }: { title: string }) => {
       saveTranscription(
@@ -89,7 +90,7 @@ export const TranscriptionTitleEditor = ({
   return (
     <div className="flex items-baseline gap-2">
       <h1 className={cn('text-3xl font-bold', { 'text-gray-400': !title })}>
-        {form.watch('title') || placeholder}
+        {titleValue || placeholder}
       </h1>
       <Button
         onClick={() => {

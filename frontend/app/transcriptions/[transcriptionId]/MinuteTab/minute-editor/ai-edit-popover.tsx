@@ -11,7 +11,7 @@ import { createMinuteVersionMinutesMinuteIdVersionsPostMutation } from '@/lib/cl
 import { useMutation } from '@tanstack/react-query'
 import { Wand2Icon } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 
 type AIEditFormData = { instruction: string }
 
@@ -28,6 +28,10 @@ export const AiEditPopover = ({
 }) => {
   const [open, setOpen] = useState(false)
   const form = useForm<AIEditFormData>()
+  const instructionValue = useWatch({
+    name: 'instruction',
+    control: form.control,
+  })
   const { mutate: saveEdit } = useMutation({
     ...createMinuteVersionMinutesMinuteIdVersionsPostMutation(),
   })
@@ -70,7 +74,7 @@ export const AiEditPopover = ({
           <Button
             className="mt-2 bg-indigo-700 hover:bg-indigo-800 active:bg-yellow-500"
             type="submit"
-            disabled={!form.watch('instruction')}
+            disabled={!instructionValue}
           >
             <Wand2Icon /> Apply AI Edit
           </Button>

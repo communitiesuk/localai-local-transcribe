@@ -36,7 +36,6 @@ export function ChatTab({ transcription }: { transcription: Transcription }) {
   const queryClient = useQueryClient()
   const [input, setInput] = useState('')
   const listEndRef = useRef<HTMLDivElement | null>(null)
-  const [pollingChatId, setPollingChatId] = useState<string | null>(null) // State to hold the ID of the chat message to poll
 
   const {
     citationPopover,
@@ -68,35 +67,12 @@ export function ChatTab({ transcription }: { transcription: Transcription }) {
     [data?.chat]
   )
 
-  // Effect to find the latest 'in_progress' or 'awaiting_start' chat item
-  // and set it for individual polling.
-  useEffect(() => {
-    // Filter out optimistic (temporary) IDs before searching for an item to poll.
-    // We only want to poll messages that have a real ID from the server.
-    const realChatItems = chatItems.filter(
-      (item) => item.id && !item.id.startsWith('optimistic-')
-    )
-
-    const chatItemsReverse = [...realChatItems].reverse() // Check from the end to find the latest pending item
-    const itemToPoll = chatItemsReverse.find(
-      (item) =>
-        item.status === 'awaiting_start' || item.status === 'in_progress'
-    )
-
-    if (itemToPoll && itemToPoll.id && itemToPoll.id !== pollingChatId) {
-      setPollingChatId(itemToPoll.id)
-      console.log(
-        `Setting pollingChatId to: ${itemToPoll.id} with status: ${itemToPoll.status}`
-      )
-    } else if (!itemToPoll && pollingChatId) {
-      // If no real chat item needs polling (and no real items are awaiting/in_progress),
-      // and we were previously polling, stop.
-      setPollingChatId(null)
-      console.log(
-        'No real chat item needs polling, stopping individual polling.'
-      )
-    }
-  }, [chatItems, pollingChatId]) // Depend on chatItems and pollingChatId
+  const pollingChatId = chatItems.findLast(
+    (item) =>
+      item.id &&
+      !item.id.startsWith('optimistic-') &&
+      (item.status === 'awaiting_start' || item.status === 'in_progress')
+  )?.id
 
   // New useQuery for polling a single chat item
   useQuery({
@@ -169,7 +145,6 @@ export function ChatTab({ transcription }: { transcription: Transcription }) {
             }),
           })
         }
-        setPollingChatId(null) // Stop polling this ID
         return false // Stop refetching
       }
 
@@ -206,7 +181,6 @@ export function ChatTab({ transcription }: { transcription: Transcription }) {
           path: { transcription_id: transcriptionId },
         }),
       })
-      setPollingChatId(null) // Clear any active polling when chat is cleared
     },
   })
 

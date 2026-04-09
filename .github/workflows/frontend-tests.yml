@@ -13,7 +13,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install dependencies
         working-directory: frontend
@@ -45,7 +45,7 @@ jobs:
         if: always()
         with:
           name: frontend-coverage-xml
-          path: frontend/coverage/cobertura-coverage.xml 
+          path: frontend/coverage/cobertura-coverage.xml
 
       - name: Coverage summary
         if: always()
