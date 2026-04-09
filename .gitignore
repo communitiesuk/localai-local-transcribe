@@ -130,3 +130,4 @@ evals/**/output/
 **/*.mp3
 **/*.m4a
 
+frontend/public/assets/govuk
