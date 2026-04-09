@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from evals.summarisation.src.schemas import (
+from evals.summarisation.src.common.schemas import (
     DialogExample,
     DialogSummary,
     EvalRecord,

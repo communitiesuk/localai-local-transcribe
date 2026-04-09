@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from evals.summarisation.src.config import AppConfig, load_config
+from evals.summarisation.src.common import AppConfig, load_config
 
 
 def test_load_config_parses_yaml(tmp_path):

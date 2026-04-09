@@ -13,16 +13,22 @@ poetry install --with evals-summarisation
 ## Usage
 
 ```bash
-# Quick smoke test (2 examples)
-poetry run python evals/summarisation/src/evaluate.py
+# Quick smoke test (2 examples) - standard evaluation
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/smoke-test.yaml
 
-# Full test suite
-poetry run python evals/summarisation/src/evaluate.py --config evals/summarisation/configs/test.yaml
+# Full test suite - standard evaluation
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/test.yaml
+
+# Bias/counterfactual evaluation
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/counterfactual.yaml
 ```
 
 **Available configs:**
-- `smoke-test.yaml` - Fast smoke test with `limit: 2`
-- `test.yaml` - Full test suite (no limit)
+- `smoke-test.yaml` - Fast smoke test with `limit: 2` (`eval_type: standard`)
+- `test.yaml` - Full test suite (`eval_type: standard`)
+- `counterfactual.yaml` - Bias evaluation (`eval_type: bias`)
+
+The evaluation type is determined by the `eval_type` field in the config file.
 
 Outputs are written to `evals/summarisation/output/<run_id>/results.jsonl` and `evals/summarisation/output/<run_id>/summary.json`.
 
@@ -34,6 +40,59 @@ An experiment is defined by:
 - Prompt templates in `evals/summarisation/prompts/` (how we ask the model to summarise, and how we ask the judge to score).
 
 All run parameters (`split`, `limit`, `prompt_version`) are now configured in the YAML file under the `run:` section, not as CLI flags.
+
+## Counterfactual Bias Evaluation
+
+Measures bias in summarization by comparing outputs across counterfactual transcript pairs that differ only in protected characteristics (e.g., gender, age, ethnicity).
+
+### How it works
+
+For each counterfactual pair (original + variant transcript):
+1. **Original transcript** → Run through summarization `num_iterations` times (default: 5)
+2. **Counterfactual transcript** → Run through summarization `num_iterations` times (default: 5)
+
+Each iteration uses the **same transcript** to measure variance in LLM output and detect bias sensitivity.
+
+### Setup
+
+```bash
+poetry install --with evals-summarisation
+```
+
+### Usage
+
+```bash
+# Run bias evaluation using unified entry point
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/counterfactual.yaml
+
+# Generate visualizations from results
+poetry run python evals/summarisation/src/bias/visualize.py \
+  evals/summarisation/output/counterfactual/<run_id>/results.jsonl
+```
+
+**Note:** The unified entry point (`src/main.py`) automatically determines whether to run standard or bias evaluation based on the `eval_type` field in the config.
+
+### Configuration
+
+**Config:** `evals/summarisation/configs/counterfactual.yaml`
+
+**Key parameters:**
+- `num_iterations`: Number of times to run each transcript through summarization (default: 5)
+- `input_dir`: Directory containing counterfactual JSON files (default: `evals/dataset_generation/counterfactual_generation/output`)
+- `metrics`: Judge metrics to evaluate (faithfulness, coverage, conciseness, coherence)
+- `prompt_version`: Prompt version to use (e.g., `dev`, `prod`)
+
+### Output
+
+Results written to `evals/summarisation/output/counterfactual/<run_id>/`:
+- `results.jsonl` - Detailed per-example results with all iterations
+- `summary.json` - Aggregated statistics across all examples
+- `visualizations/` - Generated plots showing bias analysis (created by `visualize.py`)
+
+**Visualizations include:**
+- Per-metric comparison plots showing distribution shifts between original and counterfactual groups
+- Statistical measures: mean, std, min/max across iterations
+- Semantic similarity and sentiment comparison between groups
 
 # Transcription Evaluation
 

@@ -13,19 +13,19 @@ from dspy.evaluate import Evaluate
 from langchain_core.prompts import ChatPromptTemplate
 
 from common.settings import get_settings
-
-from .adapter_factory import build_azure_apim_adapter
-from .config import AppConfig
-from .jsonl import write_jsonl
-from .langchain_adapter import LangChainModelAdapter
-from .metric import DialogSummaryMetric, build_metrics
-from .prompts import render_template
-from .schemas import (
+from evals.summarisation.src.common import (
+    AppConfig,
     DialogExample,
     DialogSummary,
+    DialogSummaryMetric,
     EvalRecord,
     GenerationConfig,
+    LangChainModelAdapter,
     MetricResult,
+    build_azure_apim_adapter,
+    build_metrics,
+    render_template,
+    write_jsonl,
 )
 
 
@@ -163,7 +163,11 @@ def run_eval(
     summarizer_llm = _build_llm()
     model_name = settings.BEST_LLM_MODEL_NAME
 
-    summarizer_template_path = cfg.prompts.summarizer_template_path
+    summarizer_template_path_opt = cfg.prompts.summarizer_template_path
+    if summarizer_template_path_opt is None:
+        msg = "summarizer_template_path must be provided in config"
+        raise ValueError(msg)
+    summarizer_template_path: str = summarizer_template_path_opt
 
     metrics = build_metrics(cfg)
     summarize_prompt, _ = _build_prompts()
