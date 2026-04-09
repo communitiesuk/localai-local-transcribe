@@ -41,7 +41,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 RUN apt-get update && \
-    apt-get install -y ffmpeg && \
+    apt-get install -y ffmpeg=7:4.4.2-0ubuntu0.22.04.1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
