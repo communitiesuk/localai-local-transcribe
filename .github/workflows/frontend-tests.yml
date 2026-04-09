@@ -45,7 +45,7 @@ jobs:
         if: always()
         with:
           name: frontend-coverage-xml
-          path: frontend/coverage/cobertura-coverage.xml 
+          path: frontend/coverage/cobertura-coverage.xml
 
       - name: Coverage summary
         if: always()

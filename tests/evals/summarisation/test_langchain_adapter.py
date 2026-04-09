@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from evals.summarisation.src.langchain_adapter import (
+from evals.summarisation.src.common.langchain_adapter import (
     LangChainModelAdapter,
     _convert_message_to_dict,
 )

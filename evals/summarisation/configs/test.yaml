@@ -1,4 +1,5 @@
 run:
+  eval_type: standard
   output_dir: evals/summarisation/output
   seed: 0
   split: test
