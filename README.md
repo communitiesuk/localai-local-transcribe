@@ -1,5 +1,3 @@
-[![build](https://github.com/i-dot-ai/minute/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/minute/actions/workflows/build.yml?query=branch%3Amain)
-
 # Local Transcribe
 
 > [!IMPORTANT]
