@@ -7,7 +7,17 @@ import pytest
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_session import get_session
 from backend.main import app
-from common.database.postgres_models import Chat, ContentSource, JobStatus, Minute, MinuteVersion, Transcription, User
+from common.database.postgres_models import (
+    Chat,
+    ContentSource,
+    JobStatus,
+    Minute,
+    MinuteVersion,
+    Recording,
+    Transcription,
+    User,
+)
+from common.types import RecordingCreateRequest, TranscriptionCreateRequest, TranscriptionPatchRequest
 
 mock_email = "test@local-transcribe.com"
 
@@ -56,6 +66,27 @@ def override_session(mock_session):
 
 
 @pytest.fixture
+def mock_recording(mock_user):
+    recording = Mock(spec=Recording)
+    recording.id = uuid4()
+    recording.user_id = mock_user.id
+    recording.s3_file_key = "audio/file.mp3"
+    recording.transcription_id = None
+    return recording
+
+
+@pytest.fixture
+def mock_session_with_recording(mock_session, mock_recording):
+    mock_session.get.return_value = mock_recording
+    return mock_session
+
+
+@pytest.fixture
+def recording_create_request():
+    return RecordingCreateRequest(file_extension="mp3")
+
+
+@pytest.fixture
 def mock_minute() -> Minute:
     return Minute(
         id=uuid4(),
@@ -85,16 +116,59 @@ def mock_minute_version(mock_minute) -> MinuteVersion:
 
 
 @pytest.fixture
-def mock_transcription(mock_minute) -> Transcription:
+def mock_transcription(mock_minute, mock_user) -> Transcription:
     return Transcription(
         id=uuid4(),
-        user_id=uuid4(),
+        user_id=mock_user.id,
         audio_url="https://example.com/audio.mp3",
         status=JobStatus.COMPLETED,
         created_datetime=datetime.now(tz=UTC),
         updated_datetime=datetime.now(tz=UTC),
         minutes=[mock_minute],
+        title="Test Transcription",
+        dialogue_entries=[
+            {"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0},
+            {"speaker": "Bob", "text": "Hi there", "start_time": 1.0, "end_time": 2.0},
+        ],
     )
+
+
+@pytest.fixture
+def transcription_request():
+    return TranscriptionCreateRequest(
+        recording_id=uuid4(),
+        title="Test Transcription",
+        template_name="default",
+        template_id=None,
+        agenda=None,
+    )
+
+
+@pytest.fixture
+def transcription_patch_request():
+    return TranscriptionPatchRequest(
+        title="Mocked Transcription Title",
+        dialogue_entries=[
+            {"speaker": "Alice", "text": "Updated dialogue 1", "start_time": 0.0, "end_time": 5.5},
+            {"speaker": "Bob", "text": "Updated dialogue 2", "start_time": 5.5, "end_time": 12.3},
+        ],
+    )
+
+
+@pytest.fixture
+def mock_storage_service(mocker):
+    service = mocker.patch("backend.api.routes.transcriptions.storage_service")
+    service.check_object_exists = AsyncMock(return_value=True)
+    service.generate_presigned_url_put_object = AsyncMock(return_value="https://example.s3.amazonaws.com/put-123")
+    service.generate_presigned_url_get_object = AsyncMock(return_value="https://example.s3.amazonaws.com/get-123")
+    return service
+
+
+@pytest.fixture
+def mock_transcription_queue_service(mocker):
+    service = mocker.patch("backend.api.routes.transcriptions.transcription_queue_service")
+    service.publish_message = Mock()
+    return service
 
 
 @pytest.fixture
