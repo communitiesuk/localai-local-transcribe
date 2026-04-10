@@ -33,7 +33,11 @@ export function HallucinationsList({
             {formatLabel(h.hallucination_type)}:
           </span>
           {h.hallucination_text && (
-            <p className="text-red-900 italic">"{h.hallucination_text}"</p>
+            <p className="text-red-900 italic">
+              {'"'}
+              {h.hallucination_text}
+              {'"'}
+            </p>
           )}
           {h.hallucination_reason && (
             <p className="text-xs text-red-700">
