@@ -36,8 +36,8 @@ jobs:
       - name: Setup Python and Poetry
         uses: ./.github/actions/python-poetry-setup
         with:
-          python-version: ${{ inputs.python_version }}
-          poetry-version: ${{ inputs.poetry_version }}
+          python-version: ${{ inputs.python_version || '3.12' }}
+          poetry-version: ${{ inputs.poetry_version || '2.3.3' }}
 
       - name: Install dependencies
         run: poetry sync --no-root --no-ansi --with evals-summarisation
