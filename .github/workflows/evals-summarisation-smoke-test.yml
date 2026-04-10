@@ -1,6 +1,11 @@
 name: Evals Summarisation Smoke Test
 
 on:
+  push:
+    branches:
+      - "feature/**"
+    paths:
+      - .github/workflows/evals-summarisation-smoke-test.yml
   workflow_call:
     inputs: 
       python_version: 
