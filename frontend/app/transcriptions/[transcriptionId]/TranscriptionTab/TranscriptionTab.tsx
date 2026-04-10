@@ -31,8 +31,8 @@ export function TranscriptionTab({
     handleSubmit,
     formState: { isDirty },
     reset,
-    watch,
     setValue,
+    getValues,
   } = methods
 
   const transcriptionString = useMemo(
@@ -51,9 +51,9 @@ export function TranscriptionTab({
   useEffect(() => {
     if (isDirty) {
       handleSubmit(saveTranscription)()
-      reset(watch())
+      reset(getValues())
     }
-  }, [handleSubmit, isDirty, saveTranscription, reset, watch])
+  }, [handleSubmit, isDirty, saveTranscription, reset, getValues])
 
   const { fields, update } = useFieldArray({ control, name: 'entries' })
 
@@ -111,11 +111,9 @@ export function TranscriptionTab({
               />
               <div className="flex justify-between">
                 <div>
-                  {playingRef.current && (
-                    <Button onClick={scrollToPlaying} variant="link">
-                      <ArrowDown /> Scroll to playing
-                    </Button>
-                  )}
+                  <Button onClick={scrollToPlaying} variant="link">
+                    <ArrowDown /> Scroll to playing
+                  </Button>
                 </div>
                 <DownloadButton recordings={recordings} />
               </div>
@@ -124,7 +122,6 @@ export function TranscriptionTab({
           <div className="flex flex-col gap-6">
             {fields.map((entry, index, array) => {
               const isPlaying =
-                time &&
                 time >= entry.start_time &&
                 (!array[index + 1] || time < array[index + 1].start_time)
               return (

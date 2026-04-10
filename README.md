@@ -37,7 +37,7 @@ This will build and run 5 containers:
 2. Backend api available at http://localhost:8080
 3. Worker service, which process transcriptions and does not have a public facing url
 4. Postgres database hosted at http:localhost:5432
-5. Localstack to simulate AWS SQS
+5. ElasticMQ to simulate AWS SQS
 
 #### LLM and Transcription Services
 
@@ -48,11 +48,13 @@ If you have access to a supported LLM and Transcription provider, you will need 
 ##### In `.env`
 
 - Transcription: `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`
-- LLM: `AZURE_APIM_URL`, `AZURE_APIM_DEPLOYMENT`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, and `AZURE_APIM_SUBSCRIPTION_KEY`.
+- LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, and `AZURE_APIM_SUBSCRIPTION_KEY`.
 
 Note:
 
-- These APIM values can be found on the [Azure APIM Portal](https://portal.api.azc.test.communities.gov.uk/).
+- These APIM values can be found on the [Azure APIM Portal](https://portal.api.azc.test.communities.gov.uk/), including:
+  - AZURE_APIM_URL in the format `https://{{host}}.gov.uk/{{product_name}}/`
+  - AZURE_APIM_API_VERSION in the format `yyyy-mm-dd`
 - The `AZURE_APIM_ACCESS_TOKEN` is short lived and so must be regenerated every 2 hours.
 
 ##### In `common/settings.py`:
@@ -137,6 +139,8 @@ To run unit tests:
 make test
 ```
 
+For transcription service evaluation, see [evals/transcription/README.md](evals/transcription/README.md).
+
 ### Testing paid APIs and LLM prompt evaluations
 
 A special set of tests are available to evaluate paid calls to LLM providers. Since we don't want to run this all the
@@ -162,10 +166,10 @@ Simply put them in the [templates](backend/templates) directory, and they will a
 ```bash
 poetry install --with dev
 
-poetry run mypy .                
+poetry run mypy .
 # check entire project
 
-poetry run mypy path/to/file.py  
+poetry run mypy path/to/file.py
 # check a specific file
 ```
 

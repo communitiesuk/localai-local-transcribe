@@ -9,13 +9,14 @@ services:
       - .env
     environment:
       - POSTGRES_HOST=db
-      - LOCALSTACK_URL=http://localstack:4566
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
+      - ELASTICMQ_URL=http://elasticmq:9324
+
     depends_on:
       db:
         condition: service_healthy
-      localstack:
+      elasticmq:
         condition: service_healthy
     volumes:
       - type: bind
@@ -59,14 +60,14 @@ services:
     environment:
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
-      - LOCALSTACK_URL=http://localstack:4566
+      - ELASTICMQ_URL=http://elasticmq:9324 
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
     stop_grace_period: 10s
     depends_on:
       db:
         condition: service_healthy
-      localstack:
+      elasticmq:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
@@ -133,54 +134,19 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
-
-  localstack:
-    image: localstack/localstack:latest
-    env_file:
-      - .env
+      
+  elasticmq:
+    image: softwaremill/elasticmq
     ports:
-      - 4566:4566
-      - 4510-4559:4510-4559
+      - "9324:9324"
     volumes:
-      - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
-    environment:
-      - AWS_DEFAULT_REGION=eu-west-2
+      - ./elasticmq.conf:/opt/elasticmq.conf
     healthcheck:
-      test: ["CMD", "test", "-f", "/ready.txt"]
-      interval: 1m30s
-      timeout: 30s
+      test: ["CMD-SHELL", "curl --fail http://localhost:9324/?Action=ListQueues"]
+      interval: 5s
+      timeout: 5s
       retries: 5
-      start_period: 30s
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: minute-ollama
-    ports:
-      - "11434:11434"
-    environment:
-      - OLLAMA_HOST=0.0.0.0
-    volumes:
-      - ollama_data:/root/.ollama
-    entrypoint: /bin/sh -c "ollama serve & sleep 5 && ollama pull llama3.2:3b-instruct-q4_K_M && wait"
-    deploy:
-      resources:
-        limits:
-          memory: 8G # Prevent it eating all RAM
-
-  # 2. The Transcriber (For Audio -> Text)
-  whisper:
-    image: fedirz/faster-whisper-server:latest-cpu
-    container_name: minute-whisper
-    ports:
-      - "8000:8000"
-    environment:
-      # Use a smaller model for speed.
-      # Options: tiny, base, small, medium, large-v3
-      - WHISPER_MODEL=small
-    deploy:
-      resources:
-        limits:
-          memory: 4G
+      start_period: 10s
 
 volumes:
   local_postgres_data: {}

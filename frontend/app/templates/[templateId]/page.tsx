@@ -16,15 +16,17 @@ import {
 } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useEffect } from 'react'
+import { useEffect, use } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 
-export default function EditTemplatePage({
-  params: { templateId },
-}: {
-  params: { templateId: string }
+export default function EditTemplatePage(props: {
+  params: Promise<{ templateId: string }>
 }) {
+  const params = use(props.params)
+
+  const { templateId } = params
+
   const { data: template } = useQuery({
     ...getUserTemplateUserTemplatesTemplateIdGetOptions({
       path: { template_id: templateId },

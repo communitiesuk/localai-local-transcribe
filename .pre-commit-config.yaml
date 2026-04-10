@@ -2,7 +2,8 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v6.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
         name: Check for files larger than 5 MB
@@ -25,16 +26,15 @@ repos:
 
       - id: npm-format
         name: Format frontend files
-        entry: bash -c 'cd frontend && npx prettier --write .'
+        entry: bash -c 'cd frontend && npm exec -- prettier --write "${@#frontend/}"' --
         language: system
-        pass_filenames: false
-        files: ^frontend/
-        types: [file]
+        pass_filenames: true
+        files: ^frontend/.*\.(js|jsx|ts|tsx|json|css|scss|md|yaml|html)$
 
       # - id: python-tests
       #   name: Run Python tests
       #   entry: poetry run pytest
-      #   language: system
+      #   language: system  
       #   types: [python]
       #   pass_filenames: false
 

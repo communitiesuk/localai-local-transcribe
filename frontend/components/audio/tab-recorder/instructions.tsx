@@ -1,17 +1,16 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export const InstructionsTabs = () => {
-  const [tab, setTab] = useState('windows')
-
-  useEffect(() => {
+  const [tab, setTab] = useState(() => {
+    if (typeof navigator === 'undefined') return 'windows'
     // Gross typing to make typescript happy
     const platform =
       (navigator as Navigator & { userAgentData?: { platform: string } })
         .userAgentData?.platform || navigator.platform
-    setTab(platform.toLowerCase().includes('mac') ? 'macos' : 'windows')
-  }, [])
+    return platform.toLowerCase().includes('mac') ? 'macos' : 'windows'
+  })
   return (
     <Tabs value={tab} onValueChange={setTab}>
       <TabsList>

@@ -18,10 +18,44 @@ skip = [
 
 [tool.pytest.ini_options]
 minversion = "8.3"
-addopts = "-ra -q"
 testpaths = [
     "tests"
 ]
+addopts = [
+    "-ra -q",
+    "--cov=backend",               
+    "--cov=common",
+    "--cov=evals", 
+    "--cov=worker",                 
+    "--cov-report=term-missing",   
+    "--cov-report=html",             
+    ]
+
+[tool.coverage.run]
+source = ["backend", "common", "evals"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/terraform/*",
+    "*/alembic/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+    "*/.venv/*",
+    "*/venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+fail_under = 10
+
 
 [tool.poetry]
 packages = [
@@ -29,7 +63,7 @@ packages = [
     {include = "backend"},
     {include = "common"},
 ]
-requires-poetry = "=2.3.2"
+requires-poetry = "=2.3.3"
 
 # add common dependencies here
 [tool.poetry.dependencies]
@@ -49,9 +83,10 @@ sentry-sdk = {extras = ["fastapi"], version = "^2.18.0"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
 asyncpg = "^0.30.0"
 markdownify = "^1.2.0"
-python-multipart = "^0.0.20"
+python-multipart = "^0.0.22"
 i-dot-ai-utilities = "^0.4.4"
 azure-servicebus = "^7.14.2"
+mypy-boto3-sqs = "^1.42.3"
 
 [tool.poetry.group.backend.dependencies]
 pyjwt = "^2.9.0"
@@ -69,6 +104,38 @@ azure-identity = "^1.23.1"
 
 [tool.poetry.group.local-dev.dependencies]
 whisply = "^0.13.1"
+
+[tool.poetry.group.evals-transcription.dependencies]
+datasets = "^3.0.0"
+jiwer = "^3.0.0"
+soundfile = "^0.12.0"
+librosa = "^0.10.0"
+
+[tool.poetry.group.evals-audio_generation.dependencies]
+elevenlabs = ">=2.35.0,<3.0.0"
+pydub = ">=0.25.1,<0.26.0"
+
+[tool.poetry.group.evals-summarisation.dependencies]
+datasets = "^3.6.0"
+dspy-ai = "^2.0.4"
+jinja2 = "^3.1.4"
+langchain = "^1.2.10"
+langchain-core = "^1.2.17"
+langchain-openai = "^1.1.9"
+orjson = "^3.10.7"
+polars = "^1.5.0"
+pydantic = "^2.8.2"
+pyyaml = "^6.0.2"
+tenacity = "^9.0.0"
+typer = "^0.20.0"
+sentence-transformers = "^3.0.0"
+transformers = "^4.40.0"
+torch = "^2.0.0"
+matplotlib = "^3.8.0"
+
+[tool.poetry.group.evals-dataset-generation.dependencies]
+jinja2 = ">=3.1.4"
+pyyaml = ">=6.0.2"
 
 [tool.poetry.group.dev.dependencies]
 bumpversion = "^0.6.0"
@@ -117,6 +184,11 @@ types-ujson = "^5.10.0.20250822"
 types-aioboto3 = "^15.5.0"
 types-botocore = "^1.0.2"
 types-boto3 = "^1.42.34"
+coverage = "^7.13.2"
+dspy = "^3.1.3"
+orjson = "^3.11.7"
+langchain-core = "^1.2.23"
+elevenlabs = "^2.40.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
@@ -127,20 +199,17 @@ line-length = 120
 target-version = 'py312'
 fix = true
 
-[tool.ruff.format]
-exclude = ["data/*"]
-
 [tool.ruff.lint]
 select = [
     "A", "B", "C", "E", "F", "G", "I", "N", "Q", "S", "T", "W",
     "ARG", "ASYNC", "BLE", "COM", "DJ", "DTZ", "EM", "EXE", "FURB",
     "ICN", "INT", "ISC", "LOG", "NPY", "PD", "PGH", "PIE", "PL",
-    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT",
-    "TCH", "TD", "TID", "UP", "YTT"
+    "PT", "PTH", "PYI", "RET", "RSE", "RUF", "SIM", "SLF", "SLOT", 
+    "TD", "TID", "UP", "YTT", "TCH"
 ]
-# TODO: Decide on a structure for evals folder and add ruff support properly
+
 exclude = ["out/*", "viewer/*", "alembic/*"]
-ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912"]
+ignore = ["COM812", "DJ001", "RET505", "RET508", "PLR0913", "S318","ISC001","PLR0912","C901","PLR0912", "TC001", "TC002", "TC003"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["backend", "frontend"]
@@ -151,15 +220,31 @@ known-first-party = ["backend", "frontend"]
 "*/tests_playwright/*" = ["S101", "S106", "PLR0913", "PLR2004", "TD003"]
 
 [tool.mypy]
+explicit_package_bases = true
 warn_unused_configs = true
 warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 strict_optional = true
-
 check_untyped_defs = true
 no_implicit_optional = true
-# terraform: non production diagram scripts using untyped diagrams
+ignore_missing_imports = false
+# terraform: non production diagram scripts using untyped diagrams 
 # TODO: Decide on a structure for evals and viewer folder and add mypy support properly
-exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*", "evals/*"]
+exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*"]
+
+
+[[tool.mypy.overrides]]
+module = ["datasets.*", "dspy.*", "dspy", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["scipy.optimize"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["pydub.*", "pydub"]
+ignore_missing_imports = true
+follow_untyped_imports = true
+

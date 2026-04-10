@@ -3,7 +3,7 @@ export
 
 PY_VERSION := $(shell cat .python-version)
 
-.PHONY: build-pyenv install pre-commit-setup test test_e2e run_frontend run_backend run stop
+.PHONY: build-pyenv install pre-commit-setup test test_cov test_e2e run_frontend run_backend run stop
 
 build-pyenv:
 	pyenv install -s ${PY_VERSION}
@@ -19,7 +19,15 @@ run-pre-commit:
 	poetry run pre-commit run --all-files
 
 test:
-	poetry run pytest tests/
+	poetry run pytest --cov --cov-report=term-missing 
+
+test-cov:
+	poetry run pytest --cov --cov-report=html:htmlcov/cov --cov-report=xml --cov-report=term-missing
+	@echo "Coverage report generated in htmlcov/cov and coverage.xml"
+
+test-evals:
+	poetry run pytest tests/evals/ --cov=evals --cov-report=html:htmlcov/evals --cov-report=xml --cov-report=term-missing -o addopts=
+	@echo "Coverage report generated in htmlcov/evals"
 
 run_frontend:
 	cd frontend && npm run dev

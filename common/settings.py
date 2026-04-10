@@ -75,8 +75,7 @@ class Settings(BaseSettings):
     AZURE_AUDIO_DEPLOYMENT: str | None = Field(description="Azure deployment for audio (Whisper)", default=None)
 
     # if using Azure APIM
-    AZURE_APIM_URL: str | None = Field(description="Base URL for Azure APIM LLM.", default=None)
-    AZURE_APIM_DEPLOYMENT: str | None = Field(description="Azure APIM deployment, <project-model>", default=None)
+    AZURE_APIM_URL: str | None = Field(description="Base URL for Minute's Azure APIM LLM.", default=None)
     AZURE_APIM_API_VERSION: str | None = Field(description="Azure APIM API version, <yyyy-mm-dd>", default=None)
     AZURE_APIM_ACCESS_TOKEN: str | None = Field(description="Access token for Azure APIM", default=None)
     AZURE_APIM_SUBSCRIPTION_KEY: str | None = Field(description="Subscription key for Azure APIM", default=None)
@@ -88,10 +87,10 @@ class Settings(BaseSettings):
     GOOGLE_CLOUD_PROJECT: str | None = Field(description="Google Cloud project ID", default=None)
     GOOGLE_CLOUD_LOCATION: str | None = Field(description="Google Cloud region/location", default=None)
 
-    # if using LOCALSTACK for development (recommended)
-    USE_LOCALSTACK: bool = Field(description="Use LocalStack for local AWS services emulation in dev", default=True)
-    LOCALSTACK_URL: str = Field(
-        description="LocalStack service URL for local AWS services emulation", default="http://localhost:4566"
+    # ELASTICMQ for development
+    USE_ELASTICMQ: bool = Field(description="Use ElasticMQ for local AWS SQS emulation in dev", default=True)
+    ELASTICMQ_URL: str = Field(
+        description="ELASTICMQ service URL for local AWS services emulation", default="http://localhost:9324"
     )
 
     TRANSCRIPTION_SERVICES: list[str] = Field(
@@ -105,9 +104,8 @@ class Settings(BaseSettings):
         default="azure_apim",
     )
     FAST_LLM_MODEL_NAME: str = Field(
-        description="Fast LLM model name to use. Note that this should be used for low complexity LLM tasks. Currently "
-        "ignored by azure_apim as the apim controls model access.",
-        default="gemini-2.5-flash-lite",
+        description="Fast LLM model name to use. Note that this should be used for low complexity LLM tasks.",
+        default="gpt-4o",
     )
     BEST_LLM_PROVIDER: str = Field(
         description="Best LLM provider to use. Currently 'openai', 'azure_apim', and 'gemini' are supported. Note that "
@@ -116,8 +114,8 @@ class Settings(BaseSettings):
     )
     BEST_LLM_MODEL_NAME: str = Field(
         description="Best LLM model name to use. Note that this should be used for higher complexity LLM tasks, like "
-        "initial minute generation. Currently ignored by azure_apim as the apim controls model access.",
-        default="gemini-2.5-flash",
+        "initial minute generation.",
+        default="gpt-4o",
     )
 
     STORAGE_SERVICE_NAME: str = Field(

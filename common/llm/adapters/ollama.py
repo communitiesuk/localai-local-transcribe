@@ -3,17 +3,12 @@ import logging
 from typing import Any
 
 from openai import AsyncOpenAI
-from openai.types.chat import (
-    ChatCompletionAssistantMessageParam,
-    ChatCompletionDeveloperMessageParam,
-    ChatCompletionMessageParam,
-    ChatCompletionSystemMessageParam,
-    ChatCompletionUserMessageParam,
-)
+from pydantic import BaseModel
 
 from common.settings import get_settings
 
-from .base import ModelAdapter, T
+from .base import ModelAdapter
+from .message_utils import convert_to_openai_message
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -33,40 +28,7 @@ class OllamaModelAdapter(ModelAdapter):
         )
         self._kwargs = kwargs
 
-    @staticmethod
-    def _convert_to_openai_message(msg: dict[str, str]) -> ChatCompletionMessageParam:
-        role = msg["role"]
-        content = msg["content"]
-
-        if role == "system":
-            return ChatCompletionSystemMessageParam(role="system", content=content)
-        elif role == "user":
-            return ChatCompletionUserMessageParam(role="user", content=content)
-        elif role == "assistant":
-            return ChatCompletionAssistantMessageParam(role="assistant", content=content)
-        elif role == "developer":
-            return ChatCompletionDeveloperMessageParam(role="developer", content=content)
-        else:
-            error_msg = f"Invalid role: {role}"
-            raise ValueError(error_msg)
-
-    @staticmethod
-    def _generate_example_obj(properties: dict[str, Any]) -> dict[str, Any]:
-        """Generates a dummy JSON object based on schema properties for prompting."""
-        example_obj: dict[str, Any] = {}
-        for field_name, field_info in properties.items():
-            field_type = field_info.get("type", "string")
-            if field_type == "number":
-                example_obj[field_name] = 0.85
-            elif field_type == "string":
-                example_obj[field_name] = "Example text here"
-            elif field_type == "boolean":
-                example_obj[field_name] = True
-            else:
-                example_obj[field_name] = "value"
-        return example_obj
-
-    async def structured_chat(self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+    async def structured_chat[T: BaseModel](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         schema = response_format.model_json_schema()
 
         # Build a clearer instruction that explains what fields to include
@@ -103,9 +65,7 @@ Remember: Respond with ONLY the JSON object containing your actual analysis, not
             last_msg["content"] = last_msg["content"] + json_instruction
             modified_messages[-1] = last_msg
 
-        openai_messages = [self._convert_to_openai_message(msg) for msg in modified_messages]
-
-        temperature = float(self._kwargs.get("temperature", 0.0))
+        openai_messages = [convert_to_openai_message(msg) for msg in modified_messages]
 
         response = await self.async_client.chat.completions.create(
             model=self._model,
@@ -128,7 +88,7 @@ Remember: Respond with ONLY the JSON object containing your actual analysis, not
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
         try:
-            openai_messages = [self._convert_to_openai_message(msg) for msg in messages]
+            openai_messages = [convert_to_openai_message(msg) for msg in messages]
 
             response = await self.async_client.chat.completions.create(
                 model=self._model,

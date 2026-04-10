@@ -42,7 +42,7 @@ Before moving on to the next step, edit the .env file and add: WHISPLY_HF_TOKEN=
 ./run-worker-local.sh
 ```
 
-Access the app at http://localhost:3000
+### Access the app at http://localhost:3000
 
 > **Note**: The first transcription will take significantly longer as it downloads 2 annotation models and 1 transcription model (3 large files). These files are cached locally and only need to be downloaded once.
 
@@ -58,7 +58,7 @@ You need to launch the Ollama GUI application. Search for 'ollama' in your appli
 
 ## Architecture
 
-- **Docker**: Database, backend, frontend, localstack
+- **Docker**: Database, backend, frontend, elasticmq
 - **Local Worker**: Runs natively for GPU access (MPS on Apple Silicon)
 - **Transcription**: Whisply with hardware acceleration
 - **LLM**: Ollama (local, runs natively for MPS acceleration)
@@ -73,4 +73,26 @@ If you encounter Docker issues, the fastest solution is to reset Docker complete
 
 ```bash
 docker compose down -v
+```
+
+## API Portal
+
+To gain & validate access to the platform
+
+-  Install the Azure CLI if needed
+-  Login with the command below, when prompted, provide  with your test account credentials
+```
+az login --scope api://api.azc.test.communities.gov.uk/.default
+
+```
+- Get your access token via the command below and set it to the AZURE_APIM_ACCESS_TOKEN key within your env file
+```
+az account get-access-token
+
+```
+- Finally, run the 'test-apim.py' script within root. On success, you should receive the following response 
+
+```
+message=ChatCompletionMessage(content="Hello, APIM Test Team! 👋 Hope you're all doing great and having a productive day. Let me know how I can assist you! 🚀" ...)
+
 ```
