@@ -63,7 +63,7 @@ done
 echo ""
 echo "Planning Terraform..."
 cd "${REPO_ROOT}/terraform/development"
-TF_VARS=(-var="alarm_email_address=harry.best@softwire.com" -var="image_tag=${TAG}" -var="ssl_certs_created=false")
+TF_VARS=(-var="alarm_email_address=harry.best@softwire.com" -var="image_tag=${TAG}" -var="ssl_certs_created=true")
 terraform plan "${TF_VARS[@]}" -out=tfplan 2>/dev/null | grep -v ": Refreshing state\|: Reading\|: Still reading\|: Read complete"
 
 echo ""
