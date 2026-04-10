@@ -104,11 +104,11 @@ The worker reads from the queue and executes transcription/file conversion/llm c
 
 Local Transcribe was developed to run on AWS and/or Azure, with abstractions available for message queues and cloud storage.
 
-<img src="minute_architecture_diagram.png" height="800" alt="Local Transcribe architecture diagram"/>
+<img src="local_transcribe_mhclg_target_architecture.png" height="800" alt="Local Transcribe architecture diagram"/>
 
 #### Database Schema
 
-<img src="minute_database_schema.png" height="800" alt="Local Transcribe database schema" />
+<img src="local_transcribe_database_schema.png" height="800" alt="Local Transcribe database schema" />
 
 #### Sentry setup (optional)
 
