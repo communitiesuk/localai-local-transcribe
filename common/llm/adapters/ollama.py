@@ -13,12 +13,12 @@ from .message_utils import convert_to_openai_message
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
-
 class OllamaModelAdapter(ModelAdapter):
     def __init__(
         self,
         model: str,
         base_url: str,
+        temperature: float = 0.7,
         **kwargs: Any,
     ) -> None:
         self._model = model
