@@ -7,7 +7,9 @@ import pytest
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_session import get_session
 from backend.main import app
-from common.database.postgres_models import Chat, ContentSource, JobStatus, Minute, MinuteVersion, Transcription, User
+from common.database.postgres_models import (
+    Chat, ContentSource, JobStatus, Minute, MinuteVersion, Transcription, User, UserTemplate
+)
 
 mock_email = "test@local-transcribe.com"
 
@@ -129,3 +131,4 @@ def mock_user_template(mock_user) -> UserTemplate:
         minutes=[],
         questions=[],
     )
+   
