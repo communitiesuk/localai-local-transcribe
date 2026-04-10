@@ -47,20 +47,20 @@ export function WarningsList({
             </span>
           </div>
           {result.reasoning && (
-          <p className="italic opacity-90">
-            {"\""}
-            {result.reasoning}
-            {"\""}
-          </p>
-        )}
+            <p className="italic opacity-90">
+              {'"'}
+              {result.reasoning}
+              {'"'}
+            </p>
+          )}
 
-        {result.score !== null && (
-          <p className="ml-6 text-xs opacity-75">
-            Confidence: {(result.score * 100).toFixed(0)}%
-          </p>
-        )}
-                </div>
-              ))}
+          {result.score !== null && (
+            <p className="ml-6 text-xs opacity-75">
+              Confidence: {(result.score * 100).toFixed(0)}%
+            </p>
+          )}
+        </div>
+      ))}
     </StatusSection>
   )
 }
