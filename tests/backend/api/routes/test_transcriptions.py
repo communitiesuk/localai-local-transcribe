@@ -24,18 +24,13 @@ async def test_create_transcription_success(
     mock_session_with_recording,
     mock_user,
     mock_transcription_queue_service,
+    mock_minute,
+    mock_minute_version,
     transcription_request,
+    mock_transcription,
     mock_storage_service,  # NOQA: ARG001
 ):
-    mock_transcription = Mock()
-    mock_transcription.id = uuid.uuid4()
-
-    mock_minute = Mock()
-    mock_minute.id = uuid.uuid4()
-
-    mock_minute_version = Mock()
-    mock_minute_version.id = uuid.uuid4()
-
+    """Test successful creation of a transcription with associated minute and minute version."""
     mocker.patch("backend.api.routes.transcriptions.Transcription", return_value=mock_transcription)
     mocker.patch("backend.api.routes.transcriptions.Minute", return_value=mock_minute)
     mocker.patch("backend.api.routes.transcriptions.MinuteVersion", return_value=mock_minute_version)
@@ -80,8 +75,6 @@ async def test_create_recording_different_file_extensions(
 
     request = RecordingCreateRequest(file_extension=file_format)
 
-    mock_recording.id = uuid.uuid4()
-    mock_recording.user_id = mock_user.id
     mock_recording.s3_file_key = f"uploads/{mock_user.email}/file.{file_format}"
 
     mocker.patch("backend.api.routes.transcriptions.Recording", return_value=mock_recording)
@@ -132,7 +125,6 @@ async def test_get_recordings_for_transcription_success(
 @pytest.mark.asyncio
 async def test_save_transcription_success(mock_session, mock_user, mock_transcription, transcription_patch_request):
     """Test successful save/update of a transcription"""
-    mock_transcription.user_id = mock_user.id
     mock_transcription.title = "Local Transcribe"
     mock_transcription.dialogue_entries = [{"speaker": "user_one", "text": "Hello World"}]
 
@@ -167,7 +159,6 @@ async def test_list_transcriptions(mock_session, mock_user, mock_transcription):
 
 @pytest.mark.asyncio
 async def test_get_transcription_success(mock_session, mock_user, mock_transcription):
-    mock_transcription.user_id = mock_user.id
     mock_session.get = AsyncMock(return_value=mock_transcription)
     response = await get_transcription(mock_transcription.id, mock_session, mock_user)
     assert response.id == mock_transcription.id
@@ -186,7 +177,6 @@ async def test_get_transcription_not_found(mock_session, mock_user):
 
 @pytest.mark.asyncio
 async def test_delete_transcription(mock_session, mock_user, mock_transcription):
-    mock_transcription.user_id = mock_user.id
     mock_session.get = AsyncMock(return_value=mock_transcription)
 
     await delete_transcription(mock_transcription.id, mock_session, mock_user)
