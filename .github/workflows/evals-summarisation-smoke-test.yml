@@ -2,10 +2,6 @@ name: Evals Summarisation Smoke Test
 
 on:
   push:
-    branches:
-      - "feature/**"
-    paths:
-      - .github/workflows/evals-summarisation-smoke-test.yml
   workflow_call:
     inputs: 
       python_version: 
@@ -27,8 +23,6 @@ on:
 
 env:
   ENVIRONMENT: test
-  PYTHON_VERSION: "3.12"
-  POETRY_VERSION: "2.3.3"
 
 jobs:
   smoke-test:
@@ -42,8 +36,8 @@ jobs:
       - name: Setup Python and Poetry
         uses: ./.github/actions/python-poetry-setup
         with:
-          python-version: ${{ inputs.python_version || env.PYTHON_VERSION }}
-          poetry-version: ${{ inputs.poetry_version || env.POETRY_VERSION }}
+          python-version: ${{ inputs.python_version }}
+          poetry-version: ${{ inputs.poetry_version }}
 
       - name: Install dependencies
         run: poetry sync --no-root --no-ansi --with evals-summarisation
