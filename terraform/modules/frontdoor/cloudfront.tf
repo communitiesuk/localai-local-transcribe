@@ -139,8 +139,8 @@ resource "aws_cloudfront_distribution" "main" {
 
 resource "aws_cloudfront_cache_policy" "main" {
   name        = var.environment_name
-  min_ttl     = 1
-  default_ttl = 60
+  min_ttl     = 0
+  default_ttl = 0
 
   parameters_in_cache_key_and_forwarded_to_origin {
     cookies_config {
