@@ -37,7 +37,6 @@ import {
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
-import { Controller, useForm } from 'react-hook-form'
 import { MIN_WORD_COUNT_FOR_SUMMARY } from '@/app/settings/constants'
 
 type MinuteEditorForm = {
