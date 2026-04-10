@@ -40,8 +40,10 @@ ENV RAY_ROTATION_BACKUP_COUNT=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
+# Dynamically pin ffmpeg to satisfy Wiz IaC requirements
 RUN apt-get update && \
-    apt-get install -y ffmpeg && \
+    FFMPEG_VERSION=$(apt-cache madison ffmpeg | head -n 1 | awk '{print $3}') && \
+    apt-get install -y --no-install-recommends ffmpeg="$FFMPEG_VERSION" && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
