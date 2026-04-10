@@ -1,4 +1,4 @@
-name: Evals Summarisation Smoke Test
+name: Summarisation Evals
 
 on:
   push:
@@ -25,13 +25,13 @@ env:
   ENVIRONMENT: test
 
 jobs:
-  smoke-test:
+  summarisation-evals:
     runs-on: ubuntu-latest
     environment: release
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python and Poetry
         uses: ./.github/actions/python-poetry-setup
@@ -54,7 +54,7 @@ jobs:
         run: poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/smoke-test.yaml
 
       - name: Upload smoke test output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: summarisation-smoke-test-output
