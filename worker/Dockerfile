@@ -41,7 +41,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 RUN apt-get update && \
-    apt-get install -y ffmpeg=7:4.4.2-0ubuntu0.22.04.1 && \
+    apt-get install -y ffmpeg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -51,17 +51,15 @@ RUN groupadd -g 1000 appuser && \
 WORKDIR /app
 
 # Copy the fully built virtual environment from the builder
-COPY --from=builder /app/.venv /app/.venv
-COPY --chown=appuser:appuser . .
-
+# Copy the fully built virtual environment from the builder
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
 # Put the virtual environment on the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy the application code
-COPY common common
-COPY backend/__init__.py backend/__init__.py
-COPY worker worker
+# Copy specific directories instead of '.' to avoid overwriting permissions and bloat
+COPY --chown=appuser:appuser common common
+COPY --chown=appuser:appuser worker worker
 
 RUN chmod +x worker/entrypoint.sh
 USER appuser

@@ -16,7 +16,9 @@ RUN poetry --version
 COPY pyproject.toml poetry.lock README.md ./
 RUN poetry config virtualenvs.in-project true && \
     poetry install --with backend --without dev --no-interaction --no-ansi --no-root
-COPY . .
+COPY common common
+COPY backend backend
+COPY worker/__init__.py worker/__init__.py
 RUN /app/.venv/bin/pip install --no-cache-dir --no-deps .
 
 # ==========================================
@@ -36,8 +38,11 @@ WORKDIR /app
 # Copy the venv from builder and fix ownership
 COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
-# Copy your source code (Only need this ONCE)
-COPY --chown=appuser:appuser . .
+# Copy your source code explicitly to avoid frontend/ and docs/ bloat
+COPY --chown=appuser:appuser common common
+COPY --chown=appuser:appuser backend backend
+COPY --chown=appuser:appuser alembic alembic
+COPY --chown=appuser:appuser alembic.ini ./alembic.ini
 
 # Set path and permissions
 ENV PATH="/app/.venv/bin:$PATH"
