@@ -1,4 +1,5 @@
-from backend.utils.get_file_s3_key import get_file_s3_key  
+from backend.utils.get_file_s3_key import get_file_s3_key
+
 
 def test_get_file_s3_key_multimedia():
     result = get_file_s3_key("test@example.com", "file.mp3")

@@ -1,15 +1,14 @@
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 from uuid import uuid4
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, call
 from zoneinfo import ZoneInfo
 
 import pytest
-from datetime import UTC
 
 from backend.cleanup_job import (
     cleanup_failed_records,
-    cleanup_old_records,
     cleanup_jobs,
+    cleanup_old_records,
     delete_orphan_records,
     init_cleanup_scheduler,
 )
@@ -75,14 +74,15 @@ async def test_cleanup_failed_records_uses_correct_cutoff(mock_session, mock_ses
     exec_result.rowcount = 0
     mock_session.exec.return_value = exec_result
 
-    with patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx):
-        with patch("backend.cleanup_job.datetime") as mock_dt:
-            mock_now = datetime(2026, 4, 10, 12, 0, 0, tzinfo=ZoneInfo("Europe/London"))
-            mock_dt.now.return_value = mock_now
-            await cleanup_failed_records()
+    with (
+        patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx),
+        patch("backend.cleanup_job.datetime") as mock_dt,
+    ):
+        mock_now = datetime(2026, 4, 10, 12, 0, 0, tzinfo=ZoneInfo("Europe/London"))
+        mock_dt.now.return_value = mock_now
+        await cleanup_failed_records()
 
     mock_dt.now.assert_called_once_with(tz=ZoneInfo("Europe/London"))
-
 
 
 @pytest.mark.asyncio
@@ -96,7 +96,6 @@ async def test_cleanup_old_records_deletes_expired_transcriptions(mock_session, 
 
     mock_session.delete.assert_awaited_once_with(mock_transcription)
     mock_session.commit.assert_awaited_once()
-
 
 
 @pytest.mark.asyncio
@@ -113,7 +112,9 @@ async def test_cleanup_old_records_no_transcriptions(mock_session, mock_session_
 
 
 @pytest.mark.asyncio
-async def test_delete_orphan_records_deletes_from_storage_and_db(mock_session, mock_session_ctx, mock_recording, mock_storage_service):
+async def test_delete_orphan_records_deletes_from_storage_and_db(
+    mock_session, mock_session_ctx, mock_recording, mock_storage_service
+):
     exec_result = Mock()
     exec_result.all.return_value = [mock_recording]
     mock_session.exec.return_value = exec_result
@@ -128,7 +129,9 @@ async def test_delete_orphan_records_deletes_from_storage_and_db(mock_session, m
 
 
 @pytest.mark.asyncio
-async def test_delete_orphan_records_skips_db_delete_on_storage_error(mock_session, mock_session_ctx, mock_recording, mock_storage_service):
+async def test_delete_orphan_records_skips_db_delete_on_storage_error(
+    mock_session, mock_session_ctx, mock_recording, mock_storage_service
+):
     exec_result = Mock()
     exec_result.all.return_value = [mock_recording]
     mock_session.exec.return_value = exec_result
@@ -166,7 +169,6 @@ async def test_cleanup_jobs_calls_all_three(mocker):
     mock_cleanup_old.assert_awaited_once()
     mock_delete_orphan.assert_awaited_once()
     mock_cleanup_failed.assert_awaited_once()
-
 
 
 @pytest.mark.asyncio
