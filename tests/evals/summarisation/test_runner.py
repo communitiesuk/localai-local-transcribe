@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import dspy
 
-from evals.summarisation.src.config import AppConfig
-from evals.summarisation.src.runner import (
+from evals.summarisation.src.common import AppConfig, DialogExample
+from evals.summarisation.src.optimisation.runner import (
     _load_data_pairs,
     _ms,
     _now,
@@ -16,7 +16,6 @@ from evals.summarisation.src.runner import (
     _to_dspy_devset,
     run_eval,
 )
-from evals.summarisation.src.schemas import DialogExample
 
 
 def test_now_returns_utc_datetime():
@@ -108,7 +107,7 @@ def test_load_data_pairs_basic():
         ]
     }
 
-    with patch("evals.summarisation.src.runner.load_dataset", return_value=mock_dataset):
+    with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset):
         examples = _load_data_pairs(cfg, split="test", limit=None)
 
     assert len(examples) == 2
@@ -147,7 +146,7 @@ def test_load_data_pairs_with_limit():
 
     mock_dataset = {"test": mock_dataset_split}
 
-    with patch("evals.summarisation.src.runner.load_dataset", return_value=mock_dataset):
+    with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset):
         examples = _load_data_pairs(cfg, split="test", limit=2)
 
     mock_dataset_split.select.assert_called_once()
@@ -177,7 +176,7 @@ def test_load_data_pairs_missing_id_uses_index():
         ]
     }
 
-    with patch("evals.summarisation.src.runner.load_dataset", return_value=mock_dataset):
+    with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset):
         examples = _load_data_pairs(cfg, split="test", limit=None)
 
     assert examples[0].example_id == "0"
@@ -236,11 +235,11 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     mock_evaluator.return_value = 0.95
 
     with (
-        patch("evals.summarisation.src.runner.load_dataset", return_value=mock_dataset),
-        patch("evals.summarisation.src.runner._build_llm", return_value=mock_llm),
-        patch("evals.summarisation.src.runner.build_metrics", return_value=[mock_metric]),
-        patch("evals.summarisation.src.runner.get_settings") as mock_settings,
-        patch("evals.summarisation.src.runner.Evaluate", return_value=mock_evaluator),
+        patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset),
+        patch("evals.summarisation.src.optimisation.runner._build_llm", return_value=mock_llm),
+        patch("evals.summarisation.src.optimisation.runner.build_metrics", return_value=[mock_metric]),
+        patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
+        patch("evals.summarisation.src.optimisation.runner.Evaluate", return_value=mock_evaluator),
     ):
         mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
 

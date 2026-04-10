@@ -8,6 +8,7 @@ import orjson
 
 
 def write_jsonl(path: str | Path, records: Iterable[dict[str, Any]]) -> None:
+    """Writes records to JSONL file, creating parent directories if needed."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("ab") as f:

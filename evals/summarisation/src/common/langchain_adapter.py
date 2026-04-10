@@ -13,17 +13,21 @@ from common.llm.adapters.base import ModelAdapter
 
 
 def _convert_message_to_dict(message: BaseMessage) -> dict[str, str]:
+    """Converts LangChain message to dictionary format."""
     role = "user" if message.type == "human" else message.type
     return {"role": role, "content": str(message.content)}
 
 
 class LangChainModelAdapter(BaseChatModel):
+    """LangChain chat model adapter wrapping ModelAdapter."""
+
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     adapter: Any = Field(default=None)
     model_name: str = Field(default="")
 
     def __init__(self, adapter: ModelAdapter, model_name: str, **kwargs: Any) -> None:
+        """Initializes LangChain adapter with model adapter."""
         super().__init__(**kwargs)
         self.adapter = adapter
         self.model_name = model_name
@@ -35,6 +39,7 @@ class LangChainModelAdapter(BaseChatModel):
         _run_manager: CallbackManagerForLLMRun | None = None,
         **_kwargs: Any,
     ) -> ChatResult:
+        """Generates chat response from messages using wrapped adapter."""
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:

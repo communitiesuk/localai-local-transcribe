@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from evals.summarisation.src.prompts import render_template
+from evals.summarisation.src.common.prompts import render_template
 
 
 def test_render_template_contract_loads_file_and_renders_with_kwargs(tmp_path):

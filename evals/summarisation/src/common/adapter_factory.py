@@ -5,6 +5,7 @@ from common.settings import get_settings
 
 
 def build_azure_apim_adapter() -> AzureAPIMModelAdapter:
+    """Builds Azure APIM model adapter from environment settings."""
     settings = get_settings()
     if not settings.AZURE_APIM_URL:
         msg = "AZURE_APIM_URL is required"

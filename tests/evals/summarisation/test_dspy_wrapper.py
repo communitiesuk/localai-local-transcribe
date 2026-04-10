@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from evals.summarisation.src.dspy_wrapper import DSPyModelAdapterWrapper
+from evals.summarisation.src.common.dspy_wrapper import DSPyModelAdapterWrapper
 
 
 @pytest.fixture
@@ -92,7 +92,7 @@ def test_call_creates_event_loop_if_needed(mock_adapter):
     wrapper = DSPyModelAdapterWrapper(adapter=mock_adapter, model_name="test-model")
 
     with (
-        patch("asyncio.get_event_loop", side_effect=RuntimeError("No loop")),
+        patch("asyncio.get_running_loop", side_effect=RuntimeError("No running loop")),
         patch("asyncio.new_event_loop") as mock_new_loop,
         patch("asyncio.set_event_loop") as mock_set_loop,
     ):
@@ -104,6 +104,7 @@ def test_call_creates_event_loop_if_needed(mock_adapter):
 
         mock_new_loop.assert_called_once()
         mock_set_loop.assert_called_once_with(mock_loop)
+        mock_loop.run_until_complete.assert_called_once()
         assert result == ["Test response"]
 
 
@@ -113,10 +114,21 @@ def test_call_uses_existing_event_loop(mock_adapter):
     mock_loop = Mock()
     mock_loop.run_until_complete = Mock(return_value="Test response")
 
-    with patch("asyncio.get_event_loop", return_value=mock_loop):
+    with (
+        patch("asyncio.get_running_loop", return_value=mock_loop),
+        patch("concurrent.futures.ThreadPoolExecutor") as mock_executor_class,
+    ):
+        mock_executor = Mock()
+        mock_future = Mock()
+        mock_future.result = Mock(return_value="Test response")
+        mock_executor.submit = Mock(return_value=mock_future)
+        mock_executor.__enter__ = Mock(return_value=mock_executor)
+        mock_executor.__exit__ = Mock(return_value=False)
+        mock_executor_class.return_value = mock_executor
+
         result = wrapper(prompt="Test")
 
-        mock_loop.run_until_complete.assert_called_once()
+        mock_executor.submit.assert_called_once()
         assert result == ["Test response"]
 
 
