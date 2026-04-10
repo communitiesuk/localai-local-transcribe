@@ -13,6 +13,7 @@ from .message_utils import convert_to_openai_message
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
+
 class OllamaModelAdapter(ModelAdapter):
     def __init__(
         self,
@@ -22,6 +23,7 @@ class OllamaModelAdapter(ModelAdapter):
         **kwargs: Any,
     ) -> None:
         self._model = model
+        self.temperature = temperature
         self.async_client = AsyncOpenAI(
             base_url=base_url,
             api_key="ollama",
@@ -71,7 +73,7 @@ Remember: Respond with ONLY the JSON object containing your actual analysis, not
             model=self._model,
             messages=openai_messages,
             response_format={"type": "json_object"},
-            temperature=temperature,
+            temperature=self.temperature,
         )
 
         content = response.choices[0].message.content
