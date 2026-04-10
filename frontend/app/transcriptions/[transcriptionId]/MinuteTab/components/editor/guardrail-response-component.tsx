@@ -3,7 +3,7 @@ import { GuardrailResultResponse } from '@/lib/client'
 import { HallucinationsList, LLMHallucination } from './HallucinationsList'
 import { VerifiedGuardrailsList } from './VerifiedGuardrailsList'
 import { WarningsList } from './WarningsList'
-import { GUARDRAIL_THRESHOLD } from '@/settings/constants'
+import { GUARDRAIL_THRESHOLD } from '../../../../../settings/constants'
 
 interface GuardrailProps {
   guardrailResults: GuardrailResultResponse[]
