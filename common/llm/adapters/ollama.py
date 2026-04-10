@@ -30,6 +30,25 @@ class OllamaModelAdapter(ModelAdapter):
         )
         self._kwargs = kwargs
 
+    def _generate_example_obj(self, properties: dict[str, Any]) -> dict[str, Any]:
+        """Generate a dummy example object for the LLM prompt based on the JSON schema."""
+        example: dict[str, Any] = {}
+        for key, prop in properties.items():
+            prop_type = prop.get("type", "string")
+            if prop_type == "string":
+                example[key] = "example_string"
+            elif prop_type in ("integer", "number"):
+                example[key] = 0
+            elif prop_type == "boolean":
+                example[key] = True
+            elif prop_type == "array":
+                example[key] = []
+            elif prop_type == "object":
+                example[key] = {}
+            else:
+                example[key] = "..."
+        return example
+
     async def structured_chat[T: BaseModel](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         schema = response_format.model_json_schema()
 
