@@ -1,19 +1,19 @@
 [![build](https://github.com/i-dot-ai/minute/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/i-dot-ai/minute/actions/workflows/build.yml?query=branch%3Amain)
 
-# Minute
+# Local Transcribe
 
 > [!IMPORTANT]
 > Incubation Project: This project is in active development and a work in progress.
 
-Minute is an application that is designed to simplify the transcription and minuting of meetings in the public sector. Built with modern web technologies and AI-powered transcription and summarisation services, Minute transforms how government organisations handle meeting documentation by automating the conversion of audio recordings into structured, professional minutes.
+Local Transcribe is an application that is designed to simplify the transcription and minuting of meetings in the public sector. Built with modern web technologies and AI-powered transcription and summarisation services, Local Transcribe transforms how government organisations handle meeting documentation by automating the conversion of audio recordings into structured, professional minutes.
 
 ## Key Features
 
-**AI-Powered Transcription**: Minute integrates with multiple transcription services including Azure Speech-to-Text and AWS Transcribe, automatically selecting the most appropriate service based on audio duration and quality. The system handles various audio formats and automatically converts them to optimize transcription accuracy.
+**AI-Powered Transcription**: Local Transcribe integrates with multiple transcription services including Azure Speech-to-Text and AWS Transcribe, automatically selecting the most appropriate service based on audio duration and quality. The system handles various audio formats and automatically converts them to optimize transcription accuracy.
 
 **Professional Meeting Templates**: The application includes specialized templates tailored for different types of government meetings, including Cabinet meetings, planning committees, care assessments, and general-purpose meetings. Each template follows specific formatting standards and style guides required for official documentation.
 
-**Intelligent Minute Generation**: Beyond simple transcription, Minute uses AI to structure conversations into professional minute formats, applying proper grammar, tense conversion, and formatting rules specific to government documentation standards.
+**Intelligent Minute Generation**: Beyond simple transcription, Local Transcribe uses AI to structure conversations into professional minute formats, applying proper grammar, tense conversion, and formatting rules specific to government documentation standards.
 
 **Multi-Format Audio Support**: Upload recordings in various formats - the system automatically handles conversion and optimization for the best transcription results. Support for mono and multi-channel audio ensures compatibility with different recording setups.
 
@@ -21,7 +21,7 @@ Minute is an application that is designed to simplify the transcription and minu
 
 **Real-Time Processing**: Asynchronous processing architecture ensures efficient handling of large audio files, with job status tracking and progress monitoring throughout the transcription and minute generation process.
 
-Minute streamlines the traditionally time-intensive process of creating meeting minutes, allowing public sector organizations to focus on decision-making rather than documentation overhead.
+Local Transcribe streamlines the traditionally time-intensive process of creating meeting minutes, allowing public sector organizations to focus on decision-making rather than documentation overhead.
 
 ## Development
 
@@ -65,7 +65,7 @@ This should be sufficient for local development. Keys related to 'AWS', 'Google 
 
 #### Set up your development environment:
 
-We use dev containers to emulate the cloud environment in which Minute is usually deployed.
+We use dev containers to emulate the cloud environment in which Local Transcribe is usually deployed.
 
 Running ` docker compose up --watch` will sync local file changes to the docker containers and restart them as appropriate. Note that `docker compose down` will revert the containers to their base state. See [this issue](https://github.com/docker/compose/issues/11102)
 
@@ -104,13 +104,13 @@ The worker reads from the queue and executes transcription/file conversion/llm c
 
 #### Architecture diagram
 
-Minute was developed to run on AWS and/or Azure, with abstractions available for message queues and cloud storage.
+Local Transcribe was developed to run on AWS and/or Azure, with abstractions available for message queues and cloud storage.
 
-<img src="minute_architecture_diagram.png" height="800" alt="Minute architecture diagram"/>
+<img src="minute_architecture_diagram.png" height="800" alt="Local Transcribe architecture diagram"/>
 
 #### Database Schema
 
-<img src="minute_database_schema.png" height="800" alt="Minute database schema" />
+<img src="minute_database_schema.png" height="800" alt="Local Transcribe database schema" />
 
 #### Sentry setup (optional)
 
