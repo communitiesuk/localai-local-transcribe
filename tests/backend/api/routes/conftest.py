@@ -14,9 +14,10 @@ from common.database.postgres_models import (
     Minute,
     MinuteVersion,
     Recording,
+    TemplateType,
     Transcription,
     User,
-    UserTemplate
+    UserTemplate,
 )
 from common.types import RecordingCreateRequest, TranscriptionCreateRequest, TranscriptionPatchRequest
 
@@ -190,10 +191,11 @@ def mock_chat(uid=None, user_content="hello", assistant_content="world", status=
         updated_datetime=datetime.now(tz=UTC),
     )
 
+
 @pytest.fixture
 def mock_user_template(mock_user) -> UserTemplate:
     return UserTemplate(
-        id=uuid.uuid4(),
+        id=uuid4(),
         user_id=mock_user.id,
         name="Test Template",
         description="Test Description",
@@ -204,4 +206,3 @@ def mock_user_template(mock_user) -> UserTemplate:
         minutes=[],
         questions=[],
     )
-   
