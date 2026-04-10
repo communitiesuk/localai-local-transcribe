@@ -71,19 +71,19 @@ resource "aws_lb_target_group" "frontend" {
 
 
 data "aws_ssm_parameter" "oidc_client_id" {
-  count           = var.ssl_certs_created ? 1 : 0
+  count           = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
   name            = var.oidc_client_id_name
   with_decryption = true
 }
 
 data "aws_ssm_parameter" "oidc_client_secret" {
-  count           = var.ssl_certs_created ? 1 : 0
+  count           = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
   name            = var.oidc_client_secret_name
   with_decryption = true
 }
 
 resource "aws_lb_listener_rule" "authentication" {
-  count        = var.ssl_certs_created ? 1 : 0
+  count        = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
 
   action {
@@ -101,6 +101,29 @@ resource "aws_lb_listener_rule" "authentication" {
       session_timeout        = 604800
     }
   }
+
+  action {
+    target_group_arn = aws_lb_target_group.frontend.id
+    type             = "forward"
+  }
+
+  condition {
+    host_header {
+      values = [var.app_host]
+    }
+  }
+
+  condition {
+    http_header {
+      http_header_name = local.cloudfront_header_name
+      values           = [random_password.cloudfront_header.result]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "forward_no_auth" {
+  count        = var.ssl_certs_created && !var.enable_oidc_auth ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
 
   action {
     target_group_arn = aws_lb_target_group.frontend.id

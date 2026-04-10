@@ -78,6 +78,7 @@ module "frontdoor" {
   cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
 
   use_aws_shield_advanced        = false
+  enable_oidc_auth               = false
   ip_allowlist = [
     # Softwire
     "31.221.86.178/32",

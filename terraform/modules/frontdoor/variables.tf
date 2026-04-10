@@ -78,14 +78,22 @@ variable "maintenance_mode_on" {
   default     = false
 }
 
+variable "enable_oidc_auth" {
+  description = "Whether to enable GOV.UK SSO (GDS Identity Assurance) OIDC authentication on the ALB listener"
+  type        = bool
+  default     = true
+}
+
 variable "oidc_client_id_name" {
   description = "SSM parameter name for the Internal Access OIDC client ID."
   type        = string
+  default     = null
 }
 
 variable "oidc_client_secret_name" {
   description = "SSM parameter name for the Internal Access OIDC client secret."
   type        = string
+  default     = null
 }
 
 variable "app_host" {
