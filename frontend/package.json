@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "setup:govuk": "cpy \"node_modules/govuk-frontend/dist/govuk/assets/**/*\" public/assets",
-    "prebuild": "npm run setup:govuk",
-    "predev": "npm run setup:govuk",
+    "prebuild": "node sync-constants.js && npm run setup:govuk",
+    "predev": "node sync-constants.js && npm run setup:govuk",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

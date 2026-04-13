@@ -174,7 +174,7 @@ class MinuteVersionResponse(BaseModel):
     ai_edit_instructions: str | None
     content_source: ContentSource
     guardrail_results: list[GuardrailResultResponse] = []
-    hallucinations: list[LLMHallucination] | None = None
+    hallucinations: list[LLMHallucination] = []
 
 
 class SpeakerPrediction(BaseModel):

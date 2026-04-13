@@ -37,7 +37,7 @@ import {
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
-import { MIN_WORD_COUNT_FOR_SUMMARY } from '@/app/settings/constants'
+import constants from '@/app/settings/constants.json'
 
 type MinuteEditorForm = {
   html: string
@@ -229,7 +229,7 @@ export function MinuteEditor({
     )
   }
 
-  const minWordCount = Number(MIN_WORD_COUNT_FOR_SUMMARY)
+  const minWordCount = Number(constants.MIN_WORD_COUNT_FOR_SUMMARY)
   const isTooShort = wordCount < minWordCount
 
   return (

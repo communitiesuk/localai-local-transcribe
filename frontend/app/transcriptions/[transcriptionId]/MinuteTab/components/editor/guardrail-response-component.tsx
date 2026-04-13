@@ -3,7 +3,7 @@ import { GuardrailResultResponse } from '@/lib/client'
 import { HallucinationsList, LLMHallucination } from './HallucinationsList'
 import { VerifiedGuardrailsList } from './VerifiedGuardrailsList'
 import { WarningsList } from './WarningsList'
-import { GUARDRAIL_THRESHOLD } from '../../../../../settings/constants'
+import constants from '../../../../../settings/constants.json'
 
 interface GuardrailProps {
   guardrailResults: GuardrailResultResponse[]
@@ -16,7 +16,7 @@ export function GuardrailResponseComponent({
 }: GuardrailProps) {
   const { warnings, passes } = useMemo(() => {
     const isWarning = (r: GuardrailResultResponse) => {
-      const isLowScore = r.score != null && r.score < GUARDRAIL_THRESHOLD
+      const isLowScore = r.score != null && r.score < constants.GUARDRAIL_THRESHOLD
       return r.passed === false || isLowScore
     }
 

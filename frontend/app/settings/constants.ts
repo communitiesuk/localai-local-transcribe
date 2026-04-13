@@ -1,3 +1,0 @@
-export const MIN_WORD_COUNT_FOR_SUMMARY = 200
-
-export const GUARDRAIL_THRESHOLD = 0.8

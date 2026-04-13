@@ -106,6 +106,7 @@ services:
       - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
     volumes:
       - ./frontend:/app # Maps your Mac folder to the container (Hot Reloading)
+      - ./common:/common # Maps common folder to the container
       - /app/node_modules # Protects container libraries
       - next_data:/app/.next # Keeps build speed fast
     develop:

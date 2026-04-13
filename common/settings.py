@@ -21,6 +21,11 @@ if dotenv_detected:
 else:
     logger.info("No .env file was detected. Using environment variables as is")
 
+# --- Shared constants with frontend ---
+MIN_WORD_COUNT_FOR_SUMMARY = 200
+GUARDRAIL_THRESHOLD = 0.8
+# --------------------------------------
+
 
 class Settings(BaseSettings):
     POSTGRES_HOST: str = Field(description="PostgreSQL database host")
@@ -163,7 +168,8 @@ class Settings(BaseSettings):
     )
 
     NEXT_PUBLIC_MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
-        default=200, description="Transcript must have at least this many words to be passed to summary stage"
+        default=MIN_WORD_COUNT_FOR_SUMMARY,
+        description="Transcript must have at least this many words to be passed to summary stage",
     )
     MIN_WORD_COUNT_FOR_FULL_SUMMARY: int = Field(
         default=199,
@@ -173,7 +179,7 @@ class Settings(BaseSettings):
         ),
     )
     NEXT_PUBLIC_GUARDRAIL_THRESHOLD: float = Field(
-        default=0.8,
+        default=GUARDRAIL_THRESHOLD,
         description="Guardrail threshold for LLM responses",
     )
 
