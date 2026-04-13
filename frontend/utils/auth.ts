@@ -4,6 +4,16 @@ export interface UserAuthorisationResult {
   authReason: string
 }
 
+type AuthResponse = {
+  decision: {
+    is_authorised: boolean
+    auth_reason: string
+  }
+  metadata: {
+    user_email: string
+  }
+}
+
 // Validate required environment variables
 // Don't expect an AUTH_API_URL if you're running dev locally / running frontend tests
 const authApiUrl =
@@ -32,10 +42,7 @@ export async function parseAuthToken(
       signal: AbortSignal.timeout(5000),
     })
 
-    const data = (await res.json()) as {
-      metadata: { user_email: string }
-      decision: { is_authorised: boolean; auth_reason: string }
-    }
+    const data = (await res.json()) as AuthResponse
 
     const email = data.metadata.user_email
 
