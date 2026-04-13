@@ -40,10 +40,9 @@ ENV RAY_ROTATION_BACKUP_COUNT=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Dynamically pin ffmpeg to satisfy Wiz IaC requirements
+# Pinned to 7:7.1.3-0+deb13u1 for Debian 13 (Trixie)
 RUN apt-get update && \
-    FFMPEG_VERSION=$(apt-cache madison ffmpeg | head -n 1 | awk '{print $3}') && \
-    apt-get install -y --no-install-recommends ffmpeg="$FFMPEG_VERSION" && \
+    apt-get install -y --no-install-recommends ffmpeg=7:7.1.3-0+deb13u1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
