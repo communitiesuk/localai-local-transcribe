@@ -53,7 +53,6 @@ RUN groupadd -g 1000 appuser && \
 WORKDIR /app
 
 # Copy the fully built virtual environment from the builder
-# Copy the fully built virtual environment from the builder
 COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
 
 # Put the virtual environment on the path
@@ -66,5 +65,5 @@ COPY --chown=appuser:appuser worker worker
 RUN chmod +x worker/entrypoint.sh
 USER appuser
 
-ENV PATH="/app/.venv/bin:$PATH"
+
 CMD ["worker/entrypoint.sh"]
