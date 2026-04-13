@@ -10,28 +10,20 @@ from backend.api.routes.templates import (
     delete_user_template,
     duplicate_user_template,
     edit_user_template,
-    get_templates,
     get_user_template,
     get_user_templates,
 )
-from common.database.postgres_models import TemplateType
 from common.services.template_manager import TemplateManager
+from common.types import Question
 from tests.utils import get_test_client
 
 
-@pytest.mark.asyncio(loop_scope="session")
-@pytest.mark.parametrize("expected_status_code", [200])
-async def test_get_templates_success(expected_status_code):
+@pytest.mark.asyncio
+async def test_get_templates_success():
     async with get_test_client() as ac:
         response = await ac.get("/templates")
-        assert response.status_code == expected_status_code
+        assert response.status_code == 200
         assert len(response.json()) == len(TemplateManager.templates)
-
-
-@pytest.mark.asyncio
-async def test_get_templates_returns_list(mock_user):
-    res = get_templates(mock_user)
-    assert isinstance(res, list)
 
 
 @pytest.mark.asyncio
@@ -70,23 +62,28 @@ async def test_get_user_template_not_found(mock_session, mock_user):
 
 
 @pytest.mark.asyncio
-async def test_create_user_template_calls_add_and_commit(mock_session, mock_user, mock_user_template, monkeypatch):
-    request = SimpleNamespace(
-        name="Test Template",
-        content="Hello World",
-        description="test template",
-        type=TemplateType.DOCUMENT,
-        questions=[SimpleNamespace(position=1, title="Foo", description="foobar")],
-    )
+async def test_create_user_template_calls_add_and_commit(
+    mock_session, mock_user, mock_user_template, mock_request, monkeypatch
+):
     monkeypatch.setattr("backend.api.routes.templates.UserTemplate", lambda **_: mock_user_template)
 
-    await create_user_template(mock_user, mock_session, request)
+    await create_user_template(mock_user, mock_session, mock_request)
     mock_session.add.assert_called_once_with(mock_user_template)
     mock_session.commit.assert_awaited()
 
 
 @pytest.mark.asyncio
-async def test_edit_user_template_success(mock_session, mock_user, mock_user_template):
+async def test_create_user_template_has_right_details(mock_session, mock_user, mock_request):
+    await create_user_template(mock_user, mock_session, mock_request)
+    template = mock_session.add.call_args.args[0]
+    assert template.name == mock_request.name
+    assert template.content == mock_request.content
+    assert template.description == mock_request.description
+    assert template.type == mock_request.type
+
+
+@pytest.mark.asyncio
+async def test_edit_user_template_success(mock_session, mock_user, mock_user_template, mock_request):
     exec_result = Mock()
     exec_result.first.return_value = mock_user_template
 
@@ -95,34 +92,37 @@ async def test_edit_user_template_success(mock_session, mock_user, mock_user_tem
 
     mock_session.exec.side_effect = [exec_result, exec_q]
 
-    request = SimpleNamespace(
-        name="New Request",
-        content=None,
-        description=None,
-        questions=[SimpleNamespace(position=1, title="Test Question", description="Hello World")],
-    )
+    original_datetime = mock_user_template.updated_datetime
 
-    await edit_user_template(mock_user, mock_session, mock_user_template.id, request)
+    await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
 
     mock_session.add.assert_called()
     mock_session.commit.assert_awaited()
 
+    assert mock_user_template.name == mock_request.name
+    assert mock_user_template.content == mock_request.content
+
+    added_question = mock_session.add.call_args.args[0]
+    assert added_question.user_template_id == mock_user_template.id
+    assert added_question.position == mock_request.questions[0].position
+    assert added_question.title == mock_request.questions[0].title
+
+    mock_session.delete.assert_not_called()
+
+    assert mock_user_template.updated_datetime > original_datetime
+
 
 @pytest.mark.asyncio
-async def test_edit_user_template_not_found(mock_session, mock_user, mock_user_template):
+async def test_edit_user_template_not_found(mock_session, mock_user, mock_user_template, mock_request):
     exec_result = Mock()
     exec_result.first.return_value = None
     mock_session.exec.side_effect = [exec_result]
 
-    request = SimpleNamespace(
-        name="New Request",
-        content=None,
-        description=None,
-        questions=[SimpleNamespace(position=1, title="Test Question", description="Hello World")],
-    )
+    mock_request.content = None
+    mock_request.description = None
 
     with pytest.raises(HTTPException) as exc_info:
-        await edit_user_template(mock_user, mock_session, mock_user_template.id, request)
+        await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
     assert exc_info.value.status_code == 404
 
 
@@ -160,6 +160,12 @@ async def test_duplicate_user_template_success(mock_session, mock_user, mock_use
     mock_session.add.assert_called()
     mock_session.commit.assert_awaited()
 
+    duplicated_template = mock_session.add.call_args.args[0]
+    duplicated_name_suffix = " (Copy)"
+    assert duplicated_template.name == mock_user_template.name + duplicated_name_suffix
+    assert duplicated_template.content == mock_user_template.content
+    assert duplicated_template.description == mock_user_template.description
+
 
 @pytest.mark.asyncio
 async def test_duplicate_user_template_not_found(mock_session, mock_user):
@@ -170,3 +176,56 @@ async def test_duplicate_user_template_not_found(mock_session, mock_user):
     with pytest.raises(HTTPException) as exc_info:
         await duplicate_user_template(mock_user, mock_session, uuid.uuid4())
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_edit_user_template_question_at_index_zero_is_updated(mock_session, mock_user, mock_user_template):
+    existing_question = Mock()
+    existing_question.id = uuid.uuid4()
+    existing_question.position = 0
+    existing_question.title = "Old Title"
+    existing_question.description = "Old Description"
+
+    exec_result = Mock()
+    exec_result.first.return_value = mock_user_template
+
+    exec_q = Mock()
+    exec_q.all.return_value = [existing_question]
+
+    mock_session.exec.side_effect = [exec_result, exec_q]
+
+    request = SimpleNamespace(
+        name=None,
+        content=None,
+        description=None,
+        questions=[Question(id=existing_question.id, position=0, title="New Title", description="New Description")],
+    )
+
+    await edit_user_template(mock_user, mock_session, mock_user_template.id, request)
+
+    mock_session.add.assert_not_called()
+    assert existing_question.title == "New Title"
+
+
+@pytest.mark.asyncio
+async def test_edit_user_template_adds_new_question_when_no_id(
+    mock_session, mock_user, mock_user_template, mock_request
+):
+    mock_request.questions = [SimpleNamespace(id=None, position=1, title="Foo", description="foobar")]
+
+    exec_result = Mock()
+    exec_result.first.return_value = mock_user_template
+
+    exec_q = Mock()
+    exec_q.all.return_value = []
+
+    mock_session.exec.side_effect = [exec_result, exec_q]
+
+    await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
+
+    mock_session.add.assert_called_once()
+
+    added = mock_session.add.call_args.args[0]
+    assert added.title == mock_request.questions[0].title
+    assert added.position == mock_request.questions[0].position
+    assert added.user_template_id == mock_user_template.id
