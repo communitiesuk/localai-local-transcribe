@@ -134,7 +134,7 @@ async def edit_user_template(
         for question in request.questions:
             if isinstance(question, Question):
                 existing_idx = next((i for i, q in enumerate(questions) if q.id == question.id), None)
-                if existing_idx:
+                if existing_idx is not None:
                     existing = questions.pop(existing_idx)
                     existing.title = question.title
                     existing.description = question.description
