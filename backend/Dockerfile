@@ -3,7 +3,11 @@
 # ==========================================
 FROM python:3.12-slim AS builder
 
-RUN pip install --no-cache-dir poetry==2.3.3 poetry-plugin-export
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends build-essential=12.12 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir poetry==2.3.3 poetry-plugin-export==1.9.0
 WORKDIR /app
 COPY pyproject.toml poetry.lock README.md ./
 

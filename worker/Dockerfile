@@ -8,13 +8,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Install build tools only if needed for compiled deps
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential && \
+    apt-get install -y --no-install-recommends build-essential=12.12 && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Install Poetry
-RUN pip install --no-cache-dir poetry==2.3.3 poetry-plugin-export
+RUN pip install --no-cache-dir poetry==2.3.3 poetry-plugin-export==1.9.0
 
 COPY pyproject.toml poetry.lock README.md ./
 
