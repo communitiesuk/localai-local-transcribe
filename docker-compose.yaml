@@ -53,16 +53,18 @@ services:
     ports:
       - "8265:8265"
     volumes:
-      - /tmp:/tmp
       - type: bind
         source: ./.data
         target: /static
+    tmpfs:
+      - /tmp
     environment:
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
       - ELASTICMQ_URL=http://elasticmq:9324 
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
+      - RAY_OBJECT_STORE_ALLOW_SLOW_STORAGE=1
     stop_grace_period: 10s
     depends_on:
       db:
@@ -94,7 +96,7 @@ services:
         - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
         - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
     ports:
-      - "3000:3000"
+      - "3000:8081"
     env_file:
       - .env
     depends_on:
