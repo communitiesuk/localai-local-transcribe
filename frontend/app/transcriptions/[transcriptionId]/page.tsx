@@ -17,13 +17,11 @@ import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { useRouter, redirect } from 'next/navigation'
 
-
-
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
 }) {
   const params = use(props.params)
-  
+
   const router = useRouter()
 
   const { transcriptionId } = params
@@ -53,8 +51,6 @@ export default function TranscriptionPage(props: {
     )
   }
 
-  
-
   if (!transcription) {
     return (
       <div className="flex flex-col items-center justify-center">
@@ -63,15 +59,6 @@ export default function TranscriptionPage(props: {
       </div>
     )
   }
-  
-    if (!transcription && !isLoading) {
-    // Optional: Redirect to home instead of showing 404
-    redirect('/'); 
-  }
- 
-
-
-  
 
   const date = new Date(transcription.created_datetime)
   const dateLabel = `${date.toDateString()} at ${date.toLocaleTimeString()}`
