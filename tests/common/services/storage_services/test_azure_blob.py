@@ -44,7 +44,10 @@ def mock_file_ctx(mocker):
 
 @pytest.mark.asyncio
 async def test_get_client_raises_if_no_connection_string(mocker):
+    dummy_value = "foo"
+
     mocker.patch("common.services.storage_services.azure_blob.settings.AZURE_BLOB_CONNECTION_STRING", None)
+    mocker.patch("common.services.storage_services.azure_blob.settings.AZURE_UPLOADS_CONTAINER_NAME", dummy_value)
 
     with pytest.raises(ValueError, match="AZURE_BLOB_CONNECTION_STRING must be set"):
         async with get_client():
@@ -53,7 +56,10 @@ async def test_get_client_raises_if_no_connection_string(mocker):
 
 @pytest.mark.asyncio
 async def test_get_client_raises_if_no_container_name(mocker):
+    dummy_value = "bar"
+
     mocker.patch("common.services.storage_services.azure_blob.settings.AZURE_UPLOADS_CONTAINER_NAME", None)
+    mocker.patch("common.services.storage_services.azure_blob.settings.AZURE_BLOB_CONNECTION_STRING", dummy_value)
 
     with pytest.raises(ValueError, match="AZURE_UPLOADS_CONTAINER_NAME must be set"):
         async with get_client():
@@ -141,6 +147,9 @@ async def test_generate_presigned_url_get_object(mocker, mock_client_ctx, mock_c
     assert kwargs["blob_name"] == object_key
     assert kwargs["container_name"] == mock_container_client.container_name
     assert kwargs["content_disposition"] == f"attachment; filename={file_name}"
+    permissions = kwargs["permission"]
+    assert permissions.read is True
+    assert permissions.write is True
 
 
 @pytest.mark.asyncio
