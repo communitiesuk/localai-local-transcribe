@@ -129,7 +129,9 @@ class MinuteHandlerService:
 
             meeting_type = cls.predict_meeting(dialogue_entries)
             logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
-            html_content, hallucinations = await cls.generate_minutes(meeting_type, minute_version.minute)
+            html_content, _total_claims, hallucinations = await cls.generate_minutes(
+                meeting_type, minute_version.minute
+            )
             cls.update_minute_version(
                 minute_version.id,
                 html_content=html_content,
@@ -188,7 +190,7 @@ class MinuteHandlerService:
             raise RuntimeError(msg)
         logger.info("%s: Found template id=%s, name=%s", minute.id, template.id, template.name)
         minutes, hallucinations = await generate_user_template(template=template, transcription=minute.transcription)
-        return minutes, hallucinations
+        return minutes, 0, hallucinations
 
     @classmethod
     async def generate_minutes(
@@ -202,17 +204,18 @@ class MinuteHandlerService:
             raise MinuteGenerationFailedError(msg)
 
         result: str
-        hallucinations: list[LLMHallucination] | None
+        total_claims: int
+        hallucinations: list[LLMHallucination]
 
         match meeting_type:
             case MeetingType.too_short:
-                result, hallucinations = cls.handle_bad_transcript(dialogue_entries)
+                result, total_claims, hallucinations = cls.handle_bad_transcript(dialogue_entries)
             case MeetingType.short:
-                result, hallucinations = await cls.generate_basic_minutes(dialogue_entries)
+                result, total_claims, hallucinations = await cls.generate_basic_minutes(dialogue_entries)
             case _:
-                result, hallucinations = await cls.generate_full_minutes(minute)
+                result, total_claims, hallucinations = await cls.generate_full_minutes(minute)
         html_result = mistune.html(result)
-        return cast(str, html_result), hallucinations
+        return cast(str, html_result), total_claims, hallucinations
 
     @classmethod
     async def generate_full_minutes(cls, minute: Minute) -> MinuteAndHallucinations:
@@ -220,20 +223,21 @@ class MinuteHandlerService:
             logger.info(
                 "%s: Generating minute from user template user_template_id=%s", minute.id, minute.user_template_id
             )
-            result, hallucinations = await cls.generate_minute_from_user_template(minute)
+            result, total_claims, hallucinations = await cls.generate_minute_from_user_template(minute)
         else:
             logger.info("%s: Generating minute from default template: %s", minute.id, minute.template_name)
             template = TemplateManager.get_template(minute.template_name)
-            result, hallucinations = await template.generate(minute)
+            result, total_claims, hallucinations = await template.generate(minute)
         logger.info("%s: Successfully generated minute", minute.id)
         result = convert_american_to_british_spelling(result)
-        return result, hallucinations
+        return result, total_claims, hallucinations
 
     @classmethod
     def handle_bad_transcript(cls, transcript: list[DialogueEntry]) -> MinuteAndHallucinations:
         return (
             f"""Short meeting detected. Minutes not available.
          Please try again with a longer meeting. Transcript is: {transcript_as_speaker_and_utterance(transcript)}""",
+            0,
             [],
         )
 
@@ -245,7 +249,7 @@ class MinuteHandlerService:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         choice = await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
         hallucinations = await chatbot.hallucination_check()
-        return choice, hallucinations
+        return choice, 0, hallucinations
 
     @classmethod
     def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:

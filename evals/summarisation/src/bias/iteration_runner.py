@@ -7,10 +7,10 @@ from typing import Any
 import dspy
 
 from common.database.postgres_models import DialogueEntry
-from evals.summarisation.src.bias.summarizer import generate_summary
 from evals.summarisation.src.bias.types import CounterfactualMetricResult, IterationMetrics
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import DialogExample
+from evals.summarisation.src.summarizer import generate_summary
 
 logger = logging.getLogger(__name__)
 

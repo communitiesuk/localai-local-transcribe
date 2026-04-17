@@ -1,22 +1,72 @@
 import re
 
-from common.database.postgres_models import DialogueEntry
+from pydantic import BaseModel
+
+from common.database.postgres_models import DialogueEntry, HallucinationType
 from common.llm.client import FastOrBestLLM, create_default_chatbot
-from common.prompts import get_citations_prompt
+from common.prompts import get_cite_claims_prompt, get_extract_claims_prompt
+from common.types import LLMHallucination
+
+
+class ClaimsList(BaseModel):
+    claims: list[str]
+
+
+class CitationResult(BaseModel):
+    cited_summary: str
+    uncited_claims: list[str]
+
+
+async def extract_claims(draft: str) -> list[str]:
+    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+    result = await chatbot.structured_chat(
+        messages=get_extract_claims_prompt(draft),
+        response_format=ClaimsList,
+    )
+    return result.claims
+
+
+async def cite_claims(
+    draft: str,
+    claims: list[str],
+    transcript: list[DialogueEntry],
+) -> CitationResult:
+    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+    return await chatbot.structured_chat(
+        messages=get_cite_claims_prompt(draft, claims, transcript),
+        response_format=CitationResult,
+    )
+
+
+def highlight_uncited_claims(minute: str, uncited_claims: list[str]) -> str:
+    """Wraps each uncited claim in a <mark class="uncited-claim"> tag."""
+    for claim in uncited_claims:
+        if claim in minute:
+            minute = minute.replace(claim, f'<mark class="uncited-claim">{claim}</mark>', 1)
+    return minute
 
 
 async def add_citations_to_minute(
     transcript: list[DialogueEntry],
     initial_draft: str,
-) -> str:
-    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-    messages = get_citations_prompt(initial_draft, transcript)
+) -> tuple[str, int, list[LLMHallucination]]:
+    claims = await extract_claims(initial_draft)
+    total_claims = len(claims)
+    citation_result = await cite_claims(initial_draft, claims, transcript)
 
-    minute = await chatbot.chat(messages)
+    minute = combine_consecutive_citations(citation_result.cited_summary)
+    minute = highlight_uncited_claims(minute, citation_result.uncited_claims)
 
-    minute = combine_consecutive_citations(minute)
+    uncited_hallucinations = [
+        LLMHallucination(
+            hallucination_type=HallucinationType.FACTUAL_FABRICATION,
+            hallucination_text=claim,
+            hallucination_reason="Could not find supporting evidence in the transcript",
+        )
+        for claim in citation_result.uncited_claims
+    ]
 
-    return minute or ""
+    return minute or "", total_claims, uncited_hallucinations
 
 
 MAX_CITATION_DISTANCE = 2
@@ -31,7 +81,6 @@ def combine_consecutive_citations(minute: str) -> str:
         citation_cluster = match.group()
         numbers = [int(n.group()) for n in citation_pattern.finditer(citation_cluster)]
         numbers.sort()
-        # Extract individual numbers from the cluster
         groups: list[list[int]] = []
         for number in numbers:
             if len(groups) == 0 or abs(groups[-1][-1] - number) > MAX_CITATION_DISTANCE:

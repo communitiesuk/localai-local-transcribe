@@ -1,10 +1,9 @@
 run:
   eval_type: standard
   output_dir: evals/summarisation/output
-  seed: 0
-  split: test
-  limit: 2
   prompt_version: dev
+  dataset_version: unspecified
+  limit: 2
 
 dataset:
   name: knkarthick/dialogsum
@@ -15,11 +14,9 @@ dataset:
 judge:
   pass_threshold: 4
 
-metrics:
-  - faithfulness
-  - coverage
-  - conciseness
-  - coherence
-
 prompts:
+  summarizer_template_name: General
   judge_template_path: evals/summarisation/prompts/judge.j2
+
+hallucination:
+  enabled: true

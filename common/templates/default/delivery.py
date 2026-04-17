@@ -107,5 +107,8 @@ The sections should be in the order they appear in the transcript. Typically you
                 action_index += 1
 
         final = header + "\n\n" + initial_draft
-        final = await add_citations_to_minute(transcript=transcript, initial_draft=final)
-        return final, hallucinations
+        final, _total_claims, citation_hallucinations = await add_citations_to_minute(
+            transcript=transcript, initial_draft=final
+        )
+        hallucinations += citation_hallucinations
+        return final, _total_claims, hallucinations

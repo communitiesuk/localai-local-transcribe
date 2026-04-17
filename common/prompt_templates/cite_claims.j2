@@ -1,0 +1,41 @@
+<task>
+Add citations to the provided meeting summary which reference items in the transcript.
+The following claims require citations. For each claim, find the relevant transcript entries if they exist.
+</task>
+
+<transcript>
+{{ transcript }}
+</transcript>
+
+<claims_to_cite>
+{{ claims_text }}
+</claims_to_cite>
+
+<meeting_summary>
+{{ initial_draft }}
+</meeting_summary>
+
+<formatting_instructions>
+Each citation should be of the form [n] where n is the index of the transcript item.
+Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81].
+Each claim should have a maximum of 5 citations.
+Do not add citations to lists of attendees.
+</formatting_instructions>
+
+<citation_policy>
+Be aggressive with citations. Every claim that can be traced to a transcript entry MUST be cited — including:
+- Attributions ("X mentioned Y" → cite the transcript entry where X says Y)
+- Commitments and agreements ("agreed to", "will", "plans to" → cite where this was said)
+- Stated positions, concerns, or recommendations → cite the transcript entry
+- Any factual claim with a corresponding transcript entry
+
+If a claim has partial support, cite the closest matching entries. Only leave a claim uncited if there is genuinely no supporting evidence in the transcript at all.
+</citation_policy>
+
+<output>
+Return:
+1. The cited meeting summary (the original text with [n] citation markers added inline).
+2. A list of uncited claims — claims for which no supporting transcript entry could be found.
+
+CRITICAL: Each entry in uncited_claims MUST be the verbatim phrase or sentence copied exactly from the meeting_summary text (not a paraphrase or reworded version of the claim). This is required so the phrase can be located and highlighted in the original document. If multiple claims map to the same sentence or phrase in the meeting summary, include that phrase once per distinct unsupported span.
+</output>

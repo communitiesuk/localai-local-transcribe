@@ -24,7 +24,7 @@ def run(
     try:
         cfg = load_config(config)
 
-        run_id, results_path, summary_path = run_eval(
+        run_id, results_path, summary_path, hallucination_inputs_path = run_eval(
             cfg,
             split=cfg.run.split,
             limit=cfg.run.limit,
@@ -34,6 +34,7 @@ def run(
         typer.echo(f"run_id={run_id}")
         typer.echo(f"results={results_path}")
         typer.echo(f"summary={summary_path}")
+        typer.echo(f"hallucination_inputs={hallucination_inputs_path}")
 
     except Exception as e:
         typer.echo("❌ Error occurred during run", err=True)

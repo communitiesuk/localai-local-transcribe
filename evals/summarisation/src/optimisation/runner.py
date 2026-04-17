@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+import asyncio
+import re
 import time
 import uuid
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypedDict
 
 import dspy
 import orjson
 from datasets import load_dataset
 from dspy.evaluate import Evaluate
-from langchain_core.prompts import ChatPromptTemplate
 
+from common.database.postgres_models import DialogueEntry, HallucinationType
 from common.settings import get_settings
 from evals.summarisation.src.common import (
     AppConfig,
@@ -20,30 +23,37 @@ from evals.summarisation.src.common import (
     DialogSummaryMetric,
     EvalRecord,
     GenerationConfig,
-    LangChainModelAdapter,
     MetricResult,
-    build_azure_apim_adapter,
     build_metrics,
-    render_template,
     write_jsonl,
 )
+from evals.summarisation.src.hallucination.types import HallucinationInput
+from evals.summarisation.src.summarizer import generate_summary
+
+_DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
 
-def _now() -> datetime:
+class _RunSummary(TypedDict):
+    run_id: str
+    split: str
+    n: int
+    overall: float | None
+    metrics: dict[str, dict[str, float]]
+    latency_ms: dict[str, int]
+
+
+def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def _ms(start_s: float, end_s: float) -> int:
+def _elapsed_ms(start_s: float, end_s: float) -> int:
     return int(round((end_s - start_s) * 1000))
 
 
-def _prepare_run_paths(cfg: AppConfig, run_id: str) -> tuple[Path, Path, Path]:
+def _prepare_run_paths(cfg: AppConfig, run_id: str) -> tuple[Path, Path, Path, Path]:
     out_dir = Path(cfg.run.output_dir) / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    results_path = out_dir / "results.jsonl"
-    summary_path = out_dir / "summary.json"
-    return out_dir, results_path, summary_path
+    return out_dir, out_dir / "results.jsonl", out_dir / "summary.json", out_dir / "hallucination_inputs.json"
 
 
 def _load_data_pairs(cfg: AppConfig, *, split: str, limit: int | None) -> list[DialogExample]:
@@ -52,70 +62,39 @@ def _load_data_pairs(cfg: AppConfig, *, split: str, limit: int | None) -> list[D
     if limit is not None:
         rows = rows.select(range(min(limit, len(rows))))
 
-    examples: list[DialogExample] = []
-    for i, row in enumerate(rows):
-        ex = DialogExample(
+    return [
+        DialogExample(
             example_id=str(row.get("id", i)),
             dialogue=row[cfg.dataset.dialogue_field],
             reference_summary=row.get(cfg.dataset.reference_summary_field),
         )
-        examples.append(ex)
-    return examples
+        for i, row in enumerate(rows)
+    ]
 
 
 def _to_dspy_devset(examples: list[DialogExample]) -> list[dspy.Example]:
-    devset: list[dspy.Example] = []
-    for ex in examples:
-        devset.append(
-            dspy.Example(
-                example_id=ex.example_id,
-                dialogue=ex.dialogue,
-                reference_summary=ex.reference_summary,
-            ).with_inputs("dialogue")
-        )
-    return devset
+    return [
+        dspy.Example(
+            example_id=ex.example_id,
+            dialogue=ex.dialogue,
+            reference_summary=ex.reference_summary,
+        ).with_inputs("dialogue")
+        for ex in examples
+    ]
 
 
-def _build_llm() -> LangChainModelAdapter:
-    settings = get_settings()
-    adapter = build_azure_apim_adapter()
-    return LangChainModelAdapter(adapter=adapter, model_name=settings.BEST_LLM_MODEL_NAME)
-
-
-def _build_prompts() -> tuple[ChatPromptTemplate, ChatPromptTemplate]:
-    summarize_prompt = ChatPromptTemplate.from_messages([("user", "{text}")])
-    judge_prompt = ChatPromptTemplate.from_messages([("user", "{text}")])
-    return summarize_prompt, judge_prompt
-
-
-def _summarize_one(
-    *,
-    summarizer_llm: LangChainModelAdapter,
-    summarize_prompt: ChatPromptTemplate,
-    summarizer_template_path: str,
-    dialogue: str,
-    prompt_version: str,
-    model_name: str,
-) -> tuple[DialogSummary, int]:
-    t0 = time.perf_counter()
-    summarize_text = render_template(summarizer_template_path, dialogue=dialogue)
-    summarize_msg = summarize_prompt.invoke({"text": summarize_text})
-    summary_resp = summarizer_llm.invoke(summarize_msg)
-    t1 = time.perf_counter()
-
-    content = summary_resp.content
-    summary_text = content.strip() if isinstance(content, str) else " ".join(str(item) for item in content).strip()
-
-    candidate = DialogSummary(
-        summary=summary_text,
-        model=model_name,
-        prompt_version=prompt_version,
-        generation_config=GenerationConfig(
-            temperature=0.2,
-            max_tokens=256,
-        ),
-    )
-    return candidate, _ms(t0, t1)
+def _dialogue_to_entries(dialogue: str) -> list[DialogueEntry]:
+    """Converts dialogsum-format dialogue string to DialogueEntry objects."""
+    entries: list[DialogueEntry] = []
+    for i, raw_line in enumerate(dialogue.splitlines()):
+        line = raw_line.strip()
+        if not line:
+            continue
+        match = _DIALOGSUM_SPEAKER_RE.match(line)
+        speaker = match.group(1) if match else "Speaker"
+        text = match.group(2) if match else line
+        entries.append({"speaker": speaker, "text": text, "start_time": float(i), "end_time": float(i + 1)})
+    return entries
 
 
 def _evaluate_metrics(
@@ -124,18 +103,12 @@ def _evaluate_metrics(
     example: DialogExample,
     prediction: dspy.Prediction,
 ) -> dict[str, MetricResult]:
-    out: dict[str, MetricResult] = {}
-    for m in metrics:
-        out[m.name] = m.evaluate(example=example, prediction=prediction)
-    return out
+    return {m.name: m.evaluate(example=example, prediction=prediction) for m in metrics}
 
 
 def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
-        write_jsonl(
-            results_path,
-            (r.model_dump(by_alias=True) for r in records),
-        )
+        write_jsonl(results_path, (r.model_dump(by_alias=True) for r in records))
         records.clear()
 
 
@@ -152,27 +125,21 @@ def run_eval(
     split: str,
     limit: int | None,
     prompt_version: str,
-) -> tuple[str, Path, Path]:
+) -> tuple[str, Path, Path, Path]:
     run_id = str(uuid.uuid4())
-    _, results_path, summary_path = _prepare_run_paths(cfg, run_id)
+    _, results_path, summary_path, hallucination_inputs_path = _prepare_run_paths(cfg, run_id)
 
     examples = _load_data_pairs(cfg, split=split, limit=limit)
     devset = _to_dspy_devset(examples)
 
-    settings = get_settings()
-    summarizer_llm = _build_llm()
-    model_name = settings.BEST_LLM_MODEL_NAME
-
-    summarizer_template_path_opt = cfg.prompts.summarizer_template_path
-    if summarizer_template_path_opt is None:
-        msg = "summarizer_template_path must be provided in config"
-        raise ValueError(msg)
-    summarizer_template_path: str = summarizer_template_path_opt
+    model_name = get_settings().BEST_LLM_MODEL_NAME
+    template_name = cfg.prompts.summarizer_template_name
 
     metrics = build_metrics(cfg)
-    summarize_prompt, _ = _build_prompts()
+    hallucination_enabled = cfg.hallucination.enabled
 
     records: list[EvalRecord] = []
+    hallucination_inputs: list[HallucinationInput] = []
     summarize_ms_values: list[int] = []
     judge_ms_values: list[int] = []
     metric_names = [m.name for m in metrics]
@@ -180,16 +147,19 @@ def run_eval(
 
     class _Program:
         def __call__(self, *, dialogue: str) -> dspy.Prediction:
-            candidate, summarize_ms = _summarize_one(
-                summarizer_llm=summarizer_llm,
-                summarize_prompt=summarize_prompt,
-                summarizer_template_path=summarizer_template_path,
-                dialogue=dialogue,
+            entries = _dialogue_to_entries(dialogue)
+            t0 = time.perf_counter()
+            summary_text, total_claims, hallucinations = asyncio.run(generate_summary(entries, template_name))
+            summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
+            candidate = DialogSummary(
+                summary=summary_text,
+                model=model_name,
                 prompt_version=prompt_version,
-                model_name=model_name,
+                generation_config=GenerationConfig(temperature=0.0, max_tokens=1024),
             )
-            summarize_ms_values.append(summarize_ms)
-            return dspy.Prediction(summary=candidate.summary, candidate=candidate)
+            return dspy.Prediction(
+                summary=summary_text, candidate=candidate, hallucinations=hallucinations, total_claims=total_claims
+            )
 
     program = _Program()
 
@@ -202,28 +172,44 @@ def run_eval(
 
         t_j0 = time.perf_counter()
         metrics_out = _evaluate_metrics(metrics=metrics, example=ex, prediction=pred)
-        t_j1 = time.perf_counter()
-        judge_ms = _ms(t_j0, t_j1)
+        judge_ms = _elapsed_ms(t_j0, time.perf_counter())
         judge_ms_values.append(judge_ms)
 
         for name, res in metrics_out.items():
             metric_scores[name].append(res.score)
 
         candidate = pred.candidate
-        rec = EvalRecord(
-            run_id=run_id,
-            timestamp=_now(),
-            example=ex,
-            candidate=candidate,
-            metrics=metrics_out,
-            latency_ms={
-                "summarize": summarize_ms_values[-1] if summarize_ms_values else 0,
-                "judge": judge_ms,
-            },
-            error=None,
+        records.append(
+            EvalRecord(
+                run_id=run_id,
+                timestamp=_utc_now(),
+                example=ex,
+                candidate=candidate,
+                metrics=metrics_out,
+                latency_ms={
+                    "summarize": summarize_ms_values[-1] if summarize_ms_values else 0,
+                    "judge": judge_ms,
+                },
+                error=None,
+            )
         )
-        records.append(rec)
         _maybe_flush_records(results_path, records, flush_every=25)
+
+        if hallucination_enabled:
+            uncited_claims = [
+                h.hallucination_text
+                for h in pred.hallucinations
+                if h.hallucination_type == HallucinationType.FACTUAL_FABRICATION
+            ]
+            hallucination_inputs.append(
+                HallucinationInput(
+                    example_id=str(gold.example_id),
+                    hypothesis_model=model_name,
+                    summary_html=candidate.summary,
+                    uncited_claims=uncited_claims,
+                    total_claims=pred.total_claims,
+                )
+            )
 
         if metric_names:
             return float(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
@@ -238,7 +224,7 @@ def run_eval(
     metrics_summary = {
         name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0} for name, vals in metric_scores.items()
     }
-    summary = {
+    summary: _RunSummary = {
         "run_id": run_id,
         "split": split,
         "n": len(devset),
@@ -251,4 +237,7 @@ def run_eval(
     }
 
     summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))
-    return run_id, results_path, summary_path
+    hallucination_inputs_path.write_bytes(
+        orjson.dumps([h.model_dump() for h in hallucination_inputs], option=orjson.OPT_INDENT_2)
+    )
+    return run_id, results_path, summary_path, hallucination_inputs_path

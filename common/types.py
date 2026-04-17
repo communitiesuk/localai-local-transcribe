@@ -203,7 +203,7 @@ class LLMHallucinationList(BaseModel):
     hallucinations: list[LLMHallucination] = Field(description="List of detected hallucinations")
 
 
-MinuteAndHallucinations = tuple[str, list[LLMHallucination] | None]
+MinuteAndHallucinations = tuple[str, int, list[LLMHallucination]]
 
 
 class MeetingType(StrEnum):
