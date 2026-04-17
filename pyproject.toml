@@ -87,6 +87,11 @@ python-multipart = "^0.0.22"
 i-dot-ai-utilities = "^0.4.4"
 azure-servicebus = "^7.14.2"
 mypy-boto3-sqs = "^1.42.3"
+google-genai = "^1.10.0"
+openai = "^1.42.0"
+ffmpeg-python = "^0.2.0"
+azure-storage-blob = "^12.26.0"
+azure-identity = "^1.23.1"
 
 [tool.poetry.group.backend.dependencies]
 pyjwt = "^2.9.0"
@@ -95,12 +100,7 @@ uvicorn = "^0.31.0"
 apscheduler = "^3.11.0"
 
 [tool.poetry.group.worker.dependencies]
-google-genai = "^1.10.0"
-openai = "^1.42.0"
-ffmpeg-python = "^0.2.0"
 ray = {extras = ["default"], version = "^2.53.0"}
-azure-storage-blob = "^12.26.0"
-azure-identity = "^1.23.1"
 
 [tool.poetry.group.local-dev.dependencies]
 whisply = "^0.13.1"

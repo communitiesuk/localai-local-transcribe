@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
@@ -14,10 +15,17 @@ from common.database.postgres_models import (
     Minute,
     MinuteVersion,
     Recording,
+    TemplateType,
     Transcription,
     User,
+    UserTemplate,
 )
-from common.types import RecordingCreateRequest, TranscriptionCreateRequest, TranscriptionPatchRequest
+from common.types import (
+    Question,
+    RecordingCreateRequest,
+    TranscriptionCreateRequest,
+    TranscriptionPatchRequest,
+)
 
 mock_email = "test@local-transcribe.com"
 
@@ -185,6 +193,33 @@ def mock_chat(uid=None, user_content="hello", assistant_content="world", status=
         user_content=user_content,
         assistant_content=assistant_content,
         status=status,
-        created_datetime=datetime.now(UTC),
-        updated_datetime=datetime.now(UTC),
+        created_datetime=datetime.now(tz=UTC),
+        updated_datetime=datetime.now(tz=UTC),
+    )
+
+
+@pytest.fixture
+def mock_user_template(mock_user) -> UserTemplate:
+    return UserTemplate(
+        id=uuid4(),
+        user_id=mock_user.id,
+        name="Test Template",
+        description="Test Description",
+        content="Hello World",
+        type=TemplateType.DOCUMENT,
+        created_datetime=datetime.now(tz=UTC),
+        updated_datetime=datetime.now(tz=UTC),
+        minutes=[],
+        questions=[],
+    )
+
+
+@pytest.fixture
+def mock_request():
+    return SimpleNamespace(
+        name="Test Template",
+        content="Hello World",
+        description="test template",
+        type=TemplateType.DOCUMENT,
+        questions=[Question(id=uuid4(), position=1, title="Foo", description="foobar")],
     )
