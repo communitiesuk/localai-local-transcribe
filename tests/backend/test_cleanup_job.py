@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -159,6 +159,23 @@ async def test_delete_orphan_records_no_orphans(mock_session, mock_session_ctx, 
 
 
 @pytest.mark.asyncio
+async def test_delete_orphan_records_exists_false(mock_session, mock_session_ctx, mock_storage_service, mock_recording):
+    exec_result = Mock()
+    exec_result.all.return_value = [mock_recording]
+    mock_session.exec.return_value = exec_result
+
+    mock_storage_service.check_object_exists.return_value = False
+
+    with patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx):
+        await delete_orphan_records()
+
+    mock_storage_service.check_object_exists.assert_awaited_once_with(mock_recording.s3_file_key)
+    mock_storage_service.delete.assert_not_awaited()
+    mock_session.delete.assert_awaited_once_with(mock_recording)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_cleanup_jobs_calls_all_three(mocker):
     mock_cleanup_old = mocker.patch("backend.cleanup_job.cleanup_old_records", AsyncMock())
     mock_delete_orphan = mocker.patch("backend.cleanup_job.delete_orphan_records", AsyncMock())
@@ -174,13 +191,22 @@ async def test_cleanup_jobs_calls_all_three(mocker):
 @pytest.mark.asyncio
 async def test_init_cleanup_scheduler_starts_cleanup_job(mocker):
     mock_scheduler = Mock()
+    mock_run_time = datetime(2026, 1, 1, 1, 0, tzinfo=UTC)
+
     mocker.patch("backend.cleanup_job.AsyncIOScheduler", return_value=mock_scheduler)
+    mock_datetime = mocker.patch("backend.cleanup_job.datetime", autospec=True)
+
+    mock_datetime.now.return_value = mock_run_time
+    mock_datetime.UTC = UTC
 
     await init_cleanup_scheduler()
 
     mock_scheduler.add_job.assert_called_once()
     call_kwargs = mock_scheduler.add_job.call_args
-    assert call_kwargs.args[0] == cleanup_jobs
+    assert call_kwargs.args[0] is cleanup_jobs
     assert call_kwargs.args[1] == "interval"
     assert call_kwargs.kwargs["days"] == 1
+
+    expected_next_run = mock_run_time.replace(hour=23, minute=0, second=0, microsecond=0)
+    assert call_kwargs.kwargs["next_run_time"] == expected_next_run
     mock_scheduler.start.assert_called_once()
