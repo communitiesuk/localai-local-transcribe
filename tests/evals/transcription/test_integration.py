@@ -47,7 +47,11 @@ def setup_evaluation(tmp_path, monkeypatch):
             "whisply": FakeWhisperAdapter,
         }
 
-        fake_settings = SimpleNamespace(AZURE_SPEECH_KEY="key", AZURE_SPEECH_REGION="region")
+        fake_settings = SimpleNamespace(
+            AZURE_APIM_URL="https://fake.apim.url",
+            AZURE_APIM_SUBSCRIPTION_KEY="key",
+            AZURE_APIM_ACCESS_TOKEN="token",
+        )
         monkeypatch.setattr("evals.transcription.src.evaluate.settings", fake_settings)
         monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
         monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: audio_duration)
@@ -171,7 +175,11 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
 
     samples = [{"text": "hello world", "audio": {"path": str(wav_a)}}]
     dataset = FakeDataset(samples)
-    fake_settings = SimpleNamespace(AZURE_SPEECH_KEY=None, AZURE_SPEECH_REGION=None)
+    fake_settings = SimpleNamespace(
+        AZURE_APIM_URL=None,
+        AZURE_APIM_SUBSCRIPTION_KEY=None,
+        AZURE_APIM_ACCESS_TOKEN=None,
+    )
 
     monkeypatch.setattr("common.services.transcription_services.azure.settings", fake_settings)
     monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)

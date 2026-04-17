@@ -57,9 +57,6 @@ class Settings(BaseSettings):
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
     )
 
-    AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
-    AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
-
     MAX_TRANSCRIPTION_PROCESSES: int = Field(description="the number of transcription workers per node", default=1)
     MAX_LLM_PROCESSES: int = Field(description="the number of LLM workers per node", default=1)
 

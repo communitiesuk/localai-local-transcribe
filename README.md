@@ -45,8 +45,7 @@ If you have access to a supported LLM and Transcription provider, you will need 
 
 ##### In `.env`
 
-- Transcription: `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`
-- LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, and `AZURE_APIM_SUBSCRIPTION_KEY`.
+- Transcription + LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, and `AZURE_APIM_SUBSCRIPTION_KEY`.
 
 Note:
 
