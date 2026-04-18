@@ -49,4 +49,3 @@ function sync() {
 }
 
 sync()
-pre

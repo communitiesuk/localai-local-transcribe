@@ -7,6 +7,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import aioboto3
 import httpx
@@ -39,9 +40,13 @@ def get_client() -> Generator[ContainerClient, None, None]:
         yield container_client
 
 
-transcriptions_url = f"https://{settings.AZURE_SPEECH_REGION}.api.cognitive.microsoft.com/speechtotext/transcriptions"
-submit_url = f"{transcriptions_url}:submit"
-headers = {"Ocp-Apim-Subscription-Key": settings.AZURE_SPEECH_KEY, "Content-Type": "application/json"}
+_apim = urlparse(settings.AZURE_APIM_URL or "")
+submit_url = f"{_apim.scheme}://{_apim.netloc}/localtranscribe/speechtotext/transcriptions:submit"
+headers = {
+    "Ocp-Apim-Subscription-Key": settings.AZURE_APIM_SUBSCRIPTION_KEY or "",
+    "Authorization": f"Bearer {settings.AZURE_APIM_ACCESS_TOKEN or ''}",
+    "Content-Type": "application/json",
+}
 timeout_settings = httpx.Timeout(
     timeout=30.0,
     connect=30.0,
@@ -211,7 +216,9 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
 
     @classmethod
     def is_available(cls) -> bool:
-        return bool(settings.AZURE_SPEECH_KEY and settings.AZURE_SPEECH_REGION)
+        return bool(
+            settings.AZURE_APIM_URL and settings.AZURE_APIM_SUBSCRIPTION_KEY and settings.AZURE_APIM_ACCESS_TOKEN
+        )
 
     @classmethod
     def get_azure_container_sas(

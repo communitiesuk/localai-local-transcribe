@@ -83,6 +83,11 @@ class AzureAPIMModelAdapter(ModelAdapter):
             raise TypeError(msg)
         return message_content
 
+        # In your structured_chat method, add this BEFORE calling _call_with_retry:
+        logger.debug("--- PROMPT PAYLOAD START ---")
+        logger.debug(openai_messages) # This will show you exactly what is being sent
+        logger.debug("--- PROMPT PAYLOAD END ---")
+
     async def _call_with_retry[T_Response](
         self, api_call: Callable[[], Awaitable[T_Response]], method_name: str
     ) -> T_Response:
