@@ -6,9 +6,6 @@ let nextConfig = {
     includePaths: ['./node_modules'],
     quietDeps: true,
   },
-  outputFileTracingIncludes: {
-    '/assets/**/*': ['./node_modules/govuk-frontend/dist/govuk/assets/**/*'],
-  },
 }
 
 const sentryConfig = {
