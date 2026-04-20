@@ -26,16 +26,19 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
+      
+      - name: Copy env file
+        run: cp .env.example .env
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ inputs.python_version || '3.12' }}
+          python-version: ${{ '3.12' }}
 
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2
         with:
-          poetry-version: ${{ inputs.poetry_version || '1.8.3' }}
+          poetry-version: ${{  '1.8.3' }}
 
       - name: Configure Poetry to create .venv in project
         run: poetry config virtualenvs.in-project true
@@ -44,16 +47,14 @@ jobs:
         uses: actions/cache@v4 
         with: 
           path: .venv 
-          key: venv-${{ runner.os }}-${{ inputs.python_version || '3.12'}}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-${{  '3.12'}}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            venv-${{ runner.os }}-${{ inputs.python_version || '3.12'}}-
+            venv-${{ runner.os }}-${{  '3.12'}}-
             venv-${{ runner.os }}-
       
       - name: Install dependencies
         run: poetry sync --no-root --no-ansi --with dev 
 
-      - name: Copy env file
-        run: cp .env.example .env
 
       - name: Create test data directory
         run: mkdir -p .data/test_audio/normal
