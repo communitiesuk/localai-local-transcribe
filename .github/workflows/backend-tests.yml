@@ -9,6 +9,16 @@ on:
       poetry_version: 
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      python_version:
+        required: true
+        type: string
+        default: "3.12"
+      poetry_version:
+        required: true
+        type: string
+        default: "1.8.3"
 
 env:
   ENVIRONMENT: test
@@ -34,6 +44,9 @@ jobs:
         with:
           poetry-version: ${{ inputs.poetry_version }}
 
+      - name: Configure Poetry to create .venv in project
+        run: poetry config virtualenvs.in-project true
+
       - name: Cache virtualenv 
         uses: actions/cache@v4 
         with: 
@@ -43,9 +56,6 @@ jobs:
             venv-${{ runner.os }}-${{ inputs.python_version }}-
             venv-${{ runner.os }}-
       
-      - name: Configure Poetry to create .venv in project
-        run: poetry config virtualenvs.in-project true
-
       - name: Install dependencies
         run: poetry sync --no-root --no-ansi --with dev 
 
