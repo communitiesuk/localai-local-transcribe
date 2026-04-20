@@ -38,7 +38,6 @@ from common.types import (
 
 settings = get_settings()
 
-
 logger = logging.getLogger(__name__)
 
 THRESHOLD_FOR_PASSING_ACCURACY_CHECK = settings.GUARDRAIL_THRESHOLD

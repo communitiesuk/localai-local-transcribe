@@ -168,7 +168,6 @@ class TranscriptionHandlerService:
             else:
                 # it's a new transcription job
                 cls.update_transcription(transcription.id, JobStatus.IN_PROGRESS)
-
                 transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
 
             if transcription_job.transcript:

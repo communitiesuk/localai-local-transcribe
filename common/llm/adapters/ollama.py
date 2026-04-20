@@ -60,8 +60,8 @@ class OllamaModelAdapter(ModelAdapter):
         for field_name, field_info in properties.items():
             field_type = field_info.get("type", "string")
             field_desc = field_info.get("description", "")
-            is_required = "REQUIRED" if field_name in required_fields else "optional"
-            field_descriptions.append(f'  - "{field_name}" ({field_type}, {is_required}): {field_desc}')
+            required_description = "REQUIRED" if field_name in required_fields else "optional"
+            field_descriptions.append(f'  - "{field_name}" ({field_type}, {required_description}): {field_desc}')
 
         fields_text = "\n".join(field_descriptions)
 
