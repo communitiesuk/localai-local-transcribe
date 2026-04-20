@@ -22,13 +22,8 @@ fi
 TOKEN_SCOPE=$(grep "^AZURE_TOKEN_SCOPE=" "$ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
 
 if [ -z "$TOKEN_SCOPE" ]; then
-<<<<<<< HEAD
-    echo "Warning: AZURE_TOKEN_SCOPE not set in $ENV_FILE. Using default." >&2
-    TOKEN_SCOPE="api://api.azc.test.communities.gov.uk/.default"
-=======
     echo "Error: AZURE_TOKEN_SCOPE not set in $ENV_FILE" >&2
     exit 1
->>>>>>> origin/development
 fi
 
 if ! command -v az &> /dev/null; then

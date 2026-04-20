@@ -10,6 +10,7 @@ from openai.types.chat.chat_completion import Choice
 from common.settings import get_settings
 
 from .base import ModelAdapter
+from .exceptions import ResponseTruncatedError
 from .llm_constants import MAX_TOKENS, TEMPERATURE
 
 settings = get_settings()
@@ -58,7 +59,7 @@ class OpenAIModelAdapter(ModelAdapter):
         choice = response.choices[0]
         if self.choice_incomplete(choice, response):
             msg = "OpenAI response may be incomplete due to max token limit"
-            raise ValueError(msg)
+            raise ResponseTruncatedError(msg)
         message_content = choice.message.content
         if message_content is None:
             msg = "OpenAI response.content is None"
