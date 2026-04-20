@@ -161,7 +161,7 @@ class GuardrailScore(BaseModel):
     reasoning: str = Field(description="Reasoning for the score")
 
 
-MinuteAndHallucinations = tuple[str, list[LLMHallucination] | None]
+MinuteAndHallucinations = tuple[str, list[LLMHallucination]]
 
 
 class MinuteVersionResponse(BaseModel):
