@@ -9,16 +9,9 @@ on:
       poetry_version: 
         required: true
         type: string
-  workflow_dispatch:
-    inputs:
-      python_version:
-        required: true
-        type: string
-        default: "3.12"
-      poetry_version:
-        required: true
-        type: string
-        default: "1.8.3"
+push:
+    branches:
+      - feat/AIILG-493-ci-cache 
 
 env:
   ENVIRONMENT: test
@@ -37,12 +30,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ inputs.python_version }}
+          python-version: ${{ inputs.python_version || '3.12' }}
 
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2
         with:
-          poetry-version: ${{ inputs.poetry_version }}
+          poetry-version: ${{ inputs.poetry_version || '1.8.3' }}
 
       - name: Configure Poetry to create .venv in project
         run: poetry config virtualenvs.in-project true
@@ -51,9 +44,9 @@ jobs:
         uses: actions/cache@v4 
         with: 
           path: .venv 
-          key: venv-${{ runner.os }}-${{ inputs.python_version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-${{ inputs.python_version || '3.12'}}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            venv-${{ runner.os }}-${{ inputs.python_version }}-
+            venv-${{ runner.os }}-${{ inputs.python_version || '3.12'}}-
             venv-${{ runner.os }}-
       
       - name: Install dependencies
