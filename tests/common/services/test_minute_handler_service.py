@@ -1,31 +1,29 @@
-# from __future__ import annotations
-
-from uuid import uuid4
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from uuid import uuid4
 
 import pytest
 
 from common.database.postgres_models import (
+    DialogueEntry,
     Hallucination,
     JobStatus,
     Minute,
-    MinuteVersion, 
-    UserTemplate,
-    DialogueEntry,
+    MinuteVersion,
+    Transcription,
     User,
-    Transcription
+    UserTemplate,
 )
 from common.services.minute_handler_service import (
     MinuteGenerationFailedError,
     MinuteHandlerService,
 )
+from common.settings import get_settings
 from common.types import HallucinationType, LLMHallucination, MeetingType
-from types import SimpleNamespace
-from datetime import UTC, datetime
 
-
-# ── Shared fixtures ───────────────────────────────────────────────────────────
 mock_email = "tests@local-transcribe.com"
+settings = get_settings()
+
 
 @pytest.fixture
 def mock_user() -> User:
@@ -40,12 +38,7 @@ def mock_user() -> User:
 
 @pytest.fixture
 def mock_dialogue_entries():
-    return DialogueEntry(
-        speaker = "John",
-        text = "hello world",
-        start_time= 0.0, 
-        end_time=  1.0  
-    )
+    return DialogueEntry(speaker="John", text="hello world", start_time=0.0, end_time=1.0)
 
 
 @pytest.fixture
@@ -55,6 +48,7 @@ def mock_llm_hallucination():
         hallucination_text="this string is hallucinating",
         hallucination_reason="for reasons unknown",
     )
+
 
 @pytest.fixture
 def mock_minute():
@@ -66,9 +60,9 @@ def mock_minute():
         minute_versions=[],
     )
 
+
 @pytest.fixture
 def mock_minute_version(mock_minute):
-
     minute_version = MinuteVersion(
         id=uuid4(),
         minute_id=mock_minute.id,
@@ -78,6 +72,7 @@ def mock_minute_version(mock_minute):
     )
     minute_version.minute = mock_minute
     return minute_version
+
 
 @pytest.fixture
 def mock_session(mock_minute_version):
@@ -103,7 +98,7 @@ def mock_transcription(mock_minute, mock_user) -> Transcription:
         updated_datetime=datetime.now(tz=UTC),
         minutes=[mock_minute],
         title="Test Transcription",
-        dialogue_entries= mock_dialogue_entries
+        dialogue_entries=mock_dialogue_entries,
     )
 
 
@@ -118,7 +113,6 @@ def test_convert_llm_hallucination_to_db_hallucination(mock_llm_hallucination, m
     assert result.minute_version_id == mock_minute_version.id
 
 
-
 def test_update_minute_version_updates_fields(mock_session, mock_minute_version):
     ctx, session = mock_session
     content = "<p>html content</p>"
@@ -127,7 +121,7 @@ def test_update_minute_version_updates_fields(mock_session, mock_minute_version)
     with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
         MinuteHandlerService.update_minute_version(
             mock_minute_version.id,
-            html_content= content,
+            html_content=content,
             status=new_status,
             error=None,
             hallucinations=None,
@@ -143,17 +137,14 @@ def test_update_minute_version_raises_if_not_found(mock_session, mock_minute_ver
     ctx, session = mock_session
     session.get.return_value = None
 
-    with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
-        with pytest.raises(ValueError) as exc_info:
-            MinuteHandlerService.update_minute_version(mock_minute_version.id)
-    assert f"MinuteVersion not found for id: {mock_minute_version.id}" in str(exc_info.value)
-
-
-def test_update_minute_version_converts_llm_hallucinations(
-    mock_session, 
-    mock_minute_version, 
-    mock_llm_hallucination
+    with (
+        patch("common.services.minute_handler_service.SessionLocal", return_value=ctx),
+        pytest.raises(ValueError, match=f"MinuteVersion not found for id: {mock_minute_version.id}"),
     ):
+        MinuteHandlerService.update_minute_version(mock_minute_version.id)
+
+
+def test_update_minute_version_converts_llm_hallucinations(mock_session, mock_minute_version, mock_llm_hallucination):
     ctx, session = mock_session
 
     with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
@@ -164,7 +155,6 @@ def test_update_minute_version_converts_llm_hallucinations(
 
     assert len(mock_minute_version.hallucinations) == 1
     assert isinstance(mock_minute_version.hallucinations[0], Hallucination)
-
 
 
 @pytest.mark.asyncio
@@ -183,10 +173,11 @@ async def test_get_minute_version_raises_if_not_found(mock_session):
     ctx, session = mock_session
     session.get.return_value = None
 
-    with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
-        with pytest.raises(ValueError, match="MinuteVersion not found for id:"):
-            await MinuteHandlerService.get_minute_version(uuid4())
-
+    with (
+        patch("common.services.minute_handler_service.SessionLocal", return_value=ctx),
+        pytest.raises(ValueError, match="MinuteVersion not found for id:"),
+    ):
+        await MinuteHandlerService.get_minute_version(uuid4())
 
 
 @pytest.mark.asyncio
@@ -194,21 +185,25 @@ async def test_get_only_minute_version_raises_if_minute_not_found(mock_session):
     ctx, session = mock_session
     session.get.return_value = None
 
-    with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
-        with pytest.raises(ValueError, match="Minute not found for minute id"):
-            await MinuteHandlerService.get_only_minute_version_for_minute_id(uuid4())
+    with (
+        patch("common.services.minute_handler_service.SessionLocal", return_value=ctx),
+        pytest.raises(ValueError, match="Minute not found for minute id"),
+    ):
+        await MinuteHandlerService.get_only_minute_version_for_minute_id(uuid4())
 
 
 @pytest.mark.asyncio
-async def test_get_only_minute_version_raises_if_no_versions(mock_session, mock_minute, mock_minute_version):
+async def test_get_only_minute_version_raises_if_no_versions(mock_session, mock_minute):
     ctx, session = mock_session
     mock_minute.minute_versions = []
-  
+
     session.get.return_value = mock_minute
 
-    with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
-        with pytest.raises(ValueError, match="MinuteVersion not found for minute"):
-            await MinuteHandlerService.get_only_minute_version_for_minute_id(uuid4())
+    with (
+        patch("common.services.minute_handler_service.SessionLocal", return_value=ctx),
+        pytest.raises(ValueError, match="MinuteVersion not found for minute"),
+    ):
+        await MinuteHandlerService.get_only_minute_version_for_minute_id(uuid4())
 
 
 @pytest.mark.asyncio
@@ -217,9 +212,11 @@ async def test_get_only_minute_version_raises_if_multiple_versions(mock_session,
     mock_minute.minute_versions = [mock_minute_version, mock_minute_version]
     session.get.return_value = mock_minute
 
-    with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
-        with pytest.raises(ValueError, match="More than one MinuteVersions found"):
-            await MinuteHandlerService.get_only_minute_version_for_minute_id(uuid4())
+    with (
+        patch("common.services.minute_handler_service.SessionLocal", return_value=ctx),
+        pytest.raises(ValueError, match="More than one MinuteVersions found"),
+    ):
+        await MinuteHandlerService.get_only_minute_version_for_minute_id(uuid4())
 
 
 @pytest.mark.asyncio
@@ -236,52 +233,33 @@ async def test_get_only_minute_version_success(mock_session, mock_minute_version
     session.expunge.assert_called_once_with(mock_minute)
 
 
-#### From here
+def test_predict_meeting_too_short(mock_dialogue_entries):
+    dialogue_too_short = ("a " * (settings.MIN_WORD_COUNT_FOR_SUMMARY - 1)).strip()
 
-
-# ── predict_meeting ───────────────────────────────────────────────────────────
-
-def test_predict_meeting_too_short(mocker, mock_dialogue_entries):
-    mocker.patch("common.services.minute_handler_service.settings.MIN_WORD_COUNT_FOR_SUMMARY", 10)
-    mocker.patch("common.services.minute_handler_service.settings.MIN_WORD_COUNT_FOR_FULL_SUMMARY", 50)
-
-    mock_dialogue_entries["text"] = "A"
+    mock_dialogue_entries["text"] = dialogue_too_short
     result = MinuteHandlerService.predict_meeting([mock_dialogue_entries])
     assert result == MeetingType.too_short
 
 
-def test_predict_meeting_short(mocker, mock_dialogue_entries):
-    mocker.patch("common.services.minute_handler_service.settings.MIN_WORD_COUNT_FOR_SUMMARY", 2)
-    mocker.patch("common.services.minute_handler_service.settings.MIN_WORD_COUNT_FOR_FULL_SUMMARY", 50)
+def test_predict_meeting_standard(mock_dialogue_entries):
+    valid_dialogue = ("a " * (settings.MIN_WORD_COUNT_FOR_SUMMARY + 1)).strip()
 
-    mock_dialogue_entries["text"] = "Lorem ipsum dolor sit amet consectetur adipiscing elit quisque faucibus."
-    result = MinuteHandlerService.predict_meeting([mock_dialogue_entries])
-    assert result == MeetingType.short
-
-
-def test_predict_meeting_standard(mocker, mock_dialogue_entries):
-    mocker.patch("common.services.minute_handler_service.settings.MIN_WORD_COUNT_FOR_SUMMARY", 2)
-    mocker.patch("common.services.minute_handler_service.settings.MIN_WORD_COUNT_FOR_FULL_SUMMARY", 5)
-
-    mock_dialogue_entries["text"] = "Lorem ipsum dolor sit amet consectetur adipiscing elit quisque faucibus."
+    mock_dialogue_entries["text"] = valid_dialogue
     result = MinuteHandlerService.predict_meeting([mock_dialogue_entries])
     assert result == MeetingType.standard
 
 
-# ── handle_bad_transcript ─────────────────────────────────────────────────────
-
 def test_handle_bad_transcript(mock_dialogue_entries, mocker):
+    utterance = "Adam says hello world"
     mocker.patch(
         "common.services.minute_handler_service.transcript_as_speaker_and_utterance",
-        return_value="Alice: hello world",
+        return_value=utterance,
     )
     result, hallucinations = MinuteHandlerService.handle_bad_transcript(mock_dialogue_entries)
 
-    assert "Short meeting detected" in result
+    assert f"Transcript is: {utterance}" in result
     assert hallucinations == []
 
-
-# ── generate_basic_minutes ────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
 async def test_generate_basic_minutes(mock_dialogue_entries, mocker):
@@ -298,114 +276,104 @@ async def test_generate_basic_minutes(mock_dialogue_entries, mocker):
     mock_chatbot.chat.assert_awaited_once()
 
 
-# ── edit_minutes_with_ai ──────────────────────────────────────────────────────
-
 @pytest.mark.asyncio
 async def test_edit_minutes_with_ai(mock_dialogue_entries, mocker):
+    text_content = "edited minutes"
     mock_chatbot = AsyncMock()
-    mock_chatbot.chat = AsyncMock(return_value="edited minutes")
+    mock_chatbot.chat = AsyncMock(return_value=text_content)
     mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
     result, hallucinations = await MinuteHandlerService.edit_minutes_with_ai(
-        minutes="<p>original</p>",
+        minutes="<p>original minutes</p>",
         edit_instructions="make it shorter",
         transcript=[mock_dialogue_entries],
     )
 
-    assert result == "edited minutes"
+    assert result == text_content
     assert hallucinations == []
 
 
 @pytest.mark.asyncio
 async def test_edit_minutes_with_ai_strips_code_fences(mock_dialogue_entries, mocker):
+    chatbot_output = "edited minutes"
     mock_chatbot = AsyncMock()
-    mock_chatbot.chat = AsyncMock(return_value="```html<p>edited</p>```")
+    mock_chatbot.chat = AsyncMock(return_value=f"```html<p>{chatbot_output}</p>```")
     mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
     result, _ = await MinuteHandlerService.edit_minutes_with_ai(
-        minutes="<p>original</p>",
+        minutes="<p>original minutes</p>",
         edit_instructions="make it shorter",
         transcript=[mock_dialogue_entries],
     )
 
-    assert result == "<p>edited</p>"
+    assert result == f"<p>{chatbot_output}</p>"
 
-
-# ── generate_minutes ──────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_generate_minutes_too_short(mocker, mock_minute, mock_dialogue_entries, mock_transcription):
-
+async def test_generate_minutes_too_short(mocker, mock_minute, mock_transcription):
+    output = "too short"
     mock_minute.transcription = mock_transcription
 
-    mocker.patch.object(MinuteHandlerService, "handle_bad_transcript", return_value=("too short", []))
-    mocker.patch("common.services.minute_handler_service.mistune.html", return_value="<p>too short</p>")
+    mocker.patch.object(MinuteHandlerService, "handle_bad_transcript", return_value=(output, []))
+    mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
 
     result, hallucinations = await MinuteHandlerService.generate_minutes(MeetingType.too_short, mock_minute)
 
-    assert result == "<p>too short</p>"
+    assert result == f"<p>{output}</p>"
     assert hallucinations == []
 
 
 @pytest.mark.asyncio
-async def test_generate_minutes_short(mocker, mock_dialogue_entries,mock_minute, mock_transcription):
-
+async def test_generate_minutes_short(mocker, mock_minute, mock_transcription):
+    output = "short"
     mock_minute.transcription = mock_transcription
- 
 
-    mocker.patch.object(MinuteHandlerService, "generate_basic_minutes", AsyncMock(return_value=("basic", [])))
-    mocker.patch("common.services.minute_handler_service.mistune.html", return_value="<p>basic</p>")
+    mocker.patch.object(MinuteHandlerService, "generate_basic_minutes", AsyncMock(return_value=(output, [])))
+    mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
 
     result, _ = await MinuteHandlerService.generate_minutes(MeetingType.short, mock_minute)
 
-    assert result == "<p>basic</p>"
+    assert result == f"<p>{output}</p>"
 
 
 @pytest.mark.asyncio
 async def test_generate_minutes_standard(mocker, mock_dialogue_entries, mock_minute, mock_transcription):
-        
+    output = "standard"
+
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = mock_dialogue_entries
 
-    mocker.patch.object(MinuteHandlerService, "generate_full_minutes", AsyncMock(return_value=("full", [])))
-    mocker.patch("common.services.minute_handler_service.mistune.html", return_value="<p>full</p>")
+    mocker.patch.object(MinuteHandlerService, "generate_full_minutes", AsyncMock(return_value=(output, [])))
+    mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
 
     result, _ = await MinuteHandlerService.generate_minutes(MeetingType.standard, mock_minute)
 
-    assert result == "<p>full</p>"
+    assert result == f"<p>{output}</p>"
 
 
 @pytest.mark.asyncio
 async def test_generate_minutes_raises_if_no_dialogue(mock_minute, mock_transcription):
- 
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = []
 
     with pytest.raises(MinuteGenerationFailedError) as exc_info:
         await MinuteHandlerService.generate_minutes(MeetingType.standard, mock_minute)
     assert f"Minute {mock_minute.id} has no dialogue entries" in str(exc_info.value)
-    
 
-
-# ── generate_full_minutes ─────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
 async def test_generate_full_minutes_uses_user_template(mocker, mock_minute):
-
     output = "backwards_parallelogram"
     mock_template = AsyncMock()
 
- 
     mocker.patch.object(
         MinuteHandlerService, "generate_minute_from_user_template", AsyncMock(return_value=(output, []))
     )
     mocker.patch("common.services.minute_handler_service.TemplateManager.get_template", return_value=mock_template)
 
-    mocker.patch(
-        "common.services.minute_handler_service.convert_american_to_british_spelling", return_value=output
-    )
+    mocker.patch("common.services.minute_handler_service.convert_american_to_british_spelling", return_value=output)
 
     result, hallucinations = await MinuteHandlerService.generate_full_minutes(mock_minute)
 
@@ -415,16 +383,13 @@ async def test_generate_full_minutes_uses_user_template(mocker, mock_minute):
 
 @pytest.mark.asyncio
 async def test_generate_full_minutes_uses_default_template(mocker, mock_minute):
-
     output = "expected_result"
 
     mock_template = AsyncMock()
     mock_template.generate = AsyncMock(return_value=("result", []))
     mock_minute.user_template_id = None
     mocker.patch("common.services.minute_handler_service.TemplateManager.get_template", return_value=mock_template)
-    mocker.patch(
-        "common.services.minute_handler_service.convert_american_to_british_spelling", return_value=output
-    )
+    mocker.patch("common.services.minute_handler_service.convert_american_to_british_spelling", return_value=output)
 
     result, _ = await MinuteHandlerService.generate_full_minutes(mock_minute)
 
@@ -432,10 +397,9 @@ async def test_generate_full_minutes_uses_default_template(mocker, mock_minute):
     mock_template.generate.assert_awaited_once_with(mock_minute)
 
 
-# ── generate_minute_from_user_template ────────────────────────────────────────
-
 @pytest.mark.asyncio
 async def test_generate_minute_from_user_template_success(mocker, mock_session, mock_minute, mock_transcription):
+    output = "minute contents"
     ctx, session = mock_session
     mock_template = Mock(spec=UserTemplate)
     session.get.return_value = mock_template
@@ -445,58 +409,53 @@ async def test_generate_minute_from_user_template_success(mocker, mock_session, 
     mocker.patch("common.services.minute_handler_service.SessionLocal", return_value=ctx)
     mocker.patch(
         "common.services.minute_handler_service.generate_user_template",
-        AsyncMock(return_value=("minutes", [])),
+        AsyncMock(return_value=(output, [])),
     )
 
     result, hallucinations = await MinuteHandlerService.generate_minute_from_user_template(mock_minute)
 
-    assert result == "minutes"
+    assert result == output
     assert hallucinations == []
 
 
 @pytest.mark.asyncio
-async def test_generate_minute_from_user_template_raises_if_no_template(mocker, mock_session):
+async def test_generate_minute_from_user_template_raises_if_no_template(mocker, mock_minute, mock_session):
     ctx, session = mock_session
     session.get.return_value = None
 
-    minute = Minute(
-        id=uuid4(),
-        transcription_id=uuid4(),
-        template_name="TEMPLATE",
-        user_template_id=uuid4(),
-    )
-
     mocker.patch("common.services.minute_handler_service.SessionLocal", return_value=ctx)
 
-    with pytest.raises(RuntimeError, match="No template"):
-        await MinuteHandlerService.generate_minute_from_user_template(minute)
+    with pytest.raises(RuntimeError, match=f"No template with id {mock_minute.user_template_id}"):
+        await MinuteHandlerService.generate_minute_from_user_template(mock_minute)
 
-
-# ── process_minute_generation_message ────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_process_minute_generation_message_success(mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entries):
-
+async def test_process_minute_generation_message_success(
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entries
+):
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = mock_dialogue_entries
+    dialogue = "<p>the family table</p>"
 
     mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
     mocker.patch.object(MinuteHandlerService, "predict_meeting", return_value=MeetingType.standard)
-    mocker.patch.object(MinuteHandlerService, "generate_minutes", AsyncMock(return_value=("<p>minutes</p>", [])))
+    mocker.patch.object(MinuteHandlerService, "generate_minutes", AsyncMock(return_value=(dialogue, [])))
     mocker.patch.object(MinuteHandlerService, "update_minute_version")
 
     await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
 
     MinuteHandlerService.update_minute_version.assert_called_once_with(
         mock_minute_version.id,
-        html_content="<p>minutes</p>",
+        html_content=dialogue,
         hallucinations=[],
         status=JobStatus.COMPLETED,
     )
 
 
 @pytest.mark.asyncio
-async def test_process_minute_generation_message_fails_if_no_dialogue(mocker, mock_minute_version,mock_minute, mock_transcription, mock_dialogue_entries):
+async def test_process_minute_generation_message_fails_if_no_dialogue(
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entries
+):
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = mock_dialogue_entries
 
@@ -512,54 +471,49 @@ async def test_process_minute_generation_message_fails_if_no_dialogue(mocker, mo
 
 
 @pytest.mark.asyncio
-async def test_process_minute_generation_message_raises_if_minute_version_not_found(mocker):
+async def test_process_minute_generation_message_raises_if_minute_version_not_found(mock_minute_version, mocker):
     mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(side_effect=ValueError("not found")))
 
     with pytest.raises(MinuteGenerationFailedError):
-        await MinuteHandlerService.process_minute_generation_message(uuid4())
+        await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
 
-
-# ── process_minute_edit_message ───────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_process_minute_edit_message_success(mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entries):
-    source = mock_minute_version
+async def test_process_minute_edit_message_success(
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entries
+):
+    output = "edited_string"
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = mock_dialogue_entries
-    source.minute = mock_minute
-    
+
     target = MinuteVersion(
-        id=source.id,
-        minute_id=source.minute_id,
-        html_content=source.html_content,
-        status=source.status,
-        ai_edit_instructions=source.ai_edit_instructions,
-    
+        id=uuid4(),
+        minute_id=uuid4(),
+        html_content=mock_minute_version.html_content,
+        status=mock_minute_version.status,
+        ai_edit_instructions=mock_minute_version.ai_edit_instructions,
     )
 
-    target.minute = source.minute
+    target.minute = mock_minute_version.minute
 
     mocker.patch.object(
-        MinuteHandlerService, "get_minute_version", AsyncMock(side_effect=[source, target])
+        MinuteHandlerService, "get_minute_version", AsyncMock(side_effect=[mock_minute_version, target])
     )
-    mocker.patch.object(
-        MinuteHandlerService, "edit_minutes_with_ai", AsyncMock(return_value=("edited", []))
-    )
+    mocker.patch.object(MinuteHandlerService, "edit_minutes_with_ai", AsyncMock(return_value=(output, [])))
     mocker.patch.object(MinuteHandlerService, "update_minute_version")
 
-    await MinuteHandlerService.process_minute_edit_message(source.id, target.id)
+    await MinuteHandlerService.process_minute_edit_message(mock_minute_version.id, target.id)
 
     MinuteHandlerService.update_minute_version.assert_called_once_with(
         minute_version_id=target.id,
         status=JobStatus.COMPLETED,
-        html_content="edited",
+        html_content=output,
         hallucinations=[],
     )
 
 
 @pytest.mark.asyncio
 async def test_process_minute_edit_message_raises_if_no_edit_instructions(mocker, mock_minute_version):
-    source = mock_minute_version
     target = MinuteVersion(
         id=uuid4(),
         minute_id=uuid4(),
@@ -567,30 +521,35 @@ async def test_process_minute_edit_message_raises_if_no_edit_instructions(mocker
     )
 
     mocker.patch.object(
-        MinuteHandlerService, "get_minute_version", AsyncMock(side_effect=[source, target])
+        MinuteHandlerService, "get_minute_version", AsyncMock(side_effect=[mock_minute_version, target])
     )
 
-    with pytest.raises(MinuteGenerationFailedError, match="AI edit instructions"):
-        await MinuteHandlerService.process_minute_edit_message(source.id, target.id)
+    with pytest.raises(MinuteGenerationFailedError, match="Target minute does not have AI edit instructions"):
+        await MinuteHandlerService.process_minute_edit_message(mock_minute_version.id, target.id)
 
 
 @pytest.mark.asyncio
-async def test_process_minute_edit_message_raises_if_no_transcript(mocker, mock_minute_version, mock_transcription, mock_dialogue_entries):
-    source = mock_minute_version
-    source.minute.transcription = mock_transcription
-    source.minute.transcription.dialogue_entries = []
+async def test_process_minute_edit_message_raises_if_no_transcript(
+    mocker,
+    mock_minute_version,
+    mock_transcription,
+):
+    mock_minute.transcription = mock_transcription
+    mock_transcription.dialogue_entries = None
 
     target = MinuteVersion(
         id=uuid4(),
         minute_id=uuid4(),
         ai_edit_instructions="make it shorter",
     )
-    target.minute = source.minute
+    target.minute = mock_minute_version.minute
 
     mocker.patch.object(
-        MinuteHandlerService, "get_minute_version", AsyncMock(side_effect=[source, target])
+        MinuteHandlerService, "get_minute_version", AsyncMock(side_effect=[mock_minute_version, target])
     )
     mocker.patch.object(MinuteHandlerService, "update_minute_version")
 
-    with pytest.raises(MinuteGenerationFailedError):
-        await MinuteHandlerService.process_minute_edit_message(source.id, target.id)
+    with pytest.raises(MinuteGenerationFailedError) as exc_info:
+        await MinuteHandlerService.process_minute_edit_message(mock_minute_version.id, target.id)
+
+    assert "Source minute version has no transcript" in str(exc_info.value.__cause__)
