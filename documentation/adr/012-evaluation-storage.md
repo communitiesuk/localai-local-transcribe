@@ -19,7 +19,7 @@ We need to determine optimal storage strategies that address these distinct requ
 ## Considered Options
 
 ### Input Storage Options
-* ADAPT (MHCLG official sensitive data service)
+* Azure Blob Storage
 * Git repository (version controlled test cases)
 * S3 Bucket (versioned test datasets)
 * Dedicated test case database
@@ -33,22 +33,24 @@ We need to determine optimal storage strategies that address these distinct requ
 
 ## Decision Outcome
 
-Inputs: ADAPT (MHCLG official sensitive data service), because it is an established, certified solution for Official Sensitive data, avoids the need to manage additional storage infrastructure, and enables collaboration with the ADAPT team.
+Inputs: Azure Blob Storage, because it handles large binary files (e.g., audio), supports fine-grained access controls and encryption for sensitive data, and aligns with the Azure environment. ADAPT (an MHCLG VDI service) can optionally provide an additional layer of access restriction for writes to the underlying storage.
 
-Outputs: Azure Blob Storage, because it aligns with the Azure environment used for evaluation runners (see ADR-014) and ADAPT-based input storage, avoids unnecessary cross-cloud complexity, and provides persistent and reliable storage that is straightforward to set up and integrate.
+Outputs: Azure Blob Storage, because it aligns with the Azure environment used for evaluation runners (see ADR-014) and input storage, avoids unnecessary cross-cloud complexity, and provides persistent and reliable storage that is straightforward to set up and integrate.
 
 ## Pros and Cons of the Options
 
 ### Input Storage Options
 
-#### ADAPT (MHCLG official sensitive data service)
+#### Azure Blob Storage
 
-* Good, because it is an established solution already certified for handling Official Sensitive data.
-* Good, because setup is likely straightforward given it is existing approved infrastructure.
-* Good, because the ADAPT team can provide support if integration issues arise.
-* Good, because collaborating with the ADAPT team allows us to offer feedback that could improve the service for all users.
-* Bad, because we forgo some freedom over how we structure and access data, as we must work within how ADAPT is designed.
-* Bad, because networking prerequisites need to be investigated — for example, access may require being within the MHCLG network, which could introduce additional constraints to other parts of the evaluation system.
+Store evaluation inputs as files in Azure Blob Storage containers with fine-grained access controls.
+
+* Good, because handles large binary files efficiently (e.g., audio samples).
+* Good, because supports fine-grained access controls and encryption for sensitive data.
+* Good, because aligns with the Azure environment used for evaluation runners (ADR-014).
+* Good, because ADAPT (an MHCLG VDI service) can optionally be used to provide an additional layer of access restriction for writes to the underlying storage.
+* Bad, because requires access management setup.
+* Bad, because not suitable for version-controlled test cases without additional tooling.
 
 #### Git repository (version controlled test cases)
 
@@ -86,7 +88,7 @@ Store test cases and configurations in a dedicated database with versioning.
 
 Store evaluation results as files in Azure Blob Storage containers with fine-grained access controls.
 
-* Good, because it aligns with the Azure environment used for evaluation runners (ADR-014) and ADAPT-based input storage.
+* Good, because it aligns with the Azure environment used for evaluation runners (ADR-014) and input storage.
 * Good, because it avoids egress costs that would arise from moving data across cloud providers.
 * Good, because persistent and reliable with no storage limits beyond cost.
 * Good, because easy to set up and integrate, with full control over storage structure.
