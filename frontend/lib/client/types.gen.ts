@@ -430,6 +430,10 @@ export type MinuteVersionResponse = {
   ai_edit_instructions: string | null
   content_source: ContentSource
   /**
+   * Too Short
+   */
+  too_short?: boolean
+  /**
    * Guardrail Results
    */
   guardrail_results: Array<GuardrailResultResponse>

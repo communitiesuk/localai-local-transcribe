@@ -21,10 +21,10 @@ if dotenv_detected:
 else:
     logger.info("No .env file was detected. Using environment variables as is")
 
-# --- Shared constants with frontend ---
+# --- Default constants ---
 MIN_WORD_COUNT_FOR_SUMMARY = 200
 GUARDRAIL_THRESHOLD = 0.8
-# --------------------------------------
+# -------------------------
 
 
 class Settings(BaseSettings):

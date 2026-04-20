@@ -173,6 +173,7 @@ class MinuteVersionResponse(BaseModel):
     error: str | None
     ai_edit_instructions: str | None
     content_source: ContentSource
+    too_short: bool = False
     guardrail_results: list[GuardrailResultResponse] = []
     hallucinations: list[LLMHallucination] = []
 
