@@ -50,12 +50,6 @@ class ContentSource(StrEnum):
     INITIAL_GENERATION = auto()
 
 
-#  class GuardrailType(StrEnum):
-#     HALLUCINATION = auto()
-#     TOXICITY = auto()
-#     COMPLETENESS = auto()
-
-
 class MinuteVersion(BaseTableMixin, table=True):
     __tablename__ = "minute_version"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
@@ -119,7 +113,6 @@ class Hallucination(BaseTableMixin, table=True):
     hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
 
 
-# Main models with table=True for DB tables
 class User(BaseTableMixin, table=True):
     __tablename__ = "user"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)

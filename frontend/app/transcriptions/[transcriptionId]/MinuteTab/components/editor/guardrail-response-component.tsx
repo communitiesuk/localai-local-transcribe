@@ -3,7 +3,7 @@ import { GuardrailResultResponse } from '@/lib/client'
 import { HallucinationsList, LLMHallucination } from './HallucinationsList'
 import { VerifiedGuardrailsList } from './VerifiedGuardrailsList'
 import { WarningsList } from './WarningsList'
-import constants from '../../../../../settings/constants.json'
+
 
 interface GuardrailProps {
   guardrailResults: GuardrailResultResponse[]
@@ -14,16 +14,11 @@ export function GuardrailResponseComponent({
   guardrailResults = [],
   hallucinations = [],
 }: GuardrailProps) {
+  
   const { warnings, passes } = useMemo(() => {
-    const isWarning = (r: GuardrailResultResponse) => {
-      const isLowScore =
-        r.score != null && r.score < constants.GUARDRAIL_THRESHOLD
-      return r.passed === false || isLowScore
-    }
-
     return {
-      warnings: guardrailResults.filter(isWarning),
-      passes: guardrailResults.filter((r) => !isWarning(r)),
+      warnings: guardrailResults.filter((r) => r.passed === false),
+      passes: guardrailResults.filter((r) => r.passed === true),
     }
   }, [guardrailResults])
 
@@ -33,15 +28,44 @@ export function GuardrailResponseComponent({
   if (!guardrailResults.length && !hasHallucinations) return null
 
   return (
-    <div className="flex flex-col gap-4">
-      <HallucinationsList hallucinations={hallucinations} />
+    <div className="flex flex-col gap-6">
+      {/* 1. Hallucinations (Red alert) */}
+      {hasHallucinations && (
+        <div className="border-l-4 border-red-500 pl-4 py-2">
+          <h3 className="font-bold text-red-700">⚠️ Hallucination Warning</h3>
+          <HallucinationsList hallucinations={hallucinations} />
+        </div>
+      )}
 
-      <WarningsList warnings={warnings} />
-
-      <VerifiedGuardrailsList
-        passes={passes}
-        isVisible={!hasWarnings && !hasHallucinations}
-      />
+        {hasWarnings && (
+    <div className="govuk-warning-text mb-6">
+      <span className="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <div className="govuk-warning-text__text">
+        {/* Reduced the title size and merged the intro text */}
+        <h3 className="govuk-heading-s mb-2 text-gray-900">
+          Accuracy Mismatch
+        </h3>
+        <p className="govuk-body-s mb-3">
+          The automated guardrail system detected a significant discrepancy between 
+          the meeting transcript and the generated summary.
+        </p>
+        
+        {/* Reasoning and Confidence inside the warning flow */}
+        <WarningsList warnings={warnings} />
+      </div>
+    </div>
+  )}
+  
+      {/* 3. Success: Celebrate (No reasoning shown!) */}
+      {!hasWarnings && !hasHallucinations && (
+        <div className="border-l-4 border-green-500 pl-4 py-2">
+           {/* Your existing VerifiedGuardrailsList probably handles the "AI Verified" text */}
+           <VerifiedGuardrailsList 
+            passes={passes} 
+            isVisible={true} 
+          />
+        </div>
+      )}
     </div>
   )
 }

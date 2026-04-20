@@ -41,7 +41,7 @@ settings = get_settings()
 
 logger = logging.getLogger(__name__)
 
-THRESHOLD_FOR_PASSING_ACCURACY_CHECK = settings.NEXT_PUBLIC_GUARDRAIL_THRESHOLD
+THRESHOLD_FOR_PASSING_ACCURACY_CHECK = settings.GUARDRAIL_THRESHOLD
 
 
 class MinuteGenerationFailedError(Exception):
@@ -67,12 +67,10 @@ class MinuteHandlerService:
         score: GuardrailScore,
     ) -> None:
         with SessionLocal() as session:
-            # Determine Pass/Fail based on a threshold (e.g. 0.7)
             passed = score.score >= THRESHOLD_FOR_PASSING_ACCURACY_CHECK
 
             guardrail_result = GuardrailResult(
                 minute_version_id=minute_version_id,
-                #   guardrail_type=GuardrailType.HALLUCINATION,
                 passed=passed,
                 score=score.score,
                 reasoning=score.reasoning,
@@ -85,7 +83,6 @@ class MinuteHandlerService:
         with SessionLocal() as session:
             guardrail_result = GuardrailResult(
                 minute_version_id=minute_version_id,
-                #   guardrail_type=GuardrailType.HALLUCINATION,
                 passed=False,
                 score=0.0,
                 reasoning="System Error: Could not verify accuracy.",

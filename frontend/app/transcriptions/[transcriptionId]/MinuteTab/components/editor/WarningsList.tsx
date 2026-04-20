@@ -1,6 +1,4 @@
-import { AlertTriangle, XCircle } from 'lucide-react'
-import { StatusSection } from './statussection'
-import { formatLabel } from '@/lib/utils'
+import { AlertCircle } from 'lucide-react'
 import { GuardrailResultResponse } from '@/lib/client'
 
 export function WarningsList({
@@ -11,56 +9,26 @@ export function WarningsList({
   if (warnings.length === 0) return null
 
   return (
-    <StatusSection
-      title="Guardrail Warnings"
-      icon={AlertTriangle}
-      variant="warning"
-    >
+    <div className="flex flex-col gap-4">
       {warnings.map((result) => (
-        <div
-          key={result.id}
-          className={`flex flex-col gap-1 rounded border p-2 text-sm ${
-            result.passed
-              ? 'border-yellow-100 bg-white/50'
-              : 'border-red-100 bg-red-50'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {result.passed ? (
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            ) : (
-              <XCircle className="h-4 w-4 text-red-600" />
-            )}
-            <span
-              className={`font-medium capitalize ${result.passed ? 'text-yellow-800' : 'text-red-800'}`}
-            >
-              {formatLabel('Accuracy Audit')}:
-            </span>
-            <span
-              className={`rounded border px-1 text-xs font-bold uppercase ${
-                result.passed
-                  ? 'border-yellow-600 bg-yellow-100 text-yellow-800'
-                  : 'border-red-600 bg-red-100 text-red-700'
-              }`}
-            >
-              {result.passed ? 'WARNING' : 'FAILED'}
-            </span>
-          </div>
+        <div key={result.id} className="flex flex-col gap-2">
+          {/* Use the reasoning as the primary message, remove the label/badge */}
           {result.reasoning && (
-            <p className="italic opacity-90">
+            <p className="text-amber-900 text-sm leading-relaxed italic border-l-2 border-amber-300 pl-3">
               {'"'}
               {result.reasoning}
               {'"'}
             </p>
           )}
 
+          {/* Keep the confidence low-key, just as a small metadata point */}
           {result.score !== null && (
-            <p className="ml-6 text-xs opacity-75">
-              Confidence: {(result.score * 100).toFixed(0)}%
+            <p className="text-xs text-amber-800/70 font-medium">
+              System confidence: {(result.score * 100).toFixed(0)}%
             </p>
           )}
         </div>
       ))}
-    </StatusSection>
+    </div>
   )
 }

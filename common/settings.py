@@ -178,9 +178,14 @@ class Settings(BaseSettings):
             "Note, this is disabled by default as is lower than the MIN_WORD_COUNT_FOR_SUMMARY"
         ),
     )
-    NEXT_PUBLIC_GUARDRAIL_THRESHOLD: float = Field(
-        default=GUARDRAIL_THRESHOLD,
+    GUARDRAIL_THRESHOLD: float = Field(
+        default=0.7,
         description="Guardrail threshold for LLM responses",
+    )
+
+    MIN_WORD_COUNT_FOR_GUARDRAIL: int = Field(
+        default=100,
+        description="Transcript must have at least this many words to be passed to guardrail stage",
     )
 
     LOCAL_STORAGE_PATH: str = Field(

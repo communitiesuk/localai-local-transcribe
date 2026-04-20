@@ -14,12 +14,20 @@ async def add_citations_to_minute(
 
     minute = await chatbot.chat(messages)
 
+    minute = strip_meeting_summary_tags(minute)
     minute = combine_consecutive_citations(minute)
 
     return minute or ""
 
 
 MAX_CITATION_DISTANCE = 2
+meeting_summary_tag_pattern = re.compile(r"</?meeting_summary>\s*")
+
+
+def strip_meeting_summary_tags(minute: str) -> str:
+    if not minute:
+        return ""
+    return meeting_summary_tag_pattern.sub("", minute)
 
 cluster_pattern = re.compile(r"(\[\d+\])+")
 citation_pattern = re.compile(r"\d+")

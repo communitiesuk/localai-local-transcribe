@@ -1,7 +1,6 @@
 import { XCircle } from 'lucide-react'
-import { StatusSection } from './statussection' // Assuming you moved this to a UI folder
-import { formatLabel } from '@/lib/utils' // Assuming you moved this to a utils file
-
+import { StatusSection } from './statussection' 
+import { formatLabel } from '@/lib/utils' 
 export type LLMHallucination = {
   hallucination_type: string
   hallucination_text: string
