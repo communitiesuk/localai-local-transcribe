@@ -210,7 +210,13 @@ class MinuteHandlerService:
             )
 
         except Exception as e:
-            logger.debug("Internal error: %s", e)
+            logger.error(
+                "%s: Summary generation failed with %s: %s",
+                minute_version.minute_id,
+                type(e).__name__,
+                e,
+                exc_info=True,
+            )
             cls.update_minute_version(minute_version.id, status=JobStatus.FAILED, error=str(e))
             raise MinuteGenerationFailedError from e
 
