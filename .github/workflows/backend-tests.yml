@@ -23,6 +23,7 @@ jobs:
     environment: release
 
     steps:
+     
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -40,6 +41,11 @@ jobs:
         with:
           poetry-version: ${{  '1.8.3' }}
 
+      - name: Check Poetry version
+        run: |
+          which poetry
+          poetry --version
+
       - name: Configure Poetry to create .venv in project
         run: poetry config virtualenvs.in-project true
 
@@ -53,7 +59,7 @@ jobs:
             venv-${{ runner.os }}-
       
       - name: Install dependencies
-        run: poetry sync --no-root --no-ansi --with dev 
+        run: poetry install --no-root --no-ansi --with dev 
 
 
       - name: Create test data directory
