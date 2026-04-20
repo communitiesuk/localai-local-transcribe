@@ -22,7 +22,7 @@ export function WarningsList({
           )}
 
           {/* Keep the confidence low-key, just as a small metadata point */}
-          {result.score !== null && (
+          {typeof result.score === 'number' && (
             <p className="text-xs text-amber-800/70 font-medium">
               System confidence: {(result.score * 100).toFixed(0)}%
             </p>

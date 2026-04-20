@@ -3,8 +3,8 @@ import { StatusSection } from './statussection'
 import { formatLabel } from '@/lib/utils' 
 export type LLMHallucination = {
   hallucination_type: string
-  hallucination_text: string
-  hallucination_reason: string
+  hallucination_text: string | null
+  hallucination_reason: string | null
 }
 
 interface HallucinationsListProps {
