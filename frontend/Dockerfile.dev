@@ -1,12 +1,27 @@
-FROM node:23-alpine
-
+# 1. Builder Stage
+FROM node:24-alpine AS builder
 WORKDIR /app
-
-# Install dependencies based on the preferred package manager
 COPY frontend/package.json frontend/package-lock.json ./
-RUN npm install
-
+RUN npm ci
 COPY frontend .
-COPY common ../common
+ARG NEXT_PUBLIC_SENTRY_DSN
+ARG NEXT_PUBLIC_POSTHOG_API_KEY
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_POSTHOG_API_KEY=$NEXT_PUBLIC_POSTHOG_API_KEY
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
 
-ENTRYPOINT [ "npm", "run", "dev" ]
+# 2. Runner Stage
+FROM node:24-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+USER nextjs
+EXPOSE 8081
+ENV PORT=8081
+ENV HOSTNAME=0.0.0.0
+CMD ["node", "server.js"]

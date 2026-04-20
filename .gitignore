@@ -57,6 +57,7 @@ frontend/**/*.html
 
 # dependencies
 node_modules
+frontend/node_modules
 frontend/.pnp
 frontend/.pnp.js
 frontend/.yarn/install-state.gz
@@ -105,6 +106,7 @@ backend/app/delivery-style.txt
 backend/app/llm/generate_test_meeting.py
 backend/app/generate_test_meeting.py
 curl.sh
+get-apim-token.sh
 test_azure.py
 test.json
 config/google-credentials.json
