@@ -1,0 +1,20 @@
+name: Notify Slack on Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  notify:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'feat/AIILG-410-Dependabot-alerting-Slack'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack notification
+        run: |
+          MESSAGE="PR #${{ github.event.pull_request.number }} merged into main: ${{ github.event.pull_request.title }}"
+
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"$MESSAGE\"}" \
+          ${{ secrets.SLACK_WEBHOOK_DEV }}
