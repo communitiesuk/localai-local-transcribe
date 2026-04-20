@@ -5,7 +5,7 @@ import { GuardrailResultResponse } from '@/lib/client'
 
 interface VerifiedGuardrailsListProps {
   passes: GuardrailResultResponse[]
-  isVisible: boolean // The orchestrator tells it if it's allowed to show
+  isVisible: boolean
 }
 
 export function VerifiedGuardrailsList({

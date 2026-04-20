@@ -39,6 +39,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import constants from '@/app/settings/constants.json'
 
+
 type MinuteEditorForm = {
   html: string
 }

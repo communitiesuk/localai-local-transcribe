@@ -148,8 +148,8 @@ class GuardrailResultResponse(BaseModel):
 
 class LLMHallucination(BaseModel):
     hallucination_type: HallucinationType = Field(description="Type of hallucination")
-    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
-    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
+    hallucination_text: str = Field(description="Text of hallucination", default=None)
+    hallucination_reason: str = Field(description="Reason for hallucination", default=None)
 
 
 class LLMHallucinationList(BaseModel):

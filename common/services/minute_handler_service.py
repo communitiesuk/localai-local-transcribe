@@ -364,20 +364,7 @@ class MinuteHandlerService:
         transcript: list[DialogueEntry],
     ) -> GuardrailScore:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-        
-        # 1. Strip HTML tags from the minute content only.
-        # This removes the biggest XSS threat that the WAF is likely blocking.
-        clean_minute = cls._strip_html(minute)
-        
-        # 2. Pass the original 'transcript' object back.
-        # Your existing code (get_accuracy_check_messages -> get_transcript_messages)
-        # expects this structure, so keep it as is to avoid the TypeError.
         return await chatbot.structured_chat(
-            messages=get_accuracy_check_messages(clean_minute, transcript),
+            messages=get_accuracy_check_messages(minute, transcript),
             response_format=GuardrailScore,
         )
-
-    @staticmethod
-    def _strip_html(text: str) -> str:
-        # Requires 'import re' at the top of the file
-        return re.sub(r'<[^>]+>', '', text)

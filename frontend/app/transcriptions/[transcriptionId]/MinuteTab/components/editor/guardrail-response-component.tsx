@@ -59,7 +59,6 @@ export function GuardrailResponseComponent({
       {/* 3. Success: Celebrate (No reasoning shown!) */}
       {!hasWarnings && !hasHallucinations && (
         <div className="border-l-4 border-green-500 pl-4 py-2">
-           {/* Your existing VerifiedGuardrailsList probably handles the "AI Verified" text */}
            <VerifiedGuardrailsList 
             passes={passes} 
             isVisible={true} 
