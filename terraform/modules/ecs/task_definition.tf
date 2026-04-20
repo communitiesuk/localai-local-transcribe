@@ -270,7 +270,7 @@ resource "aws_ecs_task_definition" "worker" {
       secrets = local.shared_worker_backend_secrets
 
       healthCheck = {
-        command     = ["CMD-SHELL", "poetry run python worker/healthcheck.py"]
+        command     = ["CMD-SHELL", "python worker/healthcheck.py"]
         interval    = 60
         retries     = 3
         startPeriod = 60
