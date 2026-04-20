@@ -9,7 +9,7 @@ on:
       poetry_version: 
         required: true
         type: string
-push:
+  push:
     branches:
       - feat/AIILG-493-ci-cache 
 
