@@ -26,7 +26,7 @@ Azure DevOps Runners, because they can operate within a protected network bounda
 
 Run evaluations on Azure DevOps pipelines using runners that can be scoped to operate within a protected network boundary.
 
-* Good, because runners can live within the protected network, enabling easier access for AI services.
+* Good, because runners operate in a trusted network location, simplifying access to AI services through APIM by avoiding WAF false positives.
 * Good, because it allows for tighter network controls, which improve security for evaluations dealing with sensitive data.
 * Good, because it aligns with the preferred storage options in ADR-012.
 * Good, because it avoids ingress and egress costs that would arise from running outside the Azure environment.
