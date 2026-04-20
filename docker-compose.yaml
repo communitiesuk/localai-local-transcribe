@@ -107,10 +107,7 @@ services:
       - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
       - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
     volumes:
-      - ./frontend:/app # Maps your Mac folder to the container (Hot Reloading)
-      - ./common:/common # Maps common folder to the container
-      - /app/node_modules # Protects container libraries
-      - next_data:/app/.next # Keeps build speed fast
+      - next_data:/app/.next
     develop:
       watch:
         - path: ./frontend
@@ -154,4 +151,3 @@ services:
 volumes:
   local_postgres_data: {}
   next_data: {}
-  ollama_data: {}
