@@ -1,4 +1,4 @@
-name: Dependabot merge notify
+name: Dependabot merge Slack notify
 
 on:
   pull_request:
@@ -6,31 +6,28 @@ on:
 
 jobs:
   notify:
-    if: github.event.pull_request.merged == true
-    # if: >
-    #   github.event.pull_request.merged == true &&
-    #   github.event.pull_request.user.login == 'dependabot[bot]'
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
-
     steps:
       - name: Fetch metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v1
+        uses: dependabot/fetch-metadata@v2
 
       - name: Notify Slack
-        if: always()
-        # if: steps.metadata.outputs.security-advisory != ''
+        if: steps.metadata.outputs.security-advisory != ''
         run: |
           MESSAGE="Dependabot security fix merged in PR #${{ github.event.pull_request.number }}. Redeploy required."
 
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"[DEV] $MESSAGE\"}" \
+            --data "{\"text\":\"$MESSAGE\"}" \
             ${{ secrets.SLACK_WEBHOOK_DEV }}
 
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"[STAGING] $MESSAGE\"}" \
+            --data "{\"text\":\"$MESSAGE\"}" \
             ${{ secrets.SLACK_WEBHOOK_STAGING }}
 
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"[PROD] $MESSAGE\"}" \
+            --data "{\"text\":\"$MESSAGE\"}" \
             ${{ secrets.SLACK_WEBHOOK_PROD }}
