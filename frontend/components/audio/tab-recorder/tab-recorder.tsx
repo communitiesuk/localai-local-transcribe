@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import {
   AudioDevice,
@@ -27,7 +26,7 @@ import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
-import AudioPlayerComponent from '../audio-player'
+import AudioPlayerComponent from '@/components/audio/audio-player'
 
 export const TabRecorderForm = () => {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -84,6 +83,7 @@ function TabRecorder({
   const streamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
   useTabCloseWarning(isRecording || !!recordedAudio)
 
   const stopAllTracks = useCallback(() => {
@@ -220,6 +220,7 @@ function TabRecorder({
         composedStream.addTrack(track)
       })
       streamRef.current = composedStream
+      setStream(composedStream)
 
       // Create a media recorder from the composed stream
       const options = { mimeType: 'audio/webm' }
@@ -348,7 +349,7 @@ function TabRecorder({
           ) : (
             <div className="space-y-4">
               <RecordingControl
-                stream={streamRef.current}
+                stream={stream}
                 isRecording={isRecording}
                 onStopRecording={stopRecording}
                 onPauseStateChange={handlePauseStateChange}
