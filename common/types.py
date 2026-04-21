@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -149,8 +148,8 @@ class GuardrailResultResponse(BaseModel):
 
 class LLMHallucination(BaseModel):
     hallucination_type: HallucinationType = Field(description="Type of hallucination")
-    hallucination_text: Optional[str] = Field(description="Text of hallucination", default=None)
-    hallucination_reason: Optional[str] = Field(description="Reason for hallucination", default=None)
+    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
+    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
 
 
 class LLMHallucinationList(BaseModel):
