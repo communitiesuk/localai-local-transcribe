@@ -20,13 +20,6 @@ async def add_citations_to_minute(
 
 
 MAX_CITATION_DISTANCE = 2
-meeting_summary_tag_pattern = re.compile(r"</?meeting_summary>\s*")
-
-
-def strip_meeting_summary_tags(minute: str) -> str:
-    if not minute:
-        return ""
-    return meeting_summary_tag_pattern.sub("", minute)
 
 
 cluster_pattern = re.compile(r"(\[\d+\])+")
