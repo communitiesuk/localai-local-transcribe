@@ -121,45 +121,9 @@ poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test
 
 **Results:** `evals/transcription/output/`
 
-# Characteristic Extraction Evaluation
-
-Evaluation framework for extracting characteristics and attributes from transcripts using an LLM. 
-
-## Setup
-
-Ensure you have the required dependencies installed from the project root:
-
-```bash
-poetry install --with evals
-```
-
-## Usage
-
-1. **Input Data**: Place your transcription files (`.txt` or `.json`) in `evals/characteristics/input/`.
-2. **Configuration**: Edit `evals/characteristics/configs/default_config.yaml` to specify the model, dataset settings, and run output paths.
-3. **Prompts**: Jinja2 prompt templates are located in `evals/characteristics/prompts/`.
-
-Run the evaluation:
-
-```bash
-poetry run python -m evals.characteristics.src.main
-```
-
-Results for each input file will be saved to `evals/characteristics/output/` as `<filename>_output.json`.
-
-### Code Structure
-
-- `main.py`: Entry point for the CLI.
-- `pipeline.py`: Orchestration of the extraction process.
-- `chunker.py`: Logic for transcript chunking and characteristic deduplication.
-- `transcript_loader.py`: Formats `.txt` and `.json` transcripts for extraction.
-- `sanitizer.py`: WAF-specific sanitization to prevent false-positive security blocks.
-- `config_loader.py`: Configuration loading and template rendering.
-- `schema.py`: Pydantic models for configuration and extraction results.
-
 # Dataset Generation
 
-Generate synthetic conversational transcripts using LLM-based role-playing.
+End-to-end pipeline for generating synthetic conversational transcripts with controlled variations.
 
 **Important: Run all commands from project root.**
 
@@ -169,14 +133,26 @@ Generate synthetic conversational transcripts using LLM-based role-playing.
 poetry install --with evals-dataset-generation
 ```
 
-## Usage
+## Quick Start: Full Counterfactual Pipeline
+
+Run the complete pipeline (transcription → characteristics → counterfactuals):
+
+```bash
+./evals/dataset_generation/counterfactual-pipeline.sh
+```
+
+This generates a synthetic transcript, extracts characteristics, and creates gender-based counterfactuals. By default, it uses `smoke_test.yaml` for quick testing.
+
+## Individual Module Usage
+
+### Transcription Generation
 
 ```bash
 # Run with default config (smoketest.yaml)
-poetry run python evals/dataset_generation/transcription_generation/main.py
+poetry run python -m evals.dataset_generation.transcription_generation.main
 
 # Run with specific config
-poetry run python evals/dataset_generation/transcription_generation/main.py --config multispeaker.yaml
+poetry run python -m evals.dataset_generation.transcription_generation.main --config multispeaker.yaml
 ```
 
 ## Configuration
@@ -192,7 +168,8 @@ Modify existing configs or create new ones as needed.
 | `theme` | string | *required* | Conversation scenario/topic (e.g., "Team meeting about project priorities") |
 | `word_target` | integer | 400 | Target word count for the generated transcript |
 | `num_speakers` | integer | 2 | Number of speakers in the conversation |
-| `termination_threshold_multiplier` | float | 1.25 | Safety multiplier for `word_target` to prevent runaway generation costs/time. If conversation exceeds `word_target * termination_threshold_multiplier`, generation stops. Most conversations end naturally via notice messages before reaching this limit. |
+| `output_filename` | string | null | Optional output filename (without .json). If not provided, uses timestamp. |
+| `termination_threshold_multiplier` | float | 1.25 | Safety multiplier for `word_target` to prevent runaway generation. |
 
 ### Conversation Flow
 
@@ -245,8 +222,77 @@ flowchart TD
 
 ### Output
 
-Generated transcripts are saved to: `evals/dataset_generation/transcription_generation/output/transcript_<timestamp>.json`
+Generated transcripts: `evals/dataset_generation/transcription_generation/output/transcript_<timestamp>.json`
 
+Format: Full transcript with `dialogue_entries`, `theme`, `word_target`, `num_speakers`, and `actor_definitions`.
+
+### Characteristics Extraction
+
+Extract demographic and behavioral characteristics from transcripts.
+
+```bash
+poetry run python -m evals.dataset_generation.characteristics.src.main --config evals/dataset_generation/characteristics/configs/smoke_test.yaml
+```
+
+**Input**: Accepts both flat array format and full transcript format with `dialogue_entries`.
+
+**Output**: `evals/dataset_generation/characteristics/output/<filename>_output.json`
+
+Contains `detected_characteristics` array with `characteristic`, `attribute_value`, and `evidence_spans`.
+
+## Counterfactual Generation
+
+Rewrites meeting transcripts with controlled attribute variations (e.g., gender, seniority, communication style) while preserving unrelated content.
+
+### Setup
+
+```bash
+poetry install --with evals-dataset-generation
+```
+
+### Usage
+
+```bash
+# Use default config
+poetry run python -m evals.dataset_generation.counterfactual_generation.src.main
+
+# Use specific config
+poetry run python -m evals.dataset_generation.counterfactual_generation.src.main --config my_config.yaml
+```
+
+### Configuration
+
+Create YAML config in `evals/dataset_generation/counterfactual_generation/configs/`:
+
+```yaml
+transcript_path: "evals/dataset_generation/transcription_generation/output/transcript_smoke_test.json"
+characteristic_detection_path: "evals/dataset_generation/characteristics/output/transcript_smoke_test_output.json"
+
+axes:
+  - axis: "gender"
+    original_value: "all_participants_male"
+    target_value: "all_participants_female"
+```
+
+**Input formats**: Accepts both flat array and full transcript format with `dialogue_entries`.
+
+**Characteristics integration**: If `characteristic_detection_path` provided, uses detected characteristics and evidence spans. Otherwise uses config-based axes.
+
+**Paths**: Relative to project root or absolute.
+
+### Recommended Axes
+
+**Demographic**: `gender`, `age`, `ethnicity`
+
+**Professional**: `seniority`, `experience_level`, `role`
+
+**Behavioral**: `communication_style`, `conflict_approach`, `meeting_engagement`
+
+**Meeting dynamics**: `facilitator_behavior`, `team_cohesion`, `meeting_tone`
+
+### Output
+
+Counterfactuals saved to: `evals/dataset_generation/counterfactual_generation/output/counterfactual_<axis>_<value>_<timestamp>.json`
 
 # Audio Generation
 

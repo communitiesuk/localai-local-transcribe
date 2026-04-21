@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counterfactual Transcript Comparison</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .summary {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary p {
+            margin: 8px 0;
+        }
+
+        .dialogue-entry {
+            background: white;
+            margin: 10px 0;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .dialogue-entry.modified {
+            border-left: 4px solid #2196F3;
+        }
+
+        .entry-header {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fafafa;
+        }
+
+        .entry-header:hover {
+            background: #f0f0f0;
+        }
+
+        .entry-header.unchanged {
+            opacity: 0.6;
+        }
+
+        .toggle-icon {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .index {
+            font-size: 13px;
+            color: #999;
+            min-width: 30px;
+        }
+
+        .speaker {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .diff-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #2196F3;
+            color: white;
+        }
+
+        .diff-badge.unmodified {
+            background: #9E9E9E;
+            color: white;
+        }
+
+        .entry-content {
+            display: none;
+            padding: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .entry-content.show {
+            display: block;
+        }
+
+        .text-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .text-col {
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .text-col strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #666;
+        }
+
+        .original-col {
+            background: #fff9f0;
+        }
+
+        .rewritten-col {
+            background: #f0f7ff;
+        }
+
+        mark.removed {
+            background: #ffebee;
+            color: #c62828;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        mark.added {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Counterfactual Transcript Comparison</h1>
+
+    <div class="summary">
+        <p><strong>Axis:</strong> {{ axis_change.axis }}</p>
+        <p><strong>Change:</strong> {{ axis_change.original_value }} → {{ axis_change.target_value }}</p>
+        <p><strong>Total entries:</strong> {{ total_entries }}</p>
+        <p><strong>Modified entries:</strong> {{ modified_count }}</p>
+    </div>
+
+    {% for entry in dialogue_entries %}
+    <div class="dialogue-entry {% if entry.is_modified %}modified{% endif %}">
+        <div class="entry-header {% if not entry.is_modified %}unchanged{% endif %}" data-idx="{{ entry.idx }}">
+            <span class="toggle-icon" id="icon-{{ entry.idx }}">{% if entry.is_modified %}▼{% else %}▶{% endif %}</span>
+            <span class="index">#{{ entry.idx }}</span>
+            <span class="speaker">{{ entry.speaker }}</span>
+            {% if entry.is_modified %}
+            <span class="diff-badge">MODIFIED</span>
+            {% else %}
+            <span class="diff-badge unmodified">UNMODIFIED</span>
+            {% endif %}
+        </div>
+        <div class="entry-content {% if entry.is_modified %}show{% endif %}" id="content-{{ entry.idx }}">
+            <div class="text-row">
+                <div class="text-col original-col">
+                    <strong>Original</strong>
+                    <div>{{ entry.original_text | safe }}</div>
+                </div>
+                <div class="text-col rewritten-col">
+                    <strong>Rewritten</strong>
+                    <div>{{ entry.rewritten_text | safe }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <script>
+        document.querySelectorAll('.entry-header').forEach(header => {
+            header.addEventListener('click', function () {
+                const idx = this.getAttribute('data-idx');
+                const content = document.getElementById('content-' + idx);
+                const icon = document.getElementById('icon-' + idx);
+                if (content.classList.contains('show')) {
+                    content.classList.remove('show');
+                    icon.textContent = '▶';
+                } else {
+                    content.classList.add('show');
+                    icon.textContent = '▼';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

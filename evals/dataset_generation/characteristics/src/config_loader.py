@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from evals.characteristics.src.schema import EvalsConfig
+from evals.dataset_generation.characteristics.src.schema import EvalsConfig
 
 logger = logging.getLogger(__name__)
 
