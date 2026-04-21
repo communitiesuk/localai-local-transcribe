@@ -107,9 +107,7 @@ async def list_minute_versions(
     if not minute or not minute.transcription.user_id or minute.transcription.user_id != user.id:
         raise HTTPException(404)
 
-    word_count = sum(
-        len(entry["text"].split()) for entry in (minute.transcription.dialogue_entries or [])
-    )
+    word_count = sum(len(entry["text"].split()) for entry in (minute.transcription.dialogue_entries or []))
     is_too_short = word_count < settings.NEXT_PUBLIC_MIN_WORD_COUNT_FOR_SUMMARY
 
     return [
@@ -126,7 +124,6 @@ async def list_minute_versions(
             guardrail_results=[
                 GuardrailResultResponse(
                     id=guardrail_result.id,
-
                     passed=guardrail_result.passed,
                     score=guardrail_result.score,
                     reasoning=guardrail_result.reasoning,
@@ -176,7 +173,6 @@ async def create_minute_version(
         guardrail_results=[
             GuardrailResultResponse(
                 id=guardrail_result.id,
-
                 passed=guardrail_result.passed,
                 score=guardrail_result.score,
                 reasoning=guardrail_result.reasoning,

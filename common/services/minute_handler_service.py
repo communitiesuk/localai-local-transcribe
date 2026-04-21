@@ -4,7 +4,7 @@ import logging
 import uuid
 from typing import cast
 from uuid import UUID
-import re
+
 import mistune
 from sqlalchemy.orm import selectinload
 
@@ -210,12 +210,11 @@ class MinuteHandlerService:
             )
 
         except Exception as e:
-            logger.error(
+            logger.exception(
                 "%s: Summary generation failed with %s: %s",
                 minute_version.minute_id,
                 type(e).__name__,
                 e,
-                exc_info=True,
             )
             cls.update_minute_version(minute_version.id, status=JobStatus.FAILED, error=str(e))
             raise MinuteGenerationFailedError from e

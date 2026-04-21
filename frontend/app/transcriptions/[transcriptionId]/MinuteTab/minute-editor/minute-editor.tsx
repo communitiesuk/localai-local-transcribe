@@ -38,7 +38,6 @@ import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 
-
 type MinuteEditorForm = {
   html: string
 }

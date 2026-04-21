@@ -29,6 +29,7 @@ def strip_meeting_summary_tags(minute: str) -> str:
         return ""
     return meeting_summary_tag_pattern.sub("", minute)
 
+
 cluster_pattern = re.compile(r"(\[\d+\])+")
 citation_pattern = re.compile(r"\d+")
 

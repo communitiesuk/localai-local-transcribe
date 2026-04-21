@@ -14,7 +14,7 @@ export function WarningsList({
         <div key={result.id} className="flex flex-col gap-2">
           {/* Use the reasoning as the primary message, remove the label/badge */}
           {result.reasoning && (
-            <p className="text-amber-900 text-sm leading-relaxed italic border-l-2 border-amber-300 pl-3">
+            <p className="border-l-2 border-amber-300 pl-3 text-sm leading-relaxed text-amber-900 italic">
               {'"'}
               {result.reasoning}
               {'"'}
@@ -23,7 +23,7 @@ export function WarningsList({
 
           {/* Keep the confidence low-key, just as a small metadata point */}
           {typeof result.score === 'number' && (
-            <p className="text-xs text-amber-800/70 font-medium">
+            <p className="text-xs font-medium text-amber-800/70">
               System confidence: {(result.score * 100).toFixed(0)}%
             </p>
           )}
