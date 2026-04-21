@@ -7,12 +7,12 @@ declare interface Window {
 }
 
 declare module '../audio/audio-player' {
-  import { FC } from 'react';
+  import { FC } from 'react'
 
   interface AudioPlayerProps {
-    audioBlob: Blob;
+    audioBlob: Blob
   }
 
-  const AudioPlayerComponent: FC<AudioPlayerProps>;
-  export default AudioPlayerComponent;
+  const AudioPlayerComponent: FC<AudioPlayerProps>
+  export default AudioPlayerComponent
 }
