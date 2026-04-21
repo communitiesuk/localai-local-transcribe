@@ -13,7 +13,8 @@ def test_validate_evidence_spans_valid():
         EvidenceSpan(dialogue_index=0, text_snippet="test", confidence=0.9),
         EvidenceSpan(dialogue_index=2, text_snippet="another", confidence=0.8),
     ]
-    validate_evidence_spans(spans, max_index=5)
+    result = validate_evidence_spans(spans, max_index=5)
+    assert result is None
 
 
 def test_validate_evidence_spans_index_out_of_range_negative():
@@ -33,11 +34,13 @@ def test_validate_evidence_spans_confidence_at_boundaries():
         EvidenceSpan(dialogue_index=0, text_snippet="test", confidence=0.0),
         EvidenceSpan(dialogue_index=1, text_snippet="test", confidence=1.0),
     ]
-    validate_evidence_spans(spans, max_index=5)
+    result = validate_evidence_spans(spans, max_index=5)
+    assert result is None
 
 
 def test_validate_evidence_spans_empty_list():
-    validate_evidence_spans([], max_index=5)
+    result = validate_evidence_spans([], max_index=5)
+    assert result is None
 
 
 def test_validate_evidence_spans_without_dialogue_index():
@@ -46,7 +49,8 @@ def test_validate_evidence_spans_without_dialogue_index():
         confidence = 0.9
 
     spans = [SimpleSpan()]
-    validate_evidence_spans(spans, max_index=5)
+    result = validate_evidence_spans(spans, max_index=5)
+    assert result is None
 
 
 def test_identify_modified_entries_no_modifications():

@@ -10,10 +10,13 @@ from evals.dataset_generation.counterfactual_generation.src.models import Eviden
 def test_verify_evidence_modifications_with_empty_evidence_spans():
     original = [DialogueEntry(speaker="A", text="Hello", start_time=0.0, end_time=1.0)]
     rewritten = [DialogueEntry(speaker="A", text="Hi", start_time=0.0, end_time=1.0)]
-    verify_evidence_modifications([], [0], original, rewritten)
+    result = verify_evidence_modifications([], [0], original, rewritten)
+    assert result is None
 
 
-def test_verify_evidence_modifications_with_index_based_evidence():
+def test_verify_evidence_modifications_with_index_based_evidence(caplog):
+    import logging
+
     spans = [
         EvidenceSpan(dialogue_index=0, text_snippet="test", confidence=0.9),
         EvidenceSpan(dialogue_index=2, text_snippet="another", confidence=0.8),
@@ -28,10 +31,14 @@ def test_verify_evidence_modifications_with_index_based_evidence():
         DialogueEntry(speaker="B", text="middle", start_time=1.0, end_time=2.0),
         DialogueEntry(speaker="C", text="changed", start_time=2.0, end_time=3.0),
     ]
+    caplog.set_level(logging.INFO)
     verify_evidence_modifications(spans, [0, 2], original, rewritten)
+    assert "Modified 2/2 evidence-based entries (100.0%)" in caplog.text
 
 
-def test_verify_evidence_modifications_with_text_based_evidence():
+def test_verify_evidence_modifications_with_text_based_evidence(caplog):
+    import logging
+
     class TextSpan:
         text_snippet = "evidence text"
 
@@ -42,7 +49,9 @@ def test_verify_evidence_modifications_with_text_based_evidence():
     rewritten = [
         DialogueEntry(speaker="A", text="This has modified text in it", start_time=0.0, end_time=1.0),
     ]
+    caplog.set_level(logging.INFO)
     verify_evidence_modifications(spans, [0], original, rewritten)
+    assert "Evidence spans provided as text snippets" in caplog.text
 
 
 def test_verify_index_based_evidence_all_modified(caplog):
@@ -86,8 +95,12 @@ def test_verify_index_based_evidence_none_modified(caplog):
     assert "Modified 0/1 evidence-based entries (0.0%)" in caplog.text
 
 
-def test_verify_index_based_evidence_empty_spans():
+def test_verify_index_based_evidence_empty_spans(caplog):
+    import logging
+
+    caplog.set_level(logging.INFO)
     _verify_index_based_evidence([], [0, 1])
+    assert "Modified 0/0 evidence-based entries (0.0%)" in caplog.text
 
 
 def test_verify_text_based_evidence_found_and_modified(caplog):
@@ -154,7 +167,9 @@ def test_verify_text_based_evidence_empty_text_snippets(caplog):
     assert "No text content found in evidence spans" in caplog.text
 
 
-def test_verify_text_based_evidence_with_text_attribute():
+def test_verify_text_based_evidence_with_text_attribute(caplog):
+    import logging
+
     class TextSpan:
         text = "evidence text"
 
@@ -165,4 +180,6 @@ def test_verify_text_based_evidence_with_text_attribute():
     rewritten = [
         DialogueEntry(speaker="A", text="Modified", start_time=0.0, end_time=1.0),
     ]
+    caplog.set_level(logging.INFO)
     _verify_text_based_evidence(spans, [0], original, rewritten)
+    assert "Modified 1/1 evidence-containing entries (100.0%)" in caplog.text
