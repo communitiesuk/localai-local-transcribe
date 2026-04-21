@@ -28,7 +28,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next.config.js",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "types/**/*.d.ts"
   ],
   "files": ["./types/declarations.d.ts"],
   "exclude": ["node_modules"]
