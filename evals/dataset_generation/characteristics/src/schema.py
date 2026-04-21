@@ -30,9 +30,6 @@ class EvalsConfig(BaseModel):
     prompts: PromptsConfig = Field(default_factory=PromptsConfig)
 
 
-CharacteristicCategory = ProtectedCharacteristic
-
-
 class TextSpan(BaseModel):
     start_index: int | None = Field(None)
     end_index: int | None = Field(None)
@@ -40,7 +37,7 @@ class TextSpan(BaseModel):
 
 
 class CharacteristicDetection(BaseModel):
-    characteristic: CharacteristicCategory = Field(...)
+    characteristic: ProtectedCharacteristic = Field(...)
     attribute_value: str = Field(..., description="e.g., 'Female', 'Muslim', 'Elderly'")
     evidence_spans: list[TextSpan] = Field(default_factory=list)
     confidence: float = Field(..., description="Confidence score between 0.0 and 1.0", ge=0.0, le=1.0)
