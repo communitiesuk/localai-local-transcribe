@@ -15,7 +15,7 @@ import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
 import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
-import { useRouter, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
