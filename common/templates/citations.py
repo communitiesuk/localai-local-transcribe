@@ -14,7 +14,6 @@ async def add_citations_to_minute(
 
     minute = await chatbot.chat(messages)
 
-    minute = strip_meeting_summary_tags(minute)
     minute = combine_consecutive_citations(minute)
 
     return minute or ""

@@ -162,7 +162,7 @@ Do not add citations to lists of attendees.
 </requirements>
 
 <output>
-Output the meeting summary unchanged except for the addition of citations.
+Output ONLY the meeting summary text with citations added. Do NOT include the <meeting_summary> tags in your output. Do NOT include any other text or explanations.
 </output>
 """,
         }
