@@ -1,4 +1,4 @@
-name: Notify Slack on Merge
+name: Dependabot merge notify
 
 on:
   pull_request:
