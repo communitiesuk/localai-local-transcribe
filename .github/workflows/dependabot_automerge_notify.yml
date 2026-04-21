@@ -1,0 +1,36 @@
+name: Notify Slack on Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  notify:
+    if: github.event.pull_request.merged == true
+    # if: >
+    #   github.event.pull_request.merged == true &&
+    #   github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+
+      - name: Notify Slack
+        if: always()
+        # if: steps.metadata.outputs.security-advisory != ''
+        run: |
+          MESSAGE="Dependabot security fix merged in PR #${{ github.event.pull_request.number }}. Redeploy required."
+
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"[DEV] $MESSAGE\"}" \
+            ${{ secrets.SLACK_WEBHOOK_DEV }}
+
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"[STAGING] $MESSAGE\"}" \
+            ${{ secrets.SLACK_WEBHOOK_STAGING }}
+
+          curl -X POST -H 'Content-type: application/json' \
+            --data "{\"text\":\"[PROD] $MESSAGE\"}" \
+            ${{ secrets.SLACK_WEBHOOK_PROD }}
