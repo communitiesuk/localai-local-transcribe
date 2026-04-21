@@ -1,5 +1,5 @@
 'use client'
-import { use, useEffect } from 'react'
+import { use } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
@@ -21,8 +21,6 @@ export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
 }) {
   const params = use(props.params)
-
-  const router = useRouter()
 
   const { transcriptionId } = params
 

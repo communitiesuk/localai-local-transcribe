@@ -1,4 +1,3 @@
-import { AlertCircle } from 'lucide-react'
 import { GuardrailResultResponse } from '@/lib/client'
 
 export function WarningsList({
