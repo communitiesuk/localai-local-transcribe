@@ -152,7 +152,7 @@ resource "aws_ecs_task_definition" "frontend" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.backend_log_group.id
+          awslogs-group         = aws_cloudwatch_log_group.frontend_log_group.id
           awslogs-region        = "eu-west-2"
           awslogs-stream-prefix = var.environment_name
           mode                  = "non-blocking"
