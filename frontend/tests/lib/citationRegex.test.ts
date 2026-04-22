@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { citationRegex, citationRegexWithSpace } from '../../lib/citationRegex'
+import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 
 describe('citationRegex', () => {
   it('matches a simple citation', () => {
