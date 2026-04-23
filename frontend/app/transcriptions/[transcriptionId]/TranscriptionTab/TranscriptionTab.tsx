@@ -17,6 +17,17 @@ export type DialogueEntryForm = {
   entries: DialogueEntry[]
 }
 
+export function isEntryPlaying(
+  time: number,
+  entryStart: number,
+  nextEntryStart?: number
+): boolean {
+  return (
+    time >= entryStart &&
+    (nextEntryStart === undefined || time < nextEntryStart)
+  )
+}
+
 export function TranscriptionTab({
   transcription,
 }: {
@@ -121,9 +132,11 @@ export function TranscriptionTab({
           )}
           <div className="flex flex-col gap-6">
             {fields.map((entry, index, array) => {
-              const isPlaying =
-                time >= entry.start_time &&
-                (!array[index + 1] || time < array[index + 1].start_time)
+              const isPlaying = isEntryPlaying(
+                time,
+                entry.start_time,
+                array[index + 1].start_time
+              )
               return (
                 <div
                   className={cn('flex items-start gap-2 rounded', {
