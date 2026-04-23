@@ -163,7 +163,7 @@ class MinuteHandlerService:
                 msg = "Source minute version has no transcript"
                 raise MinuteGenerationFailedError(msg)
 
-            edited_string, hallucinations = await cls.edit_minutes_with_ai(
+            edited_string, _, hallucinations = await cls.edit_minutes_with_ai(
                 minutes=source_minute_version.html_content,
                 edit_instructions=target_minute_version.ai_edit_instructions,
                 transcript=transcript,
@@ -276,4 +276,4 @@ class MinuteHandlerService:
         edited_minutes = edited_minutes.removeprefix("```html").removesuffix("```")
         hallucinations = await chatbot.hallucination_check()
 
-        return edited_minutes, hallucinations
+        return edited_minutes, 0, hallucinations
