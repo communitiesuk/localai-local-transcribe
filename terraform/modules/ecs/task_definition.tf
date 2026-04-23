@@ -153,7 +153,7 @@ resource "aws_ecs_task_definition" "frontend" {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.frontend_log_group.id
-          awslogs-region        = "eu-west-2"
+          awslogs-region        = var.aws_region
           awslogs-stream-prefix = var.environment_name
           mode                  = "non-blocking"
           max-buffer-size       = "4m"
@@ -199,7 +199,7 @@ resource "aws_ecs_task_definition" "backend" {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.backend_log_group.id
-          awslogs-region        = "eu-west-2"
+          awslogs-region        = var.aws_region
           awslogs-stream-prefix = var.environment_name
           mode                  = "non-blocking"
           max-buffer-size       = "4m"
@@ -252,7 +252,7 @@ resource "aws_ecs_task_definition" "worker" {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.worker_log_group.id
-          awslogs-region        = "eu-west-2"
+          awslogs-region        = var.aws_region
           awslogs-stream-prefix = var.environment_name
           mode                  = "non-blocking"
           max-buffer-size       = "4m"
