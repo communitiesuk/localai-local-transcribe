@@ -19,7 +19,7 @@ class OllamaModelAdapter(ModelAdapter):
         self,
         model: str,
         base_url: str,
-        temperature: float = 0.7,
+        temperature: float = settings.LLM_TEMPERATURE,
         **kwargs: Any,
     ) -> None:
         self._model = model

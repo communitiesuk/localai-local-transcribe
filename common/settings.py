@@ -183,6 +183,11 @@ class Settings(BaseSettings):
         description="Guardrail threshold for LLM responses",
     )
 
+    LLM_TEMPERATURE: float = Field(
+        default=0.7,
+        description="Temperature for LLM responses",
+    )
+
     MIN_WORD_COUNT_FOR_GUARDRAIL: int = Field(
         default=100,
         description="Transcript must have at least this many words to be passed to guardrail stage",

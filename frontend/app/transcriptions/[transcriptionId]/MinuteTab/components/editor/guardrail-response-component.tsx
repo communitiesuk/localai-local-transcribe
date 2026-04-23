@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { GuardrailResultResponse } from '@/lib/client'
-import { HallucinationsList, LLMHallucination } from './HallucinationsList'
 import { VerifiedGuardrailsList } from './VerifiedGuardrailsList'
 import { WarningsList } from './WarningsList'
+import { LLMHallucination } from '@/lib/client'
+import { HallucinationsList } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/HallucinationsList'
 
 interface GuardrailProps {
   guardrailResults: GuardrailResultResponse[]
