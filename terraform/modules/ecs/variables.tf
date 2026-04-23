@@ -151,7 +151,7 @@ variable "backend_task_cpu" {
 }
 
 variable "worker_task_cpu" {
-  description = "CPU units for the backend ECS task definition"
+  description = "CPU units for the worker ECS task definition"
   type        = number
   default     = 4096
 }
@@ -169,7 +169,7 @@ variable "backend_task_memory" {
 }
 
 variable "worker_task_memory" {
-  description = "Memory for the backend ECS task definition"
+  description = "Memory for the worker ECS task definition"
   type        = number
   default     = 8192
 }
