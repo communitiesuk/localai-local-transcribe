@@ -33,7 +33,7 @@ locals {
   app_host                  = "development.local-transcribe.test.communities.gov.uk"
   load_balancer_domain_name = "lb.development.local-transcribe.test.communities.gov.uk"
 
-  cloudwatch_log_exipiration_days = 90
+  cloudwatch_log_expiration_days = 90
   access_s3_log_expiration_days   = 90
   database_allocated_storage      = 50
 }
@@ -54,7 +54,7 @@ module "networking" {
   number_of_availability_zones = 2
   number_of_isolated_subnets   = 2 # RDS requires there to be 2 subnets in different AZs even when multi-AZ is disabled
 
-  vpc_flow_cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
+  vpc_flow_cloudwatch_log_expiration_days = local.cloudwatch_log_expiration_days
 }
 
 module "frontdoor" {
@@ -75,7 +75,7 @@ module "frontdoor" {
   load_balancer_domain_name      = local.load_balancer_domain_name
   cloudfront_certificate_arn     = module.certificates.cloudfront_certificate_arn
   load_balancer_certificate_arn  = module.certificates.load_balancer_certificate_arn
-  cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
+  cloudwatch_log_expiration_days = local.cloudwatch_log_expiration_days
 
   use_aws_shield_advanced        = false
   enable_oidc_auth               = false
@@ -134,7 +134,7 @@ module "bastion" {
   main_vpc_id        = module.networking.vpc.id
   vpc_cidr_block     = module.networking.vpc.cidr_block
 
-  bastion_ssm_patch_cloudwatch_log_expiration_days = local.cloudwatch_log_exipiration_days
+  bastion_ssm_patch_cloudwatch_log_expiration_days = local.cloudwatch_log_expiration_days
 }
 
 module "database" {
@@ -228,7 +228,7 @@ module "monitoring" {
   }
 
   environment_name                    = local.environment_name
-  cloudwatch_log_expiration_days      = local.cloudwatch_log_exipiration_days
+  cloudwatch_log_expiration_days      = local.cloudwatch_log_expiration_days
   alarm_email_address                 = var.alarm_email_address
   alb_name                            = module.frontdoor.load_balancer.name
   alb_arn_suffix                      = module.frontdoor.load_balancer.arn_suffix
