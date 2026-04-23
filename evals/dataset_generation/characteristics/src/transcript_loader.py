@@ -21,7 +21,13 @@ def load_transcript(file_path: Path) -> str:
 
     if file_path.suffix == ".json":
         raw_data = json.loads(file_path.read_text(encoding="utf-8"))
-        turns = [TranscriptTurn(**item) for item in raw_data]
+
+        if isinstance(raw_data, dict) and "dialogue_entries" in raw_data:
+            dialogue_entries = raw_data["dialogue_entries"]
+        else:
+            dialogue_entries = raw_data
+
+        turns = [TranscriptTurn(**item) for item in dialogue_entries]
         return "\n".join(f"{t.speaker}: {t.text}" for t in turns)
 
     message = f"Unsupported format: {file_path.suffix}"
