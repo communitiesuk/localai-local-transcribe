@@ -4,11 +4,13 @@ import json
 import logging
 from pathlib import Path
 
-from evals.characteristics.src.config_loader import load_config
-from evals.characteristics.src.pipeline import process_file
+from evals.dataset_generation.characteristics.src.config_loader import load_config
+from evals.dataset_generation.characteristics.src.pipeline import process_file
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+WORKDIR = Path(__file__).resolve().parent.parent
 
 
 async def main() -> None:
@@ -17,16 +19,15 @@ async def main() -> None:
     parser.add_argument(
         "--config",
         type=str,
-        default="evals/characteristics/configs/default_config.yaml",
-        help="Path to the YAML configuration file",
+        default="smoke_test.yaml",
+        help="Config file name in configs/ directory (default: smoke_test.yaml)",
     )
     args = parser.parse_args()
-    root_dir = Path(__file__).resolve().parents[3]
-    config_path = Path(args.config)
-    if not config_path.is_absolute():
-        config_path = root_dir / config_path
+
+    config_path = WORKDIR / "configs" / args.config
     config = load_config(config_path)
 
+    root_dir = Path(__file__).resolve().parents[4]
     input_dir = root_dir / config.dataset.input_dir
     output_dir = root_dir / config.run.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)

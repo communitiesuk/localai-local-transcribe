@@ -4,10 +4,6 @@ import uuid
 from pathlib import Path
 from typing import TypedDict
 
-# local-only dependency, not required in prod, hence the ignores
-from whisply import models  # type: ignore[import-untyped]
-from whisply.transcription import TranscriptionHandler  # type: ignore[import-untyped]
-
 from common.database.postgres_models import DialogueEntry, Recording
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.settings import get_settings
@@ -58,6 +54,10 @@ class WhisplyLocalAdapter(TranscriptionAdapter):
             raise ValueError(msg)
 
         try:
+            # local-only dependency, not required in prod, hence the lazy import
+            from whisply import models  # type: ignore[import-untyped]
+            from whisply.transcription import TranscriptionHandler  # type: ignore[import-untyped]
+
             handler = TranscriptionHandler(
                 base_dir=str(output_dir),
                 model=settings.WHISPLY_MODEL,
