@@ -179,6 +179,10 @@ class Settings(BaseSettings):
         default="/tmp",  # noqa: S108
         description="The folder where the data directory is mounted for the local storage service.",
     )
+    LOCAL_STORAGE_BASE_URL: str = Field(
+        default="http://localhost:8080",
+        description="Browser-accessible base URL of the backend, used to generate direct upload URLs for local storage.",
+    )
 
     WHISPLY_DEVICE: str = Field(
         default="auto",
