@@ -37,6 +37,9 @@ class ChatBot:
         self.adapter = adapter
         self.messages: list[dict[str, str]] = []
 
+    def clear_history(self) -> None:
+        self.messages = []
+
     async def hallucination_check(self) -> list[LLMHallucination]:
         if settings.HALLUCINATION_CHECK:
             result = await self.structured_chat(
