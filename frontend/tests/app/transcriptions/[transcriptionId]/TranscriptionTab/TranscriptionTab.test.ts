@@ -58,6 +58,6 @@ describe('buildTranscriptionHtml', () => {
   })
 
   it('handles undefined input', () => {
-    expect(buildTranscriptionHtml(undefined as any)).toBe('')
+    expect(buildTranscriptionHtml(undefined)).toBe('')
   })
 })
