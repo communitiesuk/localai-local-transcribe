@@ -56,7 +56,7 @@ class AzureBlobStorageService(StorageService):
                 account_name=container_client.account_name,
                 container_name=container_client.container_name,
                 account_key=container_client.credential.account_key,
-                permission=BlobSasPermissions(read=True, write=True, list=True),
+                permission=BlobSasPermissions(write=True),
                 expiry=expiry_time,
             )
             return f"{container_client.url}/{key}?{sas_token}"
@@ -71,7 +71,7 @@ class AzureBlobStorageService(StorageService):
                 account_name=container_client.account_name,
                 container_name=container_client.container_name,
                 account_key=container_client.credential.account_key,
-                permission=BlobSasPermissions(read=True, write=True, list=True),
+                permission=BlobSasPermissions(read=True),
                 expiry=expiry_time,
                 content_disposition=f"attachment; filename={filename}",
             )
