@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { type UserAuthorisationResult } from '@i-dot-ai-npm/utilities'
-import { parseAuthToken } from './utils/auth'
+import { parseAuthToken, type UserAuthorisationResult } from './utils/auth'
 import { API_PROXY_PATH } from './lib/constants'
 
 // Define paths that should be public (no authorisation required)

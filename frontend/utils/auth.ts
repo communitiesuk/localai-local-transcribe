@@ -1,11 +1,18 @@
-import {
-  AuthApiClient,
-  createAuthUtils,
-  type UserAuthorisationResult,
-} from '@i-dot-ai-npm/utilities'
+export interface UserAuthorisationResult {
+  email: string
+  isAuthorised: boolean
+  authReason: string
+}
 
-// Logger configuration
-const logger = console
+type AuthResponse = {
+  decision: {
+    is_authorised: boolean
+    auth_reason: string
+  }
+  metadata: {
+    user_email: string
+  }
+}
 
 // Validate required environment variables
 // Don't expect an AUTH_API_URL if you're running dev locally / running frontend tests
@@ -19,17 +26,6 @@ if (!authApiUrl) {
 
 process.env.AUTH_API_URL = authApiUrl
 
-// Initialize AuthApiClient
-const authClient = new AuthApiClient({
-  appName: process.env.REPO || 'unknown',
-  authApiUrl: process.env.AUTH_API_URL,
-  logger: logger,
-  timeout: 5000,
-})
-
-// Create auth utilities
-const { getUserInfo } = createAuthUtils(authClient, logger)
-
 export async function parseAuthToken(
   token: string
 ): Promise<UserAuthorisationResult | null> {
@@ -39,22 +35,26 @@ export async function parseAuthToken(
   }
 
   try {
-    const userInfo = await getUserInfo(token)
+    const res = await fetch(`${authApiUrl}/tokens/authorise`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ app_name: process.env.REPO || 'unknown', token }),
+      signal: AbortSignal.timeout(5000),
+    })
 
-    if (!userInfo) {
-      console.error('Failed to get user info from token')
-      return null
-    }
+    const data = (await res.json()) as AuthResponse
 
-    if (!userInfo.email) {
+    const email = data.metadata.user_email
+
+    if (!email) {
       console.error('No email found in user info')
       return null
     }
 
     return {
-      email: userInfo.email,
-      isAuthorised: userInfo.isAuthorised,
-      authReason: userInfo.authReason,
+      email,
+      isAuthorised: data.decision.is_authorised,
+      authReason: data.decision.auth_reason,
     }
   } catch (error) {
     console.error('Error parsing auth token:', error)
