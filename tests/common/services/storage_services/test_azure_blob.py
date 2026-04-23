@@ -124,7 +124,7 @@ async def test_generate_presigned_url_put_object(mocker, mock_client_ctx, mock_c
     assert kwargs["blob_name"] == object_key
     assert kwargs["container_name"] == mock_container_client.container_name
     permissions = kwargs["permission"]
-    assert permissions.read is True
+    assert permissions.read is False
     assert permissions.write is True
 
 
@@ -152,7 +152,7 @@ async def test_generate_presigned_url_get_object(mocker, mock_client_ctx, mock_c
     assert kwargs["content_disposition"] == f"attachment; filename={file_name}"
     permissions = kwargs["permission"]
     assert permissions.read is True
-    assert permissions.write is True
+    assert permissions.write is False
 
 
 @pytest.mark.asyncio
