@@ -10,7 +10,6 @@ from openai.types.chat import ChatCompletion
 from openai.types.chat.chat_completion import Choice
 
 from .base import ModelAdapter
-from .exceptions import ResponseTruncatedError
 from .llm_constants import MAX_TOKENS, TEMPERATURE
 from .message_utils import convert_to_openai_message
 
@@ -72,9 +71,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
             "chat",
         )
         choice = response.choices[0]
-        if self.choice_incomplete(choice, response):
-            msg = "Azure APIM response may be incomplete due to max token limit"
-            raise ResponseTruncatedError(msg)
+        self.choice_incomplete(choice, response)
         message_content = choice.message.content
         if message_content is None:
             msg = "Azure APIM message.content is None"
