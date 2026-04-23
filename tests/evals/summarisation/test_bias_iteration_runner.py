@@ -76,7 +76,7 @@ async def test_run_single_iteration_basic(mock_metrics, mock_sentiment_analyzer)
     dialogue_entries = [{"speaker": "1", "text": "Hello", "start_time": 0.0, "end_time": 1.0}]
     iteration_id = "test_iter_0"
 
-    mock_generate = AsyncMock(return_value="Generated summary")
+    mock_generate = AsyncMock(return_value=("Generated summary", 0, []))
 
     with patch("evals.summarisation.src.bias.iteration_runner.generate_summary", mock_generate):
         summary, metrics, summarize_ms, judge_ms = await run_single_iteration(
@@ -106,7 +106,7 @@ async def test_run_single_iteration_with_template(mock_metrics, mock_sentiment_a
     iteration_id = "test_iter_0"
     template_name = "custom_template"
 
-    mock_generate = AsyncMock(return_value="Template summary")
+    mock_generate = AsyncMock(return_value=("Template summary", 0, []))
 
     with patch("evals.summarisation.src.bias.iteration_runner.generate_summary", mock_generate):
         summary, metrics, summarize_ms, judge_ms = await run_single_iteration(
@@ -128,7 +128,7 @@ async def test_run_multiple_iterations_basic(mock_metrics, mock_sentiment_analyz
     base_id = "test"
     num_iterations = 3
 
-    mock_generate = AsyncMock(return_value="Generated summary")
+    mock_generate = AsyncMock(return_value=("Generated summary", 0, []))
 
     with patch("evals.summarisation.src.bias.iteration_runner.generate_summary", mock_generate):
         summaries, iterations, total_summarize_ms, total_judge_ms = await run_multiple_iterations(
@@ -156,7 +156,7 @@ async def test_run_multiple_iterations_aggregates_latency(mock_metrics, mock_sen
     base_id = "test"
     num_iterations = 2
 
-    mock_generate = AsyncMock(return_value="Generated summary")
+    mock_generate = AsyncMock(return_value=("Generated summary", 0, []))
 
     with patch("evals.summarisation.src.bias.iteration_runner.generate_summary", mock_generate):
         _summaries, _iterations, total_summarize_ms, total_judge_ms = await run_multiple_iterations(
