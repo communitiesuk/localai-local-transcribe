@@ -59,12 +59,12 @@ resource "aws_lb_target_group" "frontend" {
 
   health_check {
     healthy_threshold   = 2
-    interval            = 300
+    unhealthy_threshold = 5
+    interval            = 30
     protocol            = "HTTP"
     matcher             = "200"
-    timeout             = 70
+    timeout             = 10
     path                = "/health"
-    unhealthy_threshold = 5
     port                = var.frontend_port
   }
 }
