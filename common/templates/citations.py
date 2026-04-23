@@ -21,7 +21,6 @@ async def add_citations_to_minute(
 
 MAX_CITATION_DISTANCE = 2
 
-
 cluster_pattern = re.compile(r"(\[\d+\])+")
 citation_pattern = re.compile(r"\d+")
 
