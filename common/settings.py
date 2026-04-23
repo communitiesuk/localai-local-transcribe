@@ -181,7 +181,7 @@ class Settings(BaseSettings):
     )
     LOCAL_STORAGE_BASE_URL: str = Field(
         default="http://localhost:8080",
-        description="Browser-accessible base URL of the backend, used to generate direct upload URLs for local storage.",
+        description="Browser-accessible backend URL for generating direct upload URLs in local storage.",
     )
 
     WHISPLY_DEVICE: str = Field(
