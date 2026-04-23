@@ -3,6 +3,7 @@ import {
   isEntryPlaying,
   buildTranscriptionHtml,
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { DialogueEntry } from '@/lib/client'
 
 describe('isEntryPlaying', () => {
   it('returns false when time is before entry start', () => {
@@ -35,19 +36,19 @@ describe('isEntryPlaying', () => {
 })
 
 describe('buildTranscriptionHtml', () => {
+  const mockTranscript: DialogueEntry[] = [
+    { speaker: 'Alice', text: 'Hello', start_time: 0, end_time: 1 },
+    { speaker: 'Bob', text: 'Hi', start_time: 1, end_time: 2 },
+  ]
+
   it('formats a single entry', () => {
-    const result = buildTranscriptionHtml([
-      { speaker: 'Alice', text: 'Hello' } as any,
-    ])
+    const result = buildTranscriptionHtml(mockTranscript.slice(0, 1))
 
     expect(result).toBe('<p><b>Alice:</b> Hello</p>')
   })
 
   it('formats multiple entries with spacing', () => {
-    const result = buildTranscriptionHtml([
-      { speaker: 'Alice', text: 'Hello' } as any,
-      { speaker: 'Bob', text: 'Hi' } as any,
-    ])
+    const result = buildTranscriptionHtml(mockTranscript)
 
     expect(result).toBe('<p><b>Alice:</b> Hello</p>\n\n<p><b>Bob:</b> Hi</p>')
   })
