@@ -53,7 +53,7 @@ locals {
       value = var.llm_deadletter_queue_name
     }, {
       name  = "TRANSCRIPTION_SERVICES"
-      value = "[\"aws_transcribe\"]"
+      value = "[\"aws_transcribe\"]" # TODO replace with APIM - AIILG-481
     }, {
       name  = "MAX_TRANSCRIPTION_PROCESSES"
       value = tostring(var.max_transcription_processes)
