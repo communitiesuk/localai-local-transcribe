@@ -139,7 +139,7 @@ resource "aws_ecs_task_definition" "frontend" {
       name      = "frontend"
       essential = true
       image     = var.frontend_image_name
-      user = "root" # TODO probably shouldn't be root
+      user = "root" # TODO shouldn't be root - AIILG-508
 
       portMappings = [
         {
@@ -185,7 +185,7 @@ resource "aws_ecs_task_definition" "backend" {
       name      = "backend"
       essential = true
       image     = var.backend_image_name
-      user = "root" # TODO probably shouldn't be root
+      user = "root" # TODO shouldn't be root - AIILG-508
 
       portMappings = [
         {
@@ -246,7 +246,7 @@ resource "aws_ecs_task_definition" "worker" {
       name      = "worker"
       essential = true
       image     = var.worker_image_name
-      user = "root" # TODO probably shouldn't be root
+      user = "root" # TODO shouldn't be root - AIILG-508
 
       logConfiguration = {
         logDriver = "awslogs"
