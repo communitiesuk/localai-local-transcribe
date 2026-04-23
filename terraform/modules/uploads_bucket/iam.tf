@@ -21,7 +21,7 @@ resource "aws_iam_policy" "ecs_bucket_access" {
   policy = data.aws_iam_policy_document.ecs_bucket_access.json
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_bucket_access" {
+resource "aws_iam_role_policy_attachment" "ecs_bucket_access_worker" {
   role       = var.worker_task_role_name
   policy_arn = aws_iam_policy.ecs_bucket_access.arn
 }
