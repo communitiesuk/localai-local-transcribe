@@ -12,14 +12,27 @@ Choice of execution infrastructure affects control, cost, and complexity. Since 
 
 ## Considered Options
 
+* Azure DevOps Runners
 * Standard CI/CD Runners
 * Dedicated CI/CD Runners
 
 ## Decision Outcome
 
-Standard CI/CD Runners, because they provide robust security features comparable to dedicated infrastructure while avoiding infrastructure management overhead and costs.
+Azure DevOps Runners, because they can operate within a protected network boundary enabling easier access to AI services, allow for tighter network controls that improve security for evaluations handling sensitive data, and align with the preferred storage options in ADR-012.
 
 ## Pros and Cons of the Options
+
+### Azure DevOps Runners
+
+Run evaluations on Azure DevOps pipelines using runners that can be scoped to operate within a protected network boundary.
+
+* Good, because runners operate in a trusted network location, simplifying access to AI services through APIM by avoiding WAF false positives.
+* Good, because it allows for tighter network controls, which improve security for evaluations dealing with sensitive data.
+* Good, because it aligns with the preferred storage options in ADR-012.
+* Good, because it avoids ingress and egress costs that would arise from running outside the Azure environment.
+* Good, because Azure DevOps is an organisation-wide managed instance where much of the security groundwork has already been done.
+* Bad, because it ties evaluation infrastructure to Azure DevOps, reducing portability.
+* Bad, because it would mean that some of our pipelines are inconsistent with other pipelines in the repository (such as linting pipelines).
 
 ### Standard CI/CD Runners
 

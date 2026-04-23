@@ -19,24 +19,38 @@ We need to determine optimal storage strategies that address these distinct requ
 ## Considered Options
 
 ### Input Storage Options
+* Azure Blob Storage
 * Git repository (version controlled test cases)
 * S3 Bucket (versioned test datasets)
 * Dedicated test case database
 
 ### Output Storage Options
+* Azure Blob Storage
+* Azure DevOps Artifacts
 * CI/CD Artifacts
 * S3 Bucket (or similar object storage)
 * Dedicated Database
 
 ## Decision Outcome
 
-Inputs: S3 Bucket (versioned test datasets), because it handles large files efficiently, supports fine-grained access control for sensitive data, provides encryption and audit logging, and enables versioning to track dataset evolution.
+Inputs: Azure Blob Storage, because it handles large binary files (e.g., audio), supports fine-grained access controls and encryption for sensitive data, and aligns with the Azure environment. ADAPT (an MHCLG VDI service) can optionally provide an additional layer of access restriction for writes to the underlying storage.
 
-Outputs: S3 Bucket (or similar object storage), because it provides persistent and reliable storage, is easy to set up and integrate, and works well with custom dashboards or jupyter notebooks for analysis.
+Outputs: Azure Blob Storage, because it aligns with the Azure environment used for evaluation runners (see ADR-014) and input storage, avoids unnecessary cross-cloud complexity, and provides persistent and reliable storage that is straightforward to set up and integrate.
 
 ## Pros and Cons of the Options
 
 ### Input Storage Options
+
+#### Azure Blob Storage
+
+Store evaluation inputs as files in Azure Blob Storage containers with fine-grained access controls.
+
+* Good, because handles large binary files efficiently (e.g., audio samples).
+* Good, because supports fine-grained access controls and encryption for sensitive data.
+* Good, because aligns with the Azure environment used for evaluation runners (ADR-014).
+* Good, because ADAPT (an MHCLG VDI service) can optionally be used to provide an additional layer of access restriction for writes to the underlying storage.
+* Bad, because requires access management setup.
+* Bad, because not suitable for version-controlled test cases without additional tooling.
 
 #### Git repository (version controlled test cases)
 
@@ -69,6 +83,29 @@ Store test cases and configurations in a dedicated database with versioning.
 * Bad, because it requires additional access management.
 
 ### Output Storage Options
+
+#### Azure Blob Storage
+
+Store evaluation results as files in Azure Blob Storage containers with fine-grained access controls.
+
+* Good, because it aligns with the Azure environment used for evaluation runners (ADR-014) and input storage.
+* Good, because it avoids egress costs that would arise from moving data across cloud providers.
+* Good, because persistent and reliable with no storage limits beyond cost.
+* Good, because easy to set up and integrate, with full control over storage structure.
+* Good, because works well with custom dashboards and Jupyter notebooks for analysis.
+* Bad, because not optimized for across-file querying of data.
+* Bad, because requires a dashboard or Jupyter notebook for most users.
+
+#### Azure DevOps Artifacts
+
+Store evaluation results as pipeline artifacts or Universal Packages within Azure DevOps, scoped to the organisation.
+
+* Good, because it integrates naturally with Azure DevOps CI/CD workflows, aligning with ADR-014.
+* Good, because access is restricted to organisation members with minimal additional setup.
+* Bad, because it offers less freedom than Blob Storage — access controls are coarser and storage structure is constrained by the package registry model.
+* Bad, because pipeline artifacts are tied to pipeline run retention, making long-term persistence unreliable without additional configuration.
+* Bad, because there is a 2 GiB free-tier storage limit per organisation; exceeding it requires paid billing.
+* Bad, because querying and analysing results across artifacts is difficult.
 
 #### CI/CD Artifacts
 
