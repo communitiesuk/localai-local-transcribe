@@ -18,7 +18,7 @@ from common.types import TranscriptionJobMessageData
 settings = get_settings()
 logger = logging.getLogger(__name__)
 _apim = urlparse(settings.AZURE_APIM_URL or "")
-url = f"{_apim.scheme}://{_apim.netloc}/localtranscribe/speechtotext/transcriptions:transcribe"
+url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_STT_PRODUCT}/speechtotext/transcriptions:transcribe"
 headers = {
     "Ocp-Apim-Subscription-Key": settings.AZURE_APIM_SUBSCRIPTION_KEY or "",
     "Authorization": f"Bearer {settings.AZURE_APIM_ACCESS_TOKEN or ''}",

@@ -41,7 +41,7 @@ def get_client() -> Generator[ContainerClient, None, None]:
 
 
 _apim = urlparse(settings.AZURE_APIM_URL or "")
-submit_url = f"{_apim.scheme}://{_apim.netloc}/localtranscribe/speechtotext/transcriptions:submit"
+submit_url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_STT_PRODUCT}/speechtotext/transcriptions:submit"
 headers = {
     "Ocp-Apim-Subscription-Key": settings.AZURE_APIM_SUBSCRIPTION_KEY or "",
     "Authorization": f"Bearer {settings.AZURE_APIM_ACCESS_TOKEN or ''}",

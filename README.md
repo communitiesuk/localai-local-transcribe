@@ -45,13 +45,14 @@ If you have access to a supported LLM and Transcription provider, you will need 
 
 ##### In `.env`
 
-- Transcription + LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, and `AZURE_APIM_SUBSCRIPTION_KEY`.
+- Transcription + LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, `AZURE_APIM_SUBSCRIPTION_KEY`, and `AZURE_APIM_STT_PRODUCT`.
 
 Note:
 
 - These APIM values can be found on the [Azure APIM Portal](https://portal.api.azc.test.communities.gov.uk/), including:
-  - AZURE_APIM_URL in the format `https://{{host}}.gov.uk/{{product_name}}/`
+  - AZURE_APIM_URL in the format `https://{{host}}.gov.uk/`
   - AZURE_APIM_API_VERSION in the format `yyyy-mm-dd`
+  - AZURE_APIM_STT_PRODUCT: the product name prefix for the Speech-to-Text endpoint (e.g. `localtranscribe`)
 - The `AZURE_APIM_ACCESS_TOKEN` is short lived and so must be regenerated every 2 hours.
 
 ##### In `common/settings.py`:
