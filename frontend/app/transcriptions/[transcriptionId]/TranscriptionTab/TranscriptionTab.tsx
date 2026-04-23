@@ -28,6 +28,15 @@ export function isEntryPlaying(
   )
 }
 
+export function buildTranscriptionHtml(
+  entries: DialogueEntry[] | null | undefined
+): string {
+  const safeEntries = entries ?? []
+  return safeEntries
+    .map((entry) => `<p><b>${entry.speaker}:</b> ${entry.text}</p>`)
+    .join('\n\n')
+}
+
 export function TranscriptionTab({
   transcription,
 }: {
@@ -47,10 +56,7 @@ export function TranscriptionTab({
   } = methods
 
   const transcriptionString = useMemo(
-    () =>
-      (transcription.dialogue_entries || [])
-        .map((entry) => `<p><b>${entry.speaker}:</b> ${entry.text}</p>`)
-        .join('\n\n'),
+    () => buildTranscriptionHtml(transcription.dialogue_entries),
     [transcription.dialogue_entries]
   )
 
@@ -135,7 +141,7 @@ export function TranscriptionTab({
               const isPlaying = isEntryPlaying(
                 time,
                 entry.start_time,
-                array[index + 1].start_time
+                array[index + 1]?.start_time
               )
               return (
                 <div

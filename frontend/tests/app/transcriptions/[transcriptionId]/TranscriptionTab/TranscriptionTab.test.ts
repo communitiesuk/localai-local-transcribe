@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { isEntryPlaying } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import {
+  isEntryPlaying,
+  buildTranscriptionHtml,
+} from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 
 describe('isEntryPlaying', () => {
   it('returns false when time is before entry start', () => {
@@ -28,5 +31,32 @@ describe('isEntryPlaying', () => {
 
   it('handles last entry with time before start', () => {
     expect(isEntryPlaying(3, 5)).toBe(false)
+  })
+})
+
+describe('buildTranscriptionHtml', () => {
+  it('formats a single entry', () => {
+    const result = buildTranscriptionHtml([
+      { speaker: 'Alice', text: 'Hello' } as any,
+    ])
+
+    expect(result).toBe('<p><b>Alice:</b> Hello</p>')
+  })
+
+  it('formats multiple entries with spacing', () => {
+    const result = buildTranscriptionHtml([
+      { speaker: 'Alice', text: 'Hello' } as any,
+      { speaker: 'Bob', text: 'Hi' } as any,
+    ])
+
+    expect(result).toBe('<p><b>Alice:</b> Hello</p>\n\n<p><b>Bob:</b> Hi</p>')
+  })
+
+  it('returns empty string for no entries', () => {
+    expect(buildTranscriptionHtml([])).toBe('')
+  })
+
+  it('handles undefined input', () => {
+    expect(buildTranscriptionHtml(undefined as any)).toBe('')
   })
 })
