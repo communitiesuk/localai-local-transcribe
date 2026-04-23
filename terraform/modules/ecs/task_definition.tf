@@ -162,6 +162,14 @@ resource "aws_ecs_task_definition" "frontend" {
       }
 
       environment = local.frontend_environment_variables
+
+      healthCheck = {
+        command     = ["CMD-SHELL", "curl --fail http://localhost:${ var.frontend_port }/health"]
+        interval    = 60
+        retries     = 3
+        startPeriod = 60
+        timeout     = 5
+      }
     }
   ])
 
