@@ -84,14 +84,14 @@ variable "enable_oidc_auth" {
   default     = true
 }
 
-variable "oidc_client_id_name" {
-  description = "SSM parameter name for the Internal Access OIDC client ID."
+variable "internal_access_oidc_client_id_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client ID."
   type        = string
   default     = null
 }
 
-variable "oidc_client_secret_name" {
-  description = "SSM parameter name for the Internal Access OIDC client secret."
+variable "internal_access_oidc_client_secret_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client secret."
   type        = string
   default     = null
 }

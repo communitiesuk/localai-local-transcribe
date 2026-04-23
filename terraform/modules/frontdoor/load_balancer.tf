@@ -72,13 +72,13 @@ resource "aws_lb_target_group" "frontend" {
 
 data "aws_ssm_parameter" "oidc_client_id" {
   count           = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
-  name            = var.oidc_client_id_name
+  name            = var.internal_access_oidc_client_id_name
   with_decryption = true
 }
 
 data "aws_ssm_parameter" "oidc_client_secret" {
   count           = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
-  name            = var.oidc_client_secret_name
+  name            = var.internal_access_oidc_client_secret_name
   with_decryption = true
 }
 

@@ -24,12 +24,12 @@ output "azure_speech_region_arn" {
   value       = aws_ssm_parameter.azure_speech_region.arn
 }
 
-output "oidc_client_id_name" {
-  description = "SSM parameter name for the OIDC client ID."
+output "internal_access_oidc_client_id_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client ID."
   value       = aws_ssm_parameter.oidc_client_name.name
 }
 
-output "oidc_client_secret_name" {
-  description = "SSM parameter name for the OIDC client secret."
+output "internal_access_oidc_client_secret_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client secret."
   value       = aws_ssm_parameter.oidc_client_secret.name
 }

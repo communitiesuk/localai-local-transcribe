@@ -91,8 +91,8 @@ module "frontdoor" {
   ]
 
   app_host                       = local.app_host
-  oidc_client_id_name            = module.secrets.oidc_client_id_name
-  oidc_client_secret_name        = module.secrets.oidc_client_secret_name
+  internal_access_oidc_client_id_name            = module.secrets.internal_access_oidc_client_id_name
+  internal_access_oidc_client_secret_name        = module.secrets.internal_access_oidc_client_secret_name
 }
 
 module "certificates" {
