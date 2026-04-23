@@ -39,7 +39,7 @@ variable "backend_port" {
 }
 
 variable "database_host" {
-  description = "Database primary database host"
+  description = "Primary database host"
   type        = string
 }
 
