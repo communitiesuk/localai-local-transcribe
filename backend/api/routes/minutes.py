@@ -6,7 +6,14 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from common.database.postgres_models import Hallucination, HallucinationType, JobStatus, Minute, MinuteVersion, Transcription
+from common.database.postgres_models import (
+    Hallucination,
+    HallucinationType,
+    JobStatus,
+    Minute,
+    MinuteVersion,
+    Transcription,
+)
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
