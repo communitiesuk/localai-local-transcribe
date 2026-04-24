@@ -12,6 +12,25 @@ import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
+export const getPageNumbers = (
+  currentPage: number,
+  totalPages: number,
+  maxPagesToShow = 5
+) => {
+  const pages = []
+  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
+  const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
+
+  if (endPage - startPage + 1 < maxPagesToShow) {
+    startPage = Math.max(1, endPage - maxPagesToShow + 1)
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i)
+  }
+  return pages
+}
+
 export const PaginatedTranscriptions = () => {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
   const pathname = usePathname()
@@ -43,22 +62,6 @@ export const PaginatedTranscriptions = () => {
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
-
-  const getPageNumbers = () => {
-    const pages = []
-    const maxPagesToShow = 5
-    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
-    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
-
-    if (endPage - startPage + 1 < maxPagesToShow) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1)
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
-    }
-    return pages
-  }
 
   return (
     <div>
@@ -125,7 +128,7 @@ export const PaginatedTranscriptions = () => {
                   </Link>
                 </Button>
               )}
-              {getPageNumbers().map((page) => (
+              {getPageNumbers(currentPage, totalPages).map((page) => (
                 <Button
                   key={page}
                   variant={currentPage === page ? 'default' : 'outline'}
