@@ -10,7 +10,6 @@ from common.templates.citations import (
     cite_claims,
     combine_consecutive_citations,
     extract_claims,
-    highlight_uncited_claims,
 )
 
 
@@ -37,23 +36,6 @@ def test_combine_consecutive_citations_single_citation():
 def test_combine_consecutive_citations_already_range():
     result = combine_consecutive_citations("Already ranged [1-3].")
     assert result == "Already ranged [1-3]."
-
-
-def test_highlight_uncited_claims_wraps_matching_text():
-    minute = "<p>The project will cost £500,000.</p>"
-    result = highlight_uncited_claims(minute, ["The project will cost £500,000"])
-    assert '<mark class="uncited-claim">The project will cost £500,000</mark>' in result
-
-
-def test_highlight_uncited_claims_no_match_unchanged():
-    minute = "<p>Some content here.</p>"
-    result = highlight_uncited_claims(minute, ["unrelated claim"])
-    assert result == minute
-
-
-def test_highlight_uncited_claims_empty_list_unchanged():
-    minute = "<p>Some content here.</p>"
-    assert highlight_uncited_claims(minute, []) == minute
 
 
 @pytest.mark.asyncio

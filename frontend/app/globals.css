@@ -266,38 +266,3 @@
 .editor-content code:not(pre code) {
   color: red;
 }
-
-.editor-content mark.uncited-claim {
-  background-color: #fef9c3;
-  border-bottom: 2px dashed #ca8a04;
-  border-radius: 2px;
-  padding: 0 1px;
-  cursor: help;
-  position: relative;
-}
-
-.editor-content mark.uncited-claim::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #1f2937;
-  color: #fff;
-  font-size: 0.75rem;
-  line-height: 1.4;
-  padding: 6px 10px;
-  border-radius: 4px;
-  white-space: normal;
-  text-align: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  z-index: 50;
-  width: max-content;
-  max-width: 260px;
-}
-
-.editor-content mark.uncited-claim:hover::after {
-  opacity: 1;
-}

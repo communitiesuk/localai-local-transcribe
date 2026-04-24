@@ -93,9 +93,6 @@ export function MinuteEditor({
   const hasCitations = useMemo(() => {
     return !!htmlContent?.match(citationRegex)
   }, [htmlContent])
-  const hasUncitedClaims = useMemo(() => {
-    return !!htmlContent?.includes('uncited-claim')
-  }, [htmlContent])
   useEffect(() => {}, [htmlContent])
   const { mutate: saveEdit } = useMutation({
     ...createMinuteVersionMinutesMinuteIdVersionsPostMutation(),
@@ -296,7 +293,7 @@ export function MinuteEditor({
           />
         </div>
       </div>
-      {hasUncitedClaims && (
+      {minuteVersion.hallucinations_detected && (
         <div className="mb-3 flex gap-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-900">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
           <div>
@@ -304,8 +301,9 @@ export function MinuteEditor({
               Some claims could not be verified (potential hallucinations)
             </p>
             <p className="mt-1 text-sm">
-              Text highlighted in yellow is your first flag, but review the full
-              summary critically before sharing.
+              An automated check was unable to confirm some of the claims made
+              using the transcript. Please review this summary carefully before
+              sharing, or consider generating a new one.
             </p>
           </div>
         </div>

@@ -429,6 +429,7 @@ export type MinuteVersionResponse = {
    */
   ai_edit_instructions: string | null
   content_source: ContentSource
+  hallucinations_detected: boolean
 }
 
 /**

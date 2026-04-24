@@ -38,14 +38,6 @@ async def cite_claims(
     )
 
 
-def highlight_uncited_claims(minute: str, uncited_claims: list[str]) -> str:
-    """Wraps each uncited claim in a <mark class="uncited-claim"> tag."""
-    for claim in uncited_claims:
-        if claim in minute:
-            minute = minute.replace(claim, f'<mark class="uncited-claim">{claim}</mark>', 1)
-    return minute
-
-
 async def add_citations_to_minute(
     transcript: list[DialogueEntry],
     initial_draft: str,
@@ -55,7 +47,6 @@ async def add_citations_to_minute(
     citation_result = await cite_claims(initial_draft, claims, transcript)
 
     minute = combine_consecutive_citations(citation_result.cited_summary)
-    minute = highlight_uncited_claims(minute, citation_result.uncited_claims)
 
     uncited_hallucinations = [
         LLMHallucination(

@@ -1,6 +1,6 @@
 'use client'
 
-import { Extension, Mark } from '@tiptap/core'
+import { Extension } from '@tiptap/core'
 import Document from '@tiptap/extension-document'
 import HardBreak from '@tiptap/extension-hard-break'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -49,23 +49,6 @@ function SimpleEditor({
     closeCitationPopover,
     setIsPopoverOpen,
   } = useCitationPopover()
-
-  const UncitedClaimMark = Mark.create({
-    name: 'uncitedClaim',
-    parseHTML() {
-      return [{ tag: 'mark.uncited-claim' }]
-    },
-    renderHTML() {
-      return [
-        'mark',
-        {
-          class: 'uncited-claim',
-          'data-tooltip': 'This claim could not be confirmed in the transcript',
-        },
-        0,
-      ]
-    },
-  })
 
   const CitationExtension = Extension.create({
     name: 'citation',
@@ -138,7 +121,6 @@ function SimpleEditor({
       Paragraph,
       Text,
       CitationExtension,
-      UncitedClaimMark,
       HardBreak,
     ],
     onUpdate: ({ editor }) => {
