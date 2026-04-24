@@ -122,8 +122,6 @@ async def test_get_minute_success(mock_session, mock_minute, mock_transcription,
 async def test_list_minute_versions_success(
     mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
 ):
-    exec_result = Mock()
-
     transcription = mock_transcription
     transcription.user_id = mock_user.id
 
@@ -134,13 +132,19 @@ async def test_list_minute_versions_success(
     minute_version = mock_minute_version
     minute.minute_versions = [minute_version]
 
-    exec_result.first.return_value = minute
-    mock_session.exec.return_value = exec_result
+    exec_result_versions = Mock()
+    exec_result_versions.first.return_value = minute
+
+    exec_result_hallucinations = Mock()
+    exec_result_hallucinations.all.return_value = []
+
+    mock_session.exec.side_effect = [exec_result_versions, exec_result_hallucinations]
 
     result = await list_minute_versions(minute.id, mock_session, mock_user)
 
     assert len(result) == 1
     assert result[0].id == minute_version.id
+    assert result[0].hallucinations_detected is False
 
 
 @pytest.mark.asyncio

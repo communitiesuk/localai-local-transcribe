@@ -115,7 +115,7 @@ async def list_minute_versions(
     if version_ids:
         hall_result = await session.exec(
             select(Hallucination).where(
-                Hallucination.minute_version_id.in_(version_ids),
+                col(Hallucination.minute_version_id).in_(version_ids),
                 Hallucination.hallucination_type == HallucinationType.FACTUAL_FABRICATION,
             )
         )
