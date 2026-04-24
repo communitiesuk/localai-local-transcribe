@@ -11,7 +11,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from common.database.postgres_models import Recording
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from common.services.transcription_services.azure_common import (
+from common.services.transcription_services.azure_stt_base import (
     convert_to_dialogue_entries,
     make_stt_request,
     stt_is_available,
@@ -22,7 +22,7 @@ from common.types import TranscriptionJobMessageData
 settings = get_settings()
 logger = logging.getLogger(__name__)
 _apim = urlparse(settings.AZURE_APIM_URL or "")
-url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_STT_PRODUCT}/speechtotext/transcriptions:transcribe"
+url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_PRODUCT}/speechtotext/transcriptions:transcribe"
 
 
 class AzureSpeechAdapter(TranscriptionAdapter):

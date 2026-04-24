@@ -17,7 +17,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from common.database.postgres_models import DialogueEntry, Recording
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from common.services.transcription_services.azure_common import make_stt_request, stt_is_available
+from common.services.transcription_services.azure_stt_base import make_stt_request, stt_is_available
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -42,7 +42,7 @@ def get_client() -> Generator[ContainerClient, None, None]:
 
 
 _apim = urlparse(settings.AZURE_APIM_URL or "")
-submit_url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_STT_PRODUCT}/speechtotext/transcriptions:submit"
+submit_url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_PRODUCT}/speechtotext/transcriptions:submit"
 timeout_settings = httpx.Timeout(
     timeout=30.0,
     connect=30.0,

@@ -175,13 +175,12 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
 
     samples = [{"text": "hello world", "audio": {"path": str(wav_a)}}]
     dataset = FakeDataset(samples)
-    fake_settings = SimpleNamespace(
-        AZURE_APIM_URL=None,
-        AZURE_APIM_SUBSCRIPTION_KEY=None,
-        AZURE_APIM_ACCESS_TOKEN=None,
-    )
 
-    monkeypatch.setattr("common.services.transcription_services.azure.settings", fake_settings)
+    async def fake_make_stt_request(_make_request, _extra_headers=None):
+        msg = "AZURE_APIM credentials not configured"
+        raise ValueError(msg)
+
+    monkeypatch.setattr("common.services.transcription_services.azure.make_stt_request", fake_make_stt_request)
     monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))

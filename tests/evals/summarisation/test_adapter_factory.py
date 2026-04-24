@@ -45,6 +45,8 @@ def test_build_azure_apim_adapter_success(monkeypatch):
     assert isinstance(adapter, type(adapter))
     assert adapter._model == model_name  # noqa: SLF001
     assert adapter._api_version == api_version  # noqa: SLF001
+    assert adapter._url == base_url  # noqa: SLF001
+    assert adapter._subscription_key == "test-subscription-key-456"  # noqa: SLF001
     assert client is not None
     assert str(client.base_url).rstrip("/") == f"{base_url.rstrip('/')}/{model_name}"
     assert "Ocp-Apim-Subscription-Key" in client.default_headers
