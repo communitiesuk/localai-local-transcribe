@@ -1,7 +1,10 @@
-#tfsec:ignore:aws-ecs-enable-container-insight: We can enable insights later if required
-
 resource "aws_ecs_cluster" "main" {
   name = "${var.environment_name}-app"
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
 }
 
 resource "aws_ecs_service" "frontend" {
