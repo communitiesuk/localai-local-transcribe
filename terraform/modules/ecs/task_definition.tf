@@ -152,7 +152,7 @@ resource "aws_ecs_task_definition" "frontend" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.frontend_log_group.id
+          awslogs-group         = module.frontend_log_group.name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = var.environment_name
           mode                  = "non-blocking"
@@ -206,7 +206,7 @@ resource "aws_ecs_task_definition" "backend" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.backend_log_group.id
+          awslogs-group         = module.backend_log_group.name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = var.environment_name
           mode                  = "non-blocking"
@@ -259,7 +259,7 @@ resource "aws_ecs_task_definition" "worker" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = aws_cloudwatch_log_group.worker_log_group.id
+          awslogs-group         = module.worker_log_group.name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = var.environment_name
           mode                  = "non-blocking"

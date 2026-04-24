@@ -1,28 +1,17 @@
-#TODO: PRSD-1115 - add customer managed KMS key
-#tfsec:ignore:aws-cloudwatch-log-group-customer-key
-resource "aws_cloudwatch_log_group" "frontend_log_group" {
-  name              = "${var.environment_name}-frontend"
-  retention_in_days = 365
-
-  tags = {
-    Application = var.environment_name
-  }
+module "frontend_log_group" {
+  source             = "../encrypted_log_group"
+  log_group_name     = "${var.environment_name}-frontend"
+  log_retention_days = 365
 }
 
-resource "aws_cloudwatch_log_group" "backend_log_group" {
-  name              = "${var.environment_name}-backend"
-  retention_in_days = 365
-
-  tags = {
-    Application = var.environment_name
-  }
+module "backend_log_group" {
+  source             = "../encrypted_log_group"
+  log_group_name     = "${var.environment_name}-backend"
+  log_retention_days = 365
 }
 
-resource "aws_cloudwatch_log_group" "worker_log_group" {
-  name              = "${var.environment_name}-worker"
-  retention_in_days = 365
-
-  tags = {
-    Application = var.environment_name
-  }
+module "worker_log_group" {
+  source             = "../encrypted_log_group"
+  log_group_name     = "${var.environment_name}-worker"
+  log_retention_days = 365
 }
