@@ -165,7 +165,7 @@ resource "aws_ecs_task_definition" "frontend" {
       environment = local.frontend_environment_variables
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl --fail http://localhost:${ var.frontend_port }/health"]
+        command     = ["CMD-SHELL", "wget -qO- http://localhost:${ var.frontend_port }/health || exit 1"]
         interval    = 60
         retries     = 3
         startPeriod = 60
