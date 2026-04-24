@@ -1,7 +1,10 @@
-#tfsec:ignore:aws-ecr-repository-customer-key:encryption using KMS CMK not required
 resource "aws_ecr_repository" "frontend" {
   name                 = "${var.environment_name}-frontend"
   image_tag_mutability = "IMMUTABLE"
+
+  encryption_configuration {
+    encryption_type = "KMS"
+  }
 
   image_scanning_configuration {
     scan_on_push = true
@@ -12,6 +15,10 @@ resource "aws_ecr_repository" "backend" {
   name                 = "${var.environment_name}-backend"
   image_tag_mutability = "IMMUTABLE"
 
+  encryption_configuration {
+    encryption_type = "KMS"
+  }
+
   image_scanning_configuration {
     scan_on_push = true
   }
@@ -20,6 +27,10 @@ resource "aws_ecr_repository" "backend" {
 resource "aws_ecr_repository" "worker" {
   name                 = "${var.environment_name}-worker"
   image_tag_mutability = "IMMUTABLE"
+
+  encryption_configuration {
+    encryption_type = "KMS"
+  }
 
   image_scanning_configuration {
     scan_on_push = true
