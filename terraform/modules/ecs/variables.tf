@@ -58,8 +58,8 @@ variable "database_user" {
   type        = string
 }
 
-variable "database_password" {
-  description = "Database password"
+variable "database_password_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the database password"
   type        = string
 }
 

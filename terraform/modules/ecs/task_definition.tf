@@ -31,9 +31,6 @@ locals {
       name  = "POSTGRES_USER"
       value = var.database_user
     }, {
-      name  = "POSTGRES_PASSWORD"
-      value = var.database_password
-    }, {
       name  = "POSTGRES_DB"
       value = var.database_name
     }, {
@@ -90,6 +87,10 @@ locals {
     },
   ]
   shared_worker_backend_secrets = [
+    {
+      name      = "POSTGRES_PASSWORD"
+      valueFrom = var.database_password_secret_arn
+    },
     {
       name      = "AZURE_SPEECH_KEY"
       valueFrom = var.azure_speech_key_arn

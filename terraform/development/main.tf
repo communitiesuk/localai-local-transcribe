@@ -177,7 +177,7 @@ module "ecs" {
   database_host     = module.database.database_url
   database_name     = module.database.database_name
   database_user     = local.database_username
-  database_password = module.secrets.database_password.result
+  database_password_secret_arn = module.secrets.database_password_secret_arn
 
   lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
