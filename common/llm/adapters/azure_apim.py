@@ -12,11 +12,14 @@ from openai import APIConnectionError, APIError, AsyncOpenAI, AuthenticationErro
 from openai.types.chat import ChatCompletion, ParsedChatCompletion
 from openai.types.chat.chat_completion import Choice
 
+from common.settings import get_settings
+
 from .base import ModelAdapter
 from .llm_constants import MAX_TOKENS, TEMPERATURE
 from .message_utils import convert_to_openai_message
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 MAX_RETRIES = 6
 
@@ -223,3 +226,33 @@ class AzureAPIMModelAdapter(ModelAdapter):
             logger.warning("max output tokens reached (response_id=%s)", response.id)
             return True
         return False
+
+
+def build_azure_apim_token_provider() -> AzureTokenProvider:
+    """Factory that builds the appropriate APIM token provider based on settings."""
+    if settings.AZURE_APIM_AUTH_METHOD == "client_secret":
+        if not settings.AZURE_APIM_TENANT_ID:
+            msg = "AZURE_APIM_TENANT_ID is required for azure_apim client_secret auth"
+            raise ValueError(msg)
+        if not settings.AZURE_APIM_CLIENT_ID:
+            msg = "AZURE_APIM_CLIENT_ID is required for azure_apim client_secret auth"
+            raise ValueError(msg)
+        if not settings.AZURE_APIM_CLIENT_SECRET:
+            msg = "AZURE_APIM_CLIENT_SECRET is required for azure_apim client_secret auth"
+            raise ValueError(msg)
+        if not settings.AZURE_APIM_SCOPE:
+            msg = "AZURE_APIM_SCOPE is required for azure_apim client_secret auth"
+            raise ValueError(msg)
+        return get_azure_client_secret_token_provider(
+            settings.AZURE_APIM_TENANT_ID,
+            settings.AZURE_APIM_CLIENT_ID,
+            settings.AZURE_APIM_CLIENT_SECRET,
+            settings.AZURE_APIM_SCOPE,
+        )
+    if settings.AZURE_APIM_AUTH_METHOD == "static_token":
+        if not settings.AZURE_APIM_ACCESS_TOKEN:
+            msg = "AZURE_APIM_ACCESS_TOKEN is required for azure_apim static_token auth"
+            raise ValueError(msg)
+        return AzureStaticTokenProvider(settings.AZURE_APIM_ACCESS_TOKEN)
+    msg = "AZURE_APIM_AUTH_METHOD is required, use either 'static_token' or 'client_secret'"
+    raise ValueError(msg)

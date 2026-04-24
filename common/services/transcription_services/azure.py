@@ -11,7 +11,11 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from common.database.postgres_models import Recording
 from common.services.exceptions import TranscriptionFailedError
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
-from common.services.transcription_services.azure_common import convert_to_dialogue_entries
+from common.services.transcription_services.azure_common import (
+    convert_to_dialogue_entries,
+    make_stt_request,
+    stt_is_available,
+)
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -19,10 +23,6 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 _apim = urlparse(settings.AZURE_APIM_URL or "")
 url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_STT_PRODUCT}/speechtotext/transcriptions:transcribe"
-headers = {
-    "Ocp-Apim-Subscription-Key": settings.AZURE_APIM_SUBSCRIPTION_KEY or "",
-    "Authorization": f"Bearer {settings.AZURE_APIM_ACCESS_TOKEN or ''}",
-}
 
 
 class AzureSpeechAdapter(TranscriptionAdapter):
@@ -44,17 +44,6 @@ class AzureSpeechAdapter(TranscriptionAdapter):
     )
     async def start(cls, audio_file_path_or_recording: Path | Recording) -> TranscriptionJobMessageData:
         """Transcribe using Azure Speech-to-Text API."""
-        if (
-            not settings.AZURE_APIM_URL
-            or not settings.AZURE_APIM_SUBSCRIPTION_KEY
-            or not settings.AZURE_APIM_ACCESS_TOKEN
-        ):
-            msg = (
-                "Azure APIM STT credentials not found. Please set AZURE_APIM_URL, "
-                "AZURE_APIM_SUBSCRIPTION_KEY and AZURE_APIM_ACCESS_TOKEN environment variables."
-            )
-            raise ValueError(msg)
-
         if not isinstance(audio_file_path_or_recording, Path):
             msg = "AzureSpeechAdapter only accepts Path objects"
             raise TypeError(msg)
@@ -83,17 +72,17 @@ class AzureSpeechAdapter(TranscriptionAdapter):
         with sentry_sdk.start_transaction(op="process", name="post_file_to_azure_transcribe") as transaction:
             transaction.set_data("file_size", audio_file_path_or_recording.stat().st_size)
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
-                response = await client.post(url, headers=headers, files=files, params=params)
+                response = await make_stt_request(
+                    lambda hdrs: client.post(url, headers=hdrs, files=files, params=params)
+                )
                 response.raise_for_status()
 
                 full_response = response.json()
                 transaction.set_data("response", response.status_code)
 
-                # Check for error response first
                 if "code" in full_response:
                     error_message = full_response.get("message", "Unknown error occurred")
                     raise TranscriptionFailedError(error_message)
-                # If no error, proceed with phrases extraction
                 phrases = full_response.get("phrases")
                 if not phrases:
                     error_msg = "No transcription phrases found in response"
@@ -105,6 +94,4 @@ class AzureSpeechAdapter(TranscriptionAdapter):
 
     @classmethod
     def is_available(cls) -> bool:
-        return bool(
-            settings.AZURE_APIM_URL and settings.AZURE_APIM_SUBSCRIPTION_KEY and settings.AZURE_APIM_ACCESS_TOKEN
-        )
+        return stt_is_available()
