@@ -1,5 +1,6 @@
 resource "aws_sqs_queue" "transcription_queue" {
-  name = "${var.environment_name}-local-transcribe-transcription-queue"
+  name                    = "${var.environment_name}-local-transcribe-transcription-queue"
+  sqs_managed_sse_enabled = true
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.transcription_queue_deadletter.arn
@@ -8,7 +9,8 @@ resource "aws_sqs_queue" "transcription_queue" {
 }
 
 resource "aws_sqs_queue" "transcription_queue_deadletter" {
-  name = "${var.environment_name}-local-transcribe-transcription-queue-deadletter"
+  name                    = "${var.environment_name}-local-transcribe-transcription-queue-deadletter"
+  sqs_managed_sse_enabled = true
 }
 
 resource "aws_sqs_queue_redrive_allow_policy" "transcription_queue_redrive_allow_policy" {
@@ -21,7 +23,8 @@ resource "aws_sqs_queue_redrive_allow_policy" "transcription_queue_redrive_allow
 }
 
 resource "aws_sqs_queue" "llm_queue" {
-  name = "${var.environment_name}-local-transcribe-llm-queue"
+  name                    = "${var.environment_name}-local-transcribe-llm-queue"
+  sqs_managed_sse_enabled = true
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.llm_queue_deadletter.arn
@@ -30,7 +33,8 @@ resource "aws_sqs_queue" "llm_queue" {
 }
 
 resource "aws_sqs_queue" "llm_queue_deadletter" {
-  name = "${var.environment_name}-local-transcribe-llm-queue-deadletter"
+  name                    = "${var.environment_name}-local-transcribe-llm-queue-deadletter"
+  sqs_managed_sse_enabled = true
 }
 
 resource "aws_sqs_queue_redrive_allow_policy" "llm_queue_redrive_allow_policy" {
