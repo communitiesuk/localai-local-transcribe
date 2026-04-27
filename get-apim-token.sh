@@ -18,11 +18,11 @@ if [ ! -f "$ENV_FILE" ]; then
     exit 1
 fi
 
-# Extract AZURE_TOKEN_SCOPE from .env (avoiding sourcing to prevent parsing errors)
-TOKEN_SCOPE=$(grep "^AZURE_TOKEN_SCOPE=" "$ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+# Extract AZURE_APIM_SCOPE from .env (avoiding sourcing to prevent parsing errors)
+TOKEN_SCOPE=$(grep "^AZURE_APIM_SCOPE=" "$ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
 
 if [ -z "$TOKEN_SCOPE" ]; then
-    echo "Error: AZURE_TOKEN_SCOPE not set in $ENV_FILE" >&2
+    echo "Error: AZURE_APIM_SCOPE not set in $ENV_FILE" >&2
     exit 1
 fi
 
