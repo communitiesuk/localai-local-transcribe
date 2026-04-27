@@ -25,7 +25,7 @@ repos:
 
       - id: npm-format
         name: Format frontend files
-        entry: bash -c 'cd frontend && npx prettier --write .'
+        entry: bash -c 'cd frontend && npm exec -- prettier --write "${@#frontend/}"' --
         language: system
         pass_filenames: true
         files: ^frontend/.*\.(js|jsx|ts|tsx|json|css|scss|md|yaml|html)$
