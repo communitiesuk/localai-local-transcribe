@@ -139,7 +139,6 @@ class MinutesPatchRequest(BaseModel):
 
 class GuardrailResultResponse(BaseModel):
     id: uuid.UUID
-    #   guardrail_type: str
     passed: bool
     score: float | None
     reasoning: str | None
