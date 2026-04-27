@@ -1,14 +1,24 @@
 variable "environment_name" {
-  description = "must be one of: integration, test, nft, or production"
+  description = "must be one of: development, staging"
   type        = string
   validation {
-    condition     = contains(["integration", "test", "nft", "production"], var.environment_name)
-    error_message = "Environment must be one of: integration, test"
+    condition     = contains(["development", "staging"], var.environment_name)
+    error_message = "Environment must be one of: development, staging"
   }
 }
 
-variable "push_ecr_image_policy_arn" {
-  description = "arn of the iam policy for pushing images to ecr"
+variable "push_frontend_ecr_image_policy_arn" {
+  description = "ARN of the IAM policy for pushing images to the frontend ECR repository"
+  type        = string
+}
+
+variable "push_backend_ecr_image_policy_arn" {
+  description = "ARN of the IAM policy for pushing images to the backend ECR repository"
+  type        = string
+}
+
+variable "push_worker_ecr_image_policy_arn" {
+  description = "ARN of the IAM policy for pushing images to the worker ECR repository"
   type        = string
 }
 

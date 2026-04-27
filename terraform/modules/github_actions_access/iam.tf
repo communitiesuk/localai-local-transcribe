@@ -22,11 +22,8 @@ data "aws_iam_policy_document" "github_actions_terraform_plan_assume_role" {
     }
 
     condition {
-      test = "StringLike"
-      values = [
-        "repo:communitiesuk/prsdb-infra:*",
-        "repo:communitiesuk/prsdb-webapp:*",
-      ]
+      test     = "StringLike"
+      values   = ["repo:communitiesuk/localai-local-transcribe:*"]
       variable = "token.actions.githubusercontent.com:sub"
     }
   }
@@ -74,11 +71,8 @@ data "aws_iam_policy_document" "github_actions_terraform_admin_assume_role" {
     }
 
     condition {
-      test = "StringLike"
-      values = [
-        "repo:communitiesuk/prsdb-infra:*",
-        "repo:communitiesuk/prsdb-webapp:*",
-      ]
+      test     = "StringLike"
+      values   = ["repo:communitiesuk/localai-local-transcribe:*"]
       variable = "token.actions.githubusercontent.com:sub"
     }
   }
@@ -112,7 +106,7 @@ data "aws_iam_policy_document" "github_actions_push_ecr_assume_role" {
     condition {
       test = "StringLike"
       values = [
-        "repo:communitiesuk/prsdb-webapp:*",
+        "repo:communitiesuk/localai-local-transcribe:*",
       ]
       variable = "token.actions.githubusercontent.com:sub"
     }
@@ -124,9 +118,19 @@ resource "aws_iam_role" "push_image" {
   assume_role_policy = data.aws_iam_policy_document.github_actions_push_ecr_assume_role.json
 }
 
-resource "aws_iam_role_policy_attachment" "allow_push_image_policy_attachment" {
+resource "aws_iam_role_policy_attachment" "allow_push_frontend_image_policy_attachment" {
   role       = aws_iam_role.push_image.name
-  policy_arn = var.push_ecr_image_policy_arn
+  policy_arn = var.push_frontend_ecr_image_policy_arn
+}
+
+resource "aws_iam_role_policy_attachment" "allow_push_backend_image_policy_attachment" {
+  role       = aws_iam_role.push_image.name
+  policy_arn = var.push_backend_ecr_image_policy_arn
+}
+
+resource "aws_iam_role_policy_attachment" "allow_push_worker_image_policy_attachment" {
+  role       = aws_iam_role.push_image.name
+  policy_arn = var.push_worker_ecr_image_policy_arn
 }
 
 # RDS access role for webapp repo
@@ -148,7 +152,7 @@ data "aws_iam_policy_document" "github_actions_rds_assume_role" {
     condition {
       test = "StringLike"
       values = [
-        "repo:communitiesuk/prsdb-webapp:*",
+        "repo:communitiesuk/localai-local-transcribe:*",
       ]
       variable = "token.actions.githubusercontent.com:sub"
     }
@@ -174,7 +178,7 @@ data "aws_iam_policy_document" "ssm_port_forwarding" {
       "ssm:ResumeSession",
     ]
     resources = [
-      "arn:aws:ssm:eu-west-2:${data.aws_caller_identity.current.account_id}:session/GitHubActions-*",
+      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:session/GitHubActions-*",
     ]
   }
 
@@ -185,7 +189,7 @@ data "aws_iam_policy_document" "ssm_port_forwarding" {
     ]
     resources = concat(
       var.bastion_host_arns,
-      ["arn:aws:ssm:eu-west-2::document/AWS-StartPortForwardingSessionToRemoteHost"],
+      ["arn:aws:ssm:${data.aws_region.current.name}::document/AWS-StartPortForwardingSessionToRemoteHost"],
     )
   }
 
@@ -280,7 +284,7 @@ data "aws_iam_policy_document" "github_actions_assume_ecr_describe_images_role" 
 
     condition {
       test     = "StringLike"
-      values   = ["repo:communitiesuk/prsdb-infra:*"]
+      values   = ["repo:communitiesuk/localai-local-transcribe:*"]
       variable = "token.actions.githubusercontent.com:sub"
     }
   }
