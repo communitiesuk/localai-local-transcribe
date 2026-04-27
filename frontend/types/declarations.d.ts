@@ -5,14 +5,3 @@
 declare interface Window {
   webkitAudioContext: typeof AudioContext
 }
-
-declare module '../audio/audio-player' {
-  import { FC } from 'react'
-
-  interface AudioPlayerProps {
-    audioBlob: Blob
-  }
-
-  const AudioPlayerComponent: FC<AudioPlayerProps>
-  export default AudioPlayerComponent
-}
