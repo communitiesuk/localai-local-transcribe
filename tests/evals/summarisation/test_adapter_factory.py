@@ -39,6 +39,9 @@ def test_build_azure_apim_adapter_success(monkeypatch):
 
     adapter = build_azure_apim_adapter()
 
+    # Populate the cached client
+    adapter._get_apim_client()  # noqa: SLF001
+
     assert isinstance(adapter, type(adapter))
     assert adapter._model == model_name  # noqa: SLF001
     assert adapter._api_version == api_version  # noqa: SLF001
