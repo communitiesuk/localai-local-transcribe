@@ -207,6 +207,12 @@ module "ecs" {
 
   azure_speech_key_arn    = module.secrets.azure_speech_key_arn
   azure_speech_region_arn = module.secrets.azure_speech_region_arn
+
+  azure_apim_tenant_id_arn        = module.secrets.azure_apim_tenant_id_arn
+  azure_apim_client_id_arn        = module.secrets.azure_apim_client_id_arn
+  azure_apim_client_secret_arn    = module.secrets.azure_apim_client_secret_arn
+  azure_apim_scope_arn            = module.secrets.azure_apim_scope_arn
+  azure_apim_subscription_key_arn = module.secrets.azure_apim_subscription_key_arn
 }
 
 module "uploads_bucket" {

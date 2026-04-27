@@ -60,6 +60,11 @@ resource "aws_iam_role_policy" "secret_access" {
         Resource = [
           aws_ssm_parameter.azure_speech_key.arn,
           aws_ssm_parameter.azure_speech_region.arn,
+          aws_ssm_parameter.azure_apim_tenant_id.arn,
+          aws_ssm_parameter.azure_apim_client_id.arn,
+          aws_ssm_parameter.azure_apim_client_secret.arn,
+          aws_ssm_parameter.azure_apim_scope.arn,
+          aws_ssm_parameter.azure_apim_subscription_key.arn,
         ]
       }
     ]

@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from typing import Literal
 
 import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
@@ -71,8 +72,19 @@ class Settings(BaseSettings):
     # if using Azure APIM
     AZURE_APIM_URL: str | None = Field(description="Base URL for Minute's Azure APIM LLM.", default=None)
     AZURE_APIM_API_VERSION: str | None = Field(description="Azure APIM API version, <yyyy-mm-dd>", default=None)
-    AZURE_APIM_ACCESS_TOKEN: str | None = Field(description="Access token for Azure APIM", default=None)
     AZURE_APIM_SUBSCRIPTION_KEY: str | None = Field(description="Subscription key for Azure APIM", default=None)
+    AZURE_APIM_AUTH_METHOD: Literal["client_secret", "static_token"] | None = Field(
+        description="APIM auth method: 'client_secret' or 'static_token'", default=None
+    )
+    # if using 'client_secret' for AZURE_APIM_AUTH_METHOD
+    AZURE_APIM_TENANT_ID: str | None = Field(description="Azure tenant ID for APIM client secret auth", default=None)
+    AZURE_APIM_CLIENT_ID: str | None = Field(description="Azure client ID for APIM client secret auth", default=None)
+    AZURE_APIM_CLIENT_SECRET: str | None = Field(
+        description="Azure client secret for APIM client secret auth", default=None
+    )
+    AZURE_APIM_SCOPE: str | None = Field(description="OAuth scope for APIM client secret auth", default=None)
+    # if using 'static_token' for AZURE_APIM_AUTH_METHOD
+    AZURE_APIM_ACCESS_TOKEN: str | None = Field(description="Access token for Azure APIM", default=None)
 
     # if using Gemini
     GOOGLE_APPLICATION_CREDENTIALS: str | None = Field(

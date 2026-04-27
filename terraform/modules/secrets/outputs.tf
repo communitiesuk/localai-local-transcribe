@@ -33,3 +33,28 @@ output "internal_access_oidc_client_secret_name" {
   description = "SSM parameter name for the Gov Internal Access OIDC client secret."
   value       = aws_ssm_parameter.oidc_client_secret.name
 }
+
+output "azure_apim_tenant_id_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM tenant ID"
+  value       = aws_ssm_parameter.azure_apim_tenant_id.arn
+}
+
+output "azure_apim_client_id_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM client ID"
+  value       = aws_ssm_parameter.azure_apim_client_id.arn
+}
+
+output "azure_apim_client_secret_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM client secret"
+  value       = aws_ssm_parameter.azure_apim_client_secret.arn
+}
+
+output "azure_apim_scope_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM OAuth scope"
+  value       = aws_ssm_parameter.azure_apim_scope.arn
+}
+
+output "azure_apim_subscription_key_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM subscription key"
+  value       = aws_ssm_parameter.azure_apim_subscription_key.arn
+}

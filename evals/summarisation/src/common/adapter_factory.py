@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from common.llm.adapters import AzureAPIMModelAdapter
+from common.llm.adapters.azure_apim import AzureStaticTokenProvider
 from common.settings import get_settings
 
 
@@ -24,6 +25,6 @@ def build_azure_apim_adapter() -> AzureAPIMModelAdapter:
         url=settings.AZURE_APIM_URL,
         model=settings.BEST_LLM_MODEL_NAME,
         api_version=settings.AZURE_APIM_API_VERSION,
-        access_token=settings.AZURE_APIM_ACCESS_TOKEN,
+        token_provider=AzureStaticTokenProvider(settings.AZURE_APIM_ACCESS_TOKEN),
         subscription_key=settings.AZURE_APIM_SUBSCRIPTION_KEY,
     )
