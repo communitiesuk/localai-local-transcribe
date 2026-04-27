@@ -87,7 +87,7 @@ resource "aws_iam_role_policy_attachment" "github_actions_terraform_admin_access
   policy_arn = data.aws_iam_policy.administrator_access.arn
 }
 
-# ECR Push role for webapp repo
+# ECR Push role
 data "aws_iam_policy_document" "github_actions_push_ecr_assume_role" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -133,140 +133,7 @@ resource "aws_iam_role_policy_attachment" "allow_push_worker_image_policy_attach
   policy_arn = var.push_worker_ecr_image_policy_arn
 }
 
-# RDS access role for webapp repo
-data "aws_iam_policy_document" "github_actions_rds_assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.main.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      values   = ["sts.amazonaws.com"]
-      variable = "token.actions.githubusercontent.com:aud"
-    }
-
-    condition {
-      test = "StringLike"
-      values = [
-        "repo:communitiesuk/localai-local-transcribe:*",
-      ]
-      variable = "token.actions.githubusercontent.com:sub"
-    }
-  }
-}
-
-data "aws_iam_policy_document" "ssm_port_forwarding" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "ssm:DescribeSessions",
-      "ec2:DescribeInstances",
-    ]
-    resources = [
-      "*",
-    ]
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "ssm:TerminateSession",
-      "ssm:ResumeSession",
-    ]
-    resources = [
-      "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:session/GitHubActions-*",
-    ]
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "ssm:StartSession",
-    ]
-    resources = concat(
-      var.bastion_host_arns,
-      ["arn:aws:ssm:${data.aws_region.current.name}::document/AWS-StartPortForwardingSessionToRemoteHost"],
-    )
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "ssm:GetParameter",
-    ]
-    resources = [var.db_username_ssm_parameter_arn, var.db_url_ssm_parameter_arn]
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "secretsmanager:GetSecretValue",
-    ]
-    resources = [var.db_password_secret_arn]
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "kms:Decrypt",
-    ]
-    resources = [var.secrets_kms_key_arn]
-  }
-}
-
-data "aws_iam_policy_document" "update_ecs_service" {
-  count = var.task_definition_created ? 1 : 0
-  statement {
-    effect = "Allow"
-    actions = [
-      "ecs:UpdateService",
-    ]
-    resources = [var.ecs_service_arn]
-  }
-
-  statement {
-    effect = "Allow"
-    actions = [
-      "iam:PassRole",
-    ]
-    resources = [var.ecs_task_execution_role_arn, var.webapp_ecs_task_role_arn]
-  }
-}
-
-resource "aws_iam_policy" "ssm_port_forwarding" {
-  name        = "${var.environment_name}-ssm-port-forwarding"
-  description = "Policy that allows SSM port forwarding for RDS access"
-  policy      = data.aws_iam_policy_document.ssm_port_forwarding.json
-}
-
-resource "aws_iam_policy" "update_ecs_service" {
-  count       = var.task_definition_created ? 1 : 0
-  name        = "${var.environment_name}-update-ecs-service"
-  description = "Policy that allows updating ECS service"
-  policy      = data.aws_iam_policy_document.update_ecs_service[0].json
-}
-
-resource "aws_iam_role" "rds_access" {
-  name               = "${var.environment_name}-rds-access"
-  assume_role_policy = data.aws_iam_policy_document.github_actions_rds_assume_role.json
-}
-
-resource "aws_iam_role_policy_attachment" "allow_rds_access_policy_attachment" {
-  role       = aws_iam_role.rds_access.name
-  policy_arn = aws_iam_policy.ssm_port_forwarding.arn
-}
-
-resource "aws_iam_role_policy_attachment" "allow_update_ecs_service_policy_attachment" {
-  count      = var.task_definition_created ? 1 : 0
-  role       = aws_iam_role.rds_access.name
-  policy_arn = aws_iam_policy.update_ecs_service[0].arn
-}
-
-# ECR Describe Images role for infra repo
+# ECR Describe Images role
 data "aws_iam_policy_document" "github_actions_assume_ecr_describe_images_role" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
