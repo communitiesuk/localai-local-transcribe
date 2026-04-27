@@ -168,7 +168,9 @@ class MinuteHandlerService:
         """Helper to run accuracy check and handle result/error logging."""
         word_count = sum(len(entry["text"].split()) for entry in transcript)
         if word_count < settings.NEXT_PUBLIC_MIN_WORD_COUNT_FOR_SUMMARY:
-            logger.info("%s: Skipping guardrail check for %s (transcript too short: %d words)", minute_id, label, word_count)
+            logger.info(
+                "%s: Skipping guardrail check for %s (transcript too short: %d words)", minute_id, label, word_count
+            )
             return
 
         try:
