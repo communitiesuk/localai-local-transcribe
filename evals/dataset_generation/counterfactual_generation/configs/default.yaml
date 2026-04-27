@@ -1,0 +1,6 @@
+transcript_path: "configs/example_transcript.json"
+
+axes:
+  - axis: "Sex"
+    original_value: "male"
+    target_value: "female"
