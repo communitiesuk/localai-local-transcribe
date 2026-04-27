@@ -87,9 +87,6 @@ frontend/yarn-error.log*
 # local env files
 frontend/.env*.local
 
-# generated constants
-frontend/app/settings/constants.json
-
 # vercel
 frontend/.vercel
 

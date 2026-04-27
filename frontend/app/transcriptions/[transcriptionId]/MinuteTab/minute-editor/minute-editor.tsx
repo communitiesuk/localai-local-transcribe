@@ -296,12 +296,9 @@ export function MinuteEditor({
       </div>
 
       {!minuteVersion.too_short && (
-        <>
-          <GuardrailResponseComponent
-            guardrailResults={minuteVersion.guardrail_results}
-            hallucinations={minuteVersion.hallucinations}
-          />
-        </>
+        <GuardrailResponseComponent
+          guardrailResults={minuteVersion.guardrail_results}
+        />
       )}
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller

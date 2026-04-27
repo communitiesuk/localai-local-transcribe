@@ -1,35 +1,30 @@
-import { CheckCircle } from 'lucide-react'
-import { StatusSection } from './statussection'
-import { formatLabel } from '@/lib/utils'
 import { GuardrailResultResponse } from '@/lib/client'
 
 interface VerifiedGuardrailsListProps {
   passes: GuardrailResultResponse[]
-  isVisible: boolean
 }
 
-export function VerifiedGuardrailsList({
-  passes,
-  isVisible,
-}: VerifiedGuardrailsListProps) {
-  if (!isVisible || passes.length === 0) return null
+export function VerifiedGuardrailsList({ passes }: VerifiedGuardrailsListProps) {
+  if (!passes || passes.length === 0) return null
 
   return (
-    <StatusSection title="AI Verified" icon={CheckCircle} variant="success">
-      <div className="flex flex-col gap-1 pl-7">
-        {passes.map((result) => (
-          <div
-            key={result.id}
-            className="flex items-center gap-2 text-xs opacity-90"
-          >
-            <span className="capitalize">
-              {formatLabel(result.guardrail_type)}
-            </span>
-            <span className="opacity-50">•</span>
-            <span>Pass</span>
-          </div>
+    <div className="border-l-4 border-green-500 py-2 pl-4">
+      <h3 className="font-bold text-green-700">Summary verified</h3>
+      <p className="mt-1 text-sm text-gray-900">
+        The generated summary passed the configured accuracy and safety checks.
+      </p>
+
+      <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-gray-900">
+        {passes.map((p) => (
+          <li key={p.id}>
+            <span className="font-semibold">
+              {p.passed ? 'Passed' : 'Failed'}:
+            </span>{' '}
+            {p.reasoning ?? p.error ?? 'No additional details provided.'}
+          </li>
         ))}
-      </div>
-    </StatusSection>
+      </ul>
+    </div>
   )
 }
+``
