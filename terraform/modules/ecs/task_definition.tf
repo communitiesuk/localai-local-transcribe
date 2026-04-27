@@ -50,7 +50,7 @@ locals {
       value = var.llm_deadletter_queue_name
     }, {
       name  = "TRANSCRIPTION_SERVICES"
-      value = "[\"aws_transcribe\"]" # TODO replace with APIM - AIILG-481
+      value = "[\"azure_stt_synchronous\"]"
     }, {
       name  = "MAX_TRANSCRIPTION_PROCESSES"
       value = tostring(var.max_transcription_processes)
@@ -99,14 +99,6 @@ locals {
     {
       name      = "POSTGRES_PASSWORD"
       valueFrom = var.database_password_secret_arn
-    },
-    {
-      name      = "AZURE_SPEECH_KEY"
-      valueFrom = var.azure_speech_key_arn
-    },
-    {
-      name      = "AZURE_SPEECH_REGION"
-      valueFrom = var.azure_speech_region_arn
     },
     {
       name      = "AZURE_APIM_TENANT_ID"
