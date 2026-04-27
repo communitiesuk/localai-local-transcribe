@@ -42,6 +42,6 @@ def test_build_azure_apim_adapter_success(monkeypatch):
     assert isinstance(adapter, type(adapter))
     assert adapter._model == model_name  # noqa: SLF001
     assert adapter._api_version == api_version  # noqa: SLF001
-    assert adapter.async_apim_client is not None
-    assert str(adapter.async_apim_client.base_url).rstrip("/") == f"{base_url.rstrip('/')}/{model_name}"
-    assert "Ocp-Apim-Subscription-Key" in adapter.async_apim_client.default_headers
+    assert adapter._cached_async_apim_client is not None  # noqa: SLF001
+    assert str(adapter._cached_async_apim_client.base_url).rstrip("/") == f"{base_url.rstrip('/')}/{model_name}"  # noqa: SLF001
+    assert "Ocp-Apim-Subscription-Key" in adapter._cached_async_apim_client.default_headers  # noqa: SLF001
