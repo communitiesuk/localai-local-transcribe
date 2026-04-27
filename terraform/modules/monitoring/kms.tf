@@ -1,6 +1,6 @@
 resource "aws_kms_key" "main" {
   enable_key_rotation = true
-  description         = "prsdb-cloudtrail-${var.environment_name}"
+  description         = "local-transcribe-cloudtrail-${var.environment_name}"
 }
 
 resource "aws_kms_key_policy" "main" {
@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "cloudtrail_kms" {
   statement {
     principals {
       type        = "Service"
-      identifiers = ["logs.${data.aws_region.current.name}.amazonaws.com"]
+      identifiers = ["logs.${data.aws_region.current.region}.amazonaws.com"]
     }
 
     actions = [
@@ -32,7 +32,7 @@ data "aws_iam_policy_document" "cloudtrail_kms" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${module.cloudtrail_cloudwatch_group.name}"]
+      values   = ["arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:${module.cloudtrail_cloudwatch_group.name}"]
     }
   }
 
@@ -62,7 +62,7 @@ data "aws_iam_policy_document" "cloudtrail_kms" {
     condition {
       test     = "StringEquals"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/prsd-cloudtrail-${var.environment_name}"]
+      values   = ["arn:aws:cloudtrail:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:trail/local-transcribe-cloudtrail-${var.environment_name}"]
     }
   }
 }

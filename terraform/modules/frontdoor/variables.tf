@@ -1,14 +1,15 @@
 variable "ssl_certs_created" {
   description = "Indicates whether ssl certificates have already been manually created"
   type        = bool
+  default     = false
 }
 
 variable "environment_name" {
-  description = "must be one of: integration, test, nft, or production"
+  description = "must be one of: development, or staging"
   type        = string
   validation {
-    condition     = contains(["integration", "test", "nft", "production"], var.environment_name)
-    error_message = "Environment must be one of: integration, test"
+    condition     = contains(["development", "staging"], var.environment_name)
+    error_message = "Environment must be one of: development, staging"
   }
 }
 
@@ -34,9 +35,9 @@ variable "vpc_id" {
   description = "The ID of the VPC to be associated with."
 }
 
-variable "application_port" {
+variable "frontend_port" {
   type        = number
-  description = "The network port the application runs on"
+  description = "The network port the frontend runs on, this alb assumes the frontend will internally proxy requests to the backend as needed"
 }
 
 # TODO: PRSD-574 - Reinstate when ECS has been configured
@@ -53,12 +54,6 @@ variable "cloudfront_domain_names" {
 variable "load_balancer_domain_name" {
   type        = string
   description = "MHCLG delegated domain name for alb"
-}
-
-variable "geolocation_allow_list" {
-  type        = list(string)
-  description = "List of allowed locations - geo restrictions disabled when set to null"
-  default     = null
 }
 
 variable "ip_allowlist" {
@@ -81,4 +76,27 @@ variable "maintenance_mode_on" {
   type        = bool
   description = "Indicates whether maintenance mode is on"
   default     = false
+}
+
+variable "enable_oidc_auth" {
+  description = "Whether to enable GOV.UK SSO (GDS Identity Assurance) OIDC authentication on the ALB listener"
+  type        = bool
+  default     = true
+}
+
+variable "internal_access_oidc_client_id_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client ID."
+  type        = string
+  default     = null
+}
+
+variable "internal_access_oidc_client_secret_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client secret."
+  type        = string
+  default     = null
+}
+
+variable "app_host" {
+  description = "The MHCLG delegated domain name for the application, used in host header condition for the load balancer listener rule"
+  type = string
 }

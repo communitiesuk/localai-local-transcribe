@@ -1,5 +1,7 @@
 resource "aws_cloudwatch_metric_alarm" "ecs_cpu_usage" {
-  alarm_name          = "${var.ecs_service_name}-cpu-usage"
+  for_each = toset(var.ecs_service_names)
+
+  alarm_name          = "${each.value}-cpu-usage"
   alarm_description   = "ECS CPU utilization has been >90% for over a minute"
   comparison_operator = "GreaterThanThreshold"
   metric_name         = "CPUUtilization"
@@ -11,7 +13,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_usage" {
 
   dimensions = {
     ClusterName = var.ecs_cluster_name
-    ServiceName = var.ecs_service_name
+    ServiceName = each.value
   }
 
   alarm_actions = [
@@ -20,7 +22,9 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_usage" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_memory_usage" {
-  alarm_name          = "${var.ecs_service_name}-memory-usage"
+  for_each = toset(var.ecs_service_names)
+
+  alarm_name          = "${each.value}-memory-usage"
   alarm_description   = "ECS memory usage has been >90% for over a minute"
   comparison_operator = "GreaterThanThreshold"
   metric_name         = "MemoryUtilization"
@@ -32,7 +36,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_usage" {
 
   dimensions = {
     ClusterName = var.ecs_cluster_name
-    ServiceName = var.ecs_service_name
+    ServiceName = each.value
   }
 
   alarm_actions = [
@@ -41,7 +45,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_usage" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_task_start_failure" {
-  alarm_name          = "${var.ecs_service_name}-ecs-task-start-failure"
+  alarm_name          = "ecs-task-start-failure"
   alarm_description   = "An ECS task has failed to start and reach a healthy state"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   metric_name         = aws_cloudwatch_log_metric_filter.ecs_task_start_failure.name
@@ -90,50 +94,6 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage" {
 
   dimensions = {
     DBInstanceIdentifier = var.database_identifier
-  }
-
-  alarm_actions = [
-    aws_sns_topic.alarm_sns_topic.arn,
-  ]
-}
-
-resource "aws_cloudwatch_metric_alarm" "elasticache_cpu_usage" {
-  for_each = var.elasticache_cluster_ids
-
-  alarm_name          = "${each.value}-cpu-usage"
-  alarm_description   = "ElastiCache CPU utilization has been >90% for over a minute"
-  comparison_operator = "GreaterThanThreshold"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ElastiCache"
-  evaluation_periods  = 1
-  period              = 60
-  threshold           = 90
-  statistic           = "Average"
-
-  dimensions = {
-    CacheClusterId = each.value
-  }
-
-  alarm_actions = [
-    aws_sns_topic.alarm_sns_topic.arn,
-  ]
-}
-
-resource "aws_cloudwatch_metric_alarm" "elasticache_memory_usage" {
-  for_each = var.elasticache_cluster_ids
-
-  alarm_name          = "${each.value}-memory-usage"
-  alarm_description   = "ElastiCache memory usage has been >90% for over a minute"
-  comparison_operator = "GreaterThanThreshold"
-  metric_name         = "DatabaseMemoryUsagePercentage"
-  namespace           = "AWS/ElastiCache"
-  evaluation_periods  = 1
-  period              = 60
-  threshold           = 90
-  statistic           = "Average"
-
-  dimensions = {
-    CacheClusterId = each.value
   }
 
   alarm_actions = [

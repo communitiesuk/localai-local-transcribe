@@ -1,9 +1,9 @@
 variable "environment_name" {
-  description = "must be one of: integration, test, nft, or production"
+  description = "must be one of: development, or staging"
   type        = string
   validation {
-    condition     = contains(["integration", "test", "nft", "production"], var.environment_name)
-    error_message = "Environment must be one of: integration, test, nft, or production"
+    condition     = contains(["development", "staging"], var.environment_name)
+    error_message = "Environment must be one of: development, staging"
   }
 }
 
@@ -22,9 +22,9 @@ variable "ecs_cluster_name" {
   type        = string
 }
 
-variable "ecs_service_name" {
-  description = "Name of ECS service to create alarms for"
-  type        = string
+variable "ecs_service_names" {
+  description = "Names of ECS service to create alarms for"
+  type        = list(string)
 }
 
 variable "database_identifier" {
@@ -35,11 +35,6 @@ variable "database_identifier" {
 variable "database_allocated_storage" {
   description = "Allocated storage of RDS instance to create alarms for"
   type        = number
-}
-
-variable "elasticache_cluster_ids" {
-  description = "IDs of ElastiCache clusters to create alarms for"
-  type        = set(string)
 }
 
 variable "alb_name" {
@@ -59,5 +54,15 @@ variable "alb_target_group_arn_suffix" {
 
 variable "waf_acl_name" {
   description = "Name of WAF web ACL to create alarms for"
+  type        = string
+}
+
+variable "transcription_deadletter_queue_name" {
+  description = "Name of the SQS queue for transcriptions, to create alarms for"
+  type        = string
+}
+
+variable "llm_deadletter_queue_name" {
+  description = "Name of the SQS queue for LLM processing, to create alarms for"
   type        = string
 }

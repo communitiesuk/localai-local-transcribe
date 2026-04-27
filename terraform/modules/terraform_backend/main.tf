@@ -1,10 +1,10 @@
 terraform {
-  required_version = "~>1.9.1"
+  required_version = "~>1.14.0"
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~>5.0"
+      version = "~>6.5"
     }
   }
 }
@@ -24,25 +24,11 @@ resource "aws_kms_alias" "state_bucket_encryption_key" {
 
 module "state_bucket" {
   source                             = "../s3_bucket"
-  bucket_name                        = "prsdb-tfstate-${var.environment_name}"
-  access_log_bucket_name             = "prsdb-tfstate-access-logs-${var.environment_name}"
+  bucket_name                        = "local-transcribe-tfstate-${var.environment_name}"
+  access_log_bucket_name             = "local-transcribe-tfstate-access-logs-${var.environment_name}"
   kms_key_arn                        = aws_kms_key.state_bucket_encryption_key.arn
   noncurrent_version_expiration_days = 700
   access_s3_log_expiration_days      = 700
-}
-
-# Encryption/recovery not required - lock not sensitive
-# tfsec:ignore:aws-dynamodb-enable-at-rest-encryption tfsec:ignore:aws-dynamodb-enable-recovery tfsec:ignore:aws-dynamodb-table-customer-key
-resource "aws_dynamodb_table" "terraform_state_lock" {
-  name           = "tfstate-lock-${var.environment_name}"
-  read_capacity  = 1
-  write_capacity = 1
-  hash_key       = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
 }
 
 # Access to Terraform state, should be enough to do a terraform plan along with ReadOnlyAccess
@@ -70,24 +56,13 @@ data "aws_iam_policy_document" "terraform_state_read_only" {
   }
 
   statement {
-    sid = "TFStateLock"
-    actions = [
-      "dynamodb:DescribeTable",
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:DeleteItem",
-    ]
-    resources = [aws_dynamodb_table.terraform_state_lock.arn]
-  }
-
-  statement {
     sid = "ReadTFManagedSecrets"
     actions = [
       "secretsmanager:GetSecretValue",
     ]
     resources = [
       # Access secrets managed by Terraform
-      "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:tf-*",
+      "arn:aws:secretsmanager:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:secret:tf-*",
     ]
   }
 

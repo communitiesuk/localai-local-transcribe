@@ -13,7 +13,7 @@ resource "aws_cloudfront_distribution" "main" {
   enabled         = true
   http_version    = "http2and3"
   is_ipv6_enabled = true
-  price_class     = "PriceClass_100" # Affects which edge locations are used by cloudfront, which affects the latency users will experience in different geographic areas
+  price_class     = "PriceClass_100" # Extra latency outside of UK/Europe, but cheaper
 
   web_acl_id = aws_wafv2_web_acl.main.arn
 
@@ -43,10 +43,6 @@ resource "aws_cloudfront_distribution" "main" {
     response_headers_policy_id = data.aws_cloudfront_response_headers_policy.main.id
     target_origin_id           = local.origin_id
     viewer_protocol_policy     = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.url_rewriter.arn
-    }
   }
 
   origin {
@@ -74,10 +70,6 @@ resource "aws_cloudfront_distribution" "main" {
     path_pattern           = var.maintenance_mode_on ? "*" : "/maintenance"
     target_origin_id       = local.maintenance_origin_id
     viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.url_rewriter.arn
-    }
   }
 
   custom_error_response {
@@ -125,14 +117,14 @@ resource "aws_cloudfront_distribution" "main" {
   viewer_certificate {
     cloudfront_default_certificate = var.ssl_certs_created ? false : true
     acm_certificate_arn            = var.ssl_certs_created ? var.cloudfront_certificate_arn : null
-    minimum_protocol_version       = var.ssl_certs_created ? "TLSv1.2_2021" : null
+    minimum_protocol_version       = var.ssl_certs_created ? "TLSv1.3_2025": null
     ssl_support_method             = "sni-only"
   }
 
   restrictions {
     geo_restriction {
-      restriction_type = var.geolocation_allow_list != null ? "whitelist" : "none"
-      locations        = var.geolocation_allow_list != null ? var.geolocation_allow_list : []
+      restriction_type = "whitelist"
+      locations        = ["GB"]
     }
   }
 
@@ -147,8 +139,8 @@ resource "aws_cloudfront_distribution" "main" {
 
 resource "aws_cloudfront_cache_policy" "main" {
   name        = var.environment_name
-  min_ttl     = 1
-  default_ttl = 60
+  min_ttl     = 0
+  default_ttl = 0
 
   parameters_in_cache_key_and_forwarded_to_origin {
     cookies_config {
@@ -191,14 +183,6 @@ resource "aws_cloudfront_origin_request_policy" "main" {
 resource "random_password" "cloudfront_header" {
   length  = 16
   special = false
-}
-
-resource "aws_cloudfront_function" "url_rewriter" {
-  name    = "url-rewriter"
-  runtime = "cloudfront-js-2.0"
-  comment = "Rewrites URLs to include the service line as the first path segment"
-  publish = true
-  code    = file("${path.module}/url_rewriter.js")
 }
 
 resource "aws_shield_subscription" "cloudfront" {

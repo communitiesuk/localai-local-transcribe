@@ -1,31 +1,31 @@
-output "ecs_task_execution_role_arn" {
-  value       = aws_iam_role.ecs_task_execution.arn
-  description = "Role to be used by ECS to execute tasks from the ecr repository"
+output "ecr_frontend_repository_url" {
+  value       = aws_ecr_repository.frontend.repository_url
+  description = "URL of the ecr repository containing the frontend image"
 }
 
-output "ecs_task_execution_role_id" {
-  value       = aws_iam_role.ecs_task_execution.id
-  description = "Id of role to be used to execute tasks"
+output "ecr_backend_repository_url" {
+  value       = aws_ecr_repository.backend.repository_url
+  description = "URL of the ecr repository containing the backend image"
 }
 
-output "webapp_ecs_task_role_arn" {
-  value       = aws_iam_role.webapp_ecs_task.arn
-  description = "Role to be used by the ECS task definition"
+output "ecr_worker_repository_url" {
+  value       = aws_ecr_repository.worker.repository_url
+  description = "URL of the ecr repository containing the worker image"
 }
 
-output "webapp_ecs_task_role_name" {
-  value       = aws_iam_role.webapp_ecs_task.name
-  description = "Name of the ECS task role"
+output "push_frontend_ecr_image_policy_arn" {
+  value       = aws_iam_policy.push_frontend_images.arn
+  description = "iam policy allowing pushing to the frontend ecr repository"
 }
 
-output "ecr_repository_url" {
-  value       = aws_ecr_repository.main.repository_url
-  description = "URL of the ecr repository"
+output "push_backend_ecr_image_policy_arn" {
+  value       = aws_iam_policy.push_backend_images.arn
+  description = "iam policy allowing pushing to the backend ecr repository"
 }
 
-output "push_ecr_image_policy_arn" {
-  value       = aws_iam_policy.push_images.arn
-  description = "iam policy allowing pushing to the ecr repository"
+output "push_worker_ecr_image_policy_arn" {
+  value       = aws_iam_policy.push_worker_images.arn
+  description = "iam policy allowing pushing to the worker ecr repository"
 }
 
 output "describe_ecr_images_policy_arn" {

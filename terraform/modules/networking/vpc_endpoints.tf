@@ -28,7 +28,6 @@ locals {
     "ec2",
     "monitoring",
     "logs",
-    "s3tables",
     "cloudtrail",
     "sns",
     "sqs",

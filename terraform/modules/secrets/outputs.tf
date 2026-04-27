@@ -9,13 +9,27 @@ output "database_password_secret_arn" {
   value       = aws_secretsmanager_secret.database_password.arn
 }
 
-output "redis_password" {
-  description = "Randomly generated password for Redis"
-  value       = random_password.redis_password
-  sensitive   = true
-}
-
 output "secrets_kms_key_arn" {
   description = "ARN of the KMS key used to encrypt the secrets"
-  value       = aws_kms_key.prsdb_webapp_secrets.arn
+  value       = aws_kms_key.local_transcribe_secrets.arn
+}
+
+output "azure_speech_key_arn" {
+  description = "ARN of the SSM parameter containing the Azure Speech key"
+  value       = aws_ssm_parameter.azure_speech_key.arn
+}
+
+output "azure_speech_region_arn" {
+  description = "ARN of the SSM parameter containing the Azure Speech region"
+  value       = aws_ssm_parameter.azure_speech_region.arn
+}
+
+output "internal_access_oidc_client_id_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client ID."
+  value       = aws_ssm_parameter.oidc_client_name.name
+}
+
+output "internal_access_oidc_client_secret_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client secret."
+  value       = aws_ssm_parameter.oidc_client_secret.name
 }

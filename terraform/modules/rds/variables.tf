@@ -1,10 +1,16 @@
 variable "environment_name" {
-  description = "must be one of: integration, test, nft, or production"
+  description = "must be one of: development, or staging"
   type        = string
   validation {
-    condition     = contains(["integration", "test", "nft", "production"], var.environment_name)
-    error_message = "Environment must be one of: integration, test"
+    condition     = contains(["development", "staging"], var.environment_name)
+    error_message = "Environment must be one of: development, staging"
   }
+}
+
+variable "database_username" {
+  description = "username for the database"
+  type        = string
+  sensitive   = true
 }
 
 variable "database_password" {
@@ -60,10 +66,16 @@ variable "vpc_id" {
   description = "The ID of the VPC to be associated with"
 }
 
-variable "webapp_task_execution_role_name" {
-  description = "Name of the IAM role for the webapp ECS task execution"
+variable "backend_task_execution_role_name" {
+  description = "Name of the IAM role for the backend ECS task execution"
   type        = string
 }
+
+variable "worker_task_execution_role_name" {
+  description = "Name of the IAM role for the worker ECS task execution"
+  type        = string
+}
+
 variable "bastion_group_id" {
   type        = string
   description = "The id of the bastion security group"
