@@ -94,7 +94,7 @@ async def test_process_minute_generation_runs_guardrails():
     mock_minute_version.id = uuid4()
     # Provide actual dialogue entries instead of empty list
     mock_minute_version.minute.transcription.dialogue_entries = [
-        {"speaker": "A", "text": "Hello", "start_time": 0.0, "end_time": 1.0}
+        {"speaker": "A", "text": "word " * 201, "start_time": 0.0, "end_time": 1.0}
     ]
 
     with (
@@ -137,7 +137,7 @@ async def test_process_minute_generation_handles_guardrail_failure():
     mock_minute_version.id = uuid4()
     # Provide actual dialogue entries instead of empty list
     mock_minute_version.minute.transcription.dialogue_entries = [
-        {"speaker": "A", "text": "Hello", "start_time": 0.0, "end_time": 1.0}
+        {"speaker": "A", "text": "word " * 201, "start_time": 0.0, "end_time": 1.0}
     ]
 
     with (
