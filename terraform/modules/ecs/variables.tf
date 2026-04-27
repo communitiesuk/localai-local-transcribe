@@ -199,6 +199,31 @@ variable "azure_speech_region_arn" {
   type        = string
 }
 
+variable "azure_apim_tenant_id_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM tenant ID"
+  type        = string
+}
+
+variable "azure_apim_client_id_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM client ID"
+  type        = string
+}
+
+variable "azure_apim_client_secret_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM client secret"
+  type        = string
+}
+
+variable "azure_apim_scope_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM OAuth scope"
+  type        = string
+}
+
+variable "azure_apim_subscription_key_arn" {
+  description = "ARN of the SSM parameter containing the Azure APIM subscription key"
+  type        = string
+}
+
 variable "lb_listener_exists" {
   description = "Indicates whether the load balancer listener has been created"
   type        = bool

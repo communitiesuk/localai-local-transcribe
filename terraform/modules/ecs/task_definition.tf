@@ -62,16 +62,16 @@ locals {
       value = "transcriptions"
     }, {
       name = "FAST_LLM_PROVIDER"
-      value = "gemini"
+      value = "azure_apim"
     }, {
       name = "FAST_LLM_MODEL_NAME"
-      value = "gemini-2.5-flash-lite"
+      value = "gpt-4o"
     }, {
       name = "BEST_LLM_PROVIDER"
-      value = "gemini"
+      value = "azure_apim"
     }, {
       name = "BEST_LLM_MODEL_NAME"
-      value = "gemini-2.5-flash"
+      value = "gpt-4o"
     }, {
       name  = "ALB_ARN"
       value = var.alb_arn
@@ -84,6 +84,15 @@ locals {
     }, {
       name  = "AWS_ACCOUNT_ID"
       value = data.aws_caller_identity.current.account_id
+    }, {
+      name  = "AZURE_APIM_AUTH_METHOD"
+      value = "client_secret"
+    }, {
+    name  = "AZURE_APIM_URL"
+    value = "https://api.azc.test.communities.gov.uk/minute/"
+    }, {
+    name  = "AZURE_APIM_API_VERSION"
+    value = "2024-10-21"
     },
   ]
   shared_worker_backend_secrets = [
@@ -98,6 +107,26 @@ locals {
     {
       name      = "AZURE_SPEECH_REGION"
       valueFrom = var.azure_speech_region_arn
+    },
+    {
+      name      = "AZURE_APIM_TENANT_ID"
+      valueFrom = var.azure_apim_tenant_id_arn
+    },
+    {
+      name      = "AZURE_APIM_CLIENT_ID"
+      valueFrom = var.azure_apim_client_id_arn
+    },
+    {
+      name      = "AZURE_APIM_CLIENT_SECRET"
+      valueFrom = var.azure_apim_client_secret_arn
+    },
+    {
+      name      = "AZURE_APIM_SCOPE"
+      valueFrom = var.azure_apim_scope_arn
+    },
+    {
+      name      = "AZURE_APIM_SUBSCRIPTION_KEY"
+      valueFrom = var.azure_apim_subscription_key_arn
     },
   ]
   frontend_environment_variables = [
