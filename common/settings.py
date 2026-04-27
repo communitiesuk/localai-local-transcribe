@@ -195,11 +195,6 @@ class Settings(BaseSettings):
         description="Temperature for LLM responses",
     )
 
-    MIN_WORD_COUNT_FOR_GUARDRAIL: int = Field(
-        default=100,
-        description="Transcript must have at least this many words to be passed to guardrail stage",
-    )
-
     LOCAL_STORAGE_PATH: str = Field(
         default="/tmp",  # noqa: S108
         description="The folder where the data directory is mounted for the local storage service.",
