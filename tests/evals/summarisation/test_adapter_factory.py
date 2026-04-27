@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
@@ -38,13 +40,11 @@ def test_build_azure_apim_adapter_success(monkeypatch):
     monkeypatch.setenv("BEST_LLM_MODEL_NAME", model_name)
 
     adapter = build_azure_apim_adapter()
-
-    # Populate the cached client
-    adapter._get_apim_client()  # noqa: SLF001
+    client = asyncio.run(adapter._get_apim_client())  # noqa: SLF001
 
     assert isinstance(adapter, type(adapter))
     assert adapter._model == model_name  # noqa: SLF001
     assert adapter._api_version == api_version  # noqa: SLF001
-    assert adapter._cached_async_apim_client is not None  # noqa: SLF001
-    assert str(adapter._cached_async_apim_client.base_url).rstrip("/") == f"{base_url.rstrip('/')}/{model_name}"  # noqa: SLF001
-    assert "Ocp-Apim-Subscription-Key" in adapter._cached_async_apim_client.default_headers  # noqa: SLF001
+    assert client is not None
+    assert str(client.base_url).rstrip("/") == f"{base_url.rstrip('/')}/{model_name}"
+    assert "Ocp-Apim-Subscription-Key" in client.default_headers
