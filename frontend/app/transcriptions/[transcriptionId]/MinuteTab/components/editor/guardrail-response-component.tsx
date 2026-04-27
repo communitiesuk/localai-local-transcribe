@@ -6,7 +6,9 @@ interface GuardrailProps {
   guardrailResults: GuardrailResultResponse[]
 }
 
-export function GuardrailResponseComponent({ guardrailResults = [] }: GuardrailProps) {
+export function GuardrailResponseComponent({
+  guardrailResults = [],
+}: GuardrailProps) {
   if (guardrailResults.length === 0) return null
 
   const warnings = guardrailResults.filter((r) => !r.passed)

@@ -4,7 +4,9 @@ interface VerifiedGuardrailsListProps {
   passes: GuardrailResultResponse[]
 }
 
-export function VerifiedGuardrailsList({ passes }: VerifiedGuardrailsListProps) {
+export function VerifiedGuardrailsList({
+  passes,
+}: VerifiedGuardrailsListProps) {
   if (!passes || passes.length === 0) return null
 
   return (
@@ -27,4 +29,4 @@ export function VerifiedGuardrailsList({ passes }: VerifiedGuardrailsListProps) 
     </div>
   )
 }
-``
+;``

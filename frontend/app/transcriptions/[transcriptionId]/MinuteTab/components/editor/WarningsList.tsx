@@ -9,11 +9,16 @@ export function WarningsList({ warnings }: WarningsListProps) {
 
   return (
     <div className="govuk-warning-text mb-6">
-      <span className="govuk-warning-text__icon" aria-hidden="true">!</span>
+      <span className="govuk-warning-text__icon" aria-hidden="true">
+        !
+      </span>
       <div className="govuk-warning-text__text">
-        <h3 className="govuk-heading-s mb-2 text-gray-900">Accuracy mismatch</h3>
+        <h3 className="govuk-heading-s mb-2 text-gray-900">
+          Accuracy mismatch
+        </h3>
         <p className="govuk-body-s mb-3">
-          The automated guardrail system detected a discrepancy between the meeting transcript and the generated summary.
+          The automated guardrail system detected a discrepancy between the
+          meeting transcript and the generated summary.
         </p>
 
         <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-gray-900">
