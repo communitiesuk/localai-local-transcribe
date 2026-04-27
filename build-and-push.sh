@@ -25,6 +25,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 
+if [[ -z "${TF_VAR_alarm_email_address:-}" ]]; then
+  echo "Error: TF_VAR_alarm_email_address is not set"
+  exit 1
+fi
+
 SERVICES=("$@")
 if [[ ${#SERVICES[@]} -eq 0 ]]; then
   SERVICES=(frontend backend worker)
@@ -63,7 +68,7 @@ done
 echo ""
 echo "Planning Terraform..."
 cd "${REPO_ROOT}/terraform/development"
-TF_VARS=(-var="alarm_email_address=harry.best@softwire.com" -var="image_tag=${TAG}" -var="ssl_certs_created=true")
+TF_VARS=(-var="image_tag=${TAG}")
 terraform plan "${TF_VARS[@]}" -out=tfplan 2>/dev/null | grep -v ": Refreshing state\|: Reading\|: Still reading\|: Read complete"
 
 echo ""
