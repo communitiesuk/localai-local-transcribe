@@ -120,7 +120,6 @@ module "github_actions_access" {
   push_frontend_ecr_image_policy_arn = module.ecr.push_frontend_ecr_image_policy_arn
   push_backend_ecr_image_policy_arn  = module.ecr.push_backend_ecr_image_policy_arn
   push_worker_ecr_image_policy_arn   = module.ecr.push_worker_ecr_image_policy_arn
-  ecr_describe_images_policy_arn     = module.ecr.describe_ecr_images_policy_arn
 }
 
 module "secrets" {

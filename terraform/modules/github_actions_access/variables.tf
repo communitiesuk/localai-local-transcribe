@@ -22,7 +22,3 @@ variable "push_worker_ecr_image_policy_arn" {
   type        = string
 }
 
-variable "ecr_describe_images_policy_arn" {
-  description = "arn of the iam policy for describing ecr images"
-  type        = string
-}
