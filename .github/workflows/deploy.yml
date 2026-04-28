@@ -45,7 +45,7 @@ jobs:
     name: Terraform plan
     runs-on: ubuntu-latest
     needs: build
-    concurrency: tfstate-${{ env.ENVIRONMENT }}
+    concurrency: tfstate
     outputs:
       exitcode: ${{ steps.plan.outputs.exitcode }}
     defaults:
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: plan
     if: false && needs.plan.outputs.exitcode == 2
-    concurrency: tfstate-${{ env.ENVIRONMENT }}
+    concurrency: tfstate
     defaults:
       run:
         working-directory: terraform/${{ env.ENVIRONMENT }}
