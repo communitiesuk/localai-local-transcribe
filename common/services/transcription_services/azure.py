@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
-
 import aiofiles
 import httpx
 import sentry_sdk
@@ -21,8 +19,7 @@ from common.types import TranscriptionJobMessageData
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
-_apim = urlparse(settings.AZURE_APIM_URL or "")
-url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_PRODUCT}/speechtotext/transcriptions:transcribe"
+url = f"{(settings.AZURE_APIM_URL or '').rstrip('/')}/speechtotext/transcriptions:transcribe"
 
 
 class AzureSpeechAdapter(TranscriptionAdapter):

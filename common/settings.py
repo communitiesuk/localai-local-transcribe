@@ -82,11 +82,6 @@ class Settings(BaseSettings):
     AZURE_APIM_SCOPE: str | None = Field(description="OAuth scope for APIM client secret auth", default=None)
     # if using 'static_token' for AZURE_APIM_AUTH_METHOD
     AZURE_APIM_ACCESS_TOKEN: str | None = Field(description="Access token for Azure APIM", default=None)
-    AZURE_APIM_PRODUCT: str = Field(
-        description="Product name prefix for Azure APIM endpoints, e.g. 'localtranscribe'",
-        default="localtranscribe",
-    )
-
     # if using Gemini
     GOOGLE_APPLICATION_CREDENTIALS: str | None = Field(
         description="Path to Google Cloud service account credentials JSON file", default=None

@@ -34,9 +34,6 @@ locals {
       name  = "POSTGRES_DB"
       value = var.database_name
     }, {
-      name  = "AZURE_OPENAI_API_VERSION"
-      value = "2024-10-21"
-    }, {
       name  = "TRANSCRIPTION_QUEUE_NAME"
       value = var.transcription_queue_name
     }, {
@@ -57,9 +54,6 @@ locals {
     }, {
       name  = "MAX_LLM_PROCESSES"
       value = tostring(var.max_llm_processes)
-    }, {
-      name  = "AZURE_TRANSCRIPTION_CONTAINER_NAME"
-      value = "transcriptions"
     }, {
       name = "FAST_LLM_PROVIDER"
       value = "azure_apim"

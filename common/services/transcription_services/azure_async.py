@@ -7,7 +7,6 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
 
 import aioboto3
 import httpx
@@ -41,8 +40,7 @@ def get_client() -> Generator[ContainerClient, None, None]:
         yield container_client
 
 
-_apim = urlparse(settings.AZURE_APIM_URL or "")
-submit_url = f"{_apim.scheme}://{_apim.netloc}/{settings.AZURE_APIM_PRODUCT}/speechtotext/transcriptions:submit"
+submit_url = f"{(settings.AZURE_APIM_URL or '').rstrip('/')}/speechtotext/transcriptions:submit"
 timeout_settings = httpx.Timeout(
     timeout=30.0,
     connect=30.0,
