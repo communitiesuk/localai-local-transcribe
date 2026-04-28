@@ -1,22 +1,27 @@
+from collections.abc import Callable
 from difflib import SequenceMatcher
-from typing import Callable, List, Dict, Any
 from statistics import mean
-from evals.dataset_generation.data_for_testing.src.types import ManualResult
-from sentence_transformers import SentenceTransformer
+from typing import Any
+
 import numpy as np
+from sentence_transformers import SentenceTransformer
+
+from evals.dataset_generation.data_for_testing.src.types import ManualResult
 
 TextSimilarityFn = Callable[[str, str], float]
 
-model = SentenceTransformer("all-MiniLM-L6-v2")  
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
 
 def semantic_similarity(a: str, b: str) -> float:
     emb = model.encode([a, b], normalize_embeddings=True)
     return float(np.dot(emb[0], emb[1]))
 
+
 def default_similarity(a: str, b: str) -> float:
     """A default similarity function that uses case-insensitive sequence matching."""
     return SequenceMatcher(None, a.lower(), b.lower()).ratio()
-    
+
 
 def containment_similarity(a: str, b: str) -> float:
     """A simple similarity function that checks for containment and falls back to fuzzy matching."""
@@ -27,8 +32,8 @@ def containment_similarity(a: str, b: str) -> float:
         return 1.0
 
     from rapidfuzz import fuzz
-    return fuzz.partial_ratio(a, b) / 100
 
+    return fuzz.partial_ratio(a, b) / 100
 
 
 def evaluate_manual_vs_hypothesis(
@@ -36,20 +41,17 @@ def evaluate_manual_vs_hypothesis(
     auto_pcs: dict,
     text_similarity: TextSimilarityFn = default_similarity,
     threshold: float = 0.6,
-)->  dict[str, Any]:
+) -> dict[str, Any]:
     """Evaluates the hypothesis against the manual list using a specified text similarity function and threshold.
     Returns detailed results and summary metrics.
     """
 
     detected = auto_pcs.get("detected_characteristics", [])
     if not isinstance(detected, list):
-        raise ValueError("Expected 'detected_characteristics' to be a list")
+        error_msg = f"Expected 'detected_characteristics' to be a list, but got {type(detected).__name__}"
+        raise ValueError(error_msg)
 
-    hypothesis_texts = [
-        span["text"]
-        for item in detected
-        for span in item.get("evidence_spans", [])
-    ]
+    hypothesis_texts = [span["text"] for item in detected for span in item.get("evidence_spans", [])]
 
     manual_results: list[ManualResult] = []
     hypothesis_results = []
@@ -64,7 +66,7 @@ def evaluate_manual_vs_hypothesis(
     for manual in manual_list:
         best_score = 0.0
         best_match = None
-        best_idx =None
+        best_idx = None
 
         for i, hyp in enumerate(hypothesis_texts):
             if i in used_hyp_indices:
@@ -84,12 +86,14 @@ def evaluate_manual_vs_hypothesis(
         else:
             false_negative += 1
 
-        manual_results.append({
-            "manual_text": manual,
-            "best_match": best_match,
-            "score": best_score,
-            "label": "TP" if is_tp else "FN",
-        })
+        manual_results.append(
+            {
+                "manual_text": manual,
+                "best_match": best_match,
+                "score": best_score,
+                "label": "TP" if is_tp else "FN",
+            }
+        )
 
     # hypothesis → manual
     # -----------------------------
@@ -113,29 +117,24 @@ def evaluate_manual_vs_hypothesis(
         else:
             false_positive += 1
 
-        hypothesis_results.append({
-            "hypothesis_text": hyp,
-            "best_match": best_match,
-            "score": best_score,
-            "label": "TP" if is_tp else "FP",
-        })
+        hypothesis_results.append(
+            {
+                "hypothesis_text": hyp,
+                "best_match": best_match,
+                "score": best_score,
+                "label": "TP" if is_tp else "FP",
+            }
+        )
 
     # METRICS
     # -----------------------------
     precision = (
-        tp_from_hypothesis / (tp_from_hypothesis + false_positive)
-        if (tp_from_hypothesis + false_positive) > 0 else 0.0
+        tp_from_hypothesis / (tp_from_hypothesis + false_positive) if (tp_from_hypothesis + false_positive) > 0 else 0.0
     )
 
-    recall = (
-        true_positive / (true_positive + false_negative)
-        if (true_positive + false_negative) > 0 else 0.0
-    )
+    recall = true_positive / (true_positive + false_negative) if (true_positive + false_negative) > 0 else 0.0
 
-    f1_score = (
-        2 * precision * recall / (precision + recall)
-        if (precision + recall) > 0 else 0.0
-    )
+    f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     avg_similarity = mean(r["score"] for r in manual_results) if manual_results else 0.0
 
@@ -155,5 +154,3 @@ def evaluate_manual_vs_hypothesis(
         "hypothesis_to_manual": hypothesis_results,
         "summary": summary,
     }
-
-

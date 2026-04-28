@@ -1,41 +1,22 @@
-
-from evals.dataset_generation.data_for_testing.src.evaluator import (
-   evaluate_manual_vs_hypothesis
-)
-
-from evals.dataset_generation.data_for_testing.src.run_helpers import (
-    write_results,
-    load_json
-)
-
-from evals.dataset_generation.data_for_testing.src.settings import (
-    DATA_TEST_TRANSCRIPTS_DIR,
-    OUTPUT_DIR
-)
-
-from evals.dataset_generation.data_for_testing.src.evaluator import (
-    containment_similarity,
-    semantic_similarity
-)
-
-from evals.dataset_generation.data_for_testing.transcripts.manual import (
-    maunual_li_na
-)
-
 import logging
 from pathlib import Path
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
+from evals.dataset_generation.data_for_testing.src.evaluator import (
+    evaluate_manual_vs_hypothesis,
+    semantic_similarity,
 )
+from evals.dataset_generation.data_for_testing.src.run_helpers import load_json, write_results
+from evals.dataset_generation.data_for_testing.src.settings import DATA_TEST_TRANSCRIPTS_DIR, OUTPUT_DIR
+from evals.dataset_generation.data_for_testing.transcripts.manual import maunual_li_na
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+
 
 def log_file_error(file: str | Path) -> None:
     logging.error("Invalid or empty detected_characteristics in file: %s", file)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.info("=== STARTING PIPELINE (2/2) ===")
 
     manifest_path = DATA_TEST_TRANSCRIPTS_DIR / "manifest.json"
@@ -46,11 +27,8 @@ if __name__ == '__main__':
 
     if auto_pcs.get("detected_characteristics"):
         results = evaluate_manual_vs_hypothesis(maunual_li_na, auto_pcs, semantic_similarity)
-        write_results(results, OUTPUT_DIR )
+        write_results(results, OUTPUT_DIR)
     else:
-        log_file_error(auto_pc_file_path)   
+        log_file_error(auto_pc_file_path)
 
     logging.info("=== PIPELINE (2/2) COMPLETE ===")
-
-
-   
