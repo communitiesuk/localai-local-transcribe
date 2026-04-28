@@ -37,7 +37,7 @@ def containment_similarity(a: str, b: str) -> float:
 
 
 def evaluate_manual_vs_hypothesis(
-    manual_list: list[str],
+    manual_list: list[str] | None,
     auto_pcs: dict,
     text_similarity: TextSimilarityFn = default_similarity,
     threshold: float = 0.6,
@@ -45,6 +45,9 @@ def evaluate_manual_vs_hypothesis(
     """Evaluates the hypothesis against the manual list using a specified text similarity function and threshold.
     Returns detailed results and summary metrics.
     """
+    if not manual_list:
+        error_msg = "Manual list is empty or None. Cannot perform evaluation."
+        raise ValueError(error_msg)
 
     detected = auto_pcs.get("detected_characteristics", [])
     if not isinstance(detected, list):

@@ -7,7 +7,6 @@ from evals.dataset_generation.data_for_testing.src.evaluator import (
 )
 from evals.dataset_generation.data_for_testing.src.run_helpers import load_json, write_results
 from evals.dataset_generation.data_for_testing.src.settings import DATA_TEST_TRANSCRIPTS_DIR, OUTPUT_DIR
-from evals.dataset_generation.data_for_testing.transcripts.manual import maunual_li_na
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
@@ -26,7 +25,9 @@ if __name__ == "__main__":
     auto_pcs = load_json(auto_pc_file_path)
 
     if auto_pcs.get("detected_characteristics"):
-        results = evaluate_manual_vs_hypothesis(maunual_li_na, auto_pcs, semantic_similarity)
+        results = evaluate_manual_vs_hypothesis(
+            manual_list=None, auto_pcs=auto_pcs, text_similarity=semantic_similarity
+        )
         write_results(results, OUTPUT_DIR)
     else:
         log_file_error(auto_pc_file_path)
