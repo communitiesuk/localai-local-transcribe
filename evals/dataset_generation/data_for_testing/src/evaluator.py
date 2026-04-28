@@ -2,9 +2,16 @@ from difflib import SequenceMatcher
 from typing import Callable, List, Dict, Any
 from statistics import mean
 from evals.dataset_generation.data_for_testing.src.types import ManualResult
-
+from sentence_transformers import SentenceTransformer
+import numpy as np
 
 TextSimilarityFn = Callable[[str, str], float]
+
+model = SentenceTransformer("all-MiniLM-L6-v2")  
+
+def semantic_similarity(a: str, b: str) -> float:
+    emb = model.encode([a, b], normalize_embeddings=True)
+    return float(np.dot(emb[0], emb[1]))
 
 def default_similarity(a: str, b: str) -> float:
     """A default similarity function that uses case-insensitive sequence matching."""

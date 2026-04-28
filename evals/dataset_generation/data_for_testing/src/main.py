@@ -1,12 +1,4 @@
 
-from evals.dataset_generation.data_for_testing.transcripts.manual.manual_pcs_transcript_20260427_083757_dialogue_entries_output import (
-    segun_biola_manual_pcs
-)
-
-from evals.dataset_generation.data_for_testing.transcripts.manual.manual_pcs_transcript_20260427_140409_dialogue_entries_output import (
-    thomas_emily_manual_pcs
-)
-
 from evals.dataset_generation.data_for_testing.src.evaluator import (
    evaluate_manual_vs_hypothesis
 )
@@ -22,7 +14,12 @@ from evals.dataset_generation.data_for_testing.src.settings import (
 )
 
 from evals.dataset_generation.data_for_testing.src.evaluator import (
-    containment_similarity
+    containment_similarity,
+    semantic_similarity
+)
+
+from evals.dataset_generation.data_for_testing.transcripts.manual import (
+    maunual_li_na
 )
 
 import logging
@@ -48,7 +45,7 @@ if __name__ == '__main__':
     auto_pcs = load_json(auto_pc_file_path)
 
     if auto_pcs.get("detected_characteristics"):
-        results = evaluate_manual_vs_hypothesis(thomas_emily_manual_pcs, auto_pcs, containment_similarity)
+        results = evaluate_manual_vs_hypothesis(maunual_li_na, auto_pcs, semantic_similarity)
         write_results(results, OUTPUT_DIR )
     else:
         log_file_error(auto_pc_file_path)   

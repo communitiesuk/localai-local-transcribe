@@ -143,13 +143,12 @@ No need to regenerate transcripts.
   - Higher → stricter matching  
 
 - **Similarity function is configurable**:
-  - You can swap out `text_similarity` for different strategies
-  - Examples:
-    - Token overlap
-    - Levenshtein distance
-    - Containment-based matching (useful for substrings)
+  - You can swap out the `text_similarity` param for different strategies, or choose to create one to suit your needs
+  - Functions on file:
+    - semantic_similarity
+    - default_similarity
+    - containment_similarity (useful for substrings)
   - This directly impacts scoring behaviour and evaluation sensitivity
 
 - Manifest ensures:
-  - No hardcoded filenames  
   - Always uses latest pipeline output  
