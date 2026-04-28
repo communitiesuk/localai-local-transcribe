@@ -2,7 +2,7 @@ import json
 import logging
 import shutil
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -74,7 +74,7 @@ def export_results() -> None:
 def write_results(results: dict[str, Any], output_dir: Path, prefix: str = "evaluation") -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M")
     file_path = output_dir / f"{prefix}_{timestamp}.json"
 
     with file_path.open("w", encoding="utf-8") as f:
