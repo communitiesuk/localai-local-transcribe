@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - development
-  pull_request:
-    branches:
-      - development
+      - feat/AIILG-199-deployment-pipelines
 
 permissions:
   id-token: write
