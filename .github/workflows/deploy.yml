@@ -13,7 +13,7 @@ permissions:
 env:
   AWS_REGION: eu-west-2
   ENVIRONMENT: development
-  TF_VAR_alarm_email_address: ${{ secrets.ALARM_EMAIL_ADDRESS }}
+  TF_VAR_alarm_email_address: ${{ secrets.DEV_ALARM_EMAIL_ADDRESS }}
   TF_VAR_ssl_certs_created: true
 
 jobs:
