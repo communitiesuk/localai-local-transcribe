@@ -27,9 +27,24 @@ TARGET_DIR = Path("evals/characteristics/input/")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
 
+# def run_command() -> None:
+#     logging.info("Running transcription generation...")
+#     subprocess.run(COMMAND, check=True)
+#     logging.info("Command completed successfully.")
+
+
 def run_command() -> None:
     logging.info("Running transcription generation...")
-    subprocess.run(COMMAND, check=True)  # noqa: S603
+
+    result = subprocess.run(COMMAND, capture_output=True, text=True, check=False)  # noqa: S603
+
+    if result.returncode != 0:
+        logging.error("Command failed with exit code %s", result.returncode)
+        logging.error("STDOUT:\n%s", result.stdout)
+        logging.error("STDERR:\n%s", result.stderr)
+        error_msg = f"Transcription generation failed with exit code {result.returncode}"
+        raise RuntimeError(error_msg)
+
     logging.info("Command completed successfully.")
 
 

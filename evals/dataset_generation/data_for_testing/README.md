@@ -77,7 +77,7 @@ Include duplicates if they appear multiple times — the evaluation supports thi
 
 After adding manual PCs:
 
-Import the list and add it as the first arg of the  `evaluate_manual_vs_hypothesis` funtion within main, then run
+Import the list and add it as the first arg of the  `evaluate_manual_vs_hypothesis` funtion within main (manual_list param), then run
 
 ```bash
 poetry run python evals/dataset_generation/data_for_testing/src/main.py
@@ -133,7 +133,7 @@ No need to regenerate transcripts.
 
 ## 🧠 Notes
 
-- Matching uses **fuzzy similarity**, so:
+- Matching using **fuzzy similarity** resolves such as:
   - `"he said"` ≈ `"he said that"`
 
 - Matching is **bidirectional**:
@@ -149,7 +149,7 @@ No need to regenerate transcripts.
 - **Similarity function is configurable**:
   - You can swap out the `text_similarity` param for different strategies, or choose to create one to suit your needs
   - Functions on file:
-    - semantic_similarity (requires installing evals-summarisation's group-dev-dependencies )
+    - semantic_similarity (default, requires installing evals-summarisation's group-dev-dependencies )
     - default_similarity
     - containment_similarity (useful for substrings)
   - This directly impacts scoring behaviour and evaluation sensitivity

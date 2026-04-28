@@ -12,7 +12,7 @@ MANUAL_DIR = DATA_TEST_TRANSCRIPTS_DIR / "manual"
 
 
 def run_characteristics_pipeline() -> None:
-    cmd = ["poetry", "run", "python", "-m", "evals.characteristics.src.main"]
+    cmd = ["poetry", "run", "python", "-m", "evals.dataset_generation.characteristics.src.main"]
 
     logging.info("Running characteristics pipeline...")
 
