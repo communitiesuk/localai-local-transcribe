@@ -7,7 +7,7 @@ Local Transcribe is an application that is designed to simplify the transcriptio
 
 ## Key Features
 
-**AI-Powered Transcription**: Local Transcribe integrates with multiple transcription services including Azure Speech-to-Text and AWS Transcribe, automatically selecting the most appropriate service based on audio duration and quality. The system handles various audio formats and automatically converts them to optimize transcription accuracy.
+**AI-Powered Transcription**: Local Transcribe integrates with multiple transcription services including Azure Speech-to-Text via Azure APIM, automatically selecting the most appropriate service based on audio duration and quality. The system handles various audio formats and automatically converts them to optimize transcription accuracy.
 
 **Professional Meeting Templates**: The application includes specialized templates tailored for different types of government meetings, including Cabinet meetings, planning committees, care assessments, and general-purpose meetings. Each template follows specific formatting standards and style guides required for official documentation.
 
@@ -45,14 +45,13 @@ If you have access to a supported LLM and Transcription provider, you will need 
 
 ##### In `.env`
 
-- Transcription + LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, `AZURE_APIM_SUBSCRIPTION_KEY`, and `AZURE_APIM_PRODUCT`.
+- Transcription + LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, and `AZURE_APIM_SUBSCRIPTION_KEY`.
 
 Note:
 
 - These APIM values can be found on the [Azure APIM Portal](https://portal.api.azc.test.communities.gov.uk/), including:
-  - AZURE_APIM_URL in the format `https://{{host}}.gov.uk/`
+  - AZURE_APIM_URL in the format `https://{{host}}.gov.uk/{{product_name}}/`
   - AZURE_APIM_API_VERSION in the format `yyyy-mm-dd`
-  - AZURE_APIM_PRODUCT: the product name prefix for APIM endpoints (e.g. `localtranscribe`)
 - The `AZURE_APIM_ACCESS_TOKEN` is short lived and so must be regenerated every 2 hours.
 
 ##### In `common/settings.py`:
