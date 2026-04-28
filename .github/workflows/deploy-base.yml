@@ -6,12 +6,11 @@ on:
       environment:
         required: true
         type: string
+    secrets:
       aws-account-id:
         required: true
-        type: string
       alarm-email-address:
         required: true
-        type: string
 
 permissions:
   id-token: write
@@ -19,7 +18,7 @@ permissions:
 
 env:
   AWS_REGION: eu-west-2
-  TF_VAR_alarm_email_address: ${{ inputs.alarm-email-address }}
+  TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
   TF_VAR_ssl_certs_created: true
 
 jobs:
@@ -34,18 +33,18 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/${{ inputs.environment }}-push-image
+          role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/${{ inputs.environment }}-push-image
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to ECR
-        run: aws ecr get-login-password | docker login --username AWS --password-stdin ${{ inputs.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+        run: aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
       - uses: docker/build-push-action@v6
         with:
           context: .
           file: ${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ inputs.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.environment }}-${{ matrix.service }}:${{ github.sha }}
+          tags: ${{ secrets.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.environment }}-${{ matrix.service }}:${{ github.sha }}
 
   plan:
     name: Terraform plan
@@ -62,7 +61,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/github-actions-terraform-ci-plan-read-only
+          role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/github-actions-terraform-ci-plan-read-only
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: hashicorp/setup-terraform@v3
@@ -95,7 +94,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/github-actions-terraform-admin
+          role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/github-actions-terraform-admin
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: hashicorp/setup-terraform@v3
