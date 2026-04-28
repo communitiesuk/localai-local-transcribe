@@ -100,6 +100,64 @@ The worker reads from the queue and executes transcription/file conversion/llm c
 
 ## Deployment
 
+#### Requirements
+
+1. [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+2. [Install Terraform](https://developer.hashicorp.com/terraform/install).
+
+#### AWS access
+
+Set up your AWS SSO profile by running:
+
+```bash
+aws configure sso
+```
+
+Enter the following when prompted:
+- SSO start URL: shared with you separately
+- SSO region: `eu-west-2`
+- Account ID: the development account ID, also shared with you separately
+- Role: the developer role you have been assigned
+- Profile name: choose a name, e.g. `developer_role-929514686841`
+
+Then log in using your MHCLG super user account (`suxxxxxxx@mhclg.onmicrosoft.com`) and set the profile as the default for your session:
+
+```bash
+aws sso login --profile <your-profile>
+export AWS_PROFILE=<your-profile>
+```
+
+#### Build and push helper script
+
+The `build-and-push.sh` script builds Docker images, pushes them to ECR, and runs `terraform plan`/`apply` against the target environment:
+
+Ask in slack for the current alarm email address to use in development, and then run:
+
+```bash
+export TF_VAR_alarm_email_address=the_email_address_you_just_got_from_slack
+./build-and-push.sh [--environment development] [--tag <tag>] [frontend] [backend] [worker]
+```
+
+- `--environment` defaults to `development`; `--tag` defaults to the current git short SHA
+- Optionally list one or more services to build (default: all three)
+
+#### Terraform (development)
+
+> [!WARNING]
+> Ad-hoc Terraform runs can cause the state to drift out of sync with deployments from the development branch. Only run these commands when necessary, and always review the plan carefully before applying.
+
+To run Terraform commands directly against the development environment:
+
+```bash
+export TF_VAR_alarm_email_address=alerts@example.com
+cd terraform/development
+terraform init
+terraform plan [-var="image_tag=<tag>"]
+terraform apply [-var="image_tag=<tag>"]
+```
+
+This uses an S3 remote backend — AWS credentials with access to the `local-transcribe-tfstate-development` bucket are required. Yours should have been included in the permissions for the developer role you were assigned.
+
 #### Architecture diagram
 
 Local Transcribe was developed to run on AWS and/or Azure, with abstractions available for message queues and cloud storage.
