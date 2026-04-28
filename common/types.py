@@ -146,7 +146,6 @@ class MinuteVersionResponse(BaseModel):
     error: str | None
     ai_edit_instructions: str | None
     content_source: ContentSource
-    hallucinations_detected: bool = False
 
 
 class SpeakerPrediction(BaseModel):

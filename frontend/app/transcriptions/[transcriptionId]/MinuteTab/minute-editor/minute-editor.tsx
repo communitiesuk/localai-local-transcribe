@@ -22,7 +22,6 @@ import {
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  AlertTriangle,
   Download,
   Edit,
   Eye,
@@ -293,21 +292,6 @@ export function MinuteEditor({
           />
         </div>
       </div>
-      {minuteVersion.hallucinations_detected && (
-        <div className="mb-3 flex gap-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-900">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-          <div>
-            <p className="font-semibold">
-              Some claims could not be verified (potential hallucinations)
-            </p>
-            <p className="mt-1 text-sm">
-              An automated check was unable to confirm some of the claims made
-              using the transcript. Please review this summary carefully before
-              sharing, or consider generating a new one.
-            </p>
-          </div>
-        </div>
-      )}
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller
           control={form.control}

@@ -6,14 +6,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from common.database.postgres_models import (
-    Hallucination,
-    HallucinationType,
-    JobStatus,
-    Minute,
-    MinuteVersion,
-    Transcription,
-)
+from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
@@ -110,17 +103,6 @@ async def list_minute_versions(
     if not minute or not minute.transcription.user_id or minute.transcription.user_id != user.id:
         raise HTTPException(404)
 
-    version_ids = [v.id for v in minute.minute_versions]
-    hallucinated_ids: set[uuid.UUID] = set()
-    if version_ids:
-        hall_result = await session.exec(
-            select(Hallucination).where(
-                col(Hallucination.minute_version_id).in_(version_ids),
-                Hallucination.hallucination_type == HallucinationType.FACTUAL_FABRICATION,
-            )
-        )
-        hallucinated_ids = {h.minute_version_id for h in hall_result.all()}
-
     return [
         MinuteVersionResponse(
             id=version.id,
@@ -131,7 +113,6 @@ async def list_minute_versions(
             ai_edit_instructions=version.ai_edit_instructions,
             html_content=version.html_content,
             content_source=version.content_source,
-            hallucinations_detected=version.id in hallucinated_ids,
         )
         for version in minute.minute_versions
     ]
