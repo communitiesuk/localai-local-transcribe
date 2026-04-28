@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - development
+  pull_request:
+    branches:
+      - development
 
 permissions:
   id-token: write
@@ -78,7 +81,7 @@ jobs:
     name: Terraform apply
     runs-on: ubuntu-latest
     needs: plan
-    if: needs.plan.outputs.exitcode == 2
+    if: false && needs.plan.outputs.exitcode == 2
     concurrency: tfstate-${{ env.ENVIRONMENT }}
     defaults:
       run:
