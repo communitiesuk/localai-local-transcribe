@@ -13,6 +13,10 @@ The workflow is split into **two stages**:
 
 ---
 
+> [!NOTE]
+> #### poetry install --with evals-summarisation
+> This module optionally uses of the sentence-transformers dependency
+
 ## 1️⃣ Configure Transcript Generation
 
 Edit the config file:
@@ -145,7 +149,7 @@ No need to regenerate transcripts.
 - **Similarity function is configurable**:
   - You can swap out the `text_similarity` param for different strategies, or choose to create one to suit your needs
   - Functions on file:
-    - semantic_similarity
+    - semantic_similarity (requires installing evals-summarisation's group-dev-dependencies )
     - default_similarity
     - containment_similarity (useful for substrings)
   - This directly impacts scoring behaviour and evaluation sensitivity

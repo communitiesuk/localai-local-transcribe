@@ -1,37 +1,23 @@
-import subprocess
-import logging
-from pathlib import Path
-import shutil
 import json
-from datetime import datetime
+import logging
+import shutil
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
-from evals.dataset_generation.data_for_testing.src.settings import (
-    DATA_TEST_TRANSCRIPTS_DIR,
-    CHARACTERISTICS_OUTPUT_DIR
-)
+from evals.dataset_generation.data_for_testing.src.settings import CHARACTERISTICS_OUTPUT_DIR, DATA_TEST_TRANSCRIPTS_DIR
 
 MANUAL_DIR = DATA_TEST_TRANSCRIPTS_DIR / "manual"
 
 
-def run_characteristics_pipeline()-> None:
-    cmd = [
-        "poetry",
-        "run",
-        "python",
-        "-m",
-        "evals.characteristics.src.main"
-    ]
+def run_characteristics_pipeline() -> None:
+    cmd = ["poetry", "run", "python", "-m", "evals.characteristics.src.main"]
 
     logging.info("Running characteristics pipeline...")
 
     try:
-        result = subprocess.run(
-            cmd,
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
 
         logging.info("Pipeline completed successfully")
         logging.debug("STDOUT:\n%s", result.stdout)
@@ -43,19 +29,17 @@ def run_characteristics_pipeline()-> None:
         raise
 
 
-
 def get_latest_file(directory: Path) -> Path:
     files = [f for f in directory.iterdir() if f.is_file()]
 
     if not files:
-        raise ValueError(f"No files found in {directory}")
+        error_msg = f"No files found in {directory}"
+        raise ValueError(error_msg)
 
-    latest = max(files, key=lambda f: f.stat().st_mtime)
-    return latest
+    return max(files, key=lambda f: f.stat().st_mtime)
 
 
-
-def export_results()-> None:
+def export_results() -> None:
     DATA_TEST_TRANSCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
     MANUAL_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -65,7 +49,6 @@ def export_results()-> None:
     manual_filename = f"manual_pcs_{latest_file.stem}.py"
     manual_file_path = MANUAL_DIR / manual_filename
     manifest_path = DATA_TEST_TRANSCRIPTS_DIR / "manifest.json"
-
 
     shutil.copy2(latest_file, dest_json)
     logging.info("Copied output file → %s", dest_json)
@@ -82,16 +65,16 @@ def export_results()-> None:
         "manual_file": str(manual_file_path),
     }
 
-    with open(manifest_path, "w", encoding="utf-8") as f:
+    with Path(manifest_path).open("w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
     logging.info("Wrote manifest → %s", manifest_path)
 
 
-def write_results(results: dict[str,Any], output_dir: Path, prefix: str = "evaluation") -> Path:
+def write_results(results: dict[str, Any], output_dir: Path, prefix: str = "evaluation") -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
     file_path = output_dir / f"{prefix}_{timestamp}.json"
 
     with file_path.open("w", encoding="utf-8") as f:
@@ -109,25 +92,30 @@ def extract_dialogue_entries(src_path: Path, dest_path: Path) -> None:
         data = json.load(f)
 
     if "dialogue_entries" not in data:
-        raise ValueError("Expected 'dialogue_entries' key in source JSON")
+        error_msg = f"'dialogue_entries' key not found in {src_path}"
+        raise ValueError(error_msg)
 
     dialogue_entries = data["dialogue_entries"]
 
     if not isinstance(dialogue_entries, list):
-        raise ValueError("'dialogue_entries' must be a list")
+        error_msg = f"'dialogue_entries' is not a list in {src_path}"
+        raise ValueError(error_msg)
 
-    #validate shape
+    # validate shape
     for i, item in enumerate(dialogue_entries):
         if not isinstance(item, dict):
-            raise ValueError(f"Entry {i} is not a dict")
+            error_msg = f"Entry {i} in 'dialogue_entries' is not a dict in {src_path}"
+            raise ValueError(error_msg)
         if "speaker" not in item or "text" not in item:
-            raise ValueError(f"Entry {i} missing required keys")
+            error_msg = f"Entry {i} missing 'speaker' or 'text' keys in {src_path}"
+            raise ValueError(error_msg)
 
     with dest_path.open("w", encoding="utf-8") as f:
         json.dump(dialogue_entries, f, indent=2)
 
-    print(f"✅ Extracted {len(dialogue_entries)} dialogue entries")
-    print(f"📁 Written to: {dest_path}")
+    logging.info("Extracted %d dialogue entries", len(dialogue_entries))
+    logging.info("Written to: %s", dest_path)
+
 
 def validate_json(file_path: Path) -> None:
     try:
@@ -135,7 +123,8 @@ def validate_json(file_path: Path) -> None:
             json.load(f)
         logging.info("JSON validation passed: %s", file_path.name)
     except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in {file_path}: {e}")
+        error_msg = f"Invalid JSON in {file_path}: {e}"
+        raise ValueError(error_msg) from e
 
 
 def load_json(path: str | Path) -> dict[str, Any]:
@@ -143,6 +132,7 @@ def load_json(path: str | Path) -> dict[str, Any]:
         data = json.load(f)
 
     if not isinstance(data, dict):
-        raise ValueError(f"Expected JSON object, got {type(data)}")
+        error_msg = f"Expected JSON object at {path}, got {type(data)}"
+        raise ValueError(error_msg)
 
     return data
