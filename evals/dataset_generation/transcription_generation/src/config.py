@@ -8,6 +8,9 @@ class TranscriptGenerationConfig(BaseModel):
         default=1.25, description="Multiplier for word_target to determine hard termination (e.g., 1.25 = 125%)"
     )
     num_speakers: int = Field(default=2, description="Number of speakers in conversation")
+    output_filename: str | None = Field(
+        default=None, description="Optional output filename (without .json extension). If not provided, uses timestamp."
+    )
 
     @property
     def speaker_ids(self) -> list[str]:

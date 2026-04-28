@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   getFileExtension,
   getFileExtensionFromBlob,
-} from '../../lib/getFileExtension'
+} from '@/lib/getFileExtension'
 
 describe('getFileExtension', () => {
   it('returns extension for normal file', () => {

@@ -1,0 +1,102 @@
+variable "ssl_certs_created" {
+  description = "Indicates whether ssl certificates have already been manually created"
+  type        = bool
+  default     = false
+}
+
+variable "environment_name" {
+  description = "must be one of: development, or staging"
+  type        = string
+  validation {
+    condition     = contains(["development", "staging"], var.environment_name)
+    error_message = "Environment must be one of: development, staging"
+  }
+}
+
+variable "public_subnet_ids" {
+  type        = list(string)
+  description = "The ids of all the public subnets"
+}
+
+variable "cloudfront_certificate_arn" {
+  type        = string
+  description = "The arn of the certificate to be associated with the cloudfront distribution"
+  default     = null
+}
+
+variable "load_balancer_certificate_arn" {
+  type        = string
+  description = "The arn of the certificate to be associated with the load balancer HTTPS listener"
+  default     = null
+}
+
+variable "vpc_id" {
+  type        = string
+  description = "The ID of the VPC to be associated with."
+}
+
+variable "frontend_port" {
+  type        = number
+  description = "The network port the frontend runs on, this alb assumes the frontend will internally proxy requests to the backend as needed"
+}
+
+# TODO: PRSD-574 - Reinstate when ECS has been configured
+# variable "ecs_security_group_id" {
+#   type        = string
+#   description = "The id of the ecs security group for ecs egress"
+# }
+
+variable "cloudfront_domain_names" {
+  type        = list(string)
+  description = "All MHCLG delegated domain names for cloudfront"
+}
+
+variable "load_balancer_domain_name" {
+  type        = string
+  description = "MHCLG delegated domain name for alb"
+}
+
+variable "ip_allowlist" {
+  type        = list(string)
+  description = "List of allowed IPs - if empty then no ip restrictions are applied"
+  default     = []
+}
+
+variable "cloudwatch_log_expiration_days" {
+  type        = number
+  description = "Number of days to retain cloudwatch logs for"
+}
+
+variable "use_aws_shield_advanced" {
+  type        = bool
+  description = "Indicates whether AWS Shield Advanced should be enabled"
+}
+
+variable "maintenance_mode_on" {
+  type        = bool
+  description = "Indicates whether maintenance mode is on"
+  default     = false
+}
+
+variable "enable_oidc_auth" {
+  description = "Whether to enable GOV.UK SSO (GDS Identity Assurance) OIDC authentication on the ALB listener"
+  type        = bool
+  default     = true
+}
+
+variable "internal_access_oidc_client_id_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client ID."
+  type        = string
+  default     = null
+}
+
+variable "internal_access_oidc_client_secret_name" {
+  description = "SSM parameter name for the Gov Internal Access OIDC client secret."
+  type        = string
+  default     = null
+}
+
+variable "app_host" {
+  description = "The MHCLG delegated domain name for the application, used in host header condition for the load balancer listener rule"
+  type = string
+}

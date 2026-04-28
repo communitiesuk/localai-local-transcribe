@@ -1,0 +1,13 @@
+model:
+  provider: "azure_apim"
+  model: "gpt-4o"
+  temperature: 0.0
+
+dataset:
+  input_dir: "evals/dataset_generation/transcription_generation/output"
+
+run:
+  output_dir: "evals/dataset_generation/characteristics/output"
+
+prompts:
+  extraction_template: "evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2"

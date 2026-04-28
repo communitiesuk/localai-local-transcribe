@@ -28,7 +28,7 @@ function getDocumentStyles(): string {
   `
 }
 
-function formatTranscript(transcript: DialogueEntry[]): string {
+export function formatTranscript(transcript: DialogueEntry[]): string {
   return transcript
     .map(
       (entry) =>
@@ -37,7 +37,10 @@ function formatTranscript(transcript: DialogueEntry[]): string {
     .join('\n')
 }
 
-function preprocessHtml(html: string, transcript: DialogueEntry[]): string {
+export function preprocessHtml(
+  html: string,
+  transcript: DialogueEntry[]
+): string {
   // Handle line breaks and empty paragraphs
   const processedHtml = html
     .replace(/<br\s*\/?>/gi, '</p><p>')

@@ -1,30 +1,18 @@
-export interface UserAuthorisationResult {
+import { AlbJwtVerifier } from 'aws-jwt-verify'
+
+export type UserAuthorisationResult = {
   email: string
   isAuthorised: boolean
   authReason: string
 }
 
-type AuthResponse = {
-  decision: {
-    is_authorised: boolean
-    auth_reason: string
-  }
-  metadata: {
-    user_email: string
-  }
-}
-
-// Validate required environment variables
-// Don't expect an AUTH_API_URL if you're running dev locally / running frontend tests
-const authApiUrl =
-  process.env.AUTH_API_URL ||
-  (process.env.NODE_ENV === 'development' ? 'development' : undefined)
-
-if (!authApiUrl) {
-  throw new Error('AUTH_API_URL is not defined in the environment variables.')
-}
-
-process.env.AUTH_API_URL = authApiUrl
+const verifier =
+  process.env.ENVIRONMENT !== 'local'
+    ? AlbJwtVerifier.create({
+        albArn: process.env.ALB_ARN!,
+        issuer: process.env.OIDC_ISSUER!,
+      })
+    : null
 
 export async function parseAuthToken(
   token: string
@@ -35,29 +23,19 @@ export async function parseAuthToken(
   }
 
   try {
-    const res = await fetch(`${authApiUrl}/tokens/authorise`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ app_name: process.env.REPO || 'unknown', token }),
-      signal: AbortSignal.timeout(5000),
+    const payload = await verifier!.verify(token, {
+      clientId: process.env.OIDC_CLIENT_ID!,
     })
 
-    const data = (await res.json()) as AuthResponse
-
-    const email = data.metadata.user_email
-
+    const email = payload.email as string | undefined
     if (!email) {
-      console.error('No email found in user info')
+      console.error('No email found in JWT payload')
       return null
     }
 
-    return {
-      email,
-      isAuthorised: data.decision.is_authorised,
-      authReason: data.decision.auth_reason,
-    }
+    return { email, isAuthorised: true, authReason: 'OIDC' }
   } catch (error) {
-    console.error('Error parsing auth token:', error)
+    console.error('Error verifying auth token:', error)
     return null
   }
 }

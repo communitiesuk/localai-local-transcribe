@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from typing import Literal
 
 import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
@@ -34,13 +35,8 @@ class Settings(BaseSettings):
     # if using AWS
     AWS_ACCOUNT_ID: str | None = Field(description="AWS account ID", default=None)
     AWS_REGION: str | None = Field(description="AWS region", default=None)
-
-    # if using i.AI Auth API
-    REPO: str = Field(description="The name of the GitHub repository")
-    AUTH_API_URL: str = Field(description="The hostname of the Auth API")
-    AUTH_API_REQUEST_TIMEOUT: int | None = Field(
-        description="The timeout in seconds to wait for auth response", default=None
-    )
+    ALB_ARN: str | None = Field(description="ARN of the ALB, used to validate the JWT signer claim", default=None)
+    OIDC_ISSUER: str | None = Field(description="OIDC issuer URL, used to validate the JWT issuer claim", default=None)
 
     ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
@@ -76,8 +72,19 @@ class Settings(BaseSettings):
     # if using Azure APIM
     AZURE_APIM_URL: str | None = Field(description="Base URL for Minute's Azure APIM LLM.", default=None)
     AZURE_APIM_API_VERSION: str | None = Field(description="Azure APIM API version, <yyyy-mm-dd>", default=None)
-    AZURE_APIM_ACCESS_TOKEN: str | None = Field(description="Access token for Azure APIM", default=None)
     AZURE_APIM_SUBSCRIPTION_KEY: str | None = Field(description="Subscription key for Azure APIM", default=None)
+    AZURE_APIM_AUTH_METHOD: Literal["client_secret", "static_token"] | None = Field(
+        description="APIM auth method: 'client_secret' or 'static_token'", default=None
+    )
+    # if using 'client_secret' for AZURE_APIM_AUTH_METHOD
+    AZURE_APIM_TENANT_ID: str | None = Field(description="Azure tenant ID for APIM client secret auth", default=None)
+    AZURE_APIM_CLIENT_ID: str | None = Field(description="Azure client ID for APIM client secret auth", default=None)
+    AZURE_APIM_CLIENT_SECRET: str | None = Field(
+        description="Azure client secret for APIM client secret auth", default=None
+    )
+    AZURE_APIM_SCOPE: str | None = Field(description="OAuth scope for APIM client secret auth", default=None)
+    # if using 'static_token' for AZURE_APIM_AUTH_METHOD
+    AZURE_APIM_ACCESS_TOKEN: str | None = Field(description="Access token for Azure APIM", default=None)
 
     # if using Gemini
     GOOGLE_APPLICATION_CREDENTIALS: str | None = Field(

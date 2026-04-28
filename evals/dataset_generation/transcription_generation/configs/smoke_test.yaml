@@ -1,0 +1,18 @@
+theme: >
+  Doctor discussing patient care with a 70 year-old patient who has prostate cancer.
+  Patient is widowed so his kids take care of him, traveling from his hometown of Lagos.
+  The patient mentions his late husband in one very short sentence. 
+
+  The kids are adopted, as the patient is openly gay.
+  The patient has known the doctor for many years, before they underwent gender reassignment.
+  This is only mentioned implicitly in the conversation, as the patient keeps confusing their previous and current name.
+  The doctor at some point corrects them on this, in a polite maner, and the patient appologies and heavily implies the previous transition.
+  
+  At one point a pregnant nurse appears in the conversation to take the patient's blood pressure.
+  Patient asks in a polite and friendly way about the pregnancy.
+  Patient makes a remark like 'If only God was real, I would be praying now!'
+  The doctor must use the patient's name at least once!
+
+word_target: 1500
+num_speakers: 3
+output_filename: "transcript_smoke_test"
