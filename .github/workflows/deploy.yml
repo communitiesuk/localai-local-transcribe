@@ -68,7 +68,7 @@ jobs:
 
       - name: Terraform plan
         id: plan
-        run: terraform plan -input=false -detailed-exitcode -var="image_tag=${{ github.sha }}"
+        run: terraform plan -input=false -lock=false -detailed-exitcode -var="image_tag=${{ github.sha }}"
         continue-on-error: true
 
       - name: Fail if plan errored
