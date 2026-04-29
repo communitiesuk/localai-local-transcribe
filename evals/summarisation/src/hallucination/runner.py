@@ -47,7 +47,7 @@ def run_hallucination_eval(
             statements = build_statements(record.uncited_claims)
             n_hallucinations = len(statements)
             n_supported = max(0, record.total_claims - n_hallucinations)
-            total = record.total_claims if record.total_claims > 0 else n_hallucinations
+            total = record.total_claims
             hallucination_rate = round(n_hallucinations / total, 3) if total > 0 else 0.0
 
             report = HallucinationReport(
