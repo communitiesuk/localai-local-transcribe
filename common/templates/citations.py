@@ -12,9 +12,14 @@ class ClaimsList(BaseModel):
     claims: list[str]
 
 
+class ClaimCitation(BaseModel):
+    claim: str
+    citation_indices: list[int]
+
+
 class CitationResult(BaseModel):
     cited_summary: str
-    uncited_claims: list[str]
+    claim_citations: list[ClaimCitation]
 
 
 async def extract_claims(draft: str) -> list[str]:
@@ -51,10 +56,11 @@ async def add_citations_to_minute(
     uncited_hallucinations = [
         LLMHallucination(
             hallucination_type=HallucinationType.FACTUAL_FABRICATION,
-            hallucination_text=claim,
+            hallucination_text=cc.claim,
             hallucination_reason="Could not find supporting evidence in the transcript",
         )
-        for claim in citation_result.uncited_claims
+        for cc in citation_result.claim_citations
+        if not cc.citation_indices
     ]
 
     return minute or "", total_claims, uncited_hallucinations

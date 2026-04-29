@@ -35,7 +35,9 @@ If a claim has partial support, cite the closest matching entries. Only leave a 
 <output>
 Return:
 1. The cited meeting summary (the original text with [n] citation markers added inline).
-2. A list of uncited claims — claims for which no supporting transcript entry could be found.
+2. For every claim in claims_to_cite, one entry in claim_citations containing:
+   - claim: the claim text exactly as it appears in claims_to_cite
+   - citation_indices: the list of transcript indices that support this claim (empty list [] if none found)
 
-CRITICAL: Each entry in uncited_claims MUST be the verbatim phrase or sentence copied exactly from the meeting_summary text (not a paraphrase or reworded version of the claim). This is required so the phrase can be located and highlighted in the original document. If multiple claims map to the same sentence or phrase in the meeting summary, include that phrase once per distinct unsupported span.
+Every claim in claims_to_cite MUST appear in claim_citations — do not omit any.
 </output>

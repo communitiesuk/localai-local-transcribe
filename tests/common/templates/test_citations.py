@@ -5,6 +5,7 @@ import pytest
 from common.database.postgres_models import HallucinationType
 from common.templates.citations import (
     CitationResult,
+    ClaimCitation,
     ClaimsList,
     add_citations_to_minute,
     cite_claims,
@@ -74,7 +75,10 @@ async def test_cite_claims_returns_citation_result():
     transcript = []
     expected = CitationResult(
         cited_summary="<p>The budget is £1m[1]. John mentioned the timeline.</p>",
-        uncited_claims=["John mentioned the timeline"],
+        claim_citations=[
+            ClaimCitation(claim="The budget is £1m", citation_indices=[1]),
+            ClaimCitation(claim="John mentioned the timeline", citation_indices=[]),
+        ],
     )
 
     with patch("common.templates.citations.create_default_chatbot") as mock_create:
@@ -92,7 +96,6 @@ async def test_add_citations_to_minute_returns_uncited_claims_as_hallucinations(
     transcript = []
     draft = "<p>The budget is £1m. John mentioned the timeline.</p>"
     cited = "<p>The budget is £1m[1]. John mentioned the timeline.</p>"
-    uncited = ["John mentioned the timeline"]
 
     with (
         patch(
@@ -103,7 +106,13 @@ async def test_add_citations_to_minute_returns_uncited_claims_as_hallucinations(
         patch(
             "common.templates.citations.cite_claims",
             new_callable=AsyncMock,
-            return_value=CitationResult(cited_summary=cited, uncited_claims=uncited),
+            return_value=CitationResult(
+                cited_summary=cited,
+                claim_citations=[
+                    ClaimCitation(claim="The budget is £1m", citation_indices=[1]),
+                    ClaimCitation(claim="John mentioned the timeline", citation_indices=[]),
+                ],
+            ),
         ),
     ):
         result_minute, result_total_claims, result_hallucinations = await add_citations_to_minute(
@@ -128,7 +137,12 @@ async def test_add_citations_to_minute_returns_empty_hallucinations_when_all_cit
         patch(
             "common.templates.citations.cite_claims",
             new_callable=AsyncMock,
-            return_value=CitationResult(cited_summary=cited, uncited_claims=[]),
+            return_value=CitationResult(
+                cited_summary=cited,
+                claim_citations=[
+                    ClaimCitation(claim="The budget is £1m", citation_indices=[1]),
+                ],
+            ),
         ),
     ):
         result_minute, result_total_claims, result_hallucinations = await add_citations_to_minute(
