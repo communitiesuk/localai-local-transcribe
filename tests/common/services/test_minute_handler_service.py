@@ -37,7 +37,7 @@ def mock_user() -> User:
 
 
 @pytest.fixture
-def mock_dialogue_entries():
+def mock_dialogue_entry():
     return DialogueEntry(speaker="John", text="hello world", start_time=0.0, end_time=1.0)
 
 
@@ -98,7 +98,7 @@ def mock_transcription(mock_minute, mock_user) -> Transcription:
         updated_datetime=datetime.now(tz=UTC),
         minutes=[mock_minute],
         title="Test Transcription",
-        dialogue_entries=mock_dialogue_entries,
+        dialogue_entries=mock_dialogue_entry,
     )
 
 
@@ -233,43 +233,43 @@ async def test_get_only_minute_version_success(mock_session, mock_minute_version
     session.expunge.assert_called_once_with(mock_minute)
 
 
-def test_predict_meeting_too_short(mock_dialogue_entries):
+def test_predict_meeting_too_short(mock_dialogue_entry):
     dialogue_too_short = ("a " * (settings.MIN_WORD_COUNT_FOR_SUMMARY - 1)).strip()
 
-    mock_dialogue_entries["text"] = dialogue_too_short
-    result = MinuteHandlerService.predict_meeting([mock_dialogue_entries])
+    mock_dialogue_entry["text"] = dialogue_too_short
+    result = MinuteHandlerService.predict_meeting([mock_dialogue_entry])
     assert result == MeetingType.too_short
 
 
-def test_predict_meeting_standard(mock_dialogue_entries):
+def test_predict_meeting_standard(mock_dialogue_entry):
     valid_dialogue = ("a " * (settings.MIN_WORD_COUNT_FOR_SUMMARY + 1)).strip()
 
-    mock_dialogue_entries["text"] = valid_dialogue
-    result = MinuteHandlerService.predict_meeting([mock_dialogue_entries])
+    mock_dialogue_entry["text"] = valid_dialogue
+    result = MinuteHandlerService.predict_meeting([mock_dialogue_entry])
     assert result == MeetingType.standard
 
 
-def test_handle_bad_transcript(mock_dialogue_entries, mocker):
+def test_handle_bad_transcript(mock_dialogue_entry, mocker):
     utterance = "Adam says hello world"
     mocker.patch(
         "common.services.minute_handler_service.transcript_as_speaker_and_utterance",
         return_value=utterance,
     )
-    result, hallucinations = MinuteHandlerService.handle_bad_transcript(mock_dialogue_entries)
+    result, hallucinations = MinuteHandlerService.handle_bad_transcript(mock_dialogue_entry)
 
     assert f"Transcript is: {utterance}" in result
     assert hallucinations == []
 
 
 @pytest.mark.asyncio
-async def test_generate_basic_minutes(mock_dialogue_entries, mocker):
+async def test_generate_basic_minutes(mock_dialogue_entry, mocker):
     chatbot_output = "I am a chatbot"
     mock_chatbot = AsyncMock()
     mock_chatbot.chat = AsyncMock(return_value=chatbot_output)
     mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
-    result, hallucinations = await MinuteHandlerService.generate_basic_minutes([mock_dialogue_entries])
+    result, hallucinations = await MinuteHandlerService.generate_basic_minutes([mock_dialogue_entry])
 
     assert result == chatbot_output
     assert hallucinations == []
@@ -277,7 +277,7 @@ async def test_generate_basic_minutes(mock_dialogue_entries, mocker):
 
 
 @pytest.mark.asyncio
-async def test_edit_minutes_with_ai(mock_dialogue_entries, mocker):
+async def test_edit_minutes_with_ai(mock_dialogue_entry, mocker):
     text_content = "edited minutes"
     mock_chatbot = AsyncMock()
     mock_chatbot.chat = AsyncMock(return_value=text_content)
@@ -287,7 +287,7 @@ async def test_edit_minutes_with_ai(mock_dialogue_entries, mocker):
     result, hallucinations = await MinuteHandlerService.edit_minutes_with_ai(
         minutes="<p>original minutes</p>",
         edit_instructions="make it shorter",
-        transcript=[mock_dialogue_entries],
+        transcript=[mock_dialogue_entry],
     )
 
     assert result == text_content
@@ -295,7 +295,7 @@ async def test_edit_minutes_with_ai(mock_dialogue_entries, mocker):
 
 
 @pytest.mark.asyncio
-async def test_edit_minutes_with_ai_strips_code_fences(mock_dialogue_entries, mocker):
+async def test_edit_minutes_with_ai_strips_code_fences(mock_dialogue_entry, mocker):
     chatbot_output = "edited minutes"
     mock_chatbot = AsyncMock()
     mock_chatbot.chat = AsyncMock(return_value=f"```html<p>{chatbot_output}</p>```")
@@ -305,7 +305,7 @@ async def test_edit_minutes_with_ai_strips_code_fences(mock_dialogue_entries, mo
     result, _ = await MinuteHandlerService.edit_minutes_with_ai(
         minutes="<p>original minutes</p>",
         edit_instructions="make it shorter",
-        transcript=[mock_dialogue_entries],
+        transcript=[mock_dialogue_entry],
     )
 
     assert result == f"<p>{chatbot_output}</p>"
@@ -339,11 +339,11 @@ async def test_generate_minutes_short(mocker, mock_minute, mock_transcription):
 
 
 @pytest.mark.asyncio
-async def test_generate_minutes_standard(mocker, mock_dialogue_entries, mock_minute, mock_transcription):
+async def test_generate_minutes_standard(mocker, mock_dialogue_entry, mock_minute, mock_transcription):
     output = "standard"
 
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entries
+    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
 
     mocker.patch.object(MinuteHandlerService, "generate_full_minutes", AsyncMock(return_value=(output, [])))
     mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
@@ -431,10 +431,10 @@ async def test_generate_minute_from_user_template_raises_if_no_template(mocker, 
 
 @pytest.mark.asyncio
 async def test_process_minute_generation_message_success(
-    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entries
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
 ):
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entries
+    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
     dialogue = "<p>the family table</p>"
 
     mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
@@ -454,16 +454,17 @@ async def test_process_minute_generation_message_success(
 
 @pytest.mark.asyncio
 async def test_process_minute_generation_message_fails_if_no_dialogue(
-    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entries
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
 ):
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entries
+    mock_minute.transcription.dialogue_entries = []
 
     mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
     mocker.patch.object(MinuteHandlerService, "update_minute_version")
 
-    with pytest.raises(MinuteGenerationFailedError):
+    with pytest.raises(MinuteGenerationFailedError) as exc_info:
         await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
+    assert f"Transcription for minute {mock_minute.id} has no dialogue entries" in str(exc_info.value.__cause__)
 
     MinuteHandlerService.update_minute_version.assert_called_with(
         mock_minute_version.id, status=JobStatus.FAILED, error=mocker.ANY
@@ -480,11 +481,11 @@ async def test_process_minute_generation_message_raises_if_minute_version_not_fo
 
 @pytest.mark.asyncio
 async def test_process_minute_edit_message_success(
-    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entries
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
 ):
     output = "edited_string"
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entries
+    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
 
     target = MinuteVersion(
         id=uuid4(),
