@@ -83,7 +83,7 @@ locals {
       value = "client_secret"
     }, {
     name  = "AZURE_APIM_URL"
-    value = "https://api.azc.test.communities.gov.uk/minute/"
+    value = "https://api.azc.test.communities.gov.uk/localtranscribe/"
     }, {
     name  = "AZURE_APIM_API_VERSION"
     value = "2024-10-21"
