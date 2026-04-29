@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from common.azure_apim_auth import AzureStaticTokenProvider
 from common.llm.adapters import AzureAPIMModelAdapter
-from common.llm.adapters.azure_apim import AzureStaticTokenProvider
 from common.settings import get_settings
 
 

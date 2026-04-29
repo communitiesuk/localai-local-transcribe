@@ -4,14 +4,12 @@ import asyncio
 import logging
 import re
 from collections.abc import Awaitable, Callable
-from functools import cache
-from typing import Protocol
 
-from azure.identity.aio import ClientSecretCredential
 from openai import APIConnectionError, APIError, AsyncOpenAI, AuthenticationError, RateLimitError
 from openai.types.chat import ChatCompletion, ParsedChatCompletion
 from openai.types.chat.chat_completion import Choice
 
+from common.azure_apim_auth import AzureTokenProvider
 from common.settings import get_settings
 
 from .base import ModelAdapter
@@ -22,66 +20,6 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 MAX_RETRIES = 6
-
-
-@cache
-def get_azure_client_secret_token_provider(
-    tenant_id: str, client_id: str, client_secret: str, scope: str
-) -> AzureTokenProvider:
-    """
-    Returns an AzureClientSecretTokenProvider instance for the configured tenant/client. Caches providers.
-    """
-    return AzureClientSecretCredentialTokenProvider(tenant_id, client_id, client_secret, scope)
-
-
-class AzureTokenProvider(Protocol):
-    async def get_token(self) -> str: ...
-    async def invalidate_token(self) -> None: ...
-
-
-class AzureStaticTokenProvider:
-    """
-    Basic token provider which always returns the token it was initialised with
-    """
-
-    def __init__(self, token: str) -> None:
-        self._token = token
-
-    async def get_token(self) -> str:
-        return self._token
-
-    async def invalidate_token(self) -> None:
-        pass
-
-
-class AzureClientSecretCredentialTokenProvider:
-    """
-    Handles getting Azure Tokens via ClientSecretCredential
-    """
-
-    def __init__(self, tenant_id: str, client_id: str, client_secret: str, scope: str) -> None:
-        self._refresh_lock = asyncio.Lock()
-        self._token: str | None = None
-        self._token_valid: bool = False
-        self._azure_credential = ClientSecretCredential(tenant_id, client_id, client_secret)
-        self.scope = scope
-
-    async def _refresh_token(self) -> str:
-        async with self._refresh_lock:
-            if self._token_valid and self._token:
-                return self._token
-            result = await self._azure_credential.get_token(self.scope)
-            self._token = result.token
-            self._token_valid = True
-            return self._token
-
-    async def get_token(self) -> str:
-        if self._token_valid and self._token:
-            return self._token
-        return await self._refresh_token()
-
-    async def invalidate_token(self) -> None:
-        self._token_valid = False
 
 
 class AzureAPIMModelAdapter(ModelAdapter):
@@ -226,33 +164,3 @@ class AzureAPIMModelAdapter(ModelAdapter):
             logger.warning("max output tokens reached (response_id=%s)", response.id)
             return True
         return False
-
-
-def build_azure_apim_token_provider() -> AzureTokenProvider:
-    """Factory that builds the appropriate APIM token provider based on settings."""
-    if settings.AZURE_APIM_AUTH_METHOD == "client_secret":
-        if not settings.AZURE_APIM_TENANT_ID:
-            msg = "AZURE_APIM_TENANT_ID is required for azure_apim client_secret auth"
-            raise ValueError(msg)
-        if not settings.AZURE_APIM_CLIENT_ID:
-            msg = "AZURE_APIM_CLIENT_ID is required for azure_apim client_secret auth"
-            raise ValueError(msg)
-        if not settings.AZURE_APIM_CLIENT_SECRET:
-            msg = "AZURE_APIM_CLIENT_SECRET is required for azure_apim client_secret auth"
-            raise ValueError(msg)
-        if not settings.AZURE_APIM_SCOPE:
-            msg = "AZURE_APIM_SCOPE is required for azure_apim client_secret auth"
-            raise ValueError(msg)
-        return get_azure_client_secret_token_provider(
-            settings.AZURE_APIM_TENANT_ID,
-            settings.AZURE_APIM_CLIENT_ID,
-            settings.AZURE_APIM_CLIENT_SECRET,
-            settings.AZURE_APIM_SCOPE,
-        )
-    if settings.AZURE_APIM_AUTH_METHOD == "static_token":
-        if not settings.AZURE_APIM_ACCESS_TOKEN:
-            msg = "AZURE_APIM_ACCESS_TOKEN is required for azure_apim static_token auth"
-            raise ValueError(msg)
-        return AzureStaticTokenProvider(settings.AZURE_APIM_ACCESS_TOKEN)
-    msg = "AZURE_APIM_AUTH_METHOD is required, use either 'static_token' or 'client_secret'"
-    raise ValueError(msg)

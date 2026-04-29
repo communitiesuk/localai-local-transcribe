@@ -4,8 +4,8 @@ from typing import Any
 
 import httpx
 
+from common.azure_apim_auth import AzureTokenProvider, build_azure_apim_token_provider
 from common.database.postgres_models import DialogueEntry
-from common.llm.adapters.azure_apim import AzureTokenProvider, build_azure_apim_token_provider
 from common.settings import get_settings
 
 TOO_MANY_REQUESTS = 429

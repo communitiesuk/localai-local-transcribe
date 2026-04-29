@@ -10,10 +10,8 @@ from tenacity import (
     wait_random_exponential,
 )
 
+from common.azure_apim_auth import build_azure_apim_token_provider
 from common.llm.adapters import AzureAPIMModelAdapter, GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
-from common.llm.adapters.azure_apim import (
-    build_azure_apim_token_provider,
-)
 from common.prompts import get_hallucination_detection_messages
 from common.settings import get_settings
 from common.types import LLMHallucination, LLMHallucinationList
