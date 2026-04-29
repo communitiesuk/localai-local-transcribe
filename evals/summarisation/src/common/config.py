@@ -51,9 +51,14 @@ class JudgeConfig(BaseModel):
 class PromptConfig(BaseModel):
     """Configuration for prompt template paths and names."""
 
-    summarizer_template_path: str | None = None
     summarizer_template_name: str | None = None
     judge_template_path: str
+
+
+class HallucinationConfig(BaseModel):
+    """Optional addon configuration for evidence-span hallucination detection."""
+
+    enabled: bool = False
 
 
 class AppConfig(BaseModel):
@@ -64,6 +69,7 @@ class AppConfig(BaseModel):
     judge: JudgeConfig
     metrics: list[MetricName] = Field(default_factory=default_criteria)
     prompts: PromptConfig
+    hallucination: HallucinationConfig = Field(default_factory=HallucinationConfig)
 
 
 def load_config(path: str | Path) -> AppConfig:

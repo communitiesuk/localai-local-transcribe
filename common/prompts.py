@@ -1,66 +1,63 @@
-# flake8: noqa: E501
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
+
+_TEMPLATES_DIR = Path(__file__).parent / "prompt_templates"
+_env = Environment(
+    loader=FileSystemLoader(_TEMPLATES_DIR),
+    undefined=StrictUndefined,
+    autoescape=select_autoescape([]),
+    keep_trailing_newline=True,
+)
+
+
+def _render(template_name: str, **kwargs: object) -> str:
+    return _env.get_template(template_name).render(**kwargs)
 
 
 def get_transcript_messages(transcript: list[DialogueEntry]) -> dict[str, str]:
     return {
         "role": "user",
-        "content": f"Here is the meeting transcript:\n{transcript_as_speaker_and_utterance(transcript)}",
+        "content": _render("transcript.j2", transcript=transcript_as_speaker_and_utterance(transcript)),
     }
 
 
 def get_minutes_messages(minutes: str) -> dict[str, str]:
-    return {"role": "user", "content": "Here is the summary of the meeting for which you will edit:" + minutes}
+    return {"role": "user", "content": _render("minutes.j2", minutes=minutes)}
 
 
 def get_ai_edit_initial_messages(
-    minutes: str, edit_instructions: str, transcript: list[DialogueEntry]
+    minutes: str,
+    edit_instructions: str,
+    transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
     return [
-        {
-            "role": "system",
-            "content": "You are a meeting minutes editor. You are given a transcript of a meeting and a summary of that meeting. "
-            "You are also given instructions for editing the summary. "
-            "You should edit the summary according to the instructions. "
-            "Do not return anything other than the edited summary. "
-            "Your output should be in HTML format and must not contain any code fences or other formatting. "
-            "Do not reformat anything in square brackets, but keep them in their original style, for example [1][2][3] should remain as [1][2][3] rather than be [1-3]",
-        },
+        {"role": "system", "content": _render("minutes_edit_system.j2")},
         get_transcript_messages(transcript),
         get_minutes_messages(minutes),
-        {
-            "role": "user",
-            "content": "Here are the instructions the user provided for editing the summary:" + edit_instructions,
-        },
+        {"role": "user", "content": _render("edit_instructions.j2", edit_instructions=edit_instructions)},
     ]
 
 
 def get_chat_with_transcript_system_message(transcript: list[DialogueEntry]) -> dict[str, str]:
     return {
         "role": "system",
-        "content": f"""You are given a transcript of a meeting. Your role is to respond to the user's requests about the transcript.
-Your answers should only use the information contained in the transcript. Do not reference anything outside of the transcript.
-You should add citations where necessary. Each citation should be of the form [n] where n is the index of the transcript item. Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81]
-Here is the meeting transcript:\n{transcript_as_index_speaker_and_utterance(transcript)}""",
+        "content": _render("chat_with_transcript.j2", transcript=transcript_as_index_speaker_and_utterance(transcript)),
     }
 
 
 def get_basic_minutes_prompt(
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
-    """
-    A function to generate a basic meeting minutes prompt based on a provided transcript of dialogues. It combines
+    """A function to generate a basic meeting minutes prompt based on a provided transcript of dialogues. It combines
     a generic prompt with the transcript entries to create a structured message list. Intended to be used
     as a fall back when no other summary type is suitable, due to the likelihood of hallucinations.
     """
-    prompt = """Provide a simple summary of the meeting."""
     return [
-        {
-            "role": "system",
-            "content": prompt,
-        },
+        {"role": "system", "content": _render("basic_minutes.j2")},
         get_transcript_messages(transcript),
     ]
 
@@ -68,38 +65,21 @@ def get_basic_minutes_prompt(
 def get_sections_from_transcript_prompt(
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
-    # Base system message for no agenda
-    system_message = """You are an AI meeting assistant. Your task is to take a transcript of a meeting and generate a list of sections that the meeting should be split into.
-The sections should be in the order they appear in the transcript. Please think carefully about what the sections should be and based on the content of the transcript. The sections tend to be the high level topics of discussion."""
-
     return [
-        {
-            "role": "system",
-            "content": system_message,
-        },
+        {"role": "system", "content": _render("sections_from_transcript.j2")},
         get_transcript_messages(transcript),
     ]
 
 
 def get_meeting_detection_prompt(transcript: list[DialogueEntry]) -> list[dict[str, str]]:
     return [
-        {
-            "role": "system",
-            "content": "Your task is to identify if the transcript appears to be a long meeting between "
-            "multiple parties, involving a substantial amount of discussion between multiple speakers."
-            " Return True if the transcript appears to be a long meeting, and False if it appears to be a short meeting.",
-        },
+        {"role": "system", "content": _render("meeting_detection.j2")},
         get_transcript_messages(transcript),
     ]
 
 
 def get_hallucination_detection_messages() -> list[dict[str, str]]:
-    return [
-        {
-            "role": "user",
-            "content": """Is your above output consistent with the instructions you were given, or is there evidence of hallucination?""",
-        }
-    ]
+    return [{"role": "user", "content": _render("hallucination_detection.j2")}]
 
 
 def format_guidelines(guidelines: str | list[str]) -> str:
@@ -110,6 +90,7 @@ def format_guidelines(guidelines: str | list[str]) -> str:
 
     Returns:
         A string with guidelines formatted as markdown bullet points
+
     """
     if isinstance(guidelines, list):
         return "\n".join(f"- {guideline}" for guideline in guidelines)
@@ -117,39 +98,29 @@ def format_guidelines(guidelines: str | list[str]) -> str:
 
 
 def get_section_for_agenda_prompt(section: str) -> dict[str, str]:
-    return {"role": "user", "content": f"The item of the meeting that you will be contributing to is: {section}"}
+    return {"role": "user", "content": _render("section_for_agenda.j2", section=section)}
 
 
-def get_citations_prompt(initial_draft: str, transcript: list[DialogueEntry]) -> list[dict[str, str]]:
+def get_extract_claims_prompt(draft: str) -> list[dict[str, str]]:
+    return [{"role": "user", "content": _render("extract_claims.j2", draft=draft)}]
+
+
+def get_cite_claims_prompt(
+    initial_draft: str,
+    claims: list[str],
+    transcript: list[DialogueEntry],
+) -> list[dict[str, str]]:
+    claims_text = "\n".join(f"- {claim}" for claim in claims)
     return [
         {
             "role": "user",
-            "content": f"""<task>
-Add citations to the provided meeting summary which reference items in the transcript.
-</task>
-
-<transcript>
-{transcript_as_index_speaker_and_utterance(transcript)}
-</transcript>
-
-<meeting_summary>
-{initial_draft}
-</meeting_summary>
-
-<formatting_instructions>
-Each citation should be of the form [n] where n is the index of the transcript item. Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81].
-</formatting_instructions>
-
-<requirements>
-Each statement should have a maximum of 5 citations.
-Do not add citations to lists of attendees.
-</requirements>
-
-<output>
-Output the meeting summary unchanged except for the addition of citations.
-</output>
-""",
-        }
+            "content": _render(
+                "cite_claims.j2",
+                transcript=transcript_as_index_speaker_and_utterance(transcript),
+                claims_text=claims_text,
+                initial_draft=initial_draft,
+            ),
+        },
     ]
 
 
@@ -158,11 +129,9 @@ def string_to_system_message(string: str) -> dict[str, str]:
 
 
 def get_meeting_title_prompt(transcript: list[DialogueEntry]) -> list[dict[str, str]]:
-    prompt = f"""<task>
-Generate a short title for the meeting
-</task>
-
-<transcript>
-{transcript_as_speaker_and_utterance(transcript)}
-</transcript>"""
-    return [{"role": "user", "content": prompt}]
+    return [
+        {
+            "role": "user",
+            "content": _render("meeting_title.j2", transcript=transcript_as_speaker_and_utterance(transcript)),
+        },
+    ]

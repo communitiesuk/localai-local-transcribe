@@ -22,7 +22,7 @@ class LocalStorageService(StorageService):
 
     @classmethod
     async def generate_presigned_url_put_object(cls, key: str, expiry_seconds: int) -> str:  # noqa: ARG003
-        return f"/api/proxy/mock_storage/uploadfile/{key}"
+        return f"{settings.LOCAL_STORAGE_BASE_URL}/mock_storage/uploadfile/{key}"
 
     @classmethod
     async def generate_presigned_url_get_object(cls, key: str, filename: str, expiry_seconds: int) -> str:  # noqa: ARG003

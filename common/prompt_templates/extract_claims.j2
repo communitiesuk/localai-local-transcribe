@@ -1,0 +1,37 @@
+<task>
+Identify all statements in the meeting summary that make claims requiring verification against the transcript. Cast the net wide — err strongly on the side of including a claim rather than omitting it.
+</task>
+
+<meeting_summary>
+{{ draft }}
+</meeting_summary>
+
+<requirements>
+Extract each claim as a single, atomic, self-contained statement — one verifiable fact per claim.
+
+**Decompose compound sentences.** When a sentence contains an attribution AND content, extract both as separate claims:
+
+Example: "Unknown Speaker 4 mentioned that Sparklehoof has been helping them brainstorm ideas for the browser's new features."
+→ Claim 1 (attribution): "Unknown Speaker 4 mentioned Sparklehoof"
+→ Claim 2 (content as standalone fact): "Sparklehoof has been helping Unknown Speaker 4 brainstorm ideas for the browser's new features"
+
+Example: "X mentioned Y as a source of inspiration for Z"
+→ Claim 1: "X mentioned Y"
+→ Claim 2: "X described Y as a source of inspiration for Z"
+
+**No duplicates.** Do not emit the same fact twice with different wording (e.g. "mentioned" vs "stated"). Each distinct fact appears exactly once.
+
+Include ALL of the following:
+- Specific factual claims: figures, monetary amounts, quantities, dates, deadlines
+- Named decisions or agreed actions
+- Direct attributions: "X mentioned Y", "X said Y", "X noted that...", "X confirmed...", "X agreed to..." — these are claims in their own right
+- The content of what was attributed, restated as a standalone factual claim (strip the "X mentioned that..." wrapper and express the underlying fact directly)
+- Commitments or promises: "will", "agreed to", "plans to", "intends to"
+- References to documents, reports, or data
+- Statements about what was raised, discussed, or proposed by named individuals or groups
+- Any described position, concern, or recommendation attributed to a person or team
+
+**Key rule:** If a single sentence asserts multiple verifiable facts (e.g., who said something AND what they said AND why), output each as a separate claim.
+
+Do NOT include headings, attendee lists, or purely structural phrases.
+</requirements>
