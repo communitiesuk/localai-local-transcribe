@@ -7,10 +7,10 @@ from typing import Any
 import dspy
 
 from common.database.postgres_models import DialogueEntry
-from evals.summarisation.src.bias.summarizer import generate_summary
 from evals.summarisation.src.bias.types import CounterfactualMetricResult, IterationMetrics
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import DialogExample
+from evals.summarisation.src.summarizer import generate_summary
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,8 @@ async def run_single_iteration(
     Runs a single iteration of summary generation, evaluation, and sentiment analysis.
     """
     t0 = time.perf_counter()
-    summary = await generate_summary(dialogue_entries, template_name)
+    generated = await generate_summary(dialogue_entries, template_name)
+    summary = generated.text
     t1 = time.perf_counter()
     summarize_ms = int((t1 - t0) * 1000)
 
