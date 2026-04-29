@@ -113,6 +113,15 @@ module "ecr" {
   image_retention_count = 10
 }
 
+module "github_actions_access" {
+  source = "../modules/github_actions_access"
+
+  environment_name                   = local.environment_name
+  push_frontend_ecr_image_policy_arn = module.ecr.push_frontend_ecr_image_policy_arn
+  push_backend_ecr_image_policy_arn  = module.ecr.push_backend_ecr_image_policy_arn
+  push_worker_ecr_image_policy_arn   = module.ecr.push_worker_ecr_image_policy_arn
+}
+
 module "secrets" {
   source = "../modules/secrets"
 
