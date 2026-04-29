@@ -111,4 +111,4 @@ The sections should be in the order they appear in the transcript. Typically you
             transcript=transcript, initial_draft=final
         )
         hallucinations += citation_hallucinations
-        return final, _total_claims, hallucinations
+        return MinuteAndHallucinations(text=final, total_claims=_total_claims, hallucinations=hallucinations)

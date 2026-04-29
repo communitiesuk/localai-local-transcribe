@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 
@@ -203,7 +204,11 @@ class LLMHallucinationList(BaseModel):
     hallucinations: list[LLMHallucination] = Field(description="List of detected hallucinations")
 
 
-MinuteAndHallucinations = tuple[str, int, list[LLMHallucination]]
+@dataclass
+class MinuteAndHallucinations:
+    text: str
+    total_claims: int
+    hallucinations: list[LLMHallucination]
 
 
 class MeetingType(StrEnum):

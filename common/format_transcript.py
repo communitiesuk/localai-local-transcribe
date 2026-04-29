@@ -17,6 +17,4 @@ def format_indexed_transcript(entries: Iterable[tuple[int, str, str]]) -> str:
 
 
 def transcript_as_index_speaker_and_utterance(transcript: list[DialogueEntry]) -> str:
-    return format_indexed_transcript(
-        (i, entry["speaker"], entry["text"]) for i, entry in enumerate(transcript, start=1)
-    )
+    return format_indexed_transcript((i, entry["speaker"], entry["text"]) for i, entry in enumerate(transcript))

@@ -149,16 +149,19 @@ def run_eval(
         def __call__(self, *, dialogue: str) -> dspy.Prediction:
             entries = _dialogue_to_entries(dialogue)
             t0 = time.perf_counter()
-            summary_text, total_claims, hallucinations = asyncio.run(generate_summary(entries, template_name))
+            generated = asyncio.run(generate_summary(entries, template_name))
             summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
             candidate = DialogSummary(
-                summary=summary_text,
+                summary=generated.text,
                 model=model_name,
                 prompt_version=prompt_version,
                 generation_config=GenerationConfig(temperature=0.0, max_tokens=1024),
             )
             return dspy.Prediction(
-                summary=summary_text, candidate=candidate, hallucinations=hallucinations, total_claims=total_claims
+                summary=generated.text,
+                candidate=candidate,
+                hallucinations=generated.hallucinations,
+                total_claims=generated.total_claims,
             )
 
     program = _Program()

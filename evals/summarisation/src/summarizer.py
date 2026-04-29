@@ -5,13 +5,13 @@ import uuid
 from common.database.postgres_models import DialogueEntry, Minute, Transcription
 from common.services.minute_handler_service import MinuteHandlerService
 from common.services.template_manager import TemplateManager
-from common.types import LLMHallucination
+from common.types import MinuteAndHallucinations
 
 
 async def generate_summary(
     dialogue_entries: list[DialogueEntry],
     template_name: str | None = None,
-) -> tuple[str, int, list[LLMHallucination]]:
+) -> MinuteAndHallucinations:
     """
     Generates a summary from dialogue entries using specified template or basic minutes.
 
@@ -34,8 +34,6 @@ async def generate_summary(
         )
         mock_minute.transcription = mock_transcription
 
-        result, total_claims, hallucinations = await template.generate(mock_minute)
-        return result, total_claims, hallucinations
+        return await template.generate(mock_minute)
     else:
-        result, total_claims, hallucinations = await MinuteHandlerService.generate_basic_minutes(dialogue_entries)
-        return result, total_claims, hallucinations
+        return await MinuteHandlerService.generate_basic_minutes(dialogue_entries)

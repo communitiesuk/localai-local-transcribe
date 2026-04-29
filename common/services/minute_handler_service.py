@@ -129,13 +129,11 @@ class MinuteHandlerService:
 
             meeting_type = cls.predict_meeting(dialogue_entries)
             logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
-            html_content, _total_claims, hallucinations = await cls.generate_minutes(
-                meeting_type, minute_version.minute
-            )
+            generated = await cls.generate_minutes(meeting_type, minute_version.minute)
             cls.update_minute_version(
                 minute_version.id,
-                html_content=html_content,
-                hallucinations=hallucinations,
+                html_content=generated.text,
+                hallucinations=generated.hallucinations,
                 status=JobStatus.COMPLETED,
             )
         except Exception as e:
@@ -163,7 +161,7 @@ class MinuteHandlerService:
                 msg = "Source minute version has no transcript"
                 raise MinuteGenerationFailedError(msg)
 
-            edited_string, _, hallucinations = await cls.edit_minutes_with_ai(
+            generated = await cls.edit_minutes_with_ai(
                 minutes=source_minute_version.html_content,
                 edit_instructions=target_minute_version.ai_edit_instructions,
                 transcript=transcript,
@@ -171,8 +169,8 @@ class MinuteHandlerService:
             cls.update_minute_version(
                 minute_version_id=target_minute_version.id,
                 status=JobStatus.COMPLETED,
-                html_content=edited_string,
-                hallucinations=hallucinations,
+                html_content=generated.text,
+                hallucinations=generated.hallucinations,
             )
 
         except Exception as e:
@@ -190,7 +188,7 @@ class MinuteHandlerService:
             raise RuntimeError(msg)
         logger.info("%s: Found template id=%s, name=%s", minute.id, template.id, template.name)
         minutes, hallucinations = await generate_user_template(template=template, transcription=minute.transcription)
-        return minutes, 0, hallucinations
+        return MinuteAndHallucinations(text=minutes, total_claims=0, hallucinations=hallucinations)
 
     @classmethod
     async def generate_minutes(
@@ -203,19 +201,17 @@ class MinuteHandlerService:
             msg = f"Minute {minute.id} has no dialogue entries"
             raise MinuteGenerationFailedError(msg)
 
-        result: str
-        total_claims: int
-        hallucinations: list[LLMHallucination]
-
         match meeting_type:
             case MeetingType.too_short:
-                result, total_claims, hallucinations = cls.handle_bad_transcript(dialogue_entries)
+                generated = cls.handle_bad_transcript(dialogue_entries)
             case MeetingType.short:
-                result, total_claims, hallucinations = await cls.generate_basic_minutes(dialogue_entries)
+                generated = await cls.generate_basic_minutes(dialogue_entries)
             case _:
-                result, total_claims, hallucinations = await cls.generate_full_minutes(minute)
-        html_result = mistune.html(result)
-        return cast(str, html_result), total_claims, hallucinations
+                generated = await cls.generate_full_minutes(minute)
+        html_result = mistune.html(generated.text)
+        return MinuteAndHallucinations(
+            text=cast(str, html_result), total_claims=generated.total_claims, hallucinations=generated.hallucinations
+        )
 
     @classmethod
     async def generate_full_minutes(cls, minute: Minute) -> MinuteAndHallucinations:
@@ -223,22 +219,25 @@ class MinuteHandlerService:
             logger.info(
                 "%s: Generating minute from user template user_template_id=%s", minute.id, minute.user_template_id
             )
-            result, total_claims, hallucinations = await cls.generate_minute_from_user_template(minute)
+            generated = await cls.generate_minute_from_user_template(minute)
         else:
             logger.info("%s: Generating minute from default template: %s", minute.id, minute.template_name)
             template = TemplateManager.get_template(minute.template_name)
-            result, total_claims, hallucinations = await template.generate(minute)
+            generated = await template.generate(minute)
         logger.info("%s: Successfully generated minute", minute.id)
-        result = convert_american_to_british_spelling(result)
-        return result, total_claims, hallucinations
+        return MinuteAndHallucinations(
+            text=convert_american_to_british_spelling(generated.text),
+            total_claims=generated.total_claims,
+            hallucinations=generated.hallucinations,
+        )
 
     @classmethod
     def handle_bad_transcript(cls, transcript: list[DialogueEntry]) -> MinuteAndHallucinations:
-        return (
-            f"""Short meeting detected. Minutes not available.
+        return MinuteAndHallucinations(
+            text=f"""Short meeting detected. Minutes not available.
          Please try again with a longer meeting. Transcript is: {transcript_as_speaker_and_utterance(transcript)}""",
-            0,
-            [],
+            total_claims=0,
+            hallucinations=[],
         )
 
     @classmethod
@@ -249,7 +248,7 @@ class MinuteHandlerService:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         choice = await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
         hallucinations = await chatbot.hallucination_check()
-        return choice, 0, hallucinations
+        return MinuteAndHallucinations(text=choice, total_claims=0, hallucinations=hallucinations)
 
     @classmethod
     def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
@@ -276,4 +275,4 @@ class MinuteHandlerService:
         edited_minutes = edited_minutes.removeprefix("```html").removesuffix("```")
         hallucinations = await chatbot.hallucination_check()
 
-        return edited_minutes, 0, hallucinations
+        return MinuteAndHallucinations(text=edited_minutes, total_claims=0, hallucinations=hallucinations)

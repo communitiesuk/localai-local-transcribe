@@ -39,7 +39,8 @@ async def run_single_iteration(
     Runs a single iteration of summary generation, evaluation, and sentiment analysis.
     """
     t0 = time.perf_counter()
-    summary, _, _ = await generate_summary(dialogue_entries, template_name)
+    generated = await generate_summary(dialogue_entries, template_name)
+    summary = generated.text
     t1 = time.perf_counter()
     summarize_ms = int((t1 - t0) * 1000)
 

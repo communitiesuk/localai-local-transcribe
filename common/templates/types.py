@@ -107,7 +107,7 @@ class SimpleTemplate(Template, Protocol):
             hallucinations += citation_hallucinations
         else:
             total_claims = 0
-        return minutes, total_claims, hallucinations
+        return MinuteAndHallucinations(text=minutes, total_claims=total_claims, hallucinations=hallucinations)
 
 
 class SectionTemplate(Template, Protocol):
@@ -207,4 +207,4 @@ class SectionTemplate(Template, Protocol):
             final_minutes = initial_draft
             total_claims = 0
 
-        return final_minutes, total_claims, all_hallucinations
+        return MinuteAndHallucinations(text=final_minutes, total_claims=total_claims, hallucinations=all_hallucinations)
