@@ -205,9 +205,6 @@ module "ecs" {
   aws_region                  = local.aws_region
   lb_listener_exists          = var.ssl_certs_created
 
-  azure_speech_key_arn    = module.secrets.azure_speech_key_arn
-  azure_speech_region_arn = module.secrets.azure_speech_region_arn
-
   azure_apim_tenant_id_arn        = module.secrets.azure_apim_tenant_id_arn
   azure_apim_client_id_arn        = module.secrets.azure_apim_client_id_arn
   azure_apim_client_secret_arn    = module.secrets.azure_apim_client_secret_arn

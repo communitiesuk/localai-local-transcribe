@@ -58,8 +58,6 @@ resource "aws_iam_role_policy" "secret_access" {
         ]
         Effect = "Allow"
         Resource = [
-          aws_ssm_parameter.azure_speech_key.arn,
-          aws_ssm_parameter.azure_speech_region.arn,
           aws_ssm_parameter.azure_apim_tenant_id.arn,
           aws_ssm_parameter.azure_apim_client_id.arn,
           aws_ssm_parameter.azure_apim_client_secret.arn,
