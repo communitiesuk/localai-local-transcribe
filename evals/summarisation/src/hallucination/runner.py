@@ -83,7 +83,7 @@ def run_hallucination_eval(
         "timestamp": datetime.now(UTC).isoformat(),
         "template_name": cfg.prompts.summarizer_template_name,
         "dataset_version": cfg.run.dataset_version,
-        "engine_version": cfg.run.prompt_version,
+        "engine_version": inputs[0].hypothesis_model if inputs else None,
         "prompt_version": cfg.run.prompt_version,
         "n_examples": n_examples,
         "processed": processed,
