@@ -454,7 +454,7 @@ async def test_process_minute_generation_message_success(
 
 @pytest.mark.asyncio
 async def test_process_minute_generation_message_fails_if_no_dialogue(
-    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
+    mocker, mock_minute_version, mock_minute, mock_transcription
 ):
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = []
