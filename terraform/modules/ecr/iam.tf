@@ -78,26 +78,3 @@ resource "aws_iam_policy" "push_worker_images" {
   name   = "ecr-push-worker-images"
   policy = data.aws_iam_policy_document.push_worker_images.json
 }
-
-data "aws_iam_policy_document" "describe_images" {
-  statement {
-    actions   = ["ecr:DescribeImages"]
-    resources = [
-      aws_ecr_repository.frontend.arn,
-      aws_ecr_repository.backend.arn,
-      aws_ecr_repository.worker.arn
-    ]
-    effect    = "Allow"
-  }
-
-  statement {
-    actions   = ["ecr:GetAuthorizationToken"]
-    resources = ["*"]
-    effect    = "Allow"
-  }
-}
-
-resource "aws_iam_policy" "describe_images" {
-  name   = "ecr-describe-images"
-  policy = data.aws_iam_policy_document.describe_images.json
-}

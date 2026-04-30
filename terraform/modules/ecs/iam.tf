@@ -83,23 +83,3 @@ resource "aws_iam_role_policy_attachment" "worker_task_allow_ecs_exec" {
   policy_arn = aws_iam_policy.allow_ecs_exec.arn
 }
 
-data "aws_iam_policy_document" "worker_transcribe" {
-  statement {
-    effect = "Allow"
-    actions = [
-      "transcribe:StartTranscriptionJob",
-      "transcribe:GetTranscriptionJob",
-    ]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_policy" "worker_transcribe" {
-  name   = "${var.environment_name}-worker-transcribe"
-  policy = data.aws_iam_policy_document.worker_transcribe.json
-}
-
-resource "aws_iam_role_policy_attachment" "worker_transcribe" {
-  role       = aws_iam_role.worker_ecs_task.name
-  policy_arn = aws_iam_policy.worker_transcribe.arn
-}

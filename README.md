@@ -7,7 +7,7 @@ Local Transcribe is an application that is designed to simplify the transcriptio
 
 ## Key Features
 
-**AI-Powered Transcription**: Local Transcribe integrates with multiple transcription services including Azure Speech-to-Text and AWS Transcribe, automatically selecting the most appropriate service based on audio duration and quality. The system handles various audio formats and automatically converts them to optimize transcription accuracy.
+**AI-Powered Transcription**: Local Transcribe integrates with multiple transcription services including Azure Speech-to-Text via Azure APIM, automatically selecting the most appropriate service based on audio duration and quality. The system handles various audio formats and automatically converts them to optimize transcription accuracy.
 
 **Professional Meeting Templates**: The application includes specialized templates tailored for different types of government meetings, including Cabinet meetings, planning committees, care assessments, and general-purpose meetings. Each template follows specific formatting standards and style guides required for official documentation.
 
@@ -45,8 +45,7 @@ If you have access to a supported LLM and Transcription provider, you will need 
 
 ##### In `.env`
 
-- Transcription: `AZURE_SPEECH_KEY`, `AZURE_SPEECH_REGION`
-- LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, and `AZURE_APIM_SUBSCRIPTION_KEY`.
+- Transcription + LLM: `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_ACCESS_TOKEN`, and `AZURE_APIM_SUBSCRIPTION_KEY`.
 
 Note:
 

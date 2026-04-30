@@ -10,12 +10,8 @@ from tenacity import (
     wait_random_exponential,
 )
 
+from common.azure_apim_auth import build_azure_apim_token_provider
 from common.llm.adapters import AzureAPIMModelAdapter, GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
-from common.llm.adapters.azure_apim import (
-    AzureStaticTokenProvider,
-    AzureTokenProvider,
-    get_azure_client_secret_token_provider,
-)
 from common.prompts import get_hallucination_detection_messages
 from common.settings import get_settings
 from common.types import LLMHallucination, LLMHallucinationList
@@ -66,35 +62,6 @@ class ChatBot:
         self.messages.extend(messages)
         self.messages.append({"role": "assistant", "content": response.model_dump_json()})
         return response
-
-
-def _build_azure_apim_token_provider() -> AzureTokenProvider:
-    if settings.AZURE_APIM_AUTH_METHOD == "client_secret":
-        if not settings.AZURE_APIM_TENANT_ID:
-            msg = "AZURE_APIM_TENANT_ID is required for azure_apim client_secret auth"
-            raise ValueError(msg)
-        if not settings.AZURE_APIM_CLIENT_ID:
-            msg = "AZURE_APIM_CLIENT_ID is required for azure_apim client_secret auth"
-            raise ValueError(msg)
-        if not settings.AZURE_APIM_CLIENT_SECRET:
-            msg = "AZURE_APIM_CLIENT_SECRET is required for azure_apim client_secret auth"
-            raise ValueError(msg)
-        if not settings.AZURE_APIM_SCOPE:
-            msg = "AZURE_APIM_SCOPE is required for azure_apim client_secret auth"
-            raise ValueError(msg)
-        return get_azure_client_secret_token_provider(
-            settings.AZURE_APIM_TENANT_ID,
-            settings.AZURE_APIM_CLIENT_ID,
-            settings.AZURE_APIM_CLIENT_SECRET,
-            settings.AZURE_APIM_SCOPE,
-        )
-    if settings.AZURE_APIM_AUTH_METHOD == "static_token":
-        if not settings.AZURE_APIM_ACCESS_TOKEN:
-            msg = "AZURE_APIM_ACCESS_TOKEN is required for azure_apim static_token auth"
-            raise ValueError(msg)
-        return AzureStaticTokenProvider(settings.AZURE_APIM_ACCESS_TOKEN)
-    msg = "AZURE_APIM_AUTH_METHOD is required, use either 'static_token' or 'client_secret'"
-    raise ValueError(msg)
 
 
 def create_chatbot(model_type: str, model_name: str, temperature: float) -> ChatBot:
@@ -163,7 +130,7 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
             msg = "AZURE_APIM_SUBSCRIPTION_KEY is required for azure_apim model"
             raise ValueError(msg)
 
-        token_provider = _build_azure_apim_token_provider()
+        token_provider = build_azure_apim_token_provider()
 
         return ChatBot(
             AzureAPIMModelAdapter(

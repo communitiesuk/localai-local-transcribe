@@ -10,6 +10,7 @@ import typer
 from evals.summarisation.src.bias.types import PlottingOutput
 from evals.summarisation.src.bias.visualization.reporter import generate_visualizations
 from evals.summarisation.src.common import load_config
+from evals.summarisation.src.hallucination.types import HallucinationInput
 
 WORKDIR = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = WORKDIR / "configs" / "smoke-test.yaml"
@@ -48,11 +49,11 @@ async def run_bias_eval(config: Path) -> None:
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
-def run_standard_eval(config: Path) -> None:
+def run_standard_eval(config: Path) -> list[HallucinationInput]:
     from evals.summarisation.src.optimisation import run_eval
 
     cfg = load_config(config)
-    run_id, results_path, summary_path = run_eval(
+    run_id, results_path, summary_path, hallucination_inputs_path = run_eval(
         cfg,
         split=cfg.run.split,
         limit=cfg.run.limit,
@@ -62,6 +63,10 @@ def run_standard_eval(config: Path) -> None:
     typer.echo(f"\nRun ID: {run_id}")
     typer.echo(f"Results: {results_path}")
     typer.echo(f"Summary: {summary_path}")
+    typer.echo(f"Hallucination inputs: {hallucination_inputs_path}")
+
+    with hallucination_inputs_path.open("rb") as f:
+        return [HallucinationInput.model_validate(item) for item in orjson.loads(f.read())]
 
 
 @app.callback(invoke_without_command=True)
@@ -70,13 +75,30 @@ def run(
 ) -> None:
     cfg = load_config(config)
 
+    hallucination_inputs: list[HallucinationInput] = []
+
     if cfg.run.eval_type == "bias":
         asyncio.run(run_bias_eval(config))
     elif cfg.run.eval_type == "standard":
-        run_standard_eval(config)
+        hallucination_inputs = run_standard_eval(config)
     else:
         msg = f"Unknown eval_type: {cfg.run.eval_type}. Must be 'standard' or 'bias'"
         raise ValueError(msg)
+
+    if cfg.hallucination.enabled:
+        from evals.summarisation.src.hallucination import run_hallucination_eval
+
+        if not hallucination_inputs:
+            msg = "Hallucination eval requires eval_type: standard"
+            raise ValueError(msg)
+
+        h_run_id, h_results = run_hallucination_eval(
+            cfg,
+            inputs=hallucination_inputs,
+            output_dir=Path(cfg.run.output_dir),
+        )
+        typer.echo(f"\nHallucination run ID: {h_run_id}")
+        typer.echo(f"Hallucination results: {h_results}")
 
 
 if __name__ == "__main__":

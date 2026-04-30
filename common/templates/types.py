@@ -101,8 +101,13 @@ class SimpleTemplate(Template, Protocol):
         minutes = await chatbot.chat(cls.prompt(transcript, minute.agenda))
         hallucinations = await chatbot.hallucination_check()
         if cls.citations_required:
-            minutes = await add_citations_to_minute(transcript=transcript, initial_draft=minutes)
-        return minutes, hallucinations
+            minutes, total_claims, citation_hallucinations = await add_citations_to_minute(
+                transcript=transcript, initial_draft=minutes
+            )
+            hallucinations += citation_hallucinations
+        else:
+            total_claims = 0
+        return MinuteAndHallucinations(text=minutes, total_claims=total_claims, hallucinations=hallucinations)
 
 
 class SectionTemplate(Template, Protocol):
@@ -194,8 +199,12 @@ class SectionTemplate(Template, Protocol):
 
         initial_draft = "\n".join(final_sections)
         if cls.citations_required:
-            final_minutes = await add_citations_to_minute(transcript=transcript, initial_draft=initial_draft)
+            final_minutes, total_claims, citation_hallucinations = await add_citations_to_minute(
+                transcript=transcript, initial_draft=initial_draft
+            )
+            all_hallucinations.extend(citation_hallucinations)
         else:
             final_minutes = initial_draft
+            total_claims = 0
 
-        return final_minutes, all_hallucinations
+        return MinuteAndHallucinations(text=final_minutes, total_claims=total_claims, hallucinations=all_hallucinations)
