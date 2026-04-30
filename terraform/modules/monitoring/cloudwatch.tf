@@ -58,7 +58,7 @@ data "aws_iam_policy_document" "ecs_events_log_policy_document" {
 
     condition {
       test     = "ArnEquals"
-      values   = [aws_cloudwatch_event_rule.ecs_events.arn]
+      values   = [for r in aws_cloudwatch_event_rule.ecs_events : r.arn]
       variable = "aws:SourceArn"
     }
   }
@@ -70,6 +70,7 @@ resource "aws_cloudwatch_log_resource_policy" "ecs_events_log_policy" {
 }
 
 resource "aws_cloudwatch_event_target" "ecs_events_to_logs" {
-  rule = aws_cloudwatch_event_rule.ecs_events.name
+  for_each = aws_cloudwatch_event_rule.ecs_events
+  rule = each.value.name
   arn  = module.ecs_events_log_group.log_group_arn
 }

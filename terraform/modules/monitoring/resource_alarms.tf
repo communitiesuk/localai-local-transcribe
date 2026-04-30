@@ -45,10 +45,12 @@ resource "aws_cloudwatch_metric_alarm" "ecs_memory_usage" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "ecs_task_start_failure" {
-  alarm_name          = "ecs-task-start-failure"
+  for_each = aws_cloudwatch_log_metric_filter.ecs_task_start_failure
+
+  alarm_name          = "${each.key}-task-start-failure"
   alarm_description   = "An ECS task has failed to start and reach a healthy state"
   comparison_operator = "GreaterThanOrEqualToThreshold"
-  metric_name         = aws_cloudwatch_log_metric_filter.ecs_task_start_failure.name
+  metric_name         = each.value.name
   namespace           = "LogMetrics"
   evaluation_periods  = 1
   period              = 60
