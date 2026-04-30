@@ -116,6 +116,8 @@ aws configure sso
 Enter the following when prompted:
 - SSO start URL: shared with you separately
 - SSO region: `eu-west-2`
+- SSO Session: choose a name, e.g. `local-transcribe-dev`
+- SSO Registration scopes: `sso:account:access` (this might be the default)
 - Account ID: the development account ID, also shared with you separately
 - Role: the developer role you have been assigned
 - Profile name: choose a name, e.g. `developer_role-929514686841`
@@ -156,7 +158,22 @@ terraform plan [-var="image_tag=<tag>"]
 terraform apply [-var="image_tag=<tag>"]
 ```
 
+> [!WARNING]
+> Don't exit `terraform plan` with `CTRL+C` or by closing the terminal window, as this can cause the state to become locked. If this happens, run `terraform force-unlock` with the lock ID provided in the error message.
+
 This uses an S3 remote backend — AWS credentials with access to the `local-transcribe-tfstate-development` bucket are required. Yours should have been included in the permissions for the developer role you were assigned.
+
+##### Troubleshooting
+
+If you see the following error when running `terraform plan`
+
+```
+terraform plan 
+╷
+│ Error: No valid credential sources found
+```
+
+You probably don't have your AWS profile selected, try running `aws sso login --profile <your-profile>` and then `export AWS_PROFILE=<your-profile>`.
 
 #### Architecture diagram
 
