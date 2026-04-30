@@ -98,7 +98,7 @@ def mock_transcription(mock_minute, mock_user) -> Transcription:
         updated_datetime=datetime.now(tz=UTC),
         minutes=[mock_minute],
         title="Test Transcription",
-        dialogue_entries=mock_dialogue_entry,
+        dialogue_entries=[mock_dialogue_entry],
     )
 
 
