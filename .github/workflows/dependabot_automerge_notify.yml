@@ -24,8 +24,14 @@ jobs:
           MESSAGE="Dependabot security fix merged in PR #${PR_NUMBER}. Redeploy required."
           PAYLOAD=$(jq -n --arg text "$MESSAGE" '{text: $text}')
 
-          for WEBHOOK in "$SLACK_WEBHOOK_DEV" "$SLACK_WEBHOOK_STAGING" "$SLACK_WEBHOOK_PROD"; do
-            curl --fail -X POST -H 'Content-type: application/json' \
-              --data "$PAYLOAD" \
-              "$WEBHOOK"
-          done
+          curl --fail -X POST -H 'Content-type: application/json' \
+            --data "$PAYLOAD" \
+            "$WEBHOOK_DEV"
+
+          curl --fail -X POST -H 'Content-type: application/json' \
+            --data "PAYLOAD" \
+            "$WEBHOOK_STAGING"
+
+          curl --fail -X POST -H 'Content-type: application/json' \
+            --data "PAYLOAD" \
+            "$WEBHOOK_PROD"
