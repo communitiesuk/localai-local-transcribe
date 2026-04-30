@@ -1,10 +1,15 @@
 resource "aws_cloudwatch_event_rule" "ecs_events" {
-  name        = "${var.environment_name}-ecs-events"
+  for_each    = toset(var.ecs_service_names)
+  name        = "${each.value}-ecs-events"
   description = "Capture ECS events"
 
   event_pattern = jsonencode({
-    source : ["aws.ecs"],
-  })
+  source : ["aws.ecs"],
+  detail : {
+    clusterArn : [var.ecs_cluster_arn],
+    group : ["service:${each.value}"]
+  }
+})
 }
 
 module "ecs_events_log_group" {
