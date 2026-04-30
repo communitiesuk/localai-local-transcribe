@@ -26,6 +26,7 @@ Brewfile.lock.json
 # Data
 *.csv
 *.xlsx
+!DNS Change Request Form*.xlsx
 *.xls
 *.pkl
 *.parquet

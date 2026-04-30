@@ -177,6 +177,79 @@ terraform plan
 
 You probably don't have your AWS profile selected, try running `aws sso login --profile <your-profile>` and then `export AWS_PROFILE=<your-profile>`.
 
+#### Setting up a new environment from scratch
+
+##### Bootstrapping the Terraform backend
+
+1. Create `terraform/<env>/` and `terraform/<env>/backend/` by copying from `terraform/development/`, replacing all instances of `development` with your environment name and updating the domain names in `main.tf`.
+2. In `terraform/<env>/backend/main.tf`, comment out the `backend "s3"` block near the top of the file.
+3. `cd` into `terraform/<env>/backend` and run `terraform init` followed by `terraform apply`. The plan should show the creation of an S3 bucket called `local-transcribe-tfstate-<env>`. If everything looks correct, run `terraform apply`.
+4. Once the bucket exists in the AWS console, uncomment the `backend "s3"` block and run `terraform init` again. You will be prompted to migrate the local state to the remote backend.
+
+##### Setting up initial networking and requesting SSL certificates
+
+1. The new environment's `variables.tf` has `ssl_certs_created` defaulting to `false` — leave it as-is for now.
+2. `cd` into `terraform/<env>` and run `terraform init`, then:
+
+```bash
+terraform apply -target module.networking -target module.frontdoor -target module.certificates
+```
+
+3. Use the values in the terraform output to complete the DNS change request to MHCLG (see below).
+
+##### Requesting DNS changes from MHCLG
+
+Use the terraform output to complete a copy of the 'DNS Change Request Form -v2.xlsx' file in the root of the repository as follows:
+
+- For each item in the `cloudfront_certificate_validation` and `load_balancer_certificate_validation` blocks of the output, add a row to the table where:
+  - 'Change Type' is 'Add'
+  - 'Requested by' is your name
+  - 'Record Type' is the value from `resource_record_type`
+  - 'Domain' is either `test.communities.gov.uk` or `service.gov.uk`, whichever appears as part of the value in `domain_name`
+  - 'Name' is the value from `resource_record_name`
+  - 'Content' is the value from `resource_record_value`
+  - 'TTL' is '1 hr'
+  - 'Proxy status' is 'DNS only'
+  - 'Additional comment or Reason for this change' is 'Setting up environment for Local Transcribe'
+- For each item in the `cloudfront_certificate_validation` block, add an additional row where:
+  - 'Change Type' is 'Add'
+  - 'Requested by' is your name
+  - 'Record Type' is 'CNAME'
+  - 'Domain' is either `test.communities.gov.uk` or `service.gov.uk`, whichever appears as part of the value in `domain_name`
+  - 'Name' is the value from `domain_name`
+  - 'Content' is the value from `cloudfront_dns_name`
+  - 'TTL' is '1 hr'
+  - 'Proxy status' is 'DNS only'
+  - 'Additional comment or Reason for this change' is 'Setting up environment for Local Transcribe'
+- For each item in the `load_balancer_certificate_validation` block, add an additional row where:
+  - 'Change Type' is 'Add'
+  - 'Requested by' is your name
+  - 'Record Type' is 'CNAME'
+  - 'Domain' is either `test.communities.gov.uk` or `service.gov.uk`, whichever appears as part of the value in `domain_name`
+  - 'Name' is the value from `domain_name`
+  - 'Content' is the value from `load_balancer_dns_name`
+  - 'TTL' is '1 hr'
+  - 'Proxy status' is 'DNS only'
+  - 'Additional comment or Reason for this change' is 'Setting up environment for Local Transcribe'
+
+Note that DNS changes typically take around a week to be processed.
+
+Once the spreadsheet is completed, create a ServiceNow request with MHCLG using the general 'Request' option with the following details:
+
+- 'What is it that you require?' → "Creation of DNS records"
+- 'Why do you require it?' → "We are setting up the environment for Local Transcribe in AWS. As part of this we need DNS records for the sub-domains and associated certificates."
+- Attach the completed spreadsheet to the request.
+
+##### Setting up the rest of the environment
+
+Once MHCLG have made the DNS changes and the certificates have been validated, run:
+
+```bash
+terraform apply -var ssl_certs_created=true -var alarm_email_address=<email>
+```
+
+This will create all remaining resources including ECS services, the RDS database, SQS queues, and Secrets Manager secrets. The secrets will be created but not populated — you will need to populate them manually via the AWS console before the service will function correctly.
+
 #### Architecture diagram
 
 Local Transcribe was developed to run on AWS and/or Azure, with abstractions available for message queues and cloud storage.
