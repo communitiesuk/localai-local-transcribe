@@ -19,7 +19,7 @@ from common.services.minute_handler_service import (
     MinuteHandlerService,
 )
 from common.settings import get_settings
-from common.types import HallucinationType, LLMHallucination, MeetingType
+from common.types import HallucinationType, LLMHallucination, MeetingType, MinuteAndHallucinations
 
 mock_email = "tests@local-transcribe.com"
 settings = get_settings()
@@ -255,7 +255,7 @@ def test_handle_bad_transcript(mock_dialogue_entry, mocker):
         "common.services.minute_handler_service.transcript_as_speaker_and_utterance",
         return_value=utterance,
     )
-    result, hallucinations = MinuteHandlerService.handle_bad_transcript(mock_dialogue_entry)
+    result, hallucinations = MinuteHandlerService.handle_bad_transcript([mock_dialogue_entry])
 
     assert f"Transcript is: {utterance}" in result
     assert hallucinations == []
@@ -500,7 +500,11 @@ async def test_process_minute_edit_message_success(
     mocker.patch.object(
         MinuteHandlerService, "get_minute_version", AsyncMock(side_effect=[mock_minute_version, target])
     )
-    mocker.patch.object(MinuteHandlerService, "edit_minutes_with_ai", AsyncMock(return_value=(output, [])))
+    mocker.patch.object(
+        MinuteHandlerService,
+        "edit_minutes_with_ai",
+        AsyncMock(return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[])),
+    )
     mocker.patch.object(MinuteHandlerService, "update_minute_version")
 
     await MinuteHandlerService.process_minute_edit_message(mock_minute_version.id, target.id)
