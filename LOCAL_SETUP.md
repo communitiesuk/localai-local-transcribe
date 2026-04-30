@@ -18,17 +18,27 @@ brew install ffmpeg poetry
 Afterwards install Ollama from: https://ollama.com/download/mac
 
 
-**Required:**
-1. **HuggingFace Token**: https://huggingface.co/settings/tokens (starts with `hf_`)
-   - Accept terms at: https://huggingface.co/pyannote/segmentation-3.0
-   - Accept terms at: https://huggingface.co/pyannote/speaker-diarization-3.1
-   - **Note**: The organization question while accepting terms is unimportant, as we are using these models for quick local tests only without distillation/training etc. Don't hesitate to put 'N/A' there.
+## Prerequisites
+
+**APIM Access (required for transcription):**
+
+Transcription uses Azure Speech-to-Text via APIM. You need access to the APIM gateway before the worker can transcribe audio. Set the following in your `.env` after copying `.env.local`:
+
+```
+AZURE_APIM_URL=https://{{host}}.gov.uk/{{product_name}}/
+AZURE_APIM_API_VERSION=2024-10-21
+AZURE_APIM_ACCESS_TOKEN=placeholder
+AZURE_APIM_SUBSCRIPTION_KEY=placeholder
+AZURE_APIM_AUTH_METHOD=static_token
+```
+
+See the [API Portal](#api-portal) section below for how to obtain your access token.
 
 ## Quick Start
 
 ```bash
 # Install dependencies
-poetry install --with worker,local-dev
+poetry install --with worker
 
 # Download Ollama model
 ollama pull llama3.2:3b-instruct-q4_K_M
@@ -36,15 +46,15 @@ ollama pull llama3.2:3b-instruct-q4_K_M
 # Configure environment
 cp .env.local .env
 ```
-Before moving on to the next step, edit the .env file and add: WHISPLY_HF_TOKEN=hf_your_token
+
+Edit the `.env` file and fill in your APIM credentials (see above).
+
 ```bash
 # Run worker locally
 ./run-worker-local.sh
 ```
 
 ### Access the app at http://localhost:3000
-
-> **Note**: The first transcription will take significantly longer as it downloads 2 annotation models and 1 transcription model (3 large files). These files are cached locally and only need to be downloaded once.
 
 **Troubleshooting Ollama:**
 
@@ -60,7 +70,7 @@ You need to launch the Ollama GUI application. Search for 'ollama' in your appli
 
 - **Docker**: Database, backend, frontend, elasticmq
 - **Local Worker**: Runs natively for GPU access (MPS on Apple Silicon)
-- **Transcription**: Whisply with hardware acceleration
+- **Transcription**: Azure Speech-to-Text
 - **LLM**: Ollama (local, runs natively for MPS acceleration)
 
 ## Troubleshooting Docker

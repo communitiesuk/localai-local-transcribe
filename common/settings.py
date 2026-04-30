@@ -184,18 +184,6 @@ class Settings(BaseSettings):
         description="Browser-accessible backend URL for generating direct upload URLs in local storage.",
     )
 
-    WHISPLY_DEVICE: str = Field(
-        default="auto",
-        description="Device for Whisply transcription: auto, cpu, gpu, mps, or mlx",
-    )
-    WHISPLY_MODEL: str = Field(
-        default="large-v3-turbo",
-        description="Whisper model to use for Whisply transcription",
-    )
-    WHISPLY_HF_TOKEN: str | None = Field(
-        default=None,
-        description="HuggingFace token required for Whisply speaker diarization",
-    )
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434/v1")
 
     # use a dotenv file for local development

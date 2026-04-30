@@ -14,7 +14,7 @@ from tests.evals.transcription.conftest import FakeDataset
 
 @pytest.fixture
 def setup_evaluation(tmp_path, monkeypatch):
-    def _setup(samples_data, audio_duration=1.0, azure_hyp="hello world", whisper_hyp="good morning"):
+    def _setup(samples_data, audio_duration=1.0, azure_hyp="hello world"):
         wav_files = []
         for i in range(len(samples_data)):
             wav_file = tmp_path / f"{chr(97 + i)}.wav"
@@ -33,18 +33,8 @@ def setup_evaluation(tmp_path, monkeypatch):
                     transcript=[{"text": azure_hyp, "speaker": "Speaker 1", "start_time": 0.0, "end_time": 1.0}]
                 )
 
-        class FakeWhisperAdapter:
-            name = "Whisper"
-
-            @classmethod
-            async def start(cls, _audio_file_path):
-                return SimpleNamespace(
-                    transcript=[{"text": whisper_hyp, "speaker": "Speaker 1", "start_time": 0.0, "end_time": 1.0}]
-                )
-
         fake_registry = {
             "azure": FakeAzureAdapter,
-            "whisply": FakeWhisperAdapter,
         }
 
         fake_settings = SimpleNamespace(
@@ -68,10 +58,9 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
         samples_data=[{"text": "hello world"}, {"text": "good morning"}],
         audio_duration=1.0,
         azure_hyp="hello world",
-        whisper_hyp="good morning",
     )
 
-    run_evaluation(num_samples=2, adapter_names=["azure", "whisply"])
+    run_evaluation(num_samples=2, adapter_names=["azure"])
 
     results_path = next((Path(tmp_path) / "output").glob("evaluation_results_*.json"))
     assert results_path.exists()
@@ -79,8 +68,8 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
 
     expected_structure = {
         "summaries": {
-            "count": 2,
-            "engines": {"Azure Speech-to-Text", "Whisper"},
+            "count": 1,
+            "engines": {"Azure Speech-to-Text"},
             "required_fields": ["n_examples", "engine_version", "metrics"],
             "metrics_fields": ["wer"],
         },
@@ -123,10 +112,9 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
         samples_data=[{"text": "hello world"}],
         audio_duration=10.0,
         azure_hyp="hello world",
-        whisper_hyp="hello world",
     )
 
-    run_evaluation(num_samples=1, adapter_names=["azure", "whisply"])
+    run_evaluation(num_samples=1, adapter_names=["azure"])
 
     results_path = next((Path(tmp_path) / "output").glob("evaluation_results_*.json"))
     results = json.loads(results_path.read_text(encoding="utf-8"))
@@ -142,7 +130,6 @@ def test_processing_speed_ratio_calculation(setup_evaluation):
     ("adapter_name", "monkeypatch_target"),
     [
         ("azure", "common.services.transcription_services.azure.AzureSpeechAdapter.start"),
-        ("whisply", "common.services.transcription_services.whisply_local.WhisplyLocalAdapter.start"),
     ],
 )
 def test_adapter_contracts(tmp_path, monkeypatch, adapter_name, monkeypatch_target):
