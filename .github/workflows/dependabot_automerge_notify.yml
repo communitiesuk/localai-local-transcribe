@@ -15,17 +15,17 @@ jobs:
     steps:
       - name: Notify Slack
         if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          WEBHOOK_DEV: ${{ secrets.SLACK_WEBHOOK_DEV }}
+          WEBHOOK_STAGING: ${{ secrets.SLACK_WEBHOOK_STAGING }}
+          WEBHOOK_PROD: ${{ secrets.SLACK_WEBHOOK_PROD }}
         run: |
-          MESSAGE="Dependabot security fix merged in PR #${{ github.event.pull_request.number }}. Redeploy required."
+          MESSAGE="Dependabot security fix merged in PR #${PR_NUMBER}. Redeploy required."
+          PAYLOAD=$(jq -n --arg text "$MESSAGE" '{text: $text}')
 
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"$MESSAGE\"}" \
-            ${{ secrets.SLACK_WEBHOOK_DEV }}
-
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"$MESSAGE\"}" \
-            ${{ secrets.SLACK_WEBHOOK_STAGING }}
-
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"$MESSAGE\"}" \
-            ${{ secrets.SLACK_WEBHOOK_PROD }}
+          for WEBHOOK in "$SLACK_WEBHOOK_DEV" "$SLACK_WEBHOOK_STAGING" "$SLACK_WEBHOOK_PROD"; do
+            curl --fail -X POST -H 'Content-type: application/json' \
+              --data "$PAYLOAD" \
+              "$WEBHOOK"
+          done
