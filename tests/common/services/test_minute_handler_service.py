@@ -462,11 +462,7 @@ async def test_process_minute_generation_message_success(
     )
     mocker.patch.object(MinuteHandlerService, "update_minute_version")
 
-    try:
-        await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
-    except Exception as e:
-        print(f"\n--- ACTUAL ERROR CAUSE: {e.__cause__} ---")
-        raise
+    await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
 
     MinuteHandlerService.update_minute_version.assert_called_once_with(
         mock_minute_version.id,
