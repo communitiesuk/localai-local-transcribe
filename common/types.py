@@ -161,7 +161,6 @@ class GuardrailScore(BaseModel):
     reasoning: str = Field(description="Reasoning for the score")
 
 
-
 class MinuteVersionResponse(BaseModel):
     id: uuid.UUID
     minute_id: uuid.UUID

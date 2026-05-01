@@ -126,9 +126,7 @@ def get_cite_claims_prompt(
     claims: list[str],
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
-
     claims_text = "\n".join(f"- {claim}" for claim in claims)
-    
 
     return [
         {
@@ -141,6 +139,7 @@ def get_cite_claims_prompt(
             ),
         },
     ]
+
 
 def string_to_system_message(string: str) -> dict[str, str]:
     return {"role": "system", "content": string}
