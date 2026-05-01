@@ -3,8 +3,8 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import TIMESTAMP, Column, Enum
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
@@ -111,6 +111,12 @@ class Hallucination(BaseTableMixin, table=True):
 
 
 # Main models with table=True for DB tables
+class UserRole(StrEnum):
+    STANDARD_USER = auto()
+    LOCAL_AUTHORITY_ADMIN = auto()
+    MHCLG_SUPPORT_ADMIN = auto()
+
+
 class User(BaseTableMixin, table=True):
     __tablename__ = "user"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
@@ -118,7 +124,11 @@ class User(BaseTableMixin, table=True):
     email: str = Field(index=True)
     data_retention_days: int | None = Field(default=30)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
-
+    roles: list[UserRole] = Field(
+        default_factory=lambda: [UserRole.STANDARD_USER],
+        sa_column=Column(ARRAY(Enum(UserRole, name="userrole")), nullable=False, server_default="{STANDARD_USER}")
+    )
+    
 
 class Recording(BaseTableMixin, table=True):
     __tablename__ = "recording"
