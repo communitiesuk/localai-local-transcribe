@@ -130,7 +130,5 @@ evals/**/output/
 **/*.wav
 **/*.mp3
 **/*.m4a
-evals/**/data_for_testing/**/transcripts/**
-
 
 frontend/public/assets/govuk
