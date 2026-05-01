@@ -199,7 +199,9 @@ class MinuteHandlerService:
 
             meeting_type = cls.predict_meeting(dialogue_entries)
             logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
-            html_content, hallucinations = await cls.generate_minutes(meeting_type, minute_version.minute)
+            result = await cls.generate_minutes(meeting_type, minute_version.minute)
+            html_content = result.text
+            hallucinations = result.hallucinations
 
             await cls._run_accuracy_guardrail(
                 minute_version_id=minute_version.id,
@@ -209,11 +211,10 @@ class MinuteHandlerService:
                 label="generation",
             )
 
-            generated = await cls.generate_minutes(meeting_type, minute_version.minute)
             cls.update_minute_version(
                 minute_version.id,
-                html_content=generated.text,
-                hallucinations=generated.hallucinations,
+                html_content=html_content,
+                hallucinations=hallucinations,
                 status=JobStatus.COMPLETED,
             )
 
@@ -257,7 +258,7 @@ class MinuteHandlerService:
             await cls._run_accuracy_guardrail(
                 minute_version_id=target_minute_version.id,
                 minute_id=target_minute_version.minute_id,
-                content=edited_string,
+                content=generated.text,
                 transcript=transcript,
                 label="edit",
             )
@@ -371,7 +372,11 @@ class MinuteHandlerService:
         edited_minutes = edited_minutes.removeprefix("```html").removesuffix("```")
         hallucinations = await chatbot.hallucination_check()
 
-        return edited_minutes, hallucinations
+        return MinuteAndHallucinations(
+            text=edited_minutes,
+            total_claims=len(hallucinations),
+            hallucinations=hallucinations,
+        )
 
     @classmethod
     async def calculate_accuracy_score(
@@ -384,4 +389,3 @@ class MinuteHandlerService:
             messages=get_accuracy_check_messages(minute, transcript),
             response_format=GuardrailScore,
         )
-        return MinuteAndHallucinations(text=edited_minutes, total_claims=0, hallucinations=hallucinations)

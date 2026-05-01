@@ -126,36 +126,13 @@ def get_cite_claims_prompt(
     claims: list[str],
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
+
     claims_text = "\n".join(f"- {claim}" for claim in claims)
+    
+
     return [
         {
             "role": "user",
-            "content": f"""<task>
-Add citations to the provided meeting summary which reference items in the transcript.
-</task>
-
-<transcript>
-{transcript_as_index_speaker_and_utterance(transcript)}
-</transcript>
-
-<meeting_summary>
-{initial_draft}
-</meeting_summary>
-
-<formatting_instructions>
-Each citation should be of the form [n] where n is the index of the transcript item. Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81].
-</formatting_instructions>
-
-<requirements>
-Each statement should have a maximum of 5 citations.
-Do not add citations to lists of attendees.
-</requirements>
-
-<output>
-Output ONLY the meeting summary text with citations added. Do NOT include the <meeting_summary> tags in your output. Do NOT include any other text or explanations.
-</output>
-""",
-        }
             "content": _render(
                 "cite_claims.j2",
                 transcript=transcript_as_index_speaker_and_utterance(transcript),
@@ -164,7 +141,6 @@ Output ONLY the meeting summary text with citations added. Do NOT include the <m
             ),
         },
     ]
-
 
 def string_to_system_message(string: str) -> dict[str, str]:
     return {"role": "system", "content": string}
