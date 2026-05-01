@@ -4,7 +4,7 @@ from typing import TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import TIMESTAMP, Column, Enum
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
@@ -126,9 +126,9 @@ class User(BaseTableMixin, table=True):
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
     roles: list[UserRole] = Field(
         default_factory=lambda: [UserRole.STANDARD_USER],
-        sa_column=Column(ARRAY(Enum(UserRole, name="userrole")), nullable=False, server_default="{STANDARD_USER}")
+        sa_column=Column(ARRAY(Enum(UserRole, name="userrole")), nullable=False, server_default="{STANDARD_USER}"),
     )
-    
+
 
 class Recording(BaseTableMixin, table=True):
     __tablename__ = "recording"
