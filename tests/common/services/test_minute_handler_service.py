@@ -255,10 +255,10 @@ def test_handle_bad_transcript(mock_dialogue_entry, mocker):
         "common.services.minute_handler_service.transcript_as_speaker_and_utterance",
         return_value=utterance,
     )
-    result, hallucinations = MinuteHandlerService.handle_bad_transcript([mock_dialogue_entry])
+    result = MinuteHandlerService.handle_bad_transcript([mock_dialogue_entry])
 
-    assert f"Transcript is: {utterance}" in result
-    assert hallucinations == []
+    assert f"Transcript is: {utterance}" in result.text
+    assert result.hallucinations == []
 
 
 @pytest.mark.asyncio
@@ -269,10 +269,10 @@ async def test_generate_basic_minutes(mock_dialogue_entry, mocker):
     mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
-    result, hallucinations = await MinuteHandlerService.generate_basic_minutes([mock_dialogue_entry])
+    result = await MinuteHandlerService.generate_basic_minutes([mock_dialogue_entry])
 
-    assert result == chatbot_output
-    assert hallucinations == []
+    assert result.text == chatbot_output
+    assert result.hallucinations == []
     mock_chatbot.chat.assert_awaited_once()
 
 
@@ -284,14 +284,14 @@ async def test_edit_minutes_with_ai(mock_dialogue_entry, mocker):
     mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
-    result, hallucinations = await MinuteHandlerService.edit_minutes_with_ai(
+    result = await MinuteHandlerService.edit_minutes_with_ai(
         minutes="<p>original minutes</p>",
         edit_instructions="make it shorter",
         transcript=[mock_dialogue_entry],
     )
 
-    assert result == text_content
-    assert hallucinations == []
+    assert result.text == text_content
+    assert result.hallucinations == []
 
 
 @pytest.mark.asyncio
@@ -302,13 +302,13 @@ async def test_edit_minutes_with_ai_strips_code_fences(mock_dialogue_entry, mock
     mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
-    result, _ = await MinuteHandlerService.edit_minutes_with_ai(
+    result = await MinuteHandlerService.edit_minutes_with_ai(
         minutes="<p>original minutes</p>",
         edit_instructions="make it shorter",
         transcript=[mock_dialogue_entry],
     )
 
-    assert result == f"<p>{chatbot_output}</p>"
+    assert result.text == f"<p>{chatbot_output}</p>"
 
 
 @pytest.mark.asyncio
@@ -316,13 +316,17 @@ async def test_generate_minutes_too_short(mocker, mock_minute, mock_transcriptio
     output = "too short"
     mock_minute.transcription = mock_transcription
 
-    mocker.patch.object(MinuteHandlerService, "handle_bad_transcript", return_value=(output, []))
+    mocker.patch.object(
+        MinuteHandlerService,
+        "handle_bad_transcript",
+        return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[]),
+    )
     mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
 
-    result, hallucinations = await MinuteHandlerService.generate_minutes(MeetingType.too_short, mock_minute)
+    result = await MinuteHandlerService.generate_minutes(MeetingType.too_short, mock_minute)
 
-    assert result == f"<p>{output}</p>"
-    assert hallucinations == []
+    assert result.text == f"<p>{output}</p>"
+    assert result.hallucinations == []
 
 
 @pytest.mark.asyncio
@@ -330,12 +334,16 @@ async def test_generate_minutes_short(mocker, mock_minute, mock_transcription):
     output = "short"
     mock_minute.transcription = mock_transcription
 
-    mocker.patch.object(MinuteHandlerService, "generate_basic_minutes", AsyncMock(return_value=(output, [])))
+    mocker.patch.object(
+        MinuteHandlerService,
+        "generate_basic_minutes",
+        AsyncMock(return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[])),
+    )
     mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
 
-    result, _ = await MinuteHandlerService.generate_minutes(MeetingType.short, mock_minute)
+    result = await MinuteHandlerService.generate_minutes(MeetingType.short, mock_minute)
 
-    assert result == f"<p>{output}</p>"
+    assert result.text == f"<p>{output}</p>"
 
 
 @pytest.mark.asyncio
@@ -345,12 +353,16 @@ async def test_generate_minutes_standard(mocker, mock_dialogue_entry, mock_minut
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = mock_dialogue_entry
 
-    mocker.patch.object(MinuteHandlerService, "generate_full_minutes", AsyncMock(return_value=(output, [])))
+    mocker.patch.object(
+        MinuteHandlerService,
+        "generate_full_minutes",
+        AsyncMock(return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[])),
+    )
     mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
 
-    result, _ = await MinuteHandlerService.generate_minutes(MeetingType.standard, mock_minute)
+    result = await MinuteHandlerService.generate_minutes(MeetingType.standard, mock_minute)
 
-    assert result == f"<p>{output}</p>"
+    assert result.text == f"<p>{output}</p>"
 
 
 @pytest.mark.asyncio
@@ -369,15 +381,17 @@ async def test_generate_full_minutes_uses_user_template(mocker, mock_minute):
     mock_template = AsyncMock()
 
     mocker.patch.object(
-        MinuteHandlerService, "generate_minute_from_user_template", AsyncMock(return_value=(output, []))
+        MinuteHandlerService,
+        "generate_minute_from_user_template",
+        AsyncMock(return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[])),
     )
     mocker.patch("common.services.minute_handler_service.TemplateManager.get_template", return_value=mock_template)
 
     mocker.patch("common.services.minute_handler_service.convert_american_to_british_spelling", return_value=output)
 
-    result, hallucinations = await MinuteHandlerService.generate_full_minutes(mock_minute)
+    result = await MinuteHandlerService.generate_full_minutes(mock_minute)
 
-    assert result == output
+    assert result.text == output
     MinuteHandlerService.generate_minute_from_user_template.assert_awaited_once_with(mock_minute)
 
 
@@ -386,14 +400,16 @@ async def test_generate_full_minutes_uses_default_template(mocker, mock_minute):
     output = "expected_result"
 
     mock_template = AsyncMock()
-    mock_template.generate = AsyncMock(return_value=("result", []))
+    mock_template.generate = AsyncMock(
+        return_value=MinuteAndHallucinations(text="result", total_claims=0, hallucinations=[])
+    )
     mock_minute.user_template_id = None
     mocker.patch("common.services.minute_handler_service.TemplateManager.get_template", return_value=mock_template)
     mocker.patch("common.services.minute_handler_service.convert_american_to_british_spelling", return_value=output)
 
-    result, _ = await MinuteHandlerService.generate_full_minutes(mock_minute)
+    result = await MinuteHandlerService.generate_full_minutes(mock_minute)
 
-    assert result == output
+    assert result.text == output
     mock_template.generate.assert_awaited_once_with(mock_minute)
 
 
@@ -412,10 +428,10 @@ async def test_generate_minute_from_user_template_success(mocker, mock_session, 
         AsyncMock(return_value=(output, [])),
     )
 
-    result, hallucinations = await MinuteHandlerService.generate_minute_from_user_template(mock_minute)
+    result = await MinuteHandlerService.generate_minute_from_user_template(mock_minute)
 
-    assert result == output
-    assert hallucinations == []
+    assert result.text == output
+    assert result.hallucinations == []
 
 
 @pytest.mark.asyncio
@@ -439,7 +455,11 @@ async def test_process_minute_generation_message_success(
 
     mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
     mocker.patch.object(MinuteHandlerService, "predict_meeting", return_value=MeetingType.standard)
-    mocker.patch.object(MinuteHandlerService, "generate_minutes", AsyncMock(return_value=(dialogue, [])))
+    mocker.patch.object(
+        MinuteHandlerService,
+        "generate_minutes",
+        AsyncMock(return_value=MinuteAndHallucinations(text=dialogue, total_claims=0, hallucinations=[])),
+    )
     mocker.patch.object(MinuteHandlerService, "update_minute_version")
 
     await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
