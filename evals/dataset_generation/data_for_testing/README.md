@@ -1,158 +1,149 @@
-# Evaluation Pipeline
+# Data for Testing — Evaluation Pipeline
 
-This pipeline evaluates how well automatically detected Protected Characteristics (PCs) align with manually identified ones.
-
----
-
-## 🔹 Overview
-
-The workflow is split into **two stages**:
-
-1. **Pipeline (1/2)** → Generate transcript + extract PCs + prepare files  
-2. **Pipeline (2/2)** → Compare manual PCs vs model output and compute metrics  
+Evaluates how well the characteristics detection pipeline identifies Protected Characteristics (PCs) by comparing its output against a manually annotated ground truth.
 
 ---
 
-> [!NOTE]
-> #### poetry install --with evals-summarisation
-> This module optionally uses of the sentence-transformers dependency
+## Overview
 
-## 1️⃣ Configure Transcript Generation
+The workflow has two stages:
 
-Edit the config file:
+1. **Annotate** — runs characteristics detection on the transcript and creates an index-aligned annotated ground truth file from `manual_pc.json`
+2. **Evaluate** — compares the manual list against the characteristics detection output and computes precision / recall / F1
 
-> `evals/dataset_generation/transcription_generation/configs/multi_with_pcs.yaml`
-
-
-Define your desired:
-- Theme / scenario  
-- Speakers  
-- Context  
+Multiple unrelated transcripts can coexist under `input/` — each in its own named subdirectory. The annotate step picks the most recently modified one.
 
 ---
 
-## 2️⃣ Run Pipeline (1/2)
+> **Note:** Install the `evals-summarisation` dependency group for semantic similarity scoring:
+> ```bash
+> poetry install --with evals-summarisation
+> ```
+
+---
+
+## Step 1 — Generate a Synthetic Transcript
+
+Use the transcription generation module to produce a transcript:
 
 ```bash
-poetry run python evals/dataset_generation/data_for_testing/src/run.py
+poetry run python -m evals.dataset_generation.transcription_generation.main --config multi_with_pcs.yaml
 ```
 
+The output is written to:
 
-## Outputs
-
-- Generated transcript → processed automatically
-
-- Extracted characteristics →
-> `evals/characteristics/output/`
-> `evals/dataset_generation/data_for_testing/transcripts/`
-
-- Auto-created manual file →
-> `evals/dataset_generation/data_for_testing/transcripts/manual/`
-
-- Manifest →
-> `evals/dataset_generation/data_for_testing/transcripts/manifest.json`
-
-
-## ✍️ 3️⃣ Add Manual PCs
-
-Open the auto-created file in:
-
-> `evals/dataset_generation/data_for_testing/transcripts/manual/`
-
-Populate the list with manually identified PC-related text spans, e.g.:
-
-```python
-my_manual_pcs = [
-    "Biola",
-    "three months pregnant",
-    "expecting a baby",
-    "he",
-    "my partner",
-]
 ```
-Include duplicates if they appear multiple times — the evaluation supports this.
+evals/dataset_generation/transcription_generation/output/
+```
 
+Configure the scenario, speakers, and context by editing the config file first:
 
-## 4️⃣ Run Pipeline (2/2)
+```
+evals/dataset_generation/transcription_generation/configs/multi_with_pcs.yaml
+```
 
-After adding manual PCs:
+---
 
-Import the list and add it as the first arg of the  `evaluate_manual_vs_hypothesis` funtion within main (manual_list param), then run
+## Step 2 — Place Files in the Input Folder
+
+Each transcript lives in a named subdirectory under `input/`. Create one and copy the generated transcript into it:
 
 ```bash
-poetry run python evals/dataset_generation/data_for_testing/src/main.py
+mkdir -p evals/dataset_generation/data_for_testing/input/<name>
+cp "$(ls -t evals/dataset_generation/transcription_generation/output/*.json | head -1)" \
+   evals/dataset_generation/data_for_testing/input/<name>/
 ```
 
-## Outputs
+Create `manual_pc.json` in the same subdirectory with a JSON array of text spans you have manually identified as PC-related:
 
-Results are written to:
-> `evals/dataset_generation/data_for_testing/output/`
-
-They include:
-
-#### Per-item diagnostics
-```json
-{
-  "manual_text": "...",
-  "best_match": "...",
-  "score": 0.82,
-  "label": "TP | FN"
-}
+```bash
+echo '[]' > evals/dataset_generation/data_for_testing/input/<name>/manual_pc.json
+# Then open and edit it — for example:
+#   code evals/dataset_generation/data_for_testing/input/<name>/manual_pc.json
 ```
-#### False positives
-```json
-{
-  "hypothesis_text": "...",
-  "best_match": "...",
-  "score": 0.41,
-  "label": "FP"
-}
-```
-
-#### Summary metrics
 
 ```json
-{
-  "average_similarity": "...",
-  "coverage@threshold": "...",
-  "precision": "...",
-  "recall": "...",
-  "f1_score": "...",
-}
+["Biola", "three months pregnant", "expecting a baby", "he", "my partner"]
 ```
 
-## 🔁 Iteration Workflow
+Include duplicates if a span appears multiple times — the evaluation supports this.
 
-You can refine your manual PCs:
+Each subdirectory should contain exactly **two files**:
 
-1. Update the manual list
-2. Re-run Pipeline (2/2) only
+```
+input/
+  <name>/
+    <transcript>.json    ← generated transcript
+    manual_pc.json       ← your manual annotations
+```
 
-No need to regenerate transcripts.
+---
 
+## Step 3 — Annotate
 
-## 🧠 Notes
+```bash
+poetry run python evals/dataset_generation/data_for_testing/src/annotate.py
+```
 
-- Matching using **fuzzy similarity** resolves such as:
-  - `"he said"` ≈ `"he said that"`
+This step picks the most recently modified subdirectory under `input/` and:
 
-- Matching is **bidirectional**:
-  - Manual → Hypothesis (recall-like)
-  - Hypothesis → Manual (precision-like)
+- Reads `manual_pc.json` and finds each text span in the transcript, recording start/end character indices aligned to those produced by the characteristics detection pipeline
+- Writes `annotated_<transcript_name>.json` to `transcripts/` (ground truth in characteristics format)
+- Runs the characteristics detection pipeline on the transcript
+- Copies the characteristics output to `transcripts/`
+- Writes `transcripts/manifest.json` linking all files
 
-- **Threshold is configurable**:
-  - Default is `0.6`
-  - Controls what qualifies as a match (TP vs FN/FP)
-  - Lower → more lenient matching  
-  - Higher → stricter matching  
+Outputs:
 
-- **Similarity function is configurable**:
-  - You can swap out the `text_similarity` param for different strategies, or choose to create one to suit your needs
-  - Functions on file:
-    - semantic_similarity (default, requires installing evals-summarisation's group-dev-dependencies )
-    - default_similarity
-    - containment_similarity (useful for substrings)
-  - This directly impacts scoring behaviour and evaluation sensitivity
+```
+transcripts/
+  annotated_<name>.json        ← manual annotations with aligned span indices
+  <name>.json                  ← characteristics detection model output
+  manifest.json                ← links all paths for the evaluate step
+```
 
-- Manifest ensures:
-  - Always uses latest pipeline output  
+---
+
+## Step 4 — Evaluate
+
+```bash
+poetry run python evals/dataset_generation/data_for_testing/src/evaluate.py
+```
+
+This compares `manual_pc.json` against the characteristics detection output and writes results to:
+
+```
+evals/dataset_generation/data_for_testing/output/evaluation_<timestamp>.json
+```
+
+### Per-item diagnostics
+
+```json
+{ "manual_text": "...", "best_match": "...", "score": 0.82, "label": "TP | FN" }
+{ "hypothesis_text": "...", "best_match": "...", "score": 0.41, "label": "FP" }
+```
+
+### Summary metrics
+
+```json
+{ "precision": 0.85, "recall": 0.78, "f1_score": 0.81, "true_positive": 7, "false_negative": 2, "false_positive": 1 }
+```
+
+---
+
+## Iteration
+
+To refine results without re-running characteristics detection:
+
+1. Edit `input/<name>/manual_pc.json`
+2. Re-run **Step 3** (annotate) to regenerate the aligned annotated file
+3. Re-run **Step 4** (evaluate)
+
+---
+
+## Notes
+
+- **Index alignment** — both `annotated_<name>.json` and the characteristics detection output use the same transcript string representation (`"Speaker: text\n..."`) and the same `re.escape` / `re.finditer` pattern, so span indices are directly comparable
+- **Similarity function** — configurable in `evaluate.py`; options: `semantic_similarity` (default, requires `evals-summarisation`), `default_similarity`, `containment_similarity`
+- **Threshold** — default `0.6`; lower is more lenient, higher is stricter
+- **Matching** — bidirectional: manual→hypothesis (recall) and hypothesis→manual (precision)
