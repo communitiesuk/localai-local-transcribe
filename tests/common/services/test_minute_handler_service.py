@@ -238,7 +238,7 @@ def test_predict_meeting_too_short(mock_dialogue_entry):
 
     mock_dialogue_entry["text"] = dialogue_too_short
     result = MinuteHandlerService.predict_meeting([mock_dialogue_entry])
-    assert result == MeetingType.too_short  
+    assert result == MeetingType.too_short
 
 
 def test_predict_meeting_standard(mock_dialogue_entry):
@@ -467,7 +467,6 @@ async def test_process_minute_generation_message_success(
     except Exception as e:
         print(f"\n--- ACTUAL ERROR CAUSE: {e.__cause__} ---")
         raise
-
 
     MinuteHandlerService.update_minute_version.assert_called_once_with(
         mock_minute_version.id,

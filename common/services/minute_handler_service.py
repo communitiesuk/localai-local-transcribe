@@ -117,7 +117,7 @@ class MinuteHandlerService:
                 ]
             session.add(minute_version)
             session.commit()
-    
+
     @staticmethod
     def _calculate_word_count(transcript: list[DialogueEntry]) -> int:
         count = 0

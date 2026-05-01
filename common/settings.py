@@ -23,8 +23,6 @@ else:
     logger.info("No .env file was detected. Using environment variables as is")
 
 
-
-
 class Settings(BaseSettings):
     POSTGRES_HOST: str = Field(description="PostgreSQL database host")
     POSTGRES_PORT: int = Field(description="PostgreSQL database port")
@@ -176,7 +174,7 @@ class Settings(BaseSettings):
         default=50,
         description="Transcript must have at least this many words to be passed to summary stage",
     )
-    
+
     MIN_WORD_COUNT_FOR_FULL_SUMMARY: int = Field(
         default=200,
         description="Transcript must have at least this many words to be passed to full summary stage",
