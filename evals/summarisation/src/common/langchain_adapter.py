@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 from typing import Any
 
 from langchain_core.callbacks.manager import CallbackManagerForLLMRun
@@ -40,15 +41,18 @@ class LangChainModelAdapter(BaseChatModel):
         **_kwargs: Any,
     ) -> ChatResult:
         """Generates chat response from messages using wrapped adapter."""
+        message_dicts = [_convert_message_to_dict(m) for m in messages]
+
         try:
-            loop = asyncio.get_event_loop()
+            asyncio.get_running_loop()
+            # Already inside a running event loop — submit to a thread to avoid deadlock
+            with concurrent.futures.ThreadPoolExecutor() as pool:
+                future = pool.submit(asyncio.run, self.adapter.chat(message_dicts))
+                response = future.result()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-
-        message_dicts = [_convert_message_to_dict(m) for m in messages]
-
-        response = loop.run_until_complete(self.adapter.chat(message_dicts))
+            response = loop.run_until_complete(self.adapter.chat(message_dicts))
 
         message = AIMessage(content=response)
         generation = ChatGeneration(message=message)

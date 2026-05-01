@@ -34,9 +34,6 @@ locals {
       name  = "POSTGRES_DB"
       value = var.database_name
     }, {
-      name  = "AZURE_OPENAI_API_VERSION"
-      value = "2024-10-21"
-    }, {
       name  = "TRANSCRIPTION_QUEUE_NAME"
       value = var.transcription_queue_name
     }, {
@@ -50,16 +47,13 @@ locals {
       value = var.llm_deadletter_queue_name
     }, {
       name  = "TRANSCRIPTION_SERVICES"
-      value = "[\"aws_transcribe\"]" # TODO replace with APIM - AIILG-481
+      value = "[\"azure_stt_synchronous\"]"
     }, {
       name  = "MAX_TRANSCRIPTION_PROCESSES"
       value = tostring(var.max_transcription_processes)
     }, {
       name  = "MAX_LLM_PROCESSES"
       value = tostring(var.max_llm_processes)
-    }, {
-      name  = "AZURE_TRANSCRIPTION_CONTAINER_NAME"
-      value = "transcriptions"
     }, {
       name = "FAST_LLM_PROVIDER"
       value = "azure_apim"
@@ -89,7 +83,7 @@ locals {
       value = "client_secret"
     }, {
     name  = "AZURE_APIM_URL"
-    value = "https://api.azc.test.communities.gov.uk/minute/"
+    value = "https://api.azc.test.communities.gov.uk/localtranscribe/"
     }, {
     name  = "AZURE_APIM_API_VERSION"
     value = "2024-10-21"
@@ -99,14 +93,6 @@ locals {
     {
       name      = "POSTGRES_PASSWORD"
       valueFrom = var.database_password_secret_arn
-    },
-    {
-      name      = "AZURE_SPEECH_KEY"
-      valueFrom = var.azure_speech_key_arn
-    },
-    {
-      name      = "AZURE_SPEECH_REGION"
-      valueFrom = var.azure_speech_region_arn
     },
     {
       name      = "AZURE_APIM_TENANT_ID"
@@ -128,6 +114,7 @@ locals {
       name      = "AZURE_APIM_SUBSCRIPTION_KEY"
       valueFrom = var.azure_apim_subscription_key_arn
     },
+    # AZURE_BLOB_CONNECTION_STRING and AZURE_TRANSCRIPTION_CONTAINER_NAME needed here for batch adapter - see AIILG-528
   ]
   frontend_environment_variables = [
     {

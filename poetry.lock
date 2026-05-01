@@ -2857,7 +2857,7 @@ version = "3.1.6"
 description = "A very fast and expressive template engine."
 optional = false
 python-versions = ">=3.7"
-groups = ["dev", "evals-dataset-generation", "evals-summarisation", "local-dev"]
+groups = ["main", "dev", "evals-dataset-generation", "evals-summarisation", "local-dev"]
 files = [
     {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
     {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
@@ -11487,4 +11487,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "4b8838937857711ed390f69b1a2c57cfaf2edffd6a267281ac2ede70a5cf9da4"
+content-hash = "0de015dbf9b400b7cf751c3a5bad71ade7166dc376b08d9f7fbcbeb82c4f611e"

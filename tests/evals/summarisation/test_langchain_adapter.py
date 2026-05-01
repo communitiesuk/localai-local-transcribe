@@ -62,21 +62,28 @@ def test_invoke_converts_messages_and_calls_adapter(mock_adapter):
     assert result.content == "Test response from LLM"
 
 
-def test_invoke_uses_existing_event_loop(mock_adapter):
+def test_invoke_in_async_context_uses_thread_executor(mock_adapter):
     adapter = LangChainModelAdapter(adapter=mock_adapter, model_name="test-model")
     messages = [HumanMessage(content="Test")]
 
-    mock_loop = Mock()
-    mock_loop.run_until_complete = Mock(return_value="Test response from LLM")
+    mock_future = Mock()
+    mock_future.result = Mock(return_value="Test response from LLM")
+    mock_pool = Mock()
+    mock_pool.__enter__ = Mock(return_value=mock_pool)
+    mock_pool.__exit__ = Mock(return_value=False)
+    mock_pool.submit = Mock(return_value=mock_future)
 
-    with patch("asyncio.get_event_loop", return_value=mock_loop):
+    with (
+        patch("asyncio.get_running_loop"),
+        patch("concurrent.futures.ThreadPoolExecutor", return_value=mock_pool),
+    ):
         result = adapter.invoke(messages)
 
-        mock_loop.run_until_complete.assert_called_once()
+        mock_pool.submit.assert_called_once()
         assert result.content == "Test response from LLM"
 
 
-def test_invoke_creates_event_loop_if_needed(mock_adapter):
+def test_invoke_creates_event_loop_if_no_running_loop(mock_adapter):
     adapter = LangChainModelAdapter(adapter=mock_adapter, model_name="test-model")
     messages = [HumanMessage(content="Test")]
 
@@ -84,7 +91,7 @@ def test_invoke_creates_event_loop_if_needed(mock_adapter):
     mock_loop.run_until_complete = Mock(return_value="Test response from LLM")
 
     with (
-        patch("asyncio.get_event_loop", side_effect=RuntimeError("No loop")),
+        patch("asyncio.get_running_loop", side_effect=RuntimeError("no running loop")),
         patch("asyncio.new_event_loop", return_value=mock_loop),
         patch("asyncio.set_event_loop") as mock_set_loop,
     ):

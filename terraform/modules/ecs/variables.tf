@@ -189,16 +189,6 @@ variable "aws_region" {
   type        = string
 }
 
-variable "azure_speech_key_arn" {
-  description = "ARN of the SSM parameter containing the Azure Speech key"
-  type        = string
-}
-
-variable "azure_speech_region_arn" {
-  description = "ARN of the SSM parameter containing the Azure Speech region"
-  type        = string
-}
-
 variable "azure_apim_tenant_id_arn" {
   description = "ARN of the SSM parameter containing the Azure APIM tenant ID"
   type        = string

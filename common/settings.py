@@ -62,9 +62,6 @@ class Settings(BaseSettings):
         description="deadletter queue name to use for SQS. Ignored if using Azure Service Bus "
     )
 
-    AZURE_SPEECH_KEY: str = Field(description="Azure STT speech key for API")
-    AZURE_SPEECH_REGION: str = Field(description="Region for Azure STT")
-
     MAX_TRANSCRIPTION_PROCESSES: int = Field(description="the number of transcription workers per node", default=1)
     MAX_LLM_PROCESSES: int = Field(description="the number of LLM workers per node", default=1)
 
@@ -91,7 +88,6 @@ class Settings(BaseSettings):
     AZURE_APIM_SCOPE: str | None = Field(description="OAuth scope for APIM client secret auth", default=None)
     # if using 'static_token' for AZURE_APIM_AUTH_METHOD
     AZURE_APIM_ACCESS_TOKEN: str | None = Field(description="Access token for Azure APIM", default=None)
-
     # if using Gemini
     GOOGLE_APPLICATION_CREDENTIALS: str | None = Field(
         description="Path to Google Cloud service account credentials JSON file", default=None
@@ -198,6 +194,10 @@ class Settings(BaseSettings):
     LOCAL_STORAGE_PATH: str = Field(
         default="/tmp",  # noqa: S108
         description="The folder where the data directory is mounted for the local storage service.",
+    )
+    LOCAL_STORAGE_BASE_URL: str = Field(
+        default="http://localhost:8080",
+        description="Browser-accessible backend URL for generating direct upload URLs in local storage.",
     )
 
     WHISPLY_DEVICE: str = Field(

@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 
@@ -220,6 +221,23 @@ class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType
     data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
+
+
+class LLMHallucination(BaseModel):
+    hallucination_type: HallucinationType = Field(description="Type of hallucination")
+    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
+    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
+
+
+class LLMHallucinationList(BaseModel):
+    hallucinations: list[LLMHallucination] = Field(description="List of detected hallucinations")
+
+
+@dataclass
+class MinuteAndHallucinations:
+    text: str
+    total_claims: int
+    hallucinations: list[LLMHallucination]
 
 
 class MeetingType(StrEnum):

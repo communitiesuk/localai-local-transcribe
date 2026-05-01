@@ -122,8 +122,6 @@ async def test_get_minute_success(mock_session, mock_minute, mock_transcription,
 async def test_list_minute_versions_success(
     mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
 ):
-    exec_result = Mock()
-
     transcription = mock_transcription
     transcription.user_id = mock_user.id
 
@@ -134,6 +132,7 @@ async def test_list_minute_versions_success(
     minute_version = mock_minute_version
     minute.minute_versions = [minute_version]
 
+    exec_result = Mock()
     exec_result.first.return_value = minute
     mock_session.exec.return_value = exec_result
 
