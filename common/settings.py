@@ -22,10 +22,7 @@ if dotenv_detected:
 else:
     logger.info("No .env file was detected. Using environment variables as is")
 
-# --- Default constants ---
-MIN_WORD_COUNT_FOR_SUMMARY = 200
-GUARDRAIL_THRESHOLD = 0.8
-# -------------------------
+
 
 
 class Settings(BaseSettings):
@@ -170,20 +167,19 @@ class Settings(BaseSettings):
         default=False,
     )
 
-    NEXT_PUBLIC_MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
-        default=MIN_WORD_COUNT_FOR_SUMMARY,
-        description="Transcript must have at least this many words to be passed to summary stage",
-    )
-    MIN_WORD_COUNT_FOR_FULL_SUMMARY: int = Field(
-        default=199,
-        description=(
-            "Transcript must have at least this many words to be passed to complex summary stage. "
-            "Note, this is disabled by default as is lower than the MIN_WORD_COUNT_FOR_SUMMARY"
-        ),
-    )
     GUARDRAIL_THRESHOLD: float = Field(
         default=0.7,
         description="Guardrail threshold for LLM responses",
+    )
+
+    MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
+        default=50,
+        description="Transcript must have at least this many words to be passed to summary stage",
+    )
+    
+    MIN_WORD_COUNT_FOR_FULL_SUMMARY: int = Field(
+        default=200,
+        description="Transcript must have at least this many words to be passed to full summary stage",
     )
 
     LLM_TEMPERATURE: float = Field(

@@ -117,6 +117,21 @@ class MinuteHandlerService:
                 ]
             session.add(minute_version)
             session.commit()
+    
+    @staticmethod
+    def _calculate_word_count(transcript: list[DialogueEntry]) -> int:
+        count = 0
+        for entry in transcript:
+            # If it's a dictionary, use ["text"]
+            if isinstance(entry, dict):
+                count += len(entry.get("text", "").split())
+            # If it's a Pydantic object, use .text
+            elif hasattr(entry, "text"):
+                count += len(entry.text.split())
+            # If it's a plain string
+            elif isinstance(entry, str):
+                count += len(entry.split())
+        return count
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:
@@ -166,8 +181,8 @@ class MinuteHandlerService:
         label: str,
     ) -> None:
         """Helper to run accuracy check and handle result/error logging."""
-        word_count = sum(len(entry["text"].split()) for entry in transcript)
-        if word_count < settings.NEXT_PUBLIC_MIN_WORD_COUNT_FOR_SUMMARY:
+        word_count = cls._calculate_word_count(transcript)
+        if word_count < settings.MIN_WORD_COUNT_FOR_FULL_SUMMARY:
             logger.info(
                 "%s: Skipping guardrail check for %s (transcript too short: %d words)", minute_id, label, word_count
             )
@@ -349,9 +364,9 @@ class MinuteHandlerService:
 
     @classmethod
     def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
-        word_count = sum(len(entry["text"].split()) for entry in dialogue_entries)
+        word_count = cls._calculate_word_count(dialogue_entries)
         match word_count:
-            case n if n < settings.NEXT_PUBLIC_MIN_WORD_COUNT_FOR_SUMMARY:
+            case n if n < settings.MIN_WORD_COUNT_FOR_SUMMARY:
                 return MeetingType.too_short
             case n if n < settings.MIN_WORD_COUNT_FOR_FULL_SUMMARY:
                 return MeetingType.short

@@ -108,7 +108,7 @@ async def list_minute_versions(
         raise HTTPException(404)
 
     word_count = sum(len(entry["text"].split()) for entry in (minute.transcription.dialogue_entries or []))
-    is_too_short = word_count < settings.NEXT_PUBLIC_MIN_WORD_COUNT_FOR_SUMMARY
+    is_too_short = word_count < settings.MIN_WORD_COUNT_FOR_SUMMARY
 
     return [
         MinuteVersionResponse(
