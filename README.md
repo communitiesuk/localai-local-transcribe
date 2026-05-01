@@ -109,8 +109,10 @@ The worker reads from the queue and executes transcription/file conversion/llm c
 Set up your AWS SSO profile by running:
 
 ```bash
-aws configure sso
+aws configure sso --profile <your-profile>
 ```
+
+I recommend using a profile name that includes the account name, e.g. `staging-developer_role-929514686841` to avoid confusion if you have access to multiple accounts.
 
 Enter the following when prompted:
 - SSO start URL: shared with you separately
@@ -179,12 +181,19 @@ You probably don't have your AWS profile selected, try running `aws sso login --
 
 #### Setting up a new environment from scratch
 
+Follow the [instructions above](#aws-access) to set up your AWS cli.
+Make sure to set an appropriate profile name and `export AWS_PROFILE=<your profile>` before proceeding.
+
+Run `aws sts get-caller-identity` to confirm you're using the correct account. The 'account number' should match the account ID for the environment you're trying to set up.
+
 ##### Bootstrapping the Terraform backend
 
 1. Create `terraform/<env>/` and `terraform/<env>/backend/` by copying from `terraform/development/`, replacing all instances of `development` with your environment name and updating the domain names in `main.tf`.
 2. In `terraform/<env>/backend/main.tf`, comment out the `backend "s3"` block near the top of the file.
 3. `cd` into `terraform/<env>/backend` and run `terraform init` followed by `terraform apply`. The plan should show the creation of an S3 bucket called `local-transcribe-tfstate-<env>`. If everything looks correct, run `terraform apply`.
 4. Once the bucket exists in the AWS console, uncomment the `backend "s3"` block and run `terraform init` again. You will be prompted to migrate the local state to the remote backend.
+5. After the migration is complete, run `terraform plan` to confirm that everything is working correctly. The plan should show no changes.
+6. Delete the `terraform.tfstate` and `terraform.tfstate.backup` files from the local `terraform/<env>/backend/` directory, as these are no longer needed.
 
 ##### Setting up initial networking and requesting SSL certificates
 
@@ -194,6 +203,11 @@ You probably don't have your AWS profile selected, try running `aws sso login --
 ```bash
 terraform apply -target module.networking -target module.frontdoor -target module.certificates
 ```
+
+Note: This may take up to around 10 minutes to complete.
+
+If there is an error about unable to create some resources, try running the command again.
+This is likely due to some race conditions in the module creation order we still have yet to work out.
 
 3. Use the values in the terraform output to complete the DNS change request to MHCLG (see below).
 
