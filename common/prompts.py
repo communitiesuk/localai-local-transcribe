@@ -86,9 +86,13 @@ def get_accuracy_check_messages(minute: str, transcript: list[DialogueEntry]) ->
     return [
         {
             "role": "system",
-            "content": """You are a Quality Assurance auditor. Your task is to evaluate the accuracy of a meeting minute summary against the original transcript.
-You must provide a confidence score between 0.0 and 1.0, where 1.0 means the summary is perfectly accurate and complete based on the transcript, and 0.0 means it is completely inaccurate or hallucinated.
-You must also provide a reasoning for your score, explaining any discrepancies, missing key information, or hallucinations found.""",
+            "content": (
+                "You are a Quality Assurance auditor. Your task is to evaluate the accuracy of a meeting minute "
+                "summary against the original transcript. You must provide a confidence score between 0.0 and 1.0, "
+                "where 1.0 means the summary is perfectly accurate and complete based on the transcript, and 0.0 "
+                "means it is completely inaccurate or hallucinated. You must also provide a reasoning for your "
+                "score, explaining any discrepancies, missing key information, or hallucinations found."
+            ),
         },
         get_transcript_messages(transcript),
         {
