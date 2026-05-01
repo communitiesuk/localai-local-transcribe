@@ -8,8 +8,6 @@ from typing import Any
 
 from evals.dataset_generation.data_for_testing.src.settings import CHARACTERISTICS_OUTPUT_DIR, DATA_TEST_TRANSCRIPTS_DIR
 
-MANUAL_DIR = DATA_TEST_TRANSCRIPTS_DIR / "manual"
-
 
 def run_characteristics_pipeline() -> None:
     cmd = ["poetry", "run", "python", "-m", "evals.dataset_generation.characteristics.src.main"]
@@ -39,30 +37,20 @@ def get_latest_file(directory: Path) -> Path:
     return max(files, key=lambda f: f.stat().st_mtime)
 
 
-def export_results() -> None:
+def export_results(manual_pc_path: Path, annotated_file_path: Path) -> None:
     DATA_TEST_TRANSCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
-    MANUAL_DIR.mkdir(parents=True, exist_ok=True)
 
     latest_file = get_latest_file(CHARACTERISTICS_OUTPUT_DIR)
-
     dest_json = DATA_TEST_TRANSCRIPTS_DIR / latest_file.name
-    manual_filename = f"manual_pcs_{latest_file.stem}.py"
-    manual_file_path = MANUAL_DIR / manual_filename
     manifest_path = DATA_TEST_TRANSCRIPTS_DIR / "manifest.json"
 
     shutil.copy2(latest_file, dest_json)
-    logging.info("Copied output file → %s", dest_json)
-
-    if not manual_file_path.exists():
-        manual_file_path.touch()
-        logging.info("Created manual file → %s", manual_file_path)
-    else:
-        logging.info("Manual file already exists → %s", manual_file_path)
+    logging.info("Copied characteristics output → %s", dest_json)
 
     manifest = {
-        "source_file": str(latest_file),
         "characteristics_output_file": str(dest_json),
-        "manual_file": str(manual_file_path),
+        "manual_file": str(manual_pc_path),
+        "annotated_file": str(annotated_file_path),
     }
 
     with Path(manifest_path).open("w", encoding="utf-8") as f:
@@ -133,6 +121,17 @@ def load_json(path: str | Path) -> dict[str, Any]:
 
     if not isinstance(data, dict):
         error_msg = f"Expected JSON object at {path}, got {type(data)}"
+        raise ValueError(error_msg)
+
+    return data
+
+
+def load_json_list(path: str | Path) -> list[str]:
+    with Path(path).open("r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    if not isinstance(data, list):
+        error_msg = f"Expected JSON array at {path}, got {type(data)}"
         raise ValueError(error_msg)
 
     return data
