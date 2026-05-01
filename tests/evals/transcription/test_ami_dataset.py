@@ -73,7 +73,8 @@ def test_validate_dataset_contract_passes_valid_sample():
         reference_diarization=[],
     )
 
-    _validate_dataset_contract(sample)
+    result = _validate_dataset_contract(sample)
+    assert result is None
 
 
 def test_validate_dataset_contract_raises_when_no_audio():

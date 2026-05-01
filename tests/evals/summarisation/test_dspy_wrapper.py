@@ -93,6 +93,7 @@ def test_call_creates_event_loop_if_needed(mock_adapter):
 
     with (
         patch("asyncio.get_running_loop", side_effect=RuntimeError("No running loop")),
+        patch("asyncio.get_event_loop", side_effect=RuntimeError("No current loop")),
         patch("asyncio.new_event_loop") as mock_new_loop,
         patch("asyncio.set_event_loop") as mock_set_loop,
     ):

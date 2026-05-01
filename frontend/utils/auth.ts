@@ -1,34 +1,18 @@
-import {
-  AuthApiClient,
-  createAuthUtils,
-  type UserAuthorisationResult,
-} from '@i-dot-ai-npm/utilities'
+import { AlbJwtVerifier } from 'aws-jwt-verify'
 
-// Logger configuration
-const logger = console
-
-// Validate required environment variables
-// Don't expect an AUTH_API_URL if you're running dev locally / running frontend tests
-const authApiUrl =
-  process.env.AUTH_API_URL ||
-  (process.env.NODE_ENV === 'development' ? 'development' : undefined)
-
-if (!authApiUrl) {
-  throw new Error('AUTH_API_URL is not defined in the environment variables.')
+export type UserAuthorisationResult = {
+  email: string
+  isAuthorised: boolean
+  authReason: string
 }
 
-process.env.AUTH_API_URL = authApiUrl
-
-// Initialize AuthApiClient
-const authClient = new AuthApiClient({
-  appName: process.env.REPO || 'unknown',
-  authApiUrl: process.env.AUTH_API_URL,
-  logger: logger,
-  timeout: 5000,
-})
-
-// Create auth utilities
-const { getUserInfo } = createAuthUtils(authClient, logger)
+const verifier =
+  process.env.ENVIRONMENT !== 'local'
+    ? AlbJwtVerifier.create({
+        albArn: process.env.ALB_ARN!,
+        issuer: process.env.OIDC_ISSUER!,
+      })
+    : null
 
 export async function parseAuthToken(
   token: string
@@ -39,25 +23,19 @@ export async function parseAuthToken(
   }
 
   try {
-    const userInfo = await getUserInfo(token)
+    const payload = await verifier!.verify(token, {
+      clientId: process.env.OIDC_CLIENT_ID!,
+    })
 
-    if (!userInfo) {
-      console.error('Failed to get user info from token')
+    const email = payload.email as string | undefined
+    if (!email) {
+      console.error('No email found in JWT payload')
       return null
     }
 
-    if (!userInfo.email) {
-      console.error('No email found in user info')
-      return null
-    }
-
-    return {
-      email: userInfo.email,
-      isAuthorised: userInfo.isAuthorised,
-      authReason: userInfo.authReason,
-    }
+    return { email, isAuthorised: true, authReason: 'OIDC' }
   } catch (error) {
-    console.error('Error parsing auth token:', error)
+    console.error('Error verifying auth token:', error)
     return null
   }
 }

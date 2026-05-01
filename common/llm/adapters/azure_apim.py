@@ -5,15 +5,19 @@ import logging
 import re
 from collections.abc import Awaitable, Callable
 
-from openai import APIConnectionError, APIError, AsyncOpenAI, RateLimitError
-from openai.types.chat import ChatCompletion
+from openai import APIConnectionError, APIError, AsyncOpenAI, AuthenticationError, RateLimitError
+from openai.types.chat import ChatCompletion, ParsedChatCompletion
 from openai.types.chat.chat_completion import Choice
+
+from common.azure_apim_auth import AzureTokenProvider
+from common.settings import get_settings
 
 from .base import ModelAdapter
 from .llm_constants import MAX_TOKENS, TEMPERATURE
 from .message_utils import convert_to_openai_message
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 MAX_RETRIES = 6
 
@@ -24,29 +28,43 @@ class AzureAPIMModelAdapter(ModelAdapter):
         url: str,
         model: str,
         api_version: str,
-        access_token: str,
         subscription_key: str,
+        token_provider: AzureTokenProvider,
     ) -> None:
         self._model = model
         self._api_version = api_version
-        self.async_apim_client = AsyncOpenAI(
-            base_url=url + self._model,
-            api_key=access_token,
-            default_headers={
-                "Ocp-Apim-Subscription-Key": subscription_key,
-            },
-            max_retries=0,
-        )
+        self._url = url
+        self._subscription_key = subscription_key
+        self._token_provider = token_provider
+        self._cached_async_apim_client: AsyncOpenAI | None = None
+
+    async def _get_apim_client(self) -> AsyncOpenAI:
+        token = await self._token_provider.get_token()
+        if self._cached_async_apim_client is None or self._cached_async_apim_client.api_key != token:
+            self._cached_async_apim_client = AsyncOpenAI(
+                base_url=self._url + self._model,  # APIM URL expects model here
+                api_key=token,
+                default_headers={
+                    "Ocp-Apim-Subscription-Key": self._subscription_key,
+                },
+                max_retries=0,
+            )
+        return self._cached_async_apim_client
 
     async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         openai_messages = [convert_to_openai_message(msg) for msg in messages]
-        response = await self._call_with_retry(
-            lambda: self.async_apim_client.beta.chat.completions.parse(
+
+        async def call() -> ParsedChatCompletion[T]:
+            client = await self._get_apim_client()
+            return await client.beta.chat.completions.parse(
                 model=self._model,
                 messages=openai_messages,
                 response_format=response_format,
                 extra_query={"api-version": self._api_version},
-            ),
+            )
+
+        response = await self._call_with_retry(
+            call,
             "structured_chat",
         )
         parsed = response.choices[0].message.parsed
@@ -60,14 +78,19 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
         openai_messages = [convert_to_openai_message(msg) for msg in messages]
-        response = await self._call_with_retry(
-            lambda: self.async_apim_client.chat.completions.create(
+
+        async def call() -> ChatCompletion:
+            client = await self._get_apim_client()
+            return await client.chat.completions.create(
                 model=self._model,
                 messages=openai_messages,
                 temperature=TEMPERATURE,
                 max_tokens=MAX_TOKENS,
                 extra_query={"api-version": self._api_version},
-            ),
+            )
+
+        response = await self._call_with_retry(
+            call,
             "chat",
         )
         choice = response.choices[0]
@@ -101,6 +124,17 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 if attempt == MAX_RETRIES - 1:
                     raise
                 await asyncio.sleep(wait_time)
+            except AuthenticationError:
+                logger.warning(
+                    "%s - authentication error, refreshing token and retrying (attempt %d/%d)",
+                    method_name,
+                    attempt + 1,
+                    MAX_RETRIES,
+                )
+                await self._token_provider.invalidate_token()
+                self._cached_async_apim_client = await self._get_apim_client()
+                if attempt == MAX_RETRIES - 1:
+                    raise
             except (APIConnectionError, APIError) as e:
                 logger.error("%s - %s: %s", method_name, type(e).__name__, str(e))
                 raise

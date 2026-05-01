@@ -10,6 +10,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
+from common.azure_apim_auth import build_azure_apim_token_provider
 from common.llm.adapters import AzureAPIMModelAdapter, GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
 from common.prompts import get_hallucination_detection_messages
 from common.settings import get_settings
@@ -36,6 +37,9 @@ class ChatBot:
     def __init__(self, adapter: ModelAdapter) -> None:
         self.adapter = adapter
         self.messages: list[dict[str, str]] = []
+
+    def clear_history(self) -> None:
+        self.messages = []
 
     async def hallucination_check(self) -> list[LLMHallucination]:
         if settings.HALLUCINATION_CHECK:
@@ -122,19 +126,18 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
         if not settings.AZURE_APIM_API_VERSION:
             msg = "AZURE_APIM_API_VERSION is required for azure_apim model"
             raise ValueError(msg)
-        if not settings.AZURE_APIM_ACCESS_TOKEN:
-            msg = "AZURE_APIM_ACCESS_TOKEN is required for azure_apim model"
-            raise ValueError(msg)
         if not settings.AZURE_APIM_SUBSCRIPTION_KEY:
             msg = "AZURE_APIM_SUBSCRIPTION_KEY is required for azure_apim model"
             raise ValueError(msg)
+
+        token_provider = build_azure_apim_token_provider()
 
         return ChatBot(
             AzureAPIMModelAdapter(
                 url=settings.AZURE_APIM_URL,
                 model=model_name,
                 api_version=settings.AZURE_APIM_API_VERSION,
-                access_token=settings.AZURE_APIM_ACCESS_TOKEN,
+                token_provider=token_provider,
                 subscription_key=settings.AZURE_APIM_SUBSCRIPTION_KEY,
             )
         )

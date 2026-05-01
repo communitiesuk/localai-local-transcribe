@@ -17,6 +17,26 @@ export type DialogueEntryForm = {
   entries: DialogueEntry[]
 }
 
+export function isEntryPlaying(
+  time: number,
+  entryStart: number,
+  nextEntryStart?: number
+): boolean {
+  return (
+    time >= entryStart &&
+    (nextEntryStart === undefined || time < nextEntryStart)
+  )
+}
+
+export function buildTranscriptionHtml(
+  entries: DialogueEntry[] | null | undefined
+): string {
+  const safeEntries = entries ?? []
+  return safeEntries
+    .map((entry) => `<p><b>${entry.speaker}:</b> ${entry.text}</p>`)
+    .join('\n\n')
+}
+
 export function TranscriptionTab({
   transcription,
 }: {
@@ -36,10 +56,7 @@ export function TranscriptionTab({
   } = methods
 
   const transcriptionString = useMemo(
-    () =>
-      (transcription.dialogue_entries || [])
-        .map((entry) => `<p><b>${entry.speaker}:</b> ${entry.text}</p>`)
-        .join('\n\n'),
+    () => buildTranscriptionHtml(transcription.dialogue_entries),
     [transcription.dialogue_entries]
   )
 
@@ -121,9 +138,11 @@ export function TranscriptionTab({
           )}
           <div className="flex flex-col gap-6">
             {fields.map((entry, index, array) => {
-              const isPlaying =
-                time >= entry.start_time &&
-                (!array[index + 1] || time < array[index + 1].start_time)
+              const isPlaying = isEntryPlaying(
+                time,
+                entry.start_time,
+                array[index + 1]?.start_time
+              )
               return (
                 <div
                   className={cn('flex items-start gap-2 rounded', {
