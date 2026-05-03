@@ -163,9 +163,7 @@ async def test_process_minute_generation_handles_guardrail_failure():
         mock_get_mv.return_value = mock_minute_version
         mock_predict.return_value = MeetingType.standard
         mock_gen_minutes.return_value = MinuteAndHallucinations(
-            text="<html>Minutes</html>", 
-            total_claims=0, 
-            hallucinations=[]
+            text="<html>Minutes</html>", total_claims=0, hallucinations=[]
         )
 
         # Guardrail check raises exception
