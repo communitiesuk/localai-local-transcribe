@@ -299,8 +299,7 @@ class MinuteHandlerService:
             msg = f"No template with id {minute.user_template_id}"
             raise RuntimeError(msg)
         logger.info("%s: Found template id=%s, name=%s", minute.id, template.id, template.name)
-        result = await generate_user_template(template=template, transcription=minute.transcription)
-        return result
+        return await generate_user_template(template=template, transcription=minute.transcription)
 
     @classmethod
     async def generate_minutes(

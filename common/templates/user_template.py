@@ -4,6 +4,7 @@ from common.database.postgres_models import TemplateType, Transcription, UserTem
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_transcript_messages
+from common.types import MinuteAndHallucinations
 
 document_prompt = """<task>
 You are an expert meeting minutes writer with extensive experience across various sectors. \
