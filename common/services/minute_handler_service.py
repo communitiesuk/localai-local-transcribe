@@ -367,6 +367,12 @@ class MinuteHandlerService:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         choice = await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
         hallucinations = await chatbot.hallucination_check()
+        if isinstance(choice, tuple):
+            return MinuteAndHallucinations(
+                text=choice[0],
+                total_claims=0,
+                hallucinations=choice[1],
+            )
         return MinuteAndHallucinations(
             text=choice,
             total_claims=0,
