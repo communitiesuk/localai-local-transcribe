@@ -220,12 +220,6 @@ class WorkerMessage(BaseModel):
     data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
 
 
-class LLMHallucination(BaseModel):
-    hallucination_type: HallucinationType = Field(description="Type of hallucination")
-    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
-    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
-
-
 @dataclass
 class MinuteAndHallucinations:
     text: str
