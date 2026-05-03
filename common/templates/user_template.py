@@ -72,7 +72,7 @@ or any other preamble. Simply provide the requested information."""
 
 async def generate_user_template(
     template: UserTemplate, transcription: Transcription
-) -> tuple[str, list[LLMHallucination]]:
+) -> MinuteAndHallucinations:
     if template.type == TemplateType.DOCUMENT:
         markdown_template = markdownify.markdownify(template.content, heading_style=markdownify.ATX)
 
@@ -89,7 +89,10 @@ async def generate_user_template(
         chatbot = create_default_chatbot(FastOrBestLLM.BEST)
         response = await chatbot.chat(messages)
         hallucinations = await chatbot.hallucination_check()
-        return response, hallucinations
+        return MinuteAndHallucinations(
+            text=response, 
+            total_claims=0, 
+            hallucinations=hallucinations)
     else:
         qa_pairs: list[tuple[str, str]] = []
         for question in template.questions:
@@ -125,4 +128,8 @@ async def generate_user_template(
 
         minute = "\n\n".join(f"## {q}\n{a}" for (q, a) in qa_pairs)
 
-        return minute, []
+        return MinuteAndHallucinations(
+            text=minute, 
+            total_claims=0, 
+            hallucinations=[]
+        )
