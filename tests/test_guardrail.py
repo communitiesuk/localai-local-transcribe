@@ -114,7 +114,11 @@ async def test_process_minute_generation_runs_guardrails():
     ):
         mock_get_mv.return_value = mock_minute_version
         mock_predict.return_value = MeetingType.standard
-        mock_gen_minutes.return_value = ("<html>Minutes</html>", [])
+        mock_gen_minutes.return_value = MinuteAndHallucinations(
+            text="<html>Minutes</html>",
+            total_claims=0,
+            hallucinations=[],
+        )
 
         mock_score = GuardrailScore(score=0.9, reasoning="Good")
         mock_calc_score.return_value = mock_score

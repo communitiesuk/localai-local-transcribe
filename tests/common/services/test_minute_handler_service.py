@@ -425,7 +425,7 @@ async def test_generate_minute_from_user_template_success(mocker, mock_session, 
     mocker.patch("common.services.minute_handler_service.SessionLocal", return_value=ctx)
     mocker.patch(
         "common.services.minute_handler_service.generate_user_template",
-        AsyncMock(return_value=(output, [])),
+        AsyncMock(return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[])),
     )
 
     result = await MinuteHandlerService.generate_minute_from_user_template(mock_minute)

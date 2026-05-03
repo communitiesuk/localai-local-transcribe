@@ -334,15 +334,7 @@ class MinuteHandlerService:
         else:
             logger.info("%s: Generating minute from default template: %s", minute.id, minute.template_name)
             template = TemplateManager.get_template(minute.template_name)
-            raw_generated = await template.generate(minute)
-            if isinstance(raw_generated, tuple):
-                generated = MinuteAndHallucinations(
-                    text=raw_generated[0],
-                    total_claims=0,
-                    hallucinations=raw_generated[1],
-                )
-            else:
-                generated = raw_generated
+            generated = await template.generate(minute)
         logger.info("%s: Successfully generated minute", minute.id)
         return MinuteAndHallucinations(
             text=convert_american_to_british_spelling(generated.text),
@@ -367,17 +359,7 @@ class MinuteHandlerService:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         choice = await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
         hallucinations = await chatbot.hallucination_check()
-        if isinstance(choice, tuple):
-            return MinuteAndHallucinations(
-                text=choice[0],
-                total_claims=0,
-                hallucinations=choice[1],
-            )
-        return MinuteAndHallucinations(
-            text=choice,
-            total_claims=0,
-            hallucinations=hallucinations,
-        )
+        return MinuteAndHallucinations(text=choice, total_claims=0, hallucinations=hallucinations)
 
     @classmethod
     def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
