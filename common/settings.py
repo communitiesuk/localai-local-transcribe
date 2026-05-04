@@ -180,11 +180,6 @@ class Settings(BaseSettings):
         description="Transcript must have at least this many words to be passed to full summary stage",
     )
 
-    LLM_TEMPERATURE: float = Field(
-        default=0.7,
-        description="Temperature for LLM responses",
-    )
-
     LOCAL_STORAGE_PATH: str = Field(
         default="/tmp",  # noqa: S108
         description="The folder where the data directory is mounted for the local storage service.",

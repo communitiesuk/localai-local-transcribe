@@ -40,8 +40,6 @@ settings = get_settings()
 
 logger = logging.getLogger(__name__)
 
-THRESHOLD_FOR_PASSING_ACCURACY_CHECK = settings.GUARDRAIL_THRESHOLD
-
 
 class MinuteGenerationFailedError(Exception):
     pass
@@ -66,7 +64,7 @@ class MinuteHandlerService:
         score: GuardrailScore,
     ) -> None:
         with SessionLocal() as session:
-            passed = score.score >= THRESHOLD_FOR_PASSING_ACCURACY_CHECK
+            passed = score.score >= settings.GUARDRAIL_THRESHOLD
 
             guardrail_result = GuardrailResult(
                 minute_version_id=minute_version_id,

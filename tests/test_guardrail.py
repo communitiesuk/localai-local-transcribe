@@ -135,7 +135,7 @@ async def test_process_minute_generation_runs_guardrails():
 
 
 @pytest.mark.asyncio
-async def test_process_minute_generation_handles_guardrail_failure():
+async def test_process_minute_generation_handles_exception():
     # Setup mocks
     mock_minute_version = MagicMock()
     mock_minute_version.id = uuid4()
