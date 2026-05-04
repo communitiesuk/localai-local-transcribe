@@ -84,7 +84,7 @@ function TabRecorder({
   const streamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null)
   useTabCloseWarning(isRecording || !!recordedAudio)
 
   const stopAllTracks = useCallback(() => {
@@ -102,7 +102,7 @@ function TabRecorder({
     streamRef.current = null
     micStreamRef.current = null
     mediaRecorderRef.current = null
-    setStream(null);
+    setStream(null)
 
     setIsRecording(false)
     releaseWakeLock()
