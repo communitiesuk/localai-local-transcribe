@@ -210,7 +210,11 @@ class UserTemplate(BaseTableMixin, table=True):
     content: str
     description: str = ""
 
-    type: TemplateType = TemplateType.DOCUMENT
+    type: TemplateType = Field(
+        default=TemplateType.DOCUMENT,
+        nullable=False,
+        sa_column_kwargs={"server_default": "DOCUMENT"},
+    )
 
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
 
