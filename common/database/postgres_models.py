@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Enum
+from sqlalchemy import TIMESTAMP, Column, Enum, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
@@ -126,7 +126,11 @@ class User(BaseTableMixin, table=True):
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
     roles: list[UserRole] = Field(
         default_factory=lambda: [UserRole.STANDARD_USER],
-        sa_column=Column(ARRAY(Enum(UserRole, name="userrole")), nullable=False, server_default="{STANDARD_USER}"),
+        sa_column=Column(
+            ARRAY(Enum(UserRole, name="userrole")),
+            nullable=False,
+            server_default=text("ARRAY['STANDARD_USER']::userrole[]"),
+        ),
     )
 
 
