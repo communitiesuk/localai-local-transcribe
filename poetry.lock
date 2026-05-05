@@ -6585,26 +6585,6 @@ requests = ">=2.9"
 test = ["black (>=22.1.0)", "flake8 (>=4.0.1)", "pre-commit (>=2.17.0)", "pytest-localserver (>=0.7.1)", "tox (>=3.24.5)"]
 
 [[package]]
-name = "pytest-cov"
-version = "7.1.0"
-description = "Pytest plugin for measuring coverage."
-optional = false
-python-versions = ">=3.9"
-groups = ["dev"]
-files = [
-    {file = "pytest_cov-7.1.0-py3-none-any.whl", hash = "sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678"},
-    {file = "pytest_cov-7.1.0.tar.gz", hash = "sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2"},
-]
-
-[package.dependencies]
-coverage = {version = ">=7.10.6", extras = ["toml"]}
-pluggy = ">=1.2"
-pytest = ">=7"
-
-[package.extras]
-testing = ["process-tests", "pytest-xdist", "virtualenv"]
-
-[[package]]
 name = "pytest-dotenv"
 version = "0.5.2"
 description = "A py.test plugin that parses environment files before running tests"
@@ -11487,4 +11467,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "0de015dbf9b400b7cf751c3a5bad71ade7166dc376b08d9f7fbcbeb82c4f611e"
+content-hash = "5d6817a024704fa5a555fca345acc896f4a5ab816f81a2d24d4edc7b7288a4e0"
