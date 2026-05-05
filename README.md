@@ -118,8 +118,8 @@ Enter the following when prompted:
 - SSO Session: choose a name, e.g. `local-transcribe-dev`
 - SSO Registration scopes: `sso:account:access` (this might be the default)
 - Account ID: the development account ID, also shared with you separately
-- Role: the developer role you have been assigned
-- Profile name: choose a name, e.g. `developer_role-929514686841`
+- Role: the developer role you have been assigned (likely 'developer_role')
+- Profile name: choose a name, e.g. `developer_role_staging` or `developer_role-929514686841`
 
 Then log in using your MHCLG super user account (`suxxxxxxx@mhclg.onmicrosoft.com`) and set the profile as the default for your session:
 
@@ -145,7 +145,7 @@ export TF_VAR_alarm_email_address=the_email_address_you_just_got_from_slack
 #### Terraform (development)
 
 > [!WARNING]
-> Ad-hoc Terraform runs can cause the state to drift out of sync with deployments from the development branch. Only run these commands when necessary, and always review the plan carefully before applying.
+> Ad-hoc Terraform runs can cause the state to drift out of sync with deployments from the development branch. Only run these commands when necessary, and always review the plan carefully before applying, it might be helpful to review with someone else too if you're unsure or anything looks risky.
 
 To run Terraform commands directly against the development environment:
 
@@ -154,6 +154,9 @@ export TF_VAR_alarm_email_address=alerts@example.com
 cd terraform/development
 terraform init
 terraform plan [-var="image_tag=<tag>"]
+```
+Then review the plan output carefully to check for any unexpected changes. If everything looks good, apply the changes with:
+```bash
 terraform apply [-var="image_tag=<tag>"]
 ```
 
