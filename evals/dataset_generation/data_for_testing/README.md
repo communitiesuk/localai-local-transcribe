@@ -11,7 +11,7 @@ The workflow has two stages:
 1. **Annotate** — runs characteristics detection on the transcript and creates an index-aligned annotated ground truth file from `manual_pc.json`
 2. **Evaluate** — compares the manual list against the characteristics detection output and computes precision / recall / F1
 
-Multiple unrelated transcripts can coexist under `input/` — each in its own named subdirectory. The annotate step picks the most recently modified one.
+Multiple unrelated transcripts can coexist under `evals/dataset_generation/data_for_testing/input/` — each in its own named subdirectory. The annotate step picks the most recently modified transcript file within the named subdirectory.
 
 ---
 
@@ -46,7 +46,7 @@ evals/dataset_generation/transcription_generation/configs/multi_with_pcs.yaml
 
 ## Step 2 — Place Files in the Input Folder
 
-Each transcript lives in a named subdirectory under `input/`. Create one and copy the generated transcript into it:
+Each transcript lives in a named subdirectory under `evals/dataset_generation/data_for_testing/input/`. Create one and copy the generated transcript into it:
 
 ```bash
 PC_TEST_INSTANCE_NAME=my_transcript
@@ -73,7 +73,7 @@ Each unique text span listed here will be searched across the full transcript �
 Each subdirectory should contain exactly **two files**:
 
 ```
-input/
+evals/dataset_generation/data_for_testing/input/
   $PC_TEST_INSTANCE_NAME/
     <transcript>.json    ← generated transcript
     manual_pc.json       ← your manual annotations
@@ -90,18 +90,14 @@ poetry run python evals/dataset_generation/data_for_testing/src/annotate.py $PC_
 This step:
 
 - Reads `manual_pc.json` and finds each text span in the transcript, recording start/end character indices aligned to those produced by the characteristics detection pipeline
-- Writes `annotated_<transcript_name>.json` to `transcripts/` (ground truth in characteristics format)
-- Runs the characteristics detection pipeline on the transcript
-- Copies the characteristics output to `transcripts/`
-- Writes `transcripts/manifest.json` linking all files
+- Writes `reference.json` to `output/<name>/` (ground truth in characteristics format)
 
 Outputs:
 
 ```
-transcripts/
-  annotated_$PC_TEST_INSTANCE_NAME.json        ← manual annotations with aligned span indices
-  $PC_TEST_INSTANCE_NAME.json                  ← characteristics detection model output
-  manifest.json                ← links all paths for the evaluate step
+evals/dataset_generation/data_for_testing/output/
+  $PC_TEST_INSTANCE_NAME/
+    reference.json    ← manual annotations with aligned span indices
 ```
 
 ---
@@ -112,10 +108,13 @@ transcripts/
 poetry run python evals/dataset_generation/data_for_testing/src/evaluate.py $PC_TEST_INSTANCE_NAME
 ```
 
-This compares `manual_pc.json` against the characteristics detection output and writes results to:
+This runs the characteristics detection pipeline on the transcript, then compares the output against the manual annotations and writes results to:
 
 ```
-evals/dataset_generation/data_for_testing/output/evaluation_<timestamp>.json
+evals/dataset_generation/data_for_testing/output/
+  $PC_TEST_INSTANCE_NAME/
+    hypothesis.json   ← characteristics detection model output
+    metrics.json      ← evaluation results
 ```
 
 ### Per-item diagnostics
@@ -137,7 +136,7 @@ evals/dataset_generation/data_for_testing/output/evaluation_<timestamp>.json
 
 To refine results without re-running characteristics detection:
 
-1. Edit `input/$PC_TEST_INSTANCE_NAME/manual_pc.json`
+1. Edit `evals/dataset_generation/data_for_testing/input/$PC_TEST_INSTANCE_NAME/manual_pc.json`
 2. Re-run annotate: `poetry run python ... annotate.py $PC_TEST_INSTANCE_NAME`
 3. Re-run evaluate: `poetry run python ... evaluate.py $PC_TEST_INSTANCE_NAME`
 
@@ -145,7 +144,7 @@ To refine results without re-running characteristics detection:
 
 ## Notes
 
-- **Index alignment** — both `annotated_$PC_TEST_INSTANCE_NAME.json` and the characteristics detection output use the same transcript string representation (`"Speaker: text\n..."`) and the same `re.escape` / `re.finditer` pattern, so span indices are directly comparable
+- **Index alignment** — both `reference.json` and the characteristics detection output use the same transcript string representation (`"Speaker: text\n..."`) and the same `re.escape` / `re.finditer` pattern, so span indices are directly comparable
 - **Similarity function** — configurable in `evaluate.py`; options: `semantic_similarity` (default, requires `evals-summarisation`), `default_similarity`, `containment_similarity`
 - **Threshold** — default `0.6`; lower is more lenient, higher is stricter
 - **Matching** — bidirectional: manual→hypothesis (recall) and hypothesis→manual (precision)
