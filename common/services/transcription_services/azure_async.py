@@ -16,6 +16,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 from common.database.postgres_models import DialogueEntry, Recording
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
+from common.services.transcription_services.azure_stt_base import make_stt_request, stt_is_available
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
@@ -39,9 +40,7 @@ def get_client() -> Generator[ContainerClient, None, None]:
         yield container_client
 
 
-transcriptions_url = f"https://{settings.AZURE_SPEECH_REGION}.api.cognitive.microsoft.com/speechtotext/transcriptions"
-submit_url = f"{transcriptions_url}:submit"
-headers = {"Ocp-Apim-Subscription-Key": settings.AZURE_SPEECH_KEY, "Content-Type": "application/json"}
+submit_url = f"{(settings.AZURE_APIM_URL or '').rstrip('/')}/speechtotext/transcriptions:submit"
 timeout_settings = httpx.Timeout(
     timeout=30.0,
     connect=30.0,
@@ -103,7 +102,10 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
             }
 
         async with httpx.AsyncClient(timeout=timeout_settings) as client:
-            response = await client.post(submit_url, headers=headers, json=data, params=params)
+            response = await make_stt_request(
+                lambda hdrs: client.post(submit_url, headers=hdrs, json=data, params=params),
+                extra_headers={"Content-Type": "application/json"},
+            )
             if response.status_code != 201:  # noqa: PLR2004
                 response.raise_for_status()
 
@@ -117,7 +119,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
     )
     async def get_results(cls, files_url: str, data: TranscriptionJobMessageData) -> TranscriptionJobMessageData:
         async with httpx.AsyncClient(timeout=timeout_settings) as client:
-            files_response = await client.get(files_url, headers=headers, params=params)
+            files_response = await make_stt_request(lambda hdrs: client.get(files_url, headers=hdrs, params=params))
             if files_response.status_code != 200:  # noqa: PLR2004
                 files_response.raise_for_status()
 
@@ -190,7 +192,9 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
         # Poll for completion
         for _ in range(retry_count):
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
-                job_response = await client.get(data.job_name, headers=headers, params=params)
+                job_response = await make_stt_request(
+                    lambda hdrs: client.get(data.job_name, headers=hdrs, params=params)
+                )
                 if job_response.status_code != 200:  # noqa: PLR2004
                     job_response.raise_for_status()
 
@@ -211,7 +215,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
 
     @classmethod
     def is_available(cls) -> bool:
-        return bool(settings.AZURE_SPEECH_KEY and settings.AZURE_SPEECH_REGION)
+        return stt_is_available()
 
     @classmethod
     def get_azure_container_sas(
