@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from evals.dataset_generation.data_for_testing.src.settings import CHARACTERISTICS_OUTPUT_DIR
+from evals.dataset_generation.data_for_testing.src.types import ManualEntry
 
 
 def get_transcript_file(subdir: Path) -> Path:
@@ -62,7 +63,7 @@ def load_json(path: str | Path) -> dict[str, Any]:
     return data
 
 
-def load_json_list(path: str | Path) -> list[str]:
+def load_manual_pc(path: str | Path) -> list[ManualEntry]:
     with Path(path).open("r", encoding="utf-8") as f:
         data = json.load(f)
     if not isinstance(data, list):

@@ -1,0 +1,14 @@
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader, Template
+
+PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
+
+PROPOSE_ALTERNATIVES_TEMPLATE = "propose_alternatives.j2"
+ASSESS_COHERENCE_TEMPLATE = "assess_coherence.j2"
+ASSESS_LEAKAGE_TEMPLATE = "assess_leakage.j2"
+
+
+def get_template(template_name: str) -> Template:
+    env = Environment(loader=FileSystemLoader(PROMPTS_DIR), autoescape=True)
+    return env.get_template(template_name)
