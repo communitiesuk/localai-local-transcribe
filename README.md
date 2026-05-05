@@ -132,6 +132,8 @@ export AWS_PROFILE=<your-profile>
 
 #### Build and push helper script
 
+> [!WARNING] You must run this on an ARM64 host machine (e.g. Apple silicon) to build images for the correct architecture. Running on an x86 machine will build images that are incompatible with our AWS environment.
+
 The `build-and-push.sh` script builds Docker images, pushes them to ECR, and runs `terraform plan`/`apply` against the target environment:
 
 Ask in slack for the current alarm email address to use in development, and then run:
@@ -197,7 +199,7 @@ Run `aws sts get-caller-identity` to confirm you're using the correct account. T
 
 ##### Setting up initial networking and requesting SSL certificates
 
-1. The new environment's `variables.tf` has `ssl_certs_created` defaulting to `false` — leave it as-is for now.
+1. In the new environment's `variables.tf` set `ssl_certs_created` defaulting to `false`
 2. `cd` into `terraform/<env>` and run `terraform init`, then:
 
 ```bash
@@ -256,13 +258,58 @@ Once the spreadsheet is completed, create a ServiceNow request with MHCLG using 
 
 ##### Setting up the rest of the environment
 
-Once MHCLG have made the DNS changes and the certificates have been validated, run:
+###### 1. Check certificate validation
+Once MHCLG have made the DNS changes you should check if the certificates have been validated.
+
+Log into the AWS console and navigate to Certificate Manager in the region you're deploying to. Check that the certificates with the domain
+names matching the terraform output have a status of 'Issued' — this means they have been validated. There should be one certificate in
+`eu-west-2` for the load balancer, and one in `us-east-1` for cloudfront.
+
+If you see 'Issued' continue to the next steps, the certificates have been successfully validated.
+
+If you see 'Failed' it might be because it's been over 72 hours since you did the deployment. If that's the case you need to trigger a new deployment.
+Run `terraform apply -target module.networking -target module.frontdoor -target module.certificates` to trigger the certificate creation again.
+Note this is somewhat deterministic, so it should create the same certificates and you won't need to send a new DNS change request. After a couple of minutes,
+the certificates should become 'issued' in the AWS console.
+
+###### 2. Deploy the rest of the infrastructure
+
+After the certificates have been validated:
+
+Update `variables.tf` to set `ssl_certs_created` to `true` to avoid having to pass this variable in future runs.
+
+then run:
 
 ```bash
 terraform apply -var ssl_certs_created=true -var alarm_email_address=<email>
 ```
 
 This will create all remaining resources including ECS services, the RDS database, SQS queues, and Secrets Manager secrets. The secrets will be created but not populated — you will need to populate them manually via the AWS console before the service will function correctly.
+
+If you get an error about resources not existing when you run this command, try running it again. This is likely due to some race conditions in the module creation order we still have yet to work out.
+
+###### 3. Populate secrets
+
+Navigate to SSM Parameter Store in the AWS console and update the following parameters:
+
+| Parameter | Where to find                                                                                                                  |
+|-----------|--------------------------------------------------------------------------------------------------------------------------------|
+| `/local-transcribe/azure/apim_tenant_id` | Securely stored ask the team, originally provided by the APIM team.                                                            |
+| `/local-transcribe/azure/apim_client_id` | Securely stored ask the team, originally provided by the APIM team.                                                            |
+| `/local-transcribe/azure/apim_client_secret` | Securely stored ask the team, originally provided by the APIM team.                                                            |
+| `/local-transcribe/azure/apim_scope` | should take the value `api://api.azc.test.communities.gov.uk/.default` at least for non-prod environments.                     |
+| `/local-transcribe/azure/apim_subscription_key` | Corresponds to subscription within a product in APIM, find on the [APIM site](https://portal.api.azc.test.communities.gov.uk). |
+
+###### 4. Push images
+
+Run the `build-and-push.sh` script as described above to build and push the latest images to ECR, and trigger a deployment.
+
+Ensure you're using the correct AWS profile.
+
+```bash
+export TF_VAR_alarm_email_address=email_address_to_recieve alarms
+./build-and-push.sh --environment <env>
+```
 
 #### Architecture diagram
 

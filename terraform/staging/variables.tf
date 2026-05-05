@@ -1,7 +1,7 @@
 variable "ssl_certs_created" {
   description = "Indicates whether ssl certificates have already been manually created"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "image_tag" {
