@@ -8,6 +8,7 @@ from azure.identity.aio import ClientSecretCredential
 
 from common.settings import get_settings
 
+
 class AzureTokenProvider(Protocol):
     async def get_token(self) -> str: ...
     async def invalidate_token(self) -> None: ...
