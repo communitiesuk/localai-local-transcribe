@@ -4,6 +4,13 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from common.llm.client import ChatBot
+from evals.dataset_generation.counterfactual_generation.src.constants import (
+    COUNTERFACTUAL_REWRITE_TEMPLATE,
+)
+from evals.dataset_generation.counterfactual_generation.src.constants import (
+    get_template as get_rewrite_template,
+)
+from evals.dataset_generation.counterfactual_generation.src.parser import parse_llm_response
 from evals.dataset_generation.data_for_testing.src.constants import (
     ASSESS_COHERENCE_TEMPLATE,
     ASSESS_LEAKAGE_TEMPLATE,
@@ -13,18 +20,14 @@ from evals.dataset_generation.data_for_testing.src.constants import (
 from evals.dataset_generation.data_for_testing.src.types import SpanContext
 
 
-class AlternativeEntry(BaseModel):
-    value: str
-    text: str
+class AxisTransformation(BaseModel):
+    axis: str
+    original_value: str
+    target_value: str
 
 
-class ValueAlternatives(BaseModel):
-    original: str
-    alternatives: list[AlternativeEntry]
-
-
-class AlternativesResponse(BaseModel):
-    values: list[ValueAlternatives]
+class AxesResponse(BaseModel):
+    axes: list[AxisTransformation]
 
 
 class CoherenceResponse(BaseModel):
@@ -62,12 +65,6 @@ def extract_characteristics(reference: dict) -> list[tuple[str, str]]:
     )
 
 
-def apply_replacements(text: str, replacements: dict[str, str]) -> str:
-    for original, alternative in replacements.items():
-        text = re.sub(r"\b" + re.escape(original) + r"\b", alternative, text)
-    return text
-
-
 def check_removals(text: str, original_values: list[str]) -> list[dict[str, Any]]:
     return [
         {
@@ -79,13 +76,30 @@ def check_removals(text: str, original_values: list[str]) -> list[dict[str, Any]
     ]
 
 
-async def _propose_alternatives(
-    chatbot: ChatBot, entries: list[SpanContext], n: int
-) -> dict[str, list[AlternativeEntry]]:
+async def _propose_axes(chatbot: ChatBot, entries: list[SpanContext], n: int) -> list[AxisTransformation]:
     prompt = get_template(PROPOSE_ALTERNATIVES_TEMPLATE).render(entries=entries, n=n)
     chatbot.clear_history()
-    response = await chatbot.structured_chat([{"role": "user", "content": prompt}], AlternativesResponse)
-    return {v.original: v.alternatives for v in response.values}
+    response = await chatbot.structured_chat([{"role": "user", "content": prompt}], AxesResponse)
+    return response.axes
+
+
+async def _rewrite_transcript(
+    chatbot: ChatBot,
+    dialogue_texts: list[str],
+    axis_transform: AxisTransformation,
+    evidence_spans: list[SpanContext],
+) -> list[str]:
+    axis_spans = [s for s in evidence_spans if s["category"].lower() == axis_transform.axis.lower()]
+    prompt = get_rewrite_template(COUNTERFACTUAL_REWRITE_TEMPLATE).render(
+        dialogue_texts=dialogue_texts,
+        axis=axis_transform.axis,
+        original_value=axis_transform.original_value,
+        target_value=axis_transform.target_value,
+        evidence_spans=axis_spans,
+    )
+    chatbot.clear_history()
+    response = await chatbot.chat(messages=[{"role": "user", "content": prompt}])
+    return parse_llm_response(response)
 
 
 async def _assess_coherence(chatbot: ChatBot, transcript: str) -> CoherenceResponse:
@@ -104,29 +118,34 @@ async def _assess_leakage(chatbot: ChatBot, transcript: str, characteristic: str
 
 async def evaluate_counterfactual(
     reference: dict,
-    transcript_text: str,
+    dialogue_entries: list[dict],
     chatbot: ChatBot,
     num_alternatives: int = 2,
 ) -> dict[str, Any]:
     span_contexts = extract_span_contexts(reference)
-    original_values = [s["text"] for s in span_contexts]
     characteristics = extract_characteristics(reference)
-    alternatives_map = await _propose_alternatives(chatbot, span_contexts, num_alternatives)
+    dialogue_texts = [entry["text"] for entry in dialogue_entries]
+
+    proposed_axes = await _propose_axes(chatbot, span_contexts, num_alternatives)
 
     rewrites: list[dict[str, Any]] = []
-    for i in range(num_alternatives):
-        replacements = {
-            v: alternatives_map[v][i].text
-            for v in original_values
-            if v in alternatives_map and i < len(alternatives_map[v])
-        }
-        rewritten = apply_replacements(transcript_text, replacements)
-        checks = check_removals(rewritten, original_values)
-        coherence = await _assess_coherence(chatbot, rewritten)
+    for i, axis_transform in enumerate(proposed_axes):
+        axis_spans = [s for s in span_contexts if s["category"].lower() == axis_transform.axis.lower()]
+        original_values = [s["text"] for s in axis_spans]
+
+        rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
+
+        rewritten_transcript = "\n".join(
+            f"{entry.get('speaker', str(j + 1))}: {text}"
+            for j, (entry, text) in enumerate(zip(dialogue_entries, rewritten_texts, strict=False))
+        )
+
+        checks = check_removals(rewritten_transcript, original_values)
+        coherence = await _assess_coherence(chatbot, rewritten_transcript)
 
         leakage_checks = []
         for char, value in characteristics:
-            result = await _assess_leakage(chatbot, rewritten, char, value)
+            result = await _assess_leakage(chatbot, rewritten_transcript, char, value)
             leakage_checks.append(
                 {
                     "characteristic": char,
@@ -146,13 +165,17 @@ async def evaluate_counterfactual(
         rewrites.append(
             {
                 "alternative_index": i,
-                "replacements": replacements,
+                "axis_change": {
+                    "axis": axis_transform.axis,
+                    "original_value": axis_transform.original_value,
+                    "target_value": axis_transform.target_value,
+                },
                 "all_values_removed": not any(c["found_in_rewrite"] for c in checks),
                 "coherence": round((coherence.score - 1) / 4, 4),
                 "coherence_explanation": coherence.explanation,
                 "leakage_checks": leakage_checks,
                 "unexpected_edits": unexpected_edits,
-                "transcript": rewritten,
+                "transcript": rewritten_transcript,
             }
         )
 
@@ -163,7 +186,7 @@ async def evaluate_counterfactual(
 
     return {
         "summary": {
-            "num_alternatives": num_alternatives,
+            "num_rewrites": len(rewrites),
             "successful_rewrite_rate": successful / len(rewrites) if rewrites else 0.0,
             "average_coherence": avg_coherence,
             "average_leakage": avg_leakage,

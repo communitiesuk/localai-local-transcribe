@@ -3,7 +3,7 @@ The following text fragments appear in a meeting transcript, each labelled with 
 {% for entry in entries %}- "{{ entry.text }}" → {{ entry.value }} [{{ entry.category }}]
 {% endfor %}
 
-Based on these detected characteristics, identify the distinct protected characteristic axes present in the transcript and propose {{ n }} counterfactual target value(s) for each axis.
+Based on these detected characteristics, identify the distinct protected characteristic axes present in the transcript and propose up to {{ n }} counterfactual axes in total — one per detected characteristic, prioritising the most meaningful transformations.
 
 For each unique characteristic (axis), describe:
 - **original_value**: a concise snake_case label summarising the current demographic state of the transcript for that characteristic (e.g. "mixed_participants", "cancer_patient", "elderly")
