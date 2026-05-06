@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Enum, text
+from sqlalchemy import TIMESTAMP, Column, Enum, String, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
@@ -111,6 +111,14 @@ class Hallucination(BaseTableMixin, table=True):
     hallucination_type: HallucinationType = Field(description="Type of hallucination", default=HallucinationType.OTHER)
     hallucination_text: str | None = Field(description="Text of hallucination", default=None)
     hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
+
+
+class Organisation(BaseTableMixin, table=True):
+    __tablename__ = "organisation"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str = Field(sa_column_kwargs={"unique": True})
+    allowed_domains: list[str] = Field(sa_column=Column(ARRAY(String)))
 
 
 # Main models with table=True for DB tables
