@@ -3,8 +3,9 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Enum, String, text
+from sqlalchemy import TIMESTAMP, Column, Enum, ForeignKey, String, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
@@ -119,6 +120,7 @@ class Organisation(BaseTableMixin, table=True):
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     name: str = Field(sa_column_kwargs={"unique": True})
     allowed_domains: list[str] = Field(sa_column=Column(ARRAY(String)))
+    users: list["User"] = Relationship(back_populates="organisation")
 
 
 # Main models with table=True for DB tables
@@ -143,6 +145,11 @@ class User(BaseTableMixin, table=True):
             server_default=text("ARRAY['STANDARD_USER']::userrole[]"),
         ),
     )
+    organisation_id: UUID | None = Field(
+        default=None,
+        sa_column=Column(SAUUID, ForeignKey("organisation.id"), nullable=True),
+    )
+    organisation: "Organisation | None" = Relationship(back_populates="users")
 
 
 class Recording(BaseTableMixin, table=True):
