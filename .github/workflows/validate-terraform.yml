@@ -1,0 +1,104 @@
+name: validate-terraform
+
+on:
+  pull_request:
+  push:
+    branches: [development, main]
+
+permissions:
+    contents: read
+    pull-requests: write
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: eu-west-2
+  TERRAFORM_VERSION: ~>1.14.0
+
+defaults:
+  run: 
+    working-directory: terraform/development
+
+jobs:
+  terraform-validate-ci:
+    name: Terraform CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION}}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.DEV_AWS_ACCOUNT_ID }}:role/github-actions-terraform-ci-plan-read-only
+          aws-region: ${{ env.AWS_REGION }}
+    
+      - name: Terraform format
+        run:  terraform fmt -check -recursive -diff
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate -no-color
+    
+      - name: Terraform plan
+        env:
+          TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
+        run: terraform plan -no-color -input=false -out=tfplan -var="image_tag=${{ github.sha }}"
+     
+      - name: Terraform show
+        run: terraform show -no-color tfplan | head -600 > tf_plan.txt
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: tf-plan
+          path: tfplan
+    
+      - name: Upload readable plan
+        uses: actions/upload-artifact@v5
+        with:
+          name: tf-plan-text
+          path: tf_plan.txt
+
+      - name: Publish plan to PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: terraform-plan
+          path: tf_plan.txt
+       
+
+
+      
+
+     
+    
+
+    
+
+        
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
