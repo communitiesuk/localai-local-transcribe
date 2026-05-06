@@ -311,6 +311,17 @@ export TF_VAR_alarm_email_address=email_address_to_recieve alarms
 ./build-and-push.sh --environment <env>
 ```
 
+###### 5. Verify deployment
+
+Visit the site, it should be working. You can also check the ECS service to see if the tasks are running correctly.
+
+If there are issues uploading a meeting recording this might be a CORs issue, check the network tab in the browser dev tools to see if there are any errors with the S3 upload call.
+Redeploying the S3 bucket and uploads bucket modules might fix this use the command
+```bash
+terraform apply -target module.s3_bucket_uploads -target module.s3_bucket
+```
+from the environment. Waiting a couple of hours also seemed to resolve this on its own.
+
 #### Architecture diagram
 
 Local Transcribe was developed to run on AWS and/or Azure, with abstractions available for message queues and cloud storage.
