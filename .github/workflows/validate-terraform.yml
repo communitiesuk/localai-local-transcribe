@@ -52,7 +52,7 @@ jobs:
     
       - name: Terraform plan
         env:
-          TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
+          TF_VAR_alarm_email_address: ${{ secrets.DEV_ALARM_EMAIL_ADDRESS }}
         run: terraform plan -no-color -input=false -out=tfplan -var="image_tag=${{ github.sha }}"
      
       - name: Terraform show
