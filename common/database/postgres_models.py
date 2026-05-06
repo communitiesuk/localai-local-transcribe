@@ -113,8 +113,6 @@ class Hallucination(BaseTableMixin, table=True):
     hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
 
 
-<<<<<<< feature-rescue
-=======
 # Main models with table=True for DB tables
 class UserRole(StrEnum):
     STANDARD_USER = auto()
@@ -122,7 +120,6 @@ class UserRole(StrEnum):
     MHCLG_SUPPORT_ADMIN = auto()
 
 
->>>>>>> development
 class User(BaseTableMixin, table=True):
     __tablename__ = "user"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
