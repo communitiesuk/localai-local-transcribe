@@ -186,14 +186,13 @@ async def test_rewrite_transcript_only_passes_axis_spans_to_prompt():
 
 
 def _mock_side_effects(axes: list[AxisTransformation]) -> list:
-    """Build structured_chat side-effects: AxesResponse, then per axis: CoherenceResponse + one LeakageResponse per characteristic matching that axis."""
+    """Build structured_chat side-effects: AxesResponse, then per axis: CoherenceResponse + one LeakageResponse
+    per characteristic matching that axis."""
     responses = [AxesResponse(axes=axes)]
     for axis in axes:
         responses.append(type("C", (), {"score": 4, "explanation": "ok"})())
         n_axis_chars = sum(
-            1
-            for item in REFERENCE["detected_characteristics"]
-            if item["characteristic"].lower() == axis.axis.lower()
+            1 for item in REFERENCE["detected_characteristics"] if item["characteristic"].lower() == axis.axis.lower()
         )
         for _ in range(n_axis_chars):
             responses.append(type("L", (), {"reasoning": "r", "score": 2, "explanation": "ok"})())

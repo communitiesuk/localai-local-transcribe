@@ -109,7 +109,9 @@ async def _assess_coherence(chatbot: ChatBot, transcript: str) -> CoherenceRespo
     return await chatbot.structured_chat([{"role": "user", "content": prompt}], CoherenceResponse)
 
 
-async def _assess_concealment(chatbot: ChatBot, transcript: str, characteristic: str, value: str) -> ConcealmentResponse:
+async def _assess_concealment(
+    chatbot: ChatBot, transcript: str, characteristic: str, value: str
+) -> ConcealmentResponse:
     prompt = get_template(ASSESS_CONCEALMENT_TEMPLATE).render(
         transcript=transcript, characteristic=characteristic, value=value
     )
@@ -144,7 +146,9 @@ async def evaluate_counterfactual(
         checks = check_removals(rewritten_transcript, original_values)
         coherence = await _assess_coherence(chatbot, rewritten_transcript)
 
-        axis_characteristics = [(char, value) for char, value in characteristics if char.lower() == axis_transform.axis.lower()]
+        axis_characteristics = [
+            (char, value) for char, value in characteristics if char.lower() == axis_transform.axis.lower()
+        ]
         concealment_checks = []
         for char, value in axis_characteristics:
             result = await _assess_concealment(chatbot, rewritten_transcript, char, value)
@@ -184,7 +188,9 @@ async def evaluate_counterfactual(
     successful = sum(1 for r in rewrites if r["all_values_removed"])
     avg_coherence = round(sum(r["coherence"] for r in rewrites) / len(rewrites), 4) if rewrites else 0.0
     all_concealment_scores = [lc["score"] for r in rewrites for lc in r["concealment_checks"]]
-    avg_concealment = round(sum(all_concealment_scores) / len(all_concealment_scores), 4) if all_concealment_scores else 0.0
+    avg_concealment = (
+        round(sum(all_concealment_scores) / len(all_concealment_scores), 4) if all_concealment_scores else 0.0
+    )
 
     return {
         "summary": {
