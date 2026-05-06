@@ -17,7 +17,7 @@ from evals.dataset_generation.data_for_testing.src.constants import (
     PROPOSE_ALTERNATIVES_TEMPLATE,
     get_template,
 )
-from evals.dataset_generation.data_for_testing.src.types import SpanContext
+from evals.dataset_generation.data_for_testing.src.types import CharacteristicKey, SpanContext, SpanKey
 
 
 class AxisTransformation(BaseModel):
@@ -42,20 +42,21 @@ class LeakageResponse(BaseModel):
 
 
 def extract_span_contexts(reference: dict) -> list[SpanContext]:
-    seen: set[str] = set()
+    seen: set[SpanKey] = set()
     result: list[SpanContext] = []
     for item in reference.get("detected_characteristics", []):
         cat = item.get("characteristic", "")
         val = item.get("attribute_value", "")
         for span in item.get("evidence_spans", []):
             text = span.get("text", "")
-            if text and text not in seen:
-                seen.add(text)
+            key = (text, cat, val)
+            if text and key not in seen:
+                seen.add(key)
                 result.append({"text": text, "value": val, "category": cat})
     return result
 
 
-def extract_characteristics(reference: dict) -> list[tuple[str, str]]:
+def extract_characteristics(reference: dict) -> list[CharacteristicKey]:
     return list(
         {
             (item["characteristic"], item["attribute_value"])

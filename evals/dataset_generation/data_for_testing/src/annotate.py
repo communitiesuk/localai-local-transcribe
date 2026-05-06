@@ -11,7 +11,7 @@ from evals.dataset_generation.data_for_testing.src.run_helpers import (
     validate_json,
 )
 from evals.dataset_generation.data_for_testing.src.settings import INPUT_DIR, OUTPUT_DIR
-from evals.dataset_generation.data_for_testing.src.types import ManualEntry
+from evals.dataset_generation.data_for_testing.src.types import CharacteristicKey, ManualEntry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
@@ -21,7 +21,7 @@ def create_annotated_output(manual_list: list[ManualEntry], transcript_text: str
 
     Entries are grouped by (category, value); duplicate texts within a group are deduplicated.
     """
-    groups: defaultdict[tuple[str, str], set[str]] = defaultdict(set)
+    groups: defaultdict[CharacteristicKey, set[str]] = defaultdict(set)
     for entry in manual_list:
         groups[(entry["category"], entry["value"])].add(entry["text"])
 

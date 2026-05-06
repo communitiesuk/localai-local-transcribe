@@ -1,4 +1,7 @@
-from typing import Literal, TypedDict
+from typing import Literal, TypeAlias, TypedDict
+
+CharacteristicKey: TypeAlias = tuple[str, str]  # (category, attribute_value)
+SpanKey: TypeAlias = tuple[str, str, str]  # (text, category, value)
 
 
 class ManualEntry(TypedDict):

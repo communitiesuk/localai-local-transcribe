@@ -76,17 +76,21 @@ Fill in `text` with the exact substring as it appears in the transcript, fill in
 
 ```json
 [
-  {"text": "Kowalski", "category": "Race", "value": "White (Polish)"},
-  {"text": "three months pregnant", "category": "Pregnancy and Maternity", "value": "Pregnant"},
-  {"text": "he",      "category": "Sex", "value": "Male"}
+  {"text": "Kowalski",             "category": "Race",                   "value": "White (Polish)"},
+  {"text": "three months pregnant","category": "Pregnancy and Maternity","value": "Pregnant"},
+  {"text": "he",                   "category": "Sex",                    "value": "Male"},
+  {"text": "Margaret",             "category": "Sex",                    "value": "Female"},
+  {"text": "Margaret",             "category": "Race",                   "value": "White British"}
 ]
 ```
 
+The last two rows show that a single text span can signal **multiple** protected characteristics. "Margaret" is both a female name (Sex) and a name common in White British culture (Race). Add one row per `(text, category, value)` combination — the pipeline will produce a separate characteristic entry for each.
+
 - `text` — the exact substring to search for in the transcript
 - `category` — the protected characteristic (`Age`, `Disability`, `Gender Reassignment`, `Marriage and Civil Partnership`, `Pregnancy and Maternity`, `Race`, `Religion or Belief`, `Sex`, `Sexual Orientation`)
-- `value` — the specific attribute value (e.g. `White (Polish)`, `Male`, `Pregnant`). There is no fixed set of these, just be concise and descriptive. 
+- `value` — the specific attribute value (e.g. `White (Polish)`, `Male`, `Pregnant`). There is no fixed set of these, just be concise and descriptive.
 
-Entries sharing the same `category` + `value` are grouped into one characteristic in `reference.json`. Duplicate `text` values within a group are deduplicated. Every occurrence of each text span in the transcript becomes a separate reference span.
+Entries sharing the same `category` + `value` are grouped into one characteristic in `reference.json`. Duplicate `(text, category, value)` triplets are deduplicated. A span that signals multiple characteristics (e.g. "Margaret" above) will appear independently under each one. Every occurrence of each text span in the transcript becomes a separate reference span.
 
 Expected layout:
 
