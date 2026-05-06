@@ -186,7 +186,7 @@ output/$PC_TEST_INSTANCE_NAME/
     "num_rewrites": 2,
     "successful_rewrite_rate": 1.0,
     "average_coherence": 0.75,
-    "average_leakage": 0.1
+    "average_concealment": 0.1
   },
   "rewrites": [
     {
@@ -196,7 +196,7 @@ output/$PC_TEST_INSTANCE_NAME/
       "all_values_removed": true,
       "coherence": 0.75,
       "coherence_explanation": "Reads naturally.",
-      "leakage_checks": [
+      "concealment_checks": [
         {"characteristic": "Race", "value": "Asian", "score": 0.0, "explanation": "No evidence found."}
       ],
       "unexpected_edits": []

@@ -238,8 +238,8 @@ async def test_evaluate_counterfactual_summary_successful_rate():
 
 
 @pytest.mark.asyncio
-async def test_evaluate_counterfactual_leakage_checks_only_for_changed_axis():
-    """leakage_checks must only include characteristics that match the rewritten axis."""
+async def test_evaluate_counterfactual_concealment_checks_only_for_changed_axis():
+    """concealment_checks must only include characteristics that match the rewritten axis."""
     mock_chatbot = AsyncMock()
     axes = [AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british")]
     mock_chatbot.structured_chat.side_effect = _mock_side_effects(axes)
@@ -247,9 +247,9 @@ async def test_evaluate_counterfactual_leakage_checks_only_for_changed_axis():
 
     report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, num_alternatives=1)
 
-    leakage_checks = report["rewrites"][0]["leakage_checks"]
-    assert all(lc["characteristic"].lower() == "race" for lc in leakage_checks)
-    assert not any(lc["characteristic"].lower() == "disability" for lc in leakage_checks)
+    concealment_checks = report["rewrites"][0]["concealment_checks"]
+    assert all(lc["characteristic"].lower() == "race" for lc in concealment_checks)
+    assert not any(lc["characteristic"].lower() == "disability" for lc in concealment_checks)
 
 
 @pytest.mark.asyncio

@@ -13,7 +13,7 @@ from evals.dataset_generation.counterfactual_generation.src.constants import (
 from evals.dataset_generation.counterfactual_generation.src.parser import parse_llm_response
 from evals.dataset_generation.data_for_testing.src.constants import (
     ASSESS_COHERENCE_TEMPLATE,
-    ASSESS_LEAKAGE_TEMPLATE,
+    ASSESS_CONCEALMENT_TEMPLATE,
     PROPOSE_ALTERNATIVES_TEMPLATE,
     get_template,
 )
@@ -35,9 +35,9 @@ class CoherenceResponse(BaseModel):
     explanation: str
 
 
-class LeakageResponse(BaseModel):
+class ConcealmentResponse(BaseModel):
     reasoning: str
-    score: int = Field(ge=1, le=5)
+    score: int = Field(ge=1, le=4)
     explanation: str
 
 
@@ -109,12 +109,12 @@ async def _assess_coherence(chatbot: ChatBot, transcript: str) -> CoherenceRespo
     return await chatbot.structured_chat([{"role": "user", "content": prompt}], CoherenceResponse)
 
 
-async def _assess_leakage(chatbot: ChatBot, transcript: str, characteristic: str, value: str) -> LeakageResponse:
-    prompt = get_template(ASSESS_LEAKAGE_TEMPLATE).render(
+async def _assess_concealment(chatbot: ChatBot, transcript: str, characteristic: str, value: str) -> ConcealmentResponse:
+    prompt = get_template(ASSESS_CONCEALMENT_TEMPLATE).render(
         transcript=transcript, characteristic=characteristic, value=value
     )
     chatbot.clear_history()
-    return await chatbot.structured_chat([{"role": "user", "content": prompt}], LeakageResponse)
+    return await chatbot.structured_chat([{"role": "user", "content": prompt}], ConcealmentResponse)
 
 
 async def evaluate_counterfactual(
@@ -145,14 +145,14 @@ async def evaluate_counterfactual(
         coherence = await _assess_coherence(chatbot, rewritten_transcript)
 
         axis_characteristics = [(char, value) for char, value in characteristics if char.lower() == axis_transform.axis.lower()]
-        leakage_checks = []
+        concealment_checks = []
         for char, value in axis_characteristics:
-            result = await _assess_leakage(chatbot, rewritten_transcript, char, value)
-            leakage_checks.append(
+            result = await _assess_concealment(chatbot, rewritten_transcript, char, value)
+            concealment_checks.append(
                 {
                     "characteristic": char,
                     "value": value,
-                    "score": round((result.score - 1) / 4, 4),
+                    "score": round((result.score - 1) / 3, 4),
                     "explanation": result.explanation,
                     "reasoning": result.reasoning,
                 }
@@ -175,7 +175,7 @@ async def evaluate_counterfactual(
                 "all_values_removed": not any(c["found_in_rewrite"] for c in checks),
                 "coherence": round((coherence.score - 1) / 4, 4),
                 "coherence_explanation": coherence.explanation,
-                "leakage_checks": leakage_checks,
+                "concealment_checks": concealment_checks,
                 "unexpected_edits": unexpected_edits,
                 "transcript": rewritten_transcript,
             }
@@ -183,15 +183,15 @@ async def evaluate_counterfactual(
 
     successful = sum(1 for r in rewrites if r["all_values_removed"])
     avg_coherence = round(sum(r["coherence"] for r in rewrites) / len(rewrites), 4) if rewrites else 0.0
-    all_leakage_scores = [lc["score"] for r in rewrites for lc in r["leakage_checks"]]
-    avg_leakage = round(sum(all_leakage_scores) / len(all_leakage_scores), 4) if all_leakage_scores else 0.0
+    all_concealment_scores = [lc["score"] for r in rewrites for lc in r["concealment_checks"]]
+    avg_concealment = round(sum(all_concealment_scores) / len(all_concealment_scores), 4) if all_concealment_scores else 0.0
 
     return {
         "summary": {
             "num_rewrites": len(rewrites),
             "successful_rewrite_rate": successful / len(rewrites) if rewrites else 0.0,
             "average_coherence": avg_coherence,
-            "average_leakage": avg_leakage,
+            "average_concealment": avg_concealment,
         },
         "rewrites": rewrites,
     }
