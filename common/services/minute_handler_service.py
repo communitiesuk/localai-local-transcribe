@@ -120,15 +120,7 @@ class MinuteHandlerService:
     def _calculate_word_count(transcript: list[DialogueEntry]) -> int:
         count = 0
         for entry in transcript:
-            # If it's a dictionary, use ["text"]
-            if isinstance(entry, dict):
-                count += len(entry.get("text", "").split())
-            # If it's a Pydantic object, use .text
-            elif hasattr(entry, "text"):
-                count += len(entry.text.split())
-            # If it's a plain string
-            elif isinstance(entry, str):
-                count += len(entry.split())
+            count += len(entry.get("text", "").split())
         return count
 
     @classmethod
