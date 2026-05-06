@@ -24,6 +24,12 @@ Multiple unrelated transcripts can coexist under `evals/dataset_generation/data_
 
 ## Step 1 — Generate a Synthetic Transcript
 
+Configure the scenario, speakers, and context by editing the config file first:
+
+```
+evals/dataset_generation/transcription_generation/configs/multi_with_pcs.yaml
+```
+
 Use the transcription generation module to produce a transcript:
 
 ```bash
@@ -36,11 +42,6 @@ The output is written to:
 evals/dataset_generation/transcription_generation/output/
 ```
 
-Configure the scenario, speakers, and context by editing the config file first:
-
-```
-evals/dataset_generation/transcription_generation/configs/multi_with_pcs.yaml
-```
 
 ---
 
