@@ -186,12 +186,16 @@ async def test_rewrite_transcript_only_passes_axis_spans_to_prompt():
 
 
 def _mock_side_effects(axes: list[AxisTransformation]) -> list:
-    """Build structured_chat side-effects for axes × characteristics."""
-    n_chars = len(REFERENCE["detected_characteristics"])
+    """Build structured_chat side-effects: AxesResponse, then per axis: CoherenceResponse + one LeakageResponse per characteristic matching that axis."""
     responses = [AxesResponse(axes=axes)]
-    for _ in axes:
+    for axis in axes:
         responses.append(type("C", (), {"score": 4, "explanation": "ok"})())
-        for _ in range(n_chars):
+        n_axis_chars = sum(
+            1
+            for item in REFERENCE["detected_characteristics"]
+            if item["characteristic"].lower() == axis.axis.lower()
+        )
+        for _ in range(n_axis_chars):
             responses.append(type("L", (), {"reasoning": "r", "score": 2, "explanation": "ok"})())
     return responses
 
@@ -231,6 +235,21 @@ async def test_evaluate_counterfactual_summary_successful_rate():
     assert report["summary"]["num_rewrites"] == 1
     assert report["rewrites"][0]["all_values_removed"] is True
     assert report["rewrites"][0]["unexpected_edits"] == []
+
+
+@pytest.mark.asyncio
+async def test_evaluate_counterfactual_leakage_checks_only_for_changed_axis():
+    """leakage_checks must only include characteristics that match the rewritten axis."""
+    mock_chatbot = AsyncMock()
+    axes = [AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british")]
+    mock_chatbot.structured_chat.side_effect = _mock_side_effects(axes)
+    mock_chatbot.chat.return_value = '["Hi Dr. Smith, I feel pressure.", "Hi Sara, let\'s work through this."]'
+
+    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, num_alternatives=1)
+
+    leakage_checks = report["rewrites"][0]["leakage_checks"]
+    assert all(lc["characteristic"].lower() == "race" for lc in leakage_checks)
+    assert not any(lc["characteristic"].lower() == "disability" for lc in leakage_checks)
 
 
 @pytest.mark.asyncio

@@ -144,8 +144,9 @@ async def evaluate_counterfactual(
         checks = check_removals(rewritten_transcript, original_values)
         coherence = await _assess_coherence(chatbot, rewritten_transcript)
 
+        axis_characteristics = [(char, value) for char, value in characteristics if char.lower() == axis_transform.axis.lower()]
         leakage_checks = []
-        for char, value in characteristics:
+        for char, value in axis_characteristics:
             result = await _assess_leakage(chatbot, rewritten_transcript, char, value)
             leakage_checks.append(
                 {
