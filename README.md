@@ -351,6 +351,26 @@ To set up posthog for UX tracking, feature flags etc, create an account at [eu.p
 - create a project and obtain an API key (it should start `phc_`)
 - set the key `POSTHOG_API_KEY` value in your `.env`
 
+#### Internal Access setup (OIDC)
+
+The ALB authenticates users against GDS Internal Access (`sso.service.security.gov.uk`) and injects a signed `x-amzn-oidc-data` header that the app verifies.
+
+Register a client in Internal Access with:
+
+- `redirect_urls`: `https://<app-host>/oauth2/idpresponse` (the CloudFront alias, e.g. `https://development.local-transcribe.test.communities.gov.uk/oauth2/idpresponse` — the path is fixed by ALB)
+- `allowed_domains`: `communities.gov.uk`
+- `prompt`: leave unset
+
+> [!WARNING]
+> Do not set `prompt` to `none` — ALB expects the IdP to show a login page, so first-time logins will fail.
+
+Store the credentials in SSM via the AWS console, updating the `SecureString` values for:
+
+- `/local-transcribe/oidc_secrets/client_id`
+- `/local-transcribe/oidc_secrets/client_secret`
+
+Set `enable_oidc_auth = true` in the environment's `terraform/<env>/main.tf` and apply.
+
 ## Testing
 
 To run unit tests:
