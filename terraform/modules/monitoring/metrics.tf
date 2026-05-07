@@ -200,8 +200,8 @@ resource "aws_cloudwatch_log_metric_filter" "ecs_task_start_failure" {
   name           = "ecs-task-start-failure-${each.value}-${var.environment_name}"
   pattern        = <<EOT
     {($.detail.stopCode = "TaskFailedToStart") &&
-     ($.detail-type = "ECS Task State Change")} &&
-     ($.detail.group = "service:${each.value}")
+     ($.detail-type = "ECS Task State Change") &&
+     ($.detail.group = "service:${each.value}")}
   EOT
 
   metric_transformation {
