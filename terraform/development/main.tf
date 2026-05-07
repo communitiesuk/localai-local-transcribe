@@ -78,7 +78,7 @@ module "frontdoor" {
   cloudwatch_log_expiration_days = local.cloudwatch_log_expiration_days
 
   use_aws_shield_advanced        = false
-  enable_oidc_auth               = false
+  enable_oidc_auth               = true
   ip_allowlist = [
     # Softwire
     "31.221.86.178/32",
@@ -192,7 +192,7 @@ module "ecs" {
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
   db_security_group_id = module.database.rds_security_group_id
   bastion_sg_id        = module.bastion.security_group_id
-  environment          = "local" # Set to local to bypass authentication
+  environment          = "development"
   data_s3_bucket_name  = module.uploads_bucket.bucket_name
   private_subnet_ids   = module.networking.private_subnets[*].id
   vpc_id               = module.networking.vpc.id
@@ -211,6 +211,7 @@ module "ecs" {
   max_transcription_processes = local.max_transcription_processes
   alb_arn                     = module.frontdoor.load_balancer.arn
   oidc_issuer                 = module.frontdoor.oidc_issuer
+  oidc_client_id_name         = module.secrets.internal_access_oidc_client_id_name
   aws_region                  = local.aws_region
   lb_listener_exists          = var.ssl_certs_created
 
