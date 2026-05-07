@@ -15,7 +15,7 @@ COPY pyproject.toml poetry.lock README.md ./
 RUN poetry export -f requirements.txt --output requirements.txt --with backend --without dev --without-hashes && \
     pip install --no-cache-dir --target=/app/site-packages -r requirements.txt
 
-COPY backend/ backend/huhuh
+COPY bacend/ backend/
 COPY common/ common/
 COPY alembic/ alembic/
 COPY alembic.ini .
