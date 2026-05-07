@@ -28,7 +28,7 @@ jobs:
           context: .
           file: ${{ matrix.service }}/Dockerfile
           push: false
-          cache-from: type=gha,scope=${{ matrix.service }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+          cache-from: type=gha,scope=${{ github.workflow }}-${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ github.workflow }}-${{ matrix.service }}
 
 
