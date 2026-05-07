@@ -3,9 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from evals.dataset_generation.data_for_testing.src.counterfactual_evaluator import (
-    AxesResponse,
     AxisTransformation,
-    _propose_axes,
     _rewrite_transcript,
     check_removals,
     evaluate_counterfactual,
@@ -117,29 +115,20 @@ def test_check_removals_word_boundary_matches_standalone():
     assert na["occurrences"] == 1
 
 
-# --- _propose_axes ---
+# --- AxisTransformation ---
 
 
-@pytest.mark.asyncio
-async def test_propose_axes_returns_axis_transformations():
-    mock_chatbot = AsyncMock()
-    mock_chatbot.structured_chat.return_value = AxesResponse(
-        axes=[
-            AxisTransformation(
-                axis="Race",
-                original_value="asian_participants",
-                target_value="all_white_british",
-            )
-        ]
+def test_axis_transformation_supports_optional_instructions():
+    axis = AxisTransformation(axis="Race", original_value="asian", target_value="white_british")
+    assert axis.instructions is None
+
+    axis_with_instructions = AxisTransformation(
+        axis="Age",
+        original_value="older_adults",
+        target_value="young_adults",
+        instructions="Also replace implicit age signals like 'our age'.",
     )
-    entries = [{"text": "Li Na", "value": "Asian", "category": "Race"}]
-
-    result = await _propose_axes(mock_chatbot, entries, n=1)
-
-    assert len(result) == 1
-    assert result[0].axis == "Race"
-    assert result[0].target_value == "all_white_british"
-    mock_chatbot.clear_history.assert_called_once()
+    assert axis_with_instructions.instructions is not None
 
 
 # --- _rewrite_transcript ---
@@ -185,22 +174,72 @@ async def test_rewrite_transcript_only_passes_axis_spans_to_prompt():
 # --- evaluate_counterfactual ---
 
 
-def _mock_side_effects(axes: list[AxisTransformation]) -> list:
-    """Build structured_chat side-effects: AxesResponse, then per axis: CoherenceResponse + one LeakageResponse
-    per characteristic matching that axis."""
-    responses = [AxesResponse(axes=axes)]
+def _build_structured_chat_responses(axes: list[AxisTransformation], num_rewrites: int = 1) -> list:
+    responses = []
     for axis in axes:
-        responses.append(type("C", (), {"score": 4, "explanation": "ok"})())
         n_axis_chars = sum(
             1 for item in REFERENCE["detected_characteristics"] if item["characteristic"].lower() == axis.axis.lower()
         )
-        for _ in range(n_axis_chars):
-            responses.append(type("L", (), {"reasoning": "r", "score": 2, "explanation": "ok"})())
+        for _ in range(num_rewrites):
+            responses.append(type("C", (), {"score": 4, "explanation": "ok"})())
+            for _ in range(n_axis_chars):
+                responses.append(type("L", (), {"reasoning": "r", "score": 2, "explanation": "ok"})())
     return responses
 
 
 @pytest.mark.asyncio
-async def test_evaluate_counterfactual_produces_one_rewrite_per_proposed_axis():
+async def test_evaluate_counterfactual_output_has_axes_list():
+    mock_chatbot = AsyncMock()
+    axes = [AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british")]
+    mock_chatbot.structured_chat.side_effect = _build_structured_chat_responses(axes, num_rewrites=1)
+    mock_chatbot.chat.return_value = '["Hi Dr. Smith, I feel pressure.", "Hi Sara, let\'s work through this."]'
+
+    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, axes=axes, num_rewrites=1)
+
+    assert "axes" in report
+    assert "summary" in report
+    assert len(report["axes"]) == 1
+    assert report["axes"][0]["axis_change"]["axis"] == "Race"
+
+
+@pytest.mark.asyncio
+async def test_evaluate_counterfactual_does_num_rewrites_per_axis():
+    mock_chatbot = AsyncMock()
+    axes = [AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british")]
+    num_rewrites = 3
+    mock_chatbot.structured_chat.side_effect = _build_structured_chat_responses(axes, num_rewrites)
+    mock_chatbot.chat.return_value = '["Hi Dr. Smith, I feel pressure.", "Hi Sara, let\'s work through this."]'
+
+    report = await evaluate_counterfactual(
+        REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, axes=axes, num_rewrites=num_rewrites
+    )
+
+    assert len(report["axes"][0]["rewrites"]) == num_rewrites
+    assert mock_chatbot.chat.call_count == num_rewrites
+
+
+@pytest.mark.asyncio
+async def test_evaluate_counterfactual_averages_coherence_across_rewrites():
+    mock_chatbot = AsyncMock()
+    axes = [AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british")]
+    # scores 5, 3 → normalised (5-1)/4=1.0, (3-1)/4=0.5 → average 0.75
+    responses = [
+        type("C", (), {"score": 5, "explanation": "excellent"})(),
+        type("L", (), {"reasoning": "r", "score": 2, "explanation": "ok"})(),
+        type("C", (), {"score": 3, "explanation": "ok"})(),
+        type("L", (), {"reasoning": "r", "score": 2, "explanation": "ok"})(),
+    ]
+    mock_chatbot.structured_chat.side_effect = responses
+    mock_chatbot.chat.return_value = '["Hi Dr. Smith, I feel pressure.", "Hi Sara, let\'s work through this."]'
+
+    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, axes=axes, num_rewrites=2)
+
+    assert report["axes"][0]["average_coherence"] == 0.75
+    assert report["summary"]["average_coherence"] == 0.75
+
+
+@pytest.mark.asyncio
+async def test_evaluate_counterfactual_summary_has_per_axis_stats():
     mock_chatbot = AsyncMock()
     axes = [
         AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british"),
@@ -208,57 +247,53 @@ async def test_evaluate_counterfactual_produces_one_rewrite_per_proposed_axis():
             axis="Disability", original_value="mental_health_condition", target_value="no_health_issues"
         ),
     ]
-    mock_chatbot.structured_chat.side_effect = _mock_side_effects(axes)
+    mock_chatbot.structured_chat.side_effect = _build_structured_chat_responses(axes, num_rewrites=2)
     mock_chatbot.chat.return_value = '["Hi Dr. Smith, I feel pressure.", "Hi Sara, let\'s work through this."]'
 
-    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, num_alternatives=2)
+    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, axes=axes, num_rewrites=2)
 
-    assert len(report["rewrites"]) == 2
-    assert report["rewrites"][0]["axis_change"]["axis"] == "Race"
-    assert report["rewrites"][1]["axis_change"]["axis"] == "Disability"
-    assert "replacements" not in report["rewrites"][0]
+    assert report["summary"]["num_axes"] == 2
+    assert report["summary"]["num_rewrites_per_axis"] == 2
+    assert "successful_axis_rate" in report["summary"]
+    assert "average_coherence" in report["summary"]
+    assert "average_concealment" in report["summary"]
 
 
 @pytest.mark.asyncio
-async def test_evaluate_counterfactual_summary_successful_rate():
-    """successful_rewrite_rate = 1.0 when the LLM removes the target evidence spans."""
+async def test_evaluate_counterfactual_successful_axis_rate_when_all_pass():
     mock_chatbot = AsyncMock()
     axes = [AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british")]
-    mock_chatbot.structured_chat.side_effect = _mock_side_effects(axes)
-    # Rewrite removes both "Li Na" and "Dr. Chen"
+    mock_chatbot.structured_chat.side_effect = _build_structured_chat_responses(axes, num_rewrites=2)
+    # Both rewrites remove Li Na and Dr. Chen
     mock_chatbot.chat.return_value = '["Hi Dr. Smith, I feel pressure.", "Hi Sara, let\'s work through this."]'
 
-    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, num_alternatives=1)
+    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, axes=axes, num_rewrites=2)
 
-    assert report["summary"]["successful_rewrite_rate"] == 1.0
-    assert report["summary"]["num_rewrites"] == 1
-    assert report["rewrites"][0]["all_values_removed"] is True
-    assert report["rewrites"][0]["unexpected_edits"] == []
+    assert report["axes"][0]["successful_rewrite_rate"] == 1.0
+    assert report["summary"]["successful_axis_rate"] == 1.0
 
 
 @pytest.mark.asyncio
 async def test_evaluate_counterfactual_concealment_checks_only_for_changed_axis():
-    """concealment_checks must only include characteristics that match the rewritten axis."""
     mock_chatbot = AsyncMock()
     axes = [AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british")]
-    mock_chatbot.structured_chat.side_effect = _mock_side_effects(axes)
+    mock_chatbot.structured_chat.side_effect = _build_structured_chat_responses(axes, num_rewrites=1)
     mock_chatbot.chat.return_value = '["Hi Dr. Smith, I feel pressure.", "Hi Sara, let\'s work through this."]'
 
-    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, num_alternatives=1)
+    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, axes=axes, num_rewrites=1)
 
-    concealment_checks = report["rewrites"][0]["concealment_checks"]
-    assert all(lc["characteristic"].lower() == "race" for lc in concealment_checks)
-    assert not any(lc["characteristic"].lower() == "disability" for lc in concealment_checks)
+    for rewrite in report["axes"][0]["rewrites"]:
+        assert all(lc["characteristic"].lower() == "race" for lc in rewrite["concealment_checks"])
+        assert not any(lc["characteristic"].lower() == "disability" for lc in rewrite["concealment_checks"])
 
 
 @pytest.mark.asyncio
 async def test_evaluate_counterfactual_empty_axes_returns_empty_report():
     mock_chatbot = AsyncMock()
-    mock_chatbot.structured_chat.return_value = AxesResponse(axes=[])
 
-    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot)
+    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, axes=[], num_rewrites=2)
 
-    assert report["rewrites"] == []
-    assert report["summary"]["num_rewrites"] == 0
-    assert report["summary"]["successful_rewrite_rate"] == 0.0
+    assert report["axes"] == []
+    assert report["summary"]["num_axes"] == 0
+    assert report["summary"]["successful_axis_rate"] == 0.0
     assert report["summary"]["average_coherence"] == 0.0

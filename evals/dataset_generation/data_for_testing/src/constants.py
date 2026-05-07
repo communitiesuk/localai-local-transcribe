@@ -4,7 +4,6 @@ from jinja2 import Environment, FileSystemLoader, Template
 
 PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
 
-PROPOSE_ALTERNATIVES_TEMPLATE = "propose_alternatives.j2"
 ASSESS_COHERENCE_TEMPLATE = "assess_coherence.j2"
 ASSESS_CONCEALMENT_TEMPLATE = "assess_concealment.j2"
 

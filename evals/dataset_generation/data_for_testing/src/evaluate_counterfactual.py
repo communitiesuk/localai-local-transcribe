@@ -6,7 +6,10 @@ from pathlib import Path
 
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from evals.dataset_generation.characteristics.src.transcript_loader import load_transcript
-from evals.dataset_generation.data_for_testing.src.counterfactual_evaluator import evaluate_counterfactual
+from evals.dataset_generation.data_for_testing.src.counterfactual_evaluator import (
+    AxisTransformation,
+    evaluate_counterfactual,
+)
 from evals.dataset_generation.data_for_testing.src.run_helpers import get_transcript_file, load_json
 from evals.dataset_generation.data_for_testing.src.settings import INPUT_DIR, OUTPUT_DIR
 
@@ -19,10 +22,24 @@ def _load_dialogue_entries(transcript_file_path: str | Path) -> list[dict]:
     return list(entries)
 
 
+def _load_axes(input_subdir: Path) -> list[AxisTransformation]:
+    axes_file = input_subdir / "axes.json"
+    if not axes_file.exists():
+        msg = f"axes.json not found in {input_subdir}. Create it to define the counterfactual test axes."
+        raise FileNotFoundError(msg)
+    with axes_file.open(encoding="utf-8") as f:
+        data = json.load(f)
+    return [AxisTransformation(**entry) for entry in data]
+
+
+def _slugify(text: str) -> str:
+    return text.lower().replace(" ", "_").replace("/", "_")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Name of the instance to evaluate (matches input/<name> and output/<name>)")
-    parser.add_argument("--num-alternatives", type=int, default=2, help="Number of counterfactual axes to propose")
+    parser.add_argument("--num-rewrites", type=int, default=2, help="Number of rewrite attempts per axis")
     args = parser.parse_args()
 
     logging.info("=== STARTING COUNTERFACTUAL EVALUATE ===")
@@ -41,15 +58,23 @@ if __name__ == "__main__":
     original_path.write_text(transcript_text, encoding="utf-8")
     logging.info("Written original transcript → %s", original_path)
 
-    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-    report = asyncio.run(evaluate_counterfactual(reference, dialogue_entries, chatbot, args.num_alternatives))
+    axes = _load_axes(INPUT_DIR / args.name)
+    logging.info("Loaded %d axes from axes.json", len(axes))
 
-    for rewrite in report["rewrites"]:
-        i = rewrite["alternative_index"]
-        rewrite_path = rewrites_dir / f"rewrite_{i}.txt"
-        rewrite_path.write_text(rewrite.pop("transcript"), encoding="utf-8")
-        rewrite["transcript_file"] = f"rewrites/rewrite_{i}.txt"
-        logging.info("Written rewrite %d → %s", i, rewrite_path)
+    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+    report = asyncio.run(
+        evaluate_counterfactual(reference, dialogue_entries, chatbot, axes=axes, num_rewrites=args.num_rewrites)
+    )
+
+    for axis_result in report["axes"]:
+        axis_slug = _slugify(axis_result["axis_change"]["axis"])
+        target_slug = axis_result["axis_change"]["target_value"]
+        for rewrite in axis_result["rewrites"]:
+            i = rewrite["rewrite_index"]
+            rewrite_path = rewrites_dir / f"{axis_slug}_{target_slug}_{i}.txt"
+            rewrite_path.write_text(rewrite.pop("transcript"), encoding="utf-8")
+            rewrite["transcript_file"] = f"rewrites/{rewrite_path.name}"
+            logging.info("Written rewrite %s attempt %d → %s", axis_slug, i, rewrite_path)
 
     report_path = output_dir / "counterfactual_report.json"
     with report_path.open("w", encoding="utf-8") as f:

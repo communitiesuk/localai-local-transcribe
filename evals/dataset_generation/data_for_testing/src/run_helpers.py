@@ -11,7 +11,8 @@ from evals.dataset_generation.data_for_testing.src.types import ManualEntry
 
 
 def get_transcript_file(subdir: Path) -> Path:
-    files = [f for f in subdir.iterdir() if f.is_file() and f.name != "manual_pc.json" and f.suffix == ".json"]
+    excluded = {"manual_pc.json", "axes.json"}
+    files = [f for f in subdir.iterdir() if f.is_file() and f.name not in excluded and f.suffix == ".json"]
     if not files:
         error_msg = f"No transcript JSON found in {subdir}"
         raise FileNotFoundError(error_msg)

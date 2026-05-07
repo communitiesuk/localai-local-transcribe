@@ -14,7 +14,6 @@ from evals.dataset_generation.counterfactual_generation.src.parser import parse_
 from evals.dataset_generation.data_for_testing.src.constants import (
     ASSESS_COHERENCE_TEMPLATE,
     ASSESS_CONCEALMENT_TEMPLATE,
-    PROPOSE_ALTERNATIVES_TEMPLATE,
     get_template,
 )
 from evals.dataset_generation.data_for_testing.src.types import CharacteristicKey, SpanContext, SpanKey
@@ -24,10 +23,7 @@ class AxisTransformation(BaseModel):
     axis: str
     original_value: str
     target_value: str
-
-
-class AxesResponse(BaseModel):
-    axes: list[AxisTransformation]
+    instructions: str | None = None
 
 
 class CoherenceResponse(BaseModel):
@@ -77,13 +73,6 @@ def check_removals(text: str, original_values: list[str]) -> list[dict[str, Any]
     ]
 
 
-async def _propose_axes(chatbot: ChatBot, entries: list[SpanContext], n: int) -> list[AxisTransformation]:
-    prompt = get_template(PROPOSE_ALTERNATIVES_TEMPLATE).render(entries=entries, n=n)
-    chatbot.clear_history()
-    response = await chatbot.structured_chat([{"role": "user", "content": prompt}], AxesResponse)
-    return response.axes
-
-
 async def _rewrite_transcript(
     chatbot: ChatBot,
     dialogue_texts: list[str],
@@ -123,81 +112,103 @@ async def evaluate_counterfactual(
     reference: dict,
     dialogue_entries: list[dict],
     chatbot: ChatBot,
-    num_alternatives: int = 2,
+    axes: list[AxisTransformation],
+    num_rewrites: int = 2,
 ) -> dict[str, Any]:
     span_contexts = extract_span_contexts(reference)
     characteristics = extract_characteristics(reference)
     dialogue_texts = [entry["text"] for entry in dialogue_entries]
 
-    proposed_axes = await _propose_axes(chatbot, span_contexts, num_alternatives)
+    axis_results: list[dict[str, Any]] = []
 
-    rewrites: list[dict[str, Any]] = []
-    for i, axis_transform in enumerate(proposed_axes):
+    for axis_transform in axes:
         axis_spans = [s for s in span_contexts if s["category"].lower() == axis_transform.axis.lower()]
         original_values = [s["text"] for s in axis_spans]
 
-        rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
+        rewrites: list[dict[str, Any]] = []
+        for i in range(num_rewrites):
+            rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
 
-        rewritten_transcript = "\n".join(
-            f"{entry.get('speaker', str(j + 1))}: {text}"
-            for j, (entry, text) in enumerate(zip(dialogue_entries, rewritten_texts, strict=False))
-        )
+            rewritten_transcript = "\n".join(
+                f"{entry.get('speaker', str(j + 1))}: {text}"
+                for j, (entry, text) in enumerate(zip(dialogue_entries, rewritten_texts, strict=False))
+            )
 
-        checks = check_removals(rewritten_transcript, original_values)
-        coherence = await _assess_coherence(chatbot, rewritten_transcript)
+            checks = check_removals(rewritten_transcript, original_values)
+            coherence = await _assess_coherence(chatbot, rewritten_transcript)
 
-        axis_characteristics = [
-            (char, value) for char, value in characteristics if char.lower() == axis_transform.axis.lower()
-        ]
-        concealment_checks = []
-        for char, value in axis_characteristics:
-            result = await _assess_concealment(chatbot, rewritten_transcript, char, value)
-            concealment_checks.append(
+            axis_characteristics = [
+                (char, value) for char, value in characteristics if char.lower() == axis_transform.axis.lower()
+            ]
+            concealment_checks = []
+            for char, value in axis_characteristics:
+                result = await _assess_concealment(chatbot, rewritten_transcript, char, value)
+                concealment_checks.append(
+                    {
+                        "characteristic": char,
+                        "value": value,
+                        "score": round((result.score - 1) / 3, 4),
+                        "explanation": result.explanation,
+                        "reasoning": result.reasoning,
+                    }
+                )
+
+            unexpected_edits = [
+                {"original": c["original_value"], "occurrences_remaining": c["occurrences"]}
+                for c in checks
+                if c["found_in_rewrite"]
+            ]
+
+            rewrites.append(
                 {
-                    "characteristic": char,
-                    "value": value,
-                    "score": round((result.score - 1) / 3, 4),
-                    "explanation": result.explanation,
-                    "reasoning": result.reasoning,
+                    "rewrite_index": i,
+                    "all_values_removed": not any(c["found_in_rewrite"] for c in checks),
+                    "coherence": round((coherence.score - 1) / 4, 4),
+                    "coherence_explanation": coherence.explanation,
+                    "concealment_checks": concealment_checks,
+                    "unexpected_edits": unexpected_edits,
+                    "transcript": rewritten_transcript,
                 }
             )
 
-        unexpected_edits = [
-            {"original": c["original_value"], "occurrences_remaining": c["occurrences"]}
-            for c in checks
-            if c["found_in_rewrite"]
-        ]
+        successful_rewrite_rate = sum(1 for r in rewrites if r["all_values_removed"]) / len(rewrites)
+        avg_coherence = round(sum(r["coherence"] for r in rewrites) / len(rewrites), 4)
+        all_concealment_scores = [lc["score"] for r in rewrites for lc in r["concealment_checks"]]
+        avg_concealment = (
+            round(sum(all_concealment_scores) / len(all_concealment_scores), 4) if all_concealment_scores else 0.0
+        )
 
-        rewrites.append(
+        axis_results.append(
             {
-                "alternative_index": i,
                 "axis_change": {
                     "axis": axis_transform.axis,
                     "original_value": axis_transform.original_value,
                     "target_value": axis_transform.target_value,
                 },
-                "all_values_removed": not any(c["found_in_rewrite"] for c in checks),
-                "coherence": round((coherence.score - 1) / 4, 4),
-                "coherence_explanation": coherence.explanation,
-                "concealment_checks": concealment_checks,
-                "unexpected_edits": unexpected_edits,
-                "transcript": rewritten_transcript,
+                "successful_rewrite_rate": successful_rewrite_rate,
+                "average_coherence": avg_coherence,
+                "average_concealment": avg_concealment,
+                "rewrites": rewrites,
             }
         )
 
-    successful = sum(1 for r in rewrites if r["all_values_removed"])
-    avg_coherence = round(sum(r["coherence"] for r in rewrites) / len(rewrites), 4) if rewrites else 0.0
-    all_concealment_scores = [lc["score"] for r in rewrites for lc in r["concealment_checks"]]
-    avg_concealment = (
-        round(sum(all_concealment_scores) / len(all_concealment_scores), 4) if all_concealment_scores else 0.0
-    )
+    if axis_results:
+        successful_axis_rate = sum(1 for a in axis_results if a["successful_rewrite_rate"] == 1.0) / len(axis_results)
+        avg_coherence = round(sum(a["average_coherence"] for a in axis_results) / len(axis_results), 4)
+        all_concealment = [a["average_concealment"] for a in axis_results]
+        avg_concealment = round(sum(all_concealment) / len(all_concealment), 4)
+    else:
+        successful_axis_rate = 0.0
+        avg_coherence = 0.0
+        avg_concealment = 0.0
 
     return {
         "summary": {
-            "num_rewrites": len(rewrites),
-            "successful_rewrite_rate": successful / len(rewrites) if rewrites else 0.0,
+            "num_axes": len(axis_results),
+            "num_rewrites_per_axis": num_rewrites,
+            "successful_axis_rate": successful_axis_rate,
             "average_coherence": avg_coherence,
             "average_concealment": avg_concealment,
         },
-        "rewrites": rewrites,
+        "axes": axis_results,
     }
