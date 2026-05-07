@@ -11,6 +11,7 @@ const verifier =
     ? AlbJwtVerifier.create({
         albArn: process.env.ALB_ARN!,
         issuer: process.env.OIDC_ISSUER!,
+        clientId: process.env.OIDC_CLIENT_ID!,
       })
     : null
 
@@ -23,9 +24,7 @@ export async function parseAuthToken(
   }
 
   try {
-    const payload = await verifier!.verify(token, {
-      clientId: process.env.OIDC_CLIENT_ID!,
-    })
+    const payload = await verifier!.verify(token)
 
     const email = payload.email as string | undefined
     if (!email) {
