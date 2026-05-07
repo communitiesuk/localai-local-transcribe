@@ -140,6 +140,12 @@ locals {
       value = var.oidc_issuer
     },
   ]
+  frontend_secrets = [
+    {
+      name      = "OIDC_CLIENT_ID"
+      valueFrom = var.oidc_client_id_name
+    },
+  ]
 }
 
 resource "aws_ecs_task_definition" "frontend" {
@@ -179,6 +185,7 @@ resource "aws_ecs_task_definition" "frontend" {
       }
 
       environment = local.frontend_environment_variables
+      secrets     = local.frontend_secrets
 
       healthCheck = {
         command     = ["CMD-SHELL", "wget -qO- http://$(hostname -i):${ var.frontend_port }/health || exit 1"]
