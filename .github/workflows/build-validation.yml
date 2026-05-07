@@ -25,7 +25,7 @@ jobs:
 
       - uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.service }}
+          context: .
           file: ${{ matrix.service }}/Dockerfile
           push: false
           cache-from: type=gha,scope=${{ matrix.service }}
