@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import cast, Union, Sequence
+from typing import cast
 from uuid import UUID
 
 import mistune
