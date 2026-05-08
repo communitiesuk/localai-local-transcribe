@@ -2,9 +2,9 @@
 
 ## Status
 
-{Draft | Proposed | Accepted | Rejected | Superseded}
+Accepted
 
-Date of decision: {yyyy-MM-dd}
+Date of decision: 2026-05-08
 
 ## Context and Problem Statement
 
@@ -24,7 +24,9 @@ use cases. This means we have a moment of opportunity to reconsider our front-en
 
 ## Decision Outcome
 
-{Title of Option X}, because {summary justification / rationale}.
+Next.js app (standalone), because it is the least effort and poses the lowest delivery risk (by offering the shortest
+required pause while unparallelisable rework happens, and by allowing flexibility in how far any refactoring/rewrite goes),
+while still making it possible to achieve our goals.
 
 ## Pros and Cons of the Options
 
@@ -39,6 +41,8 @@ and a minimal Node.js server bundle.
 * Bad, because it requires an always on Fargate task to host the server-side component, which attracts cost
 * Neutral, because it provides a natural BFF for the client-side application, but this is essentially currently unnecessary
 * Good, because React is the dominant web UI rendering framework
+* Good, because refactoring / rework can be tackled piecemeal
+* Neutral, because modern React (server components) offers smaller bundle sizes than older React (especially with Next's per-page entry points)
 
 ### Next.js app (static export)
 As above, but in static export mode, Next.js creates a static HTML and JS bundle for each page, which bootstraps the
@@ -49,6 +53,8 @@ same SPA as the standalone version, but with no server-side component.
 * Neutral, because it provides prerendering of static HTML (SSG) out of the box, but dynamic UI must be rendered by the JS
 * Good, because it requires no server-side execution environment
 * Good, because React is the dominant web UI rendering framework
+* Good, because refactoring / rework can be tackled piecemeal
+* Neutral, because modern React (server components) offers smaller bundle sizes than older React (especially with Next's per-page entry points)
 
 ### React SPA + Vite
 Instead of the Next.js 'hybrid' approach, a more traditional React SPA is a single bundle (perhaps with some code splitting) with no
@@ -59,6 +65,7 @@ server-side component or prerendered HTML.
 * Bad, because there is no SSR / SSG - UI is rendered only once the JS loads
 * Good, because it requires no server-side execution environment
 * Good, because React is the dominant web UI rendering framework
+* Bad, because this option typically leads to the largest bundle sizes (without fairly significant effort to mitigate)
 
 ### SvelteKit SPA (static export)
 SvelteKit provides an application framework built on top of Svelte (a competitor to React, but with a different philosophy). In static
@@ -69,6 +76,7 @@ export mode, it can produce static HTML and JS assets with no server-side compon
 * Neutral, because it provides prerendering of static HTML (SSG), but dynamic UI must be rendered by the JS
 * Good, because it requires no server-side execution environment
 * Neutral, because Svelte is less dominant than React, but is used by some other services within MHCLG
+* Good, because Svelte typically results in small bundle sizes
 
 ### Server-rendered MPA (with vanilla JS)
 A server-rendered MPA would move UI rendering back to a server-side application, with limited client-side JavaScript added only where needed.
@@ -79,3 +87,4 @@ A server-rendered MPA would move UI rendering back to a server-side application,
 * Bad, because it requires an always-on server-side execution environment
 * Bad, because rich interactive UI is harder to build and maintain without a client-side framework
 * Good, because many services within MHCLG follow this pattern
+* Good, because JS payload is typically small or zero
