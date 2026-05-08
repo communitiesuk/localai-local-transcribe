@@ -1,8 +1,8 @@
 """add organisation table
 
-Revision ID: a0af26106af7
+Revision ID: fae1ed4c0808
 Revises: bf3e4dac2dcd
-Create Date: 2026-05-06 11:22:44.264912
+Create Date: 2026-05-08 14:01:53.504695
 
 """
 
@@ -14,7 +14,7 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "a0af26106af7"
+revision: str = "fae1ed4c0808"
 down_revision: Union[str, None] = "bf3e4dac2dcd"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,9 +28,10 @@ def upgrade() -> None:
         sa.Column("created_datetime", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_datetime", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("name", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
-        sa.Column("allowed_domains", postgresql.ARRAY(sa.String()), nullable=True),
+        sa.Column(
+            "allowed_domains", postgresql.ARRAY(sa.Text()), server_default=sa.text("ARRAY[]::TEXT[]"), nullable=False
+        ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("name"),
     )
     # ### end Alembic commands ###
 

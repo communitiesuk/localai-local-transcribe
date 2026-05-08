@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Enum, String, text
+from sqlalchemy import TIMESTAMP, Column, Enum, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
@@ -114,8 +114,10 @@ class Organisation(BaseTableMixin, table=True):
     __tablename__ = "organisation"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
-    name: str = Field(sa_column_kwargs={"unique": True})
-    allowed_domains: list[str] = Field(sa_column=Column(ARRAY(String)))
+    name: str
+    allowed_domains: list[str] = Field(
+        default_factory=list, sa_column=Column(ARRAY(Text), nullable=False, server_default=text("ARRAY[]::TEXT[]"))
+    )
 
 
 # Main models with table=True for DB tables
