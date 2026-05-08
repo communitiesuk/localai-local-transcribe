@@ -9,6 +9,12 @@ from evals.dataset_generation.characteristics.src.schema import (
 )
 
 
+def find_spans(text: str, transcript: str) -> list[tuple[int, int]]:
+    """Find all occurrences of text in transcript, returning (start, end) index tuples."""
+    pattern = re.escape(text.strip())
+    return [(m.start(), m.end()) for m in re.finditer(pattern, transcript)]
+
+
 def deduplicate_characteristics(characteristics: list[CharacteristicDetection]) -> list[CharacteristicDetection]:
     """Merges characteristics with the same category and value, combining their evidence spans."""
     merged: dict[str, CharacteristicDetection] = {}
