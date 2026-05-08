@@ -300,7 +300,27 @@ Navigate to SSM Parameter Store in the AWS console and update the following para
 | `/local-transcribe/azure/apim_scope` | should take the value `api://api.azc.test.communities.gov.uk/.default` at least for non-prod environments.                     |
 | `/local-transcribe/azure/apim_subscription_key` | Corresponds to subscription within a product in APIM, find on the [APIM site](https://portal.api.azc.test.communities.gov.uk). |
 
-###### 4. Push images
+###### 4. Set up Internal Access (OIDC)
+
+The ALB authenticates users against GDS Internal Access (`sso.service.security.gov.uk`) and injects a signed `x-amzn-oidc-data` header that the app verifies.
+
+Register a client in Internal Access with:
+
+- `redirect_urls`: `https://<app-host>/oauth2/idpresponse` (the CloudFront alias, e.g. `https://development.local-transcribe.test.communities.gov.uk/oauth2/idpresponse` — the path is fixed by ALB)
+- `allowed_domains`: `communities.gov.uk`
+- `prompt`: leave unset
+
+> [!WARNING]
+> Do not set `prompt` to `none` — ALB expects the IdP to show a login page, so first-time logins will fail.
+
+Store the credentials in SSM via the AWS console, updating the `SecureString` values for:
+
+- `/local-transcribe/oidc_secrets/client_id`
+- `/local-transcribe/oidc_secrets/client_secret`
+
+Set `enable_oidc_auth = true` in the environment's `terraform/<env>/main.tf` and apply.
+
+###### 5. Push images
 
 Run the `build-and-push.sh` script as described above to build and push the latest images to ECR, and trigger a deployment.
 
@@ -311,7 +331,7 @@ export TF_VAR_alarm_email_address=email_address_to_recieve alarms
 ./build-and-push.sh --environment <env>
 ```
 
-###### 5. Verify deployment
+###### 6. Verify deployment
 
 Visit the site, it should be working. You can also check the ECS service to see if the tasks are running correctly.
 
@@ -350,26 +370,6 @@ To set up posthog for UX tracking, feature flags etc, create an account at [eu.p
 
 - create a project and obtain an API key (it should start `phc_`)
 - set the key `POSTHOG_API_KEY` value in your `.env`
-
-#### Internal Access setup (OIDC)
-
-The ALB authenticates users against GDS Internal Access (`sso.service.security.gov.uk`) and injects a signed `x-amzn-oidc-data` header that the app verifies.
-
-Register a client in Internal Access with:
-
-- `redirect_urls`: `https://<app-host>/oauth2/idpresponse` (the CloudFront alias, e.g. `https://development.local-transcribe.test.communities.gov.uk/oauth2/idpresponse` — the path is fixed by ALB)
-- `allowed_domains`: `communities.gov.uk`
-- `prompt`: leave unset
-
-> [!WARNING]
-> Do not set `prompt` to `none` — ALB expects the IdP to show a login page, so first-time logins will fail.
-
-Store the credentials in SSM via the AWS console, updating the `SecureString` values for:
-
-- `/local-transcribe/oidc_secrets/client_id`
-- `/local-transcribe/oidc_secrets/client_secret`
-
-Set `enable_oidc_auth = true` in the environment's `terraform/<env>/main.tf` and apply.
 
 ## Testing
 
