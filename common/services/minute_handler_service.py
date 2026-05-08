@@ -118,7 +118,7 @@ class MinuteHandlerService:
 
     @staticmethod
     def _calculate_word_count(transcript: list[DialogueEntry]) -> int:
-        return sum(len((entry.get("text") or "").split()) for entry in transcript)
+        return sum(len(str(entry.get("text", "")).split()) for entry in transcript)
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:
