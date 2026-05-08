@@ -6,16 +6,20 @@ export type UserAuthorisationResult = {
   authReason: string
 }
 
-const verifier =
-  process.env.ENVIRONMENT !== 'local'
-    ? AlbJwtVerifier.create({
-        albArn: process.env.ALB_ARN!,
-        issuer: process.env.OIDC_ISSUER!,
-        clientId: process.env.OIDC_CLIENT_ID!,
-      })
-    : null
+export type JwtPayloadVerifier = {
+  verify: (token: string) => Promise<unknown>
+}
+
+export function createAlbJwtVerifier(): JwtPayloadVerifier {
+  return AlbJwtVerifier.create({
+    albArn: process.env.ALB_ARN!,
+    issuer: process.env.OIDC_ISSUER!,
+    clientId: process.env.OIDC_CLIENT_ID!,
+  })
+}
 
 export async function parseAuthToken(
+  verifier: JwtPayloadVerifier,
   token: string
 ): Promise<UserAuthorisationResult | null> {
   if (!token) {
@@ -24,15 +28,14 @@ export async function parseAuthToken(
   }
 
   try {
-    const payload = await verifier!.verify(token)
+    const payload = (await verifier.verify(token)) as { email?: string }
 
-    const email = payload.email as string | undefined
-    if (!email) {
+    if (!payload.email) {
       console.error('No email found in JWT payload')
       return null
     }
 
-    return { email, isAuthorised: true, authReason: 'OIDC' }
+    return { email: payload.email, isAuthorised: true, authReason: 'OIDC' }
   } catch (error) {
     console.error('Error verifying auth token:', error)
     return null
