@@ -237,7 +237,7 @@ exclude = ["alembic/*", "tests/*", "terraform/*", "viewer/*"]
 
 
 [[tool.mypy.overrides]]
-module = ["datasets.*", "dspy.*", "dspy", "ffmpeg.*", "orjson","langchain_core.*", "langchain_openai.*", "soundfile.*"]
+module = ["datasets.*", "dspy.*", "dspy", "ffmpeg.*", "orjson", "langchain_core.*", "soundfile.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]

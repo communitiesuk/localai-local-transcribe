@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import cast, Union
+from typing import cast, Union, Sequence
 from uuid import UUID
 
 import mistune
@@ -117,10 +117,8 @@ class MinuteHandlerService:
             session.commit()
 
     @staticmethod
-    def _calculate_word_count(transcript: list[Union[DialogueEntry, str]]) -> int:
-        return sum(
-            len(entry.get("text", "").split()) if isinstance(entry, dict) else len(entry.split()) for entry in transcript
-        )
+    def _calculate_word_count(transcript: list[DialogueEntry]) -> int:
+        return sum(len((entry.get("text") or "").split()) for entry in transcript)
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:

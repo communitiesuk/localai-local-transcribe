@@ -351,7 +351,7 @@ async def test_generate_minutes_standard(mocker, mock_dialogue_entry, mock_minut
     output = "standard"
 
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
+    mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
 
     mocker.patch.object(
         MinuteHandlerService,
@@ -450,7 +450,7 @@ async def test_process_minute_generation_message_success(
     mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
 ):
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
+    mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
     dialogue = "<p>the family table</p>"
 
     mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
@@ -505,7 +505,7 @@ async def test_process_minute_edit_message_success(
 ):
     output = "edited_string"
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
+    mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
 
     target = MinuteVersion(
         id=uuid4(),
