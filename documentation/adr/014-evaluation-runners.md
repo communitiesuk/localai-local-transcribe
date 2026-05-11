@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 Date of decision: 2025-01-27
 
