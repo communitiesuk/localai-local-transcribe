@@ -82,11 +82,13 @@ class TestVerifyAndDecodeAlbJwt:
     TEST_ALB_ARN = "arn:aws:elasticloadbalancing:eu-west-2:123456789012:loadbalancer/app/test/abc"
     TEST_KID = "test-kid"
     TEST_ISSUER = "https://issuer.example.com"
+    TEST_CLIENT_ID = "test-client-id"
 
     def _make_settings(self, alb_arn: str | None = None) -> MagicMock:
         settings = MagicMock()
         settings.ALB_ARN = alb_arn or self.TEST_ALB_ARN
         settings.OIDC_ISSUER = self.TEST_ISSUER
+        settings.OIDC_CLIENT_ID = self.TEST_CLIENT_ID
         return settings
 
     def test_raises_when_signer_does_not_match_alb_arn(self):
@@ -120,7 +122,13 @@ class TestVerifyAndDecodeAlbJwt:
 
         assert result == expected_payload
         mock_get_key.assert_called_once_with(self.TEST_KID)
-        mock_decode.assert_called_once_with("tok", "fake-key", algorithms=["ES256"], issuer=self.TEST_ISSUER)
+        mock_decode.assert_called_once_with(
+            "tok",
+            "fake-key",
+            algorithms=["ES256"],
+            issuer=self.TEST_ISSUER,
+            audience=self.TEST_CLIENT_ID,
+        )
 
     def test_retries_with_fresh_key_on_decode_error(self):
         expected_payload = {"email": TEST_EMAIL}

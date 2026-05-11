@@ -114,6 +114,10 @@ locals {
       name      = "AZURE_APIM_SUBSCRIPTION_KEY"
       valueFrom = var.azure_apim_subscription_key_arn
     },
+    {
+      name      = "OIDC_CLIENT_ID"
+      valueFrom = var.oidc_client_id_name
+    },
     # AZURE_BLOB_CONNECTION_STRING and AZURE_TRANSCRIPTION_CONTAINER_NAME needed here for batch adapter - see AIILG-528
   ]
   frontend_environment_variables = [

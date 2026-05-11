@@ -40,12 +40,16 @@ def _verify_and_decode_alb_jwt(token: str) -> dict:
     public_key = _get_public_key(kid)
 
     try:
-        return jwt.decode(token, public_key, algorithms=["ES256"], issuer=settings.OIDC_ISSUER)
+        return jwt.decode(
+            token, public_key, algorithms=["ES256"], issuer=settings.OIDC_ISSUER, audience=settings.OIDC_CLIENT_ID
+        )
     except jwt.DecodeError:
         # Evict cached key and retry once in case of key rotation
         _public_key_cache.pop(kid, None)
         public_key = _get_public_key(kid)
-        return jwt.decode(token, public_key, algorithms=["ES256"], issuer=settings.OIDC_ISSUER)
+        return jwt.decode(
+            token, public_key, algorithms=["ES256"], issuer=settings.OIDC_ISSUER, audience=settings.OIDC_CLIENT_ID
+        )
 
 
 def __load_dummy_user_info() -> UserAuthorisationResult:
