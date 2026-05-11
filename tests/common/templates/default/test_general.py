@@ -1,12 +1,8 @@
-import pytest
-from datetime import datetime
-from zoneinfo import ZoneInfo
-from common.templates.default.general import General
-from common.database.postgres_models import DialogueEntry
-from common.templates.utils.template_renderer import render_template
+from datetime import UTC, datetime
 from unittest.mock import patch
-from datetime import datetime, timezone
 
+from common.database.postgres_models import DialogueEntry
+from common.templates.default.general import General
 
 
 def test_prompt_with_agenda():
@@ -27,8 +23,8 @@ def test_prompt_with_agenda():
     assert "- List any pending items for future discussion" in prompt_body
     assert "Hello" in transcript_messages["content"]
     assert "Here is the meeting transcript" in transcript_messages["content"]
- 
-    
+
+
 def test_prompt_without_agenda():
     transcript = [DialogueEntry(text="Hello", speaker="John"), DialogueEntry(text="Hi", speaker="Jane")]
 
@@ -51,7 +47,7 @@ def test_prompt_date_inclusion():
     transcript = []
     agenda = None
 
-    fixed_time = datetime(2026, 5, 8, tzinfo=timezone.utc)
+    fixed_time = datetime(2026, 5, 8, tzinfo=UTC)
 
     with patch("common.templates.default.general.datetime") as mock_datetime:
         mock_datetime.now.return_value = fixed_time

@@ -5,8 +5,8 @@ from zoneinfo import ZoneInfo
 from common.database.postgres_models import DialogueEntry
 from common.prompts import get_transcript_messages
 from common.templates.types import SimpleTemplate
-from common.types import AgendaUsage
 from common.templates.utils.template_renderer import render_template
+from common.types import AgendaUsage
 
 
 class General(SimpleTemplate):
@@ -18,11 +18,8 @@ class General(SimpleTemplate):
 
     @classmethod
     def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:
-        TEMPLATE_FILE = "general.j2"
-        template = render_template(TEMPLATE_FILE)
-
+        template = render_template("general.j2")
         date = datetime.now(tz=ZoneInfo("Europe/London")).strftime("%d %B %Y")
-
         formatted_agenda = [item.strip() for item in agenda.splitlines() if item.strip()] if agenda else []
 
         prompt = str(

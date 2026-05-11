@@ -2,8 +2,8 @@
 from common.database.postgres_models import DialogueEntry
 from common.prompts import get_transcript_messages
 from common.templates.types import SimpleTemplate
-from common.types import AgendaUsage
 from common.templates.utils.template_renderer import render_template
+from common.types import AgendaUsage
 
 
 class ExecutiveSummary(SimpleTemplate):
@@ -15,11 +15,9 @@ class ExecutiveSummary(SimpleTemplate):
 
     @classmethod
     def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:  # noqa: ARG003
-        TEMPLATE_FILE = "executive_summary.j2"
-        template = render_template(TEMPLATE_FILE)
-        block = template.blocks["prompt"]
-        prompt= "".join(block(template.new_context()))
-        
+        template = render_template("executive_summary.j2")
+        prompt = template.render()
+
         return [
             {
                 "role": "system",
