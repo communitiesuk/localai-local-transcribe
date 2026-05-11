@@ -93,6 +93,8 @@ module "frontdoor" {
   app_host                       = local.app_host
   internal_access_oidc_client_id_name            = module.secrets.internal_access_oidc_client_id_name
   internal_access_oidc_client_secret_name        = module.secrets.internal_access_oidc_client_secret_name
+
+  depends_on = [module.secrets]
 }
 
 module "certificates" {
