@@ -320,6 +320,12 @@ Store the credentials in SSM via the AWS console, updating the `SecureString` va
 
 Set `enable_oidc_auth = true` in the environment's `terraform/<env>/main.tf` and apply.
 
+> [!NOTE]
+> If OIDC is being enabled on an environment that was previously deployed without it, CloudFront may still be serving cached unauthenticated HTML — unauthenticated users will see the app shell on first visit and only get redirected to Internal Access after interacting with the page. Invalidate the cache to fix:
+> ```bash
+> aws cloudfront create-invalidation --distribution-id <DISTRIBUTION_ID> --paths "/*"
+> ```
+
 ###### 5. Push images
 
 Run the `build-and-push.sh` script as described above to build and push the latest images to ECR, and trigger a deployment.
