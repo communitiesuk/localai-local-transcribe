@@ -12,6 +12,8 @@ _env = Environment(
     undefined=StrictUndefined,
     autoescape=select_autoescape([]),
     keep_trailing_newline=True,
+    trim_blocks=True,
+    lstrip_blocks=True,
 )
 
 

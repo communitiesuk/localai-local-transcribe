@@ -20,17 +20,15 @@ def test_prompt_with_agenda():
     prompt_body = result[0]["content"]
     transcript_messages = result[1]
 
-    assert "Discussion Points" in prompt_body
-    assert "These are the agenda items for this meeting" in prompt_body
-    assert "Focus on substance over verbatim recording" in prompt_body
-    assert "Discuss project" in prompt_body
+    assert "4. Discussion Points" in prompt_body
+    assert "- Err on the side of including more detail rather than less" in prompt_body
+    assert "- Present in chronological order" not in prompt_body
     assert "2. Plan next steps" in prompt_body
-    assert "Present in chronological order" not in prompt_body
+    assert "- List any pending items for future discussion" in prompt_body
     assert "Hello" in transcript_messages["content"]
     assert "Here is the meeting transcript" in transcript_messages["content"]
  
     
-
 def test_prompt_without_agenda():
     transcript = [DialogueEntry(text="Hello", speaker="John"), DialogueEntry(text="Hi", speaker="Jane")]
 
@@ -41,12 +39,11 @@ def test_prompt_without_agenda():
     prompt_body = result[0]["content"]
     transcript_messages = result[1]
 
-    assert "Discussion Points" in prompt_body
+    assert "- Err on the side of including more detail rather than less" in prompt_body
+    assert "- Present in chronological order" in prompt_body
+    assert "6. Action Items" in prompt_body
     assert "These are the agenda items for this meeting" not in prompt_body
-    assert "Discussion Points" in prompt_body
-    assert "Present in chronological order" in prompt_body
-    assert "Group related topics under clear subheadings" in prompt_body
-    assert "Hello" in transcript_messages["content"]
+    assert "Hi" in transcript_messages["content"]
     assert "Jane" in transcript_messages["content"]
 
 
@@ -58,8 +55,6 @@ def test_prompt_date_inclusion():
 
     with patch("common.templates.default.general.datetime") as mock_datetime:
         mock_datetime.now.return_value = fixed_time
-
-
-    result = General.prompt(transcript, None)
+        result = General.prompt(transcript, None)
 
     assert "08 May 2026" in result[0]["content"]
