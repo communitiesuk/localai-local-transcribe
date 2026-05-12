@@ -42,10 +42,4 @@ jobs:
     uses: ./.github/workflows/frontend-tests.yml
     secrets: inherit
 
-  worker:
-    if: ${{ false && always() }}
-    permissions: write-all
-    uses: ./.github/workflows/build-one.yml
-    with:
-      service: worker
-    secrets: inherit
+

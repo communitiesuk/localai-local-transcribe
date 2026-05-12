@@ -242,7 +242,7 @@ def test_predict_meeting_too_short(mock_dialogue_entry):
 
 
 def test_predict_meeting_standard(mock_dialogue_entry):
-    valid_dialogue = ("a " * (settings.MIN_WORD_COUNT_FOR_SUMMARY + 1)).strip()
+    valid_dialogue = ("a " * (settings.MIN_WORD_COUNT_FOR_FULL_SUMMARY + 1)).strip()
 
     mock_dialogue_entry["text"] = valid_dialogue
     result = MinuteHandlerService.predict_meeting([mock_dialogue_entry])
@@ -351,7 +351,7 @@ async def test_generate_minutes_standard(mocker, mock_dialogue_entry, mock_minut
     output = "standard"
 
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
+    mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
 
     mocker.patch.object(
         MinuteHandlerService,
@@ -425,7 +425,7 @@ async def test_generate_minute_from_user_template_success(mocker, mock_session, 
     mocker.patch("common.services.minute_handler_service.SessionLocal", return_value=ctx)
     mocker.patch(
         "common.services.minute_handler_service.generate_user_template",
-        AsyncMock(return_value=(output, [])),
+        AsyncMock(return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[])),
     )
 
     result = await MinuteHandlerService.generate_minute_from_user_template(mock_minute)
@@ -450,7 +450,7 @@ async def test_process_minute_generation_message_success(
     mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
 ):
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
+    mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
     dialogue = "<p>the family table</p>"
 
     mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
@@ -505,7 +505,7 @@ async def test_process_minute_edit_message_success(
 ):
     output = "edited_string"
     mock_minute.transcription = mock_transcription
-    mock_minute.transcription.dialogue_entries = mock_dialogue_entry
+    mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
 
     target = MinuteVersion(
         id=uuid4(),
