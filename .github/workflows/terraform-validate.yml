@@ -1,0 +1,53 @@
+name: Terraform Validate
+
+on:
+  workflow_call:
+
+env:
+  AWS_REGION: eu-west-2
+  TERRAFORM_VERSION: ~>1.14.0
+
+jobs:
+  terraform-validate:
+    name: Terraform Validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    strategy:
+      matrix:
+        module:
+          - development
+          - modules/bastion
+          - modules/certificates
+          - modules/ecr
+          - modules/ecs
+          - modules/encrypted_log_group
+          - modules/frontdoor
+          - modules/github_actions_access
+          - modules/monitoring
+          - modules/networking
+          - modules/rds
+          - modules/s3_bucket
+          - modules/secrets
+          - modules/sqs
+          - modules/terraform_backend
+          - modules/uploads_bucket
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform format
+        run: terraform fmt -check -recursive -diff
+
+      - name: Terraform init
+        run: terraform -chdir=${{ matrix.module }} init -backend=false -input=false
+
+      - name: Terraform validate
+        id: validate
+        run: terraform -chdir=${{ matrix.module }} validate -no-color 

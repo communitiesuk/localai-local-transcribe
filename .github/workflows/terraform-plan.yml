@@ -1,0 +1,88 @@
+name: Terraform Plan
+
+on:
+  workflow_call:
+
+env:
+  AWS_REGION: eu-west-2
+  TERRAFORM_VERSION: ~>1.14.0
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/development
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.DEV_AWS_ACCOUNT_ID }}:role/github-actions-terraform-ci-plan-read-only
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform plan
+        env:
+          TF_VAR_alarm_email_address: ${{ secrets.DEV_ALARM_EMAIL_ADDRESS }}
+        run: terraform plan -no-color -input=false -out=tfplan -var="image_tag=${{ github.sha }}"
+
+      - name: Terraform show
+        run: terraform show -no-color tfplan > tf_plan.txt
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf-plan
+          path: terraform/development/tfplan
+
+      - name: Upload readable plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf-plan-text
+          path: terraform/development/tf_plan.txt
+
+      - name: Publish plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('terraform/development/tf_plan.txt', 'utf8');
+            const header = '## Terraform Plan';
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+            });
+
+            const existing = comments.find(c => c.body.startsWith(header));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body: `${header}\n\`\`\`\n${plan}\n\`\`\``,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body: `${header}\n\`\`\`\n${plan}\n\`\`\``,
+              });
+            }
