@@ -11,13 +11,13 @@ concurrency:
 
 jobs:
   validate:
-    uses: ./.github/workflows/terraform-validate.yaml
+    uses: ./.github/workflows/terraform-validate.yml
     secrets: inherit
     permissions:
       contents: read
   plan:
     needs: validate
-    uses: ./.github/workflows/terraform-plan.yaml
+    uses: ./.github/workflows/terraform-plan.yml
     secrets: inherit
     permissions:
       contents: read
