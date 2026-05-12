@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 from common.database.postgres_models import DialogueEntry
 from common.prompts import get_transcript_messages
 from common.templates.types import SimpleTemplate
-from common.templates.utils.template_renderer import render_template
+from common.templates.utils.template_renderer import call_macro, render_template
 from common.types import AgendaUsage
 
 
@@ -22,13 +22,7 @@ class General(SimpleTemplate):
         date = datetime.now(tz=ZoneInfo("Europe/London")).strftime("%d %B %Y")
         formatted_agenda = [item.strip() for item in agenda.splitlines() if item.strip()] if agenda else []
 
-        prompt = str(
-            template.module.prompt(
-                date=date,
-                agenda=agenda,
-                agenda_topics=formatted_agenda,
-            )
-        )
+        prompt = call_macro(template, "prompt", date=date, agenda=agenda, agenda_topics=formatted_agenda)
 
         return [
             {

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, cast
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, Template, TemplateNotFound, select_autoescape
 
@@ -25,4 +26,17 @@ def render_template(template_path: str) -> Template:
         return _env.get_template(template_path)
 
     except TemplateNotFound as e:
-        raise TemplateNotFound(f"Template '{template_path}' not found in '{_TEMPLATES_DIR}'.") from e
+        error_msg = f"Template '{template_path}' not found in '{_TEMPLATES_DIR}'."
+        raise TemplateNotFound(error_msg) from e
+
+
+def call_macro(template: Template, macro: str, **kwargs: Any) -> str:
+    """
+    Calls a macro from a Jinja2 template with the provided keyword arguments.
+    :param template: The Jinja2 template containing the macro.
+    :param macro: The name of the macro to call.
+    :param kwargs: The keyword arguments to pass to the macro.
+    :return: The result of the macro call as a string.
+    """
+
+    return cast(str, getattr(template.module, macro)(**kwargs))

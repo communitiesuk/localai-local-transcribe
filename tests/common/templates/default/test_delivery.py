@@ -1,4 +1,3 @@
-import pytest
 from common.templates.default.delivery import Delivery
 from common.templates.utils.template_renderer import render_template
 

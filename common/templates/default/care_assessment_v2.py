@@ -4,7 +4,7 @@ from common.format_transcript import transcript_as_speaker_and_utterance
 from common.settings import get_settings
 from common.templates.default.template_prompts.eligibility_criteria import ELIGIBILITY_CRITERIA
 from common.templates.types import SimpleTemplate
-from common.templates.utils.template_renderer import render_template
+from common.templates.utils.template_renderer import call_macro, render_template
 from common.types import AgendaUsage
 
 """Notes:
@@ -32,9 +32,7 @@ class CareAssessmentV2(SimpleTemplate):
     @classmethod
     def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:  # noqa: ARG003
         template = render_template("care_assessment_v2.j2")
-        prompt_body = template.module.prompt(
-            eligibility_criteria=ELIGIBILITY_CRITERIA,
-        )
+        prompt_body = call_macro(template, "prompt", eligibility_criteria=ELIGIBILITY_CRITERIA)
 
         return [
             {"role": "system", "content": prompt_body},

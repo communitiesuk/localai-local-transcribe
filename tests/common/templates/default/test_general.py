@@ -45,7 +45,6 @@ def test_prompt_without_agenda():
 
 def test_prompt_date_inclusion():
     transcript = []
-    agenda = None
 
     fixed_time = datetime(2026, 5, 8, tzinfo=UTC)
 
