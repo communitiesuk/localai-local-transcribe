@@ -24,7 +24,7 @@ WAV, FLAC, MP3, AAC, Opus, and MP4. Various codec parameters - see `docmentation
 
 ### Speed
 
-Speeds of 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 1.9 - see `docmentation/experiments/sped-transcription.md` for full exploration.
+Speeds of 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 1.9 - see `documentation/experiments/sped-transcription.md` for full exploration.
 
 ## Decision Outcome
 
