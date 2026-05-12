@@ -151,6 +151,16 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
                 ),
             )
         )
+    elif model_type == "ollama":
+        from common.llm.adapters.ollama import OllamaModelAdapter
+
+        return ChatBot(
+            OllamaModelAdapter(
+                model=model_name,
+                base_url=settings.OLLAMA_BASE_URL,
+                temperature=temperature,
+            )
+        )
     else:
         msg = f"Unsupported model type: {model_type}"
         raise ValueError(msg)

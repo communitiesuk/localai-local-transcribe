@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     AZURE_OPENAI_API_KEY: str | None = Field(description="Azure API key for openAI", default=None)
     AZURE_OPENAI_ENDPOINT: str | None = Field(description="Azure OpenAI service endpoint URL", default=None)
     AZURE_OPENAI_API_VERSION: str | None = Field(description="Azure OpenAI API version", default=None)
+    AZURE_AUDIO_DEPLOYMENT: str | None = Field(description="Azure deployment for audio (Whisper)", default=None)
 
     # if using Azure APIM
     AZURE_APIM_URL: str | None = Field(description="Base URL for Minute's Azure APIM LLM.", default=None)
@@ -164,15 +165,19 @@ class Settings(BaseSettings):
         default=False,
     )
 
-    MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
-        default=200, description="Transcript must have at least this many words to be passed to summary stage"
+    GUARDRAIL_THRESHOLD: float = Field(
+        default=0.7,
+        description="Guardrail threshold for LLM responses",
     )
+
+    MIN_WORD_COUNT_FOR_SUMMARY: int = Field(
+        default=50,
+        description="Transcript must have at least this many words to be passed to summary stage",
+    )
+
     MIN_WORD_COUNT_FOR_FULL_SUMMARY: int = Field(
-        default=199,
-        description=(
-            "Transcript must have at least this many words to be passed to complex summary stage. "
-            "Note, this is disabled by default as is lower than the MIN_WORD_COUNT_FOR_SUMMARY"
-        ),
+        default=200,
+        description="Transcript must have at least this many words to be passed to full summary stage",
     )
 
     LOCAL_STORAGE_PATH: str = Field(
@@ -195,6 +200,10 @@ class Settings(BaseSettings):
     WHISPLY_HF_TOKEN: str | None = Field(
         default=None,
         description="HuggingFace token required for Whisply speaker diarization",
+    )
+    WHISPER_URL: str = Field(
+        default="http://localhost:11434/v1",
+        description="Base URL for faster-whisper-server providing OpenAI compatible API for transcription",
     )
     OLLAMA_BASE_URL: str = Field(default="http://localhost:11434/v1")
 

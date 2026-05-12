@@ -247,6 +247,7 @@ module "monitoring" {
   alb_target_group_arn_suffix         = module.frontdoor.load_balancer.target_group_arn_suffix
   ecs_cluster_name                    = module.ecs.ecs_cluster_name
   ecs_service_names                   = [module.ecs.frontend_service_name, module.ecs.backend_service_name, module.ecs.worker_service_name]
+  ecs_cluster_arn                     = module.ecs.ecs_cluster_arn          
   database_allocated_storage          = local.database_allocated_storage
   database_identifier                 = module.database.database_identifier
   waf_acl_name                        = module.frontdoor.waf_acl_name

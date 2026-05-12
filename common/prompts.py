@@ -82,6 +82,26 @@ def get_hallucination_detection_messages() -> list[dict[str, str]]:
     return [{"role": "user", "content": _render("hallucination_detection.j2")}]
 
 
+def get_accuracy_check_messages(minute: str, transcript: list[DialogueEntry]) -> list[dict[str, str]]:
+    return [
+        {
+            "role": "system",
+            "content": (
+                "You are a Quality Assurance auditor. Your task is to evaluate the accuracy of a meeting minute "
+                "summary against the original transcript. You must provide a confidence score between 0.0 and 1.0, "
+                "where 1.0 means the summary is perfectly accurate and complete based on the transcript, and 0.0 "
+                "means it is completely inaccurate or hallucinated. You must also provide a reasoning for your "
+                "score, explaining any discrepancies, missing key information, or hallucinations found."
+            ),
+        },
+        get_transcript_messages(transcript),
+        {
+            "role": "user",
+            "content": f"Here is the generated summary to evaluate:\n{minute}",
+        },
+    ]
+
+
 def format_guidelines(guidelines: str | list[str]) -> str:
     """Format guidelines as markdown bullet points.
 
@@ -111,6 +131,7 @@ def get_cite_claims_prompt(
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
     claims_text = "\n".join(f"- {claim}" for claim in claims)
+
     return [
         {
             "role": "user",

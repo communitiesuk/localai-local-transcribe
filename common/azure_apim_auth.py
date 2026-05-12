@@ -8,8 +8,6 @@ from azure.identity.aio import ClientSecretCredential
 
 from common.settings import get_settings
 
-settings = get_settings()
-
 
 class AzureTokenProvider(Protocol):
     async def get_token(self) -> str: ...
@@ -67,6 +65,7 @@ def get_azure_client_secret_token_provider(
 
 def build_azure_apim_token_provider() -> AzureTokenProvider:
     """Factory that builds the appropriate APIM token provider based on settings."""
+    settings = get_settings()
     if settings.AZURE_APIM_AUTH_METHOD == "client_secret":
         if not settings.AZURE_APIM_TENANT_ID:
             msg = "AZURE_APIM_TENANT_ID is required for azure_apim client_secret auth"

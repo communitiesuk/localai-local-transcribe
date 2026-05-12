@@ -3,6 +3,7 @@
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
 import { RatingButton } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/rating-dialog/rating-dialog'
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
+import { GuardrailResponseComponent } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/guardrail-response-component'
 import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-version-select'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { Button } from '@/components/ui/button'
@@ -219,6 +220,7 @@ export function MinuteEditor({
       </div>
     )
   }
+
   return (
     <div className="pt-2">
       <div className="mb-2 flex flex-wrap justify-between gap-y-2">
@@ -292,6 +294,12 @@ export function MinuteEditor({
           />
         </div>
       </div>
+
+      {!minuteVersion.too_short && (
+        <GuardrailResponseComponent
+          guardrailResults={minuteVersion.guardrail_results}
+        />
+      )}
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller
           control={form.control}

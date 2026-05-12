@@ -138,6 +138,29 @@ class MinutesPatchRequest(BaseModel):
     html_content: str | None = None
 
 
+class GuardrailResultResponse(BaseModel):
+    id: uuid.UUID
+    passed: bool
+    score: float | None
+    reasoning: str | None
+    error: str | None
+
+
+class LLMHallucination(BaseModel):
+    hallucination_type: HallucinationType = Field(description="Type of hallucination")
+    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
+    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
+
+
+class LLMHallucinationList(BaseModel):
+    hallucinations: list[LLMHallucination] = Field(description="List of detected hallucinations")
+
+
+class GuardrailScore(BaseModel):
+    score: float = Field(description="Confidence score between 0.0 and 1.0")
+    reasoning: str = Field(description="Reasoning for the score")
+
+
 class MinuteVersionResponse(BaseModel):
     id: uuid.UUID
     minute_id: uuid.UUID
@@ -147,6 +170,9 @@ class MinuteVersionResponse(BaseModel):
     error: str | None
     ai_edit_instructions: str | None
     content_source: ContentSource
+    too_short: bool = False
+    guardrail_results: list[GuardrailResultResponse] = []
+    hallucinations: list[LLMHallucination] = []
 
 
 class SpeakerPrediction(BaseModel):
@@ -192,16 +218,6 @@ class WorkerMessage(BaseModel):
     id: uuid.UUID
     type: TaskType
     data: EditMessageData | TranscriptionJobMessageData | None = Field(default=None)
-
-
-class LLMHallucination(BaseModel):
-    hallucination_type: HallucinationType = Field(description="Type of hallucination")
-    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
-    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
-
-
-class LLMHallucinationList(BaseModel):
-    hallucinations: list[LLMHallucination] = Field(description="List of detected hallucinations")
 
 
 @dataclass
