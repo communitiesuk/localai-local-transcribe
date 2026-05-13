@@ -40,7 +40,7 @@ If we want no more error, we should stay at 1.0x speed. However, cost savings ar
 
 Our appetite for this trade-off is dependant on overall end-to-end transcription quality. Once we have this information, a decsion can be made - if we speed up audio, and if so to what speed.
 
-This decision will also need to anticipate some implementation work. The audio is fed back to the user on the frontend and we may want to avoid playing the audio at a faster than 1.0x speed.
+This decision will also need to anticipate some implementation work. The audio is fed back to the user on the frontend and we may want to avoid playing the audio at a faster than 1.0x speed. Timestamp annotations will also need to be adjusted accordingly.
 
 ## Caveats/Questions
 
