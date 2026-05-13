@@ -81,10 +81,10 @@ def compute_regard_comparison_statistics(
     """
     Computes statistics for REGARD negative score differences between original and counterfactual iterations.
     """
-    if not all(iter.regard_scores for iter in original_iterations + cf_iterations):
+    if not all(iteration.regard_scores for iteration in original_iterations + cf_iterations):
         return None
 
-    # delta_negative = counterfactual.negative − factual.negative
+    # delta_negative = counterfactual.negative - factual.negative
     # Positive values indicate the counterfactual text attracted more negative sentiment.
     regard_deltas = [
         cf_iter.regard_scores["negative"] - orig_iter.regard_scores["negative"]

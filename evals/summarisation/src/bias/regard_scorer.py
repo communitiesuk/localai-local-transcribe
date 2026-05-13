@@ -23,7 +23,7 @@ assuming a uniform weight keeps the average accurate.
 
 Primary signal
 --------------
-delta_negative = counterfactual.negative − factual.negative
+delta_negative = counterfactual.negative - factual.negative
 
 Positive values indicate the counterfactual text attracted more negative
 sentiment, which is the key bias signal in the Counterfactual Bias pipeline.
@@ -130,7 +130,7 @@ class REGARDPairResult:
 
     @property
     def delta_negative(self) -> float:
-        """Primary bias signal: counterfactual.negative − factual.negative."""
+        """Primary bias signal: counterfactual.negative - factual.negative."""
         return self.counterfactual.negative - self.factual.negative
 
     def debug_dict(self) -> dict:
@@ -290,7 +290,8 @@ class REGARDScorer:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _chunk_text(self, text: str) -> tuple[list[list[int]], list[int]]:
+    @staticmethod
+    def chunk_text(text: str, tokenizer: AutoTokenizer) -> tuple[list[list[int]], list[int]]:
         """
         Tokenise ``text`` and produce overlapping content-token windows.
 
@@ -304,7 +305,7 @@ class REGARDScorer:
             is typically shorter than ``_WINDOW_TOKENS``; its real count is
             returned so that token-weighted averaging remains correct.
         """
-        all_ids: list[int] = self._tokenizer.encode(
+        all_ids: list[int] = tokenizer.encode(
             text,
             add_special_tokens=False,
             truncation=False,
@@ -328,6 +329,9 @@ class REGARDScorer:
             start += _STRIDE
 
         return chunks, token_counts
+
+    def _chunk_text(self, text: str) -> tuple[list[list[int]], list[int]]:
+        return self.chunk_text(text, self._tokenizer)
 
     def _score_chunks(self, chunks: list[list[int]]) -> np.ndarray:
         """
@@ -376,28 +380,28 @@ class REGARDScorer:
 if __name__ == "__main__":
     import argparse
     import sys
+    from pathlib import Path
 
     parser = argparse.ArgumentParser(description="Run REGARD scorer on a text file.")
     parser.add_argument("file", help="Path to the text file to analyze.")
     args = parser.parse_args()
 
-    try:
-        with open(args.file) as f:
-            text = f.read()
-    except Exception as e:
-        print(f"Error reading file: {e}")
-        sys.exit(1)
-
-    # Configure basic logging to see model loading progress
+    # Configure logging
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+    try:
+        text = Path(args.file).read_text(encoding="utf-8")
+    except (FileNotFoundError, PermissionError, OSError) as e:
+        logger.error("Error reading file: %s", e)
+        sys.exit(1)
 
     scorer = REGARDScorer()
     result = scorer.score_summary(text)
 
-    print(f"\nAnalysis for: {args.file}")
-    print("-" * 40)
+    logger.info("\nAnalysis for: %s", args.file)
+    logger.info("-" * 40)
     for label, score in result.distribution.as_dict().items():
-        print(f"{label:10}: {score:.4f}")
-    print("-" * 40)
-    print(f"Chunks: {result.chunk_count}")
-    print(f"Total tokens: {result.total_tokens}")
+        logger.info("%-10s: %.4f", label, score)
+    logger.info("-" * 40)
+    logger.info("Chunks: %d", result.chunk_count)
+    logger.info("Total tokens: %d", result.total_tokens)
