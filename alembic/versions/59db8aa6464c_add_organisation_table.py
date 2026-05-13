@@ -1,8 +1,8 @@
 """add organisation table
 
-Revision ID: fae1ed4c0808
-Revises: bf3e4dac2dcd
-Create Date: 2026-05-08 14:01:53.504695
+Revision ID: 59db8aa6464c
+Revises: 23ca09738767
+Create Date: 2026-05-13 10:27:57.412195
 
 """
 
@@ -14,8 +14,8 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "fae1ed4c0808"
-down_revision: Union[str, None] = "bf3e4dac2dcd"
+revision: str = "59db8aa6464c"
+down_revision: Union[str, None] = "23ca09738767"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
