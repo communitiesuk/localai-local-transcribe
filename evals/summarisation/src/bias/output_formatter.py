@@ -4,8 +4,6 @@ import statistics
 from datetime import UTC, datetime
 
 from common.settings import get_settings
-from evals.summarisation.src.bias.regard_scorer import REGARDScorer
-from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
 from evals.summarisation.src.bias.bias_types import (
     AggregatedResultsMap,
     CharacteristicAxisMap,
@@ -15,6 +13,8 @@ from evals.summarisation.src.bias.bias_types import (
     PlottingOutput,
     PlottingRecord,
 )
+from evals.summarisation.src.bias.regard_scorer import REGARDScorer
+from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
 from evals.summarisation.src.bias.utils import parse_group_names
 from evals.summarisation.src.common import AppConfig
 
@@ -71,14 +71,10 @@ def create_plotting_output(
         )
 
         orig_regard_values = [
-            iter_orig.regard_scores["negative"]
-            for iter_orig in record.iterations_original
-            if iter_orig.regard_scores
+            iter_orig.regard_scores["negative"] for iter_orig in record.iterations_original if iter_orig.regard_scores
         ]
         cf_regard_values = [
-            iter_cf.regard_scores["negative"]
-            for iter_cf in record.iterations_counterfactual
-            if iter_cf.regard_scores
+            iter_cf.regard_scores["negative"] for iter_cf in record.iterations_counterfactual if iter_cf.regard_scores
         ]
 
         if orig_regard_values and cf_regard_values:

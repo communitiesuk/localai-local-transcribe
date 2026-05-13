@@ -1,11 +1,5 @@
 from __future__ import annotations
 
-from evals.summarisation.src.bias.data.loader import discover_counterfactual_files, load_counterfactual_json
-from evals.summarisation.src.bias.data.record_builder import (
-    build_counterfactual_record,
-    generate_supplementary_comparisons,
-    process_counterfactual_file,
-)
 from evals.summarisation.src.bias.bias_types import (
     AxisChange,
     ComparisonMetrics,
@@ -18,6 +12,12 @@ from evals.summarisation.src.bias.bias_types import (
     OriginalTranscript,
     PlottingOutput,
     PlottingRecord,
+)
+from evals.summarisation.src.bias.data.loader import discover_counterfactual_files, load_counterfactual_json
+from evals.summarisation.src.bias.data.record_builder import (
+    build_counterfactual_record,
+    generate_supplementary_comparisons,
+    process_counterfactual_file,
 )
 
 __all__ = [

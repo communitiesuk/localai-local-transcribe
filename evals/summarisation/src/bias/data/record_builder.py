@@ -6,14 +6,14 @@ from pathlib import Path
 from typing import Any
 
 from common.settings import get_settings
-from evals.summarisation.src.bias.data.loader import load_counterfactual_json
-from evals.summarisation.src.bias.iteration_runner import run_multiple_iterations
 from evals.summarisation.src.bias.bias_types import (
     CounterfactualEvalRecord,
     CounterfactualInput,
     IterationMetrics,
     MetricStatistics,
 )
+from evals.summarisation.src.bias.data.loader import load_counterfactual_json
+from evals.summarisation.src.bias.iteration_runner import run_multiple_iterations
 from evals.summarisation.src.bias.utils import (
     compute_comparison_statistics,
     compute_metric_statistics,

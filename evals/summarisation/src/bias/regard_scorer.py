@@ -37,7 +37,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 import torch
@@ -107,7 +106,7 @@ class REGARDResult:
     distribution: REGARDDistribution
     chunk_count: int
     total_tokens: int
-    delta_negative: Optional[float] = None
+    delta_negative: float | None = None
 
     @property
     def negative(self) -> float:
@@ -181,7 +180,7 @@ class REGARDScorer:
     def __init__(
         self,
         model_name: str = _MODEL_NAME,
-        device: Optional[str] = None,
+        device: str | None = None,
         batch_size: int = 8,
     ) -> None:
         # Prioritising MPS (Mac M-series), then CUDA (NVIDIA), then CPU (Fallback)
@@ -207,9 +206,7 @@ class REGARDScorer:
         # This insulates us from whatever order id2label happens to use.
         id2label: dict[int, str] = self._model.config.id2label
         label_to_model_idx = {lbl.lower(): idx for idx, lbl in id2label.items()}
-        self._col_indices: list[int] = [
-            label_to_model_idx[cat] for cat in _LABEL_ORDER
-        ]
+        self._col_indices: list[int] = [label_to_model_idx[cat] for cat in _LABEL_ORDER]
 
     # ------------------------------------------------------------------
     # Public API
@@ -353,9 +350,7 @@ class REGARDScorer:
 
             # Decode back to strings so the tokeniser can add padding and
             # the required special tokens ([CLS], [SEP]).
-            batch_texts = [
-                self._tokenizer.decode(ids, skip_special_tokens=True) for ids in batch
-            ]
+            batch_texts = [self._tokenizer.decode(ids, skip_special_tokens=True) for ids in batch]
 
             encoding = self._tokenizer(
                 batch_texts,
@@ -387,7 +382,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     try:
-        with open(args.file, "r") as f:
+        with open(args.file) as f:
             text = f.read()
     except Exception as e:
         print(f"Error reading file: {e}")

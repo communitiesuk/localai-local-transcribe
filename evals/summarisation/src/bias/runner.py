@@ -6,6 +6,7 @@ from pathlib import Path
 
 import orjson
 
+from evals.summarisation.src.bias.bias_types import CounterfactualEvalRecord, IterationMetrics
 from evals.summarisation.src.bias.constants import RESULTS_FILENAME, SUMMARY_FILENAME
 from evals.summarisation.src.bias.data.loader import discover_counterfactual_files, load_counterfactual_json
 from evals.summarisation.src.bias.data.record_builder import (
@@ -15,7 +16,6 @@ from evals.summarisation.src.bias.data.record_builder import (
 from evals.summarisation.src.bias.output_formatter import create_plotting_output, create_summary
 from evals.summarisation.src.bias.regard_scorer import REGARDScorer
 from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
-from evals.summarisation.src.bias.bias_types import CounterfactualEvalRecord, IterationMetrics
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import AppConfig, build_metrics
 
