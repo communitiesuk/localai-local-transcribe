@@ -18,20 +18,17 @@ or directly:
     poetry run pytest tests/evals/test_regard_scorer.py -v
 """
 
-from evals.summarisation.src.bias.regard_scorer import result
 from __future__ import annotations
 
-import math
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-import numpy as np
-import pytest
 import torch
 
 # ---------------------------------------------------------------------------
 # Stub factories
 # ---------------------------------------------------------------------------
+
 
 def _make_stub_tokenizer() -> MagicMock:
     """
@@ -139,6 +136,7 @@ def _build_scorer(
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _import_constants() -> tuple[int, int, int]:
     try:
         from evals.summarisation.src.bias.regard_scorer import (
@@ -154,6 +152,7 @@ def _import_constants() -> tuple[int, int, int]:
 # ===========================================================================
 # 1. Chunking tests  (no model calls)
 # ===========================================================================
+
 
 class TestChunking:
     """Validate the sliding-window logic in _chunk_text."""
@@ -226,9 +225,7 @@ class TestChunking:
         # Use distinct IDs so we can verify coverage
         total = window + stride + 50
         # Override encode to return unique IDs
-        scorer._tokenizer.encode.side_effect = lambda text, **kw: list(
-            range(len(text.split()))
-        )
+        scorer._tokenizer.encode.side_effect = lambda text, **kw: list(range(len(text.split())))
         chunks, _ = scorer._chunk_text("word " * total)
 
         seen = set()
@@ -240,13 +237,14 @@ class TestChunking:
     def test_token_counts_match_chunk_lengths(self) -> None:
         scorer = _build_scorer()
         chunks, counts = scorer._chunk_text("word " * 600)
-        for chunk, count in zip(chunks, counts):
+        for chunk, count in zip(chunks, counts, strict=False):
             assert len(chunk) == count
 
 
 # ===========================================================================
 # 2. Scoring / aggregation tests
 # ===========================================================================
+
 
 class TestScoring:
     """Validate score_summary() output and weighted aggregation."""
@@ -299,8 +297,8 @@ class TestScoring:
         # Chunk 2: ~50 tokens (remainder), very positive logits
         # If weighting is wrong (uniform), positive would pull more.
         # If weighting is correct (by actual count), negative should dominate.
-        negative_row = [-10.0, -10.0, 10.0, -10.0]   # neg ≈ 1.0
-        positive_row = [-10.0, -10.0, -10.0, -10.0]   # all equal after softmax
+        negative_row = [-10.0, -10.0, 10.0, -10.0]  # neg ≈ 1.0
+        positive_row = [-10.0, -10.0, -10.0, -10.0]  # all equal after softmax
 
         call_count = 0
 
@@ -322,12 +320,10 @@ class TestScoring:
 
         # Force two chunks: first = window tokens, second = 50 tokens
         total = window + 50
-        scorer._tokenizer.encode.side_effect = lambda text, **kw: list(
-            range(len(text.split()))
-        )
+        scorer._tokenizer.encode.side_effect = lambda text, **kw: list(range(len(text.split())))
         result = scorer.score_summary("word " * total)
         # Check that it's NOT uniform
-        uniform_avg = 0.5 * (1.0 + 0.25) # (neg_chunk_val + pos_chunk_val) / 2
+        uniform_avg = 0.5 * (1.0 + 0.25)  # (neg_chunk_val + pos_chunk_val) / 2
         assert abs(result.distribution.negative - uniform_avg) > 0.05
         # Negative should dominate given the larger first chunk
         assert result.distribution.negative > 0.5
@@ -349,6 +345,7 @@ class TestScoring:
 # 3. score_pair() tests
 # ===========================================================================
 
+
 class TestScorePair:
     """Validate the paired scoring interface and delta_negative computation."""
 
@@ -361,7 +358,7 @@ class TestScorePair:
         """
         When counterfactual has higher negative probability, delta_negative > 0.
         """
-        neutral_row = [0.0, 10.0, 0.0, 0.0]   # neutral ≈ 1.0 → negative ≈ 0
+        neutral_row = [0.0, 10.0, 0.0, 0.0]  # neutral ≈ 1.0 → negative ≈ 0
         negative_row = [0.0, 0.0, 10.0, 0.0]  # negative ≈ 1.0
 
         call_index = 0
@@ -416,6 +413,7 @@ class TestScorePair:
 # 4. REGARDDistribution helper tests
 # ===========================================================================
 
+
 class TestREGARDDistribution:
     def test_as_dict_returns_all_four_keys(self) -> None:
         try:
@@ -431,6 +429,7 @@ class TestREGARDDistribution:
 # ===========================================================================
 # 5. Edge cases
 # ===========================================================================
+
 
 class TestEdgeCases:
     def test_single_word_input(self) -> None:
