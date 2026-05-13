@@ -6,6 +6,7 @@ from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_transcript_messages
 from common.templates.citations import add_citations_to_minute
 from common.templates.types import Template
+from common.templates.utils.template_renderer import render_template
 from common.types import AgendaUsage, MinuteAndHallucinations
 
 
@@ -37,15 +38,6 @@ class Delivery(Template):
     description = "Formal minutes following the delivery style guide"
     agenda_usage = AgendaUsage.NOT_USED
 
-    style_guide = """
-- The minute is written in past reported speech.
-- The minute is written entirely in British English.
-- On the first instance of referencing an individual in the “Record of Discussion” section minute, use the full name, with the initials in brackets. Thereafter, use the initials to reference that individual if the full name of the individual is known.
-- Reference all departments by their abbreviation.
-- Citations should be of the form [n] where n is the index of the transcript item. Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81]
-- Each section must have a heading.
-- The output should be in plain text format."""
-
     @classmethod
     def get_system_message_for_delivery(cls, transcript: list[DialogueEntry]) -> list[dict[str, str]]:
         return [
@@ -58,11 +50,14 @@ class Delivery(Template):
 
     @classmethod
     def get_messages_for_sections(cls) -> dict[str, str]:
+        template = render_template("delivery_style_guide.j2")
+        style_guide = template.render()
+
         return {
             "role": "user",
             "content": f"""Generate a list of sections that the meeting should be split into.
-The sections should be in the order they appear in the transcript. Typically you will at least have an introduction and a conclusion. Use the following style guide to guide you:
-{cls.style_guide}""",
+            The sections should be in the order they appear in the transcript. Typically you will at least have an introduction and a conclusion. Use the following style guide to guide you:
+            {style_guide}""",
         }
 
     @classmethod
