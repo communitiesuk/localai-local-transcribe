@@ -10,11 +10,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
+  validate-development:
     uses: ./.github/workflows/terraform-validate.yml
-    secrets: inherit
-    permissions:
-      contents: read
+    with:
+      environment: development
+ 
+  validate-staging:
+    uses: ./.github/workflows/terraform-validate.yml
+    with:
+      environment: staging
+
   plan:
     needs: validate
     uses: ./.github/workflows/terraform-plan.yml

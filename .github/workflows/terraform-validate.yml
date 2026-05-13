@@ -1,38 +1,22 @@
-name: Terraform Validate
+name: terraform-validate
 
 on:
   workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
 
 env:
-  AWS_REGION: eu-west-2
   TERRAFORM_VERSION: ~>1.14.0
+
+permissions:
+  contents: read
 
 jobs:
   terraform-validate:
-    name: Terraform Validate
+    name: Terraform Validate — ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: terraform
-    strategy:
-      matrix:
-        module:
-          - development
-          - modules/bastion
-          - modules/certificates
-          - modules/ecr
-          - modules/ecs
-          - modules/encrypted_log_group
-          - modules/frontdoor
-          - modules/github_actions_access
-          - modules/monitoring
-          - modules/networking
-          - modules/rds
-          - modules/s3_bucket
-          - modules/secrets
-          - modules/sqs
-          - modules/terraform_backend
-          - modules/uploads_bucket
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,11 +27,21 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform format
+        working-directory: terraform
         run: terraform fmt -check -recursive -diff
 
-      - name: Terraform init
-        run: terraform -chdir=${{ matrix.module }} init -backend=false -input=false
+      - name: Terraform init — ${{ inputs.environment }}
+        working-directory: terraform/${{ inputs.environment }}
+        run: terraform init -backend=false -input=false -no-color > /dev/null
 
-      - name: Terraform validate
-        id: validate
-        run: terraform -chdir=${{ matrix.module }} validate -no-color 
+      - name: Terraform validate — ${{ inputs.environment }}
+        working-directory: terraform/${{ inputs.environment }}
+        run: terraform validate -no-color
+
+      - name: Terraform init — ${{ inputs.environment }}/backend
+        working-directory: terraform/${{ inputs.environment }}/backend
+        run: terraform init -backend=false -input=false -no-color > /dev/null
+
+      - name: Terraform validate — ${{ inputs.environment }}/backend
+        working-directory: terraform/${{ inputs.environment }}/backend
+        run: terraform validate -no-color

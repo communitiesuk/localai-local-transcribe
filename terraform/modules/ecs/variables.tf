@@ -104,7 +104,7 @@ variable "max_llm_processes" {
 }
 
 variable "frontend_image_name" {
- description = "name of the frontend docker image to deploy"
+  description = "name of the frontend docker image to deploy"
   type        = string
 }
 
@@ -120,22 +120,22 @@ variable "worker_image_name" {
 
 variable "transcription_queue_name" {
   description = "name of transcription sqs queue"
-  type = string
+  type        = string
 }
 
 variable "transcription_deadletter_queue_name" {
   description = "name of transcription deadletter sqs queue"
-  type = string
+  type        = string
 }
 
 variable "llm_queue_name" {
   description = "name of llm sqs queue"
-  type = string
+  type        = string
 }
 
 variable "llm_deadletter_queue_name" {
   description = "name of llm deadletter sqs queue"
-  type = string
+  type        = string
 }
 
 variable "frontend_task_cpu" {
