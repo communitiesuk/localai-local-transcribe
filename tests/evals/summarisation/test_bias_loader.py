@@ -6,7 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from evals.summarisation.src.bias.data.loader import discover_counterfactual_files, load_counterfactual_json
-from evals.summarisation.src.bias.types import CounterfactualInput
+from evals.summarisation.src.bias.bias_types import CounterfactualInput
 
 
 @pytest.fixture

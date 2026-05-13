@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 
-from evals.summarisation.src.bias.types import MetricData
+from evals.summarisation.src.bias.bias_types import MetricData
 from evals.summarisation.src.bias.visualization.plot_config import LAYOUT
 from evals.summarisation.src.bias.visualization.plot_elements import (
     add_data_points,

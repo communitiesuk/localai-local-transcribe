@@ -11,7 +11,7 @@ from evals.summarisation.src.bias.iteration_runner import (
     run_multiple_iterations,
     run_single_iteration,
 )
-from evals.summarisation.src.bias.types import CounterfactualMetricResult
+from evals.summarisation.src.bias.bias_types import CounterfactualMetricResult
 from evals.summarisation.src.common import DialogExample
 
 

@@ -13,8 +13,9 @@ from evals.summarisation.src.bias.data.record_builder import (
     process_counterfactual_file,
 )
 from evals.summarisation.src.bias.output_formatter import create_plotting_output, create_summary
+from evals.summarisation.src.bias.regard_scorer import REGARDScorer
 from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
-from evals.summarisation.src.bias.types import CounterfactualEvalRecord, IterationMetrics
+from evals.summarisation.src.bias.bias_types import CounterfactualEvalRecord, IterationMetrics
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import AppConfig, build_metrics
 
@@ -38,6 +39,7 @@ async def run_counterfactual_eval(
 
     metrics = build_metrics(cfg)
     sentiment_analyzer = SentimentAnalyzer()
+    regard_scorer = REGARDScorer()
 
     if cfg.run.num_iterations is None:
         msg = "num_iterations must be specified in config for bias evaluations"
@@ -60,7 +62,15 @@ async def run_counterfactual_eval(
 
     for file_path in counterfactual_files:
         record = await process_counterfactual_file(
-            file_path, run_id, num_iterations, metrics, sentiment_analyzer, cfg, baseline_cache, template_name
+            file_path,
+            run_id,
+            num_iterations,
+            metrics,
+            sentiment_analyzer,
+            regard_scorer,
+            cfg,
+            baseline_cache,
+            template_name,
         )
         all_records.append(record)
 

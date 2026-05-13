@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from evals.summarisation.src.bias.output_formatter import create_plotting_output, create_summary
-from evals.summarisation.src.bias.types import (
+from evals.summarisation.src.bias.bias_types import (
     CounterfactualEvalRecord,
     CounterfactualMetricResult,
     IterationMetrics,

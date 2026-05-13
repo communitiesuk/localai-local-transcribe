@@ -6,7 +6,7 @@ from evals.summarisation.src.bias.data.record_builder import (
     generate_supplementary_comparisons,
     process_counterfactual_file,
 )
-from evals.summarisation.src.bias.types import (
+from evals.summarisation.src.bias.bias_types import (
     AxisChange,
     ComparisonMetrics,
     CounterfactualEvalRecord,

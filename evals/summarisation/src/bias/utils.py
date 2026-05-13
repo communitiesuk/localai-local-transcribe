@@ -3,7 +3,7 @@ from __future__ import annotations
 import statistics
 
 from common.database.postgres_models import DialogueEntry
-from evals.summarisation.src.bias.types import IterationMetrics, MetricStatistics
+from evals.summarisation.src.bias.bias_types import IterationMetrics, MetricStatistics
 
 
 def format_dialogue(dialogue_entries: list[DialogueEntry]) -> str:
@@ -72,3 +72,27 @@ def compute_comparison_statistics(
         for orig_iter, cf_iter in zip(original_iterations, cf_iterations, strict=True)
     ]
     return compute_statistics(sentiment_deltas)
+
+
+def compute_regard_comparison_statistics(
+    original_iterations: list[IterationMetrics],
+    cf_iterations: list[IterationMetrics],
+) -> MetricStatistics | None:
+    """
+    Computes statistics for REGARD negative score differences between original and counterfactual iterations.
+    """
+    if not all(iter.regard_scores for iter in original_iterations + cf_iterations):
+        return None
+
+    # delta_negative = counterfactual.negative − factual.negative
+    # Positive values indicate the counterfactual text attracted more negative sentiment.
+    regard_deltas = [
+        cf_iter.regard_scores["negative"] - orig_iter.regard_scores["negative"]
+        for orig_iter, cf_iter in zip(original_iterations, cf_iterations, strict=True)
+        if orig_iter.regard_scores and cf_iter.regard_scores
+    ]
+
+    if not regard_deltas:
+        return None
+
+    return compute_statistics(regard_deltas)

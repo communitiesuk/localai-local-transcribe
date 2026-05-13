@@ -6,7 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from evals.summarisation.src.bias.constants import VISUALIZATIONS_DIRNAME
-from evals.summarisation.src.bias.types import MetricData, PlottingRecord
+from evals.summarisation.src.bias.bias_types import MetricData, PlottingRecord
 from evals.summarisation.src.bias.visualization.plotting import (
     create_comparison_figure,
     finalize_figure,
