@@ -7,11 +7,19 @@ on:
   push:
     branches: [main]
 
+env:
+  TERRAFORM_VERSION: ~>1.14.0
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+        
     - uses: actions/setup-python@v3
     - uses: actions/setup-node@v4
       with:
