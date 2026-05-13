@@ -18,6 +18,7 @@ or directly:
     poetry run pytest tests/evals/test_regard_scorer.py -v
 """
 
+from evals.summarisation.src.bias.regard_scorer import result
 from __future__ import annotations
 
 import math
@@ -325,9 +326,9 @@ class TestScoring:
             range(len(text.split()))
         )
         result = scorer.score_summary("word " * total)
-# Check that it's NOT uniform
-uniform_avg = 0.5 * (1.0 + 0.25) # (neg_chunk_val + pos_chunk_val) / 2
-assert abs(result.distribution.negative - uniform_avg) > 0.05
+        # Check that it's NOT uniform
+        uniform_avg = 0.5 * (1.0 + 0.25) # (neg_chunk_val + pos_chunk_val) / 2
+        assert abs(result.distribution.negative - uniform_avg) > 0.05
         # Negative should dominate given the larger first chunk
         assert result.distribution.negative > 0.5
 
