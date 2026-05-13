@@ -151,7 +151,7 @@ class User(BaseTableMixin, table=True):
         default=None,
         sa_column=Column(SAUUID, ForeignKey("organisation.id"), nullable=True),
     )
-    organisation: "Organisation | None" = Relationship(back_populates="users")
+    organisation: Organisation | None = Relationship(back_populates="users")
 
 
 class Recording(BaseTableMixin, table=True):
