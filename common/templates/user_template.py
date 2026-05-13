@@ -4,7 +4,7 @@ from common.database.postgres_models import TemplateType, Transcription, UserTem
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_transcript_messages
-from common.types import LLMHallucination
+from common.types import MinuteAndHallucinations
 
 document_prompt = """<task>
 You are an expert meeting minutes writer with extensive experience across various sectors. \
@@ -70,9 +70,7 @@ Do not include conversational phrases like "Sure!", "Here's the answer:", "Based
 or any other preamble. Simply provide the requested information."""
 
 
-async def generate_user_template(
-    template: UserTemplate, transcription: Transcription
-) -> tuple[str, list[LLMHallucination]]:
+async def generate_user_template(template: UserTemplate, transcription: Transcription) -> MinuteAndHallucinations:
     if template.type == TemplateType.DOCUMENT:
         markdown_template = markdownify.markdownify(template.content, heading_style=markdownify.ATX)
 
@@ -89,7 +87,7 @@ async def generate_user_template(
         chatbot = create_default_chatbot(FastOrBestLLM.BEST)
         response = await chatbot.chat(messages)
         hallucinations = await chatbot.hallucination_check()
-        return response, hallucinations
+        return MinuteAndHallucinations(text=response, total_claims=0, hallucinations=hallucinations)
     else:
         qa_pairs: list[tuple[str, str]] = []
         for question in template.questions:
@@ -125,4 +123,4 @@ async def generate_user_template(
 
         minute = "\n\n".join(f"## {q}\n{a}" for (q, a) in qa_pairs)
 
-        return minute, []
+        return MinuteAndHallucinations(text=minute, total_claims=0, hallucinations=[])

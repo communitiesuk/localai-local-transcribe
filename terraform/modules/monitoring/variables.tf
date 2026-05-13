@@ -22,6 +22,11 @@ variable "ecs_cluster_name" {
   type        = string
 }
 
+variable "ecs_cluster_arn" {
+  description = "Arn of ECS cluster to create alarms for"
+  type = string
+}
+
 variable "ecs_service_names" {
   description = "Names of ECS service to create alarms for"
   type        = list(string)

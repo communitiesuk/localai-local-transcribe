@@ -429,6 +429,66 @@ export type MinuteVersionResponse = {
    */
   ai_edit_instructions: string | null
   content_source: ContentSource
+  /**
+   * Too Short
+   */
+  too_short?: boolean
+  /**
+   * Guardrail Results
+   */
+  guardrail_results: Array<GuardrailResultResponse>
+  /**
+   * Hallucinations
+   */
+  hallucinations?: Array<LLMHallucination> | null
+}
+
+/**
+ * LLMHallucination
+ */
+export type LLMHallucination = {
+  /**
+   * Hallucination Type
+   */
+  hallucination_type: string
+  /**
+   * Hallucination Text
+   */
+  hallucination_text: string | null
+  /**
+   * Hallucination Reason
+   */
+  hallucination_reason: string | null
+}
+
+/**
+ * GuardrailResultResponse
+ */
+export type GuardrailResultResponse = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Guardrail Type
+   */
+  guardrail_type: string
+  /**
+   * Passed
+   */
+  passed: boolean
+  /**
+   * Score
+   */
+  score?: number | null
+  /**
+   * Reasoning
+   */
+  reasoning?: string | null
+  /**
+   * Error
+   */
+  error?: string | null
 }
 
 /**

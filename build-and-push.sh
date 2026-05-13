@@ -67,9 +67,9 @@ done
 
 echo ""
 echo "Planning Terraform..."
-cd "${REPO_ROOT}/terraform/development"
+cd "${REPO_ROOT}/terraform/${ENVIRONMENT}"
 TF_VARS=(-var="image_tag=${TAG}")
-terraform plan "${TF_VARS[@]}" -out=tfplan 2>/dev/null | grep -v ": Refreshing state\|: Reading\|: Still reading\|: Read complete"
+terraform plan "${TF_VARS[@]}" -out=tfplan 2>&1 | grep -v ": Refreshing state\|: Reading\|: Still reading\|: Read complete"
 
 echo ""
 read -r -p "Apply the above plan? [y/N] " confirm

@@ -10,10 +10,19 @@ from sqlalchemy.orm import selectinload
 
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import DialogueEntry, Hallucination, JobStatus, Minute, MinuteVersion, UserTemplate
+from common.database.postgres_models import (
+    DialogueEntry,
+    GuardrailResult,
+    Hallucination,
+    JobStatus,
+    Minute,
+    MinuteVersion,
+    UserTemplate,
+)
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
+    get_accuracy_check_messages,
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
@@ -21,6 +30,7 @@ from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.templates.user_template import generate_user_template
 from common.types import (
+    GuardrailScore,
     LLMHallucination,
     MeetingType,
     MinuteAndHallucinations,
@@ -49,6 +59,36 @@ class MinuteHandlerService:
         )
 
     @staticmethod
+    def save_guardrail_result(
+        minute_version_id: UUID,
+        score: GuardrailScore,
+    ) -> None:
+        with SessionLocal() as session:
+            passed = score.score >= settings.GUARDRAIL_THRESHOLD
+
+            guardrail_result = GuardrailResult(
+                minute_version_id=minute_version_id,
+                passed=passed,
+                score=score.score,
+                reasoning=score.reasoning,
+            )
+            session.add(guardrail_result)
+            session.commit()
+
+    @staticmethod
+    def save_guardrail_error(minute_version_id: UUID, error_message: str) -> None:
+        with SessionLocal() as session:
+            guardrail_result = GuardrailResult(
+                minute_version_id=minute_version_id,
+                passed=False,
+                score=0.0,
+                reasoning="System Error: Could not verify accuracy.",
+                error=error_message,
+            )
+            session.add(guardrail_result)
+            session.commit()
+
+    @staticmethod
     def update_minute_version(
         minute_version_id: UUID,
         html_content: str | None = None,
@@ -75,6 +115,10 @@ class MinuteHandlerService:
                 ]
             session.add(minute_version)
             session.commit()
+
+    @staticmethod
+    def _calculate_word_count(transcript: list[DialogueEntry]) -> int:
+        return sum(len(str(entry.get("text", "")).split()) for entry in transcript)
 
     @classmethod
     async def get_minute_version(cls, minute_version_id: UUID) -> MinuteVersion:
@@ -115,6 +159,34 @@ class MinuteHandlerService:
             return minute.minute_versions[0]
 
     @classmethod
+    async def _run_accuracy_guardrail(
+        cls,
+        minute_version_id: UUID,
+        minute_id: UUID,
+        content: str,
+        transcript: list[DialogueEntry],
+        label: str,
+    ) -> None:
+        """Helper to run accuracy check and handle result/error logging."""
+        word_count = cls._calculate_word_count(transcript)
+        if word_count < settings.MIN_WORD_COUNT_FOR_FULL_SUMMARY:
+            logger.info(
+                "%s: Skipping guardrail check for %s (transcript too short: %d words)", minute_id, label, word_count
+            )
+            return
+
+        try:
+            accuracy_score = await cls.calculate_accuracy_score(
+                minute=content,
+                transcript=transcript,
+            )
+            cls.save_guardrail_result(minute_version_id, accuracy_score)
+            logger.info("%s: Saved guardrail result for %s: %s", minute_id, label, accuracy_score)
+        except Exception as e:
+            logger.exception("%s: Failed to run guardrail check for %s", minute_id, label)
+            cls.save_guardrail_error(minute_version_id, str(e))
+
+    @classmethod
     async def process_minute_generation_message(cls, minute_version_id: UUID) -> None:
         try:
             minute_version = await cls.get_minute_version(minute_version_id=minute_version_id)
@@ -129,14 +201,32 @@ class MinuteHandlerService:
 
             meeting_type = cls.predict_meeting(dialogue_entries)
             logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
-            generated = await cls.generate_minutes(meeting_type, minute_version.minute)
+            result = await cls.generate_minutes(meeting_type, minute_version.minute)
+            html_content = result.text
+            hallucinations = result.hallucinations
+
+            await cls._run_accuracy_guardrail(
+                minute_version_id=minute_version.id,
+                minute_id=minute_version.minute_id,
+                content=html_content,
+                transcript=dialogue_entries,
+                label="generation",
+            )
+
             cls.update_minute_version(
                 minute_version.id,
-                html_content=generated.text,
-                hallucinations=generated.hallucinations,
+                html_content=html_content,
+                hallucinations=hallucinations,
                 status=JobStatus.COMPLETED,
             )
+
         except Exception as e:
+            logger.exception(
+                "%s: Summary generation failed with %s: %s",
+                minute_version.minute_id,
+                type(e).__name__,
+                e,
+            )
             cls.update_minute_version(minute_version.id, status=JobStatus.FAILED, error=str(e))
             raise MinuteGenerationFailedError from e
 
@@ -166,6 +256,15 @@ class MinuteHandlerService:
                 edit_instructions=target_minute_version.ai_edit_instructions,
                 transcript=transcript,
             )
+
+            await cls._run_accuracy_guardrail(
+                minute_version_id=target_minute_version.id,
+                minute_id=target_minute_version.minute_id,
+                content=generated.text,
+                transcript=transcript,
+                label="edit",
+            )
+
             cls.update_minute_version(
                 minute_version_id=target_minute_version.id,
                 status=JobStatus.COMPLETED,
@@ -187,8 +286,7 @@ class MinuteHandlerService:
             msg = f"No template with id {minute.user_template_id}"
             raise RuntimeError(msg)
         logger.info("%s: Found template id=%s, name=%s", minute.id, template.id, template.name)
-        minutes, hallucinations = await generate_user_template(template=template, transcription=minute.transcription)
-        return MinuteAndHallucinations(text=minutes, total_claims=0, hallucinations=hallucinations)
+        return await generate_user_template(template=template, transcription=minute.transcription)
 
     @classmethod
     async def generate_minutes(
@@ -200,7 +298,6 @@ class MinuteHandlerService:
         if not dialogue_entries:
             msg = f"Minute {minute.id} has no dialogue entries"
             raise MinuteGenerationFailedError(msg)
-
         match meeting_type:
             case MeetingType.too_short:
                 generated = cls.handle_bad_transcript(dialogue_entries)
@@ -252,7 +349,7 @@ class MinuteHandlerService:
 
     @classmethod
     def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
-        word_count = sum(len(entry["text"].split()) for entry in dialogue_entries)
+        word_count = cls._calculate_word_count(dialogue_entries)
         match word_count:
             case n if n < settings.MIN_WORD_COUNT_FOR_SUMMARY:
                 return MeetingType.too_short
@@ -275,4 +372,20 @@ class MinuteHandlerService:
         edited_minutes = edited_minutes.removeprefix("```html").removesuffix("```")
         hallucinations = await chatbot.hallucination_check()
 
-        return MinuteAndHallucinations(text=edited_minutes, total_claims=0, hallucinations=hallucinations)
+        return MinuteAndHallucinations(
+            text=edited_minutes,
+            total_claims=len(hallucinations),
+            hallucinations=hallucinations,
+        )
+
+    @classmethod
+    async def calculate_accuracy_score(
+        cls,
+        minute: str,
+        transcript: list[DialogueEntry],
+    ) -> GuardrailScore:
+        chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+        return await chatbot.structured_chat(
+            messages=get_accuracy_check_messages(minute, transcript),
+            response_format=GuardrailScore,
+        )

@@ -1,10 +1,15 @@
 resource "aws_cloudwatch_event_rule" "ecs_events" {
-  name        = "${var.environment_name}-ecs-events"
+  for_each    = toset(var.ecs_service_names)
+  name        = "${var.environment_name}-${each.value}-ecs-events"
   description = "Capture ECS events"
 
   event_pattern = jsonencode({
-    source : ["aws.ecs"],
-  })
+  source : ["aws.ecs"],
+  detail : {
+    clusterArn : [var.ecs_cluster_arn],
+    group : ["service:${each.value}"]
+  },
+})
 }
 
 module "ecs_events_log_group" {
@@ -53,7 +58,7 @@ data "aws_iam_policy_document" "ecs_events_log_policy_document" {
 
     condition {
       test     = "ArnEquals"
-      values   = [aws_cloudwatch_event_rule.ecs_events.arn]
+      values   = [for r in aws_cloudwatch_event_rule.ecs_events : r.arn]
       variable = "aws:SourceArn"
     }
   }
@@ -65,6 +70,8 @@ resource "aws_cloudwatch_log_resource_policy" "ecs_events_log_policy" {
 }
 
 resource "aws_cloudwatch_event_target" "ecs_events_to_logs" {
-  rule = aws_cloudwatch_event_rule.ecs_events.name
+  for_each = aws_cloudwatch_event_rule.ecs_events
+  rule = each.value.name
   arn  = module.ecs_events_log_group.log_group_arn
+  target_id = each.key
 }

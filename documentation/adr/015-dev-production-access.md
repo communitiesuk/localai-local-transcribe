@@ -2,9 +2,9 @@
 
 ## Status
 
-Proposed
+Accepted
 
-Date of decision TBC
+Date of decision: 2026-02-06
 
 ## Context and Problem Statement
 

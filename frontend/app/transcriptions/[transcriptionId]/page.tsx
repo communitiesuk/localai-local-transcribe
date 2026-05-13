@@ -1,5 +1,5 @@
 'use client'
-import { use, useEffect } from 'react'
+import { use } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
@@ -15,14 +15,12 @@ import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
 import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
-import { useRouter, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
 }) {
   const params = use(props.params)
-
-  const router = useRouter()
 
   const { transcriptionId } = params
 

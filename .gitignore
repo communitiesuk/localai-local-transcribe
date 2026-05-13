@@ -26,6 +26,7 @@ Brewfile.lock.json
 # Data
 *.csv
 *.xlsx
+!DNS Change Request Form*.xlsx
 *.xls
 *.pkl
 *.parquet
@@ -131,4 +132,4 @@ evals/**/output/
 **/*.mp3
 **/*.m4a
 
-frontend/public/assets/govuk
+frontend/public/assets/govuk.coverage
