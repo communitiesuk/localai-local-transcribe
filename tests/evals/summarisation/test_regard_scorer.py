@@ -46,10 +46,8 @@ def _make_stub_tokenizer() -> MagicMock:
 
     def _batch_encode(
         texts: list[str],
-        _padding: bool = True,
-        _truncation: bool = True,
         max_length: int = 512,
-        _return_tensors: str = "pt",
+        **_kwargs: Any,
     ) -> dict[str, torch.Tensor]:
         batch = len(texts)
         seq = max((len(t.split()) for t in texts), default=1) + 2  # +2 for CLS/SEP
@@ -160,33 +158,33 @@ class TestChunking:
 
     def test_short_text_produces_single_chunk(self) -> None:
         scorer = _build_scorer()
-        chunks, counts = scorer.chunk_text("word " * 10)
+        chunks, counts = scorer._chunk_text("word " * 10)  # noqa: SLF001
         assert len(chunks) == 1
         assert counts[0] == 10
 
-    def test_empty_text_returns_empty(self) -> None:
+    def test_empty_text_returns_empty_lists(self) -> None:
         scorer = _build_scorer()
-        chunks, counts = scorer.chunk_text("")
+        chunks, counts = scorer._chunk_text("")  # noqa: SLF001
         assert chunks == []
         assert counts == []
 
-    def test_exact_window_size_is_one_chunk(self) -> None:
+    def test_text_exactly_one_window_long(self) -> None:
         window, _, _ = _import_constants()
         scorer = _build_scorer()
-        chunks, counts = scorer.chunk_text("word " * window)
+        chunks, counts = scorer._chunk_text("word " * window)  # noqa: SLF001
         assert len(chunks) == 1
         assert counts[0] == window
 
-    def test_one_token_over_window_produces_two_chunks(self) -> None:
+    def test_text_slightly_over_one_window(self) -> None:
         window, _, _ = _import_constants()
         scorer = _build_scorer()
-        chunks, counts = scorer.chunk_text("word " * (window + 1))
+        chunks, counts = scorer._chunk_text("word " * (window + 1))  # noqa: SLF001
         assert len(chunks) == 2
 
     def test_long_text_produces_multiple_chunks(self) -> None:
         scorer = _build_scorer()
         # 900 words → well over one 462-token window
-        chunks, counts = scorer.chunk_text("word " * 900)
+        chunks, counts = scorer._chunk_text("word " * 900)  # noqa: SLF001
         assert len(chunks) > 1
 
     def test_final_chunk_reflects_actual_token_count(self) -> None:
@@ -200,7 +198,7 @@ class TestChunking:
         # Construct a total length where the remainder is exactly 100 tokens.
         remainder = 100
         total = window + stride + remainder  # forces 3 chunks; last has `remainder` tokens
-        chunks, counts = scorer.chunk_text("word " * total)
+        chunks, counts = scorer._chunk_text("word " * total)  # noqa: SLF001
 
         assert counts[-1] == len(chunks[-1])
         assert counts[-1] < window
@@ -211,7 +209,7 @@ class TestChunking:
         scorer = _build_scorer()
 
         total = window + stride  # exactly two chunks
-        chunks, _ = scorer.chunk_text("word " * total)
+        chunks, _ = scorer._chunk_text("word " * total)  # noqa: SLF001
         assert len(chunks) == 2
 
         # The tail of chunk[0] should equal the head of chunk[1]
@@ -227,7 +225,7 @@ class TestChunking:
         total = window + stride + 50
         # Override encode to return unique IDs
         scorer._tokenizer.encode.side_effect = lambda text, **_: list(range(len(text.split())))  # noqa: SLF001
-        chunks, _ = scorer.chunk_text("word " * total)
+        chunks, _ = scorer._chunk_text("word " * total)  # noqa: SLF001
 
         seen = set()
         for chunk in chunks:
@@ -237,7 +235,7 @@ class TestChunking:
 
     def test_token_counts_match_chunk_lengths(self) -> None:
         scorer = _build_scorer()
-        chunks, counts = scorer.chunk_text("word " * 600)
+        chunks, counts = scorer._chunk_text("word " * 600)  # noqa: SLF001
         for chunk, count in zip(chunks, counts, strict=False):
             assert len(chunk) == count
 
