@@ -8,6 +8,9 @@ _env = Environment(
     loader=FileSystemLoader(_TEMPLATES_DIR),
     undefined=StrictUndefined,
     autoescape=select_autoescape([]),
+    # Autoescape is disabled as we are generating plain text prompts, not HTML/XML.
+    # This prevents characters like <, > used within tags from being unnecessarily escaped.
+    # This can be revised later if HTML or XML rendering is introduced.
     keep_trailing_newline=True,
     trim_blocks=True,
     lstrip_blocks=True,
