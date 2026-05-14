@@ -1,9 +1,11 @@
 import logging
 from dataclasses import dataclass
+from uuid import UUID
 
 import jwt
 import requests
 
+from common.database.postgres_models import User, UserRole
 from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings
 
@@ -92,3 +94,13 @@ def is_authorised_user(auth_token: str) -> bool:
     except Exception:
         logger.exception("Error occurred when authorising user")
         return False
+
+
+def is_system_admin(user: User) -> bool:
+    return UserRole.MHCLG_SUPPORT_ADMIN in user.roles
+
+
+def is_admin_for_org(user: User, organisation_id: UUID) -> bool:
+    return is_system_admin(user) or (
+        user.organisation_id == organisation_id and UserRole.LOCAL_AUTHORITY_ADMIN in user.roles
+    )
