@@ -143,7 +143,9 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 if attempt == MAX_RETRIES - 1:
                     raise
             except (APIConnectionError, APIError, APITimeoutError) as e:
-                logger.error("%s - %s: %s (attempt %d/%d)", method_name, type(e).__name__, str(e), attempt + 1, MAX_RETRIES)
+                logger.error(
+                    "%s - %s: %s (attempt %d/%d)", method_name, type(e).__name__, str(e), attempt + 1, MAX_RETRIES
+                )
                 if attempt == MAX_RETRIES - 1:
                     raise
                 await asyncio.sleep(2**attempt)  # Exponential backoff for connection issues
