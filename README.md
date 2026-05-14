@@ -326,6 +326,16 @@ Set `enable_oidc_auth = true` in the environment's `terraform/<env>/main.tf` and
 > aws cloudfront create-invalidation --distribution-id <DISTRIBUTION_ID> --paths "/*"
 > ```
 
+> [!NOTE]
+> If the client ID or secret are updated in SSM after the deployment that enabled Internal Access, the ALB rule and ECS tasks won't pick up the new values. Taint them and redeploy:
+> ```bash
+> terraform taint 'module.frontdoor.aws_lb_listener_rule.authentication[0]'
+> terraform taint module.ecs.aws_ecs_task_definition.frontend
+> terraform taint module.ecs.aws_ecs_task_definition.backend
+> terraform taint module.ecs.aws_ecs_task_definition.worker
+> ```
+> You'll need to do this if you see a client_id - unknown error in the URL bar when being redirected to Internal Access, or an unauthorised error when reaching Local Transcribe — there are likely other failure modes too.
+
 ###### 5. Push images
 
 Run the `build-and-push.sh` script as described above to build and push the latest images to ECR, and trigger a deployment.
