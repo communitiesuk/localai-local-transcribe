@@ -3,8 +3,9 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Column, Enum, text
+from sqlalchemy import TIMESTAMP, Column, Enum, ForeignKey, Text, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
@@ -113,6 +114,17 @@ class Hallucination(BaseTableMixin, table=True):
     hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
 
 
+class Organisation(BaseTableMixin, table=True):
+    __tablename__ = "organisation"
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str
+    allowed_domains: list[str] = Field(
+        default_factory=list, sa_column=Column(ARRAY(Text), nullable=False, server_default=text("ARRAY[]::TEXT[]"))
+    )
+    users: list["User"] = Relationship(back_populates="organisation")
+
+
 # Main models with table=True for DB tables
 class UserRole(StrEnum):
     STANDARD_USER = auto()
@@ -135,6 +147,11 @@ class User(BaseTableMixin, table=True):
             server_default=text("ARRAY['STANDARD_USER']::userrole[]"),
         ),
     )
+    organisation_id: UUID | None = Field(
+        default=None,
+        sa_column=Column(SAUUID, ForeignKey("organisation.id"), nullable=True),
+    )
+    organisation: Organisation | None = Relationship(back_populates="users")
 
 
 class Recording(BaseTableMixin, table=True):

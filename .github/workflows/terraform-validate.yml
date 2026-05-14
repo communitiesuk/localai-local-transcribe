@@ -1,0 +1,47 @@
+name: terraform-validate
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+
+env:
+  TERRAFORM_VERSION: ~>1.14.0
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-validate:
+    name: Terraform Validate — ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform format
+        working-directory: terraform
+        run: terraform fmt -check -recursive -diff
+
+      - name: Terraform init — ${{ inputs.environment }}
+        working-directory: terraform/${{ inputs.environment }}
+        run: terraform init -backend=false -input=false -no-color > /dev/null
+
+      - name: Terraform validate — ${{ inputs.environment }}
+        working-directory: terraform/${{ inputs.environment }}
+        run: terraform validate -no-color
+
+      - name: Terraform init — ${{ inputs.environment }}/backend
+        working-directory: terraform/${{ inputs.environment }}/backend
+        run: terraform init -backend=false -input=false -no-color > /dev/null
+
+      - name: Terraform validate — ${{ inputs.environment }}/backend
+        working-directory: terraform/${{ inputs.environment }}/backend
+        run: terraform validate -no-color

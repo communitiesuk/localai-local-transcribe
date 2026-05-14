@@ -98,7 +98,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage" {
   dimensions = {
     DBInstanceIdentifier = var.database_identifier
   }
-  
+
   alarm_actions = [
     aws_sns_topic.alarm_sns_topic.arn,
   ]
