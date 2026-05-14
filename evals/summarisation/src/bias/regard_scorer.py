@@ -40,7 +40,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, PreTrainedtokenizerbase
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, PreTrainedTokenizerBase
 
 logger = logging.getLogger(__name__)
 
@@ -291,7 +291,7 @@ class REGARDScorer:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def chunk_text(text: str, tokenizer: PreTrainedtokenizerbase) -> tuple[list[list[int]], list[int]]:
+    def chunk_text(text: str, tokenizer: PreTrainedTokenizerBase) -> tuple[list[list[int]], list[int]]:
         """
         Tokenise ``text`` and produce overlapping content-token windows.
 
