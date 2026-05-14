@@ -69,10 +69,10 @@ class AzureAPIMModelAdapter(ModelAdapter):
         )
         parsed = response.choices[0].message.parsed
         if parsed is None:
-            msg = "Azure APIM response.parsed is None"
+            msg = "APIM ERROR: Azure APIM response.parsed is None"
             raise ValueError(msg)
         if not isinstance(parsed, response_format):
-            msg = f"Azure APIM parsed response is not of type {response_format}"
+            msg = f"APIM ERROR: Azure APIM parsed response is not of type {response_format}"
             raise TypeError(msg)
         return parsed
 
@@ -97,10 +97,10 @@ class AzureAPIMModelAdapter(ModelAdapter):
         self.choice_incomplete(choice, response)
         message_content = choice.message.content
         if message_content is None:
-            msg = "Azure APIM message.content is None"
+            msg = "APIM ERROR: Azure APIM message.content is None"
             raise ValueError(msg)
         if not isinstance(message_content, str):
-            msg = f"Azure APIM message.content is not a string: {type(message_content)}"
+            msg = f"APIM ERROR: Azure APIM message.content is not a string: {type(message_content)}"
             raise TypeError(msg)
         return message_content
 
@@ -126,7 +126,8 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 await asyncio.sleep(wait_time)
             except AuthenticationError:
                 logger.warning(
-                    "%s - authentication error, refreshing token and retrying (attempt %d/%d)",
+                    "%s,%s - authentication error, refreshing token and retrying (attempt %d/%d)",
+                    "APIM ERROR: ",
                     method_name,
                     attempt + 1,
                     MAX_RETRIES,
@@ -136,7 +137,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 if attempt == MAX_RETRIES - 1:
                     raise
             except (APIConnectionError, APIError) as e:
-                logger.error("%s - %s: %s", method_name, type(e).__name__, str(e))
+                logger.error("%s %s - %s: %s","APIM ERROR:", method_name, type(e).__name__, str(e))
                 raise
         msg = f"{method_name} - max retries exhausted"
         raise RuntimeError(msg)

@@ -210,3 +210,19 @@ resource "aws_cloudwatch_log_metric_filter" "ecs_task_start_failure" {
     value     = "1"
   }
 }
+
+resource "aws_cloudwatch_log_metric_filter" "apim_error_messages" {
+  for_each = toset(var.ecs_service_names)
+  log_group_name = module.backend_log_group.name
+  name =  "apim-error-logs-${var.environment_name}-${each.value}"
+  pattern =  <<EOT
+    "APIM ERROR:"
+  EOT
+
+  metric_transformation {
+    name = "placeholder"
+    namespace = "LogMetrics"
+    value = 1
+  }
+
+}
