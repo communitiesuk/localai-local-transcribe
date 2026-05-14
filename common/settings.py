@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     AWS_REGION: str | None = Field(description="AWS region", default=None)
     ALB_ARN: str | None = Field(description="ARN of the ALB, used to validate the JWT signer claim", default=None)
     OIDC_ISSUER: str | None = Field(description="OIDC issuer URL, used to validate the JWT issuer claim", default=None)
+    OIDC_CLIENT_ID: str | None = Field(
+        description="OIDC client ID, used to validate the JWT audience claim", default=None
+    )
 
     ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)

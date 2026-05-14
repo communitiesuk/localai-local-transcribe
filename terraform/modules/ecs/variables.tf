@@ -184,6 +184,11 @@ variable "oidc_issuer" {
   type        = string
 }
 
+variable "oidc_client_id_name" {
+  description = "SSM parameter name for the OIDC client ID, used by the frontend to validate the client_id claim in the ALB JWT"
+  type        = string
+}
+
 variable "aws_region" {
   description = "AWS region, used to construct the ALB public key endpoint URL"
   type        = string

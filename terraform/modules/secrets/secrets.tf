@@ -1,7 +1,7 @@
-resource "aws_ssm_parameter" "oidc_client_name" {
+resource "aws_ssm_parameter" "oidc_client_id" {
   type        = "SecureString"
   key_id      = aws_kms_key.local_transcribe_secrets.arn
-  name        = "/local-transcribe/oidc_secrets/client_name"
+  name        = "/local-transcribe/oidc_secrets/client_id"
   description = "OIDC client ID for local-transcribe"
   value       = "placeholder" # Update value in SSM - Do not hardcode
 
