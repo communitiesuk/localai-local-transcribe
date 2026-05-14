@@ -117,7 +117,7 @@ resource "aws_cloudfront_distribution" "main" {
   viewer_certificate {
     cloudfront_default_certificate = var.ssl_certs_created ? false : true
     acm_certificate_arn            = var.ssl_certs_created ? var.cloudfront_certificate_arn : null
-    minimum_protocol_version       = var.ssl_certs_created ? "TLSv1.3_2025": null
+    minimum_protocol_version       = var.ssl_certs_created ? "TLSv1.3_2025" : null
     ssl_support_method             = "sni-only"
   }
 

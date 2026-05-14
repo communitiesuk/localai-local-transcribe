@@ -1,6 +1,6 @@
 #tfsec:ignore:aws-elb-alb-not-public:the load balancer must be exposed to the internet in order to communicate with cloudfront
 locals {
-  gds_ia_issuer   = "https://sso.service.security.gov.uk"
+  gds_ia_issuer = "https://sso.service.security.gov.uk"
 }
 
 resource "aws_lb" "main" {

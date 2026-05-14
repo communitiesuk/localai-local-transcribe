@@ -98,5 +98,5 @@ variable "internal_access_oidc_client_secret_name" {
 
 variable "app_host" {
   description = "The MHCLG delegated domain name for the application, used in host header condition for the load balancer listener rule"
-  type = string
+  type        = string
 }
