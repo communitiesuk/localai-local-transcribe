@@ -1,10 +1,6 @@
-from typing_extensions import NotRequired
 from __future__ import annotations
-
-from typing import Any, TypedDict
-
+from typing import Any, NotRequired, TypedDict
 from pydantic import BaseModel, Field
-
 from common.database.postgres_models import DialogueEntry
 
 
