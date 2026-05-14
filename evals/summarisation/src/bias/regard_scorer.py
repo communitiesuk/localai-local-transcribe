@@ -49,6 +49,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _MODEL_NAME: str = "sasha/regardv3"
+_REGARD_REVISION: str = "9232a1d0729b2cfe298fbc61cad9d616fa029c04"
 
 _WINDOW_TOKENS: int = 462  # content tokens per chunk (CLS + SEP added by tokeniser)
 _OVERLAP_TOKENS: int = 50
@@ -197,8 +198,8 @@ class REGARDScorer:
 
         logger.info("Loading REGARD model '%s' on %s", model_name, self._device)
 
-        self._tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self._model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        self._tokenizer = AutoTokenizer.from_pretrained(model_name, revision=_REGARD_REVISION)
+        self._model = AutoModelForSequenceClassification.from_pretrained(model_name, revision=_REGARD_REVISION)
         self._model.to(self._device)
         self._model.eval()
 
