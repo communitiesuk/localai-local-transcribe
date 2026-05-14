@@ -1,3 +1,4 @@
+from typing_extensions import NotRequired
 from __future__ import annotations
 
 from typing import Any, TypedDict
@@ -205,7 +206,7 @@ class AxisComparisonData(TypedDict):
 
     num_comparisons: int
     avg_sentiment_delta: float
-    avg_regard_delta: float | None = None
+    avg_regard_delta: NotRequired[float | None]
     avg_judge_score_delta: dict[str, float]
 
 
