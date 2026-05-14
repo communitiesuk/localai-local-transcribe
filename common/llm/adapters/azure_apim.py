@@ -5,7 +5,14 @@ import logging
 import re
 from collections.abc import Awaitable, Callable
 
-from openai import APIConnectionError, APIError, AsyncOpenAI, AuthenticationError, RateLimitError
+from openai import (
+    APIConnectionError,
+    APIError,
+    APITimeoutError,
+    AsyncOpenAI,
+    AuthenticationError,
+    RateLimitError,
+)
 from openai.types.chat import ChatCompletion, ParsedChatCompletion
 from openai.types.chat.chat_completion import Choice
 
@@ -135,9 +142,11 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 self._cached_async_apim_client = await self._get_apim_client()
                 if attempt == MAX_RETRIES - 1:
                     raise
-            except (APIConnectionError, APIError) as e:
-                logger.error("%s - %s: %s", method_name, type(e).__name__, str(e))
-                raise
+            except (APIConnectionError, APIError, APITimeoutError) as e:
+                logger.error("%s - %s: %s (attempt %d/%d)", method_name, type(e).__name__, str(e), attempt + 1, MAX_RETRIES)
+                if attempt == MAX_RETRIES - 1:
+                    raise
+                await asyncio.sleep(2**attempt)  # Exponential backoff for connection issues
         msg = f"{method_name} - max retries exhausted"
         raise RuntimeError(msg)
 
