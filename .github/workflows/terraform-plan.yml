@@ -64,11 +64,18 @@ jobs:
             const issue_number = context.payload.pull_request.number;
             const sha = context.sha;
 
-            // Returns true only if every changed resource is an ECS task definition or service.
-            // Any other resource type (RDS, ALB, etc.) means this is a real infra change.
+            // Returns true only if the plan has the exact shape of an image-tag bump:
+            // task definitions must be replaced (always true for an image change) and
+            // services must be updated in-place (they just re-point to the new task def).
+            // Any other action type (a service being replaced, a task def updated in-place)
+            // or any non-ECS resource means this is a real infra change.
             const onlyEcsResources = (planText) => {
-              const changed = [...planText.matchAll(/# \S+ (will be updated in-place|must be replaced)/g)];
-              return changed.length > 0 && changed.every(m => /aws_ecs_(task_definition|service)/.test(m[0]));
+              const allChanged = [...planText.matchAll(/# \S+ (will be updated in-place|must be replaced)/g)];
+              if (allChanged.length === 0) return false;
+              const taskDefReplacements = [...planText.matchAll(/# \S+aws_ecs_task_definition\.\S+ must be replaced/g)];
+              const serviceUpdates = [...planText.matchAll(/# \S+aws_ecs_service\.\S+ will be updated in-place/g)];
+              return taskDefReplacements.length > 0
+                && (taskDefReplacements.length + serviceUpdates.length) === allChanged.length;
             };
 
             // Returns true only if every modified (~) field is a known metadata side-effect of
