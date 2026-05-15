@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from evals.summarisation.src.bias.types import CounterfactualInput
+from evals.summarisation.src.bias.bias_types import CounterfactualInput
 
 
 def load_counterfactual_json(file_path: Path) -> CounterfactualInput:

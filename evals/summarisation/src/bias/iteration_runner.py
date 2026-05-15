@@ -7,7 +7,7 @@ from typing import Any
 import dspy
 
 from common.database.postgres_models import DialogueEntry
-from evals.summarisation.src.bias.types import CounterfactualMetricResult, IterationMetrics
+from evals.summarisation.src.bias.bias_types import CounterfactualMetricResult, IterationMetrics
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import DialogExample
 from evals.summarisation.src.summarizer import generate_summary
@@ -33,6 +33,7 @@ async def run_single_iteration(
     iteration_id: str,
     metrics: list[Any],
     sentiment_analyzer: Any,
+    regard_scorer: Any = None,
     template_name: str | None = None,
 ) -> tuple[str, IterationMetrics, int, int]:
     """
@@ -57,6 +58,10 @@ async def run_single_iteration(
     judge_ms = int((t1_judge - t0_judge) * 1000)
 
     sentiment_score = sentiment_analyzer.compute_sentiment(summary)
+    regard_scores = None
+    if regard_scorer:
+        regard_result = regard_scorer.score_summary(summary)
+        regard_scores = regard_result.distribution.as_dict()
 
     logger.debug(
         "Sentiment for iteration %s: score=%.4f, summary_preview=%s",
@@ -68,6 +73,7 @@ async def run_single_iteration(
     iteration_metrics = IterationMetrics(
         metrics=judge_results,
         sentiment_score=sentiment_score,
+        regard_scores=regard_scores,
     )
 
     return summary, iteration_metrics, summarize_ms, judge_ms
@@ -79,6 +85,7 @@ async def run_multiple_iterations(
     num_iterations: int,
     metrics: list[Any],
     sentiment_analyzer: Any,
+    regard_scorer: Any = None,
     template_name: str | None = None,
 ) -> tuple[list[str], list[IterationMetrics], int, int]:
     """
@@ -92,7 +99,7 @@ async def run_multiple_iterations(
     for iteration in range(num_iterations):
         iteration_id = f"{base_id}_iter_{iteration}"
         summary, iteration_metrics, summarize_ms, judge_ms = await run_single_iteration(
-            dialogue_entries, iteration_id, metrics, sentiment_analyzer, template_name
+            dialogue_entries, iteration_id, metrics, sentiment_analyzer, regard_scorer, template_name
         )
         summaries.append(summary)
         iterations.append(iteration_metrics)
