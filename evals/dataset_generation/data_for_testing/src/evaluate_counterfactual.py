@@ -18,7 +18,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(
 
 def _load_dialogue_entries(transcript_file_path: str | Path) -> list[dict]:
     raw = load_json(transcript_file_path)
-    entries = raw.get("dialogue_entries", raw) if isinstance(raw, dict) else raw
+    if isinstance(raw, dict):
+        if "dialogue_entries" not in raw:
+            msg = f"Expected 'dialogue_entries' key in {transcript_file_path}"
+            raise ValueError(msg)
+        entries = raw["dialogue_entries"]
+    else:
+        entries = raw
     return list(entries)
 
 
@@ -68,7 +74,7 @@ if __name__ == "__main__":
 
     for axis_result in report["axes"]:
         axis_slug = _slugify(axis_result["axis_change"]["axis"])
-        target_slug = axis_result["axis_change"]["target_value"]
+        target_slug = _slugify(axis_result["axis_change"]["target_value"])
         for rewrite in axis_result["rewrites"]:
             i = rewrite["rewrite_index"]
             rewrite_path = rewrites_dir / f"{axis_slug}_{target_slug}_{i}.txt"

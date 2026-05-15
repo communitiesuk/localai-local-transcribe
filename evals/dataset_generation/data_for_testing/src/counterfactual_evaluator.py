@@ -129,9 +129,12 @@ async def evaluate_counterfactual(
         for i in range(num_rewrites):
             rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
 
+            if len(rewritten_texts) != len(dialogue_entries):
+                msg = f"LLM returned {len(rewritten_texts)} lines but dialogue has {len(dialogue_entries)}"
+                raise ValueError(msg)
             rewritten_transcript = "\n".join(
                 f"{entry.get('speaker', str(j + 1))}: {text}"
-                for j, (entry, text) in enumerate(zip(dialogue_entries, rewritten_texts, strict=False))
+                for j, (entry, text) in enumerate(zip(dialogue_entries, rewritten_texts))
             )
 
             checks = check_removals(rewritten_transcript, original_values)
