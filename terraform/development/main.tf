@@ -178,7 +178,7 @@ module "ecs" {
   source = "../modules/ecs"
 
   environment_name            = local.environment_name
-  frontend_task_desired_count = 2
+  frontend_task_desired_count = 1
   backend_task_desired_count  = 1
   worker_task_desired_count   = 1
   frontend_port               = local.frontend_port
