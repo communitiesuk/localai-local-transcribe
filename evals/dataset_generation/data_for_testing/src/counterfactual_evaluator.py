@@ -134,7 +134,7 @@ async def evaluate_counterfactual(
                 raise ValueError(msg)
             rewritten_transcript = "\n".join(
                 f"{entry.get('speaker', str(j + 1))}: {text}"
-                for j, (entry, text) in enumerate(zip(dialogue_entries, rewritten_texts))
+                for j, (entry, text) in enumerate(zip(dialogue_entries, rewritten_texts, strict=True))
             )
 
             checks = check_removals(rewritten_transcript, original_values)
