@@ -25,7 +25,7 @@ Minute generates summaries from meeting transcripts, evaluated using an LLM-as-j
 
 ## Decision Outcome
 
-{Title of Option X}, because {summary justification / rationale}.
+Lightweight Jupyter Notebook with UI, because it requires no new infrastructure, aligns with existing data inspection tooling and storage access patterns, and can be built quickly without AI coding tools. A more capable internal web annotation tool remains an option if annotation needs grow beyond what the notebook can support.
 
 ## Pros and Cons of the Options
 
