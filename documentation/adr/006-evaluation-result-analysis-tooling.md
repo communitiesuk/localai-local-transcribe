@@ -2,25 +2,24 @@
 
 ## Status
 
-{Draft | Proposed | Accepted | Rejected | Superseded}
+Accepted
 
-Date of decision: {yyyy-MM-dd}
+Date of decision: 2026-05-15
 
 ## Context and Problem Statement
 
-Minute generates summaries from meeting transcripts, and we evaluate summary quality using an LLM-as-judge rubric (e.g., faithfulness, coverage, conciseness, coherence). To trust and improve LLM-as-judge scoring and prompt optimisation, we need a human annotation process that:
+Minute generates summaries from meeting transcripts, evaluated using an LLM-as-judge rubric. To trust and improve LLM-as-judge scoring and prompt optimisation, we need a human annotation process that:
 
 * Collects human scores aligned to the same rubric dimensions.
-* Enables comparing human vs machine scores to measure correlation and calibration.
+* Enables comparison of human vs. machine scores to measure correlation and calibration.
 * Produces a reusable evaluation dataset for judge prompt iteration and DSPy optimisation.
-* Supports periodic review (ongoing audits) in addition to one-off dataset creation.
-
-We also need an annotation tool/interface that makes the process efficient, consistent, and auditable.
+* Supports periodic review in addition to one-off dataset creation.
 
 ## Considered Options
 
 * Ad-hoc spreadsheet / offline review
-* Lightweight internal web annotation tool (preferred)
+* Lightweight Jupyter Notebook with UI
+* Lightweight internal web annotation tool
 * Full-featured third-party labeling platform
 * Human-in-the-loop review embedded into the product UI
 
@@ -32,114 +31,67 @@ We also need an annotation tool/interface that makes the process efficient, cons
 
 ### Ad-hoc spreadsheet / offline review
 
-This approach exports transcripts/summaries to a spreadsheet or document and asks reviewers to provide scores.
+Export transcripts/summaries to a spreadsheet and ask reviewers to provide scores.
 
-* Good, because it is fast to start and requires minimal engineering.
-* Good, because it is flexible for early exploration.
-* Bad, because it is hard to enforce consistency and required fields.
-* Bad, because it is difficult to version, audit, and reproduce.
-* Bad, because it is not well-suited for periodic reviews and assignment workflows.
+* Good, because it is fast to start with no engineering required.
+* Bad, because consistency and required fields are hard to enforce, and it is not well-suited for periodic reviews or audit trails.
 
-### Lightweight internal web annotation tool (preferred)
+### Lightweight Jupyter Notebook with UI
 
-This approach provides a simple UI where a reviewer can view:
+A Jupyter Notebook with an `ipywidgets` UI for reviewing and annotating transcripts and summaries. Aligned with existing output data inspection workflows, making it trivial to deploy without additional infrastructure.
 
-* Transcript (with speaker attribution and timestamps if available)
-* Candidate summary (produced by Minute)
-* Optional reference summary (if present)
-* Optional LLM-as-judge output (scores + rationale) for comparison (configurable)
+The notebook reads from and writes directly to the annotation container within the input data storage, using the same access patterns as other data inspection tooling. Reviewers can score and edit annotations in-place, with results persisted back to the container.
 
-The reviewer then records rubric-aligned annotations.
+* Good, because it is trivial to deploy — no new infrastructure or services required.
+* Good, because it is consistent with existing data inspection tooling and storage access patterns.
+* Good, because it can be created quickly even without AI coding tools.
+* Bad, because it lacks workflow features (assignment, adjudication, change history).
+* Bad, because it is not well-suited for large-scale or multi-reviewer workflows.
+* Neutral, because scope can be kept minimal and expanded if needs grow.
 
-Recommended rubric dimensions (aligned to LLM-as-judge):
+### Lightweight internal web annotation tool
 
-* Faithfulness
-* Coverage
-* Conciseness
-* Coherence
+A simple web UI where reviewers can view the transcript, candidate summary, optional reference summary, and optional LLM-as-judge output, then record rubric-aligned annotations with scores, rationales, and evidence spans.
 
-Annotation depth options (configurable per project or per batch):
+Should support: assignment queues, double annotation for inter-annotator agreement, adjudication, embedded reviewer guidelines, change history, and structured export.
 
-* Score-only (e.g., 1–5) per dimension
-* Score + short rationale per dimension
-* Score + rationale + evidence spans (quote transcript snippets that justify score)
-* Binary flags for critical failures (e.g., hallucination present, incorrect action item owner)
-
-Operational features the tool should support:
-
-* Queue / assignment (who reviews what)
-* Double annotation on a subset for inter-annotator agreement
-* Conflict resolution / adjudication workflow
-* Reviewer guidelines embedded in the UI (rubric definitions + examples)
-* Change history (who edited what, when)
-* Export to a structured format usable for evaluation/optimisation
-
-* Good, because it enforces a consistent schema aligned to evaluation needs.
-* Good, because it supports periodic review and sampling.
-* Good, because it can integrate with existing eval outputs (runs/results) and reuse IDs.
-* Bad, because it requires engineering effort and ongoing maintenance.
+* Good, because it enforces a consistent schema and supports periodic review, sampling, and integration with eval outputs.
+* Bad, because it requires significant engineering effort and ongoing maintenance.
+* Bad, because this is only straightforward to build with AI coding tools, which the team does not currently have access to.
 * Neutral, because scope can be kept small initially and expanded over time.
 
 ### Full-featured third-party labeling platform
 
-This approach uses an off-the-shelf labeling tool with workflows, QA, and analytics.
+Use an off-the-shelf labeling tool (e.g., Label Studio, Scale AI) with built-in workflow management, QA, and analytics.
 
-* Good, because it provides mature workflow management and QA.
-* Good, because it can scale to larger annotation programs.
-* Bad, because it may be costly and require integration work.
-* Bad, because it can be hard to customize for rubric-specific UX (e.g., evidence spans, side-by-side judge comparisons).
-* Neutral, because it can be adopted later once requirements stabilize.
+* Good, because it provides mature workflows and can scale to larger annotation programmes.
+* Bad, because it may be costly, require integration work, and be hard to customise for rubric-specific UX.
+* Neutral, because it can be adopted later once requirements stabilise.
 
 ### Human-in-the-loop review embedded into the product UI
 
-This approach asks end users to provide feedback on summaries within the product.
+Ask end users to provide feedback on summaries within the product itself.
 
-* Good, because it captures real user judgment and real meeting distributions.
-* Good, because it can run continuously, with feedback from real usage over time.
-* Bad, because it requires strong UX design and careful sampling to avoid bias.
-* Bad, because feedback may be noisy and not rubric-consistent without training.
-* Neutral, because it can complement a dedicated annotation workflow.
+* Good, because it captures real user judgement on real meeting distributions continuously.
+* Bad, because feedback is likely noisy and not rubric-consistent without careful UX design.
+* Neutral, because it can complement a dedicated annotation workflow rather than replace it.
 
 ## More Information
 
 ### Correlation and calibration
 
-To validate LLM-as-judge, we should track:
+To validate LLM-as-judge, track:
 
 * Correlation between human and LLM scores per dimension.
 * Calibration curves (where judges are systematically high/low).
 * Disagreement analysis by category (e.g., numbers, attribution, negation).
 
-This can be used to:
-
-* Decide whether the judge is reliable enough for optimisation.
-* Identify rubric dimensions that need prompt refinement.
-* Build a gold/anchor set for regression evaluation.
-
 ### Periodic reviews
 
-In addition to initial dataset creation, the same tool should support ongoing audits:
+The annotation tooling should support ongoing audits: sampling recent production-like outputs periodically, running human review on a fixed budget, and tracking trends across model/prompt versions.
 
-* Sample recent production-like outputs periodically.
-* Run human review on a fixed budget (e.g., N items per week).
-* Track trends over time and across model/prompt versions.
+### Data storage and export
 
-### Data storage, versioning, and export
+Annotations should be stored with stable identifiers (example_id, run_id, prompt/version), the exact transcript and summary shown to the reviewer, annotation schema version, and reviewer metadata (anonymised as needed). Exports should support eval dataset creation and DSPy optimisation splits.
 
-The annotations should be stored with:
-
-* Stable identifiers (example_id, run_id, prompt/version identifiers)
-* The exact transcript and candidate summary version shown to the reviewer
-* Annotation schema version
-* Reviewer metadata (anonymized as needed)
-
-Exports should support:
-
-* Evaluation datasets for LLM-as-judge prompt iteration
-* Training/validation splits for DSPy optimisation and held-out testing
-
-Signoff, correct consent, data agreement will be required for:
-
-* Any use of production/user transcripts in labeling workflows
-* Human reviewer access controls and data retention policies (if any)
-* Third-party labeling vendor usage
+Signoff, consent, and data agreements are required for use of production/user transcripts, reviewer access controls, and any third-party labeling vendor usage.
