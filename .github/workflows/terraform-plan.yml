@@ -53,10 +53,10 @@ jobs:
           path: terraform/development/tf_plan.txt
 
       - name: Publish plan to PR
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
+            if (!context.payload.pull_request) return;
             const fs = require('fs');
             const plan = fs.readFileSync('terraform/development/tf_plan.txt', 'utf8');
             const header = '## Terraform Plan';
@@ -97,18 +97,20 @@ jobs:
 
             let body;
             if (isImageOnlyBump) {
-              body = `${header}
-
-:white_check_mark: Image tag bump only — deploying commit \`${sha.slice(0, 7)}\` to all services. No infrastructure changes, no review needed.
-
-<details>
-<summary>Full plan</summary>
-
-\`\`\`
-${plan}
-\`\`\`
-
-</details>`;
+              body = [
+                header,
+                '',
+                `:white_check_mark: Image tag bump only — deploying commit \`${sha.slice(0, 7)}\` to all services. No infrastructure changes, no review needed.`,
+                '',
+                '<details>',
+                '<summary>Full plan</summary>',
+                '',
+                '```',
+                plan,
+                '```',
+                '',
+                '</details>',
+              ].join('\n');
             } else {
               body = `${header}\n\`\`\`\n${plan}\n\`\`\``;
             }
