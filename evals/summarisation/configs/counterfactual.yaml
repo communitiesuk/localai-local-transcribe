@@ -4,9 +4,9 @@ run:
   output_dir: evals/summarisation/output/bias
   seed: 0
   split: test
-  limit: null
+  limit: 10
   prompt_version: dev
-  num_iterations: 5
+  num_iterations: 1
 
 dataset:
   name: counterfactual

@@ -5,7 +5,13 @@ import logging
 import re
 from collections.abc import Awaitable, Callable
 
-from openai import APIConnectionError, APIError, AsyncOpenAI, AuthenticationError, RateLimitError
+from openai import (
+    APIConnectionError,
+    APIError,
+    AsyncOpenAI,
+    AuthenticationError,
+    RateLimitError,
+)
 from openai.types.chat import ChatCompletion, ParsedChatCompletion
 from openai.types.chat.chat_completion import Choice
 

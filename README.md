@@ -300,7 +300,43 @@ Navigate to SSM Parameter Store in the AWS console and update the following para
 | `/local-transcribe/azure/apim_scope` | should take the value `api://api.azc.test.communities.gov.uk/.default` at least for non-prod environments.                     |
 | `/local-transcribe/azure/apim_subscription_key` | Corresponds to subscription within a product in APIM, find on the [APIM site](https://portal.api.azc.test.communities.gov.uk). |
 
-###### 4. Push images
+###### 4. Set up Internal Access (OIDC)
+
+The ALB authenticates users against GDS Internal Access (`sso.service.security.gov.uk`) and injects a signed `x-amzn-oidc-data` header that the app verifies.
+
+Register a client in Internal Access with:
+
+- `redirect_urls`: `https://<app-host>/oauth2/idpresponse` (the CloudFront alias, e.g. `https://development.local-transcribe.test.communities.gov.uk/oauth2/idpresponse` — the path is fixed by ALB)
+- `allowed_domains`: `communities.gov.uk`
+- `prompt`: leave unset
+
+> [!WARNING]
+> Do not set `prompt` to `none` — ALB expects the IdP to show a login page, so first-time logins will fail.
+
+Store the credentials in SSM via the AWS console, updating the `SecureString` values for:
+
+- `/local-transcribe/oidc_secrets/client_id`
+- `/local-transcribe/oidc_secrets/client_secret`
+
+Set `enable_oidc_auth = true` in the environment's `terraform/<env>/main.tf` and apply.
+
+> [!NOTE]
+> If OIDC is being enabled on an environment that was previously deployed without it, CloudFront may still be serving cached unauthenticated HTML — unauthenticated users will see the app shell on first visit and only get redirected to Internal Access after interacting with the page. Invalidate the cache to fix:
+> ```bash
+> aws cloudfront create-invalidation --distribution-id <DISTRIBUTION_ID> --paths "/*"
+> ```
+
+> [!NOTE]
+> If the client ID or secret are updated in SSM after the deployment that enabled Internal Access, the ALB rule and ECS tasks won't pick up the new values. Taint them and redeploy:
+> ```bash
+> terraform taint 'module.frontdoor.aws_lb_listener_rule.authentication[0]'
+> terraform taint module.ecs.aws_ecs_task_definition.frontend
+> terraform taint module.ecs.aws_ecs_task_definition.backend
+> terraform taint module.ecs.aws_ecs_task_definition.worker
+> ```
+> You'll need to do this if you see a client_id - unknown error in the URL bar when being redirected to Internal Access, or an unauthorised error when reaching Local Transcribe — there are likely other failure modes too.
+
+###### 5. Push images
 
 Run the `build-and-push.sh` script as described above to build and push the latest images to ECR, and trigger a deployment.
 
@@ -311,7 +347,7 @@ export TF_VAR_alarm_email_address=email_address_to_recieve alarms
 ./build-and-push.sh --environment <env>
 ```
 
-###### 5. Verify deployment
+###### 6. Verify deployment
 
 Visit the site, it should be working. You can also check the ECS service to see if the tasks are running correctly.
 

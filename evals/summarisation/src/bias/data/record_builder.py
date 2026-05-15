@@ -6,17 +6,18 @@ from pathlib import Path
 from typing import Any
 
 from common.settings import get_settings
-from evals.summarisation.src.bias.data.loader import load_counterfactual_json
-from evals.summarisation.src.bias.iteration_runner import run_multiple_iterations
-from evals.summarisation.src.bias.types import (
+from evals.summarisation.src.bias.bias_types import (
     CounterfactualEvalRecord,
     CounterfactualInput,
     IterationMetrics,
     MetricStatistics,
 )
+from evals.summarisation.src.bias.data.loader import load_counterfactual_json
+from evals.summarisation.src.bias.iteration_runner import run_multiple_iterations
 from evals.summarisation.src.bias.utils import (
     compute_comparison_statistics,
     compute_metric_statistics,
+    compute_regard_comparison_statistics,
     format_dialogue,
 )
 from evals.summarisation.src.common import AppConfig
@@ -42,6 +43,7 @@ def build_counterfactual_record(
     metrics_original_stats = compute_metric_statistics(original_iterations)
     metrics_cf_stats = compute_metric_statistics(cf_iterations)
     sentiment_delta_stats = compute_comparison_statistics(original_iterations, cf_iterations)
+    regard_delta_stats = compute_regard_comparison_statistics(original_iterations, cf_iterations)
 
     return CounterfactualEvalRecord(
         run_id=run_id,
@@ -60,6 +62,7 @@ def build_counterfactual_record(
         metrics_original_stats=metrics_original_stats,
         metrics_counterfactual_stats=metrics_cf_stats,
         sentiment_delta_stats=sentiment_delta_stats,
+        regard_delta_stats=regard_delta_stats,
         latency_ms={
             "summarize_original": total_summarize_ms_orig,
             "judge_original": total_judge_ms_orig,
@@ -76,6 +79,7 @@ async def process_counterfactual_file(
     num_iterations: int,
     metrics: list[Any],
     sentiment_analyzer: Any,
+    regard_scorer: Any,
     cfg: AppConfig,
     baseline_cache: dict[str, tuple[list[str], list[IterationMetrics], int, int]],
     template_name: str | None = None,
@@ -107,6 +111,7 @@ async def process_counterfactual_file(
             num_iterations,
             metrics,
             sentiment_analyzer,
+            regard_scorer,
             template_name,
         )
         baseline_cache[baseline_text] = (
@@ -130,6 +135,7 @@ async def process_counterfactual_file(
         num_iterations,
         metrics,
         sentiment_analyzer,
+        regard_scorer,
         template_name,
     )
 
@@ -155,6 +161,7 @@ def _build_supplementary_record(
     variant_a_name: str,
     variant_b_name: str,
     sentiment_delta_stats: MetricStatistics,
+    regard_delta_stats: MetricStatistics | None = None,
 ) -> CounterfactualEvalRecord:
     """Builds supplementary comparison record between two counterfactual variants."""
     return CounterfactualEvalRecord(
@@ -174,6 +181,7 @@ def _build_supplementary_record(
         metrics_original_stats=variant_a.metrics_counterfactual_stats,
         metrics_counterfactual_stats=variant_b.metrics_counterfactual_stats,
         sentiment_delta_stats=sentiment_delta_stats,
+        regard_delta_stats=regard_delta_stats,
         latency_ms={"supplementary": 0},
         error=None,
     )
@@ -228,8 +236,25 @@ async def generate_supplementary_comparisons(
 
                 sentiment_delta_stats = compute_statistics(sentiment_deltas)
 
+                regard_deltas = [
+                    iter_b.regard_scores["negative"] - iter_a.regard_scores["negative"]
+                    for iter_a, iter_b in zip(
+                        variant_a.iterations_counterfactual,
+                        variant_b.iterations_counterfactual,
+                        strict=True,
+                    )
+                    if iter_a.regard_scores and iter_b.regard_scores
+                ]
+                regard_delta_stats = compute_statistics(regard_deltas) if regard_deltas else None
+
                 supplementary_record = _build_supplementary_record(
-                    run_id, variant_a, variant_b, variant_a_name, variant_b_name, sentiment_delta_stats
+                    run_id,
+                    variant_a,
+                    variant_b,
+                    variant_a_name,
+                    variant_b_name,
+                    sentiment_delta_stats,
+                    regard_delta_stats,
                 )
                 supplementary_records.append(supplementary_record)
 

@@ -1,9 +1,11 @@
 import logging
 from dataclasses import dataclass
+from uuid import UUID
 
 import jwt
 import requests
 
+from common.database.postgres_models import User, UserRole
 from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings
 
@@ -40,12 +42,16 @@ def _verify_and_decode_alb_jwt(token: str) -> dict:
     public_key = _get_public_key(kid)
 
     try:
-        return jwt.decode(token, public_key, algorithms=["ES256"], issuer=settings.OIDC_ISSUER)
+        return jwt.decode(
+            token, public_key, algorithms=["ES256"], issuer=settings.OIDC_ISSUER, audience=settings.OIDC_CLIENT_ID
+        )
     except jwt.DecodeError:
         # Evict cached key and retry once in case of key rotation
         _public_key_cache.pop(kid, None)
         public_key = _get_public_key(kid)
-        return jwt.decode(token, public_key, algorithms=["ES256"], issuer=settings.OIDC_ISSUER)
+        return jwt.decode(
+            token, public_key, algorithms=["ES256"], issuer=settings.OIDC_ISSUER, audience=settings.OIDC_CLIENT_ID
+        )
 
 
 def __load_dummy_user_info() -> UserAuthorisationResult:
@@ -88,3 +94,13 @@ def is_authorised_user(auth_token: str) -> bool:
     except Exception:
         logger.exception("Error occurred when authorising user")
         return False
+
+
+def is_system_admin(user: User) -> bool:
+    return UserRole.MHCLG_SUPPORT_ADMIN in user.roles
+
+
+def is_admin_for_org(user: User, organisation_id: UUID) -> bool:
+    return is_system_admin(user) or (
+        user.organisation_id == organisation_id and UserRole.LOCAL_AUTHORITY_ADMIN in user.roles
+    )
