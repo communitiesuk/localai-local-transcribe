@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
 
@@ -77,6 +77,11 @@ class ChatGetAllResponse(BaseModel):
 
 class ChatCreateResponse(BaseModel):
     id: uuid.UUID
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    organisation_id: uuid.UUID
 
 
 class GetUserResponse(BaseModel):

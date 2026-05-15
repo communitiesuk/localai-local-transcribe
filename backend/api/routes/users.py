@@ -4,14 +4,17 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from common.types import DataRetentionUpdateResponse, GetUserResponse
+from backend.utils.organisation import organisation_from_id
+from common.auth import is_admin_for_org
+from common.database.postgres_models import User
+from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate
 
-users_router = APIRouter(tags=["Users"])
+users_router = APIRouter(prefix="/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
 
 
-@users_router.get("/users/me")
+@users_router.get("/me")
 def get_user(user: UserDep) -> GetUserResponse:
     return GetUserResponse(
         id=user.id,
@@ -22,7 +25,7 @@ def get_user(user: UserDep) -> GetUserResponse:
     )
 
 
-@users_router.patch("/users/data-retention", response_model=GetUserResponse)
+@users_router.patch("/data-retention", response_model=GetUserResponse)
 async def update_data_retention(
     data: DataRetentionUpdateResponse,
     session: SQLSessionDep,
@@ -58,4 +61,38 @@ async def update_data_retention(
         updated_datetime=user.updated_datetime,
         email=user.email,
         data_retention_days=user.data_retention_days,
+    )
+
+
+@users_router.post("")
+async def create_user(
+    data: UserCreate,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> GetUserResponse:
+    organisation = await organisation_from_id(session, data.organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=400, detail=f"Organisation with id '{data.organisation_id}' not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can create a new user.")
+
+    email_domain = data.email.split("@")[1]
+    if email_domain not in organisation.allowed_domains:
+        raise HTTPException(
+            status_code=400, detail=f"An email of domain '{email_domain}' is not associated with this organisation."
+        )
+
+    new_user = User(email=data.email, organisation_id=organisation.id)
+
+    session.add(new_user)
+    await session.commit()
+    await session.refresh(new_user)
+
+    return GetUserResponse(
+        id=new_user.id,
+        created_datetime=new_user.created_datetime,
+        updated_datetime=new_user.updated_datetime,
+        email=new_user.email,
+        data_retention_days=new_user.data_retention_days,
     )
