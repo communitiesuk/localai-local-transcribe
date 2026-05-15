@@ -121,3 +121,23 @@ async def test_get_current_user_missing_token(monkeypatch, session):
         )
 
     assert exception.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_unhandled_exception(monkeypatch, session):
+    def mock_unexpected_error(_):
+        msg = "unexpected"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        mock_unexpected_error,
+    )
+
+    with pytest.raises(HTTPException) as exception:
+        await get_current_user(
+            session=session,
+            x_amzn_oidc_data=TEST_TOKEN,
+        )
+
+    assert exception.value.status_code == 500

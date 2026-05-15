@@ -1,6 +1,6 @@
 #tfsec:ignore:aws-elb-alb-not-public:the load balancer must be exposed to the internet in order to communicate with cloudfront
 locals {
-  gds_ia_issuer   = "https://sso.service.security.gov.uk"
+  gds_ia_issuer = "https://sso.service.security.gov.uk"
 }
 
 resource "aws_lb" "main" {
@@ -154,6 +154,15 @@ resource "aws_vpc_security_group_ingress_rule" "load_balancer_https_ingress" {
   from_port         = 443
   to_port           = 443
   prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
+  security_group_id = aws_security_group.load_balancer.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "load_balancer_https_egress" {
+  description       = "Allow https egress for OIDC token and user info endpoints"
+  ip_protocol       = "tcp"
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = "0.0.0.0/0"
   security_group_id = aws_security_group.load_balancer.id
 }
 

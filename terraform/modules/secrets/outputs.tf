@@ -16,7 +16,7 @@ output "secrets_kms_key_arn" {
 
 output "internal_access_oidc_client_id_name" {
   description = "SSM parameter name for the Gov Internal Access OIDC client ID."
-  value       = aws_ssm_parameter.oidc_client_name.name
+  value       = aws_ssm_parameter.oidc_client_id.name
 }
 
 output "internal_access_oidc_client_secret_name" {

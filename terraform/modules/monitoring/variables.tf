@@ -24,7 +24,7 @@ variable "ecs_cluster_name" {
 
 variable "ecs_cluster_arn" {
   description = "Arn of ECS cluster to create alarms for"
-  type = string
+  type        = string
 }
 
 variable "ecs_service_names" {

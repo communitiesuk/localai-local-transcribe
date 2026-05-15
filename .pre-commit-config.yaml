@@ -44,3 +44,17 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
         exclude: ^alembic/
       - id: ruff-format
+
+  
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.105.0
+    hooks:
+      - id: terraform_fmt
+        name: Format terraform files
+        
+      - id: terraform_validate
+        name: Validate terraform files
+        exclude: '^terraform/modules/'
+        args:
+          - --hook-config=--retry-once-with-cleanup=true 
+          - --tf-init-args=-backend=false

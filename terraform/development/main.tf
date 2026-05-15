@@ -34,8 +34,8 @@ locals {
   load_balancer_domain_name = "lb.development.local-transcribe.test.communities.gov.uk"
 
   cloudwatch_log_expiration_days = 90
-  access_s3_log_expiration_days   = 90
-  database_allocated_storage      = 50
+  access_s3_log_expiration_days  = 90
+  database_allocated_storage     = 50
 }
 
 provider "aws" {
@@ -77,8 +77,8 @@ module "frontdoor" {
   load_balancer_certificate_arn  = module.certificates.load_balancer_certificate_arn
   cloudwatch_log_expiration_days = local.cloudwatch_log_expiration_days
 
-  use_aws_shield_advanced        = false
-  enable_oidc_auth               = false
+  use_aws_shield_advanced = false
+  enable_oidc_auth        = true
   ip_allowlist = [
     # Softwire
     "31.221.86.178/32",
@@ -90,9 +90,11 @@ module "frontdoor" {
     "4.158.35.41/32",
   ]
 
-  app_host                       = local.app_host
-  internal_access_oidc_client_id_name            = module.secrets.internal_access_oidc_client_id_name
-  internal_access_oidc_client_secret_name        = module.secrets.internal_access_oidc_client_secret_name
+  app_host                                = local.app_host
+  internal_access_oidc_client_id_name     = module.secrets.internal_access_oidc_client_id_name
+  internal_access_oidc_client_secret_name = module.secrets.internal_access_oidc_client_secret_name
+
+  depends_on = [module.secrets]
 }
 
 module "certificates" {
@@ -182,17 +184,17 @@ module "ecs" {
   frontend_port               = local.frontend_port
   backend_port                = local.backend_port
 
-  database_port     = local.database_port
-  database_host     = module.database.database_url
-  database_name     = module.database.database_name
-  database_user     = local.database_username
+  database_port                = local.database_port
+  database_host                = module.database.database_url
+  database_name                = module.database.database_name
+  database_user                = local.database_username
   database_password_secret_arn = module.secrets.database_password_secret_arn
 
   lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
   db_security_group_id = module.database.rds_security_group_id
   bastion_sg_id        = module.bastion.security_group_id
-  environment          = "local" # Set to local to bypass authentication
+  environment          = "development"
   data_s3_bucket_name  = module.uploads_bucket.bucket_name
   private_subnet_ids   = module.networking.private_subnets[*].id
   vpc_id               = module.networking.vpc.id
@@ -211,6 +213,7 @@ module "ecs" {
   max_transcription_processes = local.max_transcription_processes
   alb_arn                     = module.frontdoor.load_balancer.arn
   oidc_issuer                 = module.frontdoor.oidc_issuer
+  oidc_client_id_name         = module.secrets.internal_access_oidc_client_id_name
   aws_region                  = local.aws_region
   lb_listener_exists          = var.ssl_certs_created
 
@@ -224,12 +227,12 @@ module "ecs" {
 module "uploads_bucket" {
   source = "../modules/uploads_bucket"
 
-  app_host                        = local.app_host
-  environment_name                = local.environment_name
-  access_s3_log_expiration_days   = local.access_s3_log_expiration_days
-  force_destroy                   = false
-  worker_task_role_name = module.ecs.worker_task_role_name
-  backend_task_role_name          = module.ecs.backend_task_role_name
+  app_host                      = local.app_host
+  environment_name              = local.environment_name
+  access_s3_log_expiration_days = local.access_s3_log_expiration_days
+  force_destroy                 = false
+  worker_task_role_name         = module.ecs.worker_task_role_name
+  backend_task_role_name        = module.ecs.backend_task_role_name
 }
 
 module "monitoring" {
@@ -247,7 +250,7 @@ module "monitoring" {
   alb_target_group_arn_suffix         = module.frontdoor.load_balancer.target_group_arn_suffix
   ecs_cluster_name                    = module.ecs.ecs_cluster_name
   ecs_service_names                   = [module.ecs.frontend_service_name, module.ecs.backend_service_name, module.ecs.worker_service_name]
-  ecs_cluster_arn                     = module.ecs.ecs_cluster_arn          
+  ecs_cluster_arn                     = module.ecs.ecs_cluster_arn
   database_allocated_storage          = local.database_allocated_storage
   database_identifier                 = module.database.database_identifier
   waf_acl_name                        = module.frontdoor.waf_acl_name

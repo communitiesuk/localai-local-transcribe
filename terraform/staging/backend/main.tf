@@ -9,11 +9,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "local-transcribe-tfstate-staging"
-    use_lockfile   = true
-    encrypt        = true
-    key            = "local-transcribe-state-infra-staging"
-    region         = "eu-west-2"
+    bucket       = "local-transcribe-tfstate-staging"
+    use_lockfile = true
+    encrypt      = true
+    key          = "local-transcribe-state-infra-staging"
+    region       = "eu-west-2"
   }
 }
 

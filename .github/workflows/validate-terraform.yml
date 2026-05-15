@@ -1,0 +1,30 @@
+name: validate-terraform
+
+on:
+  pull_request:
+  push:
+    branches: [development, main]
+
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-development:
+    uses: ./.github/workflows/terraform-validate.yml
+    with:
+      environment: development
+ 
+  validate-staging:
+    uses: ./.github/workflows/terraform-validate.yml
+    with:
+      environment: staging
+
+  plan:
+    needs: validate-development
+    uses: ./.github/workflows/terraform-plan.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
