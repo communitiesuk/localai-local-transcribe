@@ -265,7 +265,7 @@ resource "aws_cloudwatch_log_metric_filter" "apim_requests_worker" {
 resource "aws_cloudwatch_log_metric_filter" "apim_failures_worker" {
   log_group_name = var.worker_log_group_name
 
-  name = "apim-failures-worker-${var.environment_name}"
+  name = "apim-failures-${var.environment_name}-worker"
 
   pattern = <<EOT
     "APIM FAILURE:"
@@ -277,3 +277,4 @@ resource "aws_cloudwatch_log_metric_filter" "apim_failures_worker" {
     value     = "1"
   }
 }
+

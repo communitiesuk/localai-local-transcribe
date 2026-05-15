@@ -281,7 +281,6 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 ("APIM WARNING: max output tokens reached " "(response_id=%s)"),
                 response.id,
             )
-
             return True
 
         return False
