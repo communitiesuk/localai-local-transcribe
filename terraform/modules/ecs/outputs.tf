@@ -72,3 +72,13 @@ output "worker_service_name" {
   description = "The name of the worker ecs service"
   value       = aws_ecs_service.worker.name
 }
+
+output "backend_log_group_name" {
+  description = "CloudWatch log group name for backend ECS service logs"
+  value       = module.backend_log_group.name
+}
+
+output "worker_log_group_name" {
+  description = "CloudWatch log group name for worker ECS service logs"
+  value       = module.worker_log_group.name
+}
