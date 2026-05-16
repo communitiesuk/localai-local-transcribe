@@ -7,7 +7,7 @@ from pathlib import Path
 import orjson
 import typer
 
-from evals.summarisation.src.bias.types import PlottingOutput
+from evals.summarisation.src.bias.bias_types import PlottingOutput
 from evals.summarisation.src.bias.visualization.reporter import generate_visualizations
 from evals.summarisation.src.common import load_config
 from evals.summarisation.src.hallucination.types import HallucinationInput

@@ -4,8 +4,7 @@ import statistics
 from datetime import UTC, datetime
 
 from common.settings import get_settings
-from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
-from evals.summarisation.src.bias.types import (
+from evals.summarisation.src.bias.bias_types import (
     AggregatedResultsMap,
     CharacteristicAxisMap,
     ComparisonMetrics,
@@ -14,6 +13,8 @@ from evals.summarisation.src.bias.types import (
     PlottingOutput,
     PlottingRecord,
 )
+from evals.summarisation.src.bias.regard_scorer import REGARDScorer
+from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
 from evals.summarisation.src.bias.utils import parse_group_names
 from evals.summarisation.src.common import AppConfig
 
@@ -69,6 +70,27 @@ def create_plotting_output(
             )
         )
 
+        orig_regard_values = [
+            iter_orig.regard_scores["negative"] for iter_orig in record.iterations_original if iter_orig.regard_scores
+        ]
+        cf_regard_values = [
+            iter_cf.regard_scores["negative"] for iter_cf in record.iterations_counterfactual if iter_cf.regard_scores
+        ]
+
+        if orig_regard_values and cf_regard_values:
+            comparison_metrics.append(
+                ComparisonMetrics(
+                    metric_name="regard (negative)",
+                    original_mean=statistics.mean(orig_regard_values),
+                    original_std=statistics.stdev(orig_regard_values) if len(orig_regard_values) > 1 else 0.0,
+                    counterfactual_mean=statistics.mean(cf_regard_values),
+                    counterfactual_std=statistics.stdev(cf_regard_values) if len(cf_regard_values) > 1 else 0.0,
+                    delta=statistics.mean(cf_regard_values) - statistics.mean(orig_regard_values),
+                    original_values=orig_regard_values,
+                    counterfactual_values=cf_regard_values,
+                )
+            )
+
         plotting_records.append(
             PlottingRecord(
                 comparison_id=f"{record.protected_characteristic}_{record.axis_of_change}_{idx}",
@@ -79,6 +101,7 @@ def create_plotting_output(
                 is_supplementary=False,
                 metrics=comparison_metrics,
                 sentiment_delta=record.sentiment_delta_stats,
+                regard_delta=record.regard_delta_stats,
                 num_iterations=num_iterations,
                 hypothesis_model=record.hypothesis_model,
                 prompt_version=record.prompt_version,
@@ -86,6 +109,7 @@ def create_plotting_output(
         )
 
     sentiment_analyzer = SentimentAnalyzer()
+    regard_scorer = REGARDScorer()
 
     for idx, record in enumerate(supplementary_records):
         group_a_name, group_b_name = parse_group_names(record.axis_of_change)
@@ -128,6 +152,26 @@ def create_plotting_output(
             )
         )
 
+        orig_regard_values = [
+            regard_scorer.score_summary(summary).negative for summary in record.hypothesis_summaries_original
+        ]
+        cf_regard_values = [
+            regard_scorer.score_summary(summary).negative for summary in record.hypothesis_summaries_counterfactual
+        ]
+
+        comparison_metrics.append(
+            ComparisonMetrics(
+                metric_name="regard (negative)",
+                original_mean=statistics.mean(orig_regard_values),
+                original_std=statistics.stdev(orig_regard_values) if len(orig_regard_values) > 1 else 0.0,
+                counterfactual_mean=statistics.mean(cf_regard_values),
+                counterfactual_std=statistics.stdev(cf_regard_values) if len(cf_regard_values) > 1 else 0.0,
+                delta=statistics.mean(cf_regard_values) - statistics.mean(orig_regard_values),
+                original_values=orig_regard_values,
+                counterfactual_values=cf_regard_values,
+            )
+        )
+
         plotting_records.append(
             PlottingRecord(
                 comparison_id=f"{record.protected_characteristic}_{record.axis_of_change}_supplementary_{idx}",
@@ -138,6 +182,7 @@ def create_plotting_output(
                 is_supplementary=True,
                 metrics=comparison_metrics,
                 sentiment_delta=record.sentiment_delta_stats,
+                regard_delta=record.regard_delta_stats,
                 num_iterations=num_iterations,
                 hypothesis_model=record.hypothesis_model,
                 prompt_version=record.prompt_version,
@@ -179,6 +224,8 @@ def create_summary(records: list[CounterfactualEvalRecord], run_id: str, cfg: Ap
             num_records = len(records_list)
 
             avg_sentiment_delta_mean = sum(r.sentiment_delta_stats.mean for r in records_list) / num_records
+            regard_deltas = [r.regard_delta_stats.mean for r in records_list if r.regard_delta_stats]
+            avg_regard_delta_mean = sum(regard_deltas) / len(regard_deltas) if regard_deltas else None
 
             judge_deltas_mean: dict[str, list[float]] = {}
             for record in records_list:
@@ -199,6 +246,7 @@ def create_summary(records: list[CounterfactualEvalRecord], run_id: str, cfg: Ap
             aggregated[characteristic][axis_of_change] = {
                 "num_comparisons": num_records,
                 "avg_sentiment_delta": avg_sentiment_delta_mean,
+                "avg_regard_delta": avg_regard_delta_mean,
                 "avg_judge_score_delta": avg_judge_deltas,
             }
 

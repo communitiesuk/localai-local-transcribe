@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from evals.summarisation.src.bias.types import (
+from evals.summarisation.src.bias.bias_types import (
     AxisChange,
     CounterfactualEvalRecord,
     CounterfactualInput,

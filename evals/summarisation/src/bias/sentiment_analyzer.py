@@ -35,7 +35,8 @@ class SentimentAnalyzer:
 
     def _split_text_by_tokens(self, text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
         """Splits text into overlapping chunks based on token count."""
-        tokens = self.tokenizer.encode(text, add_special_tokens=False)
+        # truncation=False avoids the warning when encoding the full text for chunking
+        tokens = self.tokenizer.encode(text, add_special_tokens=False, truncation=False)
         chunks = []
         start = 0
         while start < len(tokens):

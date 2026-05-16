@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -76,6 +76,7 @@ class IterationMetrics(BaseModel):
 
     metrics: dict[str, CounterfactualMetricResult]
     sentiment_score: float = Field(ge=-1.0, le=1.0)
+    regard_scores: dict[str, float] | None = None
 
 
 class MetricStatistics(BaseModel):
@@ -114,6 +115,7 @@ class CounterfactualEvalRecord(BaseModel):
     metrics_original_stats: dict[str, MetricStatistics]
     metrics_counterfactual_stats: dict[str, MetricStatistics]
     sentiment_delta_stats: MetricStatistics
+    regard_delta_stats: MetricStatistics | None = None
 
     latency_ms: dict[str, int]
     error: dict[str, str] | None = None
@@ -148,6 +150,7 @@ class PlottingRecord(BaseModel):
 
     metrics: list[ComparisonMetrics]
     sentiment_delta: MetricStatistics
+    regard_delta: MetricStatistics | None = None
 
     num_iterations: int
     hypothesis_model: str
@@ -202,6 +205,7 @@ class AxisComparisonData(TypedDict):
 
     num_comparisons: int
     avg_sentiment_delta: float
+    avg_regard_delta: NotRequired[float | None]
     avg_judge_score_delta: dict[str, float]
 
 
