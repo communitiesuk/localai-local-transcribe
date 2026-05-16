@@ -1,5 +1,4 @@
-from evals.dataset_generation.data_for_testing.src.evaluate import evaluate_by_index
-from evals.dataset_generation.data_for_testing.src.evaluator import extract_spans
+from evals.dataset_generation.data_for_testing.src.evaluator import evaluate_by_index, extract_spans
 
 
 def make_span(start, end):

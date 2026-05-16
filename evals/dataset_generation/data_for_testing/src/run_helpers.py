@@ -2,34 +2,63 @@ import json
 import logging
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from evals.dataset_generation.data_for_testing.src.settings import CHARACTERISTICS_OUTPUT_DIR
+from evals.dataset_generation.data_for_testing.src.types import ManualEntry
 
 
 def get_transcript_file(subdir: Path) -> Path:
-    files = [f for f in subdir.iterdir() if f.is_file() and f.name != "manual_pc.json" and f.suffix == ".json"]
+    excluded = {"manual_pc.json", "axes.json"}
+    files = [f for f in subdir.iterdir() if f.is_file() and f.name not in excluded and f.suffix == ".json"]
     if not files:
         error_msg = f"No transcript JSON found in {subdir}"
         raise FileNotFoundError(error_msg)
     return max(files, key=lambda f: f.stat().st_mtime)
 
 
-def run_characteristics_pipeline() -> None:
-    cmd = ["poetry", "run", "python", "-m", "evals.dataset_generation.characteristics.src.main"]
+def run_characteristics_pipeline(transcript_file: Path) -> None:
+    with tempfile.TemporaryDirectory() as tmp_input_dir:
+        shutil.copy2(transcript_file, Path(tmp_input_dir) / transcript_file.name)
+        config_yaml = f"""
+model:
+  provider: azure_apim
+  model: gpt-4o
+  temperature: 0.0
+dataset:
+  input_dir: "{tmp_input_dir}"
+run:
+  output_dir: "{CHARACTERISTICS_OUTPUT_DIR}"
+prompts:
+  extraction_template: evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
+            tmp.write(config_yaml)
+            config_path = tmp.name
 
-    logging.info("Running characteristics pipeline...")
+        cmd = [
+            "poetry",
+            "run",
+            "python",
+            "-m",
+            "evals.dataset_generation.characteristics.src.main",
+            "--config",
+            config_path,
+        ]
 
-    try:
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
-        logging.info("Pipeline completed successfully")
-        logging.debug("STDOUT:\n%s", result.stdout)
-    except subprocess.CalledProcessError as e:
-        logging.error("Pipeline failed")
-        logging.error("STDOUT:\n%s", e.stdout)
-        logging.error("STDERR:\n%s", e.stderr)
-        raise
+        logging.info("Running characteristics pipeline on %s...", transcript_file.name)
+
+        try:
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
+            logging.info("Pipeline completed successfully")
+            logging.debug("STDOUT:\n%s", result.stdout)
+        except subprocess.CalledProcessError as e:
+            logging.error("Pipeline failed")
+            logging.error("STDOUT:\n%s", e.stdout)
+            logging.error("STDERR:\n%s", e.stderr)
+            raise
 
 
 def copy_characteristics_output(output_dir: Path, transcript_stem: str) -> Path:
@@ -62,7 +91,7 @@ def load_json(path: str | Path) -> dict[str, Any]:
     return data
 
 
-def load_json_list(path: str | Path) -> list[str]:
+def load_manual_pc(path: str | Path) -> list[ManualEntry]:
     with Path(path).open("r", encoding="utf-8") as f:
         data = json.load(f)
     if not isinstance(data, list):
