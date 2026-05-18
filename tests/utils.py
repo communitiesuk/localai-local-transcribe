@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from httpx import ASGITransport, AsyncClient
 
 from backend.main import app
-import pytest_asyncio
 
 
 @asynccontextmanager
@@ -25,5 +24,3 @@ def get_text_from_html(html: str) -> str:
     for script in soup(["script", "style"]):
         script.extract()
     return soup.get_text()
-
-

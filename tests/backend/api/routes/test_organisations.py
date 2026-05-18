@@ -1,204 +1,199 @@
+# ruff: noqa: ARG001
+import uuid
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from uuid import uuid4
-from httpx import AsyncClient
-from fastapi import FastAPI
-
-
-from backend.api.routes.organisations import (
-    organisations_router, 
-    list_organisations, 
-    create_organisation, 
-    delete_organisation, 
-    update_organisations_domains
-)
-
-from tests.utils import get_test_client
-from contextlib import asynccontextmanager
 import pytest_asyncio
 
-
-
-# -------------------------------------------------
-# FAKES
-# -------------------------------------------------
-
-class FakeUser:
-    def __init__(self, is_admin=True):
-        self.is_admin = is_admin
-
-
-class FakeOrg:
-    def __init__(self, id, name, allowed_domains=None):
-        self.id = id
-        self.name = name
-        self.allowed_domains = allowed_domains or []
-
-
-class FakeSession:
-    """
-    In-memory session replacement.
-    """
-
-    def __init__(self):
-        self.store = {}
-
-    async def exec(self, query=None):
-        class Result:
-            def __init__(self, items):
-                self._items = items
-
-            def first(self):
-                return self._items[0] if self._items else None
-
-            def all(self):
-                return self._items
-
-        return Result(list(self.store.values()))
-
-    async def get(self, model, id):
-        return self.store.get(id)
-
-    def add(self, obj):
-        self.store[obj.id] = obj
-
-    async def commit(self):
-        pass
-
-    async def refresh(self, obj):
-        return obj
-
-    async def delete(self, obj):
-        self.store.pop(obj.id, None)
+from common.database.postgres_models import Organisation, UserRole
+from tests.utils import get_test_client
 
 
 @pytest_asyncio.fixture
-async def async_test_client():
-    async with get_test_client() as ac:
-        yield ac
-
-# -------------------------------------------------
-# FIXTURES
-# -------------------------------------------------
-
-@pytest.fixture
-def fake_session():
-    return FakeSession()
-
-@pytest.fixture(autouse=True)
-def override_dependencies(fake_session):
-    """
-    Applied to all tests.
-    """
-
-    app.dependency_overrides[get_current_user] = lambda: FakeUser(is_admin=True)
-    app.dependency_overrides[get_session] = lambda: fake_session
-
-    yield
-
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
 async def client():
     async with get_test_client() as ac:
         yield ac
 
 
-# -------------------------------------------------
-# TESTS
-# -------------------------------------------------
-
 @pytest.mark.asyncio
-async def test_list_organisations_empty(client):
-    response = await client.get("/organisations")
-
-    assert response.status_code == 200
-    assert response.json() == []
-
-
-@pytest.mark.asyncio
-async def test_create_organisation(client):
-    response = await client.post(
-        "/organisations",
-        json={
-            "name": "Test Org",
-            "allowed_domains": ["test.com"],
-        },
-    )
-
-    assert response.status_code == 201
-    data = response.json()
-
-    assert data["name"] == "Test Org"
-    assert data["allowed_domains"] == ["test.com"]
-
-
-@pytest.mark.asyncio
-async def test_create_duplicate_organisation(client):
-    # First create
-    await client.post(
-        "/organisations",
-        json={
-            "name": "Duplicate Org",
-            "allowed_domains": [],
-        },
-    )
-
-    # Second attempt
-    response = await client.post(
-        "/organisations",
-        json={
-            "name": "Duplicate Org",
-            "allowed_domains": [],
-        },
-    )
-
-    assert response.status_code == 409
-
-
-@pytest.mark.asyncio
-async def test_patch_organisation(client):
-    org_id = str(uuid4())
-
-    session = FakeSession()
-    session.store[org_id] = FakeOrg(
-        id=org_id,
-        name="Patch Org",
-        allowed_domains=[],
-    )
-
-    app.dependency_overrides[get_session] = lambda: session
-
-    response = await client.patch(
-        f"/organisations/{org_id}",
-        json={"allowed_domains": ["new.com"]},
-    )
-
-    assert response.status_code == 200
-    assert response.json()["allowed_domains"] == ["new.com"]
-
-
-@pytest.mark.asyncio
-async def test_delete_organisation(client):
-    org_id = str(uuid4())
-
-    session = FakeSession()
-    session.store[org_id] = FakeOrg(
-        id=org_id,
-        name="Delete Org",
-    )
-
-    app.dependency_overrides[get_session] = lambda: session
-
-    response = await client.delete(f"/organisations/{org_id}")
-
-    assert response.status_code == 204
-
-
-@pytest.mark.asyncio
-async def test_get_requires_admin(client):
-    app.dependency_overrides[get_current_user] = lambda: FakeUser(is_admin=False)
-
+async def test_non_admin_cannot_list_organisations(client, override_user):
     response = await client.get("/organisations")
 
     assert response.status_code == 403
+    assert response.json()["detail"] == "Not authorized to access this resource"
+
+
+@pytest.mark.asyncio
+async def test_admin_can_list_organisations(client, override_user, mock_user):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+
+    response = await client.get("/organisations")
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+@pytest.mark.asyncio
+async def test_create_organisation(client, mock_user, mock_session, override_session, override_user):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+
+    mock_result = Mock()
+    mock_result.first.return_value = None
+    mock_session.exec.return_value = mock_result
+
+    fixed_time = datetime.now(UTC)
+
+    async def fake_refresh(obj):
+        obj.created_datetime = fixed_time
+        obj.updated_datetime = fixed_time
+
+    mock_session.refresh.side_effect = fake_refresh
+
+    payload = {
+        "name": "New Org",
+        "allowed_domains": ["gov.uk"],
+    }
+
+    response = await client.post(
+        "/organisations",
+        json=payload,
+    )
+
+    assert response.status_code == 201
+
+    data = response.json()
+
+    assert data["name"] == payload["name"]
+    assert data["allowed_domains"] == payload["allowed_domains"]
+
+    mock_session.exec.assert_awaited_once()
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
+    mock_session.refresh.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_duplicate_organisation(
+    client,
+    override_user,
+    override_session,
+    mock_user,
+    mock_session,
+):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+
+    existing_org = Organisation(
+        id=uuid.uuid4(),
+        name="Existing Org",
+        allowed_domains=["gov.uk"],
+    )
+
+    mock_result = Mock()
+    mock_result.first.return_value = existing_org
+    mock_session.exec.return_value = mock_result
+
+    payload = {
+        "name": "Existing Org",
+        "allowed_domains": ["gov.uk"],
+    }
+
+    response = await client.post("/organisations", json=payload)
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Organisation with this name already exists"
+
+    mock_session.add.assert_not_called()
+    mock_session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_delete_organisation(
+    client,
+    override_user,
+    override_session,
+    mock_user,
+    mock_session,
+):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+
+    fixed_time = datetime.now(UTC)
+
+    org = Organisation(
+        id=uuid.uuid4(),
+        name="Minute",
+        allowed_domains=["gov.uk"],
+        created_datetime=fixed_time,
+        updated_datetime=fixed_time,
+    )
+
+    mock_session.get.return_value = org
+
+    response = await client.delete(
+        f"/organisations/{org.id}",
+    )
+
+    assert response.status_code == 204
+
+    mock_session.delete.assert_awaited_once_with(org)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_organisation_not_found(
+    client,
+    override_user,
+    mock_user,
+    mock_session,
+    override_session,
+):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+
+    organisation_id = uuid.uuid4()
+
+    mock_session.get = AsyncMock(return_value=None)
+
+    response = await client.delete(f"/organisations/{organisation_id}")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Organisation not found"
+
+    mock_session.get.assert_awaited_once_with(Organisation, organisation_id)
+
+    mock_session.delete.assert_not_called()
+    mock_session.commit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_update_organisations_domains(
+    client,
+    override_user,
+    override_session,
+    mock_user,
+    mock_session,
+):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+    time_now = datetime.now(UTC)
+    new_domains = ["new.gov.uk", "updated.gov.uk"]
+
+    org = Organisation(
+        id=uuid.uuid4(),
+        name="Test Organisation",
+        allowed_domains=["old.gov.uk"],
+        created_datetime=time_now,
+        updated_datetime=time_now,
+    )
+
+    mock_session.get.return_value = org
+
+    response = await client.patch(
+        f"/organisations/{org.id}",
+        json={"allowed_domains": new_domains},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["allowed_domains"] == new_domains
+
+    mock_session.commit.assert_awaited_once()
+    mock_session.refresh.assert_awaited_once_with(org)

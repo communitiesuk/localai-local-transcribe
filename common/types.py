@@ -288,9 +288,11 @@ class OrganisationResponse(BaseModel):
     created_datetime: datetime
     updated_datetime: datetime
 
+
 class OrganisationCreateRequest(BaseModel):
     name: str
     allowed_domains: list[str]
 
-class OrganisationUpdateRequest(BaseModel):
+
+class OrganisationPatchRequest(BaseModel):
     allowed_domains: list[str]
