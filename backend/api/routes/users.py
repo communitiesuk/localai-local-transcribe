@@ -1,12 +1,17 @@
 import logging
 from datetime import UTC, datetime
-from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 
-from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.utils.queries import get_users, organisation_from_id, user_from_id
-from common.auth import is_admin_for_org, is_system_admin
+from backend.api.dependencies import (
+    OrganisationAdminDep,
+    SQLSessionDep,
+    SystemAdminDep,
+    TargetUserDep,
+    UserDep,
+)
+from backend.utils.queries import get_users, organisation_from_id
+from common.auth import is_admin_for_org
 from common.database.postgres_models import User
 from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate
 
@@ -102,67 +107,36 @@ async def create_user(
 
 @users_router.get("")
 async def list_users(
+    _: SystemAdminDep,
     session: SQLSessionDep,
-    user: UserDep,
 ) -> list[User]:
-    if not is_system_admin(user):
-        raise HTTPException(status_code=403, detail="Only a system admin can view users")
-
     return await get_users(session)
 
 
 @users_router.get("/{user_id}")
 async def list_user(
-    user_id: UUID,
-    session: SQLSessionDep,
-    user: UserDep,
+    _: SystemAdminDep,
+    target_user: TargetUserDep,
 ) -> User:
-    if not is_system_admin(user):
-        raise HTTPException(status_code=403, detail="Only a system admin can view users")
-
-    target_user = await user_from_id(session, user_id)
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
-
     return target_user
 
 
 @org_users_router.get("")
 async def list_users_in_org(
-    organisation_id: UUID,
+    organisation: OrganisationAdminDep,
     session: SQLSessionDep,
-    user: UserDep,
 ) -> list[User]:
-    organisation = await organisation_from_id(session, organisation_id)
-    if not organisation:
-        raise HTTPException(status_code=404, detail="Organisation not found")
-
-    if not is_admin_for_org(user, organisation):
-        raise HTTPException(status_code=403, detail="Only an organisation admin can view users")
-
     return await get_users(session, organisation)
 
 
 @org_users_router.get("/{user_id}")
-async def list_user_in_org(user_id: UUID, session: SQLSessionDep, user: UserDep) -> User:
-    target_user = await user_from_id(session, user_id)
-    if not target_user or not target_user.organisation_id:
-        raise HTTPException(status_code=400, detail="User not found within organisation")
-
-    organisation = await organisation_from_id(session, target_user.organisation_id)
-    if not organisation:
-        raise HTTPException(status_code=404, detail="Organisation not found")
-
-    if not is_admin_for_org(user, organisation):
-        raise HTTPException(status_code=403, detail="Only an organisation admin can view users")
-
+async def list_user_in_org(_: OrganisationAdminDep, target_user: TargetUserDep) -> User:
     return target_user
 
 
 @users_router.delete("/{user_id}", status_code=204)
-async def delete_user(user_id: UUID, session: SQLSessionDep, user: UserDep) -> None:
-    target_user = await user_from_id(session, user_id)
-    if not target_user or not target_user.organisation_id:
+async def delete_user(session: SQLSessionDep, user: UserDep, target_user: TargetUserDep) -> None:
+    if not target_user.organisation_id:
         raise HTTPException(status_code=400, detail="User not found within organisation")
 
     organisation = await organisation_from_id(session, target_user.organisation_id)
