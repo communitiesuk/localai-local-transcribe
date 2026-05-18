@@ -106,9 +106,25 @@ async def list_users(
     user: UserDep,
 ) -> list[User]:
     if not is_system_admin(user):
-        raise HTTPException(status_code=403, detail="Only a system admin can view all users")
+        raise HTTPException(status_code=403, detail="Only a system admin can view users")
 
     return await get_users(session)
+
+
+@users_router.get("/{user_id}")
+async def list_user(
+    user_id: UUID,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> User:
+    if not is_system_admin(user):
+        raise HTTPException(status_code=403, detail="Only a system admin can view users")
+
+    target_user = await user_from_id(session, user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return target_user
 
 
 @org_users_router.get("")
@@ -122,9 +138,25 @@ async def list_users_in_org(
         raise HTTPException(status_code=404, detail="Organisation not found")
 
     if not is_admin_for_org(user, organisation):
-        raise HTTPException(status_code=403, detail="Only an organisation admin can view all users")
+        raise HTTPException(status_code=403, detail="Only an organisation admin can view users")
 
     return await get_users(session, organisation)
+
+
+@org_users_router.get("/{user_id}")
+async def list_user_in_org(user_id: UUID, session: SQLSessionDep, user: UserDep) -> User:
+    target_user = await user_from_id(session, user_id)
+    if not target_user or not target_user.organisation_id:
+        raise HTTPException(status_code=400, detail="User not found within organisation")
+
+    organisation = await organisation_from_id(session, target_user.organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can view users")
+
+    return target_user
 
 
 @users_router.delete("/{user_id}", status_code=204)
