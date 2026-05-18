@@ -1,10 +1,11 @@
 import logging
 from datetime import UTC, datetime
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.utils.organisation import organisation_from_id
+from backend.utils.database import organisation_from_id, user_from_id
 from common.auth import is_admin_for_org
 from common.database.postgres_models import User
 from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate
@@ -72,15 +73,15 @@ async def create_user(
 ) -> GetUserResponse:
     organisation = await organisation_from_id(session, data.organisation_id)
     if not organisation:
-        raise HTTPException(status_code=400, detail=f"Organisation with id '{data.organisation_id}' not found")
+        raise HTTPException(status_code=404, detail="Organisation not found")
 
     if not is_admin_for_org(user, organisation):
-        raise HTTPException(status_code=403, detail="Only an organisation admin can create a new user.")
+        raise HTTPException(status_code=403, detail="Only an organisation admin can create a new user")
 
     email_domain = data.email.split("@")[1]
     if email_domain not in organisation.allowed_domains:
         raise HTTPException(
-            status_code=400, detail=f"An email of domain '{email_domain}' is not associated with this organisation."
+            status_code=400, detail=f"An email of domain '{email_domain}' is not associated with this organisation"
         )
 
     new_user = User(email=data.email, organisation_id=organisation.id)
@@ -96,3 +97,20 @@ async def create_user(
         email=new_user.email,
         data_retention_days=new_user.data_retention_days,
     )
+
+
+@users_router.delete("/{user_id}", status_code=204)
+async def delete_user(user_id: UUID, session: SQLSessionDep, user: UserDep) -> None:
+    target_user = await user_from_id(session, user_id)
+    if not target_user or not target_user.organisation_id:
+        raise HTTPException(status_code=400, detail="User not found within organisation")
+
+    organisation = await organisation_from_id(session, target_user.organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can delete a user")
+
+    await session.delete(target_user)
+    await session.commit()
