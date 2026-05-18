@@ -118,7 +118,7 @@ class Organisation(BaseTableMixin, table=True):
     __tablename__ = "organisation"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
-    name: str
+    name: str = Field(unique=True)
     allowed_domains: list[str] = Field(
         default_factory=list, sa_column=Column(ARRAY(Text), nullable=False, server_default=text("ARRAY[]::TEXT[]"))
     )

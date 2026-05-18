@@ -279,3 +279,18 @@ class CreateUserTemplateRequest(BaseModel):
     description: str
     type: TemplateType
     questions: list[CreateQuestion] | None = None
+
+
+class OrganisationResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    allowed_domains: list[str]
+    created_datetime: datetime
+    updated_datetime: datetime
+
+class OrganisationCreateRequest(BaseModel):
+    name: str
+    allowed_domains: list[str]
+
+class OrganisationUpdateRequest(BaseModel):
+    allowed_domains: list[str]
