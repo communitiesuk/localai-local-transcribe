@@ -17,3 +17,8 @@ async def user_from_id(
 ) -> User | None:
     statement = select(User).where(User.id == user_id)
     return (await session.exec(statement)).first()
+
+
+async def get_users(session: SQLSessionDep, organisation: Organisation | None = None):
+    statement = select(User).where(User.organisation_id == organisation.id) if organisation else select(User)
+    return list((await session.exec(statement)).all())

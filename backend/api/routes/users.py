@@ -5,12 +5,13 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.utils.database import organisation_from_id, user_from_id
-from common.auth import is_admin_for_org
+from backend.utils.queries import get_users, organisation_from_id, user_from_id
+from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import User
 from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
+org_users_router = APIRouter(prefix="/orgs/{organisation_id}/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +98,33 @@ async def create_user(
         email=new_user.email,
         data_retention_days=new_user.data_retention_days,
     )
+
+
+@users_router.get("")
+async def list_users(
+    session: SQLSessionDep,
+    user: UserDep,
+) -> list[User]:
+    if not is_system_admin(user):
+        raise HTTPException(status_code=403, detail="Only a system admin can view all users")
+
+    return await get_users(session)
+
+
+@org_users_router.get("")
+async def list_users_in_org(
+    organisation_id: UUID,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> list[User]:
+    organisation = await organisation_from_id(session, organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can view all users")
+
+    return await get_users(session, organisation)
 
 
 @users_router.delete("/{user_id}", status_code=204)
