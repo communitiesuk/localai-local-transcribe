@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import dspy
+import pytest
 
 from evals.summarisation.src.common import AppConfig, DialogExample
 from evals.summarisation.src.optimisation.runner import (
@@ -216,3 +217,39 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     assert isinstance(summary_path, Path)
     assert isinstance(hallucination_inputs_path, Path)
     assert hallucination_inputs_path.name == "hallucination_inputs.json"
+
+
+@pytest.mark.asyncio
+async def test_call_llm_judge():
+    from evals.summarisation.src.optimisation.runner import call_llm_judge
+
+    mock_client = AsyncMock()
+    mock_client.chat.completions.create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content='{"score": 5, "reason": "excellent"}'))]
+    )
+
+    mock_adapter = AsyncMock()
+    mock_adapter._model = "gpt-4-turbo"
+    mock_adapter._api_version = "2024-02-15-preview"
+    mock_adapter._get_apim_client.return_value = mock_client
+    
+    async def side_effect(call_func, method_name):
+        return await call_func()
+    mock_adapter._call_with_retry.side_effect = side_effect
+
+    with patch("evals.summarisation.src.optimisation.runner.build_azure_apim_adapter", return_value=mock_adapter):
+        result = await call_llm_judge("system prompt", "user prompt")
+
+    assert result == {"score": 5, "reason": "excellent"}
+    mock_adapter._get_apim_client.assert_called_once()
+    mock_adapter._call_with_retry.assert_called_once()
+    mock_client.chat.completions.create.assert_called_once_with(
+        model="gpt-4-turbo",
+        messages=[
+            {"role": "system", "content": "system prompt"},
+            {"role": "user", "content": "user prompt"},
+        ],
+        temperature=0,
+        response_format={"type": "json_object"},
+        extra_query={"api-version": "2024-02-15-preview"},
+    )

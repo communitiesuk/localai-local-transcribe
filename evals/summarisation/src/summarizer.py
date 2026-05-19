@@ -8,6 +8,7 @@ from common.services.template_manager import TemplateManager
 from common.types import MinuteAndHallucinations
 
 
+
 async def generate_summary(
     dialogue_entries: list[DialogueEntry],
     template_name: str | None = None,

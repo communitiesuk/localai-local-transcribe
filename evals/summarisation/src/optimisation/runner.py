@@ -24,14 +24,42 @@ from evals.summarisation.src.common import (
     EvalRecord,
     GenerationConfig,
     MetricResult,
+    build_azure_apim_adapter,
     build_metrics,
     write_jsonl,
 )
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
+from evals.summarisation.judge.prompts import build_user_message, build_system_prompt
 
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
+async def call_llm_judge(system: str, user: str) -> dict:
+    """
+    Direct call to the LLM judge using the project's standard settings.
+    This avoids polluting the summarizer service with evaluation logic.
+    """
+    adapter = build_azure_apim_adapter()
+    client = await adapter._get_apim_client()
+    
+    async def call():
+        return await client.chat.completions.create(
+            model=adapter._model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            temperature=0,
+            # Ensure we get clean JSON back
+            response_format={"type": "json_object"},
+            extra_query={"api-version": adapter._api_version},
+        )
+    
+    try:
+        response = await adapter._call_with_retry(call, "call_llm_judge")
+        return orjson.loads(response.choices[0].message.content)
+    finally:
+        await client.close()
 
 class _RunSummary(TypedDict):
     run_id: str
@@ -163,7 +191,6 @@ def run_eval(
                 hallucinations=generated.hallucinations,
                 total_claims=generated.total_claims,
             )
-
     program = _Program()
 
     def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
@@ -175,10 +202,29 @@ def run_eval(
 
         t_j0 = time.perf_counter()
         metrics_out = _evaluate_metrics(metrics=metrics, example=ex, prediction=pred)
+        
+        sys_prompt = build_system_prompt()
+        user_msg = build_user_message(
+            summary_id=ex.example_id,
+            transcript_ref=str(ex.example_id),
+            transcript_text=ex.dialogue,
+            summary_text=pred.summary
+        )
+
+        rubric_evaluation = asyncio.run(call_llm_judge(sys_prompt, user_msg))
+        
+        for dim, result in rubric_evaluation["dimensions"].items():
+            metrics_out[f"rubric_{dim}"] = MetricResult(
+                score=int(result["score"]),
+                reason=result["rationale"]
+            )
+
         judge_ms = _elapsed_ms(t_j0, time.perf_counter())
         judge_ms_values.append(judge_ms)
 
         for name, res in metrics_out.items():
+            if name not in metric_scores:
+                metric_scores[name] = []
             metric_scores[name].append(res.score)
 
         candidate = pred.candidate
@@ -215,8 +261,8 @@ def run_eval(
             )
 
         if metric_names:
-            return float(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
-        return 0.0
+            return int(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
+        return 0
 
     evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5, provide_traceback=True)
     overall_score = evaluator(program, metric=_metric)
@@ -225,13 +271,14 @@ def run_eval(
         write_jsonl(results_path, [r.model_dump(by_alias=True) for r in records])
 
     metrics_summary = {
-        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0} for name, vals in metric_scores.items()
+        name: {"mean": int(sum(vals) / len(vals)) if vals else 0} for name, vals in metric_scores.items()
     }
+    rubric_scores = [v["mean"] for k, v in metrics_summary.items() if k.startswith("rubric_")]
     summary: _RunSummary = {
         "run_id": run_id,
         "split": split,
         "n": len(devset),
-        "overall": float(overall_score) if overall_score is not None else None,
+        "overall": float(sum(rubric_scores) / len(rubric_scores)) if rubric_scores else None,
         "metrics": metrics_summary,
         "latency_ms": {
             "summarize_p50": _p50(summarize_ms_values),

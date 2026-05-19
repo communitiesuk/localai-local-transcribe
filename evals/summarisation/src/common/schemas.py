@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import Literal
 
@@ -24,6 +25,7 @@ class GenerationConfig(BaseModel):
 class DialogSummary(BaseModel):
     """Generated summary with model and generation metadata."""
 
+    summary_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     summary: str
     model: str
     prompt_version: str
@@ -36,8 +38,8 @@ CriteriaName = Literal["faithfulness", "coverage", "conciseness", "coherence"]
 class MetricResult(BaseModel):
     """Result from a single metric evaluation with score and reason."""
 
-    score: float = Field(ge=0.0, le=1.0)
-    reason: str
+    score: int = Field(..., ge=1, le=5)
+    reason: str | None = None
 
 
 class EvalRecord(BaseModel):
