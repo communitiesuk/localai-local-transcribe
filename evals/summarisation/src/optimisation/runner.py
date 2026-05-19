@@ -272,7 +272,6 @@ def run_eval(
         return 0.0
 
     evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5, provide_traceback=True)
-    overall_score = evaluator(program, metric=_metric)
 
     if records:
         write_jsonl(results_path, [r.model_dump(by_alias=True) for r in records])

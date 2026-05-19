@@ -233,7 +233,7 @@ async def test_call_llm_judge():
     mock_adapter._api_version = "2024-02-15-preview"
     mock_adapter._get_apim_client.return_value = mock_client
 
-    async def side_effect(call_func, method_name):
+    async def side_effect(call_func, _):
         return await call_func()
 
     mock_adapter._call_with_retry.side_effect = side_effect

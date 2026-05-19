@@ -23,15 +23,20 @@ from evals.summarisation.judge.prompts import (
     REVIEW_THRESHOLD,
 )
 
+# Constants for business logic gates
+MAX_SCORE_DRIFT = 0.15
+MIN_SCORE = 1
+MAX_SCORE = 5
+MIN_RATIONALE_LENGTH = 20
+
 _SCHEMA_PATH = Path(__file__).parent / "schema.json"
 _SCHEMA: dict = json.loads(_SCHEMA_PATH.read_text())
 
+# Note: Check for jsonschema availability
 try:
-    import jsonschema
     from jsonschema import Draft202012Validator
-
     _HAS_JSONSCHEMA = True
-except ImportError:  # pragma: no cover
+except ImportError:
     _HAS_JSONSCHEMA = False
 
 
@@ -53,17 +58,10 @@ class ValidationResult:
 
 
 def validate_evaluation(data: dict) -> ValidationResult:
-    """
-    Full validation of a judge output dict.
-
-    Steps:
-      1. JSON Schema structural check.
-      2. Business-logic gating (critical dimensions, fail thresholds).
-      3. overall_score recomputation drift check.
-    """
+    """Full validation of a judge output dict."""
     result = ValidationResult(valid=True)
 
-    # ── 1. Schema validation ────────────────────────────────────────────────
+    # 1. Schema validation
     if _HAS_JSONSCHEMA:
         validator = Draft202012Validator(_SCHEMA)
         errors = sorted(validator.iter_errors(data), key=lambda e: list(e.absolute_path))
@@ -72,7 +70,7 @@ def validate_evaluation(data: dict) -> ValidationResult:
             result.schema_errors = [
                 f"{'.'.join(str(p) for p in e.absolute_path) or '<root>'}: {e.message}" for e in errors
             ]
-            return result  # gates meaningless on malformed data
+            return result
     else:
         _minimal_check(data, result)
         if not result.valid:
@@ -80,7 +78,7 @@ def validate_evaluation(data: dict) -> ValidationResult:
 
     dims: dict = data.get("dimensions", {})
 
-    # ── 2. Business-logic gates ─────────────────────────────────────────────
+    # 2. Business-logic gates
     for dim_key, dim_data in dims.items():
         score: int | None = dim_data.get("score")
         if score is None:
@@ -93,13 +91,11 @@ def validate_evaluation(data: dict) -> ValidationResult:
             result.gate_warnings.append(f"{dim_key}: score={score} → review required")
 
         if dim_key in CRITICAL_DIMENSIONS and score < CRITICAL_THRESHOLD:
-            msg = (
-                f"{dim_key}: score={score} < {CRITICAL_THRESHOLD} " f"(critical dimension gate) → human review required"
-            )
+            msg = f"{dim_key}: score={score} < {CRITICAL_THRESHOLD} (critical dimension gate) → human review required"
             if msg not in result.gate_warnings and msg not in result.gate_errors:
                 result.gate_warnings.append(msg)
 
-    # ── 3. overall_score drift check ────────────────────────────────────────
+    # 3. overall_score drift check
     all_scores = [d["score"] for d in dims.values() if isinstance(d.get("score"), int)]
     if len(all_scores) == len(DIMENSIONS):
         recomputed = round(sum(all_scores) / len(all_scores), 1)
@@ -107,17 +103,12 @@ def validate_evaluation(data: dict) -> ValidationResult:
         if reported is not None:
             drift = abs(float(reported) - recomputed)
             result.overall_score_drift = drift
-            if drift > 0.15:
+            if drift > MAX_SCORE_DRIFT:
                 result.gate_warnings.append(
-                    f"overall_score mismatch: reported={reported}, " f"recomputed={recomputed} (drift={drift:.2f})"
+                    f"overall_score mismatch: reported={reported}, recomputed={recomputed} (drift={drift:.2f})"
                 )
 
     return result
-
-
-# ---------------------------------------------------------------------------
-# Minimal structural check (fallback when jsonschema is not installed)
-# ---------------------------------------------------------------------------
 
 
 def _minimal_check(data: dict, result: ValidationResult) -> None:
@@ -140,15 +131,15 @@ def _minimal_check(data: dict, result: ValidationResult) -> None:
                 result.schema_errors.append(f"dimensions.{dim_key}: missing '{req}'")
 
         score = dim_data.get("score")
-        if score is not None and not (isinstance(score, int) and 1 <= score <= 5):
+        if score is not None and not (isinstance(score, int) and MIN_SCORE <= score <= MAX_SCORE):
             result.valid = False
-            result.schema_errors.append(f"dimensions.{dim_key}.score={score!r} must be int 1–5")
+            result.schema_errors.append(f"dimensions.{dim_key}.score={score!r} must be int 1-5")
 
         rationale = dim_data.get("rationale", "")
-        if len(str(rationale)) < 20:
+        if len(str(rationale)) < MIN_RATIONALE_LENGTH:
             result.valid = False
             result.schema_errors.append(
-                f"dimensions.{dim_key}.rationale too short ({len(str(rationale))} chars, min 20)"
+                f"dimensions.{dim_key}.rationale too short ({len(str(rationale))} chars, min {MIN_RATIONALE_LENGTH})"
             )
 
         evidence = dim_data.get("evidence")

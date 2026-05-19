@@ -8,7 +8,7 @@ the primary dimension) and a BAD summary (expected ≤ 2), along with expected
 score bounds used by the live test suite.
 
 All scenarios are grounded in realistic Local Authority housing / social care
-contexts and mirror the worked examples in AIILG-457 HLD sections 3.1.a–h.
+contexts and mirror the worked examples in AIILG-457 HLD sections 3.1.a-h.
 """
 
 from __future__ import annotations

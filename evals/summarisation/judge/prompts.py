@@ -28,6 +28,7 @@ from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 _TEMPLATE_DIR = Path(__file__).parent
 _env = Environment(
+    autoescape=True,
     loader=FileSystemLoader(str(_TEMPLATE_DIR)),
     undefined=StrictUndefined,
     keep_trailing_newline=True,
