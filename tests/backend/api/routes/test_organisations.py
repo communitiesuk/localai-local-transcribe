@@ -197,3 +197,29 @@ async def test_update_organisations_domains(
 
     mock_session.commit.assert_awaited_once()
     mock_session.refresh.assert_awaited_once_with(org)
+
+
+@pytest.mark.asyncio
+async def test_update_organisation_not_found(
+    client,
+    override_user,
+    override_session,
+    mock_user,
+    mock_session,
+):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+
+    organisation_id = uuid.uuid4()
+
+    mock_session.get.return_value = None
+
+    response = await client.patch(
+        f"/organisations/{organisation_id}",
+        json={"allowed_domains": ["updated.gov.uk"]},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Organisation not found"
+
+    mock_session.commit.assert_not_awaited()
+    mock_session.refresh.assert_not_awaited()
