@@ -22,7 +22,7 @@ from common.types import (
     RecordingCreateRequest,
     TranscriptionCreateRequest,
 )
-from tests.marks import costs_money
+from tests.marks import costs_money, requires_audio_data
 from tests.utils import FileTypeTests, get_test_client
 from worker.worker_service import WorkerService, create_worker_service
 
@@ -81,7 +81,7 @@ async def load_db_test_instance(file_type: FileTypeTests) -> set[UUID]:
     return test_ids
 
 
-@pytest.mark.requires_audio_data
+@requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
@@ -97,7 +97,7 @@ async def test_e2e(worker_service):
     worker_service_task.cancel()
 
 
-@pytest.mark.requires_audio_data
+@requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e_chat(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
@@ -118,7 +118,7 @@ async def test_e2e_chat(worker_service):
     worker_service_task.cancel()
 
 
-@pytest.mark.requires_audio_data
+@requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e_zero_bytes(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
@@ -130,7 +130,7 @@ async def test_e2e_zero_bytes(worker_service):
     worker_service_task.cancel()
 
 
-@pytest.mark.requires_audio_data
+@requires_audio_data
 @pytest.mark.asyncio(loop_scope="session")
 async def test_e2e_corrupted(worker_service):
     worker_service_task = asyncio.create_task(worker_service.run())
