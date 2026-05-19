@@ -7,7 +7,7 @@ import uuid
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 import dspy
 import orjson
@@ -43,7 +43,7 @@ async def call_llm_judge(system: str, user: str) -> dict:
     adapter = build_azure_apim_adapter()
     client = await adapter.get_apim_client()
 
-    async def call():
+    async def call() -> Any:
         return await client.chat.completions.create(
             model=adapter.model,
             messages=[
@@ -58,7 +58,7 @@ async def call_llm_judge(system: str, user: str) -> dict:
 
     try:
         response = await adapter.call_with_retry(call, "call_llm_judge")
-        return orjson.loads(response.choices[0].message.content)
+        return cast(dict[Any, Any], orjson.loads(response.choices[0].message.content))
     finally:
         await client.close()
 
@@ -277,8 +277,8 @@ def run_eval(
     if records:
         write_jsonl(results_path, [r.model_dump(by_alias=True) for r in records])
 
-    metrics_summary = {
-        name: {"mean": int(sum(vals) / len(vals)) if vals else 0} for name, vals in metric_scores.items()
+    metrics_summary: dict[str, dict[str, float]] = {
+        name: {"mean": float(int(sum(vals) / len(vals)) if vals else 0)} for name, vals in metric_scores.items()
     }
     rubric_scores = [v["mean"] for k, v in metrics_summary.items() if k.startswith("rubric_")]
     summary: _RunSummary = {
