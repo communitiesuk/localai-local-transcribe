@@ -10,10 +10,11 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
+from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_users, organisation_from_id
 from common.auth import is_admin_for_org
 from common.database.postgres_models import User
-from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate
+from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
 org_users_router = APIRouter(prefix="/orgs/{organisation_id}/users", tags=["Users"])
@@ -23,13 +24,7 @@ logger = logging.getLogger(__name__)
 
 @users_router.get("/me")
 def get_user(user: UserDep) -> GetUserResponse:
-    return GetUserResponse(
-        id=user.id,
-        created_datetime=user.created_datetime,
-        updated_datetime=user.updated_datetime,
-        email=user.email,
-        data_retention_days=user.data_retention_days,
-    )
+    return to_user_response(user)
 
 
 @users_router.patch("/data-retention", response_model=GetUserResponse)
@@ -62,13 +57,7 @@ async def update_data_retention(
         user.id,
     )
 
-    return GetUserResponse(
-        id=user.id,
-        created_datetime=user.created_datetime,
-        updated_datetime=user.updated_datetime,
-        email=user.email,
-        data_retention_days=user.data_retention_days,
-    )
+    return to_user_response(user)
 
 
 @users_router.post("")
@@ -96,48 +85,61 @@ async def create_user(
     await session.commit()
     await session.refresh(new_user)
 
-    return GetUserResponse(
-        id=new_user.id,
-        created_datetime=new_user.created_datetime,
-        updated_datetime=new_user.updated_datetime,
-        email=new_user.email,
-        data_retention_days=new_user.data_retention_days,
-    )
+    return to_user_response(new_user)
 
 
 @users_router.get("")
 async def list_users(
     _: SystemAdminDep,
     session: SQLSessionDep,
-) -> list[User]:
-    return await get_users(session)
+) -> list[GetUserResponse]:
+    users = await get_users(session)
+    return [to_user_response(user) for user in users]
 
 
 @users_router.get("/{user_id}")
 async def list_user(
     _: SystemAdminDep,
     target_user: TargetUserDep,
-) -> User:
-    return target_user
+) -> GetUserResponse:
+    return to_user_response(target_user)
 
 
 @org_users_router.get("")
 async def list_users_in_org(
     organisation: OrganisationAdminDep,
     session: SQLSessionDep,
-) -> list[User]:
-    return await get_users(session, organisation)
+) -> list[GetUserResponse]:
+    users = await get_users(session, organisation)
+    return [to_user_response(user) for user in users]
 
 
 @org_users_router.get("/{user_id}")
-async def list_user_in_org(_: OrganisationAdminDep, target_user: TargetUserDep) -> User:
-    return target_user
+async def list_user_in_org(_: OrganisationAdminDep, target_user: TargetUserDep) -> GetUserResponse:
+    return to_user_response(target_user)
+
+
+@users_router.patch("/{user_id}/roles")
+async def update_user_roles(
+    _: OrganisationAdminDep,
+    data: UserUpdateRoles,
+    target_user: TargetUserDep,
+    session: SQLSessionDep,
+) -> GetUserResponse:
+    target_user.roles = data.roles
+
+    session.add(target_user)
+
+    await session.commit()
+    await session.refresh(target_user)
+
+    return to_user_response(target_user)
 
 
 @users_router.delete("/{user_id}", status_code=204)
 async def delete_user(session: SQLSessionDep, user: UserDep, target_user: TargetUserDep) -> None:
     if not target_user.organisation_id:
-        raise HTTPException(status_code=400, detail="User not found within organisation")
+        raise HTTPException(status_code=404, detail="User not found within organisation")
 
     organisation = await organisation_from_id(session, target_user.organisation_id)
     if not organisation:

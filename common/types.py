@@ -5,7 +5,14 @@ from enum import IntEnum, StrEnum, auto
 
 from pydantic import BaseModel, EmailStr, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
+from common.database.postgres_models import (
+    ContentSource,
+    DialogueEntry,
+    HallucinationType,
+    JobStatus,
+    TemplateType,
+    UserRole,
+)
 
 
 class TranscriptionMetadata(BaseModel):
@@ -84,12 +91,17 @@ class UserCreate(BaseModel):
     organisation_id: uuid.UUID
 
 
+class UserUpdateRoles(BaseModel):
+    roles: list[UserRole]
+
+
 class GetUserResponse(BaseModel):
     id: uuid.UUID
     created_datetime: datetime
     updated_datetime: datetime
     email: str
     data_retention_days: int | None
+    roles: list[UserRole]
 
 
 class DataRetentionUpdateResponse(BaseModel):
