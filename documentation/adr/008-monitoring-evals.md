@@ -86,7 +86,3 @@ Rely solely on existing user logging and feedback (e.g., PostHog analytics).
 
 * Good, because it requires no additional cost or engineering effort.
 * Bad, because it cannot detect gradual degradation, distinguish feature vs. provider regressions, or provide visibility between user-reported incidents.
-
-## Links
-
-* Related to ADR-009: Prompt Optimization Data Collection (monitoring infrastructure)
