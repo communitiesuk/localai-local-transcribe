@@ -71,3 +71,15 @@ variable "llm_deadletter_queue_name" {
   description = "Name of the SQS queue for LLM processing, to create alarms for"
   type        = string
 }
+
+variable "worker_log_group_name" {
+  description = "CloudWatch log group name for worker ECS service logs"
+
+  type = string
+}
+
+variable "backend_log_group_name" {
+  description = "CloudWatch log group name for backend ECS service logs"
+
+  type = string
+}

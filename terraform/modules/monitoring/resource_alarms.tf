@@ -189,3 +189,64 @@ resource "aws_cloudwatch_metric_alarm" "waf_blocked_requests" {
     aws_sns_topic.us_alarm_sns_topic.arn,
   ]
 }
+
+
+resource "aws_cloudwatch_metric_alarm" "apim_failure_rate" {
+  alarm_name          = "${var.environment_name}-apim-failure-rate"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 3
+  threshold           = 10
+  datapoints_to_alarm = 2
+  treat_missing_data  = "notBreaching"
+
+  metric_query {
+    id = "backend_requests"
+    metric {
+      namespace   = "LogMetrics"
+      metric_name = "apim-requests-${var.environment_name}-backend"
+      period      = 60
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id = "backend_failures"
+    metric {
+      namespace   = "LogMetrics"
+      metric_name = "apim-failures-${var.environment_name}-backend"
+      period      = 60
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id = "worker_requests"
+    metric {
+      namespace   = "LogMetrics"
+      metric_name = "apim-requests-${var.environment_name}-worker"
+      period      = 60
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id = "worker_failures"
+    metric {
+      namespace   = "LogMetrics"
+      metric_name = "apim-failures-${var.environment_name}-worker"
+      period      = 60
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id          = "rate"
+    expression  = "IF((backend_requests + worker_requests) > 0, ((backend_failures + worker_failures) / (backend_requests + worker_requests)) * 100, 0)"
+    label       = "APIM Failure Rate"
+    return_data = true
+  }
+
+  alarm_actions = [
+    aws_sns_topic.alarm_sns_topic.arn
+  ]
+}
