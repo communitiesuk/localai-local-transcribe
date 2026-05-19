@@ -8,6 +8,7 @@ from collections.abc import Awaitable, Callable
 from openai import (
     APIConnectionError,
     APIError,
+    APITimeoutError,
     AsyncOpenAI,
     AuthenticationError,
     RateLimitError,
@@ -215,7 +216,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                     )
                     raise
 
-            except (APIConnectionError, APIError) as error:
+            except (APIConnectionError, APIError, APITimeoutError) as error:
                 logger.warning(
                     ("APIM RETRY: %s - %s: %s " "(attempt %d/%d)"),
                     method_name,
