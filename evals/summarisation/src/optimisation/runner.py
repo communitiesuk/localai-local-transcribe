@@ -16,6 +16,7 @@ from dspy.evaluate import Evaluate
 
 from common.database.postgres_models import DialogueEntry, HallucinationType
 from common.settings import get_settings
+from evals.summarisation.judge.prompts import build_system_prompt, build_user_message
 from evals.summarisation.src.common import (
     AppConfig,
     DialogExample,
@@ -30,9 +31,9 @@ from evals.summarisation.src.common import (
 )
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
-from evals.summarisation.judge.prompts import build_user_message, build_system_prompt
 
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
+
 
 async def call_llm_judge(system: str, user: str) -> dict:
     """
@@ -41,7 +42,7 @@ async def call_llm_judge(system: str, user: str) -> dict:
     """
     adapter = build_azure_apim_adapter()
     client = await adapter._get_apim_client()
-    
+
     async def call():
         return await client.chat.completions.create(
             model=adapter._model,
@@ -54,12 +55,13 @@ async def call_llm_judge(system: str, user: str) -> dict:
             response_format={"type": "json_object"},
             extra_query={"api-version": adapter._api_version},
         )
-    
+
     try:
         response = await adapter._call_with_retry(call, "call_llm_judge")
         return orjson.loads(response.choices[0].message.content)
     finally:
         await client.close()
+
 
 class _RunSummary(TypedDict):
     run_id: str
@@ -137,6 +139,7 @@ def _evaluate_metrics(
         results[m.name] = res
     return results
 
+
 def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
         write_jsonl(results_path, (r.model_dump(by_alias=True) for r in records))
@@ -194,6 +197,7 @@ def run_eval(
                 hallucinations=generated.hallucinations,
                 total_claims=generated.total_claims,
             )
+
     program = _Program()
 
     def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
@@ -205,22 +209,19 @@ def run_eval(
 
         t_j0 = time.perf_counter()
         metrics_out = _evaluate_metrics(metrics=metrics, example=ex, prediction=pred)
-        
+
         sys_prompt = build_system_prompt()
         user_msg = build_user_message(
             summary_id=ex.example_id,
             transcript_ref=str(ex.example_id),
             transcript_text=ex.dialogue,
-            summary_text=pred.summary
+            summary_text=pred.summary,
         )
 
         rubric_evaluation = asyncio.run(call_llm_judge(sys_prompt, user_msg))
-        
+
         for dim, result in rubric_evaluation["dimensions"].items():
-            metrics_out[f"rubric_{dim}"] = MetricResult(
-                score=int(result["score"]),
-                reason=result["rationale"]
-            )
+            metrics_out[f"rubric_{dim}"] = MetricResult(score=int(result["score"]), reason=result["rationale"])
 
         judge_ms = _elapsed_ms(t_j0, time.perf_counter())
         judge_ms_values.append(judge_ms)

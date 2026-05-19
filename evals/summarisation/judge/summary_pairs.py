@@ -10,7 +10,9 @@ score bounds used by the live test suite.
 All scenarios are grounded in realistic Local Authority housing / social care
 contexts and mirror the worked examples in AIILG-457 HLD sections 3.1.a–h.
 """
+
 from __future__ import annotations
+
 from typing import TypedDict
 
 
@@ -25,7 +27,6 @@ class SummaryFixture(TypedDict):
 
 
 FIXTURES: dict[str, SummaryFixture] = {
-
     # ── D1: ACCURACY ─────────────────────────────────────────────────────────
     "accuracy_nhs_referral": {
         "description": (
@@ -58,7 +59,6 @@ FIXTURES: dict[str, SummaryFixture] = {
         "good_expected_min_score": 4,
         "bad_expected_max_score": 2,
     },
-
     # ── D2: NUMERICAL ACCURACY ────────────────────────────────────────────────
     "numerical_accuracy_deadlines": {
         "description": (
@@ -89,7 +89,6 @@ FIXTURES: dict[str, SummaryFixture] = {
         "good_expected_min_score": 4,
         "bad_expected_max_score": 2,
     },
-
     # ── D3: TEMPLATE FIT ──────────────────────────────────────────────────────
     "template_fit_php": {
         "description": (
@@ -129,7 +128,6 @@ FIXTURES: dict[str, SummaryFixture] = {
         "good_expected_min_score": 4,
         "bad_expected_max_score": 2,
     },
-
     # ── D4: COVERAGE ──────────────────────────────────────────────────────────
     "coverage_machete_incident": {
         "description": (
@@ -159,12 +157,10 @@ FIXTURES: dict[str, SummaryFixture] = {
         "good_expected_min_score": 4,
         "bad_expected_max_score": 2,
     },
-
     # ── D5: ACTION CLARITY ────────────────────────────────────────────────────
     "action_clarity_three_actions": {
         "description": (
-            "Three actions with explicit owners and deadlines. "
-            "Bad summary is vague with no owners or dates."
+            "Three actions with explicit owners and deadlines. " "Bad summary is vague with no owners or dates."
         ),
         "transcript": (
             "Housing Officer (00:22:10): So three actions from today. First, the "
@@ -191,7 +187,6 @@ FIXTURES: dict[str, SummaryFixture] = {
         "good_expected_min_score": 4,
         "bad_expected_max_score": 2,
     },
-
     # ── D6a: PROFESSIONAL TONE (neutral paraphrase) ───────────────────────────
     "professional_tone_paraphrase": {
         "description": (
@@ -201,7 +196,7 @@ FIXTURES: dict[str, SummaryFixture] = {
         "transcript": (
             "Housing Officer (00:45:00): The customer became agitated when the "
             "tenancy review was mentioned.\n"
-            'Customer (00:45:10): Yow, yuh a chat seh mi foolish? Watch yuhself.\n'
+            "Customer (00:45:10): Yow, yuh a chat seh mi foolish? Watch yuhself.\n"
             "Housing Officer (00:45:20): I've noted that and recorded it for "
             "the file."
         ),
@@ -219,7 +214,6 @@ FIXTURES: dict[str, SummaryFixture] = {
         "good_expected_min_score": 4,
         "bad_expected_max_score": 2,
     },
-
     # ── D6b: PROFESSIONAL TONE (material quote retention) ─────────────────────
     "professional_tone_direct_threat": {
         "description": (
@@ -231,7 +225,7 @@ FIXTURES: dict[str, SummaryFixture] = {
             "Housing Officer (00:51:35): That's a direct threat and I'm escalating."
         ),
         "good_summary": (
-            'The customer stated, "shut up about that or I\'ll break both your '
+            "The customer stated, \"shut up about that or I'll break both your "
             'legs", which was recorded as a direct threat and escalated due to '
             "safeguarding concerns."
         ),
@@ -244,7 +238,6 @@ FIXTURES: dict[str, SummaryFixture] = {
         "good_expected_min_score": 4,
         "bad_expected_max_score": 2,
     },
-
     # ── D7: READABILITY ───────────────────────────────────────────────────────
     "readability_render_safe": {
         "description": (
@@ -276,7 +269,6 @@ FIXTURES: dict[str, SummaryFixture] = {
         "good_expected_min_score": 4,
         "bad_expected_max_score": 2,
     },
-
     # ── D8: AUDITABILITY (CITATION ACCURACY / COHERENCE) ──────────────────────────────────────────────────────
     "auditability_timestamps": {
         "description": (

@@ -15,6 +15,7 @@ build_user_message(...) -> str
 DIMENSIONS, CRITICAL_DIMENSIONS, and thresholds are exported so the pipeline
 and tests can import them without duplicating the source of truth.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -144,17 +145,16 @@ DIMENSIONS: dict[str, dict] = {
 # Gating thresholds (HLD section 4)
 # ---------------------------------------------------------------------------
 
-CRITICAL_DIMENSIONS: frozenset[str] = frozenset(
-    {"accuracy", "action_clarity", "numerical_accuracy"}
-)
-CRITICAL_THRESHOLD: int = 4   # critical dim score < this → human review
-REVIEW_THRESHOLD: int = 2     # any dim score ≤ this → review required
-FAIL_THRESHOLD: int = 1       # any dim score == this → fail / block deployment
+CRITICAL_DIMENSIONS: frozenset[str] = frozenset({"accuracy", "action_clarity", "numerical_accuracy"})
+CRITICAL_THRESHOLD: int = 4  # critical dim score < this → human review
+REVIEW_THRESHOLD: int = 2  # any dim score ≤ this → review required
+FAIL_THRESHOLD: int = 1  # any dim score == this → fail / block deployment
 
 
 # ---------------------------------------------------------------------------
 # Public prompt builders
 # ---------------------------------------------------------------------------
+
 
 def build_system_prompt() -> str:
     """Render and return the SYSTEM turn for the LLM judge."""

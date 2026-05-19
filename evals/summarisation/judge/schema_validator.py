@@ -8,6 +8,7 @@ Public API
 ----------
 validate_evaluation(data: dict) -> ValidationResult
 """
+
 from __future__ import annotations
 
 import json
@@ -38,9 +39,9 @@ except ImportError:  # pragma: no cover
 class ValidationResult:
     valid: bool
     schema_errors: list[str] = field(default_factory=list)
-    gate_errors: list[str] = field(default_factory=list)    # hard failures
+    gate_errors: list[str] = field(default_factory=list)  # hard failures
     gate_warnings: list[str] = field(default_factory=list)  # review flags
-    overall_score_drift: float | None = None                # reported vs recomputed
+    overall_score_drift: float | None = None  # reported vs recomputed
 
     @property
     def requires_human_review(self) -> bool:
@@ -69,8 +70,7 @@ def validate_evaluation(data: dict) -> ValidationResult:
         if errors:
             result.valid = False
             result.schema_errors = [
-                f"{'.'.join(str(p) for p in e.absolute_path) or '<root>'}: {e.message}"
-                for e in errors
+                f"{'.'.join(str(p) for p in e.absolute_path) or '<root>'}: {e.message}" for e in errors
             ]
             return result  # gates meaningless on malformed data
     else:
@@ -87,19 +87,14 @@ def validate_evaluation(data: dict) -> ValidationResult:
             continue
 
         if score <= FAIL_THRESHOLD:
-            result.gate_errors.append(
-                f"{dim_key}: score={score} → FAIL / block deployment"
-            )
+            result.gate_errors.append(f"{dim_key}: score={score} → FAIL / block deployment")
             result.valid = False
         elif score <= REVIEW_THRESHOLD:
-            result.gate_warnings.append(
-                f"{dim_key}: score={score} → review required"
-            )
+            result.gate_warnings.append(f"{dim_key}: score={score} → review required")
 
         if dim_key in CRITICAL_DIMENSIONS and score < CRITICAL_THRESHOLD:
             msg = (
-                f"{dim_key}: score={score} < {CRITICAL_THRESHOLD} "
-                f"(critical dimension gate) → human review required"
+                f"{dim_key}: score={score} < {CRITICAL_THRESHOLD} " f"(critical dimension gate) → human review required"
             )
             if msg not in result.gate_warnings and msg not in result.gate_errors:
                 result.gate_warnings.append(msg)
@@ -114,8 +109,7 @@ def validate_evaluation(data: dict) -> ValidationResult:
             result.overall_score_drift = drift
             if drift > 0.15:
                 result.gate_warnings.append(
-                    f"overall_score mismatch: reported={reported}, "
-                    f"recomputed={recomputed} (drift={drift:.2f})"
+                    f"overall_score mismatch: reported={reported}, " f"recomputed={recomputed} (drift={drift:.2f})"
                 )
 
     return result
@@ -124,6 +118,7 @@ def validate_evaluation(data: dict) -> ValidationResult:
 # ---------------------------------------------------------------------------
 # Minimal structural check (fallback when jsonschema is not installed)
 # ---------------------------------------------------------------------------
+
 
 def _minimal_check(data: dict, result: ValidationResult) -> None:
     required_top = {"summary_id", "transcript_ref", "evaluated_at", "overall_score", "dimensions"}
@@ -147,9 +142,7 @@ def _minimal_check(data: dict, result: ValidationResult) -> None:
         score = dim_data.get("score")
         if score is not None and not (isinstance(score, int) and 1 <= score <= 5):
             result.valid = False
-            result.schema_errors.append(
-                f"dimensions.{dim_key}.score={score!r} must be int 1–5"
-            )
+            result.schema_errors.append(f"dimensions.{dim_key}.score={score!r} must be int 1–5")
 
         rationale = dim_data.get("rationale", "")
         if len(str(rationale)) < 20:
@@ -161,6 +154,4 @@ def _minimal_check(data: dict, result: ValidationResult) -> None:
         evidence = dim_data.get("evidence")
         if not isinstance(evidence, list) or len(evidence) < 1:
             result.valid = False
-            result.schema_errors.append(
-                f"dimensions.{dim_key}.evidence must be a non-empty list"
-            )
+            result.schema_errors.append(f"dimensions.{dim_key}.evidence must be a non-empty list")
