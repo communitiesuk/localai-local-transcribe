@@ -35,6 +35,7 @@ _SCHEMA: dict = json.loads(_SCHEMA_PATH.read_text())
 # Note: Check for jsonschema availability
 try:
     from jsonschema import Draft202012Validator
+
     _HAS_JSONSCHEMA = True
 except ImportError:
     _HAS_JSONSCHEMA = False
