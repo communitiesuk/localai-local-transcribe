@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, HTTPException
@@ -8,6 +9,7 @@ from common.auth import is_system_admin
 from common.database.postgres_models import Organisation
 from common.types import OrganisationCreateRequest, OrganisationPatchRequest, OrganisationResponse
 
+logger = logging.getLogger(__name__)
 organisations_router = APIRouter(tags=["Organisations"])
 
 
@@ -21,7 +23,7 @@ async def list_organisations(
         raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
     result = await session.exec(select(Organisation).order_by(Organisation.name))
-    return result.all()
+    return [OrganisationResponse.model_validate(org) for org in result.all()]
 
 
 @organisations_router.post("/organisations", response_model=OrganisationResponse, status_code=201)
@@ -46,7 +48,8 @@ async def create_organisation(
     session.add(new_org)
     await session.commit()
     await session.refresh(new_org)
-    return new_org
+    logger.info("Created new organisation with id %s and name %s", new_org.id, new_org.name)
+    return OrganisationResponse.model_validate(new_org)
 
 
 @organisations_router.delete("/organisations/{organisation_id}", status_code=204)
@@ -85,4 +88,9 @@ async def update_organisation(
     org.allowed_domains = request.allowed_domains
     await session.commit()
     await session.refresh(org)
-    return org
+    logger.info(
+        "Updated allowed domains for organisation %s. Count=%s",
+        org.id,
+        len(org.allowed_domains),
+    )
+    return OrganisationResponse.model_validate(org)

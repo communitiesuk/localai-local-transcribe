@@ -50,7 +50,7 @@ async def test_create_organisation(client, mock_user, mock_session, override_ses
     mock_session.refresh.side_effect = fake_refresh
 
     payload = {
-        "name": "New Org",
+        "name": "Test Organisation",
         "allowed_domains": ["gov.uk"],
     }
 
@@ -84,7 +84,7 @@ async def test_create_duplicate_organisation(
 
     existing_org = Organisation(
         id=uuid.uuid4(),
-        name="Existing Org",
+        name="Pre-existing Org",
         allowed_domains=["gov.uk"],
     )
 
@@ -93,8 +93,8 @@ async def test_create_duplicate_organisation(
     mock_session.exec.return_value = mock_result
 
     payload = {
-        "name": "Existing Org",
-        "allowed_domains": ["gov.uk"],
+        "name": "Pre-existing Org",
+        "allowed_domains": ["gov.uk", "new.gov.uk"],
     }
 
     response = await client.post("/organisations", json=payload)

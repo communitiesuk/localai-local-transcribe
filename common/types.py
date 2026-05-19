@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
 
@@ -282,6 +282,8 @@ class CreateUserTemplateRequest(BaseModel):
 
 
 class OrganisationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: uuid.UUID
     name: str
     allowed_domains: list[str]
