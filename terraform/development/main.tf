@@ -256,4 +256,7 @@ module "monitoring" {
   waf_acl_name                        = module.frontdoor.waf_acl_name
   llm_deadletter_queue_name           = module.sqs.llm_deadletter_queue_name
   transcription_deadletter_queue_name = module.sqs.transcription_deadletter_queue_name
+  backend_log_group_name              = module.ecs.backend_log_group_name
+  worker_log_group_name               = module.ecs.worker_log_group_name
+
 }
