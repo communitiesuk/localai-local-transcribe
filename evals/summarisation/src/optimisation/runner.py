@@ -131,8 +131,11 @@ def _evaluate_metrics(
     example: DialogExample,
     prediction: dspy.Prediction,
 ) -> dict[str, MetricResult]:
-    return {m.name: m.evaluate(example=example, prediction=prediction) for m in metrics}
-
+    results = {}
+    for m in metrics:
+        res = m.evaluate(example=example, prediction=prediction)
+        results[m.name] = res
+    return results
 
 def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
@@ -261,8 +264,11 @@ def run_eval(
             )
 
         if metric_names:
-            return int(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
-        return 0
+            return float(sum(metrics_out[n].score for n in metric_names) / len(metric_names))
+        rubric_vals = [res.score for name, res in metrics_out.items() if name.startswith("rubric_")]
+        if rubric_vals:
+            return float(sum(rubric_vals) / len(rubric_vals))
+        return 0.0
 
     evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5, provide_traceback=True)
     overall_score = evaluator(program, metric=_metric)

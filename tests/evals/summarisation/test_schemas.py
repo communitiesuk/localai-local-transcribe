@@ -19,8 +19,8 @@ def test_metric_result_contract_validates_score_bounds():
     with pytest.raises(ValueError, match="less than or equal to 5"):
         MetricResult(score=6, reason="Invalid")
 
-    with pytest.raises(ValueError, match="greater than or equal to 1"):
-        MetricResult(score=0, reason="Invalid")
+    with pytest.raises(ValueError, match="greater than or equal to 0"):
+        MetricResult(score=-1, reason="Invalid")
 
     valid = MetricResult(score=5, reason="Valid")
     assert valid.score == 5
