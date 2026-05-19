@@ -18,6 +18,7 @@ from common.database.postgres_models import (
     TemplateType,
     Transcription,
     User,
+    UserRole,
     UserTemplate,
 )
 from common.types import (
@@ -38,6 +39,7 @@ def mock_user() -> User:
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
+        roles=[UserRole.STANDARD_USER],
     )
 
 
