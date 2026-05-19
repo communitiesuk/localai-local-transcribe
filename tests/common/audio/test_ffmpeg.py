@@ -40,4 +40,3 @@ def test_convert_to_mp3(filename: Path):
 
     result.unlink()
     assert not result.exists()
-
