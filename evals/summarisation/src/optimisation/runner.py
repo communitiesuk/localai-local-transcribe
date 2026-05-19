@@ -41,11 +41,11 @@ async def call_llm_judge(system: str, user: str) -> dict:
     This avoids polluting the summarizer service with evaluation logic.
     """
     adapter = build_azure_apim_adapter()
-    client = await adapter._get_apim_client()
+    client = await adapter.get_apim_client()
 
     async def call():
         return await client.chat.completions.create(
-            model=adapter._model,
+            model=adapter.model,
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
@@ -53,11 +53,11 @@ async def call_llm_judge(system: str, user: str) -> dict:
             temperature=0,
             # Ensure we get clean JSON back
             response_format={"type": "json_object"},
-            extra_query={"api-version": adapter._api_version},
+            extra_query={"api-version": adapter.api_version},
         )
 
     try:
-        response = await adapter._call_with_retry(call, "call_llm_judge")
+        response = await adapter.call_with_retry(call, "call_llm_judge")
         return orjson.loads(response.choices[0].message.content)
     finally:
         await client.close()
@@ -272,6 +272,7 @@ def run_eval(
         return 0.0
 
     evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5, provide_traceback=True)
+    evaluator(program, metric=_metric)
 
     if records:
         write_jsonl(results_path, [r.model_dump(by_alias=True) for r in records])

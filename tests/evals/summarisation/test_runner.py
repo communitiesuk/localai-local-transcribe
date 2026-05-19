@@ -217,6 +217,7 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     assert isinstance(summary_path, Path)
     assert isinstance(hallucination_inputs_path, Path)
     assert hallucination_inputs_path.name == "hallucination_inputs.json"
+    mock_evaluator.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -229,21 +230,21 @@ async def test_call_llm_judge():
     )
 
     mock_adapter = AsyncMock()
-    mock_adapter._model = "gpt-4o"
-    mock_adapter._api_version = "2024-02-15-preview"
-    mock_adapter._get_apim_client.return_value = mock_client
+    mock_adapter.model = "gpt-4o"
+    mock_adapter.api_version = "2024-02-15-preview"
+    mock_adapter.get_apim_client.return_value = mock_client
 
     async def side_effect(call_func, _):
         return await call_func()
 
-    mock_adapter._call_with_retry.side_effect = side_effect
+    mock_adapter.call_with_retry.side_effect = side_effect
 
     with patch("evals.summarisation.src.optimisation.runner.build_azure_apim_adapter", return_value=mock_adapter):
         result = await call_llm_judge("system prompt", "user prompt")
 
     assert result == {"score": 5, "reason": "excellent"}
-    mock_adapter._get_apim_client.assert_called_once()
-    mock_adapter._call_with_retry.assert_called_once()
+    mock_adapter.get_apim_client.assert_called_once()
+    mock_adapter.call_with_retry.assert_called_once()
     mock_client.chat.completions.create.assert_called_once_with(
         model="gpt-4o",
         messages=[

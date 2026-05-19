@@ -45,6 +45,28 @@ class AzureAPIMModelAdapter(ModelAdapter):
         self._token_provider = token_provider
         self._cached_async_apim_client: AsyncOpenAI | None = None
 
+    @property
+    def model(self) -> str:
+        """Returns the model name."""
+        return self._model
+
+    @property
+    def api_version(self) -> str:
+        """Returns the API version."""
+        return self._api_version
+
+    async def get_apim_client(self) -> AsyncOpenAI:
+        """Returns the APIM client."""
+        return await self._get_apim_client()
+
+    async def call_with_retry[T_Response](
+        self,
+        api_call: Callable[[], Awaitable[T_Response]],
+        method_name: str,
+    ) -> T_Response:
+        """Calls the API with retry logic."""
+        return await self._call_with_retry(api_call, method_name)
+
     async def _get_apim_client(self) -> AsyncOpenAI:
         logger.info("APIM CLIENT: retrieving APIM client token")
 
