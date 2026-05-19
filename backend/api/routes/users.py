@@ -13,7 +13,7 @@ from backend.api.dependencies import (
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_users, organisation_from_id
 from common.auth import is_admin_for_org
-from common.database.postgres_models import User
+from common.database.postgres_models import User, UserRole
 from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
@@ -121,11 +121,21 @@ async def list_user_in_org(_: OrganisationAdminDep, target_user: TargetUserDep) 
 
 @users_router.patch("/{user_id}/roles")
 async def update_user_roles(
-    _: OrganisationAdminDep,
-    data: UserUpdateRoles,
-    target_user: TargetUserDep,
-    session: SQLSessionDep,
+    data: UserUpdateRoles, target_user: TargetUserDep, session: SQLSessionDep, user: UserDep
 ) -> GetUserResponse:
+    if UserRole.MHCLG_SUPPORT_ADMIN in data.roles and UserRole.MHCLG_SUPPORT_ADMIN not in user.roles:
+        raise HTTPException(status_code=403, detail="Only a system admin can perform this action")
+
+    if not target_user.organisation_id:
+        raise HTTPException(status_code=404, detail="User not found within organisation")
+
+    organisation = await organisation_from_id(session, target_user.organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can update user roles")
+
     target_user.roles = data.roles
 
     session.add(target_user)
