@@ -1,3 +1,4 @@
+# ruff: noqa: ARG001
 import uuid
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -19,7 +20,7 @@ from tests.utils import get_test_client
 
 
 @pytest.mark.asyncio
-async def test_get_templates_success():
+async def test_get_templates_success(override_user, override_session):
     async with get_test_client() as ac:
         response = await ac.get("/templates")
         assert response.status_code == 200
