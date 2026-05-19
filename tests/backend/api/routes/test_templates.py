@@ -1,3 +1,4 @@
+# ruff: noqa: ARG001
 import uuid
 from types import SimpleNamespace
 from unittest.mock import Mock
