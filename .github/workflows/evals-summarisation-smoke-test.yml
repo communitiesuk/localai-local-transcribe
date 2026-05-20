@@ -1,16 +1,6 @@
 name: Summarisation Evals
 
 on:
-  workflow_call:
-    inputs: 
-      python_version: 
-        required: false
-        type: string
-        default: '3.12'
-      poetry_version: 
-        required: false
-        type: string
-        default: '2.3.3'
   workflow_dispatch:
     inputs:
       python_version:
