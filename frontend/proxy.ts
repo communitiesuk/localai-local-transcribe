@@ -6,7 +6,8 @@ import {
 } from './utils/auth'
 import { API_PROXY_PATH } from './lib/constants'
 
-const verifier = createAlbJwtVerifier()
+const verifier =
+  process.env.ENVIRONMENT !== 'local' ? createAlbJwtVerifier() : null
 
 // Define paths that should be public (no authorisation required)
 const PUBLIC_PATHS = [
@@ -48,7 +49,9 @@ export async function proxy(req: NextRequest) {
         return redirectToUnauthorised(req)
       }
 
-      authResult = await parseAuthToken(verifier, token)
+      if (verifier) {
+        authResult = await parseAuthToken(verifier, token)
+      }
     } else {
       authResult = {
         email: 'test@test.co.uk',
