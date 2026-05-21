@@ -10,4 +10,5 @@ def to_user_response(user: User) -> GetUserResponse:
         email=user.email,
         data_retention_days=user.data_retention_days,
         roles=user.roles,
+        organisation_id=user.organisation_id,
     )

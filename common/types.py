@@ -102,6 +102,7 @@ class GetUserResponse(BaseModel):
     email: str
     data_retention_days: int | None
     roles: list[UserRole]
+    organisation_id: uuid.UUID | None
 
 
 class DataRetentionUpdateResponse(BaseModel):
