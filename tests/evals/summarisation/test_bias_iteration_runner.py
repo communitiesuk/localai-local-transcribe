@@ -6,12 +6,12 @@ import dspy
 import pytest
 
 from common.types import MinuteAndHallucinations
+from evals.summarisation.src.bias.bias_types import CounterfactualMetricResult
 from evals.summarisation.src.bias.iteration_runner import (
     evaluate_with_judge_detailed,
     run_multiple_iterations,
     run_single_iteration,
 )
-from evals.summarisation.src.bias.types import CounterfactualMetricResult
 from evals.summarisation.src.common import DialogExample
 
 
@@ -115,7 +115,7 @@ async def test_run_single_iteration_with_template(mock_metrics, mock_sentiment_a
 
     with patch("evals.summarisation.src.bias.iteration_runner.generate_summary", mock_generate):
         summary, metrics, summarize_ms, judge_ms = await run_single_iteration(
-            dialogue_entries, iteration_id, mock_metrics, mock_sentiment_analyzer, template_name
+            dialogue_entries, iteration_id, mock_metrics, mock_sentiment_analyzer, template_name=template_name
         )
 
         assert summary == "Template summary"

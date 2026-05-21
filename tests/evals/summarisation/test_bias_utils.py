@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from common.database.postgres_models import DialogueEntry
-from evals.summarisation.src.bias.types import CounterfactualMetricResult, IterationMetrics
+from evals.summarisation.src.bias.bias_types import CounterfactualMetricResult, IterationMetrics
 from evals.summarisation.src.bias.utils import (
     compute_comparison_statistics,
     compute_metric_statistics,

@@ -210,3 +210,71 @@ resource "aws_cloudwatch_log_metric_filter" "ecs_task_start_failure" {
     value     = "1"
   }
 }
+
+
+resource "aws_cloudwatch_log_metric_filter" "apim_requests_backend" {
+  log_group_name = var.backend_log_group_name
+
+  name = "apim-requests-${var.environment_name}-backend"
+
+  pattern = <<EOT
+    "APIM REQUEST:"
+  EOT
+
+  metric_transformation {
+    name      = "apim-requests-${var.environment_name}-backend"
+    namespace = "LogMetrics"
+    value     = "1"
+  }
+}
+
+
+resource "aws_cloudwatch_log_metric_filter" "apim_failures_backend" {
+  log_group_name = var.backend_log_group_name
+
+  name = "apim-failures-${var.environment_name}-backend"
+
+  pattern = <<EOT
+    "APIM FAILURE:"
+  EOT
+
+  metric_transformation {
+    name      = "apim-failures-${var.environment_name}-backend"
+    namespace = "LogMetrics"
+    value     = "1"
+  }
+}
+
+
+resource "aws_cloudwatch_log_metric_filter" "apim_requests_worker" {
+  log_group_name = var.worker_log_group_name
+
+  name = "apim-requests-${var.environment_name}-worker"
+
+  pattern = <<EOT
+    "APIM REQUEST:"
+  EOT
+
+  metric_transformation {
+    name      = "apim-requests-${var.environment_name}-worker"
+    namespace = "LogMetrics"
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "apim_failures_worker" {
+  log_group_name = var.worker_log_group_name
+
+  name = "apim-failures-${var.environment_name}-worker"
+
+  pattern = <<EOT
+    "APIM FAILURE:"
+  EOT
+
+  metric_transformation {
+    name      = "apim-failures-${var.environment_name}-worker"
+    namespace = "LogMetrics"
+    value     = "1"
+  }
+}
+

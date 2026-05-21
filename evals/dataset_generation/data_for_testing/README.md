@@ -2,17 +2,22 @@
 
 Evaluates how well the characteristics detection pipeline identifies Protected Characteristics (PCs) by comparing its output against a manually annotated ground truth.
 
+Two independent evaluations are available:
+
+- **PC detection eval** — precision / recall / F1 comparing detected spans against manual annotations
+- **Counterfactual rewrite eval** — checks that original characteristic values are removed after LLM rewriting, and scores coherence
+
 ---
 
 ## Overview
 
-The workflow has two stages:
+The workflow has three stages:
 
-1. **Annotate** — runs characteristics detection on the transcript and creates an index-aligned annotated ground truth file from `manual_pc.json`
-2. **Evaluate** — compares the manual list against the characteristics detection output and computes precision / recall / F1
+1. **Annotate** — creates an index-aligned ground truth (`reference.json`) from `manual_pc.json`
+2. **Evaluate** — runs the characteristics detection pipeline and computes precision / recall / F1 against the reference
+3. **Evaluate counterfactual** — proposes alternative characteristic values, rewrites the transcript, and checks removal via regex + LLM coherence scoring
 
-Multiple unrelated transcripts can coexist under `evals/dataset_generation/data_for_testing/input/` — each in its own named subdirectory. The annotate step picks the most recently modified transcript file within the named subdirectory.
-
+Multiple unrelated transcripts can coexist under `evals/dataset_generation/data_for_testing/input/` — each in its own named subdirectory.
 ---
 
 > **Note:** Install the `evals-summarisation` dependency group for semantic similarity scoring:
@@ -57,21 +62,37 @@ cp "$(ls -t evals/dataset_generation/transcription_generation/output/*.json | he
    evals/dataset_generation/data_for_testing/input/$PC_TEST_INSTANCE_NAME/
 ```
 
-Create `manual_pc.json` in the same subdirectory with a JSON array of text spans you have manually identified as PC-related:
+Create a skeleton `manual_pc.json` with one placeholder row per protected characteristic:
 
 ```bash
-echo '[]' > evals/dataset_generation/data_for_testing/input/$PC_TEST_INSTANCE_NAME/manual_pc.json
-# Then open and edit it — for example:
-#   code evals/dataset_generation/data_for_testing/input/$PC_TEST_INSTANCE_NAME/manual_pc.json
+cat > evals/dataset_generation/data_for_testing/input/$PC_TEST_INSTANCE_NAME/manual_pc.json << 'EOF'
+[
+  {"text": "", "category": "",                          "value": ""},
+]
+EOF
 ```
+
+Fill in `text` with the exact substring as it appears in the transcript, fill in `value`, and delete rows for characteristics that are not present. Example after editing:
 
 ```json
-["Biola", "three months pregnant", "expecting a baby", "he", "my partner"]
+[
+  {"text": "Kowalski",             "category": "Race",                   "value": "White (Polish)"},
+  {"text": "three months pregnant","category": "Pregnancy and Maternity","value": "Pregnant"},
+  {"text": "he",                   "category": "Sex",                    "value": "Male"},
+  {"text": "Margaret",             "category": "Sex",                    "value": "Female"},
+  {"text": "Margaret",             "category": "Race",                   "value": "White British"}
+]
 ```
 
-Each unique text span listed here will be searched across the full transcript — every position where it appears becomes a separate reference span in the evaluation. No need to list the same text multiple times.
+The last two rows show that a single text span can signal **multiple** protected characteristics. "Margaret" is both a female name (Sex) and a name common in White British culture (Race). Add one row per `(text, category, value)` combination — the pipeline will produce a separate characteristic entry for each.
 
-Each subdirectory should contain exactly **two files**:
+- `text` — the exact substring to search for in the transcript
+- `category` — the protected characteristic (`Age`, `Disability`, `Gender Reassignment`, `Marriage and Civil Partnership`, `Pregnancy and Maternity`, `Race`, `Religion or Belief`, `Sex`, `Sexual Orientation`)
+- `value` — the specific attribute value (e.g. `White (Polish)`, `Male`, `Pregnant`). There is no fixed set of these, just be concise and descriptive.
+
+Entries sharing the same `category` + `value` are grouped into one characteristic in `reference.json`. Duplicate `(text, category, value)` triplets are deduplicated. A span that signals multiple characteristics (e.g. "Margaret" above) will appear independently under each one. Every occurrence of each text span in the transcript becomes a separate reference span.
+
+Expected layout:
 
 ```
 evals/dataset_generation/data_for_testing/input/
@@ -88,34 +109,29 @@ evals/dataset_generation/data_for_testing/input/
 poetry run python evals/dataset_generation/data_for_testing/src/annotate.py $PC_TEST_INSTANCE_NAME
 ```
 
-This step:
-
-- Reads `manual_pc.json` and finds each text span in the transcript, recording start/end character indices aligned to those produced by the characteristics detection pipeline
-- Writes `reference.json` to `output/<name>/` (ground truth in characteristics format)
-
-Outputs:
+Reads `manual_pc.json`, finds each span in the transcript with character-aligned indices, and writes:
 
 ```
 evals/dataset_generation/data_for_testing/output/
   $PC_TEST_INSTANCE_NAME/
-    reference.json    ← manual annotations with aligned span indices
+    reference.json    ← manual annotations in characteristics format
 ```
 
 ---
 
-## Step 4 — Evaluate
+## Step 4 — Evaluate (PC Detection)
 
 ```bash
-poetry run python evals/dataset_generation/data_for_testing/src/evaluate.py $PC_TEST_INSTANCE_NAME
+poetry run python evals/dataset_generation/data_for_testing/src/evaluate_spans.py $PC_TEST_INSTANCE_NAME
 ```
 
-This runs the characteristics detection pipeline on the transcript, then compares the output against the manual annotations and writes results to:
+Runs the characteristics detection pipeline on the transcript, compares its output against `reference.json`, and writes:
 
 ```
 evals/dataset_generation/data_for_testing/output/
   $PC_TEST_INSTANCE_NAME/
-    hypothesis.json   ← characteristics detection model output
-    metrics.json      ← evaluation results
+    hypothesis.json   ← characteristics pipeline output
+    metrics.json      ← precision / recall / F1
 ```
 
 ### Per-item diagnostics
@@ -128,7 +144,65 @@ evals/dataset_generation/data_for_testing/output/
 ### Summary metrics
 
 ```json
-{ "precision": 0.85, "recall": 0.78, "f1_score": 0.81, "true_positive": 7, "false_negative": 2, "false_positive": 1 }
+{
+  "precision": 0.85,
+  "recall": 0.78,
+  "f1_score": 0.81,
+  "true_positive": 7,
+  "false_negative": 2,
+  "false_positive": 1
+}
+```
+
+---
+
+## Step 5 — Evaluate Counterfactual Rewriting *(optional)*
+
+```bash
+poetry run python evals/dataset_generation/data_for_testing/src/evaluate_counterfactual.py $PC_TEST_INSTANCE_NAME
+# optionally configure number of alternatives (default: 2)
+poetry run python evals/dataset_generation/data_for_testing/src/evaluate_counterfactual.py $PC_TEST_INSTANCE_NAME --num-alternatives 3
+```
+
+The LLM analyses the detected characteristics and proposes up to `N` counterfactual axis transformations (one per detected characteristic). Each axis is applied as a full LLM rewrite; the result is then assessed for value removal and coherence.
+
+Writes:
+
+```
+output/$PC_TEST_INSTANCE_NAME/
+  counterfactual_report.json
+  rewrites/
+    original.txt          ← unchanged transcript for easy comparison
+    rewrite_0.txt
+    rewrite_1.txt
+    ...
+```
+
+### Report structure
+
+```json
+{
+  "summary": {
+    "num_rewrites": 2,
+    "successful_rewrite_rate": 1.0,
+    "average_coherence": 0.75,
+    "average_concealment": 0.1
+  },
+  "rewrites": [
+    {
+      "alternative_index": 0,
+      "transcript_file": "rewrites/rewrite_0.txt",
+      "axis_change": {"axis": "Race", "original_value": "asian_participants", "target_value": "all_white_british"},
+      "all_values_removed": true,
+      "coherence": 0.75,
+      "coherence_explanation": "Reads naturally.",
+      "concealment_checks": [
+        {"characteristic": "Race", "value": "Asian", "score": 0.0, "explanation": "No evidence found."}
+      ],
+      "unexpected_edits": []
+    }
+  ]
+}
 ```
 
 ---
@@ -139,13 +213,15 @@ To refine results without re-running characteristics detection:
 
 1. Edit `evals/dataset_generation/data_for_testing/input/$PC_TEST_INSTANCE_NAME/manual_pc.json`
 2. Re-run annotate: `poetry run python ... annotate.py $PC_TEST_INSTANCE_NAME`
-3. Re-run evaluate: `poetry run python ... evaluate.py $PC_TEST_INSTANCE_NAME`
+3. Re-run evaluate: `poetry run python ... evaluate_spans.py $PC_TEST_INSTANCE_NAME`
 
 ---
 
 ## Notes
 
-- **Index alignment** — both `reference.json` and the characteristics detection output use the same transcript string representation (`"Speaker: text\n..."`) and the same `re.escape` / `re.finditer` pattern, so span indices are directly comparable
-- **Similarity function** — configurable in `evaluate.py`; options: `semantic_similarity` (default, requires `evals-summarisation`), `default_similarity`, `containment_similarity`
+- **Index alignment** — both `reference.json` and the characteristics detection output use the same transcript string representation (`"speaker: text\n..."`) and the same `re.escape` / `re.finditer` pattern, so span indices are directly comparable
+- **Span matching** — a hypothesis span is a true positive only when it fully contains the reference span; partial coverage counts as a false negative
+- **Similarity function** — configurable in `evaluate_spans.py`; options: `semantic_similarity` (default, requires `evals-summarisation`), `default_similarity`, `containment_similarity`
 - **Threshold** — default `0.6`; lower is more lenient, higher is stricter
 - **Matching** — bidirectional: manual→hypothesis (recall) and hypothesis→manual (precision)
+- **Word boundaries** — the counterfactual regex check uses `\b` boundaries, so short values like `"Na"` won't match inside words like `"Natural"`

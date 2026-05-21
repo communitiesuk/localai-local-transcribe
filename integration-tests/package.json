@@ -20,6 +20,6 @@
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.3.3",
     "prettier": "^3.8.1",
-    "uuid": "^13.0.0"
+    "uuid": "^14.0.0"
   }
 }

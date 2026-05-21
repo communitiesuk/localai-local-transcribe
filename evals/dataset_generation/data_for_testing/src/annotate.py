@@ -1,42 +1,50 @@
 import argparse
 import json
 import logging
+from collections import defaultdict
 
 from evals.dataset_generation.characteristics.src.chunker import find_spans
 from evals.dataset_generation.characteristics.src.transcript_loader import load_transcript
 from evals.dataset_generation.data_for_testing.src.run_helpers import (
     get_transcript_file,
-    load_json_list,
+    load_manual_pc,
     validate_json,
 )
 from evals.dataset_generation.data_for_testing.src.settings import INPUT_DIR, OUTPUT_DIR
+from evals.dataset_generation.data_for_testing.src.types import CharacteristicKey, ManualEntry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
 
-def create_annotated_output(manual_list: list[str], transcript_text: str) -> dict:
-    """Converts manual_pc.json text spans into characteristics-format JSON with aligned span indices.
+def create_annotated_output(manual_list: list[ManualEntry], transcript_text: str) -> dict:
+    """Converts manual_pc.json entries into characteristics-format JSON with aligned span indices.
 
-    Uses the same transcript string and span search pattern as the characteristics detection
-    pipeline (load_transcript + re.escape/finditer), so indices are directly comparable.
+    Entries are grouped by (category, value); duplicate texts within a group are deduplicated.
     """
-    seen: set[tuple[int, int]] = set()
-    evidence_spans = []
-    for text in set(manual_list):
-        for start, end in find_spans(text, transcript_text):
-            if (start, end) not in seen:
-                seen.add((start, end))
-                evidence_spans.append({"text": text, "start_index": start, "end_index": end})
+    groups: defaultdict[CharacteristicKey, set[str]] = defaultdict(set)
+    for entry in manual_list:
+        groups[(entry["category"], entry["value"])].add(entry["text"])
+
+    detected_characteristics = []
+    for (category, value), texts in groups.items():
+        seen: set[tuple[int, int]] = set()
+        evidence_spans = []
+        for text in texts:
+            for start, end in find_spans(text, transcript_text):
+                if (start, end) not in seen:
+                    seen.add((start, end))
+                    evidence_spans.append({"text": text, "start_index": start, "end_index": end})
+        detected_characteristics.append(
+            {
+                "characteristic": category,
+                "attribute_value": value,
+                "evidence_spans": evidence_spans,
+            }
+        )
 
     return {
         "version": "1.0",
-        "detected_characteristics": [
-            {
-                "characteristic": "manual_annotation",
-                "attribute_value": "manually identified",
-                "evidence_spans": evidence_spans,
-            }
-        ],
+        "detected_characteristics": detected_characteristics,
     }
 
 
@@ -60,7 +68,7 @@ def main() -> None:
     transcript = get_transcript_file(subdir)
     validate_json(transcript)
 
-    manual_list = load_json_list(manual_pc_path)
+    manual_list = load_manual_pc(manual_pc_path)
     transcript_text = load_transcript(transcript)
 
     output_dir = OUTPUT_DIR / args.name
