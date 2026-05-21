@@ -20,7 +20,7 @@ from common.azure_apim_auth import AzureTokenProvider
 from common.settings import get_settings
 
 from .base import ModelAdapter
-from .llm_constants import MAX_TOKENS, TEMPERATURE
+from .llm_constants import MAX_COMPLETION_TOKENS, TEMPERATURE
 from .message_utils import convert_to_openai_message
 
 logger = logging.getLogger(__name__)
