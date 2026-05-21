@@ -73,8 +73,9 @@ async def create_user(
     if not is_admin_for_org(user, organisation):
         raise HTTPException(status_code=403, detail="Only an organisation admin can create a new user")
 
-    email_domain = data.email.split("@")[1]
-    if email_domain not in organisation.allowed_domains:
+    email_domain = data.email.split("@")[1].lower()
+    allowed_domains = [domain.lower() for domain in organisation.allowed_domains]
+    if email_domain not in allowed_domains:
         raise HTTPException(
             status_code=400, detail=f"An email of domain '{email_domain}' is not associated with this organisation"
         )
