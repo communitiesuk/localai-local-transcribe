@@ -11,6 +11,8 @@ on:
         required: true
       alarm-email-address:
         required: true
+      slack-webhook-url:
+        required: true
 
 permissions:
   id-token: write
@@ -109,3 +111,55 @@ jobs:
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
         run: terraform apply -auto-approve -input=false -var="image_tag=${{ github.sha }}"
+   
+  notify-slack:
+    name: Notify Slack
+    runs-on: ubuntu-latest
+    needs: [build, plan, apply]
+    if: always()
+    steps:
+      - name: Determine deployment status
+        id: status
+        run: |
+          if [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "status=build failed" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.plan.result }}" == "failure" ]]; then
+            echo "status=plan failed" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT  
+          elif [[ "${{ needs.apply.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "emoji=:white_check_mark:" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.apply.result }}" == "skipped" && "${{ needs.plan.outputs.exitcode }}" == "0" ]]; then
+            echo "status=no changes" >> $GITHUB_OUTPUT
+            echo "emoji=:information_source:" >> $GITHUB_OUTPUT
+          else
+            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.slack-webhook-url }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg text "${{ steps.status.outputs.emoji }} Deployment ${{ steps.status.outputs.status }}" \
+            --arg environment "${{ inputs.environment }}" \
+            --arg status "${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.status }}" \
+            --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{
+              text: $text,
+              blocks: [
+                {
+                  type: "section",
+                  fields: [
+                    { type: "mrkdwn", text: ("*Environment:*\n" + $environment) },
+                    { type: "mrkdwn", text: ("*Status:*\n" + $status) },
+                    { type: "mrkdwn", text: ("*Run:*\n<" + $run_url + "|View run>") }
+                  ]
+                }
+              ]
+            }')
+          curl --fail-with-body -X POST -H 'Content-type: application/json' \
+            --data "$PAYLOAD" \
+            "$SLACK_WEBHOOK_URL"
