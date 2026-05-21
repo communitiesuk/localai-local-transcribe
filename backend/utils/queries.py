@@ -7,16 +7,14 @@ from common.database.postgres_models import Organisation, User
 
 
 async def organisation_from_id(session: AsyncSession, organisation_id: UUID) -> Organisation | None:
-    statement = select(Organisation).where(Organisation.id == organisation_id)
-    return (await session.exec(statement)).first()
+    return await session.get(Organisation, organisation_id)
 
 
 async def user_from_id(
     session: AsyncSession,
     user_id: UUID,
 ) -> User | None:
-    statement = select(User).where(User.id == user_id)
-    return (await session.exec(statement)).first()
+    return await session.get(User, user_id)
 
 
 async def get_users(session: AsyncSession, organisation: Organisation | None = None) -> list[User]:
