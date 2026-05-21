@@ -127,7 +127,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 model=self._model,
                 messages=openai_messages,
                 temperature=TEMPERATURE,
-                max_tokens=MAX_COMPLETION_TOKENS,
+                max_completion_tokens=MAX_COMPLETION_TOKENS,
                 extra_query={"api-version": self._api_version},
             )
 
