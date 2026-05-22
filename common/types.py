@@ -87,6 +87,7 @@ class ChatCreateResponse(BaseModel):
 
 
 class UserCreate(BaseModel):
+    name: str
     email: EmailStr
     organisation_id: uuid.UUID
 
@@ -99,6 +100,7 @@ class GetUserResponse(BaseModel):
     id: uuid.UUID
     created_datetime: datetime
     updated_datetime: datetime
+    name: str | None
     email: str
     data_retention_days: int | None
     roles: list[UserRole]

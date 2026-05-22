@@ -80,7 +80,7 @@ async def create_user(
             status_code=400, detail=f"An email of domain '{email_domain}' is not associated with this organisation"
         )
 
-    new_user = User(email=data.email, organisation_id=organisation.id)
+    new_user = User(name=data.name, email=data.email, organisation_id=organisation.id)
 
     session.add(new_user)
     await session.commit()
