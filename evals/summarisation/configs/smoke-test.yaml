@@ -15,7 +15,5 @@ dataset:
 judge:
   pass_threshold: 4
 
-metrics: []
-
 prompts:
   judge_template_path: evals/summarisation/prompts/judge.j2
