@@ -153,161 +153,57 @@ From the ASR study [15], using Whisper as a proxy (similar open-source ASR syste
 
 ## 7. LLM Processing Impact
 
-### 7.1 SimpleTemplate (General / Executive Summary)
+### 7.1 Template Comparison (X = 9,000 words, 1-hour baseline)
 
-**Token usage** (calculated from Appendix B.2 formulas)
+Token usage formulas and per-invocation breakdowns are in Appendix B.
 
-* GPT-4o (FAST): 74,778 tokens
-* GPT-4 Turbo (BEST): 55,916 tokens
-* Total: 130,694 tokens
+| Template | Invocations | Total Tokens | LLM Energy | LLM CO₂e |
+|----------|-------------|--------------|------------|----------|
+| Basic Minutes | 4 | 59,962 | 36.4 Wh | 9.4 g |
+| Short 'n' Sweet | 4 | 60,206 | 92.9 Wh | 24.0 g |
+| UserTemplate DOCUMENT | 4 | 64,192 | 104.8 Wh | 27.0 g |
+| Delivery | 6 | 107,618 | 126.5 Wh | 32.6 g |
+| SectionTemplate (Y=6) | 17 | 118,652 | 130.8 Wh | 33.7 g |
+| SimpleTemplate | 6 | 115,770 | 136.2 Wh | 35.1 g |
 
-**Energy** (calculated using research benchmarks [1], Appendix E)
-
-* GPT-4o: 45.43 Wh (74,778 tokens × 0.6075 Wh/1k tokens)
-* GPT-4 Turbo: 166.07 Wh (55,916 tokens × 2.970 Wh/1k tokens)
-
-**Total LLM energy:** **211.5 Wh (0.2115 kWh)**
-
-**CO₂e**
-
-* 211.5 Wh × 0.258 kg/kWh = **54.6 g CO₂e**
-
----
-
-### 7.2 SectionTemplate (Y = 6 sections)
-
-**Token usage** (calculated from Appendix B.3 formulas)
-
-* GPT-4o (FAST): 48,702 tokens
-* GPT-4 Turbo (BEST): 177,762 tokens
-* Total: 226,464 tokens
-
-**Energy** (calculated using research benchmarks [1], Appendix E)
-
-* GPT-4o: 29.59 Wh (48,702 tokens × 0.6075 Wh/1k tokens)
-* GPT-4 Turbo: 527.95 Wh (177,762 tokens × 2.970 Wh/1k tokens)
-
-**Total LLM energy:** **557.5 Wh (0.5575 kWh)**
-
-**CO₂e**
-
-* 557.5 Wh × 0.258 kg/kWh = **143.8 g CO₂e**
-
----
-
-### 7.3 Delivery Template
-
-**Token usage** (calculated from Appendix B.4 formulas)
-
-* GPT-4o (FAST): 69,846 tokens
-* GPT-4 Turbo (BEST): 50,952 tokens
-* Total: 120,798 tokens
-
-**Energy** (calculated using research benchmarks [1], Appendix E)
-
-* GPT-4o: 42.43 Wh (69,846 tokens × 0.6075 Wh/1k tokens)
-* GPT-4 Turbo: 151.33 Wh (50,952 tokens × 2.970 Wh/1k tokens)
-
-**Total LLM energy:** **193.8 Wh (0.1938 kWh)**
-
-**CO₂e**
-
-* 193.8 Wh × 0.258 kg/kWh = **50.0 g CO₂e**
-
----
-
-### 7.4 Basic Minutes (Fallback)
-
-**Token usage** (calculated from Appendix B.5 formulas)
-
-* GPT-4o (FAST): 83,406 tokens
-* GPT-4 Turbo (BEST): 0 tokens (FAST only)
-* Total: 83,406 tokens
-
-**Energy** (calculated using research benchmarks [1], Appendix E)
-
-* GPT-4o: 50.67 Wh (83,406 tokens × 0.6075 Wh/1k tokens)
-
-**Total LLM energy:** **50.7 Wh (0.0507 kWh)**
-
-**CO₂e**
-
-* 50.7 Wh × 0.258 kg/kWh = **13.1 g CO₂e**
-
----
-
-### 7.5 Additional Template Types
-
-Additional AI modes, including UserTemplate FORM, UserTemplate DOCUMENT, AI Edit, and Chat or Interactive Message, are documented in Appendix B.6 but excluded from the main calculations, as they generally require fewer invocations and or FAST-only processing, making them more environmentally friendly.
-
----
-
-### 7.6 Template Comparison Summary
-
-| Template Type | Invocations | Total Tokens | Energy | CO₂e |
-|---------------|-------------|--------------|--------|------|
-| Basic Minutes | 4 | 83,406 | 50.7 Wh (0.051 kWh) | 13.1 g |
-| Delivery | 6 | 120,798 | 193.8 Wh (0.194 kWh) | 50.0 g |
-| SimpleTemplate | 6 | 130,694 | 211.5 Wh (0.212 kWh) | 54.6 g |
-| SectionTemplate (Y=6) | 17 | 226,464 | 557.5 Wh (0.558 kWh) | 143.8 g |
-
-**Key observations:**
-* Model selection, FAST versus BEST, has a greater impact than token count alone
-* The architectural decision in Minute to separate these two types of invocation is the primary driver of emissions reduction
-* Emissions can vary greatly between templates
+Excluding the fallback Basic Minutes, production templates span a narrow ~1.5× energy range — from Short 'n' Sweet at 92.9 Wh to SimpleTemplate at 136.2 Wh. The main driver of variation is whether citations are included (extract_claims + cite_claims add ~30% to SimpleTemplate's token count), not template structural complexity. Detailed usage-frequency breakdown is in Appendix F.2.
 
 ---
 
 ## 8. Combined Impact per 1-Hour Meeting
 
-**Note:** For consistency in percentage calculations, CO₂e values below use EU-27 carbon intensity (258 g CO₂e/kWh) for both transcription and LLM processing. The transcription absolute emissions in Section 6 (17.3 g) reflect the source study's measured carbon intensity (~776 g/kWh) and remain unchanged.
+CO₂e values use EU-27 carbon intensity (258 g CO₂e/kWh) for both components. Transcription absolute emissions in Section 6 (17.3 g) use the source study's measured intensity and remain unchanged there.
 
-### 8.1 SimpleTemplate
+### 8.1 Usage-Weighted Average
 
-| Component      | Energy | CO₂e | % of Total |
-| -------------- | -----: | ---: | ---------: |
-| Transcription  | 22.3 Wh (0.022 kWh) | 5.8 g | 9.5% |
-| LLM processing | 211.5 Wh (0.212 kWh) | 54.6 g | 90.5% |
-| **Total**      | **233.8 Wh (0.234 kWh)** | **60 g** | **100.0%** |
+Applying production usage shares (Appendix F.1):
 
-### 8.2 SectionTemplate (Y=6)
+| Component | Energy | CO₂e | % of Total |
+|-----------|--------|------|-----------|
+| Transcription | 22.3 Wh (0.022 kWh) | 5.7 g | 14.8% |
+| LLM processing | 127.5 Wh (0.128 kWh) | 32.9 g | 85.2% |
+| **Usage-weighted total** | **149.8 Wh (0.150 kWh)** | **38.6 g** | **100%** |
 
-| Component      | Energy | CO₂e | % of Total |
-| -------------- | -----: | ---: | ---------: |
-| Transcription  | 22.3 Wh (0.022 kWh) | 5.8 g | 3.8% |
-| LLM processing | 557.5 Wh (0.558 kWh) | 143.8 g | 96.2% |
-| **Total**      | **579.8 Wh (0.580 kWh)** | **150 g** | **100.0%** |
+### 8.2 Range by Template
 
-### 8.3 Delivery Template
-
-| Component      | Energy | CO₂e | % of Total |
-| -------------- | -----: | ---: | ---------: |
-| Transcription  | 22.3 Wh (0.022 kWh) | 5.8 g | 10.3% |
-| LLM processing | 193.8 Wh (0.194 kWh) | 50.0 g | 89.7% |
-| **Total**      | **216.1 Wh (0.216 kWh)** | **56 g** | **100.0%** |
-
-### 8.4 Basic Minutes
-
-| Component      | Energy | CO₂e | % of Total |
-| -------------- | -----: | ---: | ---------: |
-| Transcription  | 22.3 Wh (0.022 kWh) | 5.8 g | 30.5% |
-| LLM processing | 50.7 Wh (0.051 kWh) | 13.1 g | 69.5% |
-| **Total**      | **73.0 Wh (0.073 kWh)** | **19 g** | **100.0%** |
+| Template | Total Energy | Total CO₂e | LLM % |
+|----------|-------------|------------|-------|
+| Basic Minutes | 58.7 Wh | 15.1 g | 62% |
+| Short 'n' Sweet | 127.2 Wh | 32.8 g | 82% |
+| UserTemplate DOCUMENT | 126.9 Wh | 32.7 g | 82% |
+| Delivery | 148.7 Wh | 38.4 g | 85% |
+| SectionTemplate (Y=6) | 153.0 Wh | 39.5 g | 85% |
+| SimpleTemplate | 158.5 Wh | 40.9 g | 86% |
 
 ---
 
 ## 9. Interpretation
 
-**Energy distribution patterns:**
-* LLM inference dominates operational energy use across all template types, representing 70-96% of total energy consumption depending on template complexity
-* Basic Minutes shows the most balanced distribution (70% LLM, 30% transcription) due to minimal processing
-* SectionTemplate shows highest LLM dominance (96%) due to multiple BEST model invocations
-* Transcription represents a fixed cost of 22.3 Wh (0.022 kWh) regardless of template type
+**Usage-weighted impact:** A typical 1-hour meeting (weighted by production template usage) produces **38.6 g CO₂e** and consumes **149.8 Wh (0.150 kWh)**. LLM inference accounts for 85% of this; transcription is a fixed ~22 Wh overhead.
 
-**Total system impact:**
-* The combined transcription and processing workflow for a 1-hour meeting produces **19-150 g CO₂e** depending on template choice (using consistent EU-27 carbon intensity)
-* Range spans from Basic Minutes (19 g) to SectionTemplate (150 g) - a 7.9× difference
-* Template selection is the single most impactful factor for environmental footprint
+**Template variation:** The range across templates is **15–41 g CO₂e** — a 2.7× spread. Templates are far more similar than the invocation count suggests, because the hallucination check contributes minimal tokens (a 17-word structured call with no conversation history) and the citations pipeline (the main differentiator between SimpleTemplate and Short 'n' Sweet) adds only ~31 Wh. Basic Minutes is the only significant outlier due to its FAST-only processing.
+
+**Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. Its share of total emissions ranges from 15% (SimpleTemplate) to 38% (Basic Minutes).
 
 ---
 
@@ -340,10 +236,10 @@ This system uses two types of AI models: Large Language Models (LLMs) for summar
 
 **Combined training impact (both models):** 72 Wh (0.072 kWh), 28 g CO₂e per user
 
-**1-hour SimpleTemplate meeting:** 233.8 Wh (0.234 kWh), 72 g CO₂e
+**1-hour SimpleTemplate meeting:** 158.5 Wh (0.159 kWh), 40.9 g CO₂e
 
-**Key finding:** Processing a single 1-hour meeting with SimpleTemplate consumes **3.2× the combined training cost** amortized per user (GPT-4 + GPT-4o). This means:
-* Training represents only ~31% of a single meeting's inference cost
+**Key finding:** Processing a single 1-hour meeting with SimpleTemplate consumes **2.2× the combined training cost** amortized per user (GPT-4 + GPT-4o). This means:
+* Training represents only ~45% of a single meeting's inference cost
 * After processing just one meeting, inference costs exceed the user's share of training costs
 * Inference costs accumulate with each use, rapidly dominating the environmental impact
 
@@ -456,17 +352,45 @@ Primary studies [1], [11], [15] represent decent available research but have lim
 
 | # | Invocation      | Model | File Reference | Input (words) | Output (words) |
 | - | --------------- | ----- | -------------- | ------------: | -------------: |
-| 1 | Speaker ID      | FAST  | `common/audio/generate_speaker_predictions.py:37-43` | 82 + X | 40 |
-| 2 | Title           | FAST  | `common/generate_meeting_title.py:14-16` | 18 + X | 15 |
-| 3 | Minutes         | BEST  | `common/templates/types.py:96-97` | 430 + X | 0.5X |
-| 4 | Hallucination 1 | BEST  | `common/templates/types.py:98` | 448 + 1.5X | 80 |
-| 5 | Citations       | FAST  | `common/templates/citations.py:12-15` | 118 + 1.55X | 0.5X |
-| 6 | Hallucination 2 | FAST  | `common/templates/citations.py:12-15` | 136 + 2.05X | 80 |
+| 1 | Speaker ID     | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
+| 2 | Title          | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
+| 3 | Minutes        | BEST  | `common/templates/types.py:96-97` | 345 + X | 0.5X |
+| 4 | Hallucination  | BEST  | `common/templates/types.py:98` | 17 | 80 |
+| 5 | extract_claims | FAST  | `common/templates/citations.py` | 336 + 0.5X | 0.1X |
+| 6 | cite_claims    | FAST  | `common/templates/citations.py` | 235 + 1.7X | 0.5X |
 
 **Totals (words):**
-* FAST: 354 + 3.6X input, 135 + 0.5X output
-* BEST: 878 + 2.5X input, 80 + 0.5X output
-* Grand total: 1,232 + 6.1X input, 215 + X output
+* FAST: 693 + 4.2X input, 50 + 0.6X output
+* BEST: 362 + X input, 80 + 0.5X output
+
+## B.2a Short 'n' Sweet (ExecutiveSummary) — SimpleTemplate without citations
+
+**Template**: Short 'n' Sweet  
+**Source**: `common/templates/default/executive_summary.py`  
+**Total invocations**: 4 (`citations_required = False` — invocations 5 and 6 skipped)
+
+| # | Invocation      | Model | File Reference | Input (words) | Output (words) |
+| - | --------------- | ----- | -------------- | ------------: | -------------: |
+| 1 | Speaker ID    | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
+| 2 | Title         | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
+| 3 | Minutes       | BEST  | `common/templates/types.py:96-97` | 345 + X | 0.5X |
+| 4 | Hallucination | BEST  | `common/templates/types.py:98` | 17 | 80 |
+
+**Totals (words):**
+* FAST: 122 + 2X input, 50 output
+* BEST: 362 + X input, 80 + 0.5X output
+
+**Token usage at X = 9,000:**
+* GPT-4o (FAST): 36,344 tokens
+* GPT-4 Turbo (BEST): 27,884 tokens
+* Total: 64,228 tokens
+
+**Energy:**
+* FAST: 22.1 Wh (36,344 tokens × 0.6075 Wh/1k tokens)
+* BEST: 82.8 Wh (27,884 tokens × 2.970 Wh/1k tokens)
+* **Total: 104.9 Wh (0.105 kWh)**
+
+**CO₂e:** 104.9 Wh × 0.258 kg/kWh = **27.1 g**
 
 ## B.3 SectionTemplate Templates
 
@@ -476,38 +400,40 @@ Primary studies [1], [11], [15] represent decent available research but have lim
 
 | # | Invocation           | Model | File Reference | Input (words) | Output (words) |
 | - | -------------------- | ----- | -------------- | ------------: | -------------: |
-| 1 | Speaker ID           | FAST  | `common/audio/generate_speaker_predictions.py:37-43` | 82 + X | 40 |
-| 2 | Title                | FAST  | `common/generate_meeting_title.py:14-16` | 18 + X | 15 |
-| 3 | Section detection    | FAST  | `common/templates/default/cabinet.py:190-195` | 56 + X | 2Y |
-| 4a | First section       | BEST  | `common/templates/types.py:176-181` | 1,615 + X | 0.3X/Y |
-| 4b | Each additional section (×Y-1) | BEST | `common/templates/types.py:185-186` | 18 | 0.3X/Y |
-| 5 | Hallucination per section (×Y) | BEST | `common/templates/types.py:183,187` | 18 + 1.3X/Y | 80 |
-| 6 | Citations            | FAST  | `common/templates/citations.py:12-15` | 118 + 1.35X | 0.3X |
-| 7 | Hallucination 2      | FAST  | `common/templates/citations.py:12-15` | 136 + 1.65X | 80 |
+| 1  | Speaker ID                     | FAST | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
+| 2  | Title                          | FAST | `common/generate_meeting_title.py` | 12 + X | 10 |
+| 3  | Section detection              | FAST | `common/templates/types.py` | 74 + X | 2Y |
+| 4a | First section                  | BEST | `common/templates/types.py:176-181` | 345 + 15 | 0.3X/Y |
+| 4b | Each section k (×Y-1)          | BEST | `common/templates/types.py:185-186` | grows with history† | 0.3X/Y |
+| 5  | Hallucination (×Y)             | BEST | `common/templates/types.py:183,187` | 17 | 80 |
+| 6  | extract_claims                 | FAST | `common/templates/citations.py` | 336 + 0.3X | 0.06X |
+| 7  | cite_claims                    | FAST | `common/templates/citations.py` | 235 + 1.46X | 0.3X |
+
+*†Section k input = system (345w) + k×15w + (k−1)×0.3X/Y (prior section output). Context window grows by ~15 + 0.3X/Y per iteration.*
 
 **Totals (words):**
-* FAST: 354 + 2.35X input, 135 + 2Y + 0.3X output
-* BEST: 1,633 + 1,575Y + 58Y² + 1.15X + 1.15XY input, 80 + 80Y + 0.3X output
-* Grand total: 1,987 + 1,575Y + 58Y² + 3.5X + 1.15XY input, 215 + 82Y + 0.6X output
+* FAST: 767 + 4.76X input, 50 + 2Y + 0.36X output
+* BEST section calls: Y×345 + 7.5Y(Y+1) + 0.15X(Y−1) input, 0.3X output (context accumulates)
+* BEST hallucination (×Y): 17Y input, 80Y output
 
 ## B.4 Delivery Template
 
 **Source**: `common/templates/default/delivery.py:73-107`  
-**Total invocations**: 6
+**Total invocations**: 7 (4 FAST + 3 BEST)
 
-| # | Invocation           | Model | File Reference | Input (words) | Output (words) |
-| - | -------------------- | ----- | -------------- | ------------: | -------------: |
-| 1 | Speaker ID           | FAST  | `common/audio/generate_speaker_predictions.py:37-43` | 82 + X | 40 |
-| 2 | Title                | FAST  | `common/generate_meeting_title.py:14-16` | 18 + X | 15 |
-| 3 | Sections + Actions   | BEST  | `common/templates/default/delivery.py:81-83` | 65 + X | 0.4X |
-| 4 | Attendees            | BEST  | `common/templates/default/delivery.py:86` | 18 | 30 |
-| 5 | Hallucination        | BEST  | `common/templates/default/delivery.py:84` | 83 + 1.4X | 80 |
-| 6 | Citations            | FAST  | `common/templates/citations.py:12-15` | 118 + 1.45X | 0.4X |
+| # | Invocation         | Model | File Reference | Input (words) | Output (words) |
+| - | ------------------ | ----- | -------------- | ------------: | -------------: |
+| 1 | Speaker ID         | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
+| 2 | Title              | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
+| 3 | Sections + Actions | BEST  | `common/templates/default/delivery.py:81-83` | 186 + X | 0.4X |
+| 4 | Hallucination      | BEST  | `common/templates/default/delivery.py:84` | 17 | 80 |
+| 5 | Attendees          | BEST  | `common/templates/default/delivery.py:86` | 13 | 30 |
+| 6 | extract_claims     | FAST  | `common/templates/citations.py` | 336 + 0.4X | 0.08X |
+| 7 | cite_claims        | FAST  | `common/templates/citations.py` | 235 + 1.58X | 0.4X |
 
 **Totals (words):**
-* FAST: 218 + 3.45X input, 55 + 0.4X output
-* BEST: 166 + 2.4X input, 110 + 0.4X output
-* Grand total: 384 + 5.85X input, 165 + 0.8X output
+* FAST: 693 + 3.98X input, 50 + 0.48X output
+* BEST: 216 + X input, 110 + 0.4X output
 
 ## B.5 Basic Minutes (Fallback)
 
@@ -516,23 +442,61 @@ Primary studies [1], [11], [15] represent decent available research but have lim
 
 | # | Invocation      | Model | File Reference | Input (words) | Output (words) |
 | - | --------------- | ----- | -------------- | ------------: | -------------: |
-| 1 | Speaker ID      | FAST  | `common/audio/generate_speaker_predictions.py:37-43` | 82 + X | 40 |
-| 2 | Title           | FAST  | `common/generate_meeting_title.py:14-16` | 18 + X | 15 |
-| 3 | Basic summary   | FAST  | `common/services/minute_handler_service.py:225-226` | 25 + X | 0.3X |
-| 4 | Hallucination   | FAST  | `common/services/minute_handler_service.py:227` | 43 + 1.3X | 80 |
+| 1 | Speaker ID    | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
+| 2 | Title         | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
+| 3 | Basic summary | FAST  | `common/services/minute_handler_service.py:225-226` | 12 + X | 0.3X |
+| 4 | Hallucination | FAST  | `common/services/minute_handler_service.py:227` | 17 | 80 |
 
 **Totals (words):**
-* FAST only: 168 + 3.3X input, 135 + 0.3X output
-* Grand total: 168 + 3.3X input, 135 + 0.3X output
+* FAST only: 151 + 3X input, 130 + 0.3X output
 
-## B.6 Additional Template Types (Not in Main Calculations)
+## B.6 Additional Template Types
 
-**UserTemplate (DOCUMENT type)**: 4 invocations (2 FAST, 2 BEST)  
-**UserTemplate (FORM type)**: 2 + Q invocations (FAST only, where Q = number of questions)  
-**AI Edit**: 2 invocations per edit (all FAST)  
-**Chat/Interactive Message**: 1 invocation per message (FAST)
+### B.6.1 UserTemplate (DOCUMENT type)
 
-These patterns represent specialized workflows not used in typical meeting processing.
+**Source**: `common/templates/user_template.py:73-90`  
+**Total invocations**: 4 (2 FAST + 2 BEST)
+
+| # | Invocation      | Model | File Reference | Input (words) | Output (words) |
+| - | --------------- | ----- | -------------- | ------------: | -------------: |
+| 1 | Speaker ID    | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
+| 2 | Title         | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
+| 3 | Document gen  | BEST  | `common/templates/user_template.py:80-88` | ~300 + X | 0.5X |
+| 4 | Hallucination | BEST  | `common/templates/user_template.py:89` | 17 | 80 |
+
+*Invocation 3 input uses ~100 words of fixed `document_prompt` system text plus an estimated ~200 words of user-defined template content; actual values vary with template complexity.*
+
+**Totals (words):**
+* FAST: 122 + 2X input, 50 output
+* BEST: 317 + X input, 80 + 0.5X output
+
+**Token usage at X = 9,000:**
+* GPT-4o (FAST): 36,344 tokens
+* GPT-4 Turbo (BEST): 27,794 tokens
+* Total: 64,138 tokens
+
+**Energy:**
+* FAST: 22.1 Wh (36,344 tokens × 0.6075 Wh/1k tokens)
+* BEST: 82.5 Wh (27,794 tokens × 2.970 Wh/1k tokens)
+* **Total: 104.6 Wh (0.105 kWh)**
+
+**CO₂e:** 104.6 Wh × 0.258 kg/kWh = **27.0 g**
+
+### B.6.2 UserTemplate (FORM type)
+
+**Total invocations**: Q (FAST only, where Q = number of questions per form)
+
+Each question is answered independently with a FAST invocation that receives the full transcript and all previously answered questions as context.
+
+### B.6.3 AI Edit
+
+**Total invocations**: 2 per edit (all FAST)
+
+### B.6.4 Chat / Interactive Message
+
+**Total invocations**: 1 per message (FAST)
+
+B.6.2–B.6.4 represent specialised workflows. UserTemplate FORM, AI Edit, and Chat are FAST-only and therefore substantially lower-impact than the BEST-model invocations that dominate B.6.1.
 
 ---
 
@@ -592,11 +556,11 @@ GPT-4 + GPT-4o total: 72 Wh (0.072 kWh) per user, 28 g per user
 **Comparison to 1-hour SimpleTemplate meeting:**
 
 ```
-SimpleTemplate (1h meeting): 233.8 Wh (0.234 kWh), 72 g CO₂e
+SimpleTemplate (1h meeting): 158.5 Wh (0.159 kWh), 40.9 g CO₂e
 Training (per user):         72 Wh (0.072 kWh), 28 g CO₂e
-Ratio: 233.8 ÷ 72 = 3.2×
+Ratio: 158.5 ÷ 72 = 2.2×
 
-Inference consumes 3.2× the amortized training cost per user.
+Inference consumes 2.2× the amortized training cost per user.
 ```
 
 ---
@@ -785,6 +749,96 @@ From the medium (1k/1k) measurements:
 
 These rates assume linear scaling with token count, which is a reasonable approximation for inference workloads of similar size to the benchmark conditions.
 
+
+---
+
+# Appendix F: Template Usage Frequency
+
+This appendix documents observed template usage across the production system. Data collected by i.AI from December 2024 to May 2026.
+
+| Template | Share |
+|----------|------:|
+| General | 52.4% |
+| Delivery | 15.2% |
+| Short 'n' Sweet | 12.3% |
+| User generated | 9.6% |
+| Cabinet | 5.9% |
+| Care Assessment | 2.6% |
+| Planning Committee | 1.2% |
+| Care Assessment V2 | 0.7% |
+
+## F.2 Usage-Weighted Environmental Impact
+
+This section maps each production template to its underlying implementation, gives its per-meeting LLM impact, and calculates the usage-weighted average across all templates.
+
+### F.2.1 Template-to-Implementation Mapping
+
+| Template | Combined share | Implementation | Appendix |
+|---------|---------------|----------------|----------|
+| General | 52.4% | SimpleTemplate (citations) | B.2 |
+| Delivery | 15.2% | Delivery Template | B.4 |
+| Short 'n' Sweet | 12.3% | SimpleTemplate (no citations) | B.2a |
+| User generated | 9.6% | UserTemplate DOCUMENT | B.6.1 |
+| Cabinet | 5.9% | SectionTemplate (Y=6) | B.3 |
+| Care Assessment | 2.6% | SimpleTemplate (deprecated v1) | B.2 |
+| Planning Committee | 1.2% | SectionTemplate (Y=6) | B.3 |
+| Care Assessment V2 | 0.7% | SimpleTemplate (citations) | B.2 |
+
+*The lowercase entries "general", "delivery", and "cabinet" in the raw data (F.1) are the same built-in templates stored with different casing, not separate user-created templates. Their shares are merged into the corresponding capitalised entries above.*
+
+### F.2.2 Per-Template LLM Impact (X = 9,000 words, 1-hour baseline)
+
+| Template | LLM Energy | LLM CO₂e |
+|---------|------------|----------|
+| Basic Minutes (fallback) | 36.4 Wh | 9.4 g |
+| Short 'n' Sweet | 104.9 Wh | 27.1 g |
+| UserTemplate DOCUMENT | 104.6 Wh | 27.0 g |
+| Delivery | 126.5 Wh | 32.6 g |
+| Cabinet / Planning Committee (SectionTemplate Y=6) | 130.8 Wh | 33.7 g |
+| General / Care Assessment / Care Assessment V2 | 136.2 Wh | 35.1 g |
+
+### F.2.3 Usage-Weighted Average Impact
+
+Applying the combined shares from F.2.1:
+
+| Template | Share | LLM Energy | LLM CO₂e | Weighted Energy | Weighted CO₂e |
+|---------|-------|------------|----------|----------------|---------------|
+| General | 52.4% | 136.2 Wh | 35.1 g | 71.4 Wh | 18.4 g |
+| Delivery | 15.2% | 126.5 Wh | 32.6 g | 19.2 Wh | 5.0 g |
+| Short 'n' Sweet | 12.3% | 104.9 Wh | 27.1 g | 12.9 Wh | 3.3 g |
+| User generated | 9.6% | 104.6 Wh | 27.0 g | 10.0 Wh | 2.6 g |
+| Cabinet | 5.9% | 130.8 Wh | 33.7 g | 7.7 Wh | 2.0 g |
+| Care Assessment | 2.6% | 136.2 Wh | 35.1 g | 3.5 Wh | 0.9 g |
+| Planning Committee | 1.2% | 130.8 Wh | 33.7 g | 1.6 Wh | 0.4 g |
+| Care Assessment V2 | 0.7% | 136.2 Wh | 35.1 g | 1.0 Wh | 0.2 g |
+| **Usage-weighted total** | **100%** | — | — | **127.5 Wh** | **32.9 g** |
+
+**Combined with transcription (EU-27 intensity):**
+
+| Component | Energy | CO₂e | % of Total |
+|-----------|--------|------|-----------|
+| Transcription | 22.3 Wh (0.022 kWh) | 5.7 g | 14.8% |
+| LLM processing | 127.5 Wh (0.128 kWh) | 32.9 g | 85.2% |
+| **Usage-weighted total** | **149.8 Wh (0.150 kWh)** | **38.6 g** | **100%** |
+
+**Comparison to single-template estimates:**
+
+| Basis | Combined Energy | Combined CO₂e |
+|-------|----------------|---------------|
+| Basic Minutes | 58.7 Wh | 15.1 g |
+| Usage-weighted average | 149.8 Wh | 38.6 g |
+| SimpleTemplate (General only) | 158.5 Wh | 40.9 g |
+| SectionTemplate Y=6 | 153.0 Wh | 39.5 g |
+
+**Key findings:**
+* The usage-weighted average (38.6 g CO₂e, 149.8 Wh) is 6% lower than using only the General/SimpleTemplate estimate, because Short 'n' Sweet, UserTemplate DOCUMENT, and Delivery (accounting for 37% of usage) are all lighter than General
+* Cabinet and Planning Committee (SectionTemplate, 7.1% combined) contribute 7% of the weighted LLM energy — roughly proportional to their usage share
+* Short 'n' Sweet has lower impact than General (27.1 g vs 35.1 g LLM CO₂e) due to skipping the citations pipeline
+
+**Limitations:**
+* "User generated" is treated as DOCUMENT type throughout; FORM-type templates are FAST-only and would lower this estimate
+* SectionTemplate section count assumed Y=6 for both Cabinet and Planning Committee
+* UserTemplate DOCUMENT fixed prompt assumed ~200 words of template content; actual values vary
 
 ---
 
