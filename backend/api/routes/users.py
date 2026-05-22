@@ -12,7 +12,7 @@ from backend.api.dependencies import (
 )
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_users, organisation_from_id
-from common.auth import is_admin_for_org
+from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import User, UserRole
 from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles
 
@@ -124,8 +124,14 @@ async def list_user_in_org(_: OrganisationAdminDep, target_user: TargetUserDep) 
 async def update_user_roles(
     data: UserUpdateRoles, target_user: TargetUserDep, session: SQLSessionDep, user: UserDep
 ) -> GetUserResponse:
-    if UserRole.MHCLG_SUPPORT_ADMIN in data.roles and UserRole.MHCLG_SUPPORT_ADMIN not in user.roles:
-        raise HTTPException(status_code=403, detail="Only a system admin can perform this action")
+    involves_system_admin_role = UserRole.MHCLG_SUPPORT_ADMIN in data.roles or is_system_admin(target_user)
+
+    # only a system admin can grant/revoke system admin
+    if involves_system_admin_role and not is_system_admin(user):
+        raise HTTPException(
+            status_code=403,
+            detail="Only a system admin can perform this action",
+        )
 
     if not target_user.organisation_id:
         raise HTTPException(status_code=404, detail="User not found within organisation")
@@ -149,6 +155,9 @@ async def update_user_roles(
 
 @users_router.delete("/{user_id}", status_code=204)
 async def delete_user(session: SQLSessionDep, user: UserDep, target_user: TargetUserDep) -> None:
+    if is_system_admin(target_user) and not is_system_admin(user):
+        raise HTTPException(status_code=403, detail="Only a system admin can perform this action")
+
     if not target_user.organisation_id:
         raise HTTPException(status_code=404, detail="User not found within organisation")
 
