@@ -222,7 +222,7 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
 
 @pytest.mark.asyncio
 async def test_call_llm_judge():
-    from unittest.mock import patch
+    from unittest.mock import AsyncMock, patch
 
     from evals.summarisation.src.optimisation.runner import (
         DimensionEvaluation,
@@ -230,27 +230,25 @@ async def test_call_llm_judge():
         call_llm_judge,
     )
 
-    # 1. Setup mock response using actual models to avoid MagicMock .name conflicts
+    # 1. Setup mock response using real Pydantic classes to avoid mock .name attribute collisions
     mock_response = RubricEvaluation(dimensions=[DimensionEvaluation(name="accuracy", score=5, rationale="excellent")])
 
-    async def side_effect(call_func, _):
-        return await call_func()
+    # 2. Mock the adapter and structured_chat response
+    mock_adapter = AsyncMock()
+    mock_adapter.structured_chat.return_value = mock_response
 
-    mock_adapter.call_with_retry.side_effect = side_effect
-
+    # 3. Patch the adapter factory and execute
     with patch("evals.summarisation.src.optimisation.runner.build_azure_apim_adapter", return_value=mock_adapter):
         result = await call_llm_judge("system prompt", "user prompt")
 
-    assert result == {"score": 5, "reason": "excellent"}
-    mock_adapter.get_apim_client.assert_called_once()
-    mock_adapter.call_with_retry.assert_called_once()
-    mock_client.chat.completions.create.assert_called_once_with(
-        model="gpt-4o",
-        messages=[
+    # 4. Assert against the expected structured output schema
+    assert result == {"dimensions": {"accuracy": {"score": 5, "rationale": "excellent"}}}
+
+    # 5. Verify the structured_chat was invoked with correct arguments
+    mock_adapter.structured_chat.assert_called_once_with(
+        [
             {"role": "system", "content": "system prompt"},
             {"role": "user", "content": "user prompt"},
         ],
-        temperature=0,
-        response_format={"type": "json_object"},
-        extra_query={"api-version": "2024-02-15-preview"},
+        RubricEvaluation,
     )
