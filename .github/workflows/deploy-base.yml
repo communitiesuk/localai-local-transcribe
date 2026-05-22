@@ -27,6 +27,7 @@ jobs:
     name: Build and push ${{ matrix.service }}
     runs-on: ubuntu-24.04-arm
     strategy:
+      fail-fast: false
       matrix:
         service: [frontend, backend, worker]
     steps:
@@ -46,6 +47,31 @@ jobs:
           file: ${{ matrix.service }}/Dockerfile
           push: true
           tags: ${{ secrets.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.environment }}-${{ matrix.service }}:${{ github.sha }}
+      
+      - name: Notify Slack on build failure
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.slack-webhook-url }}
+        if: failure()
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg environment "${{ inputs.environment }}" \
+            --arg service "${{ matrix.service }}" \
+            --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{
+              text: (":x: *Build Failed* — " + $service),
+              blocks: [
+                {
+                  type: "section",
+                  fields: [
+                    { type: "mrkdwn", text: ("*Environment:* " + $environment) },
+                    { type: "mrkdwn", text: ("*Run:* <" + $run_url + "|View run>") }
+                  ]
+                }
+              ]
+            }')
+          curl --fail-with-body -X POST -H 'Content-type: application/json' \
+            --data "$PAYLOAD" \
+            "$SLACK_WEBHOOK_URL"
 
   plan:
     name: Terraform plan
@@ -76,18 +102,22 @@ jobs:
         id: plan
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
-        run: terraform plan -input=false -lock=false -detailed-exitcode -var="image_tag=${{ github.sha }}"
+        run: |
+          terraform plan -input=false -lock=false -detailed-exitcode -var="image_tag=${{ github.sha }}"
+          EXITCODE=$?
+          echo "exitcode=$EXITCODE" >> $GITHUB_OUTPUT
+          exit $EXITCODE
         continue-on-error: true
 
       - name: Fail if plan errored
-        if: steps.plan.outputs.exitcode == 1
+        if: steps.plan.outputs.exitcode == "1"
         run: exit 1
 
   apply:
     name: Terraform apply
     runs-on: ubuntu-latest
     needs: plan
-    if: needs.plan.outputs.exitcode == 2
+    if: needs.plan.outputs.exitcode == "2"
     concurrency: tfstate-${{ inputs.environment }}
     defaults:
       run:
@@ -121,12 +151,11 @@ jobs:
       - name: Determine deployment status
         id: status
         run: |
-          if [[ "${{ needs.build.result }}" == "failure" ]]; then
-            echo "status=build failed" >> $GITHUB_OUTPUT
-            echo "emoji=:x:" >> $GITHUB_OUTPUT
+          if [[ "${{ needs.plan.result }}" == "cancelled" ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
           elif [[ "${{ needs.plan.result }}" == "failure" ]]; then
             echo "status=plan failed" >> $GITHUB_OUTPUT
-            echo "emoji=:x:" >> $GITHUB_OUTPUT  
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
           elif [[ "${{ needs.apply.result }}" == "success" ]]; then
             echo "status=success" >> $GITHUB_OUTPUT
             echo "emoji=:white_check_mark:" >> $GITHUB_OUTPUT
@@ -134,28 +163,27 @@ jobs:
             echo "status=no changes" >> $GITHUB_OUTPUT
             echo "emoji=:information_source:" >> $GITHUB_OUTPUT
           else
-            echo "status=failed" >> $GITHUB_OUTPUT
+            echo "status=apply failed" >> $GITHUB_OUTPUT
             echo "emoji=:x:" >> $GITHUB_OUTPUT
           fi
 
-      - name: Send Slack notification
+      - name: Send Slack notification on deployment status
+        if: steps.status.outputs.skip != 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.slack-webhook-url }}
         run: |
           PAYLOAD=$(jq -n \
-            --arg text "${{ steps.status.outputs.emoji }} Deployment ${{ steps.status.outputs.status }}" \
-            --arg environment "${{ inputs.environment }}" \
-            --arg status "${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.status }}" \
+            --arg text "${{ steps.status.outputs.emoji }} Deployment - ${{inputs.environment}}" \
             --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --arg status "${{ steps.status.outputs.status }}" \
             '{
               text: $text,
               blocks: [
                 {
                   type: "section",
                   fields: [
-                    { type: "mrkdwn", text: ("*Environment:*\n" + $environment) },
-                    { type: "mrkdwn", text: ("*Status:*\n" + $status) },
-                    { type: "mrkdwn", text: ("*Run:*\n<" + $run_url + "|View run>") }
+                    { type: "mrkdwn", text: ("*Status:* " + $status) },
+                    { type: "mrkdwn", text: ("*Run:* <" + $run_url + "|View run>") }
                   ]
                 }
               ]
