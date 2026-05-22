@@ -5,11 +5,35 @@ on:
     branches:
       - development
 
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - staging
+
 jobs:
   deploy-development:
+    if: github.event_name == 'push'
     uses: ./.github/workflows/deploy-base.yml
     with:
       environment: development
     secrets:
       aws-account-id: ${{ secrets.DEV_AWS_ACCOUNT_ID }}
       alarm-email-address: ${{ secrets.DEV_ALARM_EMAIL_ADDRESS }}
+      slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_DEV }}
+  
+  deploy-staging:
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'staging'
+    uses: ./.github/workflows/deploy-base.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets:
+      aws-account-id: ${{ secrets.STAGING_AWS_ACCOUNT_ID }}
+      alarm-email-address: ${{ secrets.STAGING_ALARM_EMAIL_ADDRESS }}
+      slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_STAGING  }}
+
+
+    
