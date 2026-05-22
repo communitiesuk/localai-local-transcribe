@@ -222,24 +222,16 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
 
 @pytest.mark.asyncio
 async def test_call_llm_judge():
+    from unittest.mock import patch
+
     from evals.summarisation.src.optimisation.runner import (
-        call_llm_judge,
         DimensionEvaluation,
         RubricEvaluation,
+        call_llm_judge,
     )
-    from unittest.mock import AsyncMock, patch
 
     # 1. Setup mock response using actual models to avoid MagicMock .name conflicts
-    mock_response = RubricEvaluation(
-        dimensions=[
-            DimensionEvaluation(
-                name="accuracy", 
-                score=5, 
-                rationale="excellent"
-            )
-        ]
-    )
-
+    mock_response = RubricEvaluation(dimensions=[DimensionEvaluation(name="accuracy", score=5, rationale="excellent")])
 
     async def side_effect(call_func, _):
         return await call_func()
