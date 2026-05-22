@@ -222,17 +222,24 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
 
 @pytest.mark.asyncio
 async def test_call_llm_judge():
-    from evals.summarisation.src.optimisation.runner import call_llm_judge
+    from evals.summarisation.src.optimisation.runner import (
+        call_llm_judge,
+        DimensionEvaluation,
+        RubricEvaluation,
+    )
+    from unittest.mock import AsyncMock, patch
 
-    mock_client = AsyncMock()
-    mock_client.chat.completions.create.return_value = MagicMock(
-        choices=[MagicMock(message=MagicMock(content='{"score": 5, "reason": "excellent"}'))]
+    # 1. Setup mock response using actual models to avoid MagicMock .name conflicts
+    mock_response = RubricEvaluation(
+        dimensions=[
+            DimensionEvaluation(
+                name="accuracy", 
+                score=5, 
+                rationale="excellent"
+            )
+        ]
     )
 
-    mock_adapter = AsyncMock()
-    mock_adapter.model = "gpt-4o"
-    mock_adapter.api_version = "2024-02-15-preview"
-    mock_adapter.get_apim_client.return_value = mock_client
 
     async def side_effect(call_func, _):
         return await call_func()
