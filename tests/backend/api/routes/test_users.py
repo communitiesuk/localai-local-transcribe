@@ -87,23 +87,15 @@ async def test_update_data_retention_invalid(
     ],
 )
 async def test_update_user_roles(
-    override_session,
-    make_user,
-    make_organisation,
-    user_roles,
-    target_user_roles,
-    same_org,
-    new_roles,
-    expected_status,
-    monkeypatch,
+    override_session, make_user, make_organisation, user_roles, target_user_roles, same_org, new_roles, expected_status
 ):
     organisation = make_organisation()
 
-    async def fake_organisation_from_id(session, organisation_id):
+    async def fake_session_get_organisation_from_id(model, entry_id):
         return organisation if same_org else make_organisation()
 
     mock_session = override_session
-    mock_session.get.side_effect = fake_organisation_from_id
+    mock_session.get.side_effect = fake_session_get_organisation_from_id
 
     user = make_user(organisation_id=organisation.id, roles=user_roles)
     app.dependency_overrides[get_current_user] = lambda: user
@@ -136,11 +128,11 @@ async def test_delete_user(
 ):
     organisation = make_organisation()
 
-    async def fake_organisation_from_id(session, organisation_id):
+    async def fake_session_get_organisation_from_id(model, entry_id):
         return organisation if same_org else make_organisation()
 
     mock_session = override_session
-    mock_session.get.side_effect = fake_organisation_from_id
+    mock_session.get.side_effect = fake_session_get_organisation_from_id
 
     user = make_user(organisation_id=organisation.id, roles=user_roles)
     app.dependency_overrides[get_current_user] = lambda: user
