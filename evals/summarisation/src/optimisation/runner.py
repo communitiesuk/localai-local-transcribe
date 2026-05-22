@@ -31,6 +31,21 @@ from evals.summarisation.src.common import (
 )
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
+from pydantic import BaseModel, Field, ConfigDict
+
+class DimensionEvaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    
+    name: str = Field(description="The name of the evaluation dimension (e.g. clarity, correctness).")
+    score: int = Field(description="The score assigned to this dimension.")
+    rationale: str = Field(description="The rationale behind the score.")
+
+class RubricEvaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    
+    dimensions: list[DimensionEvaluation] = Field(
+        description="A list of evaluation dimension scores and rationales."
+    )
 
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
@@ -40,27 +55,25 @@ async def call_llm_judge(system: str, user: str) -> dict:
     Direct call to the LLM judge using the project's standard settings.
     This avoids polluting the summarizer service with evaluation logic.
     """
+    
     adapter = build_azure_apim_adapter()
-    client = await adapter.get_apim_client()
 
-    async def call() -> Any:
-        return await client.chat.completions.create(
-            model=adapter.model,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
-            temperature=0,
-            # Ensure we get clean JSON back
-            response_format={"type": "json_object"},
-            extra_query={"api-version": adapter.api_version},
-        )
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
 
-    try:
-        response = await adapter.call_with_retry(call, "call_llm_judge")
-        return cast(dict[Any, Any], orjson.loads(response.choices[0].message.content))
-    finally:
-        await client.close()
+    response = await adapter.structured_chat(messages, RubricEvaluation)
+
+    dimensions_dict = {}
+    for item in response.dimensions:
+        dimensions_dict[item.name] = {
+            "score": item.score,
+            "rationale": item.rationale
+        }
+
+    return {"dimensions": dimensions_dict}
+
 
 
 class _RunSummary(TypedDict):
