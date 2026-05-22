@@ -111,7 +111,7 @@ class Settings(BaseSettings):
     )
     FAST_LLM_MODEL_NAME: str = Field(
         description="Fast LLM model name to use. Note that this should be used for low complexity LLM tasks.",
-        default="gpt5-1",
+        default="gpt-5-nano",
     )
     BEST_LLM_PROVIDER: str = Field(
         description="Best LLM provider to use. Currently 'openai', 'azure_apim', and 'gemini' are supported. Note that "
