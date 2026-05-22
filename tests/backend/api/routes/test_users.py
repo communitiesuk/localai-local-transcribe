@@ -2,9 +2,14 @@
 # needed for pytest fixtures
 
 from datetime import datetime
+from uuid import uuid4
 
 import pytest
 
+from backend.api.dependencies.get_current_user import get_current_user
+from backend.api.dependencies.get_target_user import get_target_user
+from backend.main import app
+from common.database.postgres_models import UserRole
 from tests.utils import get_test_client
 
 
@@ -68,3 +73,88 @@ async def test_update_data_retention_invalid(
     assert response.status_code == 400
     error_string = "Data retention period must be at least 1 day or None for indefinite retention"
     assert error_string == response.json()["detail"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("user_roles", "target_user_roles", "same_org", "new_roles", "expected_status"),
+    [
+        ([UserRole.MHCLG_SUPPORT_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.MHCLG_SUPPORT_ADMIN], 200),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.LOCAL_AUTHORITY_ADMIN], 200),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.MHCLG_SUPPORT_ADMIN], 403),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, [UserRole.STANDARD_USER], 403),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], False, [UserRole.LOCAL_AUTHORITY_ADMIN], 403),
+    ],
+)
+async def test_update_user_roles(
+    override_session,
+    make_user,
+    make_organisation,
+    user_roles,
+    target_user_roles,
+    same_org,
+    new_roles,
+    expected_status,
+    monkeypatch,
+):
+    organisation = make_organisation()
+
+    async def fake_organisation_from_id(session, organisation_id):
+        return organisation if same_org else make_organisation()
+
+    monkeypatch.setattr("backend.api.routes.users.organisation_from_id", fake_organisation_from_id)
+
+    user = make_user(organisation_id=organisation.id, roles=user_roles)
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    target_organisation_id = organisation.id if same_org else uuid4()
+    target_user = make_user(organisation_id=target_organisation_id, roles=target_user_roles)
+    app.dependency_overrides[get_target_user] = lambda: target_user
+
+    async with get_test_client() as ac:
+        response = await ac.patch(
+            f"/users/{target_user.id}/roles",
+            json={"roles": [r.value for r in new_roles]},
+        )
+
+    assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("user_roles", "target_user_roles", "same_org", "expected_status"),
+    [
+        ([UserRole.MHCLG_SUPPORT_ADMIN], [UserRole.STANDARD_USER], True, 204),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, 204),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], False, 403),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, 403),
+    ],
+)
+async def test_delete_user(
+    override_session,
+    make_user,
+    make_organisation,
+    user_roles,
+    same_org,
+    target_user_roles,
+    expected_status,
+    monkeypatch,
+):
+    organisation = make_organisation()
+
+    async def fake_organisation_from_id(session, organisation_id):
+        return organisation if same_org else make_organisation()
+
+    monkeypatch.setattr("backend.api.routes.users.organisation_from_id", fake_organisation_from_id)
+
+    user = make_user(organisation_id=organisation.id, roles=user_roles)
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    target_organisation_id = organisation.id if same_org else uuid4()
+    target_user = make_user(organisation_id=target_organisation_id, roles=target_user_roles)
+    app.dependency_overrides[get_target_user] = lambda: target_user
+
+    async with get_test_client() as ac:
+        response = await ac.delete(f"/users/{target_user.id}")
+
+    assert response.status_code == expected_status
