@@ -4,7 +4,6 @@ from uuid import UUID
 from fastapi import Depends, HTTPException
 
 from backend.api.dependencies.get_session import SQLSessionDep
-from backend.utils.queries import organisation_from_id
 from common.database.postgres_models import Organisation
 
 
@@ -12,8 +11,7 @@ async def get_organisation(
     organisation_id: UUID,
     session: SQLSessionDep,
 ) -> Organisation:
-    organisation = await organisation_from_id(session, organisation_id)
-
+    organisation = await session.get(Organisation, organisation_id)
     if not organisation:
         raise HTTPException(status_code=404, detail="Organisation not found")
 

@@ -105,7 +105,7 @@ def override_session(mock_session):
         return mock_session
 
     app.dependency_overrides[get_session] = _override
-    yield
+    yield mock_session
     app.dependency_overrides.pop(get_session, None)
 
 

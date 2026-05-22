@@ -11,9 +11,9 @@ from backend.api.dependencies import (
     UserDep,
 )
 from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_users, organisation_from_id
+from backend.utils.queries import get_users
 from common.auth import is_admin_for_org, is_system_admin
-from common.database.postgres_models import User, UserRole
+from common.database.postgres_models import Organisation, User, UserRole
 from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
@@ -66,7 +66,7 @@ async def create_user(
     session: SQLSessionDep,
     user: UserDep,
 ) -> GetUserResponse:
-    organisation = await organisation_from_id(session, data.organisation_id)
+    organisation = await session.get(Organisation, data.organisation_id)
     if not organisation:
         raise HTTPException(status_code=404, detail="Organisation not found")
 
@@ -136,7 +136,7 @@ async def update_user_roles(
     if not target_user.organisation_id:
         raise HTTPException(status_code=404, detail="User not found within organisation")
 
-    organisation = await organisation_from_id(session, target_user.organisation_id)
+    organisation = await session.get(Organisation, target_user.organisation_id)
     if not organisation:
         raise HTTPException(status_code=404, detail="Organisation not found")
 
@@ -161,7 +161,7 @@ async def delete_user(session: SQLSessionDep, user: UserDep, target_user: Target
     if not target_user.organisation_id:
         raise HTTPException(status_code=404, detail="User not found within organisation")
 
-    organisation = await organisation_from_id(session, target_user.organisation_id)
+    organisation = await session.get(Organisation, target_user.organisation_id)
     if not organisation:
         raise HTTPException(status_code=404, detail="Organisation not found")
 

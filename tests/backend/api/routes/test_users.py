@@ -102,7 +102,8 @@ async def test_update_user_roles(
     async def fake_organisation_from_id(session, organisation_id):
         return organisation if same_org else make_organisation()
 
-    monkeypatch.setattr("backend.api.routes.users.organisation_from_id", fake_organisation_from_id)
+    mock_session = override_session
+    mock_session.get.side_effect = fake_organisation_from_id
 
     user = make_user(organisation_id=organisation.id, roles=user_roles)
     app.dependency_overrides[get_current_user] = lambda: user
@@ -131,21 +132,15 @@ async def test_update_user_roles(
     ],
 )
 async def test_delete_user(
-    override_session,
-    make_user,
-    make_organisation,
-    user_roles,
-    same_org,
-    target_user_roles,
-    expected_status,
-    monkeypatch,
+    override_session, make_user, make_organisation, user_roles, same_org, target_user_roles, expected_status
 ):
     organisation = make_organisation()
 
     async def fake_organisation_from_id(session, organisation_id):
         return organisation if same_org else make_organisation()
 
-    monkeypatch.setattr("backend.api.routes.users.organisation_from_id", fake_organisation_from_id)
+    mock_session = override_session
+    mock_session.get.side_effect = fake_organisation_from_id
 
     user = make_user(organisation_id=organisation.id, roles=user_roles)
     app.dependency_overrides[get_current_user] = lambda: user
