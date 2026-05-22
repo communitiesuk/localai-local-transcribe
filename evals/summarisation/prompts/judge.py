@@ -5,6 +5,7 @@ LLM judge prompt templates aligned with the AIILG-457 HLD rubric (v1.0).
 from __future__ import annotations
 
 from pathlib import Path
+
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 _TEMPLATE_DIR = Path(__file__).parent
@@ -56,9 +57,10 @@ DIMENSIONS: dict[str, dict] = {
 }
 
 CRITICAL_DIMENSIONS: frozenset[str] = frozenset({"accuracy", "action_clarity", "numerical_accuracy"})
-CRITICAL_THRESHOLD: int = 4  
-REVIEW_THRESHOLD: int = 2  
-FAIL_THRESHOLD: int = 1  
+CRITICAL_THRESHOLD: int = 4
+REVIEW_THRESHOLD: int = 2
+FAIL_THRESHOLD: int = 1
+
 
 def build_system_prompt(target_dimension: str | None = None) -> str:
     """Render and return the SYSTEM turn for a single specific dimension."""
@@ -68,6 +70,7 @@ def build_system_prompt(target_dimension: str | None = None) -> str:
         dimensions=DIMENSIONS,
         critical_dimensions=sorted(CRITICAL_DIMENSIONS),
     )
+
 
 def build_user_message(
     *,
