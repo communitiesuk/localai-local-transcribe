@@ -15,7 +15,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from evals.summarisation.judge.prompts import (
+from evals.summarisation.prompts.judge import (
     CRITICAL_DIMENSIONS,
     CRITICAL_THRESHOLD,
     DIMENSIONS,

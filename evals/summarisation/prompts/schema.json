@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DimensionEvaluation",
+  "description": "LLM judge output for a single rubric dimension evaluation.",
+  "type": "object",
+  "required": ["score", "rationale", "evidence"],
+  "additionalProperties": false,
+  "properties": {
+    "score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 20,
+      "description": "How the evidence maps to the rubric criteria."
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Short quotes or pointers from the summary or transcript."
+    }
+  }
+}

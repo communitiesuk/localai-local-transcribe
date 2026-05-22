@@ -16,7 +16,7 @@ from dspy.evaluate import Evaluate
 
 from common.database.postgres_models import DialogueEntry, HallucinationType
 from common.settings import get_settings
-from evals.summarisation.judge.prompts import build_system_prompt, build_user_message
+from evals.summarisation.prompts.judge import build_system_prompt, build_user_message
 from evals.summarisation.src.common import (
     AppConfig,
     DialogExample,

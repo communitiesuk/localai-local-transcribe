@@ -1,0 +1,13 @@
+SOURCE TRANSCRIPT
+────────────────────────────────────────
+{{ transcript_text | trim }}
+
+SUMMARY UNDER EVALUATION
+────────────────────────────────────────
+{{ summary_text | trim }}
+
+{% if template_name -%}
+Template in use: {{ template_name }}
+{%- else -%}
+Template: not specified — evaluate against general UK public-sector case-note standards.
+{%- endif %}
