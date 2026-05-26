@@ -74,10 +74,10 @@ graph TD
     WSC --> GATE
     GATE --> WSD
 
-    WS5 -.parallel.-> GATE
-    WS4 -.parallel.-> WSD
-    WSB -.parallel.-> WSD
-    WS6 -.if in scope.-> WSD
+    WS5 -. parallel .-> GATE
+    WS4 -. parallel .-> WSD
+    WSB -. parallel .-> WSD
+    WS6 -. if in scope .-> WSD
 
     style GATE fill:#2e7d32,color:#fff
     style WS7 fill:#fff3e0
