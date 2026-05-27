@@ -5,13 +5,12 @@ import logging
 import re
 from collections.abc import Awaitable, Callable
 
-# Import the synchronous OpenAI client instead of AsyncOpenAI
 from openai import (
     APIConnectionError,
     APIError,
     APITimeoutError,
+    AsyncOpenAI,
     AuthenticationError,
-    OpenAI,
     RateLimitError,
 )
 from openai.types.chat import ChatCompletion, ParsedChatCompletion
@@ -44,20 +43,17 @@ class AzureAPIMModelAdapter(ModelAdapter):
         self._url = url
         self._subscription_key = subscription_key
         self._token_provider = token_provider
-        self._cached_apim_client: OpenAI | None = None
+        self._cached_async_apim_client: AsyncOpenAI | None = None
 
-    async def _get_apim_client(self) -> OpenAI:
+    async def _get_apim_client(self) -> AsyncOpenAI:
         logger.info("APIM CLIENT: retrieving APIM client token")
 
-        # We fetch the token asynchronously since the provider is async
         token = await self._token_provider.get_token()
 
-        if self._cached_apim_client is None or self._cached_apim_client.api_key != token:
-            logger.info("APIM CLIENT: creating new OpenAI client")
+        if self._cached_async_apim_client is None or self._cached_async_apim_client.api_key != token:
+            logger.info("APIM CLIENT: creating new AsyncOpenAI client")
 
-            # We instantiate the synchronous client. No event loops are registered,
-            # which permanently eliminates any "Event loop is closed" warnings.
-            self._cached_apim_client = OpenAI(
+            self._cached_async_apim_client = AsyncOpenAI(
                 base_url=self._url + self._model,
                 api_key=token,
                 default_headers={
@@ -66,7 +62,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 max_retries=0,
             )
 
-        return self._cached_apim_client
+        return self._cached_async_apim_client
 
     async def structured_chat[T](
         self,
@@ -75,12 +71,10 @@ class AzureAPIMModelAdapter(ModelAdapter):
     ) -> T:
         openai_messages = [convert_to_openai_message(msg) for msg in messages]
 
-        # The call is technically wrapped in an async def to match the interface,
-        # but the network operation runs synchronously and safely.
         async def call() -> ParsedChatCompletion[T]:
             client = await self._get_apim_client()
 
-            return client.beta.chat.completions.parse(
+            return await client.beta.chat.completions.parse(
                 model=self._model,
                 messages=openai_messages,
                 response_format=response_format,
@@ -120,7 +114,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
         async def call() -> ChatCompletion:
             client = await self._get_apim_client()
 
-            return client.chat.completions.create(
+            return await client.chat.completions.create(
                 model=self._model,
                 messages=openai_messages,
                 temperature=temperature,
@@ -186,7 +180,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 )
 
                 await self._token_provider.invalidate_token()
-                self._cached_apim_client = await self._get_apim_client()
+                self._cached_async_apim_client = await self._get_apim_client()
 
                 if attempt == MAX_RETRIES - 1:
                     logger.error("APIM FAILURE: %s - max retries exceeded due to authentication errors", method_name)
