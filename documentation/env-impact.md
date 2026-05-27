@@ -14,45 +14,30 @@ This assessment focuses on **operational energy use and associated CO₂-equival
 
 ## 2. Non-AI Components
 
-### 2.1 Deterministic system elements
+### 2.1 Infrastructure components
 
-The deterministic portion of the system consists of:
+The non-AI infrastructure consists of worker processes, back-end services, front-end applications, databases (RDS), queues, load balancers, and S3 storage. Audio processing uses FFmpeg to convert uploads to mono MP3 at 192k bitrate before transcription; files already in the target format skip conversion. All of this runs on AWS and is captured in the measured monthly emissions reported in §2.2.
 
-* Worker processes
-* Back-end services
-* Front-end applications
-* Database systems
-* Queues and messaging infrastructure
-* Load balancers and supporting services
+The primary environmental lever for this layer is infrastructure placement: selecting regions with lower grid carbon intensity and providers with transparent sustainability reporting. AWS publishes market-based (MBM) figures that account for its renewable energy certificate purchases, making its reported footprint lower than a raw grid-average calculation would suggest.
 
-These components consume electricity and require cooling in common with most cloud-hosted IT systems. There is little evidence to suggest that this part of the system is significantly more resource-intensive than typical enterprise or public-sector cloud deployments.
+### 2.2 Measured AWS Infrastructure Carbon Footprint
 
-### 2.2 Audio processing
+The AWS Sustainability API provides vendor-measured estimates of the carbon footprint of all AWS services consumed by the account each month. This covers the infrastructure described in §2.1 — EC2 worker instances, RDS databases, S3 storage, ALBs, audio processing, and supporting services.
 
-The system uses FFmpeg to convert uploaded audio and video files into a standardized format for transcription. The current production workflow converts any format to mono MP3 at 192k bitrate using the libmp3lame encoder. Files already in the target format skip conversion.
+> **Scope boundary:** This figure covers only AWS-hosted infrastructure. The AI workloads described in §3 — Azure Speech-to-Text transcription and OpenAI/Azure LLM inference — are operated by their respective providers and are **not reflected** in the AWS figures below. The figures here represent the non-AI "back-end" footprint only.
 
-While the conversion workflow is standard, observed production costs suggest significant computational resource requirements. Exact environmental impact estimation is not currently feasible.
+#### April 2026 (most recent complete month)
 
-**Under investigation:**
+| Method | MTCO2e | kg CO₂e | g CO₂e |
+|--------|-------:|--------:|-------:|
+| Location-based (LBM) | 0.064309 | 64.3 | 64,309 |
+| Market-based   (MBM) | 0.017317 | 17.3 | 17,317 |
 
-The team is researching optimizations to reduce processing costs and environmental impact, separated from implementation to avoid affecting production:
+AWS model version: v3.0.1
 
-* Alternative encoders that may be more efficient while maintaining transcription quality
-* Skipping conversions for formats already supported by Azure Speech-to-Text services
-* Optimizing bitrate and encoding parameters based on transcription service requirements
+**MBM** (market-based method) subtracts renewable energy certificates (RECs) purchased by AWS; it is the appropriate figure when comparing against a provider that actively purchases clean energy, as AWS does.  
+**LBM** (location-based method) uses regional grid-average carbon intensity and is shown for reference only.
 
-The production system will continue using MP3 conversion at 192k bitrate until research is completed and validated.
-
-### 2.3 Optimisation opportunities
-
-**Limited gains through code optimisation**
-While software optimisation may marginally reduce compute requirements, the potential environmental benefit is expected to be limited relative to engineering cost, particularly where deterministic components do not dominate total system energy use.
-
-**Cloud provider and region selection**
-The most effective lever for reducing environmental impact in this area is infrastructure placement and provider choice, including:
-
-* Selecting regions with lower grid carbon intensity
-* Preferring providers that publish or are subject to energy and sustainability reporting
 
 ---
 
@@ -204,6 +189,8 @@ Applying production usage shares (Appendix F.1):
 **Template variation:** The range across templates is **15–41 g CO₂e** — a 2.7× spread. Templates are far more similar than the invocation count suggests, because the hallucination check contributes minimal tokens (a 17-word structured call with no conversation history) and the citations pipeline (the main differentiator between SimpleTemplate and Short 'n' Sweet) adds only ~31 Wh. Basic Minutes is the only significant outlier due to its FAST-only processing.
 
 **Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. Its share of total emissions ranges from 15% (SimpleTemplate) to 38% (Basic Minutes).
+
+**Infrastructure vs. AI processing cost:** The AWS hosting layer (§2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **453 complete 1-hour meetings**. The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). Together they represent the full system footprint; on a market-adjusted basis, infrastructure overhead is within the same order of magnitude as AI inference costs and is not negligible. Run `documentation/env_assets/aws_carbon.py` to recompute against the latest month.
 
 ---
 
@@ -891,4 +878,3 @@ Applying the combined shares from F.2.1:
 [22] Netrality Data Centers, "High-Density Colocation for AI and GPU Workloads," 2025. [Online]. Available: https://netrality.com/blog/high-density-colocation-ai-gpu-infrastructure/
 
 [23] Microsoft, “Microsoft Teams surpasses 300 million monthly active users,” *Microsoft FY2023 Q3 Earnings Conference Call Transcript*, Apr. 2023. [Online]. Available: https://www.microsoft.com/en-us/investor/events/fy-2023/earnings-fy-2023-q3/ :contentReference[oaicite:0]{index=0}
-
