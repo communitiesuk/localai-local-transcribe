@@ -177,9 +177,7 @@ def run_eval(
     devset = _to_dspy_devset(examples)
 
     model_name = get_settings().FAST_LLM_MODEL_NAME
-    model_temp = get_settings().FAST_LLM_TEMPERATURE
     template_name = cfg.prompts.summarizer_template_name
-
     metrics = build_metrics(cfg)
     hallucination_enabled = cfg.hallucination.enabled
 
