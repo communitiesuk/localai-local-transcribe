@@ -1,16 +1,3 @@
-"""
-evals/summarisation/fixtures/summary_pairs.py
-=============================================
-Reference fixtures for manual and automated judge testing.
-
-Each entry contains a transcript excerpt, a GOOD summary (expected ≥ 4 on
-the primary dimension) and a BAD summary (expected ≤ 2), along with expected
-score bounds used by the live test suite.
-
-All scenarios are grounded in realistic Local Authority housing / social care
-contexts and mirror the worked examples in AIILG-457 HLD sections 3.1.a-h.
-"""
-
 from __future__ import annotations
 
 from typing import TypedDict

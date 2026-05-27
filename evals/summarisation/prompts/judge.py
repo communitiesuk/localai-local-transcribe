@@ -1,7 +1,3 @@
-"""
-LLM judge prompt templates aligned with the AIILG-457 HLD rubric (v1.0).
-"""
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -18,9 +14,6 @@ _env = Environment(
     lstrip_blocks=True,
 )
 
-# ---------------------------------------------------------------------------
-# Rubric dimension registry (Structural Metadata Only)
-# ---------------------------------------------------------------------------
 DIMENSIONS: dict[str, dict] = {
     "accuracy": {
         "label": "Factual Accuracy",

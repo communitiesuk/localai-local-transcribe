@@ -10,7 +10,7 @@ from openai.types.chat.chat_completion import Choice
 from common.settings import get_settings
 
 from .base import ModelAdapter
-from .llm_constants import MAX_COMPLETION_TOKENS, TEMPERATURE
+from .llm_constants import MAX_COMPLETION_TOKENS, BEST_LLM_TEMPERATURE, FAST_LLM_TEMPERATURE
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -49,10 +49,15 @@ class OpenAIModelAdapter(ModelAdapter):
         return cast(T, parsed)
 
     async def chat(self, messages: list[dict[str, str]]) -> str:
+        if self._model.startswith("gpt-5"):
+            temperature = FAST_LLM_TEMPERATURE
+        else:
+            temperature = BEST_LLM_TEMPERATURE
+
         response = await self.async_azure_client.chat.completions.create(
             model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),
-            temperature=TEMPERATURE,
+            temperature=temperature,
             max_tokens=MAX_COMPLETION_TOKENS,
         )
         choice = response.choices[0]

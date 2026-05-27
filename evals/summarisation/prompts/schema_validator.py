@@ -1,13 +1,3 @@
-"""
-evals/summarisation/judge/schema_validator.py
-=============================================
-Validates LLM judge output against the SummarisationEvaluation JSON Schema
-and enforces the business-logic gates from AIILG-457 HLD section 4.
-
-Public API
-----------
-validate_evaluation(data: dict) -> ValidationResult
-"""
 
 from __future__ import annotations
 

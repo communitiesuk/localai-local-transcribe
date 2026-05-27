@@ -176,7 +176,8 @@ def run_eval(
     examples = _load_data_pairs(cfg, split=split, limit=limit)
     devset = _to_dspy_devset(examples)
 
-    model_name = get_settings().BEST_LLM_MODEL_NAME
+    model_name = get_settings().FAST_LLM_MODEL_NAME
+    model_temp = get_settings().FAST_LLM_TEMPERATURE
     template_name = cfg.prompts.summarizer_template_name
 
     metrics = build_metrics(cfg)
@@ -199,7 +200,7 @@ def run_eval(
                 summary=generated.text,
                 model=model_name,
                 prompt_version=prompt_version,
-                generation_config=GenerationConfig(temperature=0.0, max_tokens=1024),
+                generation_config=GenerationConfig(temperature=1, max_tokens=1024),
             )
             return dspy.Prediction(
                 summary=generated.text,

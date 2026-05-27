@@ -113,6 +113,10 @@ class Settings(BaseSettings):
         description="Fast LLM model name to use. Note that this should be used for low complexity LLM tasks.",
         default="gpt-5-nano",
     )
+    FAST_LLM_TEMPERATURE: float = Field(
+        description="Default temperature to use for the fast LLM",
+        default=1
+    )
     BEST_LLM_PROVIDER: str = Field(
         description="Best LLM provider to use. Currently 'openai', 'azure_apim', and 'gemini' are supported. Note that "
         "this should be used for higher complexity LLM tasks, like initial minute generation.",
@@ -123,7 +127,10 @@ class Settings(BaseSettings):
         "initial minute generation.",
         default="gpt5-1",
     )
-
+    BEST_LLM_TEMPERATURE: float = Field(
+        description="Default temperature to use for the best LLM",
+        default=0.0
+    )
     STORAGE_SERVICE_NAME: str = Field(
         description="Storage service type to use for file uploads. Currently supported are: s3, azure-blob",
         default="s3",

@@ -21,7 +21,7 @@ from common.azure_apim_auth import AzureTokenProvider
 from common.settings import get_settings
 
 from .base import ModelAdapter
-from .llm_constants import MAX_COMPLETION_TOKENS, TEMPERATURE
+from .llm_constants import MAX_COMPLETION_TOKENS, FAST_LLM_TEMPERATURE, BEST_LLM_TEMPERATURE
 from .message_utils import convert_to_openai_message
 
 logger = logging.getLogger(__name__)
@@ -115,13 +115,18 @@ class AzureAPIMModelAdapter(ModelAdapter):
     ) -> str:
         openai_messages = [convert_to_openai_message(msg) for msg in messages]
 
+        if self._model.startswith("gpt-5"):
+            temperature = FAST_LLM_TEMPERATURE
+        else:
+            temperature = BEST_LLM_TEMPERATURE
+
         async def call() -> ChatCompletion:
             client = await self._get_apim_client()
 
             return client.chat.completions.create(
                 model=self._model,
                 messages=openai_messages,
-                temperature=TEMPERATURE,
+                temperature=temperature,
                 max_completion_tokens=MAX_COMPLETION_TOKENS,
                 extra_query={"api-version": self._api_version},
             )
