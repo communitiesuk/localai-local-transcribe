@@ -50,5 +50,7 @@ class EvalRecord(BaseModel):
     example: DialogExample
     candidate: DialogSummary
     metrics: dict[str, MetricResult]
+    needs_review: bool
+    review_reasons: list[str]
     latency_ms: dict[str, int]
     error: dict[str, str] | None = None

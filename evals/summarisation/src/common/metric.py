@@ -1,15 +1,45 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 
 import dspy
+from pydantic import BaseModel, ConfigDict, Field
 
-from common.settings import get_settings
+from evals.summarisation.prompts.judge import build_system_prompt, build_user_message
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
 from evals.summarisation.src.common.config import AppConfig
-from evals.summarisation.src.common.dspy_wrapper import DSPyModelAdapterWrapper
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
-from evals.summarisation.src.common.signatures import JudgeRatingSignature
+
+
+class DimensionEvaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(description="The name of the evaluation dimension (e.g. clarity, correctness).")
+    rationale: str = Field(description="The rationale behind the score.")
+    score: int = Field(description="The score assigned to this dimension.", ge=1, le=5)
+
+
+class RubricEvaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    dimensions: list[DimensionEvaluation] = Field(description="A list of evaluation dimension scores and rationales.")
+
+
+async def call_llm_judge(system: str, user: str) -> dict:
+    adapter = build_azure_apim_adapter()
+
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+    response = await adapter.structured_chat(messages, RubricEvaluation)
+
+    dimensions_dict = {}
+    for item in response.dimensions:
+        dimensions_dict[item.name] = {"score": item.score, "rationale": item.rationale}
+
+    return {"dimensions": dimensions_dict}
 
 
 @dataclass(frozen=True)
@@ -19,7 +49,7 @@ class DialogSummaryMetric:
     name: str
     criterion: str
     pass_threshold: int
-    lm: dspy.LM
+    lm: dspy.LM | None = None
 
     def evaluate(
         self,
@@ -27,20 +57,37 @@ class DialogSummaryMetric:
         example: DialogExample,
         prediction: dspy.Prediction,
     ) -> MetricResult:
-        """Evaluates prediction against example using judge LLM for specific criterion."""
-        with dspy.context(lm=self.lm):
-            pred = dspy.Predict(JudgeRatingSignature)(
-                dialogue=example.dialogue,
-                reference_summary=example.reference_summary,
-                candidate_summary=prediction.summary,
-                criterion=self.criterion,
+        """Evaluates prediction against example using rubric judge LLM for specific criterion."""
+        sys_prompt = build_system_prompt()
+        user_msg = build_user_message(
+            summary_id=example.example_id,
+            transcript_ref=str(example.example_id),
+            transcript_text=example.dialogue,
+            summary_text=prediction.summary,
+        )
+
+        rubric_evaluation = asyncio.run(call_llm_judge(sys_prompt, user_msg))
+
+        rubric_dim = self.criterion
+        # Map configured metric names to rubric dimension names
+        if rubric_dim == "faithfulness":
+            rubric_dim = "accuracy"
+        elif rubric_dim in ("conciseness", "coherence"):
+            rubric_dim = "readability"
+
+        dim_eval = rubric_evaluation["dimensions"].get(rubric_dim)
+        if dim_eval is None:
+            return MetricResult(
+                score=0.0,
+                reason=f"Dimension '{rubric_dim}' not found in rubric evaluation.",
             )
 
-        rating = int(pred.rating)
-        passed = rating >= self.pass_threshold
+        score = int(dim_eval["score"])
+        scaled_score = (score - 1) / 4.0
+
         return MetricResult(
-            score=1.0 if passed else 0.0,
-            reason=f"rating={rating} threshold={self.pass_threshold} :: {pred.reason}",
+            score=scaled_score,
+            reason=f"rubric_{rubric_dim}_score={score} :: {dim_eval['rationale']}",
         )
 
 
@@ -48,17 +95,18 @@ def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:
     """Builds list of judge metrics from configuration."""
     metrics: list[DialogSummaryMetric] = []
 
-    settings = get_settings()
-    adapter = build_azure_apim_adapter()
-    judge_lm = DSPyModelAdapterWrapper(adapter=adapter, model_name=settings.BEST_LLM_MODEL_NAME)
-
     for name in cfg.metrics:
+        rubric_dim = name
+        if name == "faithfulness":
+            rubric_dim = "accuracy"
+        elif name in ("conciseness", "coherence"):
+            rubric_dim = "readability"
+
         metrics.append(
             DialogSummaryMetric(
-                name=f"judge_{name}",
+                name=f"rubric_{rubric_dim}",
                 criterion=name,
                 pass_threshold=cfg.judge.pass_threshold,
-                lm=judge_lm,
             )
         )
 

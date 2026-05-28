@@ -48,6 +48,8 @@ def test_eval_record_contract_serializes_to_json():
         example=example,
         candidate=candidate,
         metrics=metrics,
+        needs_review=False,
+        review_reasons=[],
         latency_ms={"summarize": 1000, "judge": 500},
         error=None,
     )
@@ -100,6 +102,8 @@ def test_eval_record_contract_handles_errors():
         example=example,
         candidate=candidate,
         metrics={},
+        needs_review=False,
+        review_reasons=[],
         latency_ms={},
         error={"type": error_type, "message": "Rate limit exceeded"},
     )
@@ -110,6 +114,8 @@ def test_eval_record_contract_handles_errors():
         example=example,
         candidate=candidate,
         metrics={},
+        needs_review=False,
+        review_reasons=[],
         latency_ms={},
         error=None,
     )

@@ -185,12 +185,10 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     mock_split.select = Mock(return_value=mock_rows)
     mock_split.__len__ = Mock(return_value=1)
 
-    mock_metric = MagicMock()
-    mock_metric.name = "faithfulness"
-    mock_metric.evaluate.return_value = Mock(score=1.0, reason="Good")
-
     mock_evaluator = MagicMock()
     mock_evaluator.return_value = 0.95
+
+    mock_rubric = {"dimensions": {"accuracy": {"score": 5, "rationale": "excellent"}}}
 
     with (
         patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}),
@@ -199,11 +197,16 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
             new_callable=AsyncMock,
             return_value=("Generated summary [1]", 5, []),
         ),
-        patch("evals.summarisation.src.optimisation.runner.build_metrics", return_value=[mock_metric]),
+        patch(
+            "evals.summarisation.src.optimisation.runner.call_llm_judge",
+            new_callable=AsyncMock,
+            return_value=mock_rubric,
+        ),
         patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
         patch("evals.summarisation.src.optimisation.runner.Evaluate", return_value=mock_evaluator),
     ):
         mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
+        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-fast-model"
 
         run_id, results_path, summary_path, hallucination_inputs_path = run_eval(
             cfg,
@@ -224,7 +227,7 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
 async def test_call_llm_judge():
     from unittest.mock import AsyncMock, patch
 
-    from evals.summarisation.src.optimisation.runner import (
+    from evals.summarisation.src.common.metric import (
         DimensionEvaluation,
         RubricEvaluation,
         call_llm_judge,
@@ -238,7 +241,7 @@ async def test_call_llm_judge():
     mock_adapter.structured_chat.return_value = mock_response
 
     # 3. Patch the adapter factory and execute
-    with patch("evals.summarisation.src.optimisation.runner.build_azure_apim_adapter", return_value=mock_adapter):
+    with patch("evals.summarisation.src.common.metric.build_azure_apim_adapter", return_value=mock_adapter):
         result = await call_llm_judge("system prompt", "user prompt")
 
     # 4. Assert against the expected structured output schema
