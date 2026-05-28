@@ -4,6 +4,8 @@ import asyncio
 import re
 import time
 import uuid
+from collections import defaultdict
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
@@ -39,6 +41,7 @@ class _RunSummary(TypedDict):
     overall: float | None
     metrics: dict[str, dict[str, float]]
     latency_ms: dict[str, int]
+    review: dict[str, float | int]
 
 
 def _utc_now() -> datetime:
@@ -118,13 +121,30 @@ def _p50(values: list[int]) -> int:
     return int(values_sorted[len(values_sorted) // 2])
 
 
-def run_eval(
+def initialise_eval(
     cfg: AppConfig,
     *,
     split: str,
     limit: int | None,
     prompt_version: str,
-) -> tuple[str, Path, Path, Path]:
+) -> tuple[
+    str,
+    Path,
+    Path,
+    Path,
+    list[dspy.Example],
+    Callable[[str], dspy.Prediction],
+    asyncio.AbstractEventLoop,
+    list[EvalRecord],
+    list[HallucinationInput],
+    list[int],
+    list[int],
+    list[bool],
+    dict[str, list[int]],
+    str,
+    str,
+    bool,
+]:
     run_id = str(uuid.uuid4())
     _, results_path, summary_path, hallucination_inputs_path = _prepare_run_paths(cfg, run_id)
 
@@ -140,7 +160,7 @@ def run_eval(
     summarize_ms_values: list[int] = []
     judge_ms_values: list[int] = []
     review_flags: list[bool] = []
-    metric_scores: dict[str, list[float]] = {}
+    metric_scores = defaultdict(list)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
@@ -165,6 +185,40 @@ def run_eval(
 
     program = _Program()
 
+    return (
+        run_id,
+        results_path,
+        summary_path,
+        hallucination_inputs_path,
+        devset,
+        program,
+        loop,
+        records,
+        hallucination_inputs,
+        summarize_ms_values,
+        judge_ms_values,
+        review_flags,
+        metric_scores,
+        model_name,
+        template_name,
+        hallucination_enabled,
+    )
+
+
+def build_metric_function(
+    *,
+    loop,
+    run_id,
+    results_path,
+    records,
+    hallucination_inputs,
+    summarize_ms_values,
+    judge_ms_values,
+    review_flags,
+    metric_scores,
+    model_name,
+    hallucination_enabled,
+):
     def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
         ex = DialogExample(
             example_id=str(gold.example_id),
@@ -192,8 +246,6 @@ def run_eval(
         judge_ms_values.append(judge_ms)
 
         for name, res in metrics_out.items():
-            if name not in metric_scores:
-                metric_scores[name] = []
             metric_scores[name].append(res.score)
 
         candidate = pred.candidate
@@ -240,11 +292,24 @@ def run_eval(
             return float(sum(rubric_vals) / len(rubric_vals))
         return 0.0
 
-    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True, display_table=5, provide_traceback=True)
-    evaluator(program, metric=_metric)
+    return _metric
 
-    _maybe_flush_records(results_path, records, flush_every=1)
 
+def build_metric_summary(
+    *,
+    run_id,
+    split,
+    devset,
+    metric_scores,
+    review_flags,
+    summarize_ms_values,
+    judge_ms_values,
+    summary_path,
+    results_path,
+    hallucination_inputs_path,
+    hallucination_inputs,
+    loop,
+):
     metrics_summary: dict[str, dict[str, float]] = {
         name: {"mean": float(int(sum(vals) / len(vals)) if vals else 0)} for name, vals in metric_scores.items()
     }
@@ -275,3 +340,59 @@ def run_eval(
     )
     loop.close()
     return run_id, results_path, summary_path, hallucination_inputs_path
+
+
+def run_eval(cfg: AppConfig, *, split: str, limit: int | None, prompt_version: str):
+    (
+        run_id,
+        results_path,
+        summary_path,
+        hallucination_inputs_path,
+        devset,
+        program,
+        loop,
+        records,
+        hallucination_inputs,
+        summarize_ms_values,
+        judge_ms_values,
+        review_flags,
+        metric_scores,
+        model_name,
+        template_name,
+        hallucination_enabled,
+    ) = initialise_eval(cfg, split=split, limit=limit, prompt_version=prompt_version)
+
+    metric_fn = build_metric_function(
+        loop=loop,
+        run_id=run_id,
+        results_path=results_path,
+        records=records,
+        hallucination_inputs=hallucination_inputs,
+        summarize_ms_values=summarize_ms_values,
+        judge_ms_values=judge_ms_values,
+        review_flags=review_flags,
+        metric_scores=metric_scores,
+        model_name=model_name,
+        hallucination_enabled=hallucination_enabled,
+    )
+
+    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True)
+    evaluator(program, metric=metric_fn)
+
+    if records:
+        write_jsonl(results_path, (r.model_dump(by_alias=True) for r in records))
+
+    return build_metric_summary(
+        run_id=run_id,
+        split=split,
+        devset=devset,
+        metric_scores=metric_scores,
+        review_flags=review_flags,
+        summarize_ms_values=summarize_ms_values,
+        judge_ms_values=judge_ms_values,
+        summary_path=summary_path,
+        results_path=results_path,
+        hallucination_inputs_path=hallucination_inputs_path,
+        hallucination_inputs=hallucination_inputs,
+        loop=loop,
+    )
