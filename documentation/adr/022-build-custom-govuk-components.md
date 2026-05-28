@@ -1,4 +1,4 @@
-# ADR-022: Build custom govuk-compliant React components (drop shadcn, keep Radix for exceptions)
+# ADR-022: Gov.UK Design System Components
 
 ## Status
 
@@ -8,7 +8,12 @@ Date of decision: 2026-05-26
 
 ## Context and Problem Statement
 
-Local Transcribe must comply with GDS service standards, which means adopting the GOV.UK Design System for user-facing patterns. The current frontend (generated from the i.AI cookiecutter) mixes three styling layers: `govuk-frontend` v6.1.0 (installed but used only in the layout shell and one editor warning list), 22 shadcn-style React components in `components/ui/` each wrapping a Radix primitive with Tailwind styling, and Tailwind v4 utility classes applied throughout. There is no documented convention on which layer to reach for, which puts the service at risk of failing the GDS compliance check on visual and accessibility consistency. We need a formal decision on how to bring the frontend into GOV.UK Design System compliance.
+Local Transcribe aims to comply with GDS service standards, which means aligning with the GOV.UK Design System for user-facing patterns.
+The current frontend (generated from the i.AI cookiecutter) mixes three styling layers:
+-  `govuk-frontend` v6.1.0 (installed but used only in the layout shell and one editor warning list)
+- 22 shadcn-style React components in `components/ui/` each wrapping a Radix primitive with Tailwind styling
+- Tailwind v4 utility classes applied throughout.
+There is no documented convention on which layer to reach for. We need to provide users with a simple reliable accessible interface with minimal effort while improving visual and accessibility consistency. We need to do this efficiently.
 
 ## Considered Options
 
@@ -23,13 +28,15 @@ Build our own thin React wrappers around `govuk-frontend`, drop the shadcn styli
 
 Three threads make up the decision:
 
-1. **Build our own govuk components.** Thin React wrappers around `govuk-frontend` HTML and CSS, living in `frontend/components/govuk/`, following the pattern already used in the layout shell. We control the upgrade cadence directly. The wrappers are mostly `className` composition and ARIA passthrough, so the maintenance burden is small. The evidence for rejecting community libraries lives in [`documentation/library-evaluation.md`](../library-evaluation.md) and is summarised in the Pros and Cons section below.
-2. **Drop shadcn.** Its purpose was to give Radix a visual style. Once `govuk-frontend` is the source of styling, shadcn's role evaporates. The 22 components in `components/ui/` get migrated to `components/govuk/` for anything with a GOV.UK Design System equivalent, and the rest are reclassified as Radix-only.
+1. **Build our own govuk components.** Thin React wrappers around `govuk-frontend` because `GOV.UK` Design System brings reliability accesibility out of the box. The research around the libraries considered lives in [`documentation/library-evaluation.md`](../library-evaluation.md) and is summarised in the Pros and Cons section below.
+
+2. **Drop shadcn.** Its purpose was to give Radix a visual style. Once `govuk-frontend` is the source of styling, everything has a GOV.UK Design System equivalent, and the rest are reclassified as Radix-only.
+
 3. **Keep Radix only for primitives where `govuk-frontend` has no equivalent.** Dialogs, popovers, tooltips, and the complex menus inside the rich-text editor have no GOV.UK Design System counterpart. Radix primitives are the most accessible unstyled primitives in the React ecosystem and remain the right tool for those gaps. The boundary is documented in the conventions doc that ships with the rewrite.
 
 ## Pros and Cons of the Options
 
-### Build our own thin React wrappers around `govuk-frontend` (chosen)
+### Build our own thin React wrappers around `govuk-frontend`
 
 The Design System ships as Nunjucks templates and CSS. We import the CSS in `app/govuk.scss` (already done) and write thin React wrappers around the HTML structure each component expects. The layout shell already follows this pattern.
 
@@ -40,7 +47,7 @@ The Design System ships as Nunjucks templates and CSS. We import the CSS in `app
 * Neutral, because we own a small library of wrappers (perhaps 15 to 20 components by the time we are done).
 * Bad, because in-house code is in-house code: bugs, drift, and onboarding cost are ours.
 
-### Adopt an existing community React govuk-frontend library (rejected)
+### Adopt an existing community React govuk-frontend library
 
 We evaluated six public candidates: `govuk-react`, `LandRegistry/govuk-react-components`, `@rottitime/govuk-design-react`, `penx/govuk-frontend-react`, `pa-digital/govuk-frontend-react`, `surevine/govuk-react-jsx`. The full matrix lives at `documentation/library-evaluation.md`. Headline reasons each was discounted:
 
@@ -56,14 +63,14 @@ We evaluated six public candidates: `govuk-react`, `LandRegistry/govuk-react-com
 * Bad, because adopting any candidate couples our upgrade pace to a third-party maintainer team whose posture we do not control.
 * Bad, because the surevine evidence shows the failure mode: community libraries that reach significant download volumes and then stall force their consumers onto an obsolete `govuk-frontend` major with no upgrade path.
 
-### Continue with shadcn and custom styling (rejected)
+### Continue with shadcn and custom styling
 
 Keep the existing mix of shadcn / Radix / Tailwind / `govuk-frontend` without convention.
 
 * Bad, because this is the problem the ADR is solving. The current state already fails to meet GDS compliance on visual and accessibility consistency.
 * Bad, because shadcn was never designed to produce GOV.UK Design System markup. Achieving compliance through shadcn would mean restyling every component to the GOV.UK token system, which is the same amount of work as building wrappers around `govuk-frontend`, but with the wrong HTML.
 
-### Use GOV.UK Prototype Kit components (rejected)
+### Use GOV.UK Prototype Kit components
 
 The Prototype Kit ships Nunjucks-based components (`@x-govuk/govuk-prototype-components`) intended for rapid prototyping rather than production React applications.
 
@@ -71,13 +78,6 @@ The Prototype Kit ships Nunjucks-based components (`@x-govuk/govuk-prototype-com
 * Bad, because they are Nunjucks templates, not React components. Integrating Nunjucks into a Next.js App Router app would require a parallel rendering pipeline.
 * Bad, because the Prototype Kit is explicitly positioned for prototyping. Five MHCLG repos use it for prototypes, none for production frontends.
 
-## Trade-offs
-
-The chosen option carries three trade-offs worth recording explicitly:
-
-* **Time cost.** Phase 0 of the rewrite (layout shell rewrite plus the minimum four form wrappers plus the worked example) is roughly one sprint with two people running in parallel. The full rewrite spans multiple sprints depending on parallelism. The critical path analysis at `documentation/critical-path-analysis.md` gives the workstream breakdown.
-* **Maintenance burden.** We own a library of roughly 15 to 20 React wrappers. Each is thin (mostly `className` composition and ARIA passthrough), so the per-wrapper burden is small, but the team is responsible for following `govuk-frontend` releases and updating the wrappers when component contracts change.
-* **Drift risk against upstream `govuk-frontend`.** If a `govuk-frontend` minor or major changes the HTML structure of a component, our wrapper has to be updated to match. The mitigation is to keep wrappers thin (so the change surface is small) and to track `govuk-frontend` releases.
 
 ## More Information
 
