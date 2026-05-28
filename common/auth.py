@@ -1,11 +1,10 @@
 import logging
 from dataclasses import dataclass
-from uuid import UUID
 
 import jwt
 import requests
 
-from common.database.postgres_models import User, UserRole
+from common.database.postgres_models import Organisation, User, UserRole
 from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings
 
@@ -100,7 +99,7 @@ def is_system_admin(user: User) -> bool:
     return UserRole.MHCLG_SUPPORT_ADMIN in user.roles
 
 
-def is_admin_for_org(user: User, organisation_id: UUID) -> bool:
+def is_admin_for_org(user: User, organisation: Organisation) -> bool:
     return is_system_admin(user) or (
-        user.organisation_id == organisation_id and UserRole.LOCAL_AUTHORITY_ADMIN in user.roles
+        user.organisation_id == organisation.id and UserRole.LOCAL_AUTHORITY_ADMIN in user.roles
     )
