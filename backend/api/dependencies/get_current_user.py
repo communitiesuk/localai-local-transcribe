@@ -31,6 +31,7 @@ async def get_current_user(
     try:
         user_auth_info = get_user_info(authorization)
         email = user_auth_info.email
+        subject_id = user_auth_info.subject_id
 
         if not user_auth_info.is_authorised:
             logger.info("User {email} does not have the required permissions", email=email)
@@ -48,6 +49,12 @@ async def get_current_user(
         if not user:
             # Create new user if doesn't exist
             user = User(email=email)
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
+
+        if user.subject_id is None:
+            user.subject_id = subject_id
             session.add(user)
             await session.commit()
             await session.refresh(user)
