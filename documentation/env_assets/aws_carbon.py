@@ -26,9 +26,12 @@ from pathlib import Path
 # imported whether this script is run from the project root or anywhere else.
 sys.path.insert(0, str(Path(__file__).parent))
 from calculations import (  # noqa: E402
+    HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR,
     NUM_SECTIONS,
     TRANSCRIPT_WORDS,
+    WORKING_HOURS_PER_DAY,
     combined_impact,
+    homeworking_displacement,
     transcription_impact,
     usage_weighted_impact,
 )
@@ -186,6 +189,42 @@ def print_report() -> None:
         print("  ⚠  AWS figure = all account services (EC2, RDS, S3, networking, …).")
         print("  AI figure = transcription + LLM inference on Azure/OpenAI — different layer.")
         print("  Together they represent the two distinct slices of total system footprint.")
+
+    # ── Homeworking displacement ──────────────────────────────────────────────
+    hw_meeting = homeworking_displacement(per_hour_g)
+    hw_hosting_mbm = homeworking_displacement(mbm_g)
+
+    _section(f"Homeworking Displacement  [UK GHG CF 2025] — {label}")
+    print("  Source: UK Government GHG Conversion Factors 2025 (DESNZ/DEFRA)")
+    print("  https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025")
+    print(f"  Rate: {HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR} kg CO₂e / FTE working hour")
+    print(f"        (office equipment 0.03144 + heating 0.30234, Scope 1+2)")
+    print()
+    print("  ─── One 1-hour meeting — AI processing only ───────────────────────")
+    _row("Meeting AI CO₂e (usage-weighted)", f"{per_hour_g:.2f} g CO₂e")
+    _row(
+        "≡ homeworking",
+        f"{hw_meeting['seconds']:.1f} s  "
+        f"({hw_meeting['minutes']:.3f} min  /  {hw_meeting['hours']:.5f} h)",
+    )
+    print()
+    print("  ─── One month of AWS hosting (MBM, market-adjusted) ───────────────")
+    _row("Monthly hosting CO₂e (MBM)", f"{mbm_g:,.0f} g  ({mbm_kg:.3f} kg)")
+    _row(
+        "≡ homeworking",
+        f"{hw_hosting_mbm['hours']:,.1f} h  "
+        f"({hw_hosting_mbm['working_days']:,.1f} working day(s) at {WORKING_HOURS_PER_DAY} h/day)",
+    )
+    print()
+    if hw_meeting["hours"] > 0:
+        hw_ratio = hw_hosting_mbm["hours"] / hw_meeting["hours"]
+        print(f"  → Monthly AWS hosting ≡ {hw_hosting_mbm['working_days']:,.1f} working-day(s) of homeworking.")
+        print(f"    AI processing per meeting ≡ {hw_meeting['seconds']:.0f} seconds of homeworking.")
+        print(f"    The hosting layer is ~{hw_ratio:,.0f}× more carbon-intensive (per month vs. per meeting).")
+        print()
+        print("  Conclusion: reducing AWS infrastructure (right-sizing, switching off idle")
+        print("  resources) delivers far greater carbon savings than optimising AI prompt")
+        print("  length. The per-meeting AI cost is negligible against the hosting baseline.")
 
     print()
 

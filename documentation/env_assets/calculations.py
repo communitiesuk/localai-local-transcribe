@@ -62,6 +62,16 @@ OWSM_PUE = 1.56  # industry average PUE 2024 [21]
 # --- ASR user base [23] ---
 ASR_USER_BASE = 300_000_000  # Microsoft Teams monthly active users
 
+# --- Homeworking emission factors [HW] ---
+# Source: UK Government GHG Conversion Factors 2025 (DESNZ/DEFRA)
+# https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025
+# Table: "Homeworking" — per FTE working hour, Scope 1+2 combined
+HOMEWORKING_OFFICE_EQUIPMENT_KG_CO2E_PER_HOUR = 0.03144
+HOMEWORKING_HEATING_KG_CO2E_PER_HOUR = 0.30234
+HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR = 0.33378  # office equipment + heating
+
+WORKING_HOURS_PER_DAY = 8  # standard working day used for homeworking comparisons
+
 
 # =============================================================================
 # HELPERS
@@ -538,6 +548,28 @@ def asr_training_impact() -> dict:
 
 
 # =============================================================================
+# APPENDIX HW: HOMEWORKING DISPLACEMENT
+# =============================================================================
+
+
+def homeworking_displacement(co2e_g: float) -> dict:
+    """Express a CO₂e quantity as the equivalent duration of one person working from home.
+
+    Uses the UK GHG Conversion Factors 2025 (DESNZ/DEFRA) homeworking rate.
+    https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025
+    """
+    hw_g_per_hour = HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR * 1_000
+    hours = co2e_g / hw_g_per_hour
+    return {
+        "hw_g_per_hour": hw_g_per_hour,
+        "hours": hours,
+        "minutes": hours * 60,
+        "seconds": hours * 3_600,
+        "working_days": hours / WORKING_HOURS_PER_DAY,
+    }
+
+
+# =============================================================================
 # REPORTING
 # =============================================================================
 
@@ -740,6 +772,150 @@ def print_results() -> None:
     )
     print()
 
+    # ── Appendix HW: Homeworking displacement ────────────────────────────────
+    hw_weighted = homeworking_displacement(wt_combined["total_co2e_g"])
+    hw_simple = homeworking_displacement(simple_combined["total_co2e_g"])
+
+    _section("Appendix HW: Homeworking Displacement  [UK GHG CF 2025]")
+    print("  Source: UK Government GHG Conversion Factors 2025 (DESNZ/DEFRA)")
+    print("  https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025")
+    print("  Category: Homeworking (office equipment + heating), per FTE working hour, Scope 1+2.")
+    print()
+    _row("Office equipment", f"{HOMEWORKING_OFFICE_EQUIPMENT_KG_CO2E_PER_HOUR} kg CO₂e / FTE working hour")
+    _row("Heating", f"{HOMEWORKING_HEATING_KG_CO2E_PER_HOUR} kg CO₂e / FTE working hour")
+    _row("Combined (homeworking total)", f"{HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR} kg CO₂e / FTE working hour")
+    heating_pct = HOMEWORKING_HEATING_KG_CO2E_PER_HOUR / HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR * 100
+    print()
+    print("  Question: how long must one homeworker work to emit the same CO₂e as")
+    print("  the AI processing for one 1-hour meeting?")
+    print()
+    _row("Usage-weighted meeting CO₂e", f"{wt_combined['total_co2e_g']:.2f} g CO₂e")
+    _row(
+        "≡ homeworking time",
+        f"{hw_weighted['seconds']:.1f} s  "
+        f"({hw_weighted['minutes']:.3f} min  /  {hw_weighted['hours']:.5f} h)",
+    )
+    print()
+    _row("SimpleTemplate meeting CO₂e (reference)", f"{simple_combined['total_co2e_g']:.2f} g CO₂e")
+    _row(
+        "≡ homeworking time",
+        f"{hw_simple['seconds']:.1f} s  "
+        f"({hw_simple['minutes']:.3f} min  /  {hw_simple['hours']:.5f} h)",
+    )
+    print()
+    print(f"  → Processing one 1-hour meeting through Local Transcribe emits the same CO₂e")
+    print(f"    as ~{hw_weighted['seconds']:.0f} seconds of a single person working from home")
+    print(f"    (usage-weighted average, homeworking rate = {HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR} kg CO₂e/h).")
+    print(f"  → Heating accounts for {heating_pct:.0f}% of the homeworking factor; the AI")
+    print(f"    processing cost is smaller than a kettle boil for a cup of tea.")
+    print()
+
+
+def print_raw_figures() -> None:
+    """Print all source constants and key derived values as a reference appendix."""
+    asr = transcription_impact()
+    st = simple_template()
+    sec = section_template()
+    dv = delivery_template()
+    bm = basic_minutes()
+    es = executive_summary()
+    utd = user_template_document()
+    llm_t = llm_training_impact()
+    asr_t = asr_training_impact()
+    wt = usage_weighted_impact()
+    wt_combined = combined_impact(wt, asr)
+    simple_combined = combined_impact(st, asr)
+
+    # ── Part 1: source constants ──────────────────────────────────────────────
+    _section("Appendix RAW — Part 1: Source Constants and Assumptions")
+    print(f"  {'Constant':<48} {'Value':>16}  Notes / Reference")
+    print(f"  {'-'*48} {'-'*16}  {'-'*34}")
+    src_rows: list[tuple[str, str, str]] = [
+        ("TRANSCRIPT_WORDS", f"{TRANSCRIPT_WORDS:,} words", "1-hour baseline; typical 7,500–9,000"),
+        ("NUM_SECTIONS", str(NUM_SECTIONS), "SectionTemplate default"),
+        ("TOKENS_PER_WORD", str(TOKENS_PER_WORD), "Conservative estimate [B.1]"),
+        ("INFERENCE_CARBON_INTENSITY", f"{INFERENCE_CARBON_INTENSITY_G_PER_KWH} g/kWh", "EU-27 average [10]"),
+        ("TRAINING_CARBON_INTENSITY", f"{TRAINING_CARBON_INTENSITY_G_PER_KWH} g/kWh", "US average, EPA eGRID [14]"),
+        ("ASR_STUDY_TOTAL_ENERGY_KWH", f"{ASR_STUDY_TOTAL_ENERGY_KWH} kWh", "Whisper study measurement [15]"),
+        ("ASR_STUDY_AUDIO_HOURS", f"{ASR_STUDY_AUDIO_HOURS} h", "Study sample [15]"),
+        ("ASR_STUDY_TOTAL_CO2E_G", f"{ASR_STUDY_TOTAL_CO2E_G} g", "Study measurement [15]"),
+        ("GPT4O_BENCHMARK_WH", f"{GPT4O_BENCHMARK_WH} Wh", "Medium prompt, GPT-4o Mar '25 [1]"),
+        ("GPT4O_BENCHMARK_TOKENS", f"{GPT4O_BENCHMARK_TOKENS:,}", "[1] Table 4"),
+        ("GPT4_TURBO_BENCHMARK_WH", f"{GPT4_TURBO_BENCHMARK_WH} Wh", "Medium prompt, GPT-4 Turbo [1]"),
+        ("GPT4_TURBO_BENCHMARK_TOKENS", f"{GPT4_TURBO_BENCHMARK_TOKENS:,}", "[1] Table 4"),
+        ("GPT4_TRAINING_MWH", f"{GPT4_TRAINING_MWH:,} MWh", "Midpoint 52k–62k MWh [11]"),
+        ("GPT4O_TRAINING_MWH", f"{GPT4O_TRAINING_MWH:,} MWh", "Gopher 280B proxy [11]"),
+        ("LLM_USER_BASE", f"{LLM_USER_BASE:,}", "ChatGPT weekly active users [13]"),
+        ("OWSM_GPU_COUNT", str(OWSM_GPU_COUNT), "NVIDIA A100 40GB PCIe [19][20]"),
+        ("OWSM_GPU_TDP_W", f"{OWSM_GPU_TDP_W} W", "[20]"),
+        ("OWSM_TRAINING_DAYS", f"{OWSM_TRAINING_DAYS} days", "[19]"),
+        ("OWSM_SERVER_GPU_DRAW_W", f"{OWSM_SERVER_GPU_DRAW_W:,} W", "8×A100 server draw [22]"),
+        ("OWSM_SERVER_NON_GPU_LOW_W", f"{OWSM_SERVER_NON_GPU_LOW_W} W", "Lower bound [22]"),
+        ("OWSM_SERVER_NON_GPU_HIGH_W", f"{OWSM_SERVER_NON_GPU_HIGH_W:,} W", "Upper bound [22]"),
+        ("OWSM_PUE", str(OWSM_PUE), "Industry average 2024 [21]"),
+        ("ASR_USER_BASE", f"{ASR_USER_BASE:,}", "MS Teams monthly active users [23]"),
+        ("HOMEWORKING_OFFICE_EQUIPMENT", f"{HOMEWORKING_OFFICE_EQUIPMENT_KG_CO2E_PER_HOUR} kg CO₂e/h", "UK GHG CF 2025 [HW]"),
+        ("HOMEWORKING_HEATING", f"{HOMEWORKING_HEATING_KG_CO2E_PER_HOUR} kg CO₂e/h", "UK GHG CF 2025 [HW]"),
+        ("HOMEWORKING_TOTAL", f"{HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR} kg CO₂e/h", "UK GHG CF 2025 [HW]"),
+    ]
+    for name, val, note in src_rows:
+        print(f"  {name:<48} {val:>16}  {note}")
+    print()
+    print("  [HW] UK Government GHG Conversion Factors 2025 (DESNZ/DEFRA)")
+    print("       https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025")
+    print("       Table: Homeworking, per FTE working hour, Scope 1+2 (office equipment + heating).")
+
+    # ── Part 2: key derived values ────────────────────────────────────────────
+    _section("Appendix RAW — Part 2: Key Derived Values")
+    print(f"  {'Metric':<50} {'Value':>16}")
+    print(f"  {'-'*50} {'-'*16}")
+    der_rows: list[tuple[str, str]] = [
+        # Transcription
+        ("ASR energy / hour of audio", f"{asr['energy_wh']:.4f} Wh"),
+        ("ASR CO₂e / hour (study intensity)", f"{asr['co2e_g_study']:.4f} g"),
+        ("ASR CO₂e / hour (EU-27 recalc)", f"{asr['co2e_g_eu27']:.4f} g"),
+        # LLM per-token rates
+        (
+            "GPT-4o  Wh/token (fast)",
+            f"{GPT4O_BENCHMARK_WH / GPT4O_BENCHMARK_TOKENS:.7f} Wh",
+        ),
+        (
+            "GPT-4 Turbo  Wh/token (best)",
+            f"{GPT4_TURBO_BENCHMARK_WH / GPT4_TURBO_BENCHMARK_TOKENS:.7f} Wh",
+        ),
+        # Per-template LLM totals
+        ("SimpleTemplate   — tokens / Wh / CO₂e", f"{st['total_tokens']:,.0f} tok  {st['total_wh']:.2f} Wh  {st['co2e_g']:.2f} g"),
+        ("SectionTemplate  — tokens / Wh / CO₂e", f"{sec['total_tokens']:,.0f} tok  {sec['total_wh']:.2f} Wh  {sec['co2e_g']:.2f} g"),
+        ("DeliveryTemplate — tokens / Wh / CO₂e", f"{dv['total_tokens']:,.0f} tok  {dv['total_wh']:.2f} Wh  {dv['co2e_g']:.2f} g"),
+        ("BasicMinutes     — tokens / Wh / CO₂e", f"{bm['total_tokens']:,.0f} tok  {bm['total_wh']:.2f} Wh  {bm['co2e_g']:.2f} g"),
+        ("ExecutiveSummary — tokens / Wh / CO₂e", f"{es['total_tokens']:,.0f} tok  {es['total_wh']:.2f} Wh  {es['co2e_g']:.2f} g"),
+        ("UserTemplate Doc — tokens / Wh / CO₂e", f"{utd['total_tokens']:,.0f} tok  {utd['total_wh']:.2f} Wh  {utd['co2e_g']:.2f} g"),
+        # Combined (incl. ASR)
+        ("SimpleTemplate combined (+ ASR EU-27)", f"{simple_combined['total_co2e_g']:.4f} g CO₂e"),
+        ("Usage-weighted LLM + ASR CO₂e", f"{wt_combined['total_co2e_g']:.4f} g CO₂e"),
+        ("Usage-weighted total energy", f"{wt_combined['total_energy_wh']:.4f} Wh"),
+        # Training (per user)
+        ("GPT-4 training — per user energy", f"{llm_t['gpt4_per_user_wh']:.4f} Wh"),
+        ("GPT-4o training — per user energy", f"{llm_t['gpt4o_per_user_wh']:.6f} Wh"),
+        ("LLM combined training — per user CO₂e", f"{llm_t['llm_total_co2e']:.4f} g"),
+        ("ASR (OWSM) training — per user energy", f"{asr_t['per_user_wh']:.6f} Wh"),
+        ("ASR (OWSM) training — per user CO₂e", f"{asr_t['co2e_g']:.6f} g"),
+        # Homeworking equivalents
+        ("Homeworking rate (combined)", f"{HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR * 1000:.3f} g CO₂e/h"),
+        (
+            "Usage-weighted meeting ≡ homeworking",
+            f"{homeworking_displacement(wt_combined['total_co2e_g'])['seconds']:.2f} s",
+        ),
+        (
+            "SimpleTemplate meeting ≡ homeworking",
+            f"{homeworking_displacement(simple_combined['total_co2e_g'])['seconds']:.2f} s",
+        ),
+    ]
+    for metric, val in der_rows:
+        print(f"  {metric:<50} {val:>16}")
+    print()
+
 
 if __name__ == "__main__":
     print_results()
+    print_raw_figures()

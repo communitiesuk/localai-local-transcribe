@@ -38,6 +38,7 @@ AWS model version: v3.0.1
 **MBM** (market-based method) subtracts renewable energy certificates (RECs) purchased by AWS; it is the appropriate figure when comparing against a provider that actively purchases clean energy, as AWS does.  
 **LBM** (location-based method) uses regional grid-average carbon intensity and is shown for reference only.
 
+**Homeworking context:** At the UK GHG Conversion Factors 2025 homeworking rate (0.334 kg CO₂e/FTE hour [24]), 17,317 g CO₂e (MBM) is equivalent to **~51.9 hours (6.5 working days)** of one person working from home. See Appendix HW. Run `documentation/env_assets/aws_carbon.py` to recompute for the latest month.
 
 ---
 
@@ -191,6 +192,8 @@ Applying production usage shares (Appendix F.1):
 **Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. Its share of total emissions ranges from 15% (SimpleTemplate) to 38% (Basic Minutes).
 
 **Infrastructure vs. AI processing cost:** The AWS hosting layer (§2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **453 complete 1-hour meetings**. The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). Together they represent the full system footprint; on a market-adjusted basis, infrastructure overhead is within the same order of magnitude as AI inference costs and is not negligible. Run `documentation/env_assets/aws_carbon.py` to recompute against the latest month.
+
+**Homeworking context:** The usage-weighted per-meeting AI cost (38.3 g CO₂e) is equivalent to **~413 seconds (~7 minutes)** of a single person working from home, using the UK GHG Conversion Factors 2025 homeworking rate of 0.334 kg CO₂e/FTE hour [24]. By contrast, one month of AWS hosting (April 2026: 17.3 kg CO₂e MBM) equates to approximately **51.9 hours (6.5 working days)** of homeworking. Reducing infrastructure waste (idle resources, over-provisioned instances) therefore yields orders of magnitude more carbon savings than optimising AI prompt length. See Appendix HW.
 
 ---
 
@@ -831,6 +834,66 @@ Applying the combined shares from F.2.1:
 
 ---
 
+# Appendix HW: Homeworking Displacement Context
+
+This appendix expresses the system's carbon costs in terms of a familiar human-scale activity — one person working from home — to help readers calibrate the magnitudes involved.
+
+## HW.1 Source Data
+
+**Emission factor source:** UK Government GHG Conversion Factors 2025, published by DESNZ and DEFRA [24].  
+**URL:** https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025
+
+| Activity | Unit | kg CO₂e |
+|----------|------|--------:|
+| Office equipment | per FTE working hour | 0.03144 |
+| Heating | per FTE working hour | 0.30234 |
+| **Homeworking (combined)** | **per FTE working hour** | **0.33378** |
+
+Heating dominates at **91%** of the combined factor; office equipment contributes only 9%. The combined rate used throughout this appendix is **333.78 g CO₂e per FTE working hour**.
+
+## HW.2 One Hour of AI Processing
+
+**Question:** how long must one person work from home to emit the same CO₂e as Local Transcribe processing a single 1-hour meeting?
+
+| Metric | Value |
+|--------|------:|
+| Usage-weighted meeting CO₂e (§8.1) | 38.3 g |
+| SimpleTemplate meeting CO₂e (§8.2) | 40.9 g |
+| Homeworking rate | 333.78 g CO₂e/h |
+
+```
+Usage-weighted:  38.3 g ÷ 333.78 g/h = 0.1146 h = 6.9 min ≈ 413 seconds
+SimpleTemplate:  40.9 g ÷ 333.78 g/h = 0.1225 h = 7.4 min ≈ 441 seconds
+```
+
+**Conclusion:** Processing one 1-hour meeting costs the same as approximately **413 seconds (~7 minutes)** of a single person working from home — comparable to the time it takes to boil a kettle and make a cup of tea. The AI carbon cost at the per-meeting level is negligibly small in human-activity terms.
+
+## HW.3 One Month of AWS Hosting
+
+**April 2026 AWS hosting (MBM):** 17,317 g CO₂e (§2.2)
+
+```
+17,317 g ÷ 333.78 g/h = 51.9 hours ≈ 6.5 working days (at 8 h/day)
+```
+
+One month of AWS infrastructure hosting is equivalent to approximately **6.5 working days** of one person working from home.
+
+Run `documentation/env_assets/aws_carbon.py` for the current month's figure.
+
+## HW.4 Comparison and Conclusions
+
+| Item | CO₂e | Homeworking equivalent |
+|------|-----:|----------------------:|
+| One 1-hour meeting — AI, usage-weighted | 38 g | ~413 seconds |
+| One 1-hour meeting — AI, SimpleTemplate | 41 g | ~441 seconds |
+| April 2026 AWS hosting (MBM) | 17,317 g | ~51.9 hours (6.5 working days) |
+
+The hosting layer emits approximately **453×** more CO₂e per month than the AI cost of a single 1-hour meeting. In homeworking terms the ratio is equally stark: weeks of infrastructure running time versus a few minutes of AI processing per meeting.
+
+**Strategic implication:** Carbon reduction efforts should prioritise the infrastructure layer — right-sizing compute, switching off idle resources, and selecting low-carbon AWS regions — over micro-optimising prompt length or model selection. The AI processing cost, while non-zero, is negligibly small compared to the hosting baseline at current usage volumes.
+
+---
+
 # References
 
 [1] N. Jegham, M. Abdelatti, C. Y. Koh, L. Elmoubarki and A. Hendawi, "How Hungry is AI? Benchmarking Energy, Water, and Carbon Footprint of LLM Inference," arXiv:2505.09598v6, Nov. 2025. [Online]. Available: https://arxiv.org/abs/2505.09598
@@ -878,3 +941,5 @@ Applying the combined shares from F.2.1:
 [22] Netrality Data Centers, "High-Density Colocation for AI and GPU Workloads," 2025. [Online]. Available: https://netrality.com/blog/high-density-colocation-ai-gpu-infrastructure/
 
 [23] Microsoft, “Microsoft Teams surpasses 300 million monthly active users,” *Microsoft FY2023 Q3 Earnings Conference Call Transcript*, Apr. 2023. [Online]. Available: https://www.microsoft.com/en-us/investor/events/fy-2023/earnings-fy-2023-q3/ :contentReference[oaicite:0]{index=0}
+
+[24] Department for Energy Security and Net Zero (DESNZ) and Department for Environment, Food & Rural Affairs (DEFRA), “Greenhouse Gas Reporting: Conversion Factors 2025,” UK Government, 2025. [Online]. Available: https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025
