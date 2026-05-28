@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     OIDC_CLIENT_ID: str | None = Field(
         description="OIDC client ID, used to validate the JWT audience claim", default=None
     )
+    ALB_COOKIE_NAME: str = Field(
+        description="Name of the cookie set by the ALB for authentication", default="X-Amzn-Oidc-Data"
+    )
 
     ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)

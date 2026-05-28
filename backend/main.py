@@ -11,7 +11,6 @@ from fastapi.security import OAuth2PasswordBearer
 
 from backend.api.routes import router as api_router
 from backend.cleanup_job import init_cleanup_scheduler
-from backend.utils.get_idp_logout_url import get_idp_logout_url
 from common.settings import get_settings
 
 settings = get_settings()
@@ -19,14 +18,8 @@ log = logging.getLogger("uvicorn")
 
 
 @asynccontextmanager
-async def lifespan(app_: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app_: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
     log.info("Starting up...")
-
-    try:
-        app_.state.idp_logout_url = await get_idp_logout_url()
-    except Exception:
-        app_.state.idp_logout_url = None
-        log.exception("Failed to resolve IdP logout URL at startup")
 
     await init_cleanup_scheduler()
 
