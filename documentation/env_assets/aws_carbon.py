@@ -25,7 +25,7 @@ from pathlib import Path
 # calculations.py lives next to this file; add its directory so it can be
 # imported whether this script is run from the project root or anywhere else.
 sys.path.insert(0, str(Path(__file__).parent))
-from calculations import (  # noqa: E402
+from calculations import (
     HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR,
     NUM_SECTIONS,
     TRANSCRIPT_WORDS,
@@ -184,7 +184,7 @@ def print_report() -> None:
         )
         print()
         print(f"  → The AWS hosting layer for {label} emitted ~{mbm_eq:,.0f}× the AI cost")
-        print(f"    of a single 1-hour meeting (MBM, market-adjusted basis).")
+        print("    of a single 1-hour meeting (MBM, market-adjusted basis).")
         print()
         print("  ⚠  AWS figure = all account services (EC2, RDS, S3, networking, …).")
         print("  AI figure = transcription + LLM inference on Azure/OpenAI — different layer.")
@@ -198,14 +198,13 @@ def print_report() -> None:
     print("  Source: UK Government GHG Conversion Factors 2025 (DESNZ/DEFRA)")
     print("  https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025")
     print(f"  Rate: {HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR} kg CO₂e / FTE working hour")
-    print(f"        (office equipment 0.03144 + heating 0.30234, Scope 1+2)")
+    print("        (office equipment 0.03144 + heating 0.30234, Scope 1+2)")
     print()
     print("  ─── One 1-hour meeting — AI processing only ───────────────────────")
     _row("Meeting AI CO₂e (usage-weighted)", f"{per_hour_g:.2f} g CO₂e")
     _row(
         "≡ homeworking",
-        f"{hw_meeting['seconds']:.1f} s  "
-        f"({hw_meeting['minutes']:.3f} min  /  {hw_meeting['hours']:.5f} h)",
+        f"{hw_meeting['seconds']:.1f} s  " f"({hw_meeting['minutes']:.3f} min  /  {hw_meeting['hours']:.5f} h)",
     )
     print()
     print("  ─── One month of AWS hosting (MBM, market-adjusted) ───────────────")

@@ -792,22 +792,20 @@ def print_results() -> None:
     _row("Usage-weighted meeting CO₂e", f"{wt_combined['total_co2e_g']:.2f} g CO₂e")
     _row(
         "≡ homeworking time",
-        f"{hw_weighted['seconds']:.1f} s  "
-        f"({hw_weighted['minutes']:.3f} min  /  {hw_weighted['hours']:.5f} h)",
+        f"{hw_weighted['seconds']:.1f} s  " f"({hw_weighted['minutes']:.3f} min  /  {hw_weighted['hours']:.5f} h)",
     )
     print()
     _row("SimpleTemplate meeting CO₂e (reference)", f"{simple_combined['total_co2e_g']:.2f} g CO₂e")
     _row(
         "≡ homeworking time",
-        f"{hw_simple['seconds']:.1f} s  "
-        f"({hw_simple['minutes']:.3f} min  /  {hw_simple['hours']:.5f} h)",
+        f"{hw_simple['seconds']:.1f} s  " f"({hw_simple['minutes']:.3f} min  /  {hw_simple['hours']:.5f} h)",
     )
     print()
-    print(f"  → Processing one 1-hour meeting through Local Transcribe emits the same CO₂e")
+    print("  → Processing one 1-hour meeting through Local Transcribe emits the same CO₂e")
     print(f"    as ~{hw_weighted['seconds']:.0f} seconds of a single person working from home")
     print(f"    (usage-weighted average, homeworking rate = {HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR} kg CO₂e/h).")
     print(f"  → Heating accounts for {heating_pct:.0f}% of the homeworking factor; the AI")
-    print(f"    processing cost is smaller than a kettle boil for a cup of tea.")
+    print("    processing cost is smaller than a kettle boil for a cup of tea.")
     print()
 
 
@@ -854,7 +852,11 @@ def print_raw_figures() -> None:
         ("OWSM_SERVER_NON_GPU_HIGH_W", f"{OWSM_SERVER_NON_GPU_HIGH_W:,} W", "Upper bound [22]"),
         ("OWSM_PUE", str(OWSM_PUE), "Industry average 2024 [21]"),
         ("ASR_USER_BASE", f"{ASR_USER_BASE:,}", "MS Teams monthly active users [23]"),
-        ("HOMEWORKING_OFFICE_EQUIPMENT", f"{HOMEWORKING_OFFICE_EQUIPMENT_KG_CO2E_PER_HOUR} kg CO₂e/h", "UK GHG CF 2025 [HW]"),
+        (
+            "HOMEWORKING_OFFICE_EQUIPMENT",
+            f"{HOMEWORKING_OFFICE_EQUIPMENT_KG_CO2E_PER_HOUR} kg CO₂e/h",
+            "UK GHG CF 2025 [HW]",
+        ),
         ("HOMEWORKING_HEATING", f"{HOMEWORKING_HEATING_KG_CO2E_PER_HOUR} kg CO₂e/h", "UK GHG CF 2025 [HW]"),
         ("HOMEWORKING_TOTAL", f"{HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR} kg CO₂e/h", "UK GHG CF 2025 [HW]"),
     ]
@@ -884,12 +886,30 @@ def print_raw_figures() -> None:
             f"{GPT4_TURBO_BENCHMARK_WH / GPT4_TURBO_BENCHMARK_TOKENS:.7f} Wh",
         ),
         # Per-template LLM totals
-        ("SimpleTemplate   — tokens / Wh / CO₂e", f"{st['total_tokens']:,.0f} tok  {st['total_wh']:.2f} Wh  {st['co2e_g']:.2f} g"),
-        ("SectionTemplate  — tokens / Wh / CO₂e", f"{sec['total_tokens']:,.0f} tok  {sec['total_wh']:.2f} Wh  {sec['co2e_g']:.2f} g"),
-        ("DeliveryTemplate — tokens / Wh / CO₂e", f"{dv['total_tokens']:,.0f} tok  {dv['total_wh']:.2f} Wh  {dv['co2e_g']:.2f} g"),
-        ("BasicMinutes     — tokens / Wh / CO₂e", f"{bm['total_tokens']:,.0f} tok  {bm['total_wh']:.2f} Wh  {bm['co2e_g']:.2f} g"),
-        ("ExecutiveSummary — tokens / Wh / CO₂e", f"{es['total_tokens']:,.0f} tok  {es['total_wh']:.2f} Wh  {es['co2e_g']:.2f} g"),
-        ("UserTemplate Doc — tokens / Wh / CO₂e", f"{utd['total_tokens']:,.0f} tok  {utd['total_wh']:.2f} Wh  {utd['co2e_g']:.2f} g"),
+        (
+            "SimpleTemplate   — tokens / Wh / CO₂e",
+            f"{st['total_tokens']:,.0f} tok  {st['total_wh']:.2f} Wh  {st['co2e_g']:.2f} g",
+        ),
+        (
+            "SectionTemplate  — tokens / Wh / CO₂e",
+            f"{sec['total_tokens']:,.0f} tok  {sec['total_wh']:.2f} Wh  {sec['co2e_g']:.2f} g",
+        ),
+        (
+            "DeliveryTemplate — tokens / Wh / CO₂e",
+            f"{dv['total_tokens']:,.0f} tok  {dv['total_wh']:.2f} Wh  {dv['co2e_g']:.2f} g",
+        ),
+        (
+            "BasicMinutes     — tokens / Wh / CO₂e",
+            f"{bm['total_tokens']:,.0f} tok  {bm['total_wh']:.2f} Wh  {bm['co2e_g']:.2f} g",
+        ),
+        (
+            "ExecutiveSummary — tokens / Wh / CO₂e",
+            f"{es['total_tokens']:,.0f} tok  {es['total_wh']:.2f} Wh  {es['co2e_g']:.2f} g",
+        ),
+        (
+            "UserTemplate Doc — tokens / Wh / CO₂e",
+            f"{utd['total_tokens']:,.0f} tok  {utd['total_wh']:.2f} Wh  {utd['co2e_g']:.2f} g",
+        ),
         # Combined (incl. ASR)
         ("SimpleTemplate combined (+ ASR EU-27)", f"{simple_combined['total_co2e_g']:.4f} g CO₂e"),
         ("Usage-weighted LLM + ASR CO₂e", f"{wt_combined['total_co2e_g']:.4f} g CO₂e"),
