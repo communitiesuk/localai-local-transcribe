@@ -6,7 +6,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-from evals.summarisation.prompts.judge import (
+from .constants import (
     CRITICAL_DIMENSIONS,
     CRITICAL_THRESHOLD,
     DIMENSIONS,

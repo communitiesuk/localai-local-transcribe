@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-
+from .constants import CRITICAL_DIMENSIONS, DIMENSIONS
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 _TEMPLATE_DIR = Path(__file__).parent
@@ -12,46 +12,6 @@ _env = Environment(
     keep_trailing_newline=True,
     trim_blocks=True,
     lstrip_blocks=True,
-)
-
-DIMENSIONS: dict[str, dict] = {
-    "accuracy": {
-        "label": "Factual Accuracy",
-    },
-    "numerical_accuracy": {
-        "label": "Numeric Fidelity",
-    },
-    "template_fit": {
-        "label": "Template Adherence & Completeness",
-    },
-    "coverage": {
-        "label": "Transcript Factual Completeness",
-    },
-    "action_clarity": {
-        "label": "Actionability",
-    },
-    "professional_tone": {
-        "label": "Tone",
-    },
-    "readability": {
-        "label": "Structure & Readability",
-    },
-    "auditability": {
-        "label": "Citation Quality",
-    },
-}
-
-CRITICAL_DIMENSIONS: frozenset[str] = frozenset({"accuracy", "action_clarity", "numerical_accuracy"})
-CRITICAL_THRESHOLD: int = 4
-REVIEW_THRESHOLD: int = 2
-FAIL_THRESHOLD: int = 1
-
-HALLUCINATION_GATED_DIMENSIONS = frozenset(
-    {
-        "accuracy",
-        "numerical_accuracy",
-        "action_clarity",
-    }
 )
 
 
