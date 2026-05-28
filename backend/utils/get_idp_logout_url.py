@@ -10,7 +10,7 @@ from common.settings import get_settings
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
-CACHE_TTL: Final = timedelta(hours=4)
+CACHE_TTL: Final = timedelta(hours=1)
 
 
 @dataclass
