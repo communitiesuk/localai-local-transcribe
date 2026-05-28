@@ -4,6 +4,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 from evals.summarisation.prompts.judge import (
     CRITICAL_DIMENSIONS,
     CRITICAL_THRESHOLD,
@@ -11,6 +13,8 @@ from evals.summarisation.prompts.judge import (
     FAIL_THRESHOLD,
     REVIEW_THRESHOLD,
 )
+
+_HAS_JSONSCHEMA = True
 
 # Constants for business logic gates
 MAX_SCORE_DRIFT = 0.15
@@ -20,14 +24,6 @@ MIN_RATIONALE_LENGTH = 20
 
 _SCHEMA_PATH = Path(__file__).parent / "schema.json"
 _SCHEMA: dict = json.loads(_SCHEMA_PATH.read_text())
-
-# Note: Check for jsonschema availability
-try:
-    from jsonschema import Draft202012Validator
-
-    _HAS_JSONSCHEMA = True
-except ImportError:
-    _HAS_JSONSCHEMA = False
 
 
 @dataclass

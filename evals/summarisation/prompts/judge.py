@@ -17,35 +17,27 @@ _env = Environment(
 DIMENSIONS: dict[str, dict] = {
     "accuracy": {
         "label": "Factual Accuracy",
-        "hallucination_gate": True,
     },
     "numerical_accuracy": {
         "label": "Numeric Fidelity",
-        "hallucination_gate": True,
     },
     "template_fit": {
         "label": "Template Adherence & Completeness",
-        "hallucination_gate": False,
     },
     "coverage": {
         "label": "Transcript Factual Completeness",
-        "hallucination_gate": False,
     },
     "action_clarity": {
         "label": "Actionability",
-        "hallucination_gate": True,
     },
     "professional_tone": {
         "label": "Tone",
-        "hallucination_gate": False,
     },
     "readability": {
         "label": "Structure & Readability",
-        "hallucination_gate": False,
     },
     "auditability": {
         "label": "Citation Quality",
-        "hallucination_gate": False,
     },
 }
 
@@ -53,6 +45,14 @@ CRITICAL_DIMENSIONS: frozenset[str] = frozenset({"accuracy", "action_clarity", "
 CRITICAL_THRESHOLD: int = 4
 REVIEW_THRESHOLD: int = 2
 FAIL_THRESHOLD: int = 1
+
+HALLUCINATION_GATED_DIMENSIONS = frozenset(
+    {
+        "accuracy",
+        "numerical_accuracy",
+        "action_clarity",
+    }
+)
 
 
 def build_system_prompt(target_dimension: str | None = None) -> str:
