@@ -34,8 +34,7 @@ Each workstream has a T-shirt size: **S** ≈ under 1 day, **M** ≈ 1-3 days, *
 | **WS-2** | **individual form components** | M | Nine thin wrappers per `approach.md` decision tree: `GovukButton`, `GovukInput`+`GovukLabel`+`GovukHint`, `GovukTextarea`, `GovukSelect`, `GovukCheckboxes`, `GovukRadios`, `GovukFieldset`+`GovukErrorMessage`, `GovukErrorSummary`, `GovukBackLink`. |
 | **WS-3** | **navigation patterns** | S | Replace bespoke nav in header with `govuk-service-navigation` (or `govuk-header__navigation` if the team prefers the simpler pattern). Active-state handling per page. Mobile responsive behaviour from govuk-frontend. |
 | **WS-4** | **error and loading states** | M | Patterns for error pages (404, 500, 403 unauthorised) and loading skeletons. Top-level error boundary in `app/error.tsx`. Integration with existing `<GovukErrorSummary>` for form validation. The govuk-frontend doesn't ship a loading-skeleton pattern, so this is partly bespoke with govuk-tokens. |
-| **WS-5** | **accessibility audit setup** | M | Install `axe-core` + `jest-axe`. Initial axe audit of the existing app (capture baseline a11y findings). Wire a CI step to fail builds on new a11y regressions. Document findings + remediation backlog. |
-| **WS-6** | **React framework decisions (Next.js patterns, server vs client components)** | S | Document which wrappers must carry `'use client'` (anything with event handlers, hooks, or interactive state, so `Button`, `Tabs`, `Accordion`, `Details`, `Checkboxes`/`Radios` if they manage their own state). Document server-component-safe wrappers (`Label`, `Hint`, `ErrorMessage`, `Tag`, pure-markup ones). Decision on form submission style: keep React Hook Form (client) or move to server actions (more aligned with App Router). |
+| **WS-5** | **React framework decisions (Next.js patterns, server vs client components)** | S | Document which wrappers must carry `'use client'` (anything with event handlers, hooks, or interactive state, so `Button`, `Tabs`, `Accordion`, `Details`, `Checkboxes`/`Radios` if they manage their own state). Document server-component-safe wrappers (`Label`, `Hint`, `ErrorMessage`, `Tag`, pure-markup ones). Decision on form submission style: keep React Hook Form (client) or move to server actions (more aligned with App Router). |
 
 ### Additional workstreams
 
@@ -51,9 +50,8 @@ Each workstream has a T-shirt size: **S** ≈ under 1 day, **M** ≈ 1-3 days, *
 
 ```mermaid
 graph TD
-    WS7[WS-7: React framework decisions<br/>S]
+    WS7[WS-5: React framework decisions<br/>S]
     WS1[WS-1: govuk page layout<br/>M]
-    WS5[WS-5: a11y audit setup<br/>M]
     WS2[WS-2: form wrappers<br/>M]
     WS3[WS-3: navigation patterns<br/>S]
     WS4[WS-4: error and loading states<br/>M]
@@ -62,7 +60,7 @@ graph TD
     WSC[WS-C: cross-cutting + worked example<br/>M]
     GATE([GATE: team can build the new way])
 
-    WS7 --> WS2
+    WS5 --> WS2
     WS1 --> WS3
     WS1 --> WSC
     WS2 --> WSC
@@ -70,12 +68,11 @@ graph TD
     WSC --> GATE
     GATE --> WSD
 
-    WS5 -. parallel .-> GATE
     WS4 -. parallel .-> WSD
     WSB -. parallel .-> WSD
 
     style GATE fill:#2e7d32,color:#fff
-    style WS7 fill:#fff3e0
+    style WS5 fill:#fff3e0
     style WS1 fill:#fff3e0
     style WS2 fill:#fff3e0
     style WSA fill:#fff3e0
@@ -91,9 +88,9 @@ Solid arrows are hard dependencies. Dotted arrows show parallelisable work that 
 The longest unavoidable chain is:
 
 ```
-WS-7 (framework decisions, S)
+WS-5 (framework decisions, S)
    ↓
-WS-1 (page layout, M)  ──┐  } in parallel: A and B can both run after WS-7
+WS-1 (page layout, M)  ──┐  } in parallel: A and B can both run after WS-5
 WS-2 (form wrappers, M) ─┤
 WS-A (auth gating, M)  ──┘
    ↓
@@ -106,7 +103,7 @@ GATE: team can build the new way
 
 | Stage | T-shirt | Notes |
 |---|---|---|
-| WS-7 | S | Decisions, not implementation. Can be settled in a single sitting. |
+| WS-5 | S | Decisions, not implementation. Can be settled in a single sitting. |
 | WS-1 + WS-2 + WS-A in parallel | M | Three workstreams, each M. If three people take one each, the longest pole is whichever finishes last (≈ M). If one person sequences them, ≈ 3×M = up to a sprint. |
 | WS-C | M | Worked example + conventions doc + ESLint. Can be partly overlapped with the tail of WS-1/2/A. |
 
@@ -120,7 +117,6 @@ These workstreams do not block the gate. They run independently once their own p
 
 - **WS-3 (navigation patterns)**: blocked only on WS-1. Can land alongside WS-2 or just after WS-1.
 - **WS-4 (error and loading states)**: independent. Can start any time.
-- **WS-5 (accessibility audit setup)**: independent. Can start any time. Useful to run early to catch issues in the new wrappers as they land.
 - **WS-B (display-component wrappers)**: independent of the critical path. Blocked on Open Question O3 for `Tabs` specifically.
 
 
@@ -131,11 +127,10 @@ These workstreams do not block the gate. They run independently once their own p
 
 **Sprint 1 (this week):**
 
-1. WS-7 (React framework decisions): half-day discussion plus writeup.
+1. WS-5 (React framework decisions): half-day discussion plus writeup.
 2. WS-1 (page layout) + WS-2 (form wrappers) + WS-A (auth gating): parallel streams. WS-1 and WS-A in particular shape WS-2's implementation, so a brief sync between owners mid-sprint is worth it.
-3. WS-5 (a11y audit setup): start in parallel. Bench the baseline before the rewrite changes anything.
-4. WS-C (worked-example end-to-end): runs in the tail of Sprint 1 once WS-2 has at least the minimum 4 form wrappers (`Button`, `Input`/`Label`/`Hint`, `Fieldset`/`ErrorMessage`, `ErrorSummary`).
-5. **Hit the GATE by end of Sprint 1.**
+3. WS-C (worked-example end-to-end): runs in the tail of Sprint 1 once WS-2 has at least the minimum 4 form wrappers (`Button`, `Input`/`Label`/`Hint`, `Fieldset`/`ErrorMessage`, `ErrorSummary`).
+4. **Hit the GATE by end of Sprint 1.**
 
 **Sprint 2 onwards (parallel streams):**
 
