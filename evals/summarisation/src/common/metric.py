@@ -74,7 +74,7 @@ async def call_llm_judge_parallel(
     tasks = [evaluate_single_dim(d) for d in dimensions]
     results = await asyncio.gather(*tasks)
 
-    merged_dimensions = {dim: res_data for dim, res_data in results}
+    merged_dimensions = dict(results)
     return {"dimensions": merged_dimensions}
 
 

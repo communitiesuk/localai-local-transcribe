@@ -164,7 +164,6 @@ def initialise_eval(
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-
     class _Program:
         def __call__(self, *, dialogue: str) -> dspy.Prediction:
             entries = _dialogue_to_entries(dialogue)
