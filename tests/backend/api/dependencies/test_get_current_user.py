@@ -80,9 +80,10 @@ async def test_get_current_user_creates_user(monkeypatch, session):
 
     assert user.email == new_user_email
     mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    session.add.assert_called_once()  # new user created
-    session.commit.assert_awaited_once()
-    session.refresh.assert_awaited_once()
+    # new user is created, subject_id is added
+    assert session.add.call_count == 2
+    assert session.commit.await_count == 2
+    assert session.refresh.await_count == 2
 
 
 @pytest.mark.asyncio
