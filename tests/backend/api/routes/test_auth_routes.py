@@ -65,7 +65,7 @@ async def test_sign_out_clears_alb_auth_cookies_only(client):
         "keep",
     )
     with patch(
-        "backend.utils.get_idp_logout_url.get_idp_logout_url",
+        "backend.api.routes.auth.get_idp_logout_url",
         AsyncMock(return_value=END_SESSION_ENDPOINT_STATIC),
     ):
         response = await client.get(

@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-from typing import Any, Final
+from typing import Final, TypedDict, cast
 
 import httpx
 
@@ -11,6 +11,11 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 CACHE_TTL: Final = timedelta(hours=1)
+
+
+class OIDCResponse(TypedDict, total=False):
+    issuer: str
+    end_session_endpoint: str
 
 
 @dataclass
@@ -40,7 +45,7 @@ async def get_idp_logout_url() -> str | None:
             response = await client.get(discovery_url)
             response.raise_for_status()
 
-        config: dict[str, Any] = response.json()
+        config = cast(OIDCResponse, response.json())
 
         logout_url = config.get("end_session_endpoint")
 
