@@ -133,7 +133,7 @@ def initialise_eval(
     Path,
     Path,
     list[dspy.Example],
-    Callable[[str], dspy.Prediction],
+    Callable[..., dspy.Prediction],
     asyncio.AbstractEventLoop,
     list[EvalRecord],
     list[HallucinationInput],
@@ -142,7 +142,7 @@ def initialise_eval(
     list[bool],
     dict[str, list[float]],
     str,
-    str,
+    str | None,
     bool,
 ]:
     run_id = str(uuid.uuid4())
@@ -208,18 +208,18 @@ def initialise_eval(
 
 def build_metric_function(
     *,
-    loop,
-    run_id,
-    results_path,
-    records,
-    hallucination_inputs,
-    summarize_ms_values,
-    judge_ms_values,
-    review_flags,
-    metric_scores,
-    model_name,
-    hallucination_enabled,
-):
+    loop: asyncio.AbstractEventLoop,
+    run_id: str,
+    results_path: Path,
+    records: list[EvalRecord],
+    hallucination_inputs: list[HallucinationInput],
+    summarize_ms_values: list[int],
+    judge_ms_values: list[int],
+    review_flags: list[bool],
+    metric_scores: dict[str, list[float]],
+    model_name: str,
+    hallucination_enabled: bool,
+) -> Callable[[DialogExample, dspy.Prediction], float]:
     def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
         ex = DialogExample(
             example_id=str(gold.example_id),
@@ -299,19 +299,19 @@ def build_metric_function(
 
 def build_metric_summary(
     *,
-    run_id,
-    split,
-    devset,
-    metric_scores,
-    review_flags,
-    summarize_ms_values,
-    judge_ms_values,
-    summary_path,
-    results_path,
-    hallucination_inputs_path,
-    hallucination_inputs,
-    loop,
-):
+    run_id: str,
+    split: str,
+    devset: list[dspy.Example],
+    metric_scores: dict[str, list[float]],
+    review_flags: list[bool],
+    summarize_ms_values: list[int],
+    judge_ms_values: list[int],
+    summary_path: Path,
+    results_path: Path,
+    hallucination_inputs_path: Path,
+    hallucination_inputs: list[HallucinationInput],
+    loop: asyncio.AbstractEventLoop,
+) -> tuple[str, Path, Path, Path]:
     metrics_summary: dict[str, dict[str, float]] = {
         name: {"mean": float(int(sum(vals) / len(vals)) if vals else 0)} for name, vals in metric_scores.items()
     }
@@ -344,7 +344,7 @@ def build_metric_summary(
     return run_id, results_path, summary_path, hallucination_inputs_path
 
 
-def run_eval(cfg: AppConfig, *, split: str, limit: int | None, prompt_version: str):
+def run_eval(cfg: AppConfig, *, split: str, limit: int | None, prompt_version: str) -> tuple[str, Path, Path, Path]:
     (
         run_id,
         results_path,
