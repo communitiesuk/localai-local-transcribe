@@ -1,5 +1,7 @@
 from __future__ import annotations
-
+import os
+import tiktoken
+from .constants import TEMPERATURE, MAX_TOKENS
 import asyncio
 import logging
 import re
@@ -176,8 +178,13 @@ def initialise_eval(
                 summary=generated.text,
                 model=model_name,
                 prompt_version=prompt_version,
-                generation_config=GenerationConfig(temperature=1, max_tokens=1024),
+                generation_config=GenerationConfig(temperature=TEMPERATURE, max_tokens=MAX_TOKENS),
             )
+            tokenizer_model = os.getenv("TOKENIZER_MODEL", "gpt-4")
+            enc = tiktoken.encoding_for_model(tokenizer_model)
+            token_count = len(enc.encode(generated.text))
+            logging.info("[TokenUsage] Generated summary token count: %s", token_count)
+            metric_scores.setdefault("token_usage", []).append(float(token_count))
             return dspy.Prediction(
                 summary=generated.text,
                 candidate=candidate,
@@ -263,6 +270,7 @@ def build_metric_function(
                     "summarize": summarize_ms_values[-1] if summarize_ms_values else 0,
                 },
                 error=None,
+                token_usage=int(metric_scores["token_usage"][-1]) if metric_scores.get("token_usage") else None,
             )
         )
         _maybe_flush_records(results_path, records, flush_every=25)
@@ -308,6 +316,10 @@ def build_metric_summary(
     metrics_summary: dict[str, dict[str, float]] = {
         name: {"mean": float(int(sum(vals) / len(vals)) if vals else 0)} for name, vals in metric_scores.items()
     }
+    # Add total token usage if present
+    if "token_usage" in metric_scores:
+        total_token = sum(metric_scores["token_usage"])
+        metrics_summary.setdefault("token_usage", {})["total"] = total_token
     rubric_scores = [v["mean"] for k, v in metrics_summary.items() if k.startswith("rubric_")]
     overall = float(sum(rubric_scores) / len(rubric_scores)) if rubric_scores else None
 
