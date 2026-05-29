@@ -85,7 +85,6 @@ class DialogSummaryMetric:
     name: str
     criterion: str
     pass_threshold: int
-    lm: dspy.LM | None = None
 
     def evaluate(
         self,
