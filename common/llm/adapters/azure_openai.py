@@ -10,7 +10,7 @@ from openai.types.chat.chat_completion import Choice
 from common.settings import get_settings
 
 from .base import ModelAdapter
-from .llm_constants import MAX_TOKENS, TEMPERATURE
+from .llm_constants import MAX_COMPLETION_TOKENS, TEMPERATURE
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class OpenAIModelAdapter(ModelAdapter):
             model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),
             temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
+            max_tokens=MAX_COMPLETION_TOKENS,
         )
         choice = response.choices[0]
         self.choice_incomplete(choice, response)

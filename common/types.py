@@ -3,9 +3,16 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from common.database.postgres_models import ContentSource, DialogueEntry, HallucinationType, JobStatus, TemplateType
+from common.database.postgres_models import (
+    ContentSource,
+    DialogueEntry,
+    HallucinationType,
+    JobStatus,
+    TemplateType,
+    UserRole,
+)
 
 
 class TranscriptionMetadata(BaseModel):
@@ -79,12 +86,25 @@ class ChatCreateResponse(BaseModel):
     id: uuid.UUID
 
 
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    organisation_id: uuid.UUID
+
+
+class UserUpdateRoles(BaseModel):
+    roles: list[UserRole]
+
+
 class GetUserResponse(BaseModel):
     id: uuid.UUID
     created_datetime: datetime
     updated_datetime: datetime
+    name: str | None
     email: str
     data_retention_days: int | None
+    roles: list[UserRole]
+    organisation_id: uuid.UUID | None
 
 
 class DataRetentionUpdateResponse(BaseModel):

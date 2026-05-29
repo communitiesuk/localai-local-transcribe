@@ -136,6 +136,7 @@ class User(BaseTableMixin, table=True):
     __tablename__ = "user"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    name: str | None = Field(default=None, nullable=True)
     email: str = Field(index=True)
     data_retention_days: int | None = Field(default=30)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")

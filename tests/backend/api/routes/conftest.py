@@ -14,6 +14,7 @@ from common.database.postgres_models import (
     JobStatus,
     Minute,
     MinuteVersion,
+    Organisation,
     Recording,
     TemplateType,
     Transcription,
@@ -54,6 +55,39 @@ def override_user(mock_user):
 
 
 @pytest.fixture
+def make_user():
+    def _make_user(
+        organisation_id=None,
+        roles=None,
+    ):
+        return User(
+            id=uuid4(),
+            email=mock_email,
+            organisation_id=organisation_id or uuid4(),
+            roles=roles or [UserRole.STANDARD_USER],
+            data_retention_days=30,
+            created_datetime=datetime.now(UTC),
+            updated_datetime=datetime.now(UTC),
+        )
+
+    return _make_user
+
+
+@pytest.fixture
+def make_organisation():
+    def _make_organisation(
+        name: str | None = None,
+        allowed_domains: list[str] | None = None,
+    ):
+        return Organisation(
+            name=name or f"org-{uuid4()}",
+            allowed_domains=allowed_domains or [],
+        )
+
+    return _make_organisation
+
+
+@pytest.fixture
 def mock_session():
     session = AsyncMock()
     session.exec = AsyncMock()
@@ -71,7 +105,7 @@ def override_session(mock_session):
         return mock_session
 
     app.dependency_overrides[get_session] = _override
-    yield
+    yield mock_session
     app.dependency_overrides.pop(get_session, None)
 
 
