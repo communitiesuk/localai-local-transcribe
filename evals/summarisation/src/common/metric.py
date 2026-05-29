@@ -74,7 +74,7 @@ async def call_llm_judge_parallel(
     tasks = [evaluate_single_dim(d) for d in dimensions]
     results = await asyncio.gather(*tasks)
 
-    merged_dimensions = dict(results)
+    merged_dimensions = {dim: res_data for dim, res_data in results}
     return {"dimensions": merged_dimensions}
 
 
@@ -136,7 +136,7 @@ def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:
     metrics: list[DialogSummaryMetric] = []
 
     for name in cfg.metrics:
-        rubric_dim = name
+        rubric_dim: str = name
         if name == "faithfulness":
             rubric_dim = "accuracy"
         elif name in ("conciseness", "coherence"):

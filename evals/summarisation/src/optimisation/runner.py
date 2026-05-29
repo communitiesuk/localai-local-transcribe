@@ -140,7 +140,7 @@ def initialise_eval(
     list[int],
     list[int],
     list[bool],
-    dict[str, list[int]],
+    dict[str, list[float]],
     str,
     str,
     bool,
@@ -160,9 +160,10 @@ def initialise_eval(
     summarize_ms_values: list[int] = []
     judge_ms_values: list[int] = []
     review_flags: list[bool] = []
-    metric_scores = defaultdict(list)
+    metric_scores: dict[str, list[float]] = defaultdict(list)
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
+
 
     class _Program:
         def __call__(self, *, dialogue: str) -> dspy.Prediction:
