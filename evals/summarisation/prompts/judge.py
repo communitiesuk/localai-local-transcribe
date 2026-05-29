@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-from .constants import CRITICAL_DIMENSIONS, DIMENSIONS
+
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
+
+from .constants import CRITICAL_DIMENSIONS, DIMENSIONS
 
 _TEMPLATE_DIR = Path(__file__).parent
 _env = Environment(

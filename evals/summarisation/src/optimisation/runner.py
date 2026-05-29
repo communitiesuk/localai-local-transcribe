@@ -17,7 +17,7 @@ from dspy.evaluate import Evaluate
 
 from common.database.postgres_models import DialogueEntry, HallucinationType
 from common.settings import get_settings
-from evals.summarisation.prompts import build_system_prompt, build_user_message, DIMENSIONS
+from evals.summarisation.prompts import DIMENSIONS
 from evals.summarisation.src.common import (
     AppConfig,
     DialogExample,
@@ -25,7 +25,6 @@ from evals.summarisation.src.common import (
     EvalRecord,
     GenerationConfig,
     MetricResult,
-    call_llm_judge,
     call_llm_judge_parallel,
     write_jsonl,
 )

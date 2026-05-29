@@ -19,8 +19,7 @@ __all__ = [
     "DIMENSIONS",
     "FAIL_THRESHOLD",
     "REVIEW_THRESHOLD",
+    "apply_gates",
     "build_system_prompt",
     "build_user_message",
-    "apply_gates",
 ]
-

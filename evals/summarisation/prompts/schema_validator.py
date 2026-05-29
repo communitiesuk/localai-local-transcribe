@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
-from pathlib import Path
+
 from .constants import (
     CRITICAL_DIMENSIONS,
     CRITICAL_THRESHOLD,
-    DIMENSIONS,
     FAIL_THRESHOLD,
     REVIEW_THRESHOLD,
 )
-
 
 
 @dataclass
@@ -37,20 +34,12 @@ def apply_gates(judge: JudgeOutput) -> ValidationResult:
 
         if score <= FAIL_THRESHOLD:
             result.valid = False
-            result.gate_errors.append(
-                f"{dim_key}: score={score} → FAIL / block deployment"
-            )
+            result.gate_errors.append(f"{dim_key}: score={score} → FAIL / block deployment")
 
         elif score <= REVIEW_THRESHOLD:
-            result.gate_warnings.append(
-                f"{dim_key}: score={score} → review required"
-            )
+            result.gate_warnings.append(f"{dim_key}: score={score} → review required")
 
         if dim_key in CRITICAL_DIMENSIONS and score < CRITICAL_THRESHOLD:
-            result.gate_warnings.append(
-                f"{dim_key}: score={score} < {CRITICAL_THRESHOLD} (critical dimension)"
-            )
+            result.gate_warnings.append(f"{dim_key}: score={score} < {CRITICAL_THRESHOLD} (critical dimension)")
 
     return result
-
-
