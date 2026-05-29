@@ -11,7 +11,7 @@ from .judge import (
     build_system_prompt,
     build_user_message,
 )
-from .schema_validator import validate_evaluation
+from .schema_validator import apply_gates
 
 __all__ = [
     "CRITICAL_DIMENSIONS",
@@ -21,6 +21,6 @@ __all__ = [
     "REVIEW_THRESHOLD",
     "build_system_prompt",
     "build_user_message",
-    "validate_evaluation",
+    "apply_gates",
 ]
 

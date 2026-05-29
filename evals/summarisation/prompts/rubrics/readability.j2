@@ -11,3 +11,30 @@ The summary is logically organised, with appropriate use of sections, headings, 
 - **Score 1 — Unacceptable:** No discernible structure; content appears in random order; template not followed; summary consequently unusable. Includes render-breaking artefacts (e.g. stray JSON/XML/HTML, broken tags, or raw system-style markup).
 
 **Hallucination Gate:** No — review is not automatically triggered by low scores on this dimension alone, unless combined with failures in critical dimensions.
+
+#### Worked Examples
+
+**Scenario:** Output must be render-safe plain text following the template. Bad summary contains raw JSON and broken HTML artefacts.
+
+**Transcript Excerpt:**
+```text
+Housing Officer (00:03:00): Reference 6655321b. Date of birth 14 February 1989.
+Housing Officer (00:03:30): Two actions: Housing Officer to share application guidance with the customer; customer to send proof of address by 12 May.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+4. Personal Housing Plan — Jeff Martins
+4.1 Reference: 6655321b
+4.2 Customer DOB: 14 February 1989
+
+Actions
+1. Housing Officer to share application guidance with the customer.
+2. Customer to send proof of address by 12 May 2026.
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+{"ref":"6655321b","dob":"14/2/89","actions":["share guidance","proof of address by 12 May"]} See .cust3627b.docx paragraphs 6 & 7. <br/><b>TODO: fill in background section</b>
+```
+

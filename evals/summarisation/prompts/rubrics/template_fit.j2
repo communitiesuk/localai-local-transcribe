@@ -13,3 +13,37 @@ Score this dimension relative to what the chosen summary template requires. If a
 - **Score 1 — Unacceptable:** Template is not followed or key required sections are missing or empty; the output would not be usable in the intended workflow.
 
 **Hallucination Gate:** No — review is not automatically triggered by low scores on this dimension alone, unless combined with failures in critical dimensions.
+
+#### Worked Examples
+
+**Scenario:** Personal Housing Plan template requires reference, DOB, background, incident, and actions sections. Good fills all; bad is a free-form fragment missing required fields.
+
+**Transcript Excerpt:**
+```text
+Housing Officer (00:02:10): Let's go through Mr Martins's Personal Housing Plan. Reference 6655321b, date of birth 14 February 1989.
+Housing Officer (00:04:30): On 2 April the police were called by the neighbour after items were thrown over the fence and discriminatory abuse was shouted.
+Housing Officer (00:10:00): Actions: customer to attend anger management assessment by 5 May; Housing Officer to review tenancy conditions by 19 May.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+4. Personal Housing Plan — Jeff Martins
+4.1 Reference: 6655321b
+4.2 Customer DOB: 14 February 1989
+
+Background
+The customer's PHP was reviewed at the meeting.
+
+Incident (2 April 2026)
+On 2 April, police were called by the next-door neighbour after the customer was observed throwing items over the fence and shouting discriminatory abuse.
+
+Actions
+1. Customer to attend anger management assessment by 5 May 2026.
+2. Housing Officer to review tenancy conditions by 19 May 2026.
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+PHP for customer 6655321 Martins J DOB 14/2/89. Stuff happened with the neighbour, police called. Actions assigned to various parties.
+```
+

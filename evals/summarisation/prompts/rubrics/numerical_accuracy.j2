@@ -13,3 +13,28 @@ Where the transcript itself is uncertain, incomplete, or contradictory, the summ
 - **Score 1 — Unacceptable:** Multiple numerical errors, fabrications, or omissions that would materially mislead the reader. Dates, quantities, timeframes, amounts, IDs, or counts are wrong, invented, or confused.
 
 **Hallucination Gate:** Yes — scores ≤ 3 on this dimension require human review due to meaning-drift or operational risk.
+
+#### Worked Examples
+
+**Scenario:** Good summary reproduces the exact date (12 May 2026), time (14:30), and reference number (HB-88142). Bad summary shifts the deadline and vagues up the appointment time.
+
+**Transcript Excerpt:**
+```text
+Housing Officer (00:15:22): So you need to bring proof of address — deadline of 12 May 2026. And the follow-up appointment is booked for 22 May at 14:30, reference number HB-88142.
+Customer (00:15:40): Got it, 12 May for the documents, and I'll be there at half two on the 22nd.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+Actions
+1. Customer to provide proof of address by 12 May 2026.
+2. Follow-up appointment confirmed for 22 May 2026 at 14:30 (ref: HB-88142).
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+Actions
+1. Customer to provide proof of address by 15 May.
+2. A follow-up appointment was booked for the following week in the afternoon.
+```
+

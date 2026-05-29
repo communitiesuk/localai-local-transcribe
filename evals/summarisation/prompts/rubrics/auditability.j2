@@ -11,3 +11,24 @@ Substantive claims in the summary are traceable back to the source transcript vi
 - **Score 1 — Unacceptable:** No attributions; all statements are unverifiable without re-listening to the full recording.
 
 **Hallucination Gate:** No — review is not automatically triggered by low scores on this dimension alone, unless combined with failures in critical dimensions.
+
+#### Worked Examples
+
+**Scenario:** Claims must be attributed to speakers with accurate timestamps. Bad summary uses inaccurate attributions and omits all attribution.
+
+**Transcript Excerpt:**
+```text
+Housing Officer (00:34:12): I can confirm the customer's application has been signed off by the assessor on 3 April 2026.
+Customer (00:34:50): That's a relief, thank you.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+The Housing Officer (00:34:12) confirmed that the customer's application had been signed off by the assessor on 3 April 2026. The customer acknowledged the update.
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+The Housing Officer said his application was going okay and things were moving in the right direction. There were no issues flagged at this stage.
+```
+
