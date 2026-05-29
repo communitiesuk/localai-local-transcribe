@@ -230,11 +230,12 @@ async def test_call_llm_judge_parallel():
 
     mock_response = {"dimensions": {"accuracy": {"score": 5, "rationale": "excellent"}}}
 
+    # Patch the actual implementation location, not an intermediate module
     with patch(
-        "evals.summarisation.src.common.metric.call_llm_judge_parallel",
+        "evals.summarisation.src.optimisation.runner.call_llm_judge_parallel",  # Changed path
         new_callable=AsyncMock,
         return_value=mock_response,
-    ):
+    ) as mock_call:
         result = await call_llm_judge_parallel(
             summary_id="id",
             transcript_ref="ref",
@@ -244,3 +245,4 @@ async def test_call_llm_judge_parallel():
         )
 
     assert result == {"dimensions": {"accuracy": {"score": 5, "rationale": "excellent"}}}
+    mock_call.assert_called_once()
