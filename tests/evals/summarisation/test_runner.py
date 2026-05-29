@@ -17,6 +17,7 @@ from evals.summarisation.src.optimisation.runner import (
     _to_dspy_devset,
     _utc_now,
     run_eval,
+    call_llm_judge_parallel
 )
 
 _MINIMAL_PROMPTS = {"judge_template_path": "prompts/judge.jinja2"}
@@ -198,7 +199,7 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
             return_value=("Generated summary [1]", 5, []),
         ),
         patch(
-            "evals.summarisation.src.optimisation.runner.call_llm_judge",
+            "evals.summarisation.src.optimisation.runner.call_llm_judge_parallel",
             new_callable=AsyncMock,
             return_value=mock_rubric,
         ),
@@ -224,34 +225,22 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_call_llm_judge():
+async def test_call_llm_judge_parallel():
     from unittest.mock import AsyncMock, patch
 
-    from evals.summarisation.src.common.metric import (
-        DimensionEvaluation,
-        RubricEvaluation,
-        call_llm_judge,
-    )
+    mock_response = {"dimensions": {"accuracy": {"score": 5, "rationale": "excellent"}}}
 
-    # 1. Setup mock response using real Pydantic classes to avoid mock .name attribute collisions
-    mock_response = RubricEvaluation(dimensions=[DimensionEvaluation(name="accuracy", score=5, rationale="excellent")])
+    with patch(
+        "evals.summarisation.src.common.metric.call_llm_judge_parallel",
+        new_callable=AsyncMock,
+        return_value=mock_response,
+    ):
+        result = await call_llm_judge_parallel(
+            summary_id="id",
+            transcript_ref="ref",
+            transcript_text="dialogue",
+            summary_text="summary",
+            dimensions=["accuracy"],
+        )
 
-    # 2. Mock the adapter and structured_chat response
-    mock_adapter = AsyncMock()
-    mock_adapter.structured_chat.return_value = mock_response
-
-    # 3. Patch the adapter factory and execute
-    with patch("evals.summarisation.src.common.metric.build_azure_apim_adapter", return_value=mock_adapter):
-        result = await call_llm_judge("system prompt", "user prompt")
-
-    # 4. Assert against the expected structured output schema
     assert result == {"dimensions": {"accuracy": {"score": 5, "rationale": "excellent"}}}
-
-    # 5. Verify the structured_chat was invoked with correct arguments
-    mock_adapter.structured_chat.assert_called_once_with(
-        [
-            {"role": "system", "content": "system prompt"},
-            {"role": "user", "content": "user prompt"},
-        ],
-        RubricEvaluation,
-    )
