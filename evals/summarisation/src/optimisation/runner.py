@@ -14,7 +14,6 @@ import dspy
 import orjson
 from datasets import load_dataset
 from dspy.evaluate import Evaluate
-from logger import logger
 
 from common.database.postgres_models import DialogueEntry, HallucinationType
 from common.settings import get_settings
