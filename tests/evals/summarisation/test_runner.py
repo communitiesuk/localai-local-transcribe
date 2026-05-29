@@ -16,7 +16,6 @@ from evals.summarisation.src.optimisation.runner import (
     _prepare_run_paths,
     _to_dspy_devset,
     _utc_now,
-    call_llm_judge_parallel,
     run_eval,
 )
 
@@ -227,6 +226,7 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
 @pytest.mark.asyncio
 async def test_call_llm_judge_parallel():
     from unittest.mock import AsyncMock, patch
+
     # Import the real parallel function to test it
     from evals.summarisation.src.common.metric import call_llm_judge_parallel
 
@@ -238,7 +238,6 @@ async def test_call_llm_judge_parallel():
         new_callable=AsyncMock,
         return_value=mock_response,
     ) as mock_single_call:
-        
         result = await call_llm_judge_parallel(
             summary_id="id",
             transcript_ref="ref",
@@ -246,7 +245,7 @@ async def test_call_llm_judge_parallel():
             summary_text="summary",
             dimensions=["accuracy"],
         )
-        
+
         # Verify the parallel runner returned what the underlying judge mocked
         assert result is not None
         mock_single_call.assert_called_once()
