@@ -17,7 +17,7 @@ from dspy.evaluate import Evaluate
 
 from common.database.postgres_models import DialogueEntry, HallucinationType
 from common.settings import get_settings
-from evals.summarisation.prompts.judge import build_system_prompt, build_user_message
+from evals.summarisation.prompts import build_system_prompt, build_user_message, DIMENSIONS
 from evals.summarisation.src.common import (
     AppConfig,
     DialogExample,
@@ -26,6 +26,7 @@ from evals.summarisation.src.common import (
     GenerationConfig,
     MetricResult,
     call_llm_judge,
+    call_llm_judge_parallel,
     write_jsonl,
 )
 from evals.summarisation.src.hallucination.types import HallucinationInput
@@ -229,15 +230,16 @@ def build_metric_function(
         t_j0 = time.perf_counter()
         metrics_out = {}
 
-        sys_prompt = build_system_prompt()
-        user_msg = build_user_message(
-            summary_id=ex.example_id,
-            transcript_ref=str(ex.example_id),
-            transcript_text=ex.dialogue,
-            summary_text=pred.summary,
+        # Run separate LLM judge calls in parallel for each rubric dimension
+        rubric_evaluation = loop.run_until_complete(
+            call_llm_judge_parallel(
+                summary_id=ex.example_id,
+                transcript_ref=str(ex.example_id),
+                transcript_text=ex.dialogue,
+                summary_text=pred.summary,
+                dimensions=list(DIMENSIONS.keys()),
+            )
         )
-
-        rubric_evaluation = loop.run_until_complete(call_llm_judge(sys_prompt, user_msg))
 
         for dim, result in rubric_evaluation["dimensions"].items():
             metrics_out[f"rubric_{dim}"] = MetricResult(score=int(result["score"]), reason=result["rationale"])

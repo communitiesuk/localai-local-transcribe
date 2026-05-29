@@ -42,6 +42,42 @@ async def call_llm_judge(system: str, user: str) -> dict:
     return {"dimensions": dimensions_dict}
 
 
+async def call_llm_judge_parallel(
+    *,
+    summary_id: str,
+    transcript_ref: str,
+    transcript_text: str,
+    summary_text: str,
+    dimensions: list[str],
+) -> dict:
+    """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
+    semaphore = asyncio.Semaphore(4)  # Limit concurrency to prevent rate limits
+
+    async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
+        async with semaphore:
+            sys_prompt = build_system_prompt(dim)
+            user_msg = build_user_message(
+                summary_id=summary_id,
+                transcript_ref=transcript_ref,
+                transcript_text=transcript_text,
+                summary_text=summary_text,
+            )
+            res = await call_llm_judge(sys_prompt, user_msg)
+            dim_data = res["dimensions"].get(dim)
+            if dim_data is None and res["dimensions"]:
+                first_key = next(iter(res["dimensions"]))
+                dim_data = res["dimensions"][first_key]
+            if dim_data is None:
+                dim_data = {"score": 1, "rationale": "Missing evaluation data"}
+            return dim, dim_data
+
+    tasks = [evaluate_single_dim(d) for d in dimensions]
+    results = await asyncio.gather(*tasks)
+
+    merged_dimensions = {dim: res_data for dim, res_data in results}
+    return {"dimensions": merged_dimensions}
+
+
 @dataclass(frozen=True)
 class DialogSummaryMetric:
     """Judge-based metric for evaluating dialogue summaries."""
@@ -58,7 +94,14 @@ class DialogSummaryMetric:
         prediction: dspy.Prediction,
     ) -> MetricResult:
         """Evaluates prediction against example using rubric judge LLM for specific criterion."""
-        sys_prompt = build_system_prompt()
+        rubric_dim = self.criterion
+        # Map configured metric names to rubric dimension names
+        if rubric_dim == "faithfulness":
+            rubric_dim = "accuracy"
+        elif rubric_dim in ("conciseness", "coherence"):
+            rubric_dim = "readability"
+
+        sys_prompt = build_system_prompt(rubric_dim)
         user_msg = build_user_message(
             summary_id=example.example_id,
             transcript_ref=str(example.example_id),
@@ -68,14 +111,11 @@ class DialogSummaryMetric:
 
         rubric_evaluation = asyncio.run(call_llm_judge(sys_prompt, user_msg))
 
-        rubric_dim = self.criterion
-        # Map configured metric names to rubric dimension names
-        if rubric_dim == "faithfulness":
-            rubric_dim = "accuracy"
-        elif rubric_dim in ("conciseness", "coherence"):
-            rubric_dim = "readability"
-
         dim_eval = rubric_evaluation["dimensions"].get(rubric_dim)
+        if dim_eval is None and rubric_evaluation["dimensions"]:
+            first_key = next(iter(rubric_evaluation["dimensions"]))
+            dim_eval = rubric_evaluation["dimensions"][first_key]
+
         if dim_eval is None:
             return MetricResult(
                 score=0.0,
