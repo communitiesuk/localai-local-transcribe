@@ -135,16 +135,12 @@ def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:
     metrics: list[DialogSummaryMetric] = []
 
     for name in cfg.metrics:
-        rubric_dim: str = name
-        if name == "faithfulness":
-            rubric_dim = "accuracy"
-        elif name in ("conciseness", "coherence"):
-            rubric_dim = "readability"
+        rubric_dim = name
 
         metrics.append(
             DialogSummaryMetric(
                 name=f"rubric_{rubric_dim}",
-                criterion=name,
+                criterion=rubric_dim,
                 pass_threshold=cfg.judge.pass_threshold,
             )
         )

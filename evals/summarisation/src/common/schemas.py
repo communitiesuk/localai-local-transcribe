@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -30,9 +29,6 @@ class DialogSummary(BaseModel):
     model: str
     prompt_version: str
     generation_config: GenerationConfig
-
-
-CriteriaName = Literal["faithfulness", "coverage", "conciseness", "coherence"]
 
 
 class MetricResult(BaseModel):
