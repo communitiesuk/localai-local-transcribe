@@ -138,7 +138,6 @@ def initialise_eval(
     list[EvalRecord],
     list[HallucinationInput],
     list[int],
-    list[int],
     list[bool],
     dict[str, list[float]],
     str,
@@ -158,7 +157,7 @@ def initialise_eval(
     records: list[EvalRecord] = []
     hallucination_inputs: list[HallucinationInput] = []
     summarize_ms_values: list[int] = []
-    judge_ms_values: list[int] = []
+
     review_flags: list[bool] = []
     metric_scores: dict[str, list[float]] = defaultdict(list)
     loop = asyncio.new_event_loop()
@@ -196,7 +195,6 @@ def initialise_eval(
         records,
         hallucination_inputs,
         summarize_ms_values,
-        judge_ms_values,
         review_flags,
         metric_scores,
         model_name,
@@ -213,7 +211,6 @@ def build_metric_function(
     records: list[EvalRecord],
     hallucination_inputs: list[HallucinationInput],
     summarize_ms_values: list[int],
-    judge_ms_values: list[int],
     review_flags: list[bool],
     metric_scores: dict[str, list[float]],
     model_name: str,
@@ -226,7 +223,6 @@ def build_metric_function(
             reference_summary=getattr(gold, "reference_summary", None),
         )
 
-        t_j0 = time.perf_counter()
         metrics_out = {}
 
         # Run separate LLM judge calls in parallel for each rubric dimension
@@ -242,9 +238,6 @@ def build_metric_function(
 
         for dim, result in rubric_evaluation["dimensions"].items():
             metrics_out[f"rubric_{dim}"] = MetricResult(score=int(result["score"]), reason=result["rationale"])
-
-        judge_ms = _elapsed_ms(t_j0, time.perf_counter())
-        judge_ms_values.append(judge_ms)
 
         for name, res in metrics_out.items():
             metric_scores[name].append(res.score)
@@ -265,7 +258,6 @@ def build_metric_function(
                 review_reasons=review_reasons,
                 latency_ms={
                     "summarize": summarize_ms_values[-1] if summarize_ms_values else 0,
-                    "judge": judge_ms,
                 },
                 error=None,
             )
@@ -304,7 +296,6 @@ def build_metric_summary(
     metric_scores: dict[str, list[float]],
     review_flags: list[bool],
     summarize_ms_values: list[int],
-    judge_ms_values: list[int],
     summary_path: Path,
     results_path: Path,
     hallucination_inputs_path: Path,
@@ -328,7 +319,6 @@ def build_metric_summary(
         "metrics": metrics_summary,
         "latency_ms": {
             "summarize_p50": _p50(summarize_ms_values),
-            "judge_p50": _p50(judge_ms_values),
         },
         "review": {
             "count": review_flagged_count,
@@ -355,7 +345,6 @@ def run_eval(cfg: AppConfig, *, split: str, limit: int | None, prompt_version: s
         records,
         hallucination_inputs,
         summarize_ms_values,
-        judge_ms_values,
         review_flags,
         metric_scores,
         model_name,
@@ -370,7 +359,6 @@ def run_eval(cfg: AppConfig, *, split: str, limit: int | None, prompt_version: s
         records=records,
         hallucination_inputs=hallucination_inputs,
         summarize_ms_values=summarize_ms_values,
-        judge_ms_values=judge_ms_values,
         review_flags=review_flags,
         metric_scores=metric_scores,
         model_name=model_name,
@@ -390,7 +378,6 @@ def run_eval(cfg: AppConfig, *, split: str, limit: int | None, prompt_version: s
         metric_scores=metric_scores,
         review_flags=review_flags,
         summarize_ms_values=summarize_ms_values,
-        judge_ms_values=judge_ms_values,
         summary_path=summary_path,
         results_path=results_path,
         hallucination_inputs_path=hallucination_inputs_path,
