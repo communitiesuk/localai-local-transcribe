@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import asyncio
 import re
 import time
@@ -329,7 +328,11 @@ def build_metric_summary(
     hallucination_inputs_path.write_bytes(
         orjson.dumps([h.model_dump() for h in hallucination_inputs], option=orjson.OPT_INDENT_2)
     )
-    loop.close()
+    if not loop.is_running():
+        loop.close()
+    else:
+        logger.debug("Event loop is currently running; skipping loop.close()")
+
     return run_id, results_path, summary_path, hallucination_inputs_path
 
 
