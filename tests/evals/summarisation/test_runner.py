@@ -16,8 +16,8 @@ from evals.summarisation.src.optimisation.runner import (
     _prepare_run_paths,
     _to_dspy_devset,
     _utc_now,
+    call_llm_judge_parallel,
     run_eval,
-    call_llm_judge_parallel
 )
 
 _MINIMAL_PROMPTS = {"judge_template_path": "prompts/judge.jinja2"}
