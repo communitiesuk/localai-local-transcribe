@@ -33,13 +33,15 @@ async def get_current_user(
         email = user_auth_info.email
         subject_id = user_auth_info.subject_id
 
+        unauthorised_error = HTTPException(
+            status_code=401,
+            detail="User does not have the required permissions to access this resource",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
         if not user_auth_info.is_authorised:
             logger.info("User {email} does not have the required permissions", email=email)
-            raise HTTPException(
-                status_code=401,
-                detail="User does not have the required permissions to access this resource",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+            raise unauthorised_error
 
         # Try to find existing user
 
@@ -48,7 +50,7 @@ async def get_current_user(
 
         if not user:
             # Create new user if doesn't exist
-            user = User(email=email)
+            user = User(email=email, subject_id=subject_id)
             session.add(user)
             await session.commit()
             await session.refresh(user)
@@ -58,6 +60,9 @@ async def get_current_user(
             session.add(user)
             await session.commit()
             await session.refresh(user)
+
+        if user.subject_id != subject_id:
+            raise unauthorised_error
 
         return user
     except MissingAuthTokenError as e:
