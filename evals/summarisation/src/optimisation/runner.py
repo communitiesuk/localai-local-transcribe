@@ -1,9 +1,8 @@
 from __future__ import annotations
-import os
-import tiktoken
-from .constants import TEMPERATURE, MAX_TOKENS
+
 import asyncio
 import logging
+import os
 import re
 import time
 import uuid
@@ -15,6 +14,7 @@ from typing import TypedDict
 
 import dspy
 import orjson
+import tiktoken
 from datasets import load_dataset
 from dspy.evaluate import Evaluate
 
@@ -33,6 +33,8 @@ from evals.summarisation.src.common import (
 )
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
+
+from .constants import MAX_TOKENS, TEMPERATURE
 
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
