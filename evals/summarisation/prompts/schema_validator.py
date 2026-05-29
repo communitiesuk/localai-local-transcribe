@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from evals.summarisation.src.common.schemas import JudgeOutput
+
 from .constants import (
     CRITICAL_DIMENSIONS,
     CRITICAL_THRESHOLD,

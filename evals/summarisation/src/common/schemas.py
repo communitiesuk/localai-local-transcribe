@@ -54,3 +54,10 @@ class EvalRecord(BaseModel):
     review_reasons: list[str]
     latency_ms: dict[str, int]
     error: dict[str, str] | None = None
+
+
+class JudgeOutput(BaseModel):
+    """Output from the judge LLM."""
+
+    overall_score: float
+    dimensions: dict[str, MetricResult]
