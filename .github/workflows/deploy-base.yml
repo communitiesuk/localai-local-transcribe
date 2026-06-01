@@ -102,10 +102,11 @@ jobs:
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
         run: |
+          set +e
           terraform plan -input=false -lock=false -detailed-exitcode -var="image_tag=${{ github.sha }}"
           EXITCODE=$?
           echo "exitcode=$EXITCODE" >> $GITHUB_OUTPUT
-          echo "plan output exitcode=${{ needs.plan.outputs.exitcode }}"
+          echo "Terraform plan output exitcode: $EXITCODE"
           exit $EXITCODE
         continue-on-error: true
 
