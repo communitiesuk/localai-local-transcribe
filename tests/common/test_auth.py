@@ -15,6 +15,7 @@ from common.services.exceptions import MissingAuthTokenError
 
 TEST_TOKEN = "test.jwt.token"  # noqa: S105
 TEST_EMAIL = "user@example.com"
+TEST_SUB = "test123"
 
 
 def _make_settings(environment: str = "development") -> MagicMock:
@@ -28,6 +29,7 @@ class TestGetUserInfo:
         with patch("common.auth.settings", _make_settings("local")):
             result = get_user_info(None)
 
+        assert result.subject_id == "test123"
         assert result.email == "test@test.co.uk"
         assert result.is_authorised is True
         assert result.auth_reason == "LOCAL_TESTING"
@@ -40,10 +42,10 @@ class TestGetUserInfo:
         with patch("common.auth.settings", _make_settings()), pytest.raises(MissingAuthTokenError):
             get_user_info("")
 
-    def test_returns_authorised_result_when_jwt_contains_email(self):
+    def test_returns_authorised_result_when_jwt_contains_email_and_sub(self):
         with (
             patch("common.auth.settings", _make_settings()),
-            patch("common.auth._verify_and_decode_alb_jwt", return_value={"email": TEST_EMAIL}),
+            patch("common.auth._verify_and_decode_alb_jwt", return_value={"sub": TEST_SUB, "email": TEST_EMAIL}),
         ):
             result = get_user_info(TEST_TOKEN)
 
@@ -66,10 +68,18 @@ class TestGetUserInfo:
         ):
             get_user_info(TEST_TOKEN)
 
+    def test_propagates_exception_when_payload_has_no_sub(self):
+        with (
+            patch("common.auth.settings", _make_settings()),
+            patch("common.auth._verify_and_decode_alb_jwt", return_value={"email": TEST_EMAIL}),
+            pytest.raises(ValueError, match="No sub found"),
+        ):
+            get_user_info(TEST_TOKEN)
+
 
 class TestIsAuthorisedUser:
     def test_returns_true_when_user_is_authorised(self):
-        authorised_result = UserAuthorisationResult(email=TEST_EMAIL, is_authorised=True)
+        authorised_result = UserAuthorisationResult(subject_id=TEST_SUB, email=TEST_EMAIL, is_authorised=True)
         with patch("common.auth.get_user_info", return_value=authorised_result):
             assert is_authorised_user(TEST_TOKEN) is True
 
