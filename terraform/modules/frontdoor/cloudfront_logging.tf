@@ -6,6 +6,13 @@ resource "aws_s3_bucket" "cloudfront_logs" {
   object_lock_enabled = false
 }
 
+resource "aws_s3_bucket_versioning" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 
 resource "aws_s3_bucket_ownership_controls" "cloudfront_logs" {
   bucket = aws_s3_bucket.cloudfront_logs.id
@@ -121,21 +128,65 @@ resource "aws_s3_bucket_public_access_block" "cloudfront_logs" {
   restrict_public_buckets = true
 }
 
+resource "aws_kms_key" "cloudfront_logs" {
+  description         = "local-transcribe-cloudfront-logs-${var.environment_name}"
+  enable_key_rotation = true
+  policy              = data.aws_iam_policy_document.cloudfront_logs_kms.json
+}
+
+resource "aws_kms_alias" "cloudfront_logs" {
+  name          = "alias/${var.environment_name}-cloudfront-logs"
+  target_key_id = aws_kms_key.cloudfront_logs.key_id
+}
+
 resource "aws_s3_bucket_server_side_encryption_configuration" "cloudfront_logs" {
   bucket = aws_s3_bucket.cloudfront_logs.bucket
 
   rule {
-    blocked_encryption_types = ["SSE-C"]
-    bucket_key_enabled       = false
+    bucket_key_enabled = true
 
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.cloudfront_logs.arn
     }
   }
 }
 
+
+data "aws_iam_policy_document" "cloudfront_logs_kms" {
+  statement {
+    sid = "AllowRootAccountAccess"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid = "AllowCloudFrontLogDelivery"
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+
+    actions = [
+      "kms:GenerateDataKey",
+      "kms:Decrypt",
+    ]
+
+    resources = ["*"]
+  }
+}
+
+
 resource "aws_s3_bucket_lifecycle_configuration" "cloudfront_logs" {
-  bucket = aws_s3_bucket.cloudfront_logs.id
+  bucket     = aws_s3_bucket.cloudfront_logs.id
+  depends_on = [aws_s3_bucket_versioning.cloudfront_logs]
 
   rule {
     id = "expire-old-logs"
@@ -143,11 +194,14 @@ resource "aws_s3_bucket_lifecycle_configuration" "cloudfront_logs" {
 
     status = "Enabled"
 
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+
 
     expiration {
       days = 365
     }
-
 
   }
 
