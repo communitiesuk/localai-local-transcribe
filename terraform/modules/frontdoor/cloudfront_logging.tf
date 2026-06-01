@@ -131,7 +131,6 @@ resource "aws_s3_bucket_public_access_block" "cloudfront_logs" {
 resource "aws_kms_key" "cloudfront_logs" {
   description         = "local-transcribe-cloudfront-logs-${var.environment_name}"
   enable_key_rotation = true
-  policy              = data.aws_iam_policy_document.cloudfront_logs_kms.json
 }
 
 resource "aws_kms_alias" "cloudfront_logs" {
@@ -139,18 +138,12 @@ resource "aws_kms_alias" "cloudfront_logs" {
   target_key_id = aws_kms_key.cloudfront_logs.key_id
 }
 
-resource "aws_s3_bucket_server_side_encryption_configuration" "cloudfront_logs" {
-  bucket = aws_s3_bucket.cloudfront_logs.bucket
-
-  rule {
-    bucket_key_enabled = true
-
-    apply_server_side_encryption_by_default {
-      sse_algorithm     = "aws:kms"
-      kms_master_key_id = aws_kms_key.cloudfront_logs.arn
-    }
-  }
+resource "aws_kms_key_policy" "cloudfront_logs" {
+  key_id = aws_kms_key.cloudfront_logs.id
+  policy = data.aws_iam_policy_document.cloudfront_logs_kms.json
 }
+
+
 
 
 data "aws_iam_policy_document" "cloudfront_logs_kms" {
@@ -163,7 +156,7 @@ data "aws_iam_policy_document" "cloudfront_logs_kms" {
     }
 
     actions   = ["kms:*"]
-    resources = ["*"]
+    resources = [aws_kms_key.cloudfront_logs.arn]
   }
 
   statement {
@@ -175,11 +168,25 @@ data "aws_iam_policy_document" "cloudfront_logs_kms" {
     }
 
     actions = [
-      "kms:GenerateDataKey",
-      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+      "kms:Encrypt*",
     ]
 
-    resources = ["*"]
+    resources = [aws_kms_key.cloudfront_logs.arn]
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "cloudfront_logs" {
+  bucket = aws_s3_bucket.cloudfront_logs.bucket
+
+  rule {
+    bucket_key_enabled = true
+
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.cloudfront_logs.arn
+    }
   }
 }
 
