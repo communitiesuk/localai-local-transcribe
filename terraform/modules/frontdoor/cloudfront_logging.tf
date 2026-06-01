@@ -144,8 +144,6 @@ resource "aws_kms_key_policy" "cloudfront_logs" {
 }
 
 
-
-
 data "aws_iam_policy_document" "cloudfront_logs_kms" {
   statement {
     sid = "AllowRootAccountAccess"
@@ -168,9 +166,9 @@ data "aws_iam_policy_document" "cloudfront_logs_kms" {
     }
 
     actions = [
-      "kms:GenerateDataKey*",
+      "kms:GenerateDataKey",
       "kms:DescribeKey",
-      "kms:Encrypt*",
+      "kms:Encrypt",
     ]
 
     resources = [aws_kms_key.cloudfront_logs.arn]
