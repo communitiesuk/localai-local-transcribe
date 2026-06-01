@@ -1,6 +1,7 @@
 import { Alpha } from '@/components/layout/alpha'
 import { NavButton } from '@/components/layout/nav-button'
 import { FileText, Home, Settings } from 'lucide-react'
+import { API_PROXY_PATH } from '@/lib/constants'
 import Link from 'next/link'
 
 export const Header = () => {
@@ -41,9 +42,12 @@ export const Header = () => {
         </div>
 
         <div>
-          <Link href="#" className="govuk-link govuk-link--inverse font-bold">
+          <a
+            href={`${API_PROXY_PATH}/signout`}
+            className="govuk-link govuk-link--inverse font-bold"
+          >
             Sign out
-          </Link>
+          </a>
         </div>
       </header>
 
