@@ -42,12 +42,12 @@ export const Header = () => {
         </div>
 
         <div>
-          <Link
+          <a
             href={`${API_PROXY_PATH}/signout`}
             className="govuk-link govuk-link--inverse font-bold"
           >
             Sign out
-          </Link>
+          </a>
         </div>
       </header>
 
