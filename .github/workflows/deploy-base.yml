@@ -110,14 +110,14 @@ jobs:
         continue-on-error: true
 
       - name: Fail if plan errored
-        if: ${{ steps.plan.outputs.exitcode == 1 }}
+        if:  steps.plan.outputs.exitcode == 1
         run: exit 1
 
   apply:
     name: Terraform apply
     runs-on: ubuntu-latest
     needs: plan
-    if: ${{ needs.plan.outputs.exitcode == 2 }}
+    if:  needs.plan.outputs.exitcode == 2
     concurrency: tfstate-${{ inputs.environment }}
     defaults:
       run:
