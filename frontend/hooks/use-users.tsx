@@ -6,6 +6,7 @@ export function useUsers(organisationId: string) {
     ...listUsersInOrgOrgsOrganisationIdUsersGetOptions({
       path: { organisation_id: organisationId },
     }),
+    enabled: Boolean(organisationId),
   })
 
   return {
