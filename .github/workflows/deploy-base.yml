@@ -105,6 +105,7 @@ jobs:
           terraform plan -input=false -lock=false -detailed-exitcode -var="image_tag=${{ github.sha }}"
           EXITCODE=$?
           echo "exitcode=$EXITCODE" >> $GITHUB_OUTPUT
+          echo "plan output exitcode=${{ needs.plan.outputs.exitcode }}"
           exit $EXITCODE
         continue-on-error: true
 
