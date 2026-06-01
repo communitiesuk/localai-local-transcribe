@@ -27,7 +27,6 @@ jobs:
     name: Build and push ${{ matrix.service }}
     runs-on: ubuntu-24.04-arm
     strategy:
-      fail-fast: false
       matrix:
         service: [frontend, backend, worker]
     steps:
