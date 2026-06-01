@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   '/monitoring',
   '/privacy',
   '/support',
+  '/signout',
 ]
 
 export async function proxy(req: NextRequest) {

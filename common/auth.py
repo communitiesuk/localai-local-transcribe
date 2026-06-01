@@ -16,6 +16,7 @@ _public_key_cache: dict[str, str] = {}
 
 @dataclass
 class UserAuthorisationResult:
+    subject_id: str
     email: str
     is_authorised: bool
     auth_reason: str = ""
@@ -55,6 +56,7 @@ def _verify_and_decode_alb_jwt(token: str) -> dict:
 
 def __load_dummy_user_info() -> UserAuthorisationResult:
     return UserAuthorisationResult(
+        subject_id="test123",
         email="test@test.co.uk",
         is_authorised=True,
         auth_reason="LOCAL_TESTING",
@@ -78,7 +80,11 @@ def get_user_info(auth_token: str | None) -> UserAuthorisationResult:
         if not email:
             msg = "No email found in JWT payload"
             raise ValueError(msg)
-        return UserAuthorisationResult(email=email, is_authorised=True)
+        subject_id = payload.get("sub")
+        if not subject_id or not isinstance(subject_id, str):
+            msg = "No sub found in JWT payload"
+            raise ValueError(msg)
+        return UserAuthorisationResult(subject_id=subject_id, email=email, is_authorised=True)
     except Exception:
         logger.exception("Error occurred when authorising user")
         raise
