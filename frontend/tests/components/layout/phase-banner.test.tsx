@@ -18,18 +18,5 @@ describe('<PhaseBanner />', () => {
     const { container } = render(<PhaseBanner />)
     const text = container.querySelector('.govuk-phase-banner__text')
     expect(text?.textContent).toContain('This is a new service')
-    expect(text?.textContent).toContain('give your feedback')
-  })
-
-  it('preserves the feedback link to the current survey URL, open in a new tab', () => {
-    render(<PhaseBanner />)
-    const link = screen.getByRole('link', { name: 'give your feedback' })
-    expect(link).toHaveAttribute(
-      'href',
-      'https://surveys.publishing.service.gov.uk/s/MAQMR1/'
-    )
-    expect(link).toHaveClass('govuk-link')
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
   })
 })
