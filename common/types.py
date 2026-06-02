@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from common.database.postgres_models import (
     ContentSource,
@@ -88,7 +88,7 @@ class ChatCreateResponse(BaseModel):
 
 class UserCreate(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     organisation_id: uuid.UUID
 
 
