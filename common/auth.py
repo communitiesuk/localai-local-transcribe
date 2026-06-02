@@ -1,11 +1,10 @@
 import logging
 from dataclasses import dataclass
-from uuid import UUID
 
 import jwt
 import requests
 
-from common.database.postgres_models import User, UserRole
+from common.database.postgres_models import Organisation, User, UserRole
 from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings
 
@@ -17,6 +16,7 @@ _public_key_cache: dict[str, str] = {}
 
 @dataclass
 class UserAuthorisationResult:
+    subject_id: str
     email: str
     is_authorised: bool
     auth_reason: str = ""
@@ -56,6 +56,7 @@ def _verify_and_decode_alb_jwt(token: str) -> dict:
 
 def __load_dummy_user_info() -> UserAuthorisationResult:
     return UserAuthorisationResult(
+        subject_id="test123",
         email="test@test.co.uk",
         is_authorised=True,
         auth_reason="LOCAL_TESTING",
@@ -79,7 +80,11 @@ def get_user_info(auth_token: str | None) -> UserAuthorisationResult:
         if not email:
             msg = "No email found in JWT payload"
             raise ValueError(msg)
-        return UserAuthorisationResult(email=email, is_authorised=True)
+        subject_id = payload.get("sub")
+        if not subject_id or not isinstance(subject_id, str):
+            msg = "No sub found in JWT payload"
+            raise ValueError(msg)
+        return UserAuthorisationResult(subject_id=subject_id, email=email, is_authorised=True)
     except Exception:
         logger.exception("Error occurred when authorising user")
         raise
@@ -100,7 +105,7 @@ def is_system_admin(user: User) -> bool:
     return UserRole.MHCLG_SUPPORT_ADMIN in user.roles
 
 
-def is_admin_for_org(user: User, organisation_id: UUID) -> bool:
+def is_admin_for_org(user: User, organisation: Organisation) -> bool:
     return is_system_admin(user) or (
-        user.organisation_id == organisation_id and UserRole.LOCAL_AUTHORITY_ADMIN in user.roles
+        user.organisation_id == organisation.id and UserRole.LOCAL_AUTHORITY_ADMIN in user.roles
     )

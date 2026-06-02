@@ -3,26 +3,31 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException
 
-from backend.api.dependencies import SQLSessionDep, UserDep
-from common.types import DataRetentionUpdateResponse, GetUserResponse
+from backend.api.dependencies import (
+    OrganisationAdminDep,
+    SQLSessionDep,
+    SystemAdminDep,
+    TargetUserDep,
+    UserDep,
+)
+from backend.utils.mappers import to_user_response
+from backend.utils.queries import get_users
+from common.auth import is_admin_for_org, is_system_admin
+from common.database.postgres_models import Organisation, User, UserRole
+from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles
 
-users_router = APIRouter(tags=["Users"])
+users_router = APIRouter(prefix="/users", tags=["Users"])
+org_users_router = APIRouter(prefix="/orgs/{organisation_id}/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
 
 
-@users_router.get("/users/me")
+@users_router.get("/me")
 def get_user(user: UserDep) -> GetUserResponse:
-    return GetUserResponse(
-        id=user.id,
-        created_datetime=user.created_datetime,
-        updated_datetime=user.updated_datetime,
-        email=user.email,
-        data_retention_days=user.data_retention_days,
-    )
+    return to_user_response(user)
 
 
-@users_router.patch("/users/data-retention", response_model=GetUserResponse)
+@users_router.patch("/data-retention", response_model=GetUserResponse)
 async def update_data_retention(
     data: DataRetentionUpdateResponse,
     session: SQLSessionDep,
@@ -52,10 +57,116 @@ async def update_data_retention(
         user.id,
     )
 
-    return GetUserResponse(
-        id=user.id,
-        created_datetime=user.created_datetime,
-        updated_datetime=user.updated_datetime,
-        email=user.email,
-        data_retention_days=user.data_retention_days,
-    )
+    return to_user_response(user)
+
+
+@users_router.post("")
+async def create_user(
+    data: UserCreate,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> GetUserResponse:
+    organisation = await session.get(Organisation, data.organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can create a new user")
+
+    email_domain = data.email.split("@")[1]
+    lowered_allowed_domains = [domain.lower() for domain in organisation.allowed_domains]
+    if email_domain not in lowered_allowed_domains:
+        raise HTTPException(
+            status_code=400, detail=f"An email of domain '{email_domain}' is not associated with this organisation"
+        )
+
+    new_user = User(name=data.name, email=data.email, organisation_id=organisation.id)
+
+    session.add(new_user)
+    await session.commit()
+    await session.refresh(new_user)
+
+    return to_user_response(new_user)
+
+
+@users_router.get("")
+async def list_users(
+    _: SystemAdminDep,
+    session: SQLSessionDep,
+) -> list[GetUserResponse]:
+    users = await get_users(session)
+    return [to_user_response(user) for user in users]
+
+
+@users_router.get("/{user_id}")
+async def list_user(
+    _: SystemAdminDep,
+    target_user: TargetUserDep,
+) -> GetUserResponse:
+    return to_user_response(target_user)
+
+
+@org_users_router.get("")
+async def list_users_in_org(
+    organisation: OrganisationAdminDep,
+    session: SQLSessionDep,
+) -> list[GetUserResponse]:
+    users = await get_users(session, organisation)
+    return [to_user_response(user) for user in users]
+
+
+@org_users_router.get("/{user_id}")
+async def list_user_in_org(_: OrganisationAdminDep, target_user: TargetUserDep) -> GetUserResponse:
+    return to_user_response(target_user)
+
+
+@users_router.patch("/{user_id}/roles")
+async def update_user_roles(
+    data: UserUpdateRoles, target_user: TargetUserDep, session: SQLSessionDep, user: UserDep
+) -> GetUserResponse:
+    involves_system_admin_role = UserRole.MHCLG_SUPPORT_ADMIN in data.roles or is_system_admin(target_user)
+
+    # only a system admin can grant/revoke system admin
+    if involves_system_admin_role and not is_system_admin(user):
+        raise HTTPException(
+            status_code=403,
+            detail="Only a system admin can perform this action",
+        )
+
+    if not target_user.organisation_id:
+        raise HTTPException(status_code=404, detail="User not found within organisation")
+
+    organisation = await session.get(Organisation, target_user.organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can update user roles")
+
+    target_user.roles = data.roles
+
+    session.add(target_user)
+
+    await session.commit()
+    await session.refresh(target_user)
+
+    return to_user_response(target_user)
+
+
+@users_router.delete("/{user_id}", status_code=204)
+async def delete_user(session: SQLSessionDep, user: UserDep, target_user: TargetUserDep) -> None:
+    if is_system_admin(target_user) and not is_system_admin(user):
+        raise HTTPException(status_code=403, detail="Only a system admin can perform this action")
+
+    if not target_user.organisation_id:
+        raise HTTPException(status_code=404, detail="User not found within organisation")
+
+    organisation = await session.get(Organisation, target_user.organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can delete a user")
+
+    await session.delete(target_user)
+    await session.commit()
