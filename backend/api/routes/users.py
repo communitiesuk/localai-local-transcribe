@@ -17,7 +17,6 @@ from common.database.postgres_models import Organisation, User, UserRole
 from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
-org_users_router = APIRouter(prefix="/orgs/{organisation_id}/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
 
@@ -91,8 +90,8 @@ async def create_user(
 
 @users_router.get("")
 async def list_users(
-    user: UserDep,
     organisation: OrganisationAdminDep,
+    user: UserDep,
     session: SQLSessionDep,
 ) -> list[GetUserResponse]:
     users = []
@@ -104,8 +103,8 @@ async def list_users(
 
 
 @users_router.get("/{user_id}")
-async def list_user(
-    _: SystemAdminDep,
+async def get_target_user(
+    _: OrganisationAdminDep,
     target_user: TargetUserDep,
 ) -> GetUserResponse:
     return to_user_response(target_user)

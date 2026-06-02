@@ -14,7 +14,7 @@ async def get_org_admin(
     session: SQLSessionDep
 ) -> Organisation:
     if not user.organisation_id:
-        raise HTTPException(status_code=404, detail="User not in organisation")
+        raise HTTPException(status_code=403, detail="User not in organisation")
     
     organisation = await session.get(Organisation, user.organisation_id)
     if not organisation:
