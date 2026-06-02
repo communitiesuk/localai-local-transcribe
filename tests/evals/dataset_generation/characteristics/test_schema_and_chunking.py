@@ -2,8 +2,21 @@ from __future__ import annotations
 
 import pytest
 
-from evals.dataset_generation.characteristics.src.chunker import _MAX_UPGRADE_SPAN_LEN, _align_to_word_start, _remove_subspans, _strip_leading_with, _upgrade_subspans_to_longest, build_chunks, deduplicate_characteristics
-from evals.dataset_generation.characteristics.src.schema import CharacteristicDetection, ChunkingConfig, EvalsConfig, TextSpan
+from evals.dataset_generation.characteristics.src.chunker import (
+    _MAX_UPGRADE_SPAN_LEN,
+    _align_to_word_start,
+    _remove_subspans,
+    _strip_leading_with,
+    _upgrade_subspans_to_longest,
+    build_chunks,
+    deduplicate_characteristics,
+)
+from evals.dataset_generation.characteristics.src.schema import (
+    CharacteristicDetection,
+    ChunkingConfig,
+    EvalsConfig,
+    TextSpan,
+)
 from evals.dataset_generation.shared_constants import ProtectedCharacteristic
 
 
@@ -22,6 +35,7 @@ def _make_detection(
 
 
 # --- ChunkingConfig ---
+
 
 def test_chunking_config_defaults():
     config = ChunkingConfig()
@@ -49,6 +63,7 @@ def test_evals_config_chunking_overridable():
 
 # --- _strip_leading_with ---
 
+
 def test_strip_leading_with_removes_with_possessive():
     chunk = "I remember that With my first child it was very hard."
     start = chunk.index("With my first")
@@ -74,6 +89,7 @@ def test_strip_leading_with_no_change_for_other_leading_words():
 
 # --- _align_to_word_start ---
 
+
 def test_align_to_word_start_already_on_boundary():
     assert _align_to_word_start("hello world", 0) == 0
     assert _align_to_word_start("hello world", 6) == 6  # 'w' after space
@@ -94,16 +110,17 @@ def test_align_to_word_start_no_space_within_bound():
 
 def test_build_chunks_starts_on_word_boundaries():
     # Craft a transcript where a naive char-count split would land mid-word.
-    # "aaa " (4 chars) × 300 = 1200 chars.  stride=600 → chunk2 starts at 600 = 'a' (mid-word).
+    # "aaa " (4 chars) x 300 = 1200 chars.  stride=600 -> chunk2 starts at 600 = 'a' (mid-word).
     transcript = "aaa " * 300
     chunks = build_chunks(transcript, chunk_size_chars=1000, overlap_chars=400)
-    for text, offset in chunks:
+    for _text, offset in chunks:
         if offset > 0:
             # The char just before the chunk start must be a space (word boundary)
             assert transcript[offset - 1] == " ", f"Chunk at offset {offset} starts mid-word"
 
 
 # --- build_chunks ---
+
 
 def test_build_chunks_respects_chunk_size():
     transcript = "a" * 3000
@@ -138,7 +155,7 @@ def test_build_chunks_larger_overlap_produces_more_chunks():
 
 
 @pytest.mark.parametrize(
-    "chunk_size,overlap",
+    ("chunk_size", "overlap"),
     [
         (1000, 250),
         (1000, 400),
@@ -153,6 +170,7 @@ def test_build_chunks_covers_full_transcript(chunk_size: int, overlap: int):
 
 
 # --- deduplicate_characteristics ---
+
 
 def test_deduplication_merges_same_category_and_value():
     a = _make_detection(ProtectedCharacteristic.RACE, "South Asian", [("Raj", 0, 3)])
@@ -172,7 +190,9 @@ def test_deduplication_keeps_distinct_categories():
 def test_deduplication_merges_overlapping_spans_same_category():
     """Same name, same characteristic, different attribute_value strings → merge into one entry."""
     a = _make_detection(ProtectedCharacteristic.RACE, "South Asian (name proxy)", [("Raj", 0, 3)], confidence=0.85)
-    b = _make_detection(ProtectedCharacteristic.RACE, "South Asian (Indian name proxy)", [("Raj", 0, 3)], confidence=0.90)
+    b = _make_detection(
+        ProtectedCharacteristic.RACE, "South Asian (Indian name proxy)", [("Raj", 0, 3)], confidence=0.90
+    )
     result = deduplicate_characteristics([a, b])
     assert len(result) == 1
     # Higher-confidence attribute_value wins
