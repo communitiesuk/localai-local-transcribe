@@ -59,13 +59,13 @@ locals {
       value = "azure_apim"
       }, {
       name  = "FAST_LLM_MODEL_NAME"
-      value = "gpt-4o"
+      value = "gpt-5-nano"
       }, {
       name  = "BEST_LLM_PROVIDER"
       value = "azure_apim"
       }, {
       name  = "BEST_LLM_MODEL_NAME"
-      value = "gpt-4o"
+      value = "gpt5-1"
       }, {
       name  = "ALB_ARN"
       value = var.alb_arn
