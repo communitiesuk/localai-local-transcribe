@@ -11,11 +11,9 @@ export default function SupportPage() {
   const router = useRouter()
 
   const { data: user } = useQuery(getUserUsersMeGetOptions())
-  const isSystemAdmin = user?.roles.includes('mhclg_support_admin')
+  const { users, isLoading } = useOrgUsers(user?.organisation_id ?? '')
 
-  const orgUsers = useOrgUsers(user?.organisation_id ?? '')
-  const systemUsers = useSystemUsers(isSystemAdmin)
-  const activeQuery = isSystemAdmin ? systemUsers : orgUsers
+  // const { users, isLoading } = useSystemUsers()
 
   return (
     <div className="mx-auto max-w-3xl pt-1">
@@ -35,7 +33,7 @@ export default function SupportPage() {
 
       <div>
         <p className="govuk-body pt-5">
-          {activeQuery.users && <> Total Users: {activeQuery.users.length}</>}
+          {users && <> Total Users: {users.length}</>}
         </p>
       </div>
 
@@ -43,9 +41,9 @@ export default function SupportPage() {
         Invite new user
       </button>
 
-      {activeQuery.isFetching && <p>Loading</p>}
+      {isLoading && <p>Loading</p>}
 
-      {activeQuery.users && (
+      {users && (
         <table className="govuk-table">
           <thead className="govuk-table__head">
             <tr className="govuk-table__row">
@@ -67,7 +65,7 @@ export default function SupportPage() {
             </tr>
           </thead>
           <tbody className="govuk-table__body">
-            {activeQuery.users.map((user) => (
+            {users.map((user) => (
               <tr key={user.id} className="govuk-table__row">
                 <th scope="row" className="govuk-table__header">
                   {user.name}

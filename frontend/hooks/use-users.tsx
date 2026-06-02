@@ -18,10 +18,9 @@ export function useOrgUsers(organisationId: string) {
   }
 }
 
-export function useSystemUsers(enabled: boolean | undefined) {
+export function useSystemUsers() {
   const query = useQuery({
     ...listUsersUsersGetOptions(),
-    enabled: Boolean(enabled),
   })
   return {
     ...query,
