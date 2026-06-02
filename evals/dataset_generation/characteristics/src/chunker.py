@@ -6,6 +6,7 @@ from evals.dataset_generation.characteristics.src.config_loader import render_pr
 from evals.dataset_generation.characteristics.src.schema import (
     CharacteristicDetection,
     CharacteristicExtractionOutput,
+    TextSpan,
 )
 
 
@@ -13,6 +14,25 @@ def find_spans(text: str, transcript: str) -> list[tuple[int, int]]:
     """Find all occurrences of text in transcript, returning (start, end) index tuples."""
     pattern = re.escape(text.strip())
     return [(m.start(), m.end()) for m in re.finditer(pattern, transcript)]
+
+
+_ARTICLE_PREFIX_RE = re.compile(r"(?<!\w)(an|a|the|my|our) $", re.IGNORECASE)
+
+
+def _article_extended_start(match_start: int, text: str) -> int:
+    """Extend a span start leftward to include a leading article or possessive if present.
+
+    Fixes model tendency to strip determiners: 'amputee' → 'an amputee',
+    'gender identity' → 'my gender identity', 'age' → 'our age'.
+    """
+    m = _ARTICLE_PREFIX_RE.search(text[:match_start])
+    return m.start() if m else match_start
+
+
+# Minimum original span-text length to allow multi-occurrence expansion within a chunk.
+# Short common words (pronouns, articles ≤3 chars) are excluded to prevent FP explosions
+# when the same pronoun appears dozens of times in the same passage.
+_MIN_MULTI_OCCURRENCE_LEN = 4
 
 
 def deduplicate_characteristics(characteristics: list[CharacteristicDetection]) -> list[CharacteristicDetection]:
@@ -53,21 +73,30 @@ async def process_chunk(
     prompt_text = render_prompt(str(prompt_path), chunk_text)
     response = await chatbot.structured_chat([{"role": "user", "content": prompt_text}], CharacteristicExtractionOutput)
 
-    used_positions = set()
+    used_positions: set[tuple[int, int]] = set()
     for item in response.detected_characteristics:
+        extra_spans: list[tuple[str, int, int]] = []  # (text, start_index, end_index) for additional occurrences
         for span in item.evidence_spans:
-            pattern = re.escape(span.text.strip())
-            matched = False
+            original_text = span.text.strip()
+            pattern = re.escape(original_text)
+            span_assigned = False
             for match in re.finditer(pattern, chunk_text):
-                pos = (match.start(), match.end())
-                if pos not in used_positions:
-                    span.start_index = match.start() + offset
+                start = _article_extended_start(match.start(), chunk_text)
+                pos = (start, match.end())
+                if pos in used_positions:
+                    continue
+                used_positions.add(pos)
+                span_text = chunk_text[start : match.end()]
+                if not span_assigned:
+                    span.start_index = start + offset
                     span.end_index = match.end() + offset
-                    span.text = match.group()
-                    used_positions.add(pos)
-                    matched = True
-                    break
-            if not matched:
+                    span.text = span_text
+                    span_assigned = True
+                elif len(original_text) >= _MIN_MULTI_OCCURRENCE_LEN:
+                    extra_spans.append((span_text, start + offset, match.end() + offset))
+            if not span_assigned:
                 span.start_index = None
                 span.end_index = None
+
+        item.evidence_spans.extend(TextSpan(text=t, start_index=s, end_index=e) for t, s, e in extra_spans)
     return response.detected_characteristics

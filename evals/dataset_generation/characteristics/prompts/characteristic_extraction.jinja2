@@ -22,9 +22,10 @@ Use the following mapping rules to categorize your findings. If an atomic charac
 1. **Explicit medical information** → Disability, Pregnancy and Maternity, Sex
 2. **Medium implicit medical information** → Disability, Pregnancy and Maternity
 3. **Direct reference to pregnancy/maternity** → Pregnancy and Maternity
-4. **Pronouns** → Sex, Gender Reassignment
-5. **Sex/Gender (explicit)** → Sex, Gender Reassignment
-6. **Titles such as Mrs** → Marriage and Civil Partnership, Sex
+4. **Indirect references where the speaker confirms they have a specific child of their own** (e.g. "my little one", "juggling act with the kids", "my kids", "my children", "my little ones", "with my first", "with my second", "both of my kids") → Pregnancy and Maternity. This rule only applies when the phrasing is in the first person possessive ("my kids", "my little one") or directly addresses the specific speaker's children ("juggling act with the kids" in a personal context). Generic references to children ("every child", "children generally", "any child") do NOT qualify. **The following are NOT P&M indicators**: generic terms for all babies/children ("Babies" as a noun, "children" in a general sense), childcare techniques or processes ("sleep training", "weaning", "feeding schedule"), or bare ordinal nouns ("first", "second") without a possessive pronoun. "Motherhood" and "maternity" ARE direct P&M references. **Do NOT split compound possessive child phrases** ("my kids", "your kids", "my little one", "my children", "my first", "my second") into separate "my"/"your" and noun parts — return the full possessive phrase as one span.
+5. **Third-person gendered pronouns** (she, her, him, his, he) → Sex, Gender Reassignment. **Do NOT flag** first-person pronouns (I, me, my, we, our, I'm, I've, I'd) or second-person pronouns (you, your, yours) — they carry no sex information.
+6. **Sex/Gender (explicit)** → Sex, Gender Reassignment
+7. **Titles such as Mrs** → Marriage and Civil Partnership, Sex
 
 #### AGE AND LIFE STAGE
 1. **DOB / Age** → Age
@@ -33,6 +34,7 @@ Use the following mapping rules to categorize your findings. If an atomic charac
 4. **Life event date anchors** → Age
 5. **Life stage markers** → Age
 6. **Caregiving references** → Pregnancy and Maternity, Age
+7. **Names as age proxies**: once a person's age is established by an **explicit number** in the transcript (e.g. "aged 70", "is 65 years old", "born in 1954"), every subsequent mention of their name is an Age proxy — include all occurrences as evidence spans. **Descriptive age adjectives alone ("elderly", "old", "young") do NOT trigger this rule** — return only the descriptive span itself (e.g. `"an elderly woman"`), NOT the person's name as an additional Age proxy.
 
 #### RACE, ETHNICITY AND RELIGION
 1. **Direct reference to race** → Race
@@ -40,21 +42,33 @@ Use the following mapping rules to categorize your findings. If an atomic charac
 3. **Religious festivity references** → Religion or Belief
 4. **Nationality** → Race (as proxy for ethnic or national origins)
 5. **First name** → Race, Religion or Belief, Sex (as proxy)
-6. **Last name** → Race, Religion or Belief (as proxy)
-7. **Name nicknames** → Race (as proxy for ethnicity)
-8. **Name abbreviations** → Race (as proxy for ethnicity)
-9. **Locational reference** → Race (as proxy for ethnic or national origins)
+6. **Last name** → Race, Religion or Belief (as proxy). Jewish surnames (e.g. Goldstein, Blum, Cohen, Levy, Friedman) → Religion or Belief: Jewish. Germanic/Eastern European Jewish names follow the same rule.
+7. **Religious titles or honorifics** (e.g. Rabbi, Imam, Reverend, Father, Sister, Cantor) → Religion or Belief. Treat the full title + name as a single span (e.g. "Rabbi Goldstein").
+8. **Name nicknames** → Race (as proxy for ethnicity)
+9. **Name abbreviations** → Race (as proxy for ethnicity)
+10. **Locational reference** → Race (as proxy for ethnic or national origins)
+11. **Names as disability proxies**: once a person's disability is established in the transcript (e.g. "Luiz is an amputee", "Deji is blind"), every subsequent mention of their name is a Disability proxy — include all occurrences as evidence spans
 
 #### SEXUALITY AND RELATIONSHIPS
 1. **Sexuality (explicit)** → Sexual Orientation
 2. **References to sexuality community** → Sexual Orientation
 3. **Reference to partner** → Marriage and Civil Partnership, Sexual Orientation
+4. **Explicit or strongly implied partner/spouse language** → Marriage and Civil Partnership, Sexual Orientation. This includes: direct use of "partner", "spouse", "husband", "wife", "civil partner"; and intimate phrases that specifically reference a life companion role (e.g. "my partner in every sense of the word", "my rock, my cheerleader, my everything", "grateful to have been by your side"). Generic affectionate or team language ("means the world to me", "we've worked hard together", "for the journey") alone does NOT qualify — it must specifically imply a committed romantic/legal bond.
 
 ### CONSTRAINTS
 - **Do not hallucinate**: Only extract attributes that are explicitly stated or directly implied by evidence actually present in the transcript. Every detection must be grounded in specific text spans.
 - **Be comprehensive**: Extract ALL protected characteristics you can identify based on the mapping rules above. Do not skip characteristics because they seem "less important" or because the group hasn't historically faced discrimination.
 - **Proxy detection is mandatory**: Names that strongly indicate ethnic or national origins MUST be detected as Race proxies. For example, Polish names (Piotr, Jakub, Kowalski, Nowak) indicate White/Eastern European race; Arabic names indicate Middle Eastern/North African race; Chinese names indicate East Asian race, etc. Do not skip Race detection just because it's not explicitly stated.
 - **Evidence requirement**: Each detected characteristic must include the exact text span(s) from the transcript that support the detection. The text in evidence_spans must be verbatim from the transcript.
+- **Span boundary rule**: Return the minimal phrase or clause that is sufficient to establish the characteristic — not a full sentence, but not a bare fragment either. Always preserve leading articles (a, an, the) and possessive modifiers (my, her, his) that are part of the phrase: return `"an amputee"` not `"amputee"`, `"an elderly woman"` not `"elderly woman"`, `"my wife"` not `"wife"`, `"my gender identity"` not `"gender identity"`. Never split compound disability or characteristic descriptions that are joined by "or" — return the full phrase `"blind or has low vision"` not `"blind"` and `"has low vision"` as separate spans; `"individuals with disabilities"` not `"disabilities"` alone. For names acting as proxies, return just the name token, not the whole sentence containing it (e.g. `"Luiz"` not `"Luiz, I couldn't agree more with your points..."`). **Never prefix names with greeting words** — return only the name itself: `"Biola"` not `"Hi Biola"`, `"Li Na"` not `"Hi Li Na"`, even when the name immediately follows a greeting. **Never return sentence-length evidence spans** — spans for M&CP, Age, or Disability must be the minimal key phrase, not a full sentence like `"Franz and I are both in good health and have a strong support network"` or `"Julia and I have spent a great deal of time preparing ourselves"`.
+- **Service role exclusion**: Do not flag the names, titles, or pronouns of people whose role is strictly to conduct, facilitate, or record the interaction (e.g. housing officers, caseworkers, interviewers, social workers who are NOT themselves the subject of the case). Only flag protected characteristics of service users, applicants, tenants, claimants, or the people whose case is under discussion. **Exception**: community members, religious leaders (e.g. a Rabbi acting as a housing applicant or advocate), advocates, and people discussing their own characteristics ARE subjects and should be flagged.
+- **No redundant pronoun spans**: If a person's sex is already established by their name or a title in the detected_characteristics entry, do not add standalone pronouns (her, him, his, she, he) as separate evidence spans for that same person. Only use a pronoun as evidence when no name or title is available. For example: if you have already included `"Mrs Blum"` as a span for Sex|Female, do NOT additionally list `"her"` or `"she"` as separate spans in the same entry. This applies even across the same chunk — if the name has appeared once, do not separately list pronouns referring to the same person. **Do NOT return possessive-noun phrases** (`"her health"`, `"her case"`, `"her doctor"`, `"his team"`, `"her current situation"`) as Sex evidence spans. These use pronouns as grammatical possessives, not as sex indicators. Only standalone third-person pronouns (`"she"`, `"her"` as subject, `"he"`, `"him"`) or name/title spans are valid Sex evidence.
+- **Mrs standalone**: When `"Mrs <Surname>"` (e.g. `"Mrs Blum"`) is already present as an evidence span, do NOT additionally return `"Mrs"` alone as a separate M&CP span. Prefer the longer `"Mrs Surname"` form for all characteristics derived from that title.
+- **Housing conditions are not disability indicators**: Damp conditions, overcrowding, or poor housing quality describe the dwelling, not the occupant's disability. Do not flag these as Disability evidence spans. Only flag explicit disability or health conditions of the person themselves (e.g. `"struggles with mobility issues"`, `"visual impairment"`, `"an amputee"`).
+- **Physical limitations are Disability, not Age**: Mobility difficulties, inability to manage stairs, and other physical capability limitations are Disability indicators. Do not re-flag these as Age evidence spans. Age indicators are: explicit numerical ages, birth years, descriptive age terms (`"elderly"`, `"older adult"`), or life-stage references.
+- **Pure design/engineering statements are not individual Disability spans**: Statements purely about technology design goals (e.g. `"designed with visual users in mind"`, `"prioritizing visual aesthetics"`, `"assistive devices are designed with...in mind"`) are descriptions of engineering choices, not evidence of a specific person's disability. However, DO flag: (1) direct references to people with disabilities (`"individuals with disabilities"`, `"people who are blind"`, `"someone who's blind or has low vision"`); (2) specific disability indicators (`"Braille signage"`, `"tactile markers"`, `"audio announcements"` in an accessibility context); and (3) personal statements from a disabled speaker (`"I don't rely primarily on sight"`, `"losing a limb"`).
+- **Adoption aspirations are not Pregnancy and Maternity**: Statements expressing a wish to adopt or care for children (`"we're ready to share that with a child"`, `"provide support and care for a child"`) are not P&M indicators. P&M requires confirmation that the speaker HAS a child or is pregnant.
+- **Policy-context age discussions are not personal Age spans**: When an interviewer or assessor discusses age as a general consideration (`"age might impact the ability"`, `"age is a factor"`, `"physical energy levels over time"`) in an evaluation context, this refers to policy criteria, not the applicant's personal age characteristic. Do not flag these as Age evidence spans.
 - If no items from the mapping are present, return an empty list for detected_characteristics.
 - Do not extract the exact same attribute and evidence span more than once. Group multiple evidence spans for the same attribute under a single entry.
 
@@ -222,6 +236,139 @@ Mrs. Chen, who is expecting her second child, requested flexible working arrange
       "characteristic": "Race",
       "attribute_value": "East Asian (Chinese name proxy)",
       "evidence_spans": [{"text": "Chen"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+It's not easy juggling act with the kids while keeping up with work deadlines.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics":[
+    {
+      "characteristic": "Pregnancy and Maternity",
+      "attribute_value": "Parent (indirect child-presence cue)",
+      "evidence_spans":[{"text": "juggling act with the kids"}],
+      "confidence": 0.80
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Interviewer: How do you manage your time at home?
+Applicant: My little one keeps me very busy, but I wouldn't have it any other way. Your kids change everything, don't they?
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics":[
+    {
+      "characteristic": "Pregnancy and Maternity",
+      "attribute_value": "Parent (indirect child-presence cue)",
+      "evidence_spans":[{"text": "My little one"}, {"text": "your kids"}],
+      "confidence": 0.82
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+I just want to say how grateful I am. You've been my rock, my cheerleader, my everything. My partner in every sense of the word.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics":[
+    {
+      "characteristic": "Marriage and Civil Partnership",
+      "attribute_value": "Married or Civil Partner (implicit emotional-bond language)",
+      "evidence_spans":[{"text": "my rock, my cheerleader, my everything"}, {"text": "My partner in every sense of the word"}],
+      "confidence": 0.85
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Rabbi Goldstein and Mrs Blum attended the community meeting. Goldstein spoke about housing needs.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics":[
+    {
+      "characteristic": "Religion or Belief",
+      "attribute_value": "Jewish (religious title and surname proxy)",
+      "evidence_spans":[{"text": "Rabbi Goldstein"}, {"text": "Mrs Blum"}, {"text": "Goldstein"}],
+      "confidence": 0.90
+    },
+    {
+      "characteristic": "Marriage and Civil Partnership",
+      "attribute_value": "Married",
+      "evidence_spans":[{"text": "Mrs Blum"}],
+      "confidence": 0.85
+    },
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Female",
+      "evidence_spans":[{"text": "Mrs Blum"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Luiz introduced himself as an amputee who uses prosthetic limbs. Later, Luiz and Luiz's colleague discussed smart prosthetics.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics":[
+    {
+      "characteristic": "Disability",
+      "attribute_value": "Amputee",
+      "evidence_spans":[{"text": "Luiz"}, {"text": "an amputee"}, {"text": "prosthetic limbs"}, {"text": "Luiz"}, {"text": "smart prosthetics"}],
+      "confidence": 0.95
+    },
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Male",
+      "evidence_spans":[{"text": "Luiz"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Housing officer John Carter reviewed the case. He noted that an elderly woman named Mrs Blum struggles with mobility issues.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics":[
+    {
+      "characteristic": "Age",
+      "attribute_value": "Elderly",
+      "evidence_spans":[{"text": "an elderly woman"}],
+      "confidence": 0.95
+    },
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Female",
+      "evidence_spans":[{"text": "Mrs Blum"}],
+      "confidence": 0.95
+    },
+    {
+      "characteristic": "Marriage and Civil Partnership",
+      "attribute_value": "Married",
+      "evidence_spans":[{"text": "Mrs Blum"}],
+      "confidence": 0.85
+    },
+    {
+      "characteristic": "Disability",
+      "attribute_value": "Mobility impairment",
+      "evidence_spans":[{"text": "struggles with mobility issues"}],
       "confidence": 0.90
     }
   ]
