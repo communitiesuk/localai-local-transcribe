@@ -157,6 +157,8 @@ resource "aws_lb_listener_rule" "signout" {
 resource "aws_lb_listener_rule" "forward_no_auth" {
   count        = var.ssl_certs_created && !var.enable_oidc_auth ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
+  priority     = local.listener_rule_base_priority + 2
+
 
   action {
     target_group_arn = aws_lb_target_group.frontend.id
