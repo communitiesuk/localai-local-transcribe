@@ -5,7 +5,7 @@ import Link from 'next/link'
 export function Header() {
   return (
     <header className="govuk-header" data-module="govuk-header">
-      <div className="govuk-header__container govuk-width-container">
+      <div className="govuk-header__container govuk-width-container flex flex-wrap items-center justify-between gap-3">
         <div className="govuk-header__logo">
           <Link
             href="/"
@@ -19,20 +19,14 @@ export function Header() {
             </span>
           </Link>
         </div>
-        <div className="govuk-header__content">
-          <nav aria-label="Account" className="govuk-header__navigation">
-            <ul className="govuk-header__navigation-list">
-              <li className="govuk-header__navigation-item">
-                <a
-                  className="govuk-header__link"
-                  href={`${API_PROXY_PATH}/signout`}
-                >
-                  Sign out
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </div>
+        <nav aria-label="Account">
+          <a
+            className="govuk-link govuk-link--inverse"
+            href={`${API_PROXY_PATH}/signout`}
+          >
+            Sign out
+          </a>
+        </nav>
       </div>
     </header>
   )

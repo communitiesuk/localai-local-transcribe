@@ -27,12 +27,12 @@ describe('<Header />', () => {
     )
   })
 
-  it('renders Sign out inside the canonical account navigation slot', () => {
+  it('renders Sign out as an inverse link pointing at the proxy signout endpoint', () => {
     render(<Header />)
     const nav = screen.getByRole('navigation', { name: 'Account' })
-    expect(nav).toHaveClass('govuk-header__navigation')
+    expect(nav).toBeInTheDocument()
     const link = screen.getByRole('link', { name: 'Sign out' })
-    expect(link).toHaveClass('govuk-header__link')
+    expect(link).toHaveClass('govuk-link', 'govuk-link--inverse')
     expect(link).toHaveAttribute('href', `${API_PROXY_PATH}/signout`)
   })
 })

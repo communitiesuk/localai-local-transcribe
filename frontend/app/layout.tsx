@@ -41,10 +41,10 @@ export default function RootLayout({
             <LockNavigationProvider>
               <RecordingDbProvider>
                 <Header />
+                <LegacyNav />
                 <div className="govuk-width-container">
                   <PhaseBanner />
                 </div>
-                <LegacyNav />
 
                 <div className="govuk-width-container">
                   <main
