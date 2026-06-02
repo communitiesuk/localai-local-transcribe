@@ -3,16 +3,34 @@
 import { Button } from '@/components/ui/button'
 import { ChevronLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useOrgUsers, useSystemUsers } from '@/hooks/use-users'
+import { useSystemUsers } from '@/hooks/use-users'
 import { useQuery } from '@tanstack/react-query'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { useEffect } from 'react'
 
 export default function SupportPage() {
   const router = useRouter()
 
-  const { data: user } = useQuery(getUserUsersMeGetOptions())
-  // const { users, isLoading } = useOrgUsers(user?.organisation_id ?? '')
-  const { users, isLoading } = useSystemUsers()
+  const { data: user, isLoading: userLoading } = useQuery(
+    getUserUsersMeGetOptions()
+  )
+  const { data: users, isLoading: usersLoading } = useSystemUsers()
+
+  useEffect(() => {
+    if (!user) return
+    const allowed = ['admin', 'support_admin']
+    const isAllowed = user.roles?.some((r: string) => allowed.includes(r))
+    if (!isAllowed) {
+      router.replace('/unauthorised')
+    }
+  }, [user, router])
+
+  if (userLoading) return <p>Loading...</p>
+  if (
+    user &&
+    !user.roles?.some((r: string) => ['admin', 'support_admin'].includes(r))
+  )
+    return null
 
   return (
     <div className="mx-auto max-w-3xl pt-1">
@@ -40,7 +58,7 @@ export default function SupportPage() {
         Invite new user
       </button>
 
-      {isLoading && <p>Loading</p>}
+      {usersLoading && <p>Loading...</p>}
 
       {users && (
         <table className="govuk-table">

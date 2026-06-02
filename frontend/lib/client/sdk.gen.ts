@@ -66,6 +66,9 @@ import type {
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetErrors,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses,
+  GetTargetUserUsersUserIdGetData,
+  GetTargetUserUsersUserIdGetErrors,
+  GetTargetUserUsersUserIdGetResponses,
   GetTemplatesTemplatesGetData,
   GetTemplatesTemplatesGetErrors,
   GetTemplatesTemplatesGetResponses,
@@ -98,18 +101,9 @@ import type {
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetErrors,
   ListTranscriptionsTranscriptionsGetResponses,
-  ListUserInOrgOrgsOrganisationIdUsersUserIdGetData,
-  ListUserInOrgOrgsOrganisationIdUsersUserIdGetErrors,
-  ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponses,
-  ListUsersInOrgOrgsOrganisationIdUsersGetData,
-  ListUsersInOrgOrgsOrganisationIdUsersGetErrors,
-  ListUsersInOrgOrgsOrganisationIdUsersGetResponses,
   ListUsersUsersGetData,
   ListUsersUsersGetErrors,
   ListUsersUsersGetResponses,
-  ListUserUsersUserIdGetData,
-  ListUserUsersUserIdGetErrors,
-  ListUserUsersUserIdGetResponses,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses,
@@ -378,14 +372,16 @@ export const deleteUserUsersUserIdDelete = <
   >({ url: '/users/{user_id}', ...options })
 
 /**
- * List User
+ * Get Target User
  */
-export const listUserUsersUserIdGet = <ThrowOnError extends boolean = false>(
-  options: Options<ListUserUsersUserIdGetData, ThrowOnError>
+export const getTargetUserUsersUserIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<GetTargetUserUsersUserIdGetData, ThrowOnError>
 ) =>
   (options.client ?? client).get<
-    ListUserUsersUserIdGetResponses,
-    ListUserUsersUserIdGetErrors,
+    GetTargetUserUsersUserIdGetResponses,
+    GetTargetUserUsersUserIdGetErrors,
     ThrowOnError
   >({ url: '/users/{user_id}', ...options })
 
@@ -409,37 +405,6 @@ export const updateUserRolesUsersUserIdRolesPatch = <
       ...options.headers,
     },
   })
-
-/**
- * List Users In Org
- */
-export const listUsersInOrgOrgsOrganisationIdUsersGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<ListUsersInOrgOrgsOrganisationIdUsersGetData, ThrowOnError>
-) =>
-  (options.client ?? client).get<
-    ListUsersInOrgOrgsOrganisationIdUsersGetResponses,
-    ListUsersInOrgOrgsOrganisationIdUsersGetErrors,
-    ThrowOnError
-  >({ url: '/orgs/{organisation_id}/users', ...options })
-
-/**
- * List User In Org
- */
-export const listUserInOrgOrgsOrganisationIdUsersUserIdGet = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    ListUserInOrgOrgsOrganisationIdUsersUserIdGetData,
-    ThrowOnError
-  >
-) =>
-  (options.client ?? client).get<
-    ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponses,
-    ListUserInOrgOrgsOrganisationIdUsersUserIdGetErrors,
-    ThrowOnError
-  >({ url: '/orgs/{organisation_id}/users/{user_id}', ...options })
 
 /**
  * List Minutes For Transcription

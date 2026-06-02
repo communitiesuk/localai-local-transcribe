@@ -31,6 +31,7 @@ import {
   getMinuteMinutesMinutesIdGet,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
+  getTargetUserUsersUserIdGet,
   getTemplatesTemplatesGet,
   getTranscriptionTranscriptionsTranscriptionIdGet,
   getUserTemplatesUserTemplatesGet,
@@ -42,10 +43,7 @@ import {
   listMinuteVersionsMinutesMinuteIdVersionsGet,
   listOrganisationsOrganisationsGet,
   listTranscriptionsTranscriptionsGet,
-  listUserInOrgOrgsOrganisationIdUsersUserIdGet,
-  listUsersInOrgOrgsOrganisationIdUsersGet,
   listUsersUsersGet,
-  listUserUsersUserIdGet,
   type Options,
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
   updateDataRetentionUsersDataRetentionPatch,
@@ -110,6 +108,9 @@ import type {
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetError,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse,
+  GetTargetUserUsersUserIdGetData,
+  GetTargetUserUsersUserIdGetError,
+  GetTargetUserUsersUserIdGetResponse,
   GetTemplatesTemplatesGetData,
   GetTemplatesTemplatesGetError,
   GetTemplatesTemplatesGetResponse,
@@ -141,18 +142,9 @@ import type {
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetError,
   ListTranscriptionsTranscriptionsGetResponse,
-  ListUserInOrgOrgsOrganisationIdUsersUserIdGetData,
-  ListUserInOrgOrgsOrganisationIdUsersUserIdGetError,
-  ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponse,
-  ListUsersInOrgOrgsOrganisationIdUsersGetData,
-  ListUsersInOrgOrgsOrganisationIdUsersGetError,
-  ListUsersInOrgOrgsOrganisationIdUsersGetResponse,
   ListUsersUsersGetData,
   ListUsersUsersGetError,
   ListUsersUsersGetResponse,
-  ListUserUsersUserIdGetData,
-  ListUserUsersUserIdGetError,
-  ListUserUsersUserIdGetResponse,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse,
@@ -686,24 +678,24 @@ export const deleteUserUsersUserIdDeleteMutation = (
   return mutationOptions
 }
 
-export const listUserUsersUserIdGetQueryKey = (
-  options: Options<ListUserUsersUserIdGetData>
-) => createQueryKey('listUserUsersUserIdGet', options)
+export const getTargetUserUsersUserIdGetQueryKey = (
+  options: Options<GetTargetUserUsersUserIdGetData>
+) => createQueryKey('getTargetUserUsersUserIdGet', options)
 
 /**
- * List User
+ * Get Target User
  */
-export const listUserUsersUserIdGetOptions = (
-  options: Options<ListUserUsersUserIdGetData>
+export const getTargetUserUsersUserIdGetOptions = (
+  options: Options<GetTargetUserUsersUserIdGetData>
 ) =>
   queryOptions<
-    ListUserUsersUserIdGetResponse,
-    ListUserUsersUserIdGetError,
-    ListUserUsersUserIdGetResponse,
-    ReturnType<typeof listUserUsersUserIdGetQueryKey>
+    GetTargetUserUsersUserIdGetResponse,
+    GetTargetUserUsersUserIdGetError,
+    GetTargetUserUsersUserIdGetResponse,
+    ReturnType<typeof getTargetUserUsersUserIdGetQueryKey>
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listUserUsersUserIdGet({
+      const { data } = await getTargetUserUsersUserIdGet({
         ...options,
         ...queryKey[0],
         signal,
@@ -711,7 +703,7 @@ export const listUserUsersUserIdGetOptions = (
       })
       return data
     },
-    queryKey: listUserUsersUserIdGetQueryKey(options),
+    queryKey: getTargetUserUsersUserIdGetQueryKey(options),
   })
 
 /**
@@ -740,62 +732,6 @@ export const updateUserRolesUsersUserIdRolesPatchMutation = (
   }
   return mutationOptions
 }
-
-export const listUsersInOrgOrgsOrganisationIdUsersGetQueryKey = (
-  options: Options<ListUsersInOrgOrgsOrganisationIdUsersGetData>
-) => createQueryKey('listUsersInOrgOrgsOrganisationIdUsersGet', options)
-
-/**
- * List Users In Org
- */
-export const listUsersInOrgOrgsOrganisationIdUsersGetOptions = (
-  options: Options<ListUsersInOrgOrgsOrganisationIdUsersGetData>
-) =>
-  queryOptions<
-    ListUsersInOrgOrgsOrganisationIdUsersGetResponse,
-    ListUsersInOrgOrgsOrganisationIdUsersGetError,
-    ListUsersInOrgOrgsOrganisationIdUsersGetResponse,
-    ReturnType<typeof listUsersInOrgOrgsOrganisationIdUsersGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listUsersInOrgOrgsOrganisationIdUsersGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      })
-      return data
-    },
-    queryKey: listUsersInOrgOrgsOrganisationIdUsersGetQueryKey(options),
-  })
-
-export const listUserInOrgOrgsOrganisationIdUsersUserIdGetQueryKey = (
-  options: Options<ListUserInOrgOrgsOrganisationIdUsersUserIdGetData>
-) => createQueryKey('listUserInOrgOrgsOrganisationIdUsersUserIdGet', options)
-
-/**
- * List User In Org
- */
-export const listUserInOrgOrgsOrganisationIdUsersUserIdGetOptions = (
-  options: Options<ListUserInOrgOrgsOrganisationIdUsersUserIdGetData>
-) =>
-  queryOptions<
-    ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponse,
-    ListUserInOrgOrgsOrganisationIdUsersUserIdGetError,
-    ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponse,
-    ReturnType<typeof listUserInOrgOrgsOrganisationIdUsersUserIdGetQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listUserInOrgOrgsOrganisationIdUsersUserIdGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      })
-      return data
-    },
-    queryKey: listUserInOrgOrgsOrganisationIdUsersUserIdGetQueryKey(options),
-  })
 
 export const listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey =
   (

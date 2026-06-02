@@ -6,7 +6,6 @@ from fastapi import APIRouter, HTTPException
 from backend.api.dependencies import (
     OrganisationAdminDep,
     SQLSessionDep,
-    SystemAdminDep,
     TargetUserDep,
     UserDep,
 )

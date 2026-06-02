@@ -1335,7 +1335,7 @@ export type DeleteUserUsersUserIdDeleteResponses = {
 export type DeleteUserUsersUserIdDeleteResponse =
   DeleteUserUsersUserIdDeleteResponses[keyof DeleteUserUsersUserIdDeleteResponses]
 
-export type ListUserUsersUserIdGetData = {
+export type GetTargetUserUsersUserIdGetData = {
   body?: never
   headers?: {
     /**
@@ -1353,25 +1353,25 @@ export type ListUserUsersUserIdGetData = {
   url: '/users/{user_id}'
 }
 
-export type ListUserUsersUserIdGetErrors = {
+export type GetTargetUserUsersUserIdGetErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError
 }
 
-export type ListUserUsersUserIdGetError =
-  ListUserUsersUserIdGetErrors[keyof ListUserUsersUserIdGetErrors]
+export type GetTargetUserUsersUserIdGetError =
+  GetTargetUserUsersUserIdGetErrors[keyof GetTargetUserUsersUserIdGetErrors]
 
-export type ListUserUsersUserIdGetResponses = {
+export type GetTargetUserUsersUserIdGetResponses = {
   /**
    * Successful Response
    */
   200: GetUserResponse
 }
 
-export type ListUserUsersUserIdGetResponse =
-  ListUserUsersUserIdGetResponses[keyof ListUserUsersUserIdGetResponses]
+export type GetTargetUserUsersUserIdGetResponse =
+  GetTargetUserUsersUserIdGetResponses[keyof GetTargetUserUsersUserIdGetResponses]
 
 export type UpdateUserRolesUsersUserIdRolesPatchData = {
   body: UserUpdateRoles
@@ -1410,88 +1410,6 @@ export type UpdateUserRolesUsersUserIdRolesPatchResponses = {
 
 export type UpdateUserRolesUsersUserIdRolesPatchResponse =
   UpdateUserRolesUsersUserIdRolesPatchResponses[keyof UpdateUserRolesUsersUserIdRolesPatchResponses]
-
-export type ListUsersInOrgOrgsOrganisationIdUsersGetData = {
-  body?: never
-  headers?: {
-    /**
-     * X-Amzn-Oidc-Data
-     */
-    'x-amzn-oidc-data'?: string | null
-  }
-  path: {
-    /**
-     * Organisation Id
-     */
-    organisation_id: string
-  }
-  query?: never
-  url: '/orgs/{organisation_id}/users'
-}
-
-export type ListUsersInOrgOrgsOrganisationIdUsersGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError
-}
-
-export type ListUsersInOrgOrgsOrganisationIdUsersGetError =
-  ListUsersInOrgOrgsOrganisationIdUsersGetErrors[keyof ListUsersInOrgOrgsOrganisationIdUsersGetErrors]
-
-export type ListUsersInOrgOrgsOrganisationIdUsersGetResponses = {
-  /**
-   * Response List Users In Org Orgs  Organisation Id  Users Get
-   *
-   * Successful Response
-   */
-  200: Array<GetUserResponse>
-}
-
-export type ListUsersInOrgOrgsOrganisationIdUsersGetResponse =
-  ListUsersInOrgOrgsOrganisationIdUsersGetResponses[keyof ListUsersInOrgOrgsOrganisationIdUsersGetResponses]
-
-export type ListUserInOrgOrgsOrganisationIdUsersUserIdGetData = {
-  body?: never
-  headers?: {
-    /**
-     * X-Amzn-Oidc-Data
-     */
-    'x-amzn-oidc-data'?: string | null
-  }
-  path: {
-    /**
-     * Organisation Id
-     */
-    organisation_id: string
-    /**
-     * User Id
-     */
-    user_id: string
-  }
-  query?: never
-  url: '/orgs/{organisation_id}/users/{user_id}'
-}
-
-export type ListUserInOrgOrgsOrganisationIdUsersUserIdGetErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError
-}
-
-export type ListUserInOrgOrgsOrganisationIdUsersUserIdGetError =
-  ListUserInOrgOrgsOrganisationIdUsersUserIdGetErrors[keyof ListUserInOrgOrgsOrganisationIdUsersUserIdGetErrors]
-
-export type ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponses = {
-  /**
-   * Successful Response
-   */
-  200: GetUserResponse
-}
-
-export type ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponse =
-  ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponses[keyof ListUserInOrgOrgsOrganisationIdUsersUserIdGetResponses]
 
 export type ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData =
   {
