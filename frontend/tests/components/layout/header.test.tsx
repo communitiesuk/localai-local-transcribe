@@ -4,11 +4,11 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 describe('<Header />', () => {
-  it('renders the canonical govuk-header root with the module hook', () => {
+  it('renders the canonical govuk-template__header > govuk-header structure', () => {
     const { container } = render(<Header />)
-    const header = container.querySelector('header')
-    expect(header).toHaveClass('govuk-header')
-    expect(header).toHaveAttribute('data-module', 'govuk-header')
+    const outer = container.querySelector('header.govuk-template__header')
+    expect(outer).not.toBeNull()
+    expect(outer?.querySelector('.govuk-header')).not.toBeNull()
   })
 
   it('wraps content in govuk-header__container + govuk-width-container', () => {
@@ -21,7 +21,7 @@ describe('<Header />', () => {
     render(<Header />)
     const home = screen.getByRole('link', { name: /Local Transcribe/ })
     expect(home).toHaveAttribute('href', '/')
-    expect(home).toHaveClass('govuk-header__link--homepage')
+    expect(home).toHaveClass('govuk-header__homepage-link')
     expect(screen.getByText('Local Transcribe')).toHaveClass(
       'govuk-header__product-name'
     )

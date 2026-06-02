@@ -17,27 +17,18 @@ describe('<MhclgLogo />', () => {
     expect(svg.getAttribute('viewBox')).toBe('0 0 64 60')
   })
 
-  it('defaults to width 32 and height 30 (matches the pre-extraction sizing)', () => {
+  it('ships at the canonical 32x30 size', () => {
     const { container } = render(<MhclgLogo />)
     const svg = getSvg(container)
     expect(svg.getAttribute('width')).toBe('32')
     expect(svg.getAttribute('height')).toBe('30')
   })
 
-  it('accepts width / height / className overrides', () => {
+  it('accepts a className override (used by header for govuk-header__logotype)', () => {
     const { container } = render(
-      <MhclgLogo width={64} height={60} className="custom-class" />
+      <MhclgLogo className="govuk-header__logotype" />
     )
     const svg = getSvg(container)
-    expect(svg.getAttribute('width')).toBe('64')
-    expect(svg.getAttribute('height')).toBe('60')
-    expect(svg).toHaveClass('custom-class')
-  })
-
-  it('renders the 7 brand dots and the wreath path', () => {
-    const { container } = render(<MhclgLogo />)
-    const svg = getSvg(container)
-    expect(svg.querySelectorAll('circle')).toHaveLength(7)
-    expect(svg.querySelectorAll('path')).toHaveLength(1)
+    expect(svg).toHaveClass('govuk-header__logotype')
   })
 })

@@ -4,7 +4,7 @@ export default function GovFooter() {
   return (
     <footer className="govuk-footer" role="contentinfo">
       <div className="govuk-width-container">
-        <div className="pt-8">
+        <div className="govuk-!-padding-top-6">
           <MhclgLogo />
         </div>
         <div className="govuk-footer__meta">

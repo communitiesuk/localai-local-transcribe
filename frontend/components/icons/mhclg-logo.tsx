@@ -1,18 +1,12 @@
 type MhclgLogoProps = {
-  width?: number
-  height?: number
   className?: string
 }
 
-export function MhclgLogo({
-  width = 32,
-  height = 30,
-  className,
-}: MhclgLogoProps) {
+export function MhclgLogo({ className }: MhclgLogoProps) {
   return (
     <svg
-      width={width}
-      height={height}
+      width={32}
+      height={30}
       viewBox="0 0 64 60"
       fill="currentColor"
       focusable="false"
