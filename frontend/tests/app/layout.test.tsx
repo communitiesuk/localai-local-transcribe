@@ -13,11 +13,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
       <div className="govuk-width-container">
-        <main
-          id="main-content"
-          className="govuk-main-wrapper"
-          tabIndex={-1}
-        >
+        <main id="main-content" className="govuk-main-wrapper" tabIndex={-1}>
           {children}
         </main>
       </div>

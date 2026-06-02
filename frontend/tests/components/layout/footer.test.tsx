@@ -20,15 +20,16 @@ describe('<GovFooter />', () => {
     render(<GovFooter />)
     expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute(
       'href',
-      '/privacy',
+      '/privacy'
     )
     expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute(
       'href',
-      '/support',
+      '/support'
     )
-    expect(
-      screen.getByRole('link', { name: 'Accessibility' }),
-    ).toHaveAttribute('href', '/accessibility')
+    expect(screen.getByRole('link', { name: 'Accessibility' })).toHaveAttribute(
+      'href',
+      '/accessibility'
+    )
   })
 
   it('renders the Open Government Licence link in the meta section', () => {
@@ -36,7 +37,7 @@ describe('<GovFooter />', () => {
     const ogl = screen.getByRole('link', { name: /Open Government Licence/i })
     expect(ogl).toHaveAttribute(
       'href',
-      'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/',
+      'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/'
     )
     expect(ogl).toHaveAttribute('rel', 'license')
   })

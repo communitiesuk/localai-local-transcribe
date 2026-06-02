@@ -26,7 +26,7 @@ describe('<MhclgLogo />', () => {
 
   it('accepts width / height / className overrides', () => {
     const { container } = render(
-      <MhclgLogo width={64} height={60} className="custom-class" />,
+      <MhclgLogo width={64} height={60} className="custom-class" />
     )
     const svg = getSvg(container)
     expect(svg.getAttribute('width')).toBe('64')

@@ -21,7 +21,7 @@ describe('<GovukInit />', () => {
     const { GovukInit } = await import('@/components/layout/govuk-init')
     render(<GovukInit />)
     await vi.waitFor(() =>
-      expect(Sentry.captureException).toHaveBeenCalledTimes(1),
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1)
     )
   })
 })

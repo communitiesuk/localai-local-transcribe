@@ -28,15 +28,15 @@ describe('<LegacyNav />', () => {
     render(<LegacyNav />)
     expect(screen.getByRole('link', { name: /home/i })).toHaveAttribute(
       'href',
-      '/',
+      '/'
     )
     expect(screen.getByRole('link', { name: /templates/i })).toHaveAttribute(
       'href',
-      '/templates',
+      '/templates'
     )
     expect(screen.getByRole('link', { name: /settings/i })).toHaveAttribute(
       'href',
-      '/settings',
+      '/settings'
     )
   })
 })

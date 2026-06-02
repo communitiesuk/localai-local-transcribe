@@ -7,7 +7,7 @@ describe('<PhaseBanner />', () => {
     const { container } = render(<PhaseBanner />)
     expect(container.querySelector('.govuk-phase-banner')).toBeInTheDocument()
     expect(
-      container.querySelector('.govuk-phase-banner__content'),
+      container.querySelector('.govuk-phase-banner__content')
     ).toBeInTheDocument()
     const tag = screen.getByText('Alpha')
     expect(tag).toHaveClass('govuk-tag', 'govuk-phase-banner__content__tag')
@@ -26,7 +26,7 @@ describe('<PhaseBanner />', () => {
     const link = screen.getByRole('link', { name: 'give your feedback' })
     expect(link).toHaveAttribute(
       'href',
-      'https://surveys.publishing.service.gov.uk/s/MAQMR1/',
+      'https://surveys.publishing.service.gov.uk/s/MAQMR1/'
     )
     expect(link).toHaveClass('govuk-link')
     expect(link).toHaveAttribute('target', '_blank')

@@ -23,7 +23,7 @@ describe('<Header />', () => {
     expect(home).toHaveAttribute('href', '/')
     expect(home).toHaveClass('govuk-header__link--homepage')
     expect(screen.getByText('Local Transcribe')).toHaveClass(
-      'govuk-header__product-name',
+      'govuk-header__product-name'
     )
   })
 
