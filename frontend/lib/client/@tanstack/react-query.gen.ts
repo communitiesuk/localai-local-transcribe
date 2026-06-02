@@ -624,6 +624,56 @@ export const listUsersUsersGetOptions = (
     queryKey: listUsersUsersGetQueryKey(options),
   })
 
+export const listUsersUsersGetInfiniteQueryKey = (
+  options?: Options<ListUsersUsersGetData>
+): QueryKey<Options<ListUsersUsersGetData>> =>
+  createQueryKey('listUsersUsersGet', options, true)
+
+/**
+ * List Users
+ */
+export const listUsersUsersGetInfiniteOptions = (
+  options?: Options<ListUsersUsersGetData>
+) =>
+  infiniteQueryOptions<
+    ListUsersUsersGetResponse,
+    ListUsersUsersGetError,
+    InfiniteData<ListUsersUsersGetResponse>,
+    QueryKey<Options<ListUsersUsersGetData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListUsersUsersGetData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    // @ts-ignore
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        // @ts-ignore
+        const page: Pick<
+          QueryKey<Options<ListUsersUsersGetData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  page: pageParam,
+                },
+              }
+        const params = createInfiniteParams(queryKey, page)
+        const { data } = await listUsersUsersGet({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        })
+        return data
+      },
+      queryKey: listUsersUsersGetInfiniteQueryKey(options),
+    }
+  )
+
 /**
  * Create User
  */

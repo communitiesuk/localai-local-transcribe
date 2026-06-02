@@ -1,36 +1,44 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useSystemUsers } from '@/hooks/use-users'
 import { useQuery } from '@tanstack/react-query'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useEffect } from 'react'
+import { useState } from 'react'
+import { USERS_PER_PAGE } from '@/lib/constants'
 
-export default function SupportPage() {
+export default function UserManagementPage() {
   const router = useRouter()
+  const [page, setPage] = useState(1)
 
   const { data: user, isLoading: userLoading } = useQuery(
     getUserUsersMeGetOptions()
   )
-  const { data: users, isLoading: usersLoading } = useSystemUsers()
+  const { data: usersResponse, isLoading: usersLoading } = useSystemUsers(
+    page,
+    USERS_PER_PAGE
+  )
+
+  const users = usersResponse?.items
+  const totalPages = usersResponse?.total_pages
+
+  const isAllowed = user?.roles?.some((role: string) =>
+    ['local_authority_admin', 'mhclg_support_admin'].includes(role)
+  )
 
   useEffect(() => {
-    if (!user) return
-    const allowed = ['admin', 'support_admin']
-    const isAllowed = user.roles?.some((r: string) => allowed.includes(r))
-    if (!isAllowed) {
+    if (user && !isAllowed) {
       router.replace('/unauthorised')
     }
-  }, [user, router])
+  }, [user, isAllowed, router])
 
-  if (userLoading) return <p>Loading...</p>
-  if (
-    user &&
-    !user.roles?.some((r: string) => ['admin', 'support_admin'].includes(r))
-  )
+  if (userLoading) return <Loader2 className="animate-spin" />
+  if (user && !isAllowed) {
     return null
+  }
 
   return (
     <div className="mx-auto max-w-3xl pt-1">
@@ -50,7 +58,7 @@ export default function SupportPage() {
 
       <div>
         <p className="govuk-body pt-5">
-          {users && <> Total Users: {users.length}</>}
+          {users && <> Total Users: {usersResponse.total_count}</>}
         </p>
       </div>
 
@@ -58,7 +66,7 @@ export default function SupportPage() {
         Invite new user
       </button>
 
-      {usersLoading && <p>Loading...</p>}
+      {usersLoading && <Loader2 className="animate-spin" />}
 
       {users && (
         <table className="govuk-table">

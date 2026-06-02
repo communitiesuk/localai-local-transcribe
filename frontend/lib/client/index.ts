@@ -231,6 +231,7 @@ export type {
   OrganisationPatchRequest,
   OrganisationResponse,
   PaginatedTranscriptionsResponse,
+  PaginatedUsersResponse,
   PatchUserTemplateRequest,
   Question,
   RecordingCreateRequest,

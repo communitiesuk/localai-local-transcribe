@@ -1,7 +1,8 @@
 import logging
+import math
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from backend.api.dependencies import (
     OrganisationAdminDep,
@@ -10,10 +11,10 @@ from backend.api.dependencies import (
     UserDep,
 )
 from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_users
+from backend.utils.queries import get_users, get_user_count
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
-from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles
+from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles, PaginatedUsersResponse
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -92,13 +93,36 @@ async def list_users(
     organisation: OrganisationAdminDep,
     user: UserDep,
     session: SQLSessionDep,
-) -> list[GetUserResponse]:
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+) -> PaginatedUsersResponse:
     users = []
     if is_system_admin(user):
-        users = await get_users(session)
-    else: 
-        users = await get_users(session, organisation)
-    return [to_user_response(user) for user in users]
+        count = await get_user_count(session)
+        users = await get_users(
+            session,
+            page=page,
+            page_size=page_size,
+        )
+    else:
+        count = await get_user_count(
+            session,
+            organisation=organisation,
+        )
+        users = await get_users(
+            session,
+            organisation=organisation,
+            page=page,
+            page_size=page_size,
+        )
+
+    return PaginatedUsersResponse(
+        items=[to_user_response(u) for u in users],
+        total_count=count,
+        page=page,
+        page_size=page_size,
+        total_pages=math.ceil(count / page_size) or 1,
+    )
 
 
 @users_router.get("/{user_id}")

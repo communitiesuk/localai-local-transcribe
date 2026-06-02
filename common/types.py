@@ -107,6 +107,14 @@ class GetUserResponse(BaseModel):
     organisation_id: uuid.UUID | None
 
 
+class PaginatedUsersResponse(BaseModel):
+    items: list[GetUserResponse]
+    total_count: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class DataRetentionUpdateResponse(BaseModel):
     data_retention_days: int | None
 

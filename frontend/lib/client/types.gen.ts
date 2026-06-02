@@ -537,6 +537,32 @@ export type PaginatedTranscriptionsResponse = {
 }
 
 /**
+ * PaginatedUsersResponse
+ */
+export type PaginatedUsersResponse = {
+  /**
+   * Items
+   */
+  items: Array<GetUserResponse>
+  /**
+   * Total Count
+   */
+  total_count: number
+  /**
+   * Page
+   */
+  page: number
+  /**
+   * Page Size
+   */
+  page_size: number
+  /**
+   * Total Pages
+   */
+  total_pages: number
+}
+
+/**
  * PatchUserTemplateRequest
  */
 export type PatchUserTemplateRequest = {
@@ -1238,7 +1264,16 @@ export type ListUsersUsersGetData = {
     'x-amzn-oidc-data'?: string | null
   }
   path?: never
-  query?: never
+  query?: {
+    /**
+     * Page
+     */
+    page?: number
+    /**
+     * Page Size
+     */
+    page_size?: number
+  }
   url: '/users'
 }
 
@@ -1254,11 +1289,9 @@ export type ListUsersUsersGetError =
 
 export type ListUsersUsersGetResponses = {
   /**
-   * Response List Users Users Get
-   *
    * Successful Response
    */
-  200: Array<GetUserResponse>
+  200: PaginatedUsersResponse
 }
 
 export type ListUsersUsersGetResponse =
