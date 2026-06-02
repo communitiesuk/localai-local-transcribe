@@ -91,10 +91,15 @@ async def create_user(
 
 @users_router.get("")
 async def list_users(
-    _: SystemAdminDep,
+    user: UserDep,
+    organisation: OrganisationAdminDep,
     session: SQLSessionDep,
 ) -> list[GetUserResponse]:
-    users = await get_users(session)
+    users = []
+    if is_system_admin(user):
+        users = await get_users(session)
+    else: 
+        users = await get_users(session, organisation)
     return [to_user_response(user) for user in users]
 
 
@@ -103,20 +108,6 @@ async def list_user(
     _: SystemAdminDep,
     target_user: TargetUserDep,
 ) -> GetUserResponse:
-    return to_user_response(target_user)
-
-
-@org_users_router.get("")
-async def list_users_in_org(
-    organisation: OrganisationAdminDep,
-    session: SQLSessionDep,
-) -> list[GetUserResponse]:
-    users = await get_users(session, organisation)
-    return [to_user_response(user) for user in users]
-
-
-@org_users_router.get("/{user_id}")
-async def list_user_in_org(_: OrganisationAdminDep, target_user: TargetUserDep) -> GetUserResponse:
     return to_user_response(target_user)
 
 

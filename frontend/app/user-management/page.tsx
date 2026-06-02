@@ -11,9 +11,8 @@ export default function SupportPage() {
   const router = useRouter()
 
   const { data: user } = useQuery(getUserUsersMeGetOptions())
-  const { users, isLoading } = useOrgUsers(user?.organisation_id ?? '')
-
-  // const { users, isLoading } = useSystemUsers()
+  // const { users, isLoading } = useOrgUsers(user?.organisation_id ?? '')
+  const { users, isLoading } = useSystemUsers()
 
   return (
     <div className="mx-auto max-w-3xl pt-1">
