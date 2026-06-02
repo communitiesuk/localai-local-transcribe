@@ -6,8 +6,12 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from evals.dataset_generation.data_for_testing.src.settings import CHARACTERISTICS_OUTPUT_DIR
 from evals.dataset_generation.data_for_testing.src.types import ManualEntry
+
+_DEFAULT_CONFIG_PATH = Path(__file__).resolve().parents[2] / "characteristics" / "configs" / "default_config.yaml"
 
 
 def get_transcript_file(subdir: Path) -> Path:
@@ -19,21 +23,24 @@ def get_transcript_file(subdir: Path) -> Path:
     return max(files, key=lambda f: f.stat().st_mtime)
 
 
-def run_characteristics_pipeline(transcript_file: Path) -> None:
+def run_characteristics_pipeline(transcript_file: Path) -> str:
+    """Run the characteristics pipeline and return the output file stem.
+
+    Uses the instance directory name (not the transcript filename) so that multiple
+    instances sharing the same transcript filename do not overwrite each other's output.
+    """
+    instance_name = transcript_file.parent.name
     with tempfile.TemporaryDirectory() as tmp_input_dir:
-        shutil.copy2(transcript_file, Path(tmp_input_dir) / transcript_file.name)
-        config_yaml = f"""
-model:
-  provider: azure_apim
-  model: gpt-4o
-  temperature: 0.0
-dataset:
-  input_dir: "{tmp_input_dir}"
-run:
-  output_dir: "{CHARACTERISTICS_OUTPUT_DIR}"
-prompts:
-  extraction_template: evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2
-"""
+        shutil.copy2(transcript_file, Path(tmp_input_dir) / f"{instance_name}.json")
+
+        with _DEFAULT_CONFIG_PATH.open("r", encoding="utf-8") as f:
+            config = yaml.safe_load(f) or {}
+
+        config["dataset"] = {"input_dir": tmp_input_dir}
+        config["run"] = {"output_dir": str(CHARACTERISTICS_OUTPUT_DIR)}
+
+        config_yaml = yaml.dump(config)
+
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
             tmp.write(config_yaml)
             config_path = tmp.name
@@ -59,6 +66,8 @@ prompts:
             logging.error("STDOUT:\n%s", e.stdout)
             logging.error("STDERR:\n%s", e.stderr)
             raise
+
+    return instance_name
 
 
 def copy_characteristics_output(output_dir: Path, transcript_stem: str) -> Path:

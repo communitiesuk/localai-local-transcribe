@@ -23,11 +23,17 @@ class PromptsConfig(BaseModel):
     )
 
 
+class ChunkingConfig(BaseModel):
+    chunk_size_chars: int = Field(default=1000)
+    overlap_chars: int = Field(default=400)
+
+
 class EvalsConfig(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
     dataset: DatasetConfig = Field(default_factory=DatasetConfig)
     run: RunConfig = Field(default_factory=RunConfig)
     prompts: PromptsConfig = Field(default_factory=PromptsConfig)
+    chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
 
 
 class TextSpan(BaseModel):

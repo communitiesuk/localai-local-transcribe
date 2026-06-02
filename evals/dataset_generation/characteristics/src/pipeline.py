@@ -37,7 +37,7 @@ async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> 
 
     all_detected_characteristics: list[CharacteristicDetection] = []
     failed_chunks: list[int] = []
-    chunks = build_chunks(transcript)
+    chunks = build_chunks(transcript, config.chunking.chunk_size_chars, config.chunking.overlap_chars)
 
     for idx, (chunk_text, offset) in enumerate(chunks):
         logger.info("  -> Sending Chunk %d of %d to Azure...", idx + 1, len(chunks))
