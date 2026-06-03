@@ -24,6 +24,10 @@ async def sign_out(request: Request) -> RedirectResponse:
 
     end_session_endpoint = await get_idp_logout_url() or END_SESSION_ENDPOINT_STATIC
 
+    logger.info("Signing out user, redirecting to IdP logout endpoint: %s", end_session_endpoint)
+    logger.info("Incoming cookies: %s", request.cookies.keys())
+    logger.info("ALB cookie name for matching: %s", ALB_AUTH_COOKIE_NAME)
+
     response = RedirectResponse(
         url=end_session_endpoint,
         status_code=302,
@@ -31,6 +35,7 @@ async def sign_out(request: Request) -> RedirectResponse:
 
     for cookie_name in request.cookies:
         if ALB_AUTH_COOKIE_PATTERN.fullmatch(cookie_name):
+            logger.info("Clearing cookie: %s", cookie_name)
             response.delete_cookie(
                 cookie_name,
                 path="/",
@@ -39,5 +44,6 @@ async def sign_out(request: Request) -> RedirectResponse:
             )
 
     logger.info("User signed out, cleared ALB auth cookies")
+    logger.info("Response headers after clearing cookies: %s", response.headers)
 
     return response
