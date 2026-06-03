@@ -265,7 +265,7 @@ def run_eval(
         needs_review, review_reasons = _trigger_review(metrics_out, threshold=4)
         review_flags.append(needs_review)
 
-                # Track hallucination contexts if enabled
+        # Track hallucination contexts if enabled
         if hallucination_enabled:
             uncited_claims = [
                 h.hallucination_text
