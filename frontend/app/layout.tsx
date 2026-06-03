@@ -27,13 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`govuk-template ${inter.className}`}>
-      <body className="govuk-template__body">
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "document.body.className += ' js-enabled' + ('noModule' in HTMLScriptElement.prototype ? ' govuk-frontend-supported' : '');",
-          }}
-        />
+      <body className="govuk-template__body js-enabled govuk-frontend-supported">
         <a
           href="#main-content"
           className="govuk-skip-link"
