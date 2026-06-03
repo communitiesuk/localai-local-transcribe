@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import dspy
 
@@ -203,7 +203,11 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
             new_callable=AsyncMock,
             return_value=mock_generated,
         ),
-        patch("evals.summarisation.src.optimisation.runner.call_llm_judge_parallel", new_callable=AsyncMock, return_value=mock_judge_response),
+        patch(
+            "evals.summarisation.src.optimisation.runner.call_llm_judge_parallel",
+            new_callable=AsyncMock,
+            return_value=mock_judge_response,
+        ),
         patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
         patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
     ):
