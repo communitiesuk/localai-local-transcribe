@@ -67,7 +67,7 @@ requires-poetry = "=2.4.1"
 
 # add common dependencies here
 [tool.poetry.dependencies]
-cryptography = "^44.0.2"
+cryptography = "^46.0.7"
 pydantic-settings = "^2.5.2"
 alembic = "^1.13.3"
 sqlmodel = "^0.0.27"
