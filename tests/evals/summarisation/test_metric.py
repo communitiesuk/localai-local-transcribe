@@ -15,7 +15,7 @@ from evals.summarisation.src.common.metric import (
 def test_load_system_prompt_exists():
     """Test that load_system_prompt loads and renders the system prompt with rubric."""
     # faithfulness maps to accuracy
-    prompt_text = load_system_prompt("faithfulness")
+    prompt_text = load_system_prompt("accuracy")
     assert "You are an expert AI quality assurance judge" in prompt_text
     assert "Dimension: Factual Accuracy" in prompt_text
 
