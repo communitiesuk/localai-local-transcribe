@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, Loader2 } from 'lucide-react'
+import { ChevronLeft, Divide, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useSystemUsers } from '@/hooks/use-users'
 import { useQuery } from '@tanstack/react-query'
@@ -12,13 +12,13 @@ import { USERS_PER_PAGE } from '@/lib/constants'
 
 export default function UserManagementPage() {
   const router = useRouter()
-  const [page, setPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const { data: user, isLoading: userLoading } = useQuery(
     getUserUsersMeGetOptions()
   )
   const { data: usersResponse, isLoading: usersLoading } = useSystemUsers(
-    page,
+    currentPage,
     USERS_PER_PAGE
   )
 
@@ -85,7 +85,7 @@ export default function UserManagementPage() {
                 scope="col"
                 className="govuk-table__header govuk-table__header--numeric"
               >
-                {/* View Account placeholder */}
+                {/* View Account placeholder column */}
               </th>
             </tr>
           </thead>
@@ -115,6 +115,93 @@ export default function UserManagementPage() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {(totalPages ?? 0) > 1 && (
+        <nav className="govuk-pagination" aria-label="Pagination">
+          <div className="govuk-pagination__prev">
+            {currentPage !== 1 && (
+              <a
+                className="govuk-link govuk-pagination__link"
+                rel="prev"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setCurrentPage(currentPage - 1)
+                }}
+              >
+                <svg
+                  className="govuk-pagination__icon govuk-pagination__icon--prev"
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="13"
+                  width="15"
+                  aria-hidden="true"
+                  focusable="false"
+                  viewBox="0 0 15 13"
+                >
+                  <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.414-1.414z"></path>
+                </svg>
+                <span className="govuk-pagination__link-title">
+                  Previous<span className="govuk-visually-hidden"> page</span>
+                </span>
+              </a>
+            )}
+          </div>
+          <ul className="govuk-pagination__list">
+            {Array.from({ length: totalPages ?? 0 }, (_, index) => {
+              const page = index + 1
+              const isCurrent = page === currentPage
+
+              return (
+                <li
+                  key={page}
+                  className={`govuk-pagination__item ${
+                    isCurrent ? 'govuk-pagination__item--current' : ''
+                  }`}
+                >
+                  <a
+                    className="govuk-link govuk-pagination__link"
+                    href="#"
+                    aria-label={`Page ${page}`}
+                    aria-current={isCurrent ? 'page' : undefined}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setCurrentPage(page)
+                    }}
+                  >
+                    {page}
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+          <div className="govuk-pagination__next">
+            {currentPage !== totalPages && (
+              <a
+                className="govuk-link govuk-pagination__link"
+                rel="next"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setCurrentPage(currentPage + 1)
+                }}
+              >
+                <span className="govuk-pagination__link-title">
+                  Next<span className="govuk-visually-hidden"> page</span>
+                </span>
+                <svg
+                  className="govuk-pagination__icon govuk-pagination__icon--next"
+                  xmlns="http://www.w3.org/2000/svg"
+                  height="13"
+                  width="15"
+                  aria-hidden="true"
+                  focusable="false"
+                  viewBox="0 0 15 13"
+                >
+                  <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
+                </svg>
+              </a>
+            )}
+          </div>
+        </nav>
       )}
     </div>
   )
