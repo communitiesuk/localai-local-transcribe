@@ -24,7 +24,7 @@ async def sign_out(request: Request) -> RedirectResponse:
 
     end_session_endpoint = await get_idp_logout_url() or END_SESSION_ENDPOINT_STATIC
 
-    logger.info("Signing out user, redirecting to IdP logout endpoint: {endpoint}", endpoint=end_session_endpoint)
+    logger.info("Signing out user, redirecting to IdP logout endpoint: %s", end_session_endpoint)
     logger.info("Incoming cookies: %s", request.cookies.keys())
     logger.info("ALB cookie name for matching: %s", ALB_AUTH_COOKIE_NAME)
 
