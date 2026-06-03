@@ -29,9 +29,9 @@ def test_metric_result_contract_validates_score_bounds():
 def test_eval_record_contract_serializes_to_json():
     """CONTRACT TEST: EvalRecord can be serialized to JSON for storage in JSONL files."""
     example_id = "1"
-    model_name = "gpt-4"
+    model_name = "gpt-5-nano"
     run_id = "test_run"
-    faithfulness_score = 0.8
+    faithfulness_score = 3.5
 
     example = DialogExample(example_id=example_id, dialogue="Hello", reference_summary="Hi")
     candidate = DialogSummary(
