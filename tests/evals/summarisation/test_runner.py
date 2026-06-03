@@ -184,25 +184,31 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     mock_split.select = Mock(return_value=mock_rows)
     mock_split.__len__ = Mock(return_value=1)
 
-    mock_metric = MagicMock()
-    mock_metric.name = "faithfulness"
-    mock_metric.evaluate.return_value = Mock(score=1.0, reason="Good")
+    mock_generated = Mock()
+    mock_generated.text = "Generated summary"
+    mock_generated.hallucinations = []
+    mock_generated.total_claims = 5
 
-    mock_evaluator = MagicMock()
-    mock_evaluator.return_value = 0.95
+    mock_judge_response = {
+        "dimensions": {
+            "coherence": {"score": "5", "rationale": "Good"},
+            "faithfulness": {"score": "5", "rationale": "Accurate"},
+        }
+    }
 
     with (
         patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}),
         patch(
             "evals.summarisation.src.optimisation.runner.generate_summary",
             new_callable=AsyncMock,
-            return_value=("Generated summary [1]", 5, []),
+            return_value=mock_generated,
         ),
-        patch("evals.summarisation.src.optimisation.runner.build_metrics", return_value=[mock_metric]),
+        patch("evals.summarisation.src.optimisation.runner.call_llm_judge_parallel", new_callable=AsyncMock, return_value=mock_judge_response),
         patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
-        patch("evals.summarisation.src.optimisation.runner.Evaluate", return_value=mock_evaluator),
+        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
     ):
-        mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
+        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
+        mock_tokenizer.return_value.encode = Mock(return_value=[1, 2, 3, 4, 5])
 
         run_id, results_path, summary_path, hallucination_inputs_path = run_eval(
             cfg,
