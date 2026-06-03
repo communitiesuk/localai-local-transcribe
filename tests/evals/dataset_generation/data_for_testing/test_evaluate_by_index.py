@@ -1,3 +1,5 @@
+import pytest
+
 from evals.dataset_generation.data_for_testing.src.evaluator import evaluate_by_index, extract_spans
 
 
@@ -265,28 +267,41 @@ def test_extract_spans_filters_incomplete_indices():
     assert spans[0] == {"start_index": 0, "end_index": 5}
 
 
-def test_same_position_different_characteristics_each_get_own_tp():
-    reference = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)])
-    hypothesis = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)])
-
+@pytest.mark.parametrize(
+    ("reference", "hypothesis", "tp", "fn", "fp"),
+    [
+        pytest.param(
+            make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)]),
+            make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)]),
+            2,
+            0,
+            0,
+            id="same_position_different_chars_each_get_own_tp",
+        ),
+        pytest.param(
+            make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)]),
+            make_multi_char([("Religion", 5, 15), ("Sex", 5, 15), ("Race", 5, 15)]),
+            2,
+            0,
+            1,
+            id="extra_characteristic_at_same_position_is_fp",
+        ),
+        pytest.param(
+            make_char_span("Disability", 5, 15),
+            make_char_span("Race", 5, 15),
+            1,
+            0,
+            0,
+            id="fallback_to_different_char_when_no_same_char_available",
+        ),
+    ],
+)
+def test_characteristic_matching_counts(reference: dict, hypothesis: dict, tp: int, fn: int, fp: int) -> None:
     result = evaluate_by_index(reference, hypothesis)
     summary = result["summary"]
-
-    assert summary["true_positive"] == 2
-    assert summary["false_negative"] == 0
-    assert summary["false_positive"] == 0
-
-
-def test_extra_characteristic_at_same_position_is_fp():
-    reference = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)])
-    hypothesis = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15), ("Race", 5, 15)])
-
-    result = evaluate_by_index(reference, hypothesis)
-    summary = result["summary"]
-
-    assert summary["true_positive"] == 2
-    assert summary["false_negative"] == 0
-    assert summary["false_positive"] == 1
+    assert summary["true_positive"] == tp
+    assert summary["false_negative"] == fn
+    assert summary["false_positive"] == fp
 
 
 def test_prefer_same_characteristic_over_any_covering_span():
@@ -302,15 +317,3 @@ def test_prefer_same_characteristic_over_any_covering_span():
 
     covering = result["annotation_results"][0]["covering_hypothesis"]
     assert covering["start_index"] == 5
-
-
-def test_fallback_to_different_char_when_no_same_char_available():
-    reference = make_char_span("Disability", 5, 15)
-    hypothesis = make_char_span("Race", 5, 15)
-
-    result = evaluate_by_index(reference, hypothesis)
-    summary = result["summary"]
-
-    assert summary["true_positive"] == 1
-    assert summary["false_negative"] == 0
-    assert summary["false_positive"] == 0

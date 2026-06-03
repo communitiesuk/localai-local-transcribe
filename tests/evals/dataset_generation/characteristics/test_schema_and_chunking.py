@@ -34,68 +34,61 @@ def _make_detection(
     )
 
 
-def test_chunking_config_defaults():
-    config = ChunkingConfig()
-    assert config.chunk_size_chars == 1000
-    assert config.overlap_chars == 400
+@pytest.mark.parametrize(
+    ("kwargs", "expected_size", "expected_overlap"),
+    [
+        ({}, 1000, 400),
+        ({"chunk_size_chars": 2000, "overlap_chars": 400}, 2000, 400),
+    ],
+)
+def test_chunking_config(kwargs: dict, expected_size: int, expected_overlap: int) -> None:
+    config = ChunkingConfig(**kwargs)
+    assert config.chunk_size_chars == expected_size
+    assert config.overlap_chars == expected_overlap
 
 
-def test_chunking_config_custom_values():
-    config = ChunkingConfig(chunk_size_chars=2000, overlap_chars=400)
-    assert config.chunk_size_chars == 2000
-    assert config.overlap_chars == 400
-
-
-def test_evals_config_includes_chunking():
+def test_evals_config() -> None:
     config = EvalsConfig()
-    assert hasattr(config, "chunking")
     assert isinstance(config.chunking, ChunkingConfig)
 
-
-def test_evals_config_chunking_overridable():
-    config = EvalsConfig(chunking=ChunkingConfig(chunk_size_chars=500, overlap_chars=100))
-    assert config.chunking.chunk_size_chars == 500
-    assert config.chunking.overlap_chars == 100
+    custom = EvalsConfig(chunking=ChunkingConfig(chunk_size_chars=500, overlap_chars=100))
+    assert custom.chunking.chunk_size_chars == 500
+    assert custom.chunking.overlap_chars == 100
 
 
-def test_strip_leading_with_removes_with_possessive():
-    chunk = "I remember that With my first child it was very hard."
-    start = chunk.index("With my first")
-    end = start + len("With my first child")
+@pytest.mark.parametrize(
+    ("chunk", "span_text", "expected"),
+    [
+        (
+            "I remember that With my first child it was very hard.",
+            "With my first child",
+            "my first child",
+        ),
+        ("my first child was born in summer.", "my first child", "my first child"),
+        ("juggling act with the kids every day.", "juggling act with the kids", "juggling act with the kids"),
+    ],
+)
+def test_strip_leading_with(chunk: str, span_text: str, expected: str) -> None:
+    start = chunk.index(span_text)
+    end = start + len(span_text)
     new_start = _strip_leading_with(start, end, chunk)
-    assert chunk[new_start:end] == "my first child"
+    assert chunk[new_start:end] == expected
 
 
-def test_strip_leading_with_no_change_when_no_leading_with():
-    chunk = "my first child was born in summer."
-    start = 0
-    end = len("my first child")
-    assert _strip_leading_with(start, end, chunk) == 0
+@pytest.mark.parametrize(
+    ("transcript", "pos", "expected"),
+    [
+        ("hello world", 0, 0),
+        ("hello world", 6, 6),
+        ("individuals with disabilities", 3, 12),
+        ("hello", 3, 3),
+    ],
+)
+def test_align_to_word_start(transcript: str, pos: int, expected: int) -> None:
+    assert _align_to_word_start(transcript, pos) == expected
 
 
-def test_strip_leading_with_no_change_for_other_leading_words():
-    chunk = "juggling act with the kids every day."
-    start = 0
-    end = len("juggling act with the kids")
-    assert _strip_leading_with(start, end, chunk) == 0
-
-
-def test_align_to_word_start_already_on_boundary():
-    assert _align_to_word_start("hello world", 0) == 0
-    assert _align_to_word_start("hello world", 6) == 6
-
-
-def test_align_to_word_start_mid_word_advances():
-    transcript = "individuals with disabilities"
-    assert _align_to_word_start(transcript, 3) == 12
-
-
-def test_align_to_word_start_no_space_within_bound():
-    transcript = "hello"
-    assert _align_to_word_start(transcript, 3) == 3
-
-
-def test_build_chunks_starts_on_word_boundaries():
+def test_build_chunks_starts_on_word_boundaries() -> None:
     transcript = "aaa " * 300
     chunks = build_chunks(transcript, chunk_size_chars=1000, overlap_chars=400)
     for _text, offset in chunks:
@@ -103,30 +96,26 @@ def test_build_chunks_starts_on_word_boundaries():
             assert transcript[offset - 1] == " ", f"Chunk at offset {offset} starts mid-word"
 
 
-def test_build_chunks_respects_chunk_size():
+def test_build_chunks_respects_chunk_size() -> None:
     transcript = "a" * 3000
     chunks = build_chunks(transcript, chunk_size_chars=1000, overlap_chars=0)
     assert len(chunks) == 3
     assert all(len(text) == 1000 for text, _ in chunks)
 
 
-def test_build_chunks_respects_overlap():
-    transcript = "a" * 1500
-    chunks = build_chunks(transcript, chunk_size_chars=1000, overlap_chars=500)
-    offsets = [offset for _, offset in chunks]
-    assert offsets == [0, 500, 1000]
+@pytest.mark.parametrize(
+    ("length", "chunk_size", "overlap", "expected_offsets"),
+    [
+        (1500, 1000, 500, [0, 500, 1000]),
+        (2500, 1000, 250, [0, 750, 1500, 2250]),
+    ],
+)
+def test_build_chunks_offsets(length: int, chunk_size: int, overlap: int, expected_offsets: list[int]) -> None:
+    chunks = build_chunks("a" * length, chunk_size_chars=chunk_size, overlap_chars=overlap)
+    assert [offset for _, offset in chunks] == expected_offsets
 
 
-def test_build_chunks_offset_tracks_position():
-    transcript = "x" * 2500
-    chunks = build_chunks(transcript, chunk_size_chars=1000, overlap_chars=250)
-    offsets = [offset for _, offset in chunks]
-    assert offsets[0] == 0
-    assert offsets[1] == 750
-    assert offsets[2] == 1500
-
-
-def test_build_chunks_larger_overlap_produces_more_chunks():
+def test_build_chunks_larger_overlap_produces_more_chunks() -> None:
     transcript = "x" * 3000
     chunks_small_overlap = build_chunks(transcript, chunk_size_chars=1000, overlap_chars=250)
     chunks_large_overlap = build_chunks(transcript, chunk_size_chars=1000, overlap_chars=500)
@@ -141,14 +130,14 @@ def test_build_chunks_larger_overlap_produces_more_chunks():
         (2000, 500),
     ],
 )
-def test_build_chunks_covers_full_transcript(chunk_size: int, overlap: int):
+def test_build_chunks_covers_full_transcript(chunk_size: int, overlap: int) -> None:
     transcript = "abc" * 600
     chunks = build_chunks(transcript, chunk_size_chars=chunk_size, overlap_chars=overlap)
     last_text, last_offset = chunks[-1]
     assert last_offset + len(last_text) >= len(transcript)
 
 
-def test_deduplication_merges_same_category_and_value():
+def test_deduplication_merges_same_category_and_value() -> None:
     a = _make_detection(ProtectedCharacteristic.RACE, "South Asian", [("Raj", 0, 3)])
     b = _make_detection(ProtectedCharacteristic.RACE, "South Asian", [("Raj", 10, 13)])
     result = deduplicate_characteristics([a, b])
@@ -156,14 +145,14 @@ def test_deduplication_merges_same_category_and_value():
     assert len(result[0].evidence_spans) == 2
 
 
-def test_deduplication_keeps_distinct_categories():
+def test_deduplication_keeps_distinct_categories() -> None:
     a = _make_detection(ProtectedCharacteristic.RACE, "South Asian", [("Raj", 0, 3)])
     b = _make_detection(ProtectedCharacteristic.SEX, "Male", [("Raj", 0, 3)])
     result = deduplicate_characteristics([a, b])
     assert len(result) == 2
 
 
-def test_deduplication_merges_overlapping_spans_same_category():
+def test_deduplication_merges_overlapping_spans_same_category() -> None:
     """Same name, same characteristic, different attribute_value strings → merge into one entry."""
     a = _make_detection(ProtectedCharacteristic.RACE, "South Asian (name proxy)", [("Raj", 0, 3)], confidence=0.85)
     b = _make_detection(
@@ -175,7 +164,7 @@ def test_deduplication_merges_overlapping_spans_same_category():
     assert result[0].confidence == 0.90
 
 
-def test_deduplication_does_not_merge_non_overlapping_entries():
+def test_deduplication_does_not_merge_non_overlapping_entries() -> None:
     """Same characteristic and different attribute_value but completely different spans → keep separate."""
     a = _make_detection(ProtectedCharacteristic.RACE, "South Asian", [("Raj", 0, 3)])
     b = _make_detection(ProtectedCharacteristic.RACE, "West African", [("Kofi", 50, 54)])
@@ -183,7 +172,7 @@ def test_deduplication_does_not_merge_non_overlapping_entries():
     assert len(result) == 2
 
 
-def test_upgrade_subspans_cross_characteristic():
+def test_upgrade_subspans_cross_characteristic() -> None:
     """'Blum' (137-141) in Religion upgraded to 'Mrs Blum' (133-141) from Sex entry."""
     sex_entry = _make_detection(ProtectedCharacteristic.SEX, "Female", [("Mrs Blum", 133, 141)])
     religion_entry = _make_detection(ProtectedCharacteristic.RELIGION_BELIEF, "Jewish", [("Blum", 137, 141)])
@@ -195,14 +184,14 @@ def test_upgrade_subspans_cross_characteristic():
     assert religion_span.text == "Mrs Blum"
 
 
-def test_upgrade_subspans_no_change_when_already_longest():
+def test_upgrade_subspans_no_change_when_already_longest() -> None:
     entry = _make_detection(ProtectedCharacteristic.SEX, "Female", [("Mrs Ahmed", 0, 9)])
     _upgrade_subspans_to_longest([entry])
     assert entry.evidence_spans[0].start_index == 0
     assert entry.evidence_spans[0].text == "Mrs Ahmed"
 
 
-def test_upgrade_does_not_promote_to_long_phrase():
+def test_upgrade_does_not_promote_to_long_phrase() -> None:
     long_phrase = "Both as an amputee and as someone who is blind"
     assert len(long_phrase) > _MAX_UPGRADE_SPAN_LEN
     long_entry = _make_detection(ProtectedCharacteristic.DISABILITY, "Amputee", [(long_phrase, 0, len(long_phrase))])
@@ -211,7 +200,7 @@ def test_upgrade_does_not_promote_to_long_phrase():
     assert short_entry.evidence_spans[0].text == "an amputee"
 
 
-def test_deduplication_merges_subspan_same_category():
+def test_deduplication_merges_subspan_same_category() -> None:
     """'Blum' (702-706) contained within 'Mrs Blum' (698-706) → merged into one Race entry."""
     a = _make_detection(ProtectedCharacteristic.RACE, "Jewish surname proxy", [("Mrs Blum", 698, 706)])
     b = _make_detection(ProtectedCharacteristic.RACE, "Jewish surname", [("Blum", 702, 706)])
@@ -220,26 +209,35 @@ def test_deduplication_merges_subspan_same_category():
     assert all(s.start_index == 698 for s in result[0].evidence_spans)
 
 
-def test_remove_subspans_removes_contained_span():
-    spans = [
-        TextSpan(text="individuals with disabilities", start_index=10, end_index=39),
-        TextSpan(text="with disabilities", start_index=22, end_index=39),
-    ]
+@pytest.mark.parametrize(
+    ("spans", "expected_count", "expected_first_text"),
+    [
+        (
+            [
+                TextSpan(text="individuals with disabilities", start_index=10, end_index=39),
+                TextSpan(text="with disabilities", start_index=22, end_index=39),
+            ],
+            1,
+            "individuals with disabilities",
+        ),
+        (
+            [
+                TextSpan(text="Mrs Ahmed", start_index=0, end_index=9),
+                TextSpan(text="Kofi", start_index=20, end_index=24),
+            ],
+            2,
+            None,
+        ),
+    ],
+)
+def test_remove_subspans(spans: list[TextSpan], expected_count: int, expected_first_text: str | None) -> None:
     result = _remove_subspans(spans)
-    assert len(result) == 1
-    assert result[0].text == "individuals with disabilities"
+    assert len(result) == expected_count
+    if expected_first_text is not None:
+        assert result[0].text == expected_first_text
 
 
-def test_remove_subspans_keeps_non_contained():
-    spans = [
-        TextSpan(text="Mrs Ahmed", start_index=0, end_index=9),
-        TextSpan(text="Kofi", start_index=20, end_index=24),
-    ]
-    result = _remove_subspans(spans)
-    assert len(result) == 2
-
-
-def test_deduplication_no_duplicate_span_positions():
+def test_deduplication_no_duplicate_span_positions() -> None:
     a = _make_detection(ProtectedCharacteristic.RACE, "South Asian", [("Raj", 0, 3), ("Raj", 10, 13)])
     b = _make_detection(ProtectedCharacteristic.RACE, "South Asian", [("Raj", 0, 3)])
     result = deduplicate_characteristics([a, b])
