@@ -1,8 +1,8 @@
-'''Constants for summarisation evaluation.
+"""Constants for summarisation evaluation.
 
 MAX_TOKENS: Maximum number of tokens the LLM should generate for a summary.
 TEMPERATURE: Sampling temperature for the LLM generation.
-'''
+"""
 
 # Default token limit for generated summaries. Adjust as needed.
 MAX_TOKENS: int = 1024

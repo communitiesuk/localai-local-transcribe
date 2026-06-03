@@ -3,7 +3,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import dspy
-import pytest
 
 from evals.summarisation.src.common import DialogExample
 from evals.summarisation.src.common.metric import (

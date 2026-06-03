@@ -25,7 +25,7 @@ __all__ = [
     "MetricResult",
     "build_azure_apim_adapter",
     "build_metrics",
-        "call_llm_judge_parallel",
+    "call_llm_judge_parallel",
     "load_config",
     "write_jsonl",
 ]

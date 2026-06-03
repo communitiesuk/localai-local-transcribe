@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import re
 import time
 import uuid
@@ -18,6 +17,8 @@ from datasets import load_dataset
 from dspy.evaluate import Evaluate
 
 from common.database.postgres_models import DialogueEntry, HallucinationType
+from common.llm.adapters.llm_constants import MAX_COMPLETION_TOKENS as MAX_TOKENS
+from common.llm.adapters.llm_constants import TEMPERATURE
 from common.settings import get_settings
 from evals.summarisation.prompts import DIMENSIONS
 from evals.summarisation.src.common import (
@@ -32,8 +33,6 @@ from evals.summarisation.src.common import (
 )
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
-
-from common.llm.adapters.llm_constants import TEMPERATURE, MAX_COMPLETION_TOKENS as MAX_TOKENS
 
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
