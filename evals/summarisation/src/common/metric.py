@@ -12,6 +12,32 @@ from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
 
 
+def load_system_prompt(dimension: str | None = None) -> str:
+    """Return the rendered system prompt for a given rubric dimension.
+
+    Uses the existing Jinja template via ``build_system_prompt``.
+    """
+    return build_system_prompt(dimension)
+
+
+def make_dynamic_signature(metric_name: str, rubric: str):
+    """Create a DSPy ``Signature`` subclass for a specific evaluation metric.
+
+    The generated class contains the fields expected by the judge LLM and embeds
+    the provided *rubric* text in its docstring.
+    """
+    class_name = f"{metric_name.title().replace('_', '')}Signature"
+    docstring = f"Rubric for {metric_name}: {rubric}"
+    attrs = {
+        "__doc__": docstring,
+        "dialogue": dspy.InputField(desc="Dialogue text"),
+        "reference_summary": dspy.InputField(desc="Gold summary from dataset"),
+        "candidate_summary": dspy.InputField(desc="Model-generated summary"),
+        "evaluation_result": dspy.OutputField(desc="JSON with rating and reason"),
+    }
+    return type(class_name, (dspy.Signature,), attrs)
+
+
 class DimensionEvaluation(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(description="The name of the evaluation dimension (e.g. clarity, correctness).")
