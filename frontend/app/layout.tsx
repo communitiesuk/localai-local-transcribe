@@ -28,6 +28,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`govuk-template ${inter.className}`}>
       <body className="govuk-template__body">
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "document.body.className += ' js-enabled' + ('noModule' in HTMLScriptElement.prototype ? ' govuk-frontend-supported' : '');",
+          }}
+        />
         <a
           href="#main-content"
           className="govuk-skip-link"
@@ -50,7 +56,6 @@ export default function RootLayout({
                   <main
                     id="main-content"
                     className="govuk-main-wrapper"
-                    tabIndex={-1}
                   >
                     {children}
                   </main>
