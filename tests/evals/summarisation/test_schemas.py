@@ -16,14 +16,14 @@ from evals.summarisation.src.common.schemas import (
 
 def test_metric_result_contract_validates_score_bounds():
     """CONTRACT TEST: MetricResult enforces score must be between 0.0 and 1.0."""
-    with pytest.raises(ValueError, match="less than or equal to 1"):
-        MetricResult(score=1.5, reason="Invalid")
+    with pytest.raises(ValueError, match="greater than or equal to 1"):
+        MetricResult(score=0, reason="Invalid")
 
-    with pytest.raises(ValueError, match="greater than or equal to 0"):
-        MetricResult(score=-0.1, reason="Invalid")
+    with pytest.raises(ValueError, match="less than or equal to 5"):
+        MetricResult(score=6, reason="Invalid")
 
-    valid = MetricResult(score=0.5, reason="Valid")
-    assert valid.score == 0.5
+    valid = MetricResult(score=3, reason="Valid")
+    assert valid.score == 3
 
 
 def test_eval_record_contract_serializes_to_json():
