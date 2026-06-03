@@ -1,14 +1,17 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, Divide, Loader2 } from 'lucide-react'
+import { ChevronLeft, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useSystemUsers } from '@/hooks/use-users'
+import { useUsers } from '@/hooks/use-users'
 import { useQuery } from '@tanstack/react-query'
-import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { useEffect } from 'react'
-import { useState } from 'react'
+import {
+  getUserUsersMeGetOptions,
+  getOrganisationOrganisationsOrganisationIdGetOptions,
+} from '@/lib/client/@tanstack/react-query.gen'
+import { useState, useEffect } from 'react'
 import { USERS_PER_PAGE } from '@/lib/constants'
+import { userRoles } from '@/lib/utils'
 
 export default function UserManagementPage() {
   const router = useRouter()
@@ -17,16 +20,29 @@ export default function UserManagementPage() {
   const { data: user, isLoading: userLoading } = useQuery(
     getUserUsersMeGetOptions()
   )
-  const { data: usersResponse, isLoading: usersLoading } = useSystemUsers(
+  const { data: usersResponse, isLoading: usersLoading } = useUsers(
     currentPage,
     USERS_PER_PAGE
   )
+
+  const organisationId = user?.organisation_id
+
+  const { data: organisation } = useQuery({
+    ...getOrganisationOrganisationsOrganisationIdGetOptions({
+      path: {
+        organisationId: organisationId, // wont be undefined due to enabled
+      },
+    }),
+    enabled: Boolean(organisationId),
+  })
 
   const users = usersResponse?.items
   const totalPages = usersResponse?.total_pages
 
   const isAllowed = user?.roles?.some((role: string) =>
-    ['local_authority_admin', 'mhclg_support_admin'].includes(role)
+    [userRoles.LOCAL_AUTHORITY_ADMIN, userRoles.MHCLG_SUPPORT_ADMIN].includes(
+      role
+    )
   )
 
   useEffect(() => {
@@ -54,13 +70,12 @@ export default function UserManagementPage() {
           Back
         </span>
       </Button>
-      <h1 className="text-3xl font-bold">User Management</h1>
 
-      <div>
-        <p className="govuk-body pt-5">
-          {users && <> Total Users: {usersResponse.total_count}</>}
-        </p>
-      </div>
+      <h1 className="govuk-heading-l">User Management</h1>
+      <h2 className="govuk-heading-m">{organisation && organisation.name}</h2>
+      <p className="govuk-body">
+        {users && <> Total Users: {usersResponse.total_count}</>}
+      </p>
 
       <button type="submit" className="govuk-button" data-module="govuk-button">
         Invite new user
@@ -92,17 +107,18 @@ export default function UserManagementPage() {
           <tbody className="govuk-table__body">
             {users.map((user) => (
               <tr key={user.id} className="govuk-table__row">
-                <th scope="row" className="govuk-table__header">
+                <td scope="row" className="govuk-table__cell">
                   {user.name}
-                </th>
-                <td className="govuk-table__cell govuk-table__cell">
-                  {user.email}
                 </td>
+                <td className="govuk-table__cell">{user.email}</td>
                 <td className="govuk-table__cell govuk-table__cell--numeric">
                   <div className="flex justify-end gap-3">
-                    {user.roles.includes('local_authority_admin') && (
-                      <strong className="govuk-tag">Admin</strong>
-                    )}
+                    {user?.roles?.some((role: string) =>
+                      [
+                        userRoles.LOCAL_AUTHORITY_ADMIN,
+                        userRoles.MHCLG_SUPPORT_ADMIN,
+                      ].includes(role)
+                    ) && <strong className="govuk-tag">Admin</strong>}
                     <a
                       href="#"
                       className="govuk-link govuk-link--no-visited-state"

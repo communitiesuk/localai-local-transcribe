@@ -30,6 +30,7 @@ import {
   getChatTranscriptionsTranscriptionIdChatChatIdGet,
   getMinuteMinutesMinutesIdGet,
   getMinuteVersionMinuteVersionsMinuteVersionIdGet,
+  getOrganisationOrganisationsOrganisationIdGet,
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet,
   getTargetUserUsersUserIdGet,
   getTemplatesTemplatesGet,
@@ -105,6 +106,9 @@ import type {
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetData,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetError,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetResponse,
+  GetOrganisationOrganisationsOrganisationIdGetData,
+  GetOrganisationOrganisationsOrganisationIdGetError,
+  GetOrganisationOrganisationsOrganisationIdGetResponse,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetError,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse,
@@ -1436,6 +1440,36 @@ export const deleteOrganisationOrganisationsOrganisationIdDeleteMutation = (
   }
   return mutationOptions
 }
+
+export const getOrganisationOrganisationsOrganisationIdGetQueryKey = (
+  options?: Options<GetOrganisationOrganisationsOrganisationIdGetData>
+) => createQueryKey('getOrganisationOrganisationsOrganisationIdGet', options)
+
+/**
+ * Get Organisation
+ *
+ * Get organisation. Only accessible to organisation admins.
+ */
+export const getOrganisationOrganisationsOrganisationIdGetOptions = (
+  options?: Options<GetOrganisationOrganisationsOrganisationIdGetData>
+) =>
+  queryOptions<
+    GetOrganisationOrganisationsOrganisationIdGetResponse,
+    GetOrganisationOrganisationsOrganisationIdGetError,
+    GetOrganisationOrganisationsOrganisationIdGetResponse,
+    ReturnType<typeof getOrganisationOrganisationsOrganisationIdGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationOrganisationsOrganisationIdGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey(options),
+  })
 
 /**
  * Update Organisation

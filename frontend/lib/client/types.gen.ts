@@ -2259,6 +2259,39 @@ export type DeleteOrganisationOrganisationsOrganisationIdDeleteResponses = {
 export type DeleteOrganisationOrganisationsOrganisationIdDeleteResponse =
   DeleteOrganisationOrganisationsOrganisationIdDeleteResponses[keyof DeleteOrganisationOrganisationsOrganisationIdDeleteResponses]
 
+export type GetOrganisationOrganisationsOrganisationIdGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/organisations/{organisation_id}'
+}
+
+export type GetOrganisationOrganisationsOrganisationIdGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type GetOrganisationOrganisationsOrganisationIdGetError =
+  GetOrganisationOrganisationsOrganisationIdGetErrors[keyof GetOrganisationOrganisationsOrganisationIdGetErrors]
+
+export type GetOrganisationOrganisationsOrganisationIdGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: OrganisationResponse
+}
+
+export type GetOrganisationOrganisationsOrganisationIdGetResponse =
+  GetOrganisationOrganisationsOrganisationIdGetResponses[keyof GetOrganisationOrganisationsOrganisationIdGetResponses]
+
 export type UpdateOrganisationOrganisationsOrganisationIdPatchData = {
   body: OrganisationPatchRequest
   headers?: {

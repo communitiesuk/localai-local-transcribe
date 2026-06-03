@@ -63,6 +63,9 @@ import type {
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetData,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetErrors,
   GetMinuteVersionMinuteVersionsMinuteVersionIdGetResponses,
+  GetOrganisationOrganisationsOrganisationIdGetData,
+  GetOrganisationOrganisationsOrganisationIdGetErrors,
+  GetOrganisationOrganisationsOrganisationIdGetResponses,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetErrors,
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses,
@@ -805,6 +808,25 @@ export const deleteOrganisationOrganisationsOrganisationIdDelete = <
   (options.client ?? client).delete<
     DeleteOrganisationOrganisationsOrganisationIdDeleteResponses,
     DeleteOrganisationOrganisationsOrganisationIdDeleteErrors,
+    ThrowOnError
+  >({ url: '/organisations/{organisation_id}', ...options })
+
+/**
+ * Get Organisation
+ *
+ * Get organisation. Only accessible to organisation admins.
+ */
+export const getOrganisationOrganisationsOrganisationIdGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    GetOrganisationOrganisationsOrganisationIdGetData,
+    ThrowOnError
+  >
+) =>
+  (options?.client ?? client).get<
+    GetOrganisationOrganisationsOrganisationIdGetResponses,
+    GetOrganisationOrganisationsOrganisationIdGetErrors,
     ThrowOnError
   >({ url: '/organisations/{organisation_id}', ...options })
 
