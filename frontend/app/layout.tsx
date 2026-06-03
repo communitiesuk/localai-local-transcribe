@@ -47,10 +47,7 @@ export default function RootLayout({
                 </div>
 
                 <div className="govuk-width-container">
-                  <main
-                    id="main-content"
-                    className="govuk-main-wrapper"
-                  >
+                  <main id="main-content" className="govuk-main-wrapper">
                     {children}
                   </main>
                 </div>
