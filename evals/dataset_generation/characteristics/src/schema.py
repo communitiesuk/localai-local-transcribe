@@ -21,6 +21,16 @@ class PromptsConfig(BaseModel):
     extraction_template: str = Field(
         default="evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2"
     )
+    agent_base_template: str | None = Field(
+        default=None,
+        description="Path to the base Jinja2 template for per-characteristic agents. "
+        "When set alongside characteristic_contexts_dir, enables per-characteristic mode.",
+    )
+    characteristic_contexts_dir: str | None = Field(
+        default=None,
+        description="Directory containing per-characteristic Jinja2 template files. "
+        "Each file extends the base template and provides rules and examples for one protected characteristic.",
+    )
 
 
 class ChunkingConfig(BaseModel):

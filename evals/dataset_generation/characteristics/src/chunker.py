@@ -1,13 +1,18 @@
+import asyncio
+import logging
 import re
 from pathlib import Path
 
 from common.llm.client import ChatBot
-from evals.dataset_generation.characteristics.src.config_loader import render_prompt
+from evals.dataset_generation.characteristics.src.config_loader import render_prompt, render_prompt_for_characteristic
 from evals.dataset_generation.characteristics.src.schema import (
     CharacteristicDetection,
     CharacteristicExtractionOutput,
     TextSpan,
 )
+from evals.dataset_generation.shared_constants import ProtectedCharacteristic
+
+logger = logging.getLogger(__name__)
 
 
 def find_spans(text: str, transcript: str) -> list[tuple[int, int]]:
@@ -58,15 +63,29 @@ def _spans_related(a: "CharacteristicDetection", b: "CharacteristicDetection") -
 
 
 def _remove_subspans(spans: list[TextSpan]) -> list[TextSpan]:
-    """Remove spans that are strictly contained within a longer span in the same list."""
+    """Remove spans that are strictly contained within a longer span OR are exact-position duplicates.
+
+    `_upgrade_subspans_to_longest` can create duplicate equal-position entries (e.g. when both
+    "Blum" and "Mrs Blum" are present and the upgrade replaces "Blum" with "Mrs Blum", which is
+    already in the list). Deduplicating by (start, end) here prevents those from producing FPs.
+    """
     positions = [(s.start_index, s.end_index) for s in spans if s.start_index is not None and s.end_index is not None]
 
     def subsumed(start: int, end: int) -> bool:
         return any(o_s <= start and o_e >= end and (o_s, o_e) != (start, end) for o_s, o_e in positions)
 
-    return [
-        s for s in spans if s.start_index is None or s.end_index is None or not subsumed(s.start_index, s.end_index)
-    ]
+    seen: set[tuple[int, int]] = set()
+    result = []
+    for s in spans:
+        if s.start_index is None or s.end_index is None:
+            result.append(s)
+            continue
+        pos = (s.start_index, s.end_index)
+        if pos in seen or subsumed(s.start_index, s.end_index):
+            continue
+        seen.add(pos)
+        result.append(s)
+    return result
 
 
 # Maximum character length a container span may have for the upgrade to fire.
@@ -214,9 +233,14 @@ def _strip_leading_with(start: int, end: int, chunk: str) -> int:
 
 
 def _find_new_positions(text: str, chunk: str, used: set[tuple[int, int]]) -> list[tuple[int, int]]:
-    """Return positions of all not-yet-claimed occurrences of text in chunk, marking them used."""
+    """Return positions of all not-yet-claimed occurrences of text in chunk, marking them used.
+
+    Matching is case-insensitive so that minor capitalisation differences between the model's
+    returned span text and the actual transcript (e.g. "my little one" vs "My little one") do
+    not prevent a span from being located.
+    """
     result = []
-    for m in re.finditer(re.escape(text), chunk):
+    for m in re.finditer(re.escape(text), chunk, re.IGNORECASE):
         start = _article_extended_start(m.start(), chunk)
         start = _strip_leading_with(start, m.end(), chunk)
         pos = (start, m.end())
@@ -226,30 +250,77 @@ def _find_new_positions(text: str, chunk: str, used: set[tuple[int, int]]) -> li
     return result
 
 
+def _locate_spans_in_chunk(item: CharacteristicDetection, chunk_text: str, offset: int) -> None:
+    """Locate model-returned spans inside chunk_text and update their indices in-place."""
+    used_positions: set[tuple[int, int]] = set()
+    located: list[TextSpan] = []
+    for span in item.evidence_spans:
+        original_text = span.text.strip()
+        positions = _find_new_positions(original_text, chunk_text, used_positions)
+        if not positions:
+            continue
+        first_start, first_end = positions[0]
+        span.start_index = first_start + offset
+        span.end_index = first_end + offset
+        span.text = chunk_text[first_start:first_end]
+        located.append(span)
+        if len(original_text) >= _MIN_MULTI_OCCURRENCE_LEN:
+            located.extend(
+                TextSpan(text=chunk_text[s:e], start_index=s + offset, end_index=e + offset) for s, e in positions[1:]
+            )
+    item.evidence_spans = located
+
+
 async def process_chunk(
     chunk_text: str, offset: int, prompt_path: Path, chatbot: ChatBot
 ) -> list[CharacteristicDetection]:
     prompt_text = render_prompt(str(prompt_path), chunk_text)
     response = await chatbot.structured_chat([{"role": "user", "content": prompt_text}], CharacteristicExtractionOutput)
-
-    used_positions: set[tuple[int, int]] = set()
     for item in response.detected_characteristics:
-        new_spans: list[TextSpan] = []
-        for span in item.evidence_spans:
-            original_text = span.text.strip()
-            positions = _find_new_positions(original_text, chunk_text, used_positions)
-            if not positions:
-                span.start_index = None
-                span.end_index = None
-                continue
-            first_start, first_end = positions[0]
-            span.start_index = first_start + offset
-            span.end_index = first_end + offset
-            span.text = chunk_text[first_start:first_end]
-            if len(original_text) >= _MIN_MULTI_OCCURRENCE_LEN:
-                new_spans.extend(
-                    TextSpan(text=chunk_text[s:e], start_index=s + offset, end_index=e + offset)
-                    for s, e in positions[1:]
-                )
-        item.evidence_spans.extend(new_spans)
+        _locate_spans_in_chunk(item, chunk_text, offset)
     return response.detected_characteristics
+
+
+async def process_chunk_per_characteristic(
+    chunk_text: str,
+    offset: int,
+    characteristic: ProtectedCharacteristic,
+    prompt_path: Path,
+    chatbot: ChatBot,
+) -> list[CharacteristicDetection]:
+    """Process one chunk for a single protected characteristic using a focused prompt."""
+    prompt_text = render_prompt(str(prompt_path), chunk_text)
+    response = await chatbot.structured_chat([{"role": "user", "content": prompt_text}], CharacteristicExtractionOutput)
+    detections = [d for d in response.detected_characteristics if d.characteristic == characteristic]
+    for item in detections:
+        _locate_spans_in_chunk(item, chunk_text, offset)
+    return detections
+
+
+async def process_chunk_parallel(
+    chunk_text: str,
+    offset: int,
+    base_template_path: Path,
+    contexts_dir: Path,
+    chatbot: ChatBot,
+) -> list[CharacteristicDetection]:
+    """Process one chunk by running one focused agent per protected characteristic in parallel."""
+
+    async def _call_one(char: ProtectedCharacteristic) -> list[CharacteristicDetection]:
+        prompt_text = render_prompt_for_characteristic(base_template_path, contexts_dir, char, chunk_text)
+        response = await chatbot.structured_chat(
+            [{"role": "user", "content": prompt_text}], CharacteristicExtractionOutput
+        )
+        detections = [d for d in response.detected_characteristics if d.characteristic == char]
+        for item in detections:
+            _locate_spans_in_chunk(item, chunk_text, offset)
+        return detections
+
+    results = await asyncio.gather(*[_call_one(char) for char in ProtectedCharacteristic], return_exceptions=True)
+    detections = []
+    for char, result in zip(ProtectedCharacteristic, results, strict=False):
+        if isinstance(result, BaseException):
+            logger.error("Per-characteristic agent failed for %s: %s", char.value, result)
+        else:
+            detections.extend(result)
+    return detections

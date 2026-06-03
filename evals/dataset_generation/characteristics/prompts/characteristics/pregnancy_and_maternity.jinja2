@@ -1,0 +1,103 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Pregnancy and Maternity{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING PREGNANCY AND MATERNITY
+
+Flag any reference that confirms a speaker has a child or is pregnant/on maternity leave.
+
+**What to detect:**
+1. **Direct pregnancy references** — `"expecting"`, `"pregnant"`, `"on maternity leave"`, `"expecting her second child"`, `"expecting my first"`.
+2. **"Motherhood"** and `"maternity"` — these are direct P&M references. Return just `"motherhood"` or `"maternity"` as the span.
+3. **First-person possessive child phrases** — these confirm the speaker has a child and MUST be returned whole (never split the possessive from the noun):
+   - `"my little one"`, `"my kids"`, `"my children"`, `"my child"`, `"my little ones"`
+   - `"my first"`, `"my second"`, `"both of my kids"`
+   - `"juggling act with the kids"` (in personal context)
+4. **Second-person addressed possessive child phrases** — `"your kids"` when directly addressing a speaker's own children situation.
+5. **Caregiving references that confirm parenthood** — first-person references to caring for one's own child.
+6. **Ordinal phrases with possessive** — `"with my first"`, `"with my second"` confirm the speaker is a parent.
+
+**What NOT to detect:**
+- **Generic child references** — `"Babies"` as a noun, `"every child"`, `"a child's needs"`, `"this child"`, `"that child"`, `"children in general"` → these do not confirm the speaker is a parent.
+- **Childcare techniques or processes** — `"sleep training"`, `"weaning"`, `"feeding schedule"` → not P&M indicators.
+- **Bare ordinal nouns without a possessive** — `"first"`, `"second"` alone → not P&M.
+- **Adoption aspirations** — `"we're ready to care for a child"`, `"provide support for a child"` → not P&M (requires confirmation of having a child).
+- **Bare first-person fragments** — `"I was"`, `"I felt"`, `"I remember"` → never valid evidence spans; the span must be the possessive-child phrase itself.
+- **Do NOT split compound possessive phrases** — `"my kids"` must stay as one span, never `"my"` + `"kids"` separately.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+Mrs. Chen, who is expecting her second child, requested flexible working arrangements.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Pregnancy and Maternity",
+      "attribute_value": "Pregnant (expecting second child)",
+      "evidence_spans": [{"text": "expecting her second child"}],
+      "confidence": 1.0
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Navigating motherhood has been both the hardest and most rewarding experience of my life.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Pregnancy and Maternity",
+      "attribute_value": "Mother (direct motherhood reference)",
+      "evidence_spans": [{"text": "motherhood"}],
+      "confidence": 0.95
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+It's not easy with this juggling act with the kids while keeping up with work deadlines.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Pregnancy and Maternity",
+      "attribute_value": "Parent (indirect child-presence cue)",
+      "evidence_spans": [{"text": "juggling act with the kids"}],
+      "confidence": 0.80
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Interviewer: How do you manage your time at home?
+Applicant: My little one keeps me very busy, but I wouldn't have it any other way. Your kids change everything, don't they?
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Pregnancy and Maternity",
+      "attribute_value": "Parent (indirect child-presence cue)",
+      "evidence_spans": [{"text": "My little one"}, {"text": "your kids"}],
+      "confidence": 0.82
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Applicant: I was really struggling at that point in my life. I felt lost and unsure of what to do next.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+{% endblock %}

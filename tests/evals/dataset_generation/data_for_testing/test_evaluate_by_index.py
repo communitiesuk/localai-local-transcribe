@@ -9,6 +9,29 @@ def make_multi_span(*spans):
     return {"detected_characteristics": [{"evidence_spans": [{"start_index": s, "end_index": e} for s, e in spans]}]}
 
 
+def make_char_span(char: str, start: int, end: int) -> dict:
+    return {
+        "detected_characteristics": [
+            {
+                "characteristic": char,
+                "evidence_spans": [{"start_index": start, "end_index": end, "text": "span"}],
+            }
+        ]
+    }
+
+
+def make_multi_char(entries: list[tuple[str, int, int]]) -> dict:
+    return {
+        "detected_characteristics": [
+            {
+                "characteristic": char,
+                "evidence_spans": [{"start_index": start, "end_index": end, "text": "span"}],
+            }
+            for char, start, end in entries
+        ]
+    }
+
+
 def make_empty():
     return {"detected_characteristics": []}
 
@@ -240,3 +263,54 @@ def test_extract_spans_filters_incomplete_indices():
 
     assert len(spans) == 1
     assert spans[0] == {"start_index": 0, "end_index": 5}
+
+
+def test_same_position_different_characteristics_each_get_own_tp():
+    reference = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)])
+    hypothesis = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)])
+
+    result = evaluate_by_index(reference, hypothesis)
+    summary = result["summary"]
+
+    assert summary["true_positive"] == 2
+    assert summary["false_negative"] == 0
+    assert summary["false_positive"] == 0
+
+
+def test_extra_characteristic_at_same_position_is_fp():
+    reference = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)])
+    hypothesis = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15), ("Race", 5, 15)])
+
+    result = evaluate_by_index(reference, hypothesis)
+    summary = result["summary"]
+
+    assert summary["true_positive"] == 2
+    assert summary["false_negative"] == 0
+    assert summary["false_positive"] == 1
+
+
+def test_prefer_same_characteristic_over_any_covering_span():
+    reference = make_char_span("Sex", 5, 15)
+    hypothesis = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)])
+
+    result = evaluate_by_index(reference, hypothesis)
+    summary = result["summary"]
+
+    assert summary["true_positive"] == 1
+    assert summary["false_negative"] == 0
+    assert summary["false_positive"] == 1
+
+    covering = result["annotation_results"][0]["covering_hypothesis"]
+    assert covering["start_index"] == 5
+
+
+def test_fallback_to_different_char_when_no_same_char_available():
+    reference = make_char_span("Disability", 5, 15)
+    hypothesis = make_char_span("Race", 5, 15)
+
+    result = evaluate_by_index(reference, hypothesis)
+    summary = result["summary"]
+
+    assert summary["true_positive"] == 1
+    assert summary["false_negative"] == 0
+    assert summary["false_positive"] == 0

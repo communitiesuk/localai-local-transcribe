@@ -1,0 +1,15 @@
+model:
+  provider: "azure_apim"
+  model: "gpt-4o"
+  temperature: 0.0
+prompts:
+  extraction_template: "evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2"
+  agent_base_template: "evals/dataset_generation/characteristics/prompts/agent_base.jinja2"
+  characteristic_contexts_dir: "evals/dataset_generation/characteristics/prompts/characteristics"
+dataset:
+  input_dir: "evals/dataset_generation/characteristics/input"
+run:
+  output_dir: "evals/dataset_generation/characteristics/output"
+chunking:
+  chunk_size_chars: 1000
+  overlap_chars: 400

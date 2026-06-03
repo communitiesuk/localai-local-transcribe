@@ -1,0 +1,126 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Disability{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING DISABILITY
+
+Flag any reference to a physical or mental impairment that has a substantial and long-term effect on a person's ability to carry out normal day-to-day activities.
+
+**What to detect:**
+1. **Named disability conditions** — `"visual impairment"`, `"mobility issues"`, `"mobility-related"`, `"struggles with mobility issues"`, `"cannot walk without assistance"`, `"an amputee"`, `"losing a limb"`, `"blind or has low vision"`, `"deaf or hard of hearing"`, `"developing a chronic illness"`.
+2. **Names as disability proxies** — once a person's disability is established in the transcript (e.g. `"Carlos is deaf"`, `"Priya has rheumatoid arthritis"`), every subsequent mention of their name is a Disability proxy. Include all occurrences.
+3. **Assistive technology and aids** — devices or features that a disabled person uses: `"prosthetic limbs"`, `"prosthetic technology"`, `"smart prosthetics"`, `"assistive technologies"`, `"wheelchair-accessible"`, `"Braille signage"` (when used by someone in the transcript), `"tactile markers"` (same condition).
+4. **Generic disability references** — `"individuals with disabilities"`, `"people with disabilities"`, `"disabled individuals"`, `"individuals with visual impairments"`.
+5. **Compound disability phrases** joined by `"or"` must be returned whole — `"blind or has low vision"` not `"blind"` and `"has low vision"` as separate spans. Similarly `"individuals with disabilities"` not `"disabilities"` alone.
+6. **Gerund phrases** — include the full gerund: `"losing a limb"` not `"a limb"`.
+7. **Introductory relative clauses must be stripped** — return `"blind or has low vision"` not `"who's blind or has low vision"`, `"an amputee"` not `"as an amputee"` or `"as someone who's an amputee"`.
+
+**What NOT to detect:**
+- **Housing conditions** — damp, overcrowding, or poor housing quality describe the dwelling, not the person's disability. The impact of housing on health (`"the impact of the damp conditions on her health"`) is also NOT a Disability span.
+- **Vague "health concerns"** — generic phrases like `"health concerns"` or `"health issues"` without specification of an actual disability condition are NOT Disability spans.
+- **Vague accessibility challenges** — generic societal or systemic barrier descriptions (`"navigating public spaces"`, `"dealing with inaccessible technology"`, `"public barriers"`, `"inaccessible environments"`) are NOT Disability spans unless they directly reference a named person's specific disability.
+- **Adaptation descriptions** — how a person copes with their disability (`"relies heavily on their other senses"`, `"compensates using touch"`, `"navigates by sound"`) describes coping strategy, not the disability itself.
+- **Medical documentation** — `"medical reports"`, `"doctor's letter"`, `"referral letter"` describe paperwork, not a disability.
+- **Pure design/engineering statements** — `"many of these technologies are designed with visual users in mind"`, `"engineered for non-disabled users"` are about design, not an individual's disability.
+- **Physical limitations as Age indicators** — Do not re-flag mobility difficulties or inability to manage stairs as Age. They are Disability.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+Marco introduced himself as an amputee who uses prosthetic limbs. He noted that assistive technologies have transformed the lives of individuals with disabilities. Later, Marco and Marco's colleague discussed smart prosthetics.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Disability",
+      "attribute_value": "Amputee",
+      "evidence_spans": [
+        {"text": "Marco"}, {"text": "an amputee"}, {"text": "prosthetic limbs"},
+        {"text": "Marco"}, {"text": "Marco"}, {"text": "smart prosthetics"}
+      ],
+      "confidence": 0.95
+    },
+    {
+      "characteristic": "Disability",
+      "attribute_value": "People with disabilities (generic reference)",
+      "evidence_spans": [{"text": "individuals with disabilities"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Housing officer reviewed the case. She noted that an elderly woman named Mrs Osei cannot walk without assistance.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Disability",
+      "attribute_value": "Mobility impairment",
+      "evidence_spans": [{"text": "cannot walk without assistance"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Housing officer Mr. Davies reviewed the file and noted that the applicant, Yaw Mensah, who's blind or has low vision, was struggling to access the online portal.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Disability",
+      "attribute_value": "Visual impairment",
+      "evidence_spans": [{"text": "blind or has low vision"}],
+      "confidence": 0.95
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+The caseworker noted in the file: "She has significant mobility issues and relies on a carer. Mrs Osei has lived at this address for six years." Later the report added: "Her current property is unsuitable."
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Disability",
+      "attribute_value": "Mobility impairment",
+      "evidence_spans": [{"text": "mobility issues"}],
+      "confidence": 0.95
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+The family raised health concerns about the damp conditions in the flat. The impact of the damp conditions on her health has been significant.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+
+[INPUT START]
+Many assistive technologies are designed with able-bodied users in mind, which creates barriers for people with disabilities when navigating public spaces.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Disability",
+      "attribute_value": "People with disabilities (generic)",
+      "evidence_spans": [{"text": "people with disabilities"}],
+      "confidence": 0.85
+    }
+  ]
+}
+[OUTPUT END]
+{% endblock %}
