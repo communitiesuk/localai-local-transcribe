@@ -2267,7 +2267,12 @@ export type GetOrganisationOrganisationsOrganisationIdGetData = {
      */
     'x-amzn-oidc-data'?: string | null
   }
-  path?: never
+  path: {
+    /**
+     * Organisation Id
+     */
+    organisation_id: string
+  }
   query?: never
   url: '/organisations/{organisation_id}'
 }

@@ -27,9 +27,12 @@ async def list_organisations(
 
 
 @organisations_router.get("/organisations/{organisation_id}", response_model=OrganisationResponse, status_code=200)
-async def get_organisation(organistaion: OrganisationAdminDep) -> OrganisationResponse:
+async def get_organisation(
+    _: OrganisationAdminDep, session: SQLSessionDep, organisation_id: uuid.UUID
+) -> OrganisationResponse:
     """Get organisation. Only accessible to organisation admins."""
-    return OrganisationResponse.model_validate(organistaion)
+    organisation = await session.get(Organisation, organisation_id)
+    return OrganisationResponse.model_validate(organisation)
 
 
 @organisations_router.post("/organisations", response_model=OrganisationResponse, status_code=201)

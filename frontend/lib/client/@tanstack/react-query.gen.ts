@@ -1442,7 +1442,7 @@ export const deleteOrganisationOrganisationsOrganisationIdDeleteMutation = (
 }
 
 export const getOrganisationOrganisationsOrganisationIdGetQueryKey = (
-  options?: Options<GetOrganisationOrganisationsOrganisationIdGetData>
+  options: Options<GetOrganisationOrganisationsOrganisationIdGetData>
 ) => createQueryKey('getOrganisationOrganisationsOrganisationIdGet', options)
 
 /**
@@ -1451,7 +1451,7 @@ export const getOrganisationOrganisationsOrganisationIdGetQueryKey = (
  * Get organisation. Only accessible to organisation admins.
  */
 export const getOrganisationOrganisationsOrganisationIdGetOptions = (
-  options?: Options<GetOrganisationOrganisationsOrganisationIdGetData>
+  options: Options<GetOrganisationOrganisationsOrganisationIdGetData>
 ) =>
   queryOptions<
     GetOrganisationOrganisationsOrganisationIdGetResponse,

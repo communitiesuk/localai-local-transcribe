@@ -16,3 +16,12 @@ export const userRoles = {
   LOCAL_AUTHORITY_ADMIN: 'local_authority_admin',
   MHCLG_SUPPORT_ADMIN: 'mhclg_support_admin',
 }
+
+export function hasAnyRole(
+  userRolesList: string[] | undefined,
+  allowedRoles: string[]
+): boolean {
+  if (!userRolesList?.length) return false
+
+  return userRolesList.some((role) => allowedRoles.includes(role))
+}

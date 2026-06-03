@@ -819,12 +819,12 @@ export const deleteOrganisationOrganisationsOrganisationIdDelete = <
 export const getOrganisationOrganisationsOrganisationIdGet = <
   ThrowOnError extends boolean = false,
 >(
-  options?: Options<
+  options: Options<
     GetOrganisationOrganisationsOrganisationIdGetData,
     ThrowOnError
   >
 ) =>
-  (options?.client ?? client).get<
+  (options.client ?? client).get<
     GetOrganisationOrganisationsOrganisationIdGetResponses,
     GetOrganisationOrganisationsOrganisationIdGetErrors,
     ThrowOnError

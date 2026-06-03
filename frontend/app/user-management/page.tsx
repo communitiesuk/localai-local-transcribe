@@ -11,39 +11,37 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useState, useEffect } from 'react'
 import { USERS_PER_PAGE } from '@/lib/constants'
-import { userRoles } from '@/lib/utils'
+import { userRoles, hasAnyRole } from '@/lib/utils'
 
 export default function UserManagementPage() {
   const router = useRouter()
-  const [currentPage, setCurrentPage] = useState(1)
 
   const { data: user, isLoading: userLoading } = useQuery(
     getUserUsersMeGetOptions()
   )
-  const { data: usersResponse, isLoading: usersLoading } = useUsers(
-    currentPage,
-    USERS_PER_PAGE
-  )
 
   const organisationId = user?.organisation_id
-
   const { data: organisation } = useQuery({
     ...getOrganisationOrganisationsOrganisationIdGetOptions({
       path: {
-        organisationId: organisationId, // wont be undefined due to enabled
+        organisation_id: organisationId ?? '', // wont be undefined due to enabled
       },
     }),
     enabled: Boolean(organisationId),
   })
 
+  const [currentPage, setCurrentPage] = useState(1)
+  const { data: usersResponse, isLoading: usersLoading } = useUsers(
+    currentPage,
+    USERS_PER_PAGE
+  )
   const users = usersResponse?.items
   const totalPages = usersResponse?.total_pages
 
-  const isAllowed = user?.roles?.some((role: string) =>
-    [userRoles.LOCAL_AUTHORITY_ADMIN, userRoles.MHCLG_SUPPORT_ADMIN].includes(
-      role
-    )
-  )
+  const isAllowed = hasAnyRole(user?.roles, [
+    userRoles.LOCAL_AUTHORITY_ADMIN,
+    userRoles.MHCLG_SUPPORT_ADMIN,
+  ])
 
   useEffect(() => {
     if (user && !isAllowed) {
@@ -52,9 +50,6 @@ export default function UserManagementPage() {
   }, [user, isAllowed, router])
 
   if (userLoading) return <Loader2 className="animate-spin" />
-  if (user && !isAllowed) {
-    return null
-  }
 
   return (
     <div className="mx-auto max-w-3xl pt-1">
@@ -72,10 +67,11 @@ export default function UserManagementPage() {
       </Button>
 
       <h1 className="govuk-heading-l">User Management</h1>
-      <h2 className="govuk-heading-m">{organisation && organisation.name}</h2>
-      <p className="govuk-body">
-        {users && <> Total Users: {usersResponse.total_count}</>}
-      </p>
+      {organisation && <h2 className="govuk-heading-s">{organisation.name}</h2>}
+
+      {users && (
+        <p className="govuk-body">Total Users: {usersResponse.total_count}</p>
+      )}
 
       <button type="submit" className="govuk-button" data-module="govuk-button">
         Invite new user
@@ -113,12 +109,16 @@ export default function UserManagementPage() {
                 <td className="govuk-table__cell">{user.email}</td>
                 <td className="govuk-table__cell govuk-table__cell--numeric">
                   <div className="flex justify-end gap-3">
-                    {user?.roles?.some((role: string) =>
-                      [
-                        userRoles.LOCAL_AUTHORITY_ADMIN,
-                        userRoles.MHCLG_SUPPORT_ADMIN,
-                      ].includes(role)
-                    ) && <strong className="govuk-tag">Admin</strong>}
+                    {hasAnyRole(user?.roles, [
+                      userRoles.LOCAL_AUTHORITY_ADMIN,
+                    ]) && <strong className="govuk-tag">LA Admin</strong>}
+                    {hasAnyRole(user?.roles, [
+                      userRoles.MHCLG_SUPPORT_ADMIN,
+                    ]) && (
+                      <strong className="govuk-tag govuk-tag--purple">
+                        System Admin
+                      </strong>
+                    )}
                     <a
                       href="#"
                       className="govuk-link govuk-link--no-visited-state"
