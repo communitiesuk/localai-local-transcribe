@@ -26,7 +26,7 @@ async def sign_out(request: Request) -> RedirectResponse:
 
     logger.info("Signing out user, redirecting to IdP logout endpoint: %s", end_session_endpoint)
     logger.info("Incoming cookies: %s", request.cookies.keys())
-    logger.info("ALB cookie name for matching: %s", ALB_AUTH_COOKIE_NAME)
+    logger.info("incoming headers: %s", request.headers())
 
     response = RedirectResponse(
         url=end_session_endpoint,
