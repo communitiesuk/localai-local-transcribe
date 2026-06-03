@@ -1,0 +1,17 @@
+model:
+  provider: "azure_apim"
+  model: "gpt5-1"
+  temperature: 0.0
+
+prompts:
+  agent_base_template: "evals/dataset_generation/characteristics/prompts/agent_base.jinja2"
+
+dataset:
+  input_dir: "evals/dataset_generation/characteristics/input"
+
+run:
+  output_dir: "evals/dataset_generation/characteristics/output"
+
+chunking:
+  chunk_size_chars: 1000
+  overlap_chars: 400
