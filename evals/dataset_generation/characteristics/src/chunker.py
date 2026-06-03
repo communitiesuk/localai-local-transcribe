@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 from common.llm.client import ChatBot
-from evals.dataset_generation.characteristics.src.config_loader import render_prompt, render_prompt_for_characteristic
+from evals.dataset_generation.characteristics.src.config_loader import render_prompt_for_characteristic
 from evals.dataset_generation.characteristics.src.schema import (
     CharacteristicDetection,
     CharacteristicExtractionOutput,
@@ -271,43 +271,16 @@ def _locate_spans_in_chunk(item: CharacteristicDetection, chunk_text: str, offse
     item.evidence_spans = located
 
 
-async def process_chunk(
-    chunk_text: str, offset: int, prompt_path: Path, chatbot: ChatBot
-) -> list[CharacteristicDetection]:
-    prompt_text = render_prompt(str(prompt_path), chunk_text)
-    response = await chatbot.structured_chat([{"role": "user", "content": prompt_text}], CharacteristicExtractionOutput)
-    for item in response.detected_characteristics:
-        _locate_spans_in_chunk(item, chunk_text, offset)
-    return response.detected_characteristics
-
-
-async def process_chunk_per_characteristic(
-    chunk_text: str,
-    offset: int,
-    characteristic: ProtectedCharacteristic,
-    prompt_path: Path,
-    chatbot: ChatBot,
-) -> list[CharacteristicDetection]:
-    """Process one chunk for a single protected characteristic using a focused prompt."""
-    prompt_text = render_prompt(str(prompt_path), chunk_text)
-    response = await chatbot.structured_chat([{"role": "user", "content": prompt_text}], CharacteristicExtractionOutput)
-    detections = [d for d in response.detected_characteristics if d.characteristic == characteristic]
-    for item in detections:
-        _locate_spans_in_chunk(item, chunk_text, offset)
-    return detections
-
-
 async def process_chunk_parallel(
     chunk_text: str,
     offset: int,
     base_template_path: Path,
-    contexts_dir: Path,
     chatbot: ChatBot,
 ) -> list[CharacteristicDetection]:
     """Process one chunk by running one focused agent per protected characteristic in parallel."""
 
     async def _call_one(char: ProtectedCharacteristic) -> list[CharacteristicDetection]:
-        prompt_text = render_prompt_for_characteristic(base_template_path, contexts_dir, char, chunk_text)
+        prompt_text = render_prompt_for_characteristic(base_template_path, char, chunk_text)
         response = await chatbot.structured_chat(
             [{"role": "user", "content": prompt_text}], CharacteristicExtractionOutput
         )

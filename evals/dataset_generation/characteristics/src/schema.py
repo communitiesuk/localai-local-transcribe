@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from evals.dataset_generation.shared_constants import ProtectedCharacteristic
 
@@ -18,24 +18,19 @@ class RunConfig(BaseModel):
 
 
 class PromptsConfig(BaseModel):
-    extraction_template: str = Field(
-        default="evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2"
-    )
-    agent_base_template: str | None = Field(
-        default=None,
-        description="Path to the base Jinja2 template for per-characteristic agents. "
-        "When set alongside characteristic_contexts_dir, enables per-characteristic mode.",
-    )
-    characteristic_contexts_dir: str | None = Field(
-        default=None,
-        description="Directory containing per-characteristic Jinja2 template files. "
-        "Each file extends the base template and provides rules and examples for one protected characteristic.",
-    )
+    agent_base_template: str = Field(default="evals/dataset_generation/characteristics/prompts/agent_base.jinja2")
 
 
 class ChunkingConfig(BaseModel):
     chunk_size_chars: int = Field(default=1000)
     overlap_chars: int = Field(default=400)
+
+    @model_validator(mode="after")
+    def overlap_less_than_chunk(self) -> "ChunkingConfig":
+        if self.overlap_chars >= self.chunk_size_chars:
+            msg = f"overlap_chars ({self.overlap_chars}) must be less than chunk_size_chars ({self.chunk_size_chars})"
+            raise ValueError(msg)
+        return self
 
 
 class EvalsConfig(BaseModel):

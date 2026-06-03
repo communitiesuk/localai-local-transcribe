@@ -2,7 +2,7 @@ run:
   output_dir: "evals/characteristics/output"
 model:
   provider: "azure_apim"
-  model: "gpt-4o"
+  model: "gpt5-1"
   temperature: 0.0
 prompts:
   extraction_template: "evals/characteristics/prompts/characteristic_extraction.jinja2"

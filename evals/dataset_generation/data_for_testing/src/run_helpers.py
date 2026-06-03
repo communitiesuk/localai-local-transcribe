@@ -38,7 +38,7 @@ dataset:
 run:
   output_dir: "{CHARACTERISTICS_OUTPUT_DIR}"
 prompts:
-  extraction_template: evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2
+  agent_base_template: evals/dataset_generation/characteristics/prompts/agent_base.jinja2
 """
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
             tmp.write(config_yaml)

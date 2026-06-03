@@ -21,17 +21,6 @@ def load_config(config_path: Path) -> EvalsConfig:
     return EvalsConfig(**raw_yaml)
 
 
-def render_prompt(template_path: str, transcript: str) -> str:
-    """Renders a Jinja2 template with the provided transcript."""
-    path = Path(template_path).resolve()
-    env = Environment(
-        loader=FileSystemLoader(path.parent),
-        autoescape=select_autoescape(),
-    )
-    template = env.get_template(path.name)
-    return template.render(transcript=transcript)
-
-
 def _characteristic_context_filename(characteristic: ProtectedCharacteristic) -> str:
     """Return the Jinja2 template filename for a given characteristic."""
     return (
@@ -41,7 +30,6 @@ def _characteristic_context_filename(characteristic: ProtectedCharacteristic) ->
 
 def render_prompt_for_characteristic(
     base_template_path: Path,
-    _contexts_dir: Path,
     characteristic: ProtectedCharacteristic,
     transcript: str,
 ) -> str:
