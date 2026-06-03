@@ -20,7 +20,7 @@ def load_system_prompt(dimension: str | None = None) -> str:
     return build_system_prompt(dimension)
 
 
-def make_dynamic_signature(metric_name: str, rubric: str):
+def make_dynamic_signature(metric_name: str, rubric: str) -> type[dspy.Signature]:
     """Create a DSPy ``Signature`` subclass for a specific evaluation metric.
 
     The generated class contains the fields expected by the judge LLM and embeds
