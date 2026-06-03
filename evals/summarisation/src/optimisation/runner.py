@@ -16,7 +16,7 @@ import tiktoken
 from datasets import load_dataset
 from dspy.evaluate import Evaluate
 
-from common.database.postgres_models import DialogueEntry, HallucinationType
+from common.database.postgres_models import DialogueEntry
 from common.llm.adapters.llm_constants import MAX_COMPLETION_TOKENS as MAX_TOKENS
 from common.llm.adapters.llm_constants import TEMPERATURE
 from common.settings import get_settings
@@ -126,6 +126,56 @@ def _p50(values: list[int]) -> int:
     return int(values_sorted[len(values_sorted) // 2])
 
 
+def _build_metrics_summary(metric_scores: dict[str, list[float]]) -> dict[str, dict[str, float]]:
+    metrics_summary: dict[str, dict[str, float]] = {
+        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0}
+        for name, vals in metric_scores.items()
+        if name != "token_usage"
+    }
+    if "token_usage" in metric_scores:
+        metrics_summary["token_usage"] = {"total": sum(metric_scores["token_usage"])}
+    return metrics_summary
+
+
+def _build_run_summary(
+    *,
+    run_id: str,
+    split: str,
+    devset: list[dspy.Example],
+    metrics_summary: dict[str, dict[str, float]],
+    summarize_ms_values: list[int],
+    judge_ms_values: list[int],
+    review_flags: list[bool],
+) -> _RunSummary:
+    rubric_scores = [v["mean"] for k, v in metrics_summary.items() if k.startswith("rubric_")]
+    overall = float(sum(rubric_scores) / len(rubric_scores)) if rubric_scores else None
+    review_flagged_count = sum(review_flags)
+    return {
+        "run_id": run_id,
+        "split": split,
+        "n": len(devset),
+        "overall": overall,
+        "metrics": metrics_summary,
+        "latency_ms": {
+            "summarize_p50": _p50(summarize_ms_values),
+            "judge_p50": _p50(judge_ms_values),
+        },
+        "review": {
+            "count": review_flagged_count,
+            "rate": review_flagged_count / len(review_flags) if review_flags else 0.0,
+        },
+    }
+
+
+def _collect_rubric_metrics(rubric_evaluation: dict) -> dict[str, MetricResult]:
+    """Extract per-dimension rubric scores into MetricResult objects."""
+    metrics_out: dict[str, MetricResult] = {}
+    for dim, result in rubric_evaluation["dimensions"].items():
+        raw_score = int(result["score"])
+        metrics_out[f"rubric_{dim}"] = MetricResult(score=raw_score, reason=result["rationale"])
+    return metrics_out
+
+
 def run_eval(
     cfg: AppConfig,
     *,
@@ -186,7 +236,7 @@ def run_eval(
 
     program = _Program()
 
-    def _metric(gold: DialogExample, pred: dspy.Prediction) -> float:
+    def _metric(gold: dspy.Example, pred: dspy.Prediction) -> float:
         ex = DialogExample(
             example_id=str(gold.example_id),
             dialogue=str(gold.dialogue),
@@ -207,12 +257,7 @@ def run_eval(
         judge_ms = _elapsed_ms(t_j0, time.perf_counter())
         judge_ms_values.append(judge_ms)
 
-        metrics_out = {}
-        for dim, result in rubric_evaluation["dimensions"].items():
-            raw_score = int(result["score"])
-            # Use the original 1‑5 score directly per user request
-            metrics_out[f"rubric_{dim}"] = MetricResult(score=raw_score, reason=result["rationale"])
-
+        metrics_out = _collect_rubric_metrics(rubric_evaluation)
         for name, res in metrics_out.items():
             metric_scores[name].append(res.score)
 
@@ -220,84 +265,64 @@ def run_eval(
         needs_review, review_reasons = _trigger_review(metrics_out, threshold=4)
         review_flags.append(needs_review)
 
-        records.append(
-            EvalRecord(
-                run_id=run_id,
-                timestamp=_utc_now(),
-                example=ex,
-                candidate=candidate,
-                metrics=metrics_out,
-                needs_review=needs_review,
-                review_reasons=review_reasons,
-                latency_ms={
-                    "summarize": summarize_ms_values[-1] if summarize_ms_values else 0,
-                    "judge": judge_ms,
-                },
-                error=None,
-                token_usage=int(metric_scores["token_usage"][-1]) if metric_scores.get("token_usage") else None,
-            )
-        )
-        _maybe_flush_records(results_path, records, flush_every=25)
-
+                # Track hallucination contexts if enabled
         if hallucination_enabled:
             uncited_claims = [
                 h.hallucination_text
-                for h in pred.hallucinations
-                if h.hallucination_type == HallucinationType.FACTUAL_FABRICATION
+                for h in getattr(pred, "hallucinations", [])
+                if getattr(h, "hallucination_type", None) == "FACTUAL_FABRICATION"
             ]
             hallucination_inputs.append(
                 HallucinationInput(
-                    example_id=str(gold.example_id),
+                    example_id=ex.example_id,
                     hypothesis_model=model_name,
                     summary_html=candidate.summary,
                     uncited_claims=uncited_claims,
-                    total_claims=pred.total_claims,
+                    total_claims=getattr(pred, "total_claims", 0),
                 )
             )
 
-        rubric_vals = [res.score for name, res in metrics_out.items() if name.startswith("rubric_")]
-        if rubric_vals:
-            return float(sum(rubric_vals) / len(rubric_vals))
-        return 0.0
+        # Append evaluation trace record and periodically flush to file
+        record = EvalRecord(
+            example_id=ex.example_id,
+            dialogue=ex.dialogue,
+            reference_summary=ex.reference_summary,
+            candidate=candidate,
+            metrics=metrics_out,
+            needs_review=needs_review,
+            review_reasons=review_reasons,
+        )
+        records.append(record)
+        _maybe_flush_records(results_path, records, flush_every=10)
 
-    evaluator = Evaluate(devset=devset, num_threads=1, display_progress=True)
-    evaluator(program, metric=_metric)
+        # Return mean score across evaluate dimensions for the DSPy engine
+        score_values = [res.score for res in metrics_out.values()]
+        return sum(score_values) / len(score_values) if score_values else 0.0
 
+    # Execute dataset evaluation sequentially to preserve event loop context
+    evaluator = Evaluate(
+        devset=devset,
+        metric=_metric,
+        num_threads=1,
+        display_progress=True,
+    )
+    evaluator(program)
+
+    # Clean up any remaining records in memory
     if records:
         write_jsonl(results_path, (r.model_dump(by_alias=True) for r in records))
+        records.clear()
 
-    # Construct execution summaries
-    metrics_summary: dict[str, dict[str, float]] = {
-        name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0}
-        for name, vals in metric_scores.items()
-        if name != "token_usage"
-    }
-
-    if "token_usage" in metric_scores:
-        total_token = sum(metric_scores["token_usage"])
-        metrics_summary["token_usage"] = {"total": total_token}
-
-    rubric_scores = [v["mean"] for k, v in metrics_summary.items() if k.startswith("rubric_")]
-    overall = float(sum(rubric_scores) / len(rubric_scores)) if rubric_scores else None
-
-    review_flagged_count = sum(review_flags)
-    review_rate = review_flagged_count / len(review_flags) if review_flags else 0.0
-
-    summary: _RunSummary = {
-        "run_id": run_id,
-        "split": split,
-        "n": len(devset),
-        "overall": overall,
-        "metrics": metrics_summary,
-        "latency_ms": {
-            "summarize_p50": _p50(summarize_ms_values),
-            "judge_p50": _p50(judge_ms_values),
-        },
-        "review": {
-            "count": review_flagged_count,
-            "rate": review_rate,
-        },
-    }
+    metrics_summary = _build_metrics_summary(metric_scores)
+    summary = _build_run_summary(
+        run_id=run_id,
+        split=split,
+        devset=devset,
+        metrics_summary=metrics_summary,
+        summarize_ms_values=summarize_ms_values,
+        judge_ms_values=judge_ms_values,
+        review_flags=review_flags,
+    )
 
     summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))
     hallucination_inputs_path.write_bytes(
@@ -306,7 +331,7 @@ def run_eval(
 
     try:
         loop.close()
-    except Exception as e:
+    except OSError as e:
         logger.debug("Failed to close evaluation event loop safely: %s", e)
 
     return run_id, results_path, summary_path, hallucination_inputs_path

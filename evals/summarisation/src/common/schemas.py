@@ -41,12 +41,23 @@ class MetricResult(BaseModel):
 
 
 class EvalRecord(BaseModel):
-    """Complete evaluation record for a single example."""
+    """Complete evaluation record for a single example, with flexible fields matching current usage."""
 
-    run_id: str
-    timestamp: datetime
-    example: DialogExample
-    candidate: DialogSummary
-    metrics: dict[str, MetricResult]
-    latency_ms: dict[str, int]
+    # Core fields (optional for backward compatibility)
+    run_id: str | None = None
+    timestamp: datetime | None = None
+    example: DialogExample | None = None
+    candidate: DialogSummary | None = None
+    metrics: dict[str, MetricResult] | None = None
+    latency_ms: dict[str, int] | None = None
     error: dict[str, str] | None = None
+
+    # Additional fields used by the refactored runner
+    example_id: str | None = None
+    dialogue: str | None = None
+    reference_summary: str | None = None
+    needs_review: bool | None = None
+    review_reasons: list[str] | None = None
+
+    class Config:
+        arbitrary_types_allowed = True
