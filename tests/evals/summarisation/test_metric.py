@@ -1,137 +1,100 @@
-from __future__ import annotations
+import pytest
+import asyncio
+from types import SimpleNamespace
 
-from unittest.mock import MagicMock, patch
+from evals.summarisation.src.common.metric import DialogSummaryMetric, MetricResult
+from evals.summarisation.src.common.schemas import DialogExample
 
-import dspy
+# Helper to create a dummy prediction object expected by the metric
+class DummyPrediction:
+    def __init__(self, summary: str):
+        self.summary = summary
 
-from evals.summarisation.src.common import DialogExample
-from evals.summarisation.src.common.metric import (
-    DialogSummaryMetric,
-    load_system_prompt,
-    make_dynamic_signature,
-)
+# Mock response generator for the async LLM judge call
+async def _mock_call_llm_judge_success(system: str, user: str):
+    # Return a structure matching the expected RubricEvaluation
+    return {
+        "dimensions": {
+            "accuracy": {"score": 5, "rationale": "Excellent factual consistency"}
+        }
+    }
 
+async def _mock_call_llm_judge_fallback(system: str, user: str):
+    # Return a dict where the requested dimension is missing, forcing the fallback to the first key
+    return {
+        "dimensions": {
+            "some_other": {"score": 3, "rationale": "Adequate but not perfect"}
+        }
+    }
 
-def test_load_system_prompt_exists():
-    """Test that load_system_prompt loads and renders the system prompt with rubric."""
-    # faithfulness maps to accuracy
-    prompt_text = load_system_prompt("accuracy")
-    assert "You are an expert AI quality assurance judge" in prompt_text
-    assert "Dimension: Factual Accuracy" in prompt_text
+async def _mock_call_llm_judge_missing(system: str, user: str):
+    # Return an empty dimensions dict to trigger the default missing handling
+    return {"dimensions": {}}
 
+@pytest.fixture(autouse=True)
+def patch_llm_calls(monkeypatch):
+    """Patch the LLM judge call with a default successful mock.
+    Individual tests can override this fixture by monkeypatching again.
+    """
+    monkeypatch.setattr(
+        "evals.summarisation.src.common.metric.call_llm_judge",
+        _mock_call_llm_judge_success,
+    )
+    yield
 
-def test_load_system_prompt_fallback():
-    """Test that load_system_prompt falls back gracefully when rubric does not exist."""
-    prompt_text = load_system_prompt("nonexistent_metric")
-    assert "You are an expert AI quality assurance judge" in prompt_text
-    assert "Rate the candidate summary for the criterion: nonexistent_metric" in prompt_text
+def test_dialog_summary_metric_evaluate_success(monkeypatch):
+    """Metric should return a scaled score (0-1) and a detailed reason string.
 
-
-def test_make_dynamic_signature():
-    """Test that make_dynamic_signature creates a valid DSPy signature subclass."""
-    sig = make_dynamic_signature("test_metric", "Test Rubric content")
-    assert issubclass(sig, dspy.Signature)
-    assert "dialogue" in sig.model_fields
-    assert "reference_summary" in sig.model_fields
-    assert "candidate_summary" in sig.model_fields
-    assert "evaluation_result" in sig.model_fields
-    assert "Test Rubric content" in sig.__doc__
-
-
-def test_dialog_summary_metric_evaluate_success():
-    """Test evaluate method with a successful JSON response from the model."""
-    mock_lm = MagicMock(spec=dspy.LM)
-    metric = DialogSummaryMetric(
-        name="judge_faithfulness",
-        criterion="faithfulness",
-        pass_threshold=4,
-        lm=mock_lm,
+    The LLM judge mock returns a score of 5 for the "accuracy" dimension, which
+    maps directly to a scaled score of 1.0.
+    """
+    # Ensure the success mock is used (explicit, though fixture already does this)
+    monkeypatch.setattr(
+        "evals.summarisation.src.common.metric.call_llm_judge",
+        _mock_call_llm_judge_success,
     )
 
-    example = DialogExample(
-        example_id="1",
-        dialogue="Hello world",
-        reference_summary="Greeting",
+    metric = DialogSummaryMetric(name="rubric_faithfulness", criterion="faithfulness", pass_threshold=4)
+    example = DialogExample(example_id="ex1", dialogue="User says hello.", reference_summary="Hello.")
+    prediction = DummyPrediction(summary="Hello.")
+
+    result: MetricResult = metric.evaluate(example=example, prediction=prediction)
+
+    # Score is scaled: (5-1)/4 = 1.0
+    assert pytest.approx(result.score, 0.001) == 1.0
+    assert "rubric_accuracy_score=5" in result.reason
+    assert "Excellent factual consistency" in result.reason
+
+def test_dialog_summary_metric_fallback_to_first_dimension(monkeypatch):
+    """When the requested dimension is missing, the metric should fall back to the first available dimension.
+    """
+    monkeypatch.setattr(
+        "evals.summarisation.src.common.metric.call_llm_judge",
+        _mock_call_llm_judge_fallback,
     )
-    prediction = dspy.Prediction(summary="Hello world")
+    metric = DialogSummaryMetric(name="rubric_faithfulness", criterion="faithfulness", pass_threshold=4)
+    example = DialogExample(example_id="ex2", dialogue="User asks a question.", reference_summary="Answer.")
+    prediction = DummyPrediction(summary="Answer.")
 
-    # Mock prediction output
-    mock_pred = MagicMock()
-    mock_pred.evaluation_result = '{"rating": 5, "reason": "Perfect match"}'
+    result: MetricResult = metric.evaluate(example=example, prediction=prediction)
 
-    with patch("evals.summarisation.src.common.metric.dspy.Predict") as mock_predict_class:
-        mock_predict_instance = MagicMock()
-        mock_predict_instance.return_value = mock_pred
-        mock_predict_class.return_value = mock_predict_instance
+    # The fallback uses the first key ("some_other") with score 3 -> scaled (3-1)/4 = 0.5
+    assert pytest.approx(result.score, 0.001) == 0.5
+    assert "rubric_some_other_score=3" in result.reason
+    assert "Adequate but not perfect" in result.reason
 
-        res = metric.evaluate(example=example, prediction=prediction)
-
-        assert res.score == 1.0
-        assert "rating=5" in res.reason
-        assert "Perfect match" in res.reason
-
-
-def test_dialog_summary_metric_evaluate_below_threshold():
-    """Test evaluate method when rating is below the pass threshold."""
-    mock_lm = MagicMock(spec=dspy.LM)
-    metric = DialogSummaryMetric(
-        name="judge_faithfulness",
-        criterion="faithfulness",
-        pass_threshold=4,
-        lm=mock_lm,
+def test_dialog_summary_metric_missing_dimensions_returns_zero(monkeypatch):
+    """If the LLM judge returns no dimensions, the metric should default to the lowest score (0 after scaling)."""
+    monkeypatch.setattr(
+        "evals.summarisation.src.common.metric.call_llm_judge",
+        _mock_call_llm_judge_missing,
     )
+    metric = DialogSummaryMetric(name="rubric_faithfulness", criterion="faithfulness", pass_threshold=4)
+    example = DialogExample(example_id="ex3", dialogue="User dialogue.", reference_summary="Summary.")
+    prediction = DummyPrediction(summary="Summary.")
 
-    example = DialogExample(
-        example_id="1",
-        dialogue="Hello world",
-        reference_summary="Greeting",
-    )
-    prediction = dspy.Prediction(summary="Hello world")
+    result: MetricResult = metric.evaluate(example=example, prediction=prediction)
 
-    # Mock prediction output
-    mock_pred = MagicMock()
-    mock_pred.evaluation_result = '{"rating": 3, "reason": "Slight hallucination"}'
-
-    with patch("evals.summarisation.src.common.metric.dspy.Predict") as mock_predict_class:
-        mock_predict_instance = MagicMock()
-        mock_predict_instance.return_value = mock_pred
-        mock_predict_class.return_value = mock_predict_instance
-
-        res = metric.evaluate(example=example, prediction=prediction)
-
-        assert res.score == 0.0
-        assert "rating=3" in res.reason
-        assert "Slight hallucination" in res.reason
-
-
-def test_dialog_summary_metric_evaluate_invalid_json():
-    """Test evaluate method when the LLM returns invalid JSON."""
-    mock_lm = MagicMock(spec=dspy.LM)
-    metric = DialogSummaryMetric(
-        name="judge_faithfulness",
-        criterion="faithfulness",
-        pass_threshold=4,
-        lm=mock_lm,
-    )
-
-    example = DialogExample(
-        example_id="1",
-        dialogue="Hello world",
-        reference_summary="Greeting",
-    )
-    prediction = dspy.Prediction(summary="Hello world")
-
-    # Mock prediction output with bad JSON
-    mock_pred = MagicMock()
-    mock_pred.evaluation_result = "This is not JSON at all."
-
-    with patch("evals.summarisation.src.common.metric.dspy.Predict") as mock_predict_class:
-        mock_predict_instance = MagicMock()
-        mock_predict_instance.return_value = mock_pred
-        mock_predict_class.return_value = mock_predict_instance
-
-        res = metric.evaluate(example=example, prediction=prediction)
-
-        assert res.score == 0.0  # Fails due to default rating of 1
-        assert "rating=1" in res.reason
-        assert "No JSON object found in output" in res.reason
+    # Default score is 1 -> scaled (1-1)/4 = 0.0
+    assert result.score == 0.0
+    assert "Missing evaluation data" in result.reason
