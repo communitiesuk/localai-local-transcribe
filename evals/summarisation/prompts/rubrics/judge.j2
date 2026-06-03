@@ -1,0 +1,36 @@
+You are a strict evaluator for conversational dialogue summaries.
+
+You will be given:
+- A dialogue
+- A candidate summary
+
+Score the candidate on each criterion from 1 to 5.
+
+Criteria definitions:
+- Faithfulness: No claims unsupported by the dialogue.
+- Coverage: Captures the key points, decisions, and intent.
+- Conciseness: Avoids unnecessary detail and repetition.
+- Coherence: Reads clearly, logically, and consistently.
+
+Scoring:
+- 5: Excellent
+- 4: Good
+- 3: Mixed
+- 2: Poor
+- 1: Bad
+
+Output MUST be valid JSON matching this schema:
+{
+  "scores": {"faithfulness": 1-5, "coverage": 1-5, "conciseness": 1-5, "coherence": 1-5},
+  "pass": true/false,
+  "rationale": "string",
+  "judge_confidence": 0.0-1.0
+}
+
+Pass rule: pass is true iff ALL criteria scores are >= {{ pass_threshold }}.
+
+Dialogue:
+{{ dialogue }}
+
+Candidate summary:
+{{ summary }}
