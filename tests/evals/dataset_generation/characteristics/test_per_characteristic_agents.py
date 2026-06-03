@@ -185,16 +185,12 @@ async def test_process_chunk_parallel_calls_all_nine_characteristics(tmp_path: P
     offset = 0
 
     base_template = tmp_path / "agent_base.jinja2"
-    base_template.write_text(
-        "Detect {% block characteristic_name %}{% endblock %} only.\n{{ transcript }}"
-    )
+    base_template.write_text("Detect {% block characteristic_name %}{% endblock %} only.\n{{ transcript }}")
     _write_contexts(tmp_path / "characteristics")
 
     call_count = 0
 
-    async def counting_structured_chat(
-        _messages: list, _response_format: type
-    ) -> CharacteristicExtractionOutput:
+    async def counting_structured_chat(_messages: list, _response_format: type) -> CharacteristicExtractionOutput:
         nonlocal call_count
         call_count += 1
         return CharacteristicExtractionOutput(detected_characteristics=[])
@@ -204,9 +200,9 @@ async def test_process_chunk_parallel_calls_all_nine_characteristics(tmp_path: P
 
     await process_chunk_parallel(chunk_text, offset, base_template, tmp_path / "characteristics", chatbot)
 
-    assert call_count == len(ProtectedCharacteristic), (
-        f"Expected {len(ProtectedCharacteristic)} agent calls, got {call_count}"
-    )
+    assert call_count == len(
+        ProtectedCharacteristic
+    ), f"Expected {len(ProtectedCharacteristic)} agent calls, got {call_count}"
 
 
 @pytest.mark.asyncio
@@ -215,35 +211,25 @@ async def test_process_chunk_parallel_merges_results(tmp_path: Path):
     offset = 0
 
     base_template = tmp_path / "agent_base.jinja2"
-    base_template.write_text(
-        "Detect {% block characteristic_name %}{% endblock %} only.\n{{ transcript }}"
-    )
+    base_template.write_text("Detect {% block characteristic_name %}{% endblock %} only.\n{{ transcript }}")
     _write_contexts(tmp_path / "characteristics")
 
-    async def mock_structured_chat(
-        messages: list, _response_format: type
-    ) -> CharacteristicExtractionOutput:
+    async def mock_structured_chat(messages: list, _response_format: type) -> CharacteristicExtractionOutput:
         content = messages[0]["content"]
         if "Race" in content:
             return CharacteristicExtractionOutput(
-                detected_characteristics=[
-                    _detection(ProtectedCharacteristic.RACE, "Brazilian", [_span("Luiz", 0)])
-                ]
+                detected_characteristics=[_detection(ProtectedCharacteristic.RACE, "Brazilian", [_span("Luiz", 0)])]
             )
         if "Sex" in content:
             return CharacteristicExtractionOutput(
-                detected_characteristics=[
-                    _detection(ProtectedCharacteristic.SEX, "Male", [_span("Luiz", 0)])
-                ]
+                detected_characteristics=[_detection(ProtectedCharacteristic.SEX, "Male", [_span("Luiz", 0)])]
             )
         return CharacteristicExtractionOutput(detected_characteristics=[])
 
     chatbot = MagicMock()
     chatbot.structured_chat = mock_structured_chat
 
-    result = await process_chunk_parallel(
-        chunk_text, offset, base_template, tmp_path / "characteristics", chatbot
-    )
+    result = await process_chunk_parallel(chunk_text, offset, base_template, tmp_path / "characteristics", chatbot)
 
     characteristics_found = {d.characteristic for d in result}
     assert ProtectedCharacteristic.RACE in characteristics_found
@@ -261,9 +247,7 @@ async def test_process_chunk_parallel_continues_when_one_agent_fails(tmp_path: P
 
     call_count = 0
 
-    async def partial_failing_chat(
-        messages: list, _response_format: type
-    ) -> CharacteristicExtractionOutput:
+    async def partial_failing_chat(messages: list, _response_format: type) -> CharacteristicExtractionOutput:
         nonlocal call_count
         call_count += 1
         content = messages[0]["content"]
@@ -308,7 +292,5 @@ def test_render_prompt_for_characteristic_includes_transcript(tmp_path: Path):
     _write_contexts(contexts_dir)
 
     transcript = "Sarah discussed her case."
-    prompt = render_prompt_for_characteristic(
-        base_template, contexts_dir, ProtectedCharacteristic.SEX, transcript
-    )
+    prompt = render_prompt_for_characteristic(base_template, contexts_dir, ProtectedCharacteristic.SEX, transcript)
     assert transcript in prompt
