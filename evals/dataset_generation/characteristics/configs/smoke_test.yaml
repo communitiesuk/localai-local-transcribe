@@ -10,4 +10,4 @@ run:
   output_dir: "evals/dataset_generation/characteristics/output"
 
 prompts:
-  extraction_template: "evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2"
+  agent_base_template: "evals/dataset_generation/characteristics/prompts/agent_base.jinja2"
