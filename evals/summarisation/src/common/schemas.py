@@ -36,7 +36,7 @@ CriteriaName = Literal["faithfulness", "coverage", "conciseness", "coherence"]
 class MetricResult(BaseModel):
     """Result from a single metric evaluation with score and reason."""
 
-    score: int = Field(ge=0, le=5)
+    score: float = Field(ge=0, le=5)
     reason: str
 
 
