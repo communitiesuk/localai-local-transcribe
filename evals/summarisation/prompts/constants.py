@@ -1,28 +1,12 @@
-DIMENSIONS: dict[str, dict] = {
-    "accuracy": {
-        "label": "Factual Accuracy",
-    },
-    "numerical_accuracy": {
-        "label": "Numeric Fidelity",
-    },
-    "template_fit": {
-        "label": "Template Adherence & Completeness",
-    },
-    "coverage": {
-        "label": "Transcript Factual Completeness",
-    },
-    "action_clarity": {
-        "label": "Actionability",
-    },
-    "professional_tone": {
-        "label": "Tone",
-    },
-    "readability": {
-        "label": "Structure & Readability",
-    },
-    "auditability": {
-        "label": "Citation Quality",
-    },
+DIMENSIONS_LABELS: dict[str, str] = {
+    "accuracy": "Factual Accuracy",
+    "numerical_accuracy": "Numeric Fidelity",
+    "template_fit": "Template Adherence & Completeness",
+    "coverage": "Transcript Factual Completeness",
+    "action_clarity": "Actionability",
+    "professional_tone": "Tone",
+    "readability": "Structure & Readability",
+    "auditability": "Citation Quality"
 }
 
 THRESHOLDS = {
