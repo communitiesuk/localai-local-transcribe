@@ -9,6 +9,8 @@ DIMENSIONS_LABELS: dict[str, str] = {
     "auditability": "Citation Quality",
 }
 
+DIMENSIONS = DIMENSIONS_LABELS
+
 THRESHOLDS = {
     "critical": 4,
     "review": 2,
