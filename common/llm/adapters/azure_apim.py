@@ -20,7 +20,7 @@ from common.azure_apim_auth import AzureTokenProvider
 from common.settings import get_settings
 
 from .base import ModelAdapter
-from .llm_constants import MAX_TOKENS, TEMPERATURE
+from .llm_constants import MAX_COMPLETION_TOKENS, TEMPERATURE
 from .message_utils import convert_to_openai_message
 
 logger = logging.getLogger(__name__)
@@ -127,7 +127,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 model=self._model,
                 messages=openai_messages,
                 temperature=TEMPERATURE,
-                max_tokens=MAX_TOKENS,
+                max_completion_tokens=MAX_COMPLETION_TOKENS,
                 extra_query={"api-version": self._api_version},
             )
 

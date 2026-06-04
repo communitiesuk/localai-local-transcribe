@@ -1,71 +1,30 @@
-import { Alpha } from '@/components/layout/alpha'
-import { NavButton } from '@/components/layout/nav-button'
-import { FileText, Home, Settings } from 'lucide-react'
+import { MhclgLogo } from '@/components/icons/mhclg-logo'
+import { API_PROXY_PATH } from '@/lib/constants'
 import Link from 'next/link'
 
-export const Header = () => {
+export function Header() {
   return (
-    <>
-      <header className="flex h-[64px] items-center justify-between bg-[var(--govuk-brand-colour)] px-8">
-        <div className="flex items-center">
-          <Link
-            href="/"
-            // !flex forces the flex layout, overriding GDS inline styles
-            className="govuk-header__homepage-link !flex items-center gap-3 hover:!no-underline"
-          >
-            {/* SVG sits directly inside the flex container. shrink-0 stops it from resizing */}
-            <svg
-              width="32"
-              height="30"
-              viewBox="0 0 64 60"
-              fill="currentColor"
-              focusable="false"
-              aria-hidden="true"
-              className="shrink-0"
+    <header className="govuk-template__header">
+      <div className="govuk-header">
+        <div className="govuk-header__container govuk-width-container flex flex-wrap items-center justify-between">
+          <div className="govuk-header__logo">
+            <Link href="/" className="govuk-header__homepage-link">
+              <MhclgLogo className="govuk-header__logotype" />
+              <span className="govuk-header__product-name">
+                Local Transcribe
+              </span>
+            </Link>
+          </div>
+          <nav aria-label="Account">
+            <a
+              className="govuk-link govuk-link--inverse"
+              href={`${API_PROXY_PATH}/signout`}
             >
-              <circle cx="20" cy="17.6" r="3.7" />
-              <circle cx="10.2" cy="23.5" r="3.7" />
-              <circle cx="3.7" cy="33.2" r="3.7" />
-              <circle cx="31.7" cy="30.6" r="3.7" />
-              <circle cx="43.3" cy="17.6" r="3.7" />
-              <circle cx="53.2" cy="23.5" r="3.7" />
-              <circle cx="59.7" cy="33.2" r="3.7" />
-              <path d="M33.1,9.8c.2-.1.3-.3.5-.5l4.6,2.4v-6.8l-4.6,1.5c-.1-.2-.3-.3-.5-.5l1.9-5.9h-6.7l1.9,5.9c-.2.1-.3.3-.5.5l-4.6-1.5v6.8l4.6-2.4c.1.2.3.3.5.5l-2.6,8c-.9,2.8,1.2,5.7,4.1,5.7h0c3,0,5.1-2.9,4.1-5.7l-2.6-8ZM37,37.9s-3.4,3.8-4.1,6.1c2.2,0,4.2-.5,6.4-2.8l-.7,8.5c-2-2.8-4.4-4.1-5.7-3.8.1,3.1.5,6.7,5.8,7.2,3.7.3,6.7-1.5,7-3.8.4-2.6-2-4.3-3.7-1.6-1.4-4.5,2.4-6.1,4.9-3.2-1.9-4.5-1.8-7.7,2.4-10.9,3,4,2.6,7.3-1.2,11.1,2.4-1.3,6.2,0,4,4.6-1.2-2.8-3.7-2.2-4.2.2-.3,1.7.7,3.7,3,4.2,1.9.3,4.7-.9,7-5.9-1.3,0-2.4.7-3.9,1.7l2.4-8c.6,2.3,1.4,3.7,2.2,4.5.6-1.6.5-2.8,0-5.3l5,1.8c-2.6,3.6-5.2,8.7-7.3,17.5-7.4-1.1-15.7-1.7-24.5-1.7h0c-8.8,0-17.1.6-24.5,1.7-2.1-8.9-4.7-13.9-7.3-17.5l5-1.8c-.5,2.5-.6,3.7,0,5.3.8-.8,1.6-2.3,2.2-4.5l2.4,8c-1.5-1-2.6-1.7-3.9-1.7,2.3,5,5.2,6.2,7,5.9,2.3-.4,3.3-2.4,3-4.2-.5-2.4-3-3.1-4.2-.2-2.2-4.6,1.6-6,4-4.6-3.7-3.7-4.2-7.1-1.2-11.1,4.2,3.2,4.3,6.4,2.4,10.9,2.5-2.8,6.3-1.3,4.9,3.2-1.8-2.7-4.1-1-3.7,1.6.3,2.3,3.3,4.1,7,3.8,5.4-.5,5.7-4.2,5.8-7.2-1.3-.2-3.7,1-5.7,3.8l-.7-8.5c2.2,2.3,4.2,2.7,6.4,2.8-.7-2.3-4.1-6.1-4.1-6.1h10.6,0Z" />
-            </svg>
-
-            {/* !mb-0 overrides a subtle negative margin inside the GOV.UK CSS */}
-            <span className="govuk-header__product-name !mb-0">
-              Local Transcribe
-            </span>
-          </Link>
-        </div>
-
-        <div>
-          <Link href="#" className="govuk-link govuk-link--inverse font-bold">
-            Sign out
-          </Link>
-        </div>
-      </header>
-
-      <div className="header-grid w-full items-center border-b border-[var(--govuk-border-colour)] px-6 py-1">
-        <div
-          className="flex items-center justify-center"
-          style={{ gridArea: 'alpha' }}
-        >
-          <Alpha />
-        </div>
-        <div className="flex items-center" style={{ gridArea: 'nav' }}>
-          <NavButton href="/">
-            <Home size="1rem" /> Home
-          </NavButton>
-          <NavButton href="/templates">
-            <FileText size="1rem" /> Templates
-          </NavButton>
-          <NavButton href="/settings">
-            <Settings size="1rem" /> Settings
-          </NavButton>
+              Sign out
+            </a>
+          </nav>
         </div>
       </div>
-    </>
+    </header>
   )
 }

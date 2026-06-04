@@ -11,6 +11,8 @@ on:
         required: true
       alarm-email-address:
         required: true
+      slack-webhook-url:
+        required: true
 
 permissions:
   id-token: write
@@ -44,6 +46,31 @@ jobs:
           file: ${{ matrix.service }}/Dockerfile
           push: true
           tags: ${{ secrets.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.environment }}-${{ matrix.service }}:${{ github.sha }}
+      
+      - name: Notify Slack on build failure
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.slack-webhook-url }}
+        if: failure()
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg environment "${{ inputs.environment }}" \
+            --arg service "${{ matrix.service }}" \
+            --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{
+              text: (":x: *Build Failed* — " + $service),
+              blocks: [
+                {
+                  type: "section",
+                  fields: [
+                    { type: "mrkdwn", text: ("*Environment:* " + $environment) },
+                    { type: "mrkdwn", text: ("*Run:* <" + $run_url + "|View run>") }
+                  ]
+                }
+              ]
+            }')
+          curl --fail-with-body -X POST -H 'Content-type: application/json' \
+            --data "$PAYLOAD" \
+            "$SLACK_WEBHOOK_URL"
 
   plan:
     name: Terraform plan
@@ -74,8 +101,14 @@ jobs:
         id: plan
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
+
         run: terraform plan -input=false -lock=false -detailed-exitcode -var="image_tag=${{ github.sha }}"
         continue-on-error: true
+
+      - name: Output plan exitcode
+        run: |
+          echo "=== PLAN EXITCODE ==="
+          echo "Terraform plan exitcode: ${{ steps.plan.outputs.exitcode }}"
 
       - name: Fail if plan errored
         if: steps.plan.outputs.exitcode == 1
@@ -109,3 +142,53 @@ jobs:
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
         run: terraform apply -auto-approve -input=false -var="image_tag=${{ github.sha }}"
+   
+  notify-slack:
+    name: Notify Slack
+    runs-on: ubuntu-latest
+    needs: [build, plan, apply]
+    if: always()
+    steps:
+      - name: Determine deployment status
+        id: status
+        run: |
+          if [[ "${{ needs.plan.result }}" == "cancelled" ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.plan.result }}" == "failure" ]]; then
+            echo "status=plan failed" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.apply.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "emoji=:white_check_mark:" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.apply.result }}" == "skipped" && "${{ needs.plan.outputs.exitcode }}" == "0" ]]; then
+            echo "status=no changes" >> $GITHUB_OUTPUT
+            echo "emoji=:information_source:" >> $GITHUB_OUTPUT
+          else
+            echo "status=apply failed" >> $GITHUB_OUTPUT
+            echo "emoji=:x:" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack notification on deployment status
+        if: steps.status.outputs.skip != 'true'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.slack-webhook-url }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg text "${{ steps.status.outputs.emoji }} Deployment - ${{inputs.environment}}" \
+            --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --arg status "${{ steps.status.outputs.status }}" \
+            '{
+              text: $text,
+              blocks: [
+                {
+                  type: "section",
+                  fields: [
+                    { type: "mrkdwn", text: ("*Status:* " + $status) },
+                    { type: "mrkdwn", text: ("*Run:* <" + $run_url + "|View run>") }
+                  ]
+                }
+              ]
+            }')
+          curl --fail-with-body -X POST -H 'Content-type: application/json' \
+            --data "$PAYLOAD" \
+            "$SLACK_WEBHOOK_URL"
