@@ -1751,21 +1751,6 @@ test-extras = ["datasets (>=2.14.6)", "langchain_core", "mcp ; python_version >=
 weaviate = ["weaviate-client (>=4.5.4,<4.6.0)"]
 
 [[package]]
-name = "dspy-ai"
-version = "2.6.27"
-description = "DSPy"
-optional = false
-python-versions = ">=3.9"
-groups = ["evals-summarisation"]
-files = [
-    {file = "dspy_ai-2.6.27-py3-none-any.whl", hash = "sha256:e7d4d3328dd05098efbedbd72d1c324a2317e4693638eb8755926c9ff0f64861"},
-    {file = "dspy_ai-2.6.27.tar.gz", hash = "sha256:93d363e2ceb3745554133c8849e3eea356653707a6760eadfb9533d7d9e5f330"},
-]
-
-[package.dependencies]
-dspy = ">=2.6.5"
-
-[[package]]
 name = "einops"
 version = "0.8.2"
 description = "A new flavour of deep learning operations"
@@ -11741,4 +11726,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "a866ecf3af72763640bc7342fa2da56cd1044100228e17fb2f896f44ea1d4260"
+content-hash = "edb519e522f1c20ad2c17e98cfc22f8cf77d5601e87a5e17c8573311770f8372"
