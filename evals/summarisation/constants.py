@@ -6,7 +6,7 @@ DIMENSIONS_LABELS: dict[str, str] = {
     "action_clarity": "Actionability",
     "professional_tone": "Tone",
     "readability": "Structure & Readability",
-    "auditability": "Citation Quality"
+    "auditability": "Citation Quality",
 }
 
 THRESHOLDS = {

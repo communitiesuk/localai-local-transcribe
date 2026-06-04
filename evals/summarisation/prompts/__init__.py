@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .constants import (
+from ..constants import (
     CRITICAL_DIMENSIONS,
     CRITICAL_THRESHOLD,
     DIMENSIONS,
