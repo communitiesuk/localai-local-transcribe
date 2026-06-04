@@ -6,10 +6,11 @@ import re
 import time
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable, TypedDict
+from typing import TypedDict
 
 import dspy
 import orjson
@@ -35,7 +36,6 @@ from evals.summarisation.src.common import (
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
 
-
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
 logger = logging.getLogger(__name__)
@@ -58,9 +58,7 @@ class EvalRunState:
     summarize_ms_values: list[int] = field(default_factory=list)
     judge_ms_values: list[int] = field(default_factory=list)
     review_flags: list[bool] = field(default_factory=list)
-    metric_scores: dict[str, list[float]] = field(
-        default_factory=lambda: defaultdict(list)
-    )
+    metric_scores: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
 
 
 def _utc_now() -> datetime:
@@ -114,11 +112,7 @@ def _trigger_review(
     *,
     threshold: int = 4,
 ) -> tuple[bool, list[str]]:
-    failing = [
-        name
-        for name, res in metrics_out.items()
-        if name.startswith("rubric_") and res.score < threshold
-    ]
+    failing = [name for name, res in metrics_out.items() if name.startswith("rubric_") and res.score < threshold]
     return bool(failing), failing
 
 
