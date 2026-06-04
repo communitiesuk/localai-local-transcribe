@@ -216,7 +216,7 @@ def _create_summary_program(
     *,
     loop: asyncio.AbstractEventLoop,
     enc: tiktoken.Encoding,
-    template_name: str,
+    template_name: str | None,
     model_name: str,
     prompt_version: str,
     state: EvalRunState,
