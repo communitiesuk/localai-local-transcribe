@@ -10,9 +10,9 @@ from common.settings import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 auth_router = APIRouter(tags=["Authentication"])
+ 
 
-
-ALB_AUTH_COOKIE_NAME = settings.ALB_COOKIE_NAME
+ALB_AUTH_COOKIE_NAME = "X-Amzn-Oidc-Data"
 ALB_AUTH_COOKIE_PATTERN = re.compile(rf"^{re.escape(ALB_AUTH_COOKIE_NAME)}(?:-\d+)?$")
 
 END_SESSION_ENDPOINT_STATIC = "https://sso.service.security.gov.uk/sign-out"
@@ -27,6 +27,8 @@ async def sign_out(request: Request) -> RedirectResponse:
     logger.info("Signing out user, redirecting to IdP logout endpoint: %s", end_session_endpoint)
     logger.info("Incoming cookies: %s", request.cookies.keys())
     logger.info("incoming header names: %s", list(request.headers.keys()))
+    logger.info("Cookie header: %s", request.headers.get("cookie"))
+
 
     response = RedirectResponse(
         url=end_session_endpoint,
