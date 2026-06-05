@@ -61,6 +61,11 @@ class EvalRunState:
     metric_scores: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
 
 
+# ---------------------------------------------------------------------------
+# Pure helpers (no state, no config) — safe to keep as module-level functions
+# ---------------------------------------------------------------------------
+
+
 def _utc_now() -> datetime:
     return datetime.now(UTC)
 
@@ -69,51 +74,11 @@ def _elapsed_ms(start_s: float, end_s: float) -> int:
     return int(round((end_s - start_s) * 1000))
 
 
-def _prepare_run_paths(cfg: AppConfig, run_id: str) -> tuple[Path, Path, Path, Path]:
-    out_dir = Path(cfg.run.output_dir) / run_id
-    out_dir.mkdir(parents=True, exist_ok=True)
-    return (
-        out_dir,
-        out_dir / "results.jsonl",
-        out_dir / "summary.json",
-        out_dir / "hallucination_inputs.json",
-    )
-
-
-def _load_data_pairs(cfg: AppConfig, *, split: str, limit: int | None) -> list[DialogExample]:
-    ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
-    rows = ds[split]
-    if limit is not None:
-        rows = rows.select(range(min(limit, len(rows))))
-
-    return [
-        DialogExample(
-            example_id=str(row.get("id", i)),
-            dialogue=row[cfg.dataset.dialogue_field],
-            reference_summary=row.get(cfg.dataset.reference_summary_field),
-        )
-        for i, row in enumerate(rows)
-    ]
-
-
-def _to_dspy_devset(examples: list[DialogExample]) -> list[dspy.Example]:
-    return [
-        dspy.Example(
-            example_id=ex.example_id,
-            dialogue=ex.dialogue,
-            reference_summary=ex.reference_summary,
-        ).with_inputs("dialogue")
-        for ex in examples
-    ]
-
-
-def _trigger_review(
-    metrics_out: dict[str, MetricResult],
-    *,
-    threshold: int = 4,
-) -> tuple[bool, list[str]]:
-    failing = [name for name, res in metrics_out.items() if name.startswith("rubric_") and res.score < threshold]
-    return bool(failing), failing
+def _p50(values: list[int]) -> int:
+    if not values:
+        return 0
+    values_sorted = sorted(values)
+    return int(values_sorted[len(values_sorted) // 2])
 
 
 def _dialogue_to_entries(dialogue: str) -> list[DialogueEntry]:
@@ -139,17 +104,251 @@ def _dialogue_to_entries(dialogue: str) -> list[DialogueEntry]:
     return entries
 
 
+def _trigger_review(
+    metrics_out: dict[str, MetricResult],
+    *,
+    threshold: int = 4,
+) -> tuple[bool, list[str]]:
+    failing = [name for name, res in metrics_out.items() if name.startswith("rubric_") and res.score < threshold]
+    return bool(failing), failing
+
+
+class EvalRun:
+    def __init__(
+        self,
+        cfg: AppConfig,
+        *,
+        split: str,
+        limit: int | None,
+        prompt_version: str,
+    ) -> None:
+        self.cfg = cfg
+        self.split = split
+        self.limit = limit
+        self.prompt_version = prompt_version
+
+        settings = get_settings()
+        self.model_name: str = settings.FAST_LLM_MODEL_NAME
+        self.template_name: str | None = cfg.prompts.summarizer_template_name
+        self.hallucination_enabled: bool = cfg.hallucination.enabled
+        self.enc: tiktoken.Encoding = tiktoken.encoding_for_model(self.model_name)
+
+        self.run_id: str = ""
+        self.results_path: Path = Path()
+        self.summary_path: Path = Path()
+        self.hallucination_inputs_path: Path = Path()
+        self.devset: list[dspy.Example] = []
+        self.state: EvalRunState = EvalRunState()
+        self.loop: asyncio.AbstractEventLoop | None = None
+
+    def _setup_paths(self) -> None:
+        out_dir = Path(self.cfg.run.output_dir) / self.run_id
+        out_dir.mkdir(parents=True, exist_ok=True)
+        self.results_path = out_dir / "results.jsonl"
+        self.summary_path = out_dir / "summary.json"
+        self.hallucination_inputs_path = out_dir / "hallucination_inputs.json"
+
+    def _load_examples(self) -> None:
+        ds = load_dataset(self.cfg.dataset.name, self.cfg.dataset.config)
+        rows = ds[self.split]
+        if self.limit is not None:
+            rows = rows.select(range(min(self.limit, len(rows))))
+
+        examples = [
+            DialogExample(
+                example_id=str(row.get("id", i)),
+                dialogue=row[self.cfg.dataset.dialogue_field],
+                reference_summary=row.get(self.cfg.dataset.reference_summary_field),
+            )
+            for i, row in enumerate(rows)
+        ]
+        self.devset = [
+            dspy.Example(
+                example_id=ex.example_id,
+                dialogue=ex.dialogue,
+                reference_summary=ex.reference_summary,
+            ).with_inputs("dialogue")
+            for ex in examples
+        ]
+
+    def _build_program(self) -> dspy.Module:
+        run = self
+
+        class _Program(dspy.Module):
+            def __init__(self):
+                super().__init__()
+
+            def forward(self, dialogue: str) -> dspy.Prediction:
+                entries = _dialogue_to_entries(dialogue)
+
+                t0 = time.perf_counter()
+                generated = run.loop.run_until_complete(generate_summary(entries, run.template_name))
+                run.state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
+
+                candidate = DialogSummary(
+                    summary=generated.text,
+                    model=run.model_name,
+                    prompt_version=run.prompt_version,
+                    generation_config=GenerationConfig(
+                        temperature=TEMPERATURE,
+                        max_tokens=MAX_TOKENS,
+                    ),
+                )
+
+                token_count = len(run.enc.encode(generated.text))
+                logger.info("[TokenUsage] Generated summary token count: %s", token_count)
+                run.state.metric_scores["token_usage"].append(float(token_count))
+
+                return dspy.Prediction(
+                    summary=generated.text,
+                    candidate=candidate,
+                    hallucinations=generated.hallucinations,
+                    total_claims=generated.total_claims,
+                )
+
+        return _Program()
+
+    def _build_metric(self) -> Callable[[dspy.Example, dspy.Prediction], float]:
+        """Return a metric function compatible with dspy.Evaluate."""
+
+        run = self
+
+        def _metric(gold: dspy.Example, pred: dspy.Prediction) -> float:
+            ex = DialogExample(
+                example_id=str(gold.example_id),
+                dialogue=str(gold.dialogue),
+                reference_summary=getattr(gold, "reference_summary", None),
+            )
+
+            t_j0 = time.perf_counter()
+            rubric_evaluation = run.loop.run_until_complete(
+                call_llm_judge_parallel(
+                    summary_id=ex.example_id,
+                    transcript_ref=str(ex.example_id),
+                    transcript_text=ex.dialogue,
+                    summary_text=pred.summary,
+                    dimensions=list(DIMENSIONS.keys()),
+                )
+            )
+            run.state.judge_ms_values.append(_elapsed_ms(t_j0, time.perf_counter()))
+
+            metrics_out = _collect_rubric_metrics(rubric_evaluation)
+            for name, res in metrics_out.items():
+                run.state.metric_scores[name].append(res.score)
+
+            needs_review, review_reasons = _trigger_review(metrics_out, threshold=4)
+            run.state.review_flags.append(needs_review)
+
+            if run.hallucination_enabled:
+                uncited_claims = [
+                    h.hallucination_text
+                    for h in getattr(pred, "hallucinations", [])
+                    if getattr(h, "hallucination_type", None) == "FACTUAL_FABRICATION"
+                ]
+                run.state.hallucination_inputs.append(
+                    HallucinationInput(
+                        example_id=ex.example_id,
+                        hypothesis_model=run.model_name,
+                        summary_html=pred.candidate.summary,
+                        uncited_claims=uncited_claims,
+                        total_claims=getattr(pred, "total_claims", 0),
+                    )
+                )
+
+            record = EvalRecord(
+                example_id=ex.example_id,
+                dialogue=ex.dialogue,
+                reference_summary=ex.reference_summary,
+                candidate=pred.candidate,
+                metrics=metrics_out,
+                needs_review=needs_review,
+                review_reasons=review_reasons,
+            )
+            run.state.records.append(record)
+            _maybe_flush_records(run.results_path, run.state.records, flush_every=10)
+
+            score_values = [res.score for res in metrics_out.values()]
+            return sum(score_values) / len(score_values) if score_values else 0.0
+
+        return _metric
+
+    def _finalize(self) -> None:
+        if self.state.records:
+            write_jsonl(self.results_path, (r.model_dump(by_alias=True) for r in self.state.records))
+            self.state.records.clear()
+
+        metrics_summary = _build_metrics_summary(self.state.metric_scores)
+        summary = _build_run_summary(
+            run_id=self.run_id,
+            split=self.split,
+            devset=self.devset,
+            metrics_summary=metrics_summary,
+            summarize_ms_values=self.state.summarize_ms_values,
+            judge_ms_values=self.state.judge_ms_values,
+            review_flags=self.state.review_flags,
+        )
+
+        self.summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))
+        self.hallucination_inputs_path.write_bytes(
+            orjson.dumps(
+                [h.model_dump() for h in self.state.hallucination_inputs],
+                option=orjson.OPT_INDENT_2,
+            )
+        )
+
+    def run(self) -> tuple[str, Path, Path, Path]:
+        self.run_id = str(uuid.uuid4())
+        self._setup_paths()
+        self._load_examples()
+
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+
+        try:
+            evaluator = Evaluate(
+                devset=self.devset,
+                metric=self._build_metric(),
+                num_threads=1,
+                display_progress=True,
+            )
+            evaluator(self._build_program())
+            self._finalize()
+        finally:
+            self._close_loop()
+
+        return self.run_id, self.results_path, self.summary_path, self.hallucination_inputs_path
+
+    def _close_loop(self) -> None:
+        loop = self.loop
+        if loop is None:
+            return
+        try:
+            if not loop.is_running():
+                pending = asyncio.all_tasks(loop)
+                if pending:
+                    for task in pending:
+                        task.cancel()
+                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                loop.close()
+        except (RuntimeError, OSError) as exc:
+            logger.warning("Error while closing evaluation event loop: %s", exc, exc_info=True)
+
+
 def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
         write_jsonl(results_path, (r.model_dump(by_alias=True) for r in records))
         records.clear()
 
 
-def _p50(values: list[int]) -> int:
-    if not values:
-        return 0
-    values_sorted = sorted(values)
-    return int(values_sorted[len(values_sorted) // 2])
+def _collect_rubric_metrics(rubric_evaluation: dict) -> dict[str, MetricResult]:
+    """Extract per-dimension rubric scores into MetricResult objects."""
+    return {
+        f"rubric_{dim}": MetricResult(
+            score=int(result["score"]),
+            reason=result["rationale"],
+        )
+        for dim, result in rubric_evaluation["dimensions"].items()
+    }
 
 
 def _build_metrics_summary(metric_scores: dict[str, list[float]]) -> dict[str, dict[str, float]]:
@@ -194,168 +393,6 @@ def _build_run_summary(
     }
 
 
-def _collect_rubric_metrics(rubric_evaluation: dict) -> dict[str, MetricResult]:
-    """Extract per-dimension rubric scores into MetricResult objects."""
-    metrics_out: dict[str, MetricResult] = {}
-    for dim, result in rubric_evaluation["dimensions"].items():
-        raw_score = int(result["score"])
-        metrics_out[f"rubric_{dim}"] = MetricResult(
-            score=raw_score,
-            reason=result["rationale"],
-        )
-    return metrics_out
-
-
-def _create_event_loop() -> asyncio.AbstractEventLoop:
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    return loop
-
-
-def _create_summary_program(
-    *,
-    loop: asyncio.AbstractEventLoop,
-    enc: tiktoken.Encoding,
-    template_name: str | None,
-    model_name: str,
-    prompt_version: str,
-    state: EvalRunState,
-) -> Callable[..., dspy.Prediction]:
-    class _Program:
-        def __call__(self, *, dialogue: str) -> dspy.Prediction:
-            entries = _dialogue_to_entries(dialogue)
-
-            t0 = time.perf_counter()
-            generated = loop.run_until_complete(generate_summary(entries, template_name))
-            state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
-
-            candidate = DialogSummary(
-                summary=generated.text,
-                model=model_name,
-                prompt_version=prompt_version,
-                generation_config=GenerationConfig(
-                    temperature=TEMPERATURE,
-                    max_tokens=MAX_TOKENS,
-                ),
-            )
-
-            token_count = len(enc.encode(generated.text))
-            logger.info("[TokenUsage] Generated summary token count: %s", token_count)
-            state.metric_scores["token_usage"].append(float(token_count))
-
-            return dspy.Prediction(
-                summary=generated.text,
-                candidate=candidate,
-                hallucinations=generated.hallucinations,
-                total_claims=generated.total_claims,
-            )
-
-    return _Program()
-
-
-def _build_metric_function(
-    *,
-    loop: asyncio.AbstractEventLoop,
-    model_name: str,
-    hallucination_enabled: bool,
-    results_path: Path,
-    state: EvalRunState,
-) -> Callable[[dspy.Example, dspy.Prediction], float]:
-    def _metric(gold: dspy.Example, pred: dspy.Prediction) -> float:
-        ex = DialogExample(
-            example_id=str(gold.example_id),
-            dialogue=str(gold.dialogue),
-            reference_summary=getattr(gold, "reference_summary", None),
-        )
-
-        t_j0 = time.perf_counter()
-        rubric_evaluation = loop.run_until_complete(
-            call_llm_judge_parallel(
-                summary_id=ex.example_id,
-                transcript_ref=str(ex.example_id),
-                transcript_text=ex.dialogue,
-                summary_text=pred.summary,
-                dimensions=list(DIMENSIONS.keys()),
-            )
-        )
-        state.judge_ms_values.append(_elapsed_ms(t_j0, time.perf_counter()))
-
-        metrics_out = _collect_rubric_metrics(rubric_evaluation)
-        for name, res in metrics_out.items():
-            state.metric_scores[name].append(res.score)
-
-        candidate = pred.candidate
-        needs_review, review_reasons = _trigger_review(metrics_out, threshold=4)
-        state.review_flags.append(needs_review)
-
-        if hallucination_enabled:
-            uncited_claims = [
-                h.hallucination_text
-                for h in getattr(pred, "hallucinations", [])
-                if getattr(h, "hallucination_type", None) == "FACTUAL_FABRICATION"
-            ]
-            state.hallucination_inputs.append(
-                HallucinationInput(
-                    example_id=ex.example_id,
-                    hypothesis_model=model_name,
-                    summary_html=candidate.summary,
-                    uncited_claims=uncited_claims,
-                    total_claims=getattr(pred, "total_claims", 0),
-                )
-            )
-
-        record = EvalRecord(
-            example_id=ex.example_id,
-            dialogue=ex.dialogue,
-            reference_summary=ex.reference_summary,
-            candidate=candidate,
-            metrics=metrics_out,
-            needs_review=needs_review,
-            review_reasons=review_reasons,
-        )
-        state.records.append(record)
-        _maybe_flush_records(results_path, state.records, flush_every=10)
-
-        score_values = [res.score for res in metrics_out.values()]
-        return sum(score_values) / len(score_values) if score_values else 0.0
-
-    return _metric
-
-
-def _finalize_run(
-    *,
-    results_path: Path,
-    summary_path: Path,
-    hallucination_inputs_path: Path,
-    run_id: str,
-    split: str,
-    devset: list[dspy.Example],
-    state: EvalRunState,
-) -> None:
-    if state.records:
-        write_jsonl(results_path, (r.model_dump(by_alias=True) for r in state.records))
-        state.records.clear()
-
-    metrics_summary = _build_metrics_summary(state.metric_scores)
-    summary = _build_run_summary(
-        run_id=run_id,
-        split=split,
-        devset=devset,
-        metrics_summary=metrics_summary,
-        summarize_ms_values=state.summarize_ms_values,
-        judge_ms_values=state.judge_ms_values,
-        review_flags=state.review_flags,
-    )
-
-    summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))
-    hallucination_inputs_path.write_bytes(
-        orjson.dumps(
-            [h.model_dump() for h in state.hallucination_inputs],
-            option=orjson.OPT_INDENT_2,
-        )
-    )
-
-
 def run_eval(
     cfg: AppConfig,
     *,
@@ -363,59 +400,4 @@ def run_eval(
     limit: int | None,
     prompt_version: str,
 ) -> tuple[str, Path, Path, Path]:
-    run_id = str(uuid.uuid4())
-    _, results_path, summary_path, hallucination_inputs_path = _prepare_run_paths(cfg, run_id)
-
-    examples = _load_data_pairs(cfg, split=split, limit=limit)
-    devset = _to_dspy_devset(examples)
-
-    model_name = get_settings().FAST_LLM_MODEL_NAME
-    template_name = cfg.prompts.summarizer_template_name
-    hallucination_enabled = cfg.hallucination.enabled
-    enc = tiktoken.encoding_for_model(model_name)
-
-    state = EvalRunState()
-    loop = _create_event_loop()
-
-    try:
-        program = _create_summary_program(
-            loop=loop,
-            enc=enc,
-            template_name=template_name,
-            model_name=model_name,
-            prompt_version=prompt_version,
-            state=state,
-        )
-
-        metric = _build_metric_function(
-            loop=loop,
-            model_name=model_name,
-            hallucination_enabled=hallucination_enabled,
-            results_path=results_path,
-            state=state,
-        )
-
-        evaluator = Evaluate(
-            devset=devset,
-            metric=metric,
-            num_threads=1,
-            display_progress=True,
-        )
-        evaluator(program)
-
-        _finalize_run(
-            results_path=results_path,
-            summary_path=summary_path,
-            hallucination_inputs_path=hallucination_inputs_path,
-            run_id=run_id,
-            split=split,
-            devset=devset,
-            state=state,
-        )
-    finally:
-        try:
-            loop.close()
-        except OSError as e:
-            logger.debug("Failed to close evaluation event loop safely: %s", e)
-
-    return run_id, results_path, summary_path, hallucination_inputs_path
+    return EvalRun(cfg, split=split, limit=limit, prompt_version=prompt_version).run()
