@@ -5,9 +5,7 @@ import logging
 import re
 import time
 import uuid
-from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
@@ -34,7 +32,6 @@ from evals.summarisation.src.common import (
     call_llm_judge_parallel,
     write_jsonl,
 )
-
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
 
@@ -50,9 +47,6 @@ class _RunSummary(TypedDict):
     overall: float | None
     metrics: dict[str, dict[str, float]]
     latency_ms: dict[str, int]
-
-
-
 
 
 def _utc_now() -> datetime:
@@ -161,7 +155,6 @@ class EvalRun:
         run = self
 
         class _Program(dspy.Module):
-         
             def forward(self, dialogue: str) -> dspy.Prediction:
                 entries = _dialogue_to_entries(dialogue)
 

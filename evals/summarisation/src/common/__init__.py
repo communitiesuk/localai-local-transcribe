@@ -9,9 +9,9 @@ from evals.summarisation.src.common.schemas import (
     DialogExample,
     DialogSummary,
     EvalRecord,
+    EvalRunState,
     GenerationConfig,
     MetricResult,
-    EvalRunState
 )
 
 __all__ = [
