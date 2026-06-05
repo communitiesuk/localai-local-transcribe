@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from ..src.constants import (
+from evals.summarisation.src.constants import (
     CRITICAL_DIMENSIONS,
     CRITICAL_THRESHOLD,
     DIMENSIONS,
     FAIL_THRESHOLD,
     REVIEW_THRESHOLD,
 )
-
-from ..src.judge import (
+from evals.summarisation.src.judge import (
     build_system_prompt,
     build_user_message,
 )

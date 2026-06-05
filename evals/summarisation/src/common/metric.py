@@ -6,10 +6,10 @@ from dataclasses import dataclass
 import dspy
 from pydantic import BaseModel, ConfigDict, Field
 
-from evals.summarisation.src.judge import build_system_prompt, build_user_message
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
 from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
+from evals.summarisation.src.judge import build_system_prompt, build_user_message
 
 
 def load_system_prompt(dimension: str | None = None) -> str:
