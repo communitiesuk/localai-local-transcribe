@@ -45,85 +45,83 @@ type RadiosProps = {
   'className' | 'children' | 'onChange' | 'defaultValue'
 >
 
-const GovukRadiosRoot = forwardRef<HTMLDivElement, RadiosProps>(function GovukRadiosRoot(
-  {
-    name,
-    value,
-    defaultValue,
-    onChange,
-    disabled,
-    className,
-    children,
-    ...rest
-  },
-  ref
-) {
-  const isControlled = value !== undefined
-  const [uncontrolledValue, setUncontrolledValue] = useState<
-    string | undefined
-  >(defaultValue)
-
-  const selectedValue = isControlled ? value : uncontrolledValue
-
-  const setValue = useCallback(
-    (next: string) => {
-      if (!isControlled) {
-        setUncontrolledValue(next)
-      }
-      onChange?.(next)
-    },
-    [isControlled, onChange]
-  )
-
-  // Pre-compute item order at the root. Items are direct children whose
-  // component type === GovukRadiosItem. The first item gets the bare `${name}`
-  // as its id, subsequent items get `${name}-2`, `${name}-3`, … matching the
-  // canonical GDS reference markup.
-  const orderedValues = useMemo(() => {
-    const out: string[] = []
-    Children.forEach(children, (child) => {
-      if (!isValidElement(child)) return
-      if (child.type !== GovukRadiosItem) return
-      const props = child.props as { value?: unknown }
-      if (typeof props.value !== 'string') return
-      if (!out.includes(props.value)) {
-        out.push(props.value)
-      }
-    })
-    return out
-  }, [children])
-
-  const getItemIndex = useCallback(
-    (itemValue: string) => {
-      const idx = orderedValues.indexOf(itemValue)
-      return idx === -1 ? 0 : idx
-    },
-    [orderedValues]
-  )
-
-  const contextValue = useMemo<RadiosContextValue>(
-    () => ({
+const GovukRadiosRoot = forwardRef<HTMLDivElement, RadiosProps>(
+  function GovukRadiosRoot(
+    {
       name,
-      selectedValue,
-      disabled: Boolean(disabled),
-      setValue,
-      getItemIndex,
-    }),
-    [name, selectedValue, disabled, setValue, getItemIndex]
-  )
+      value,
+      defaultValue,
+      onChange,
+      disabled,
+      className,
+      children,
+      ...rest
+    },
+    ref
+  ) {
+    const isControlled = value !== undefined
+    const [uncontrolledValue, setUncontrolledValue] = useState<
+      string | undefined
+    >(defaultValue)
 
-  return (
-    <RadiosContext.Provider value={contextValue}>
-      <div
-        {...rest}
-        ref={ref}
-        className={cn('govuk-radios', className)}
-      >
-        {children}
-      </div>
-    </RadiosContext.Provider>
-  )
-})
+    const selectedValue = isControlled ? value : uncontrolledValue
+
+    const setValue = useCallback(
+      (next: string) => {
+        if (!isControlled) {
+          setUncontrolledValue(next)
+        }
+        onChange?.(next)
+      },
+      [isControlled, onChange]
+    )
+
+    // Pre-compute item order at the root. Items are direct children whose
+    // component type === GovukRadiosItem. The first item gets the bare `${name}`
+    // as its id, subsequent items get `${name}-2`, `${name}-3`, … matching the
+    // canonical GDS reference markup.
+    const orderedValues = useMemo(() => {
+      const out: string[] = []
+      Children.forEach(children, (child) => {
+        if (!isValidElement(child)) return
+        if (child.type !== GovukRadiosItem) return
+        const props = child.props as { value?: unknown }
+        if (typeof props.value !== 'string') return
+        if (!out.includes(props.value)) {
+          out.push(props.value)
+        }
+      })
+      return out
+    }, [children])
+
+    const getItemIndex = useCallback(
+      (itemValue: string) => {
+        const idx = orderedValues.indexOf(itemValue)
+        return idx === -1 ? 0 : idx
+      },
+      [orderedValues]
+    )
+
+    const contextValue = useMemo<RadiosContextValue>(
+      () => ({
+        name,
+        selectedValue,
+        disabled: Boolean(disabled),
+        setValue,
+        getItemIndex,
+      }),
+      [name, selectedValue, disabled, setValue, getItemIndex]
+    )
+
+    return (
+      <RadiosContext.Provider value={contextValue}>
+        <div {...rest} ref={ref} className={cn('govuk-radios', className)}>
+          {children}
+        </div>
+      </RadiosContext.Provider>
+    )
+  }
+)
 
 type ItemProps = {
   value: string
@@ -146,8 +144,7 @@ function GovukRadiosItem({
 }: ItemProps) {
   const ctx = useRadiosContext('<GovukRadios.Item>')
   const index = ctx.getItemIndex(value)
-  const resolvedId =
-    id ?? (index === 0 ? ctx.name : `${ctx.name}-${index + 1}`)
+  const resolvedId = id ?? (index === 0 ? ctx.name : `${ctx.name}-${index + 1}`)
   const hintId = `${resolvedId}-hint`
 
   return (
@@ -168,10 +165,7 @@ function GovukRadiosItem({
         disabled={ctx.disabled}
         aria-describedby={hint ? hintId : undefined}
       />
-      <label
-        className="govuk-label govuk-radios__label"
-        htmlFor={resolvedId}
-      >
+      <label className="govuk-label govuk-radios__label" htmlFor={resolvedId}>
         {children}
       </label>
       {hint && (

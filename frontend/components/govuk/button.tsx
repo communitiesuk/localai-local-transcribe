@@ -120,9 +120,7 @@ export function GovukButton(props: Props) {
       aria-disabled={isDisabled || undefined}
       className={classes}
       data-module="govuk-button"
-      data-prevent-double-click={
-        preventDoubleClick ? 'true' : undefined
-      }
+      data-prevent-double-click={preventDoubleClick ? 'true' : undefined}
     >
       {content}
     </button>

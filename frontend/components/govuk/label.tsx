@@ -21,11 +21,7 @@ export function GovukLabel({
     <label
       {...rest}
       htmlFor={htmlFor}
-      className={cn(
-        'govuk-label',
-        size && `govuk-label--${size}`,
-        className
-      )}
+      className={cn('govuk-label', size && `govuk-label--${size}`, className)}
     >
       {children}
     </label>
