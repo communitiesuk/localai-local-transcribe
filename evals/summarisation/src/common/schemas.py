@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from collections import defaultdict
+from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
+
+from evals.summarisation.src.hallucination.types import HallucinationInput
 
 
 class DialogExample(BaseModel):
@@ -45,7 +48,7 @@ class EvalRecord(BaseModel):
 
     # Core fields (optional for backward compatibility)
     run_id: str | None = None
-    timestamp: datetime | None = None
+    timestamp: datetime | None = Field(default_factory=lambda: datetime.now(tz=UTC))
     example: DialogExample | None = None
     candidate: DialogSummary | None = None
     metrics: dict[str, MetricResult] | None = None
@@ -61,10 +64,6 @@ class EvalRecord(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-
-
-from collections import defaultdict
-from evals.summarisation.src.hallucination.types import HallucinationInput
 
 
 class EvalRunState(BaseModel):

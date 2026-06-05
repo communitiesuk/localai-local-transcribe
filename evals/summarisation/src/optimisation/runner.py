@@ -369,7 +369,7 @@ def _build_run_summary(
         "n": len(devset),
         "overall": overall,
         "metrics": metrics_summary,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(tz=UTC).isoformat(),
         "latency_ms": {
             "summarize_p50": _p50(summarize_ms_values),
             "judge_p50": _p50(judge_ms_values),
