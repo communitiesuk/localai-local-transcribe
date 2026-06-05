@@ -21,9 +21,7 @@ describe('<GovukBackLink /> (server, href)', () => {
 
   it('renders custom children when provided', () => {
     render(<GovukBackLink href="/previous">Go back</GovukBackLink>)
-    expect(
-      screen.getByRole('link', { name: 'Go back' })
-    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Go back' })).toBeInTheDocument()
   })
 
   it('adds govuk-back-link--inverse when inverse is true', () => {

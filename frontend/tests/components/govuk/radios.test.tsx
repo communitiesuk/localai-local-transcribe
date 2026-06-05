@@ -117,9 +117,7 @@ describe('<GovukRadios />', () => {
     render(<Wrapper />)
     await userEvent.click(screen.getByLabelText('No'))
     expect(onChange).toHaveBeenLastCalledWith('no')
-    expect((screen.getByLabelText('No') as HTMLInputElement).checked).toBe(
-      true
-    )
+    expect((screen.getByLabelText('No') as HTMLInputElement).checked).toBe(true)
   })
 
   it('onChange fires when uncontrolled state changes via user interaction', async () => {

@@ -69,9 +69,7 @@ describe('<GovukErrorSummary />', () => {
       />
     )
     expect(container.querySelectorAll('a').length).toBe(0)
-    const items = container.querySelectorAll(
-      '.govuk-error-summary__list > li'
-    )
+    const items = container.querySelectorAll('.govuk-error-summary__list > li')
     expect(items).toHaveLength(2)
     expect(items[0].textContent).toBe('Field A invalid')
   })
@@ -131,10 +129,7 @@ describe('<GovukErrorSummary />', () => {
 
   it('composes a caller className without clobbering the canonical class', () => {
     const { container } = render(
-      <GovukErrorSummary
-        className="mb-4"
-        errorList={[{ text: 'A failed' }]}
-      />
+      <GovukErrorSummary className="mb-4" errorList={[{ text: 'A failed' }]} />
     )
     const root = container.querySelector('.govuk-error-summary') as HTMLElement
     expect(root).toHaveClass('govuk-error-summary', 'mb-4')

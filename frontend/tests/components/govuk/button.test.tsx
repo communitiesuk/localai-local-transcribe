@@ -18,18 +18,21 @@ describe('<GovukButton />', () => {
     ['secondary', 'govuk-button--secondary'],
     ['warning', 'govuk-button--warning'],
     ['inverse', 'govuk-button--inverse'],
-  ] as const)('variant=%s applies the right modifier class', (variant, modifier) => {
-    render(<GovukButton variant={variant}>Save</GovukButton>)
-    const button = screen.getByRole('button', { name: 'Save' })
-    expect(button).toHaveClass('govuk-button')
-    if (modifier) {
-      expect(button).toHaveClass(modifier)
-    } else {
-      expect(button.className.split(' ')).not.toContain(
-        'govuk-button--secondary'
-      )
+  ] as const)(
+    'variant=%s applies the right modifier class',
+    (variant, modifier) => {
+      render(<GovukButton variant={variant}>Save</GovukButton>)
+      const button = screen.getByRole('button', { name: 'Save' })
+      expect(button).toHaveClass('govuk-button')
+      if (modifier) {
+        expect(button).toHaveClass(modifier)
+      } else {
+        expect(button.className.split(' ')).not.toContain(
+          'govuk-button--secondary'
+        )
+      }
     }
-  })
+  )
 
   it('applies disabled + aria-disabled when disabled prop is true', () => {
     render(<GovukButton disabled>Save</GovukButton>)
@@ -86,7 +89,9 @@ describe('<GovukButton />', () => {
     )
     const button = screen.getByRole('button', { name: /Start now/ })
     expect(button).toHaveClass('govuk-button--start')
-    expect(container.querySelector('svg.govuk-button__start-icon')).not.toBeNull()
+    expect(
+      container.querySelector('svg.govuk-button__start-icon')
+    ).not.toBeNull()
   })
 
   it('invokes onClick when clicked (button variant)', async () => {
