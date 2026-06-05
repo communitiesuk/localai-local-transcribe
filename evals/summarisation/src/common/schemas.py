@@ -2,7 +2,19 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Literal, TypedDict  # added TypedDict
+
+
+# Define TypedDict for run summary used in runner
+class _RunSummary(TypedDict):
+    run_id: str
+    split: str
+    n: int
+    overall: float | None
+    metrics: dict[str, dict[str, float]]
+    timestamp: str
+    latency_ms: dict[str, int]
+
 
 from pydantic import BaseModel, Field
 
@@ -46,7 +58,6 @@ class MetricResult(BaseModel):
 class EvalRecord(BaseModel):
     """Complete evaluation record for a single example, with flexible fields matching current usage."""
 
-    # Core fields (optional for backward compatibility)
     run_id: str | None = None
     timestamp: datetime | None = Field(default_factory=lambda: datetime.now(tz=UTC))
     example: DialogExample | None = None
@@ -54,8 +65,6 @@ class EvalRecord(BaseModel):
     metrics: dict[str, MetricResult] | None = None
     latency_ms: dict[str, int] | None = None
     error: dict[str, str] | None = None
-
-    # Additional fields used by the refactored runner
     example_id: str | None = None
     dialogue: str | None = None
     reference_summary: str | None = None
@@ -73,4 +82,4 @@ class EvalRunState(BaseModel):
     hallucination_inputs: list[HallucinationInput] = Field(default_factory=list)
     summarize_ms_values: list[int] = Field(default_factory=list)
     judge_ms_values: list[int] = Field(default_factory=list)
-    metric_scores: dict[str, list[float]] = Field(default_factory=lambda: defaultdict(list))
+    metric_scores: dict[str, list[float]] = Field(default_factory=lambda: defaultdict(list))  # type: ignore[arg-type]

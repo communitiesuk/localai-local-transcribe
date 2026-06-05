@@ -46,6 +46,7 @@ class _RunSummary(TypedDict):
     n: int
     overall: float | None
     metrics: dict[str, dict[str, float]]
+    timestamp: str
     latency_ms: dict[str, int]
 
 
