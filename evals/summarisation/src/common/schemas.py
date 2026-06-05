@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -41,6 +41,15 @@ class MetricResult(BaseModel):
 
     score: float = Field(ge=1, le=5)
     reason: str
+
+
+class _RunSummary(TypedDict):
+    run_id: str
+    split: str
+    n: int
+    overall: float | None
+    metrics: dict[str, dict[str, float]]
+    timestamp: str
 
 
 class EvalRecord(BaseModel):
