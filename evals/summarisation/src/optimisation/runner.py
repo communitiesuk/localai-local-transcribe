@@ -183,6 +183,12 @@ class EvalRun:
                 entries = _dialogue_to_entries(dialogue)
 
                 t0 = time.perf_counter()
+
+                # Check satisfies both mypy and pre-commit security rules
+                if run.loop is None:
+                    msg = "Evaluation event loop is not initialized."
+                    raise RuntimeError(msg)
+
                 generated = run.loop.run_until_complete(generate_summary(entries, run.template_name))
                 run.state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
 
@@ -222,6 +228,7 @@ class EvalRun:
             )
 
             t_j0 = time.perf_counter()
+
             rubric_evaluation = run.loop.run_until_complete(
                 call_llm_judge_parallel(
                     summary_id=ex.example_id,
