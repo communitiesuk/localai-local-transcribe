@@ -11,6 +11,7 @@ from evals.summarisation.src.common.schemas import (
     EvalRecord,
     GenerationConfig,
     MetricResult,
+    EvalRunState
 )
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "DialogSummary",
     "DialogSummaryMetric",
     "EvalRecord",
+    "EvalRunState",
     "GenerationConfig",
     "HallucinationConfig",
     "LangChainModelAdapter",

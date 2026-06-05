@@ -61,3 +61,16 @@ class EvalRecord(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+from collections import defaultdict
+from typing import List, Dict
+
+from ..hallucination.types import HallucinationInput
+
+class EvalRunState(BaseModel):
+    """Runtime state for an evaluation run (non‑persisted)."""
+
+    records: List[EvalRecord] = Field(default_factory=list)
+    hallucination_inputs: List[HallucinationInput] = Field(default_factory=list)
+    summarize_ms_values: List[int] = Field(default_factory=list)
+    judge_ms_values: List[int] = Field(default_factory=list)
+    metric_scores: Dict[str, List[float]] = Field(default_factory=lambda: defaultdict(list))

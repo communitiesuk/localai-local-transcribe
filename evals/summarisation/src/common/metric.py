@@ -10,6 +10,7 @@ from evals.summarisation.src.common.adapter_factory import build_azure_apim_adap
 from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
 from evals.summarisation.src.judge import build_system_prompt, build_user_message
+from evals.summarisation.src.constants import CONCURRENCY
 
 
 def load_system_prompt(dimension: str | None = None) -> str:
@@ -77,7 +78,7 @@ async def call_llm_judge_parallel(
     dimensions: list[str],
 ) -> dict:
     """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
-    semaphore = asyncio.Semaphore(4)  # Limit concurrency to prevent rate limits
+    semaphore = asyncio.Semaphore(CONCURRENCY)  # Limit concurrency to prevent rate limits
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
         async with semaphore:

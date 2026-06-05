@@ -28,11 +28,13 @@ from evals.summarisation.src.common import (
     DialogExample,
     DialogSummary,
     EvalRecord,
+    EvalRunState,
     GenerationConfig,
     MetricResult,
     call_llm_judge_parallel,
     write_jsonl,
 )
+
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
 
@@ -48,17 +50,9 @@ class _RunSummary(TypedDict):
     overall: float | None
     metrics: dict[str, dict[str, float]]
     latency_ms: dict[str, int]
-    review: dict[str, float | int]
 
 
-@dataclass(slots=True)
-class EvalRunState:
-    records: list[EvalRecord] = field(default_factory=list)
-    hallucination_inputs: list[HallucinationInput] = field(default_factory=list)
-    summarize_ms_values: list[int] = field(default_factory=list)
-    judge_ms_values: list[int] = field(default_factory=list)
-    review_flags: list[bool] = field(default_factory=list)
-    metric_scores: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
+
 
 
 def _utc_now() -> datetime:
@@ -97,15 +91,6 @@ def _dialogue_to_entries(dialogue: str) -> list[DialogueEntry]:
             }
         )
     return entries
-
-
-def _trigger_review(
-    metrics_out: dict[str, MetricResult],
-    *,
-    threshold: int = 4,
-) -> tuple[bool, list[str]]:
-    failing = [name for name, res in metrics_out.items() if name.startswith("rubric_") and res.score < threshold]
-    return bool(failing), failing
 
 
 def prepare_run_paths(output_dir: str | Path, run_id: str) -> tuple[Path, Path, Path]:
@@ -176,9 +161,7 @@ class EvalRun:
         run = self
 
         class _Program(dspy.Module):
-            def __init__(self) -> None:
-                super().__init__()
-
+         
             def forward(self, dialogue: str) -> dspy.Prediction:
                 entries = _dialogue_to_entries(dialogue)
 
@@ -247,14 +230,11 @@ class EvalRun:
             for name, res in metrics_out.items():
                 run.state.metric_scores[name].append(res.score)
 
-            needs_review, review_reasons = _trigger_review(metrics_out, threshold=4)
-            run.state.review_flags.append(needs_review)
-
             if run.hallucination_enabled:
                 uncited_claims = [
                     h.hallucination_text
                     for h in getattr(pred, "hallucinations", [])
-                    if getattr(h, "hallucination_type", None) == "FACTUAL_FABRICATION"
+                    if h.hallucination_type == "FACTUAL_FABRICATION"
                 ]
                 run.state.hallucination_inputs.append(
                     HallucinationInput(
@@ -272,8 +252,6 @@ class EvalRun:
                 reference_summary=ex.reference_summary,
                 candidate=pred.candidate,
                 metrics=metrics_out,
-                needs_review=needs_review,
-                review_reasons=review_reasons,
             )
             run.state.records.append(record)
             _maybe_flush_records(run.results_path, run.state.records, flush_every=10)
@@ -296,7 +274,6 @@ class EvalRun:
             metrics_summary=metrics_summary,
             summarize_ms_values=self.state.summarize_ms_values,
             judge_ms_values=self.state.judge_ms_values,
-            review_flags=self.state.review_flags,
         )
 
         self.summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))
@@ -358,7 +335,7 @@ def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush
             raise
 
 
-def _collect_rubric_metrics(rubric_evaluation: dict) -> dict[str, MetricResult]:
+def _collect_rubric_metrics(rubric_evaluation: dict[str, dict]) -> dict[str, MetricResult]:
     """Extract per-dimension rubric scores into MetricResult objects."""
     return {
         f"rubric_{dim}": MetricResult(
@@ -370,13 +347,15 @@ def _collect_rubric_metrics(rubric_evaluation: dict) -> dict[str, MetricResult]:
 
 
 def _build_metrics_summary(metric_scores: dict[str, list[float]]) -> dict[str, dict[str, float]]:
+    """Aggregate metric scores, excluding token usage from JSON output.
+    Token usage is still logged elsewhere via logger.
+    """
     metrics_summary: dict[str, dict[str, float]] = {
         name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0}
         for name, vals in metric_scores.items()
         if name != "token_usage"
     }
-    if "token_usage" in metric_scores:
-        metrics_summary["token_usage"] = {"total": sum(metric_scores["token_usage"])}
+    # Do NOT include token_usage total in the JSON summary
     return metrics_summary
 
 
@@ -388,25 +367,19 @@ def _build_run_summary(
     metrics_summary: dict[str, dict[str, float]],
     summarize_ms_values: list[int],
     judge_ms_values: list[int],
-    review_flags: list[bool],
 ) -> _RunSummary:
     rubric_scores = [v["mean"] for k, v in metrics_summary.items() if k.startswith("rubric_")]
     overall = float(sum(rubric_scores) / len(rubric_scores)) if rubric_scores else None
-    review_flagged_count = sum(review_flags)
-
     return {
         "run_id": run_id,
         "split": split,
         "n": len(devset),
         "overall": overall,
         "metrics": metrics_summary,
+        "timestamp": datetime.utcnow().isoformat(),
         "latency_ms": {
             "summarize_p50": _p50(summarize_ms_values),
             "judge_p50": _p50(judge_ms_values),
-        },
-        "review": {
-            "count": review_flagged_count,
-            "rate": review_flagged_count / len(review_flags) if review_flags else 0.0,
         },
     }
 
