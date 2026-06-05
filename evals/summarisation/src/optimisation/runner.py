@@ -10,7 +10,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TypedDict
+from typing import Any, TypedDict
 
 import dspy
 import orjson
@@ -176,7 +176,7 @@ class EvalRun:
         run = self
 
         class _Program(dspy.Module):
-            def __init__(self):
+            def __init__(self) -> None:
                 super().__init__()
 
             def forward(self, dialogue: str) -> dspy.Prediction:
@@ -189,7 +189,8 @@ class EvalRun:
                     msg = "Evaluation event loop is not initialized."
                     raise RuntimeError(msg)
 
-                generated = run.loop.run_until_complete(generate_summary(entries, run.template_name))
+                loop: Any = run.loop
+                generated = loop.run_until_complete(generate_summary(entries, run.template_name))
                 run.state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
 
                 candidate = DialogSummary(
