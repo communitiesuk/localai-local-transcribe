@@ -61,11 +61,6 @@ class EvalRunState:
     metric_scores: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
 
 
-# ---------------------------------------------------------------------------
-# Pure helpers (no state, no config) — safe to keep as module-level functions
-# ---------------------------------------------------------------------------
-
-
 def _utc_now() -> datetime:
     return datetime.now(UTC)
 
@@ -113,6 +108,42 @@ def _trigger_review(
     return bool(failing), failing
 
 
+def prepare_run_paths(output_dir: str | Path, run_id: str) -> tuple[Path, Path, Path]:
+    """Create the run directory and return the target file paths."""
+    out_dir = Path(output_dir) / run_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    return (
+        out_dir / "results.jsonl",
+        out_dir / "summary.json",
+        out_dir / "hallucination_inputs.json",
+    )
+
+
+def load_dspy_devset(cfg: AppConfig, split: str, limit: int | None) -> list[dspy.Example]:
+    """Load the dataset and map it to a list of dspy.Example objects."""
+    ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
+    rows = ds[split]
+    if limit is not None:
+        rows = rows.select(range(min(limit, len(rows))))
+
+    examples = [
+        DialogExample(
+            example_id=str(row.get("id", i)),
+            dialogue=row[cfg.dataset.dialogue_field],
+            reference_summary=row.get(cfg.dataset.reference_summary_field),
+        )
+        for i, row in enumerate(rows)
+    ]
+    return [
+        dspy.Example(
+            example_id=ex.example_id,
+            dialogue=ex.dialogue,
+            reference_summary=ex.reference_summary,
+        ).with_inputs("dialogue")
+        for ex in examples
+    ]
+
+
 class EvalRun:
     def __init__(
         self,
@@ -140,36 +171,6 @@ class EvalRun:
         self.devset: list[dspy.Example] = []
         self.state: EvalRunState = EvalRunState()
         self.loop: asyncio.AbstractEventLoop | None = None
-
-    def _setup_paths(self) -> None:
-        out_dir = Path(self.cfg.run.output_dir) / self.run_id
-        out_dir.mkdir(parents=True, exist_ok=True)
-        self.results_path = out_dir / "results.jsonl"
-        self.summary_path = out_dir / "summary.json"
-        self.hallucination_inputs_path = out_dir / "hallucination_inputs.json"
-
-    def _load_examples(self) -> None:
-        ds = load_dataset(self.cfg.dataset.name, self.cfg.dataset.config)
-        rows = ds[self.split]
-        if self.limit is not None:
-            rows = rows.select(range(min(self.limit, len(rows))))
-
-        examples = [
-            DialogExample(
-                example_id=str(row.get("id", i)),
-                dialogue=row[self.cfg.dataset.dialogue_field],
-                reference_summary=row.get(self.cfg.dataset.reference_summary_field),
-            )
-            for i, row in enumerate(rows)
-        ]
-        self.devset = [
-            dspy.Example(
-                example_id=ex.example_id,
-                dialogue=ex.dialogue,
-                reference_summary=ex.reference_summary,
-            ).with_inputs("dialogue")
-            for ex in examples
-        ]
 
     def _build_program(self) -> dspy.Module:
         run = self
@@ -298,8 +299,11 @@ class EvalRun:
 
     def run(self) -> tuple[str, Path, Path, Path]:
         self.run_id = str(uuid.uuid4())
-        self._setup_paths()
-        self._load_examples()
+
+        self.results_path, self.summary_path, self.hallucination_inputs_path = prepare_run_paths(
+            self.cfg.run.output_dir, self.run_id
+        )
+        self.devset = load_dspy_devset(self.cfg, self.split, self.limit)
 
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -336,8 +340,12 @@ class EvalRun:
 
 def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
-        write_jsonl(results_path, (r.model_dump(by_alias=True) for r in records))
-        records.clear()
+        try:
+            write_jsonl(results_path, (r.model_dump(by_alias=True) for r in records))
+            records.clear()
+        except Exception as e:
+            logger.error("Failed to write records to %s: %s", results_path, e)
+            raise
 
 
 def _collect_rubric_metrics(rubric_evaluation: dict) -> dict[str, MetricResult]:
