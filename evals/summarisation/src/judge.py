@@ -4,9 +4,9 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from evals.summarisation.constants import CRITICAL_DIMENSIONS, DIMENSIONS
+from evals.summarisation.src.constants import CRITICAL_DIMENSIONS, DIMENSIONS
 
-_TEMPLATE_DIR = Path(__file__).parent
+_TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "prompts"
 _env = Environment(
     autoescape=True,
     loader=FileSystemLoader(str(_TEMPLATE_DIR)),
