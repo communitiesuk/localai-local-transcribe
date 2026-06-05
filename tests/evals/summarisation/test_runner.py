@@ -6,14 +6,12 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import dspy
 
-from evals.summarisation.src.common import AppConfig, DialogExample
+from evals.summarisation.src.common import AppConfig
 from evals.summarisation.src.optimisation.runner import (
+    EvalRun,
     _dialogue_to_entries,
     _elapsed_ms,
-    _load_data_pairs,
     _p50,
-    _prepare_run_paths,
-    _to_dspy_devset,
     _utc_now,
     run_eval,
 )
@@ -72,17 +70,18 @@ def test_p50_unsorted_input():
     assert _p50([50, 10, 30, 20, 40]) == 30
 
 
-def test_prepare_run_paths_creates_directories(tmp_path):
-    out_dir, results_path, summary_path, hallucination_inputs_path = _prepare_run_paths(_cfg(tmp_path), "test-run-123")
+def test_eval_run_setup_paths_creates_directories(tmp_path):
+    run = EvalRun(_cfg(tmp_path), split="test", limit=None, prompt_version="v1")
+    run.run_id = "test-run-123"
+    run._setup_paths()
 
-    assert out_dir.exists()
-    assert out_dir == tmp_path / "output" / "test-run-123"
-    assert results_path == out_dir / "results.jsonl"
-    assert summary_path == out_dir / "summary.json"
-    assert hallucination_inputs_path == out_dir / "hallucination_inputs.json"
+    assert run.results_path.parent.exists()
+    assert run.results_path == tmp_path / "output" / "test-run-123" / "results.jsonl"
+    assert run.summary_path == tmp_path / "output" / "test-run-123" / "summary.json"
+    assert run.hallucination_inputs_path == tmp_path / "output" / "test-run-123" / "hallucination_inputs.json"
 
 
-def test_load_data_pairs_basic():
+def test_eval_run_load_examples_basic():
     mock_dataset = {
         "test": [
             {"id": "1", "dialogue": "Hello world", "summary": "Greeting"},
@@ -90,16 +89,19 @@ def test_load_data_pairs_basic():
         ]
     }
 
+    run = EvalRun(_cfg(), split="test", limit=None, prompt_version="v1")
     with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset):
-        examples = _load_data_pairs(_cfg(), split="test", limit=None)
+        run._load_examples()
 
-    assert len(examples) == 2
-    assert examples[0].example_id == "1"
-    assert examples[0].dialogue == "Hello world"
-    assert examples[0].reference_summary == "Greeting"
+    assert len(run.devset) == 2
+    assert isinstance(run.devset[0], dspy.Example)
+    assert run.devset[0].example_id == "1"
+    assert run.devset[0].dialogue == "Hello world"
+    assert run.devset[0].reference_summary == "Greeting"
+    assert "dialogue" in run.devset[0].inputs()
 
 
-def test_load_data_pairs_with_limit():
+def test_eval_run_load_examples_with_limit():
     mock_rows = [
         {"id": "1", "dialogue": "First", "summary": "S1"},
         {"id": "2", "dialogue": "Second", "summary": "S2"},
@@ -110,34 +112,22 @@ def test_load_data_pairs_with_limit():
     mock_split.select = Mock(return_value=mock_rows[:2])
     mock_split.__len__ = Mock(return_value=3)
 
+    run = EvalRun(_cfg(), split="test", limit=2, prompt_version="v1")
     with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}):
-        examples = _load_data_pairs(_cfg(), split="test", limit=2)
+        run._load_examples()
 
     mock_split.select.assert_called_once()
-    assert len(examples) == 2
+    assert len(run.devset) == 2
 
 
-def test_load_data_pairs_missing_id_uses_index():
+def test_eval_run_load_examples_missing_id_uses_index():
     mock_dataset = {"test": [{"dialogue": "Hello", "summary": "Hi"}]}
 
+    run = EvalRun(_cfg(), split="test", limit=None, prompt_version="v1")
     with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset):
-        examples = _load_data_pairs(_cfg(), split="test", limit=None)
+        run._load_examples()
 
-    assert examples[0].example_id == "0"
-
-
-def test_to_dspy_devset():
-    examples = [
-        DialogExample(example_id="1", dialogue="Hello", reference_summary="Hi"),
-        DialogExample(example_id="2", dialogue="Bye", reference_summary="Goodbye"),
-    ]
-    devset = _to_dspy_devset(examples)
-
-    assert len(devset) == 2
-    assert isinstance(devset[0], dspy.Example)
-    assert devset[0].example_id == "1"
-    assert devset[0].dialogue == "Hello"
-    assert "dialogue" in devset[0].inputs()
+    assert run.devset[0].example_id == "0"
 
 
 def test_dialogue_to_entries_dialogsum_format():
