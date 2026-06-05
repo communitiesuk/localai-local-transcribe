@@ -12,6 +12,7 @@ from evals.summarisation.src.common.schemas import (
     EvalRunState,
     GenerationConfig,
     MetricResult,
+    RunSummary,
 )
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "HallucinationConfig",
     "LangChainModelAdapter",
     "MetricResult",
+    "RunSummary",
     "build_azure_apim_adapter",
     "build_metrics",
     "call_llm_judge_parallel",

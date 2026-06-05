@@ -8,7 +8,6 @@ import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TypedDict
 
 import dspy
 import orjson
@@ -29,6 +28,7 @@ from evals.summarisation.src.common import (
     EvalRunState,
     GenerationConfig,
     MetricResult,
+    RunSummary,
     call_llm_judge_parallel,
     write_jsonl,
 )
@@ -38,16 +38,6 @@ from evals.summarisation.src.summarizer import generate_summary
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
 logger = logging.getLogger(__name__)
-
-
-class _RunSummary(TypedDict):
-    run_id: str
-    split: str
-    n: int
-    overall: float | None
-    metrics: dict[str, dict[str, float]]
-    timestamp: str
-    latency_ms: dict[str, int]
 
 
 def _utc_now() -> datetime:
@@ -241,6 +231,7 @@ class EvalRun:
                 )
 
             record = EvalRecord(
+                run_id=run.run_id,
                 example_id=ex.example_id,
                 dialogue=ex.dialogue,
                 reference_summary=ex.reference_summary,
@@ -257,7 +248,7 @@ class EvalRun:
 
     def _finalize(self) -> None:
         if self.state.records:
-            write_jsonl(self.results_path, (r.model_dump(by_alias=True) for r in self.state.records))
+            write_jsonl(self.results_path, (r.model_dump(mode="json", by_alias=True) for r in self.state.records))
             self.state.records.clear()
 
         metrics_summary = _build_metrics_summary(self.state.metric_scores)
@@ -322,7 +313,7 @@ class EvalRun:
 def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
     if len(records) >= flush_every:
         try:
-            write_jsonl(results_path, (r.model_dump(by_alias=True) for r in records))
+            write_jsonl(results_path, (r.model_dump(mode="json", by_alias=True) for r in records))
             records.clear()
         except Exception as e:
             logger.error("Failed to write records to %s: %s", results_path, e)
@@ -349,7 +340,6 @@ def _build_metrics_summary(metric_scores: dict[str, list[float]]) -> dict[str, d
         for name, vals in metric_scores.items()
         if name != "token_usage"
     }
-    # Do NOT include token_usage total in the JSON summary
     return metrics_summary
 
 
@@ -361,16 +351,16 @@ def _build_run_summary(
     metrics_summary: dict[str, dict[str, float]],
     summarize_ms_values: list[int],
     judge_ms_values: list[int],
-) -> _RunSummary:
+) -> RunSummary:
     rubric_scores = [v["mean"] for k, v in metrics_summary.items() if k.startswith("rubric_")]
     overall = float(sum(rubric_scores) / len(rubric_scores)) if rubric_scores else None
     return {
         "run_id": run_id,
+        "timestamp": datetime.now(UTC).isoformat(),
         "split": split,
         "n": len(devset),
         "overall": overall,
         "metrics": metrics_summary,
-        "timestamp": datetime.now(tz=UTC).isoformat(),
         "latency_ms": {
             "summarize_p50": _p50(summarize_ms_values),
             "judge_p50": _p50(judge_ms_values),

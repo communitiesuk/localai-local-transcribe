@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime
-from typing import Literal, TypedDict  # added TypedDict
+from typing import Literal, TypedDict
+
+from pydantic import BaseModel, Field
+
+from evals.summarisation.src.hallucination.types import HallucinationInput
 
 
-# Define TypedDict for run summary used in runner
-class _RunSummary(TypedDict):
+class RunSummary(TypedDict):
     run_id: str
     split: str
     n: int
@@ -14,11 +17,6 @@ class _RunSummary(TypedDict):
     metrics: dict[str, dict[str, float]]
     timestamp: str
     latency_ms: dict[str, int]
-
-
-from pydantic import BaseModel, Field
-
-from evals.summarisation.src.hallucination.types import HallucinationInput
 
 
 class DialogExample(BaseModel):
