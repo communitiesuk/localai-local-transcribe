@@ -22,4 +22,4 @@ metrics:
   - coherence
 
 prompts:
-  judge_template_path: prompts/judge.j2
+  judge_template_path: evals/summarisation/prompts/judge.j2
