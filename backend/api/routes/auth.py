@@ -25,8 +25,9 @@ async def sign_out(request: Request) -> RedirectResponse:
 
     logger.info("host=%s", request.headers.get("host"))
     logger.info("x-forwarded-host=%s", request.headers.get("x-forwarded-host"))
-    
-    domain = domain = request.headers.get("x-forwarded-host") or request.headers.get("host")
+    logger.info("all headers: %s", request.headers.keys())
+
+    domain = request.headers.get("x-forwarded-host") or request.headers.get("host")
 
     response = RedirectResponse(
         url=end_session_endpoint,
