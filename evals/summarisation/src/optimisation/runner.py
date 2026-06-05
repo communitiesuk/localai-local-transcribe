@@ -188,7 +188,6 @@ class EvalRun:
                 if run.loop is None:
                     msg = "Evaluation event loop is not initialized."
                     raise RuntimeError(msg)
-                    
 
                 generated = run.loop.run_until_complete(generate_summary(entries, run.template_name))
                 run.state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
@@ -232,7 +231,6 @@ class EvalRun:
             if run.loop is None:
                 msg = "Evaluation event loop is not initialized."
                 raise RuntimeError(msg)
-
 
             rubric_evaluation = run.loop.run_until_complete(
                 call_llm_judge_parallel(
