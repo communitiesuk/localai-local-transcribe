@@ -10,7 +10,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import TypedDict
 
 import dspy
 import orjson
@@ -188,9 +188,9 @@ class EvalRun:
                 if run.loop is None:
                     msg = "Evaluation event loop is not initialized."
                     raise RuntimeError(msg)
+                    
 
-                loop: Any = run.loop
-                generated = loop.run_until_complete(generate_summary(entries, run.template_name))
+                generated = run.loop.run_until_complete(generate_summary(entries, run.template_name))
                 run.state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
 
                 candidate = DialogSummary(
@@ -229,6 +229,10 @@ class EvalRun:
             )
 
             t_j0 = time.perf_counter()
+            if run.loop is None:
+                msg = "Evaluation event loop is not initialized."
+                raise RuntimeError(msg)
+
 
             rubric_evaluation = run.loop.run_until_complete(
                 call_llm_judge_parallel(
