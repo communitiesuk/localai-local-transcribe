@@ -41,12 +41,6 @@ class MetricResult(BaseModel):
 
     score: float = Field(ge=1, le=5)
     reason: str
-    run_id: str
-    split: str
-    n: int
-    overall: float | None
-    metrics: dict[str, dict[str, float]]
-    timestamp: str
 
 
 class EvalRecord(BaseModel):
