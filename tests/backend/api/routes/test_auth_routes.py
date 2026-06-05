@@ -35,7 +35,7 @@ async def test_sign_out_clears_expected_alb_auth_cookies(client):
         AsyncMock(return_value=END_SESSION_ENDPOINT_STATIC),
     ):
         response = await client.get(
-            "https://development.local-transcribe.gov.uk/signout",
+            "/signout",
             follow_redirects=False,
         )
 
