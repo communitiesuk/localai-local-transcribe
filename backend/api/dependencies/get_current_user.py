@@ -43,9 +43,7 @@ async def get_current_user(
             logger.info("User {email} does not have the required permissions", email=email)
             raise unauthorised_error
 
-        # Try to find existing user
-
-        statement = select(User).where(User.email == email)
+        statement = select(User).where(User.subject_id == subject_id)
         user = (await session.exec(statement)).first()
 
         if not user:
@@ -54,15 +52,10 @@ async def get_current_user(
             session.add(user)
             await session.commit()
             await session.refresh(user)
-
-        if user.subject_id is None:
-            user.subject_id = subject_id
-            session.add(user)
+        elif user.email != email:
+            # Update the user's email if it's different from last time
+            user.email = email
             await session.commit()
-            await session.refresh(user)
-
-        if user.subject_id != subject_id:
-            raise unauthorised_error
 
         return user
     except MissingAuthTokenError as e:
