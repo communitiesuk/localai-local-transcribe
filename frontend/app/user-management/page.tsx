@@ -89,7 +89,7 @@ export default function UserManagementPage() {
               </th>
               <th
                 scope="col"
-                className="govuk-table__header govuk-table__header"
+                className="govuk-table__header"
               >
                 Email
               </th>
