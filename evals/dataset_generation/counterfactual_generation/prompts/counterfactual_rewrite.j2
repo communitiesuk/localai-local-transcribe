@@ -84,11 +84,16 @@ Then systematically transform it to "{{ target_value }}" by:
 4. Ensuring the transformation is coherent and natural throughout the entire conversation
 {% endif %}
 
-**Final Check — do this before producing your output**:
+**Final Check — work through this checklist before producing your output**:
 {% if evidence_spans and evidence_spans|length > 0 %}
-Re-read every dialogue entry and confirm that none of the evidence span texts listed above still appear verbatim. These texts were specifically annotated as signals of "{{ original_value }}" — they must be rephrased even if they seem neutral or natural in the target context, because their presence marks them as characteristic-revealing. If any still appear unchanged, replace them now before returning.
+For each evidence span below, locate every occurrence in your draft output and confirm it is gone:
+{% for span in evidence_spans %}
+- [ ] "{{ span.text_snippet or span.text }}" — must not appear verbatim anywhere in the rewrite. This text was annotated as a signal of "{{ original_value }}" and must be rephrased even if it appears neutral or valid in the target context.
+{% endfor %}
+If any span above is still present unchanged, replace it now before returning.
 {% endif %}
-Every original participant name must have been substituted if it could signal "{{ original_value }}". Every sentence that mentions "{{ original_value }}" as a topic must have been rephrased.
+- [ ] Every participant name that could signal "{{ original_value }}" has been substituted with a different name.
+- [ ] Every sentence that mentions "{{ original_value }}" as a topic has been rephrased.
 
 **Requirements**:
 1. Apply changes consistently throughout the entire transcript

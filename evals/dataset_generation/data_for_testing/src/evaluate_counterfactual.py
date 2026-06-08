@@ -46,6 +46,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("name", help="Name of the instance to evaluate (matches input/<name> and output/<name>)")
     parser.add_argument("--num-rewrites", type=int, default=2, help="Number of rewrite attempts per axis")
+    parser.add_argument("--model", choices=["fast", "best"], default="best", help="LLM tier to use (default: best)")
     args = parser.parse_args()
 
     logging.info("=== STARTING COUNTERFACTUAL EVALUATE ===")
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     axes = _load_axes(INPUT_DIR / args.name)
     logging.info("Loaded %d axes from axes.json", len(axes))
 
-    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+    chatbot = create_default_chatbot(FastOrBestLLM[args.model.upper()])
     report = asyncio.run(
         evaluate_counterfactual(reference, dialogue_entries, chatbot, axes=axes, num_rewrites=args.num_rewrites)
     )
