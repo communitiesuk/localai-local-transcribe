@@ -99,7 +99,7 @@ def _waf_safe(text: str) -> str:
     # that match SQL injection patterns (e.g. 'value' = 'other').  Replacing with the
     # typographic right-single-quotation-mark avoids false-positive WAF blocks while
     # keeping the text readable.
-    return text.replace("'", "’")
+    return text.replace("'", "\u2019")
 
 
 async def _assess_coherence(chatbot: ChatBot, transcript: str) -> CoherenceResponse:
