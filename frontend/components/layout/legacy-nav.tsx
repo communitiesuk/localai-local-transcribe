@@ -1,5 +1,5 @@
 import { NavButton } from '@/components/layout/nav-button'
-import { FileText, Home, Settings } from 'lucide-react'
+import { FileText, Home, Settings, Users } from 'lucide-react'
 
 export function LegacyNav() {
   return (
@@ -14,6 +14,9 @@ export function LegacyNav() {
           </NavButton>
           <NavButton href="/settings">
             <Settings size="1rem" /> Settings
+          </NavButton>
+          <NavButton href="/user-management">
+            <Users size="1rem" /> User Management
           </NavButton>
         </div>
       </div>
