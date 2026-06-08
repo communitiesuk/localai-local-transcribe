@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import threading
 import time
 import uuid
 from collections.abc import Callable
@@ -36,6 +37,15 @@ from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
 
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
+
+_thread_local = threading.local()
+
+def _run_async(coro):
+    """Run a coroutine using a thread-local event loop to avoid 'Event loop is closed' errors."""
+    if not hasattr(_thread_local, "loop") or _thread_local.loop.is_closed():
+        _thread_local.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(_thread_local.loop)
+    return _thread_local.loop.run_until_complete(coro)
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +161,7 @@ class EvalRun:
                 t0 = time.perf_counter()
 
                 # Check satisfies both mypy and pre-commit security rules
-                generated = asyncio.run(generate_summary(entries, run.template_name))
+                generated = _run_async(generate_summary(entries, run.template_name))
                 run.state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
 
                 candidate = DialogSummary(
@@ -190,7 +200,7 @@ class EvalRun:
             )
 
             t_j0 = time.perf_counter()
-            rubric_evaluation = asyncio.run(
+            rubric_evaluation = _run_async(
                 call_llm_judge_parallel(
                     summary_id=ex.example_id,
                     transcript_ref=str(ex.example_id),
