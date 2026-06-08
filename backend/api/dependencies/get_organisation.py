@@ -1,10 +1,9 @@
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import Depends, HTTPException
 
-from backend.api.dependencies.get_session import SQLSessionDep
 from backend.api.dependencies.get_current_user import UserDep
+from backend.api.dependencies.get_session import SQLSessionDep
 from common.database.postgres_models import Organisation
 
 
