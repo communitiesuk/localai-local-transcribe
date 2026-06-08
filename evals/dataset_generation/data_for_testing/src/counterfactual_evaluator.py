@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Any
 
@@ -136,10 +137,16 @@ async def evaluate_counterfactual(
                     break
                 logging.warning(
                     "Count mismatch for %s axis (got %d, expected %d), retry %d/%d",
-                    axis_transform.axis, len(rewritten_texts), len(dialogue_entries), attempt + 1, max_retries,
+                    axis_transform.axis,
+                    len(rewritten_texts),
+                    len(dialogue_entries),
+                    attempt + 1,
+                    max_retries,
                 )
             if len(rewritten_texts) != len(dialogue_entries):
-                msg = f"LLM returned {len(rewritten_texts)} lines but dialogue has {len(dialogue_entries)} after {max_retries} attempts"
+                n_got = len(rewritten_texts)
+                n_expected = len(dialogue_entries)
+                msg = f"LLM returned {n_got} lines but dialogue has {n_expected} after {max_retries} attempts"
                 raise ValueError(msg)
             rewritten_transcript = "\n".join(
                 f"{entry.get('speaker', str(j + 1))}: {text}"
