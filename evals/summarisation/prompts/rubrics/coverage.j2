@@ -1,0 +1,37 @@
+### Dimension: Transcript Factual Completeness (Material Coverage)
+
+The summary captures the material factual content of the transcript — including decisions, actions, risks, constraints, and salient discussion points — regardless of whether the selected template explicitly asks for it. This is a transcript-relative measure of omission severity.
+
+Score this dimension against the transcript regardless of template. Partial or low-quality transcripts should not be penalised where the summary accurately reflects the available content.
+
+#### Score Definitions:
+
+- **Score 5 — Excellent:** Material coverage is comprehensive: all decisions, actions, dependencies, risks, and salient context are captured at an appropriate level of detail.
+- **Score 4 — Good:** All key decisions, actions, risks, and constraints are captured; only minor context or low-importance detail is omitted.
+- **Score 3 — Adequate:** Most material items are covered; some non-trivial omissions or compression remain, but the reader still has a broadly correct understanding of what happened.
+- **Score 2 — Poor:** At least one material item is omitted or substantially under-represented.
+- **Score 1 — Unacceptable:** Major material omissions: key decisions, actions, risks, or constraints are missing such that the reader would form an incorrect or dangerously incomplete understanding.
+
+**Hallucination Gate:** No — review is not automatically triggered by low scores on this dimension alone, unless combined with failures in critical dimensions.
+
+#### Worked Examples
+
+**Scenario:** Material facts — 999 call, machete, bus, arrest, bail — must all appear. Bad summary reduces a serious incident to vague 'tension'.
+
+**Transcript Excerpt:**
+```text
+Social Worker (00:08:15): The meeting covered the incident on 2 April. A woman on a bus called 999 after the customer was reported to be ripping up seats with a machete. Police attended and the customer was arrested and bailed pending further investigation.
+Customer (00:09:00): I wasn't doing anything wrong.
+Social Worker (00:09:10): That's noted and it's been recorded.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+The meeting confirmed that on 2 April police were called following a 999 call by a woman on a bus who alleged that the customer had been ripping up the seats with a machete. The customer was arrested and bailed to await further investigation.
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+The meeting was a general catch-up about the customer's wellbeing. He said he had been a bit tense of late and the team discussed supporting him going forward.
+```
+
