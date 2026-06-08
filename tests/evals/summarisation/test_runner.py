@@ -2,19 +2,18 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import dspy
 
-from evals.summarisation.src.common import AppConfig, DialogExample
+from evals.summarisation.src.common import AppConfig
 from evals.summarisation.src.optimisation.runner import (
     _dialogue_to_entries,
     _elapsed_ms,
-    _load_data_pairs,
     _p50,
-    _prepare_run_paths,
-    _to_dspy_devset,
     _utc_now,
+    load_dspy_devset,
+    prepare_run_paths,
     run_eval,
 )
 
@@ -73,16 +72,17 @@ def test_p50_unsorted_input():
 
 
 def test_prepare_run_paths_creates_directories(tmp_path):
-    out_dir, results_path, summary_path, hallucination_inputs_path = _prepare_run_paths(_cfg(tmp_path), "test-run-123")
+    results_path, summary_path, hallucination_inputs_path = prepare_run_paths(
+        _cfg(tmp_path).run.output_dir, "test-run-123"
+    )
 
-    assert out_dir.exists()
-    assert out_dir == tmp_path / "output" / "test-run-123"
-    assert results_path == out_dir / "results.jsonl"
-    assert summary_path == out_dir / "summary.json"
-    assert hallucination_inputs_path == out_dir / "hallucination_inputs.json"
+    assert results_path.parent.exists()
+    assert results_path == tmp_path / "output" / "test-run-123" / "results.jsonl"
+    assert summary_path == tmp_path / "output" / "test-run-123" / "summary.json"
+    assert hallucination_inputs_path == tmp_path / "output" / "test-run-123" / "hallucination_inputs.json"
 
 
-def test_load_data_pairs_basic():
+def test_load_dspy_devset_basic():
     mock_dataset = {
         "test": [
             {"id": "1", "dialogue": "Hello world", "summary": "Greeting"},
@@ -91,15 +91,17 @@ def test_load_data_pairs_basic():
     }
 
     with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset):
-        examples = _load_data_pairs(_cfg(), split="test", limit=None)
+        devset = load_dspy_devset(_cfg(), split="test", limit=None)
 
-    assert len(examples) == 2
-    assert examples[0].example_id == "1"
-    assert examples[0].dialogue == "Hello world"
-    assert examples[0].reference_summary == "Greeting"
+    assert len(devset) == 2
+    assert isinstance(devset[0], dspy.Example)
+    assert devset[0].example_id == "1"
+    assert devset[0].dialogue == "Hello world"
+    assert devset[0].reference_summary == "Greeting"
+    assert "dialogue" in devset[0].inputs()
 
 
-def test_load_data_pairs_with_limit():
+def test_load_dspy_devset_with_limit():
     mock_rows = [
         {"id": "1", "dialogue": "First", "summary": "S1"},
         {"id": "2", "dialogue": "Second", "summary": "S2"},
@@ -111,33 +113,19 @@ def test_load_data_pairs_with_limit():
     mock_split.__len__ = Mock(return_value=3)
 
     with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}):
-        examples = _load_data_pairs(_cfg(), split="test", limit=2)
+        devset = load_dspy_devset(_cfg(), split="test", limit=2)
 
     mock_split.select.assert_called_once()
-    assert len(examples) == 2
+    assert len(devset) == 2
 
 
-def test_load_data_pairs_missing_id_uses_index():
+def test_load_dspy_devset_missing_id_uses_index():
     mock_dataset = {"test": [{"dialogue": "Hello", "summary": "Hi"}]}
 
     with patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset):
-        examples = _load_data_pairs(_cfg(), split="test", limit=None)
+        devset = load_dspy_devset(_cfg(), split="test", limit=None)
 
-    assert examples[0].example_id == "0"
-
-
-def test_to_dspy_devset():
-    examples = [
-        DialogExample(example_id="1", dialogue="Hello", reference_summary="Hi"),
-        DialogExample(example_id="2", dialogue="Bye", reference_summary="Goodbye"),
-    ]
-    devset = _to_dspy_devset(examples)
-
-    assert len(devset) == 2
-    assert isinstance(devset[0], dspy.Example)
-    assert devset[0].example_id == "1"
-    assert devset[0].dialogue == "Hello"
-    assert "dialogue" in devset[0].inputs()
+    assert devset[0].example_id == "0"
 
 
 def test_dialogue_to_entries_dialogsum_format():
@@ -184,25 +172,35 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     mock_split.select = Mock(return_value=mock_rows)
     mock_split.__len__ = Mock(return_value=1)
 
-    mock_metric = MagicMock()
-    mock_metric.name = "faithfulness"
-    mock_metric.evaluate.return_value = Mock(score=1.0, reason="Good")
+    mock_generated = Mock()
+    mock_generated.text = "Generated summary"
+    mock_generated.hallucinations = []
+    mock_generated.total_claims = 5
 
-    mock_evaluator = MagicMock()
-    mock_evaluator.return_value = 0.95
+    mock_judge_response = {
+        "dimensions": {
+            "coherence": {"score": "5", "rationale": "Good"},
+            "faithfulness": {"score": "5", "rationale": "Accurate"},
+        }
+    }
 
     with (
         patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}),
         patch(
             "evals.summarisation.src.optimisation.runner.generate_summary",
             new_callable=AsyncMock,
-            return_value=("Generated summary [1]", 5, []),
+            return_value=mock_generated,
         ),
-        patch("evals.summarisation.src.optimisation.runner.build_metrics", return_value=[mock_metric]),
+        patch(
+            "evals.summarisation.src.optimisation.runner.call_llm_judge_parallel",
+            new_callable=AsyncMock,
+            return_value=mock_judge_response,
+        ),
         patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
-        patch("evals.summarisation.src.optimisation.runner.Evaluate", return_value=mock_evaluator),
+        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
     ):
-        mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
+        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
+        mock_tokenizer.return_value.encode = Mock(return_value=[1, 2, 3, 4, 5])
 
         run_id, results_path, summary_path, hallucination_inputs_path = run_eval(
             cfg,
