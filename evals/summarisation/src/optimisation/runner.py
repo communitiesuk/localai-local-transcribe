@@ -43,7 +43,6 @@ _thread_local = threading.local()
 
 
 def _run_async(coro: Any) -> Any:
-    """Run a coroutine using a thread-local event loop to avoid 'Event loop is closed' errors."""
     if not hasattr(_thread_local, "loop") or _thread_local.loop.is_closed():
         _thread_local.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(_thread_local.loop)
@@ -69,7 +68,6 @@ def _p50(values: list[int]) -> int:
 
 
 def _dialogue_to_entries(dialogue: str) -> list[DialogueEntry]:
-    """Convert dialogsum-format dialogue string to DialogueEntry objects."""
     entries: list[DialogueEntry] = []
     for i, raw_line in enumerate(dialogue.splitlines()):
         line = raw_line.strip()
@@ -92,7 +90,6 @@ def _dialogue_to_entries(dialogue: str) -> list[DialogueEntry]:
 
 
 def prepare_run_paths(output_dir: str | Path, run_id: str) -> tuple[Path, Path, Path]:
-    """Create the run directory and return the target file paths."""
     out_dir = Path(output_dir) / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
     return (
@@ -103,7 +100,7 @@ def prepare_run_paths(output_dir: str | Path, run_id: str) -> tuple[Path, Path, 
 
 
 def load_dspy_devset(cfg: AppConfig, split: str, limit: int | None) -> list[dspy.Example]:
-    """Load the dataset and map it to a list of dspy.Example objects."""
+
     ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
     rows = ds[split]
     if limit is not None:
@@ -191,8 +188,6 @@ class EvalRun:
         return _Program()
 
     def _build_metric(self) -> Callable[[dspy.Example, dspy.Prediction], float]:
-        """Return a metric function compatible with dspy.Evaluate."""
-
         run = self
 
         def _metric(gold: dspy.Example, pred: dspy.Prediction) -> float:
@@ -320,9 +315,6 @@ def _collect_rubric_metrics(rubric_evaluation: dict[str, dict]) -> dict[str, Met
 
 
 def _build_metrics_summary(metric_scores: dict[str, list[float]]) -> dict[str, dict[str, float]]:
-    """Aggregate metric scores, excluding token usage from JSON output.
-    Token usage is still logged elsewhere via logger.
-    """
     metrics_summary: dict[str, dict[str, float]] = {
         name: {"mean": float(sum(vals) / len(vals)) if vals else 0.0}
         for name, vals in metric_scores.items()
