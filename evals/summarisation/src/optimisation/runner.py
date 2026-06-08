@@ -140,7 +140,6 @@ class EvalRun:
         self.hallucination_inputs_path: Path = Path()
         self.devset: list[dspy.Example] = []
         self.state: EvalRunState = EvalRunState()
-        self.loop: asyncio.AbstractEventLoop | None = None
 
     def _build_program(self) -> dspy.Module:
         run = self
@@ -152,11 +151,7 @@ class EvalRun:
                 t0 = time.perf_counter()
 
                 # Check satisfies both mypy and pre-commit security rules
-                if run.loop is None:
-                    msg = "Evaluation event loop is not initialized."
-                    raise RuntimeError(msg)
-
-                generated = run.loop.run_until_complete(generate_summary(entries, run.template_name))
+                generated = asyncio.run(generate_summary(entries, run.template_name))
                 run.state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
 
                 candidate = DialogSummary(
@@ -195,11 +190,7 @@ class EvalRun:
             )
 
             t_j0 = time.perf_counter()
-            if run.loop is None:
-                msg = "Evaluation event loop is not initialized."
-                raise RuntimeError(msg)
-
-            rubric_evaluation = run.loop.run_until_complete(
+            rubric_evaluation = asyncio.run(
                 call_llm_judge_parallel(
                     summary_id=ex.example_id,
                     transcript_ref=str(ex.example_id),
@@ -277,47 +268,31 @@ class EvalRun:
         )
         self.devset = load_dspy_devset(self.cfg, self.split, self.limit)
 
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-
         try:
             evaluator = Evaluate(
                 devset=self.devset,
                 metric=self._build_metric(),
-                num_threads=1,
+                num_threads=8,
                 display_progress=True,
             )
             evaluator(self._build_program())
             self._finalize()
         finally:
-            self._close_loop()
+            pass
 
         return self.run_id, self.results_path, self.summary_path, self.hallucination_inputs_path
 
-    def _close_loop(self) -> None:
-        loop = self.loop
-        if loop is None:
-            return
-        try:
-            if not loop.is_running():
-                pending = asyncio.all_tasks(loop)
-                if pending:
-                    for task in pending:
-                        task.cancel()
-                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
-                loop.close()
-        except (RuntimeError, OSError) as exc:
-            logger.warning("Error while closing evaluation event loop: %s", exc, exc_info=True)
-
 
 def _maybe_flush_records(results_path: Path, records: list[EvalRecord], *, flush_every: int) -> None:
-    if len(records) >= flush_every:
-        try:
-            write_jsonl(results_path, (r.model_dump(mode="json", by_alias=True) for r in records))
-            records.clear()
-        except Exception as e:
-            logger.error("Failed to write records to %s: %s", results_path, e)
-            raise
+    if len(records) < flush_every:
+        return
+
+    try:
+        write_jsonl(results_path, (r.model_dump(mode="json", by_alias=True) for r in records))
+        records.clear()
+    except OSError:
+        logger.exception("Critical I/O error while flushing records to %s", results_path)
+        raise
 
 
 def _collect_rubric_metrics(rubric_evaluation: dict[str, dict]) -> dict[str, MetricResult]:

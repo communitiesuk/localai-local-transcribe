@@ -43,7 +43,7 @@ class DimensionEvaluation(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(description="The name of the evaluation dimension (e.g. clarity, correctness).")
     rationale: str = Field(description="The rationale behind the score.")
-    score: int = Field(description="The score assigned to this dimension.", ge=1, le=5)
+    score: int = Field(description="The score assigned to this dimension.", ge=0, le=5)
 
 
 class RubricEvaluation(BaseModel):
