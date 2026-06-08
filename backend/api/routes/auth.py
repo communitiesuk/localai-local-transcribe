@@ -22,7 +22,12 @@ async def sign_out(request: Request) -> RedirectResponse:
     """Sign out the user by clearing ALB auth cookies and redirecting to the IdP."""
 
     end_session_endpoint = await get_idp_logout_url() or END_SESSION_ENDPOINT_STATIC
-    domain = request.url.hostname
+
+    logger.info("host=%s", request.headers.get("host"))
+    logger.info("x-forwarded-host=%s", request.headers.get("x-forwarded-host"))
+    logger.info("all headers: %s", request.headers.keys())
+
+    domain = request.headers.get("x-forwarded-host") or request.headers.get("host")
 
     response = RedirectResponse(
         url=end_session_endpoint,
