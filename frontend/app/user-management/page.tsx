@@ -20,14 +20,15 @@ export default function UserManagementPage() {
     getUserUsersMeGetOptions()
   )
 
-  const organisationId = user?.organisation_id
+  // const organisationId = user?.organisation_id
+  const organisationId = '7b5ff977-b8d3-4ea8-b7b4-e0dcb2e2042b'
   const { data: organisation } = useQuery({
     ...getOrganisationOrganisationsOrganisationIdGetOptions({
       path: {
-        organisation_id: organisationId ?? '', // wont be undefined due to enabled
+        organisation_id: organisationId!, // wont be undefined due to enabled
       },
     }),
-    enabled: Boolean(organisationId),
+    enabled: !!organisationId,
   })
 
   const [currentPage, setCurrentPage] = useState(1)

@@ -32,6 +32,8 @@ async def get_organisation(
 ) -> OrganisationResponse:
     """Get organisation. Only accessible to organisation admins."""
     organisation = await session.get(Organisation, organisation_id)
+    if organisation is None:
+        raise HTTPException(status_code=404, detail="Organisation not found")
     return OrganisationResponse.model_validate(organisation)
 
 
