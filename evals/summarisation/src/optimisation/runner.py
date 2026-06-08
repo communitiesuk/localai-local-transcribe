@@ -36,6 +36,7 @@ from evals.summarisation.src.common import (
 )
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
+from common.database.postgres_models import DialogueEntry, HallucinationType
 
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
@@ -216,7 +217,7 @@ class EvalRun:
                 uncited_claims = [
                     h.hallucination_text
                     for h in getattr(pred, "hallucinations", [])
-                    if h.hallucination_type == "FACTUAL_FABRICATION"
+                    if h.hallucination_type == HallucinationType.FACTUAL_FABRICATION
                 ]
                 run.state.hallucination_inputs.append(
                     HallucinationInput(
@@ -283,9 +284,8 @@ class EvalRun:
                 display_progress=True,
             )
             evaluator(self._build_program())
-            self._finalize()
         finally:
-            pass
+            self._finalize()
 
         return self.run_id, self.results_path, self.summary_path, self.hallucination_inputs_path
 

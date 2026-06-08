@@ -8,7 +8,7 @@ from evals.summarisation.src.constants import CRITICAL_DIMENSIONS, DIMENSIONS
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "prompts"
 _env = Environment(
-    autoescape=True,
+    autoescape=False,
     loader=FileSystemLoader(str(_TEMPLATE_DIR)),
     undefined=StrictUndefined,
     keep_trailing_newline=True,
