@@ -78,15 +78,21 @@ Focus on these areas when applying the transformation, then ensure consistency t
 Analyze the transcript and evidence spans to understand how {{ axis }} is currently expressed as "{{ original_value }}".
 Then systematically transform it to "{{ target_value }}" by:
 
-1. Identifying all explicit and implicit expressions of {{ axis }} in the dialogue
-2. Determining what specific changes are needed (e.g., names, pronouns, language patterns, tone, expertise markers)
-3. Applying those changes consistently across ALL dialogue entries where they appear
+1. Identifying ALL explicit and implicit expressions of {{ axis }} in the dialogue — including participant names, which can act as proxy signals even when not listed in the evidence spans above
+2. Determining what specific changes are needed (e.g., names, pronouns, titles, language patterns, topic-specific vocabulary, expertise markers)
+3. Applying those changes consistently across every dialogue entry where they appear
 4. Ensuring the transformation is coherent and natural throughout the entire conversation
 {% endif %}
 
+**Final Check — do this before producing your output**:
+{% if evidence_spans and evidence_spans|length > 0 %}
+Re-read every dialogue entry and confirm that none of the evidence span texts listed above still appear verbatim. These texts were specifically annotated as signals of "{{ original_value }}" — they must be rephrased even if they seem neutral or natural in the target context, because their presence marks them as characteristic-revealing. If any still appear unchanged, replace them now before returning.
+{% endif %}
+Every original participant name must have been substituted if it could signal "{{ original_value }}". Every sentence that mentions "{{ original_value }}" as a topic must have been rephrased.
+
 **Requirements**:
 1. Apply changes consistently throughout the entire transcript
-2. Update ALL pronouns, names, and references to maintain consistency
+2. Update ALL pronouns, names, and references to maintain consistency — participant names can implicitly signal the characteristic even when not listed in the evidence spans
 3. Preserve meeting content and structure
 4. Do NOT change unrelated attributes or technical content
 5. Return exactly {{ dialogue_texts|length }} text strings in the same order

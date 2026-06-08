@@ -86,6 +86,7 @@ async def _rewrite_transcript(
         original_value=axis_transform.original_value,
         target_value=axis_transform.target_value,
         evidence_spans=axis_spans,
+        custom_instructions=axis_transform.instructions,
     )
     chatbot.clear_history()
     response = await chatbot.chat(messages=[{"role": "user", "content": prompt}])
@@ -127,10 +128,18 @@ async def evaluate_counterfactual(
 
         rewrites: list[dict[str, Any]] = []
         for i in range(num_rewrites):
-            rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
-
+            max_retries = 3
+            rewritten_texts = []
+            for attempt in range(max_retries):
+                rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
+                if len(rewritten_texts) == len(dialogue_entries):
+                    break
+                logging.warning(
+                    "Count mismatch for %s axis (got %d, expected %d), retry %d/%d",
+                    axis_transform.axis, len(rewritten_texts), len(dialogue_entries), attempt + 1, max_retries,
+                )
             if len(rewritten_texts) != len(dialogue_entries):
-                msg = f"LLM returned {len(rewritten_texts)} lines but dialogue has {len(dialogue_entries)}"
+                msg = f"LLM returned {len(rewritten_texts)} lines but dialogue has {len(dialogue_entries)} after {max_retries} attempts"
                 raise ValueError(msg)
             rewritten_transcript = "\n".join(
                 f"{entry.get('speaker', str(j + 1))}: {text}"
