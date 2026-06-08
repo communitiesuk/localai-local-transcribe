@@ -90,7 +90,7 @@ module "frontdoor" {
     "4.158.35.41/32",
     # Cyberfort (temporarily allowed for pen testing)
     # TODO AIILG-653 remove these after pen testing is complete
-    "37.200.119.11",
+    "37.200.119.11/32",
     "185.10.12.32/28",
     "176.65.68.112/28",
   ]
