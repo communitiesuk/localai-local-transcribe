@@ -88,3 +88,14 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 | `GovukLabel` | Label | No |
 | `GovukLegend` | Legend | No |
 | `GovukRadios` / `GovukRadios.Item` | Radios | Yes |
+
+
+## Loading states
+
+When data is fetching, use a visually hidden message or a `govuk-!-display-none` toggle. Do not use spinners or animated loaders.
+
+**Preferred pattern:**
+
+```tax
+{isLoading && <p className="govuk-visually-hidden”>Loading users</p>}
+{users && <GovukTable>…</GovukTable>}
