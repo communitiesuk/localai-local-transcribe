@@ -100,7 +100,6 @@ def prepare_run_paths(output_dir: str | Path, run_id: str) -> tuple[Path, Path, 
 
 
 def load_dspy_devset(cfg: AppConfig, split: str, limit: int | None) -> list[dspy.Example]:
-
     ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
     rows = ds[split]
     if limit is not None:
