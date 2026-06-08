@@ -94,8 +94,16 @@ async def _rewrite_transcript(
     return parse_llm_response(response)
 
 
+def _waf_safe(text: str) -> str:
+    # Azure Application Gateway WAF (ModSecurity) flags ASCII single-quote sequences
+    # that match SQL injection patterns (e.g. 'value' = 'other').  Replacing with the
+    # typographic right-single-quotation-mark avoids false-positive WAF blocks while
+    # keeping the text readable.
+    return text.replace("'", "’")
+
+
 async def _assess_coherence(chatbot: ChatBot, transcript: str) -> CoherenceResponse:
-    prompt = get_template(ASSESS_COHERENCE_TEMPLATE).render(transcript=transcript)
+    prompt = get_template(ASSESS_COHERENCE_TEMPLATE).render(transcript=_waf_safe(transcript))
     chatbot.clear_history()
     return await chatbot.structured_chat([{"role": "user", "content": prompt}], CoherenceResponse)
 
@@ -104,7 +112,7 @@ async def _assess_concealment(
     chatbot: ChatBot, transcript: str, characteristic: str, value: str
 ) -> ConcealmentResponse:
     prompt = get_template(ASSESS_CONCEALMENT_TEMPLATE).render(
-        transcript=transcript, characteristic=characteristic, value=value
+        transcript=_waf_safe(transcript), characteristic=characteristic, value=value
     )
     chatbot.clear_history()
     return await chatbot.structured_chat([{"role": "user", "content": prompt}], ConcealmentResponse)
@@ -118,7 +126,6 @@ async def evaluate_counterfactual(
     num_rewrites: int = 2,
 ) -> dict[str, Any]:
     span_contexts = extract_span_contexts(reference)
-    characteristics = extract_characteristics(reference)
     dialogue_texts = [entry["text"] for entry in dialogue_entries]
 
     axis_results: list[dict[str, Any]] = []
@@ -156,21 +163,19 @@ async def evaluate_counterfactual(
             checks = check_removals(rewritten_transcript, original_values)
             coherence = await _assess_coherence(chatbot, rewritten_transcript)
 
-            axis_characteristics = [
-                (char, value) for char, value in characteristics if char.lower() == axis_transform.axis.lower()
+            readable_value = axis_transform.original_value.replace("_", " ")
+            concealment_result = await _assess_concealment(
+                chatbot, rewritten_transcript, axis_transform.axis, readable_value
+            )
+            concealment_checks = [
+                {
+                    "characteristic": axis_transform.axis,
+                    "value": axis_transform.original_value,
+                    "score": round((concealment_result.score - 1) / 3, 4),
+                    "explanation": concealment_result.explanation,
+                    "reasoning": concealment_result.reasoning,
+                }
             ]
-            concealment_checks = []
-            for char, value in axis_characteristics:
-                result = await _assess_concealment(chatbot, rewritten_transcript, char, value)
-                concealment_checks.append(
-                    {
-                        "characteristic": char,
-                        "value": value,
-                        "score": round((result.score - 1) / 3, 4),
-                        "explanation": result.explanation,
-                        "reasoning": result.reasoning,
-                    }
-                )
 
             unexpected_edits = [
                 {"original": c["original_value"], "occurrences_remaining": c["occurrences"]}
