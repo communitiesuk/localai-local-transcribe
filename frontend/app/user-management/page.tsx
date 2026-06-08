@@ -20,8 +20,7 @@ export default function UserManagementPage() {
     getUserUsersMeGetOptions()
   )
 
-  // const organisationId = user?.organisation_id
-  const organisationId = '7b5ff977-b8d3-4ea8-b7b4-e0dcb2e2042b'
+  const organisationId = user?.organisation_id
   const { data: organisation } = useQuery({
     ...getOrganisationOrganisationsOrganisationIdGetOptions({
       path: {
@@ -87,10 +86,7 @@ export default function UserManagementPage() {
               <th scope="col" className="govuk-table__header">
                 Name
               </th>
-              <th
-                scope="col"
-                className="govuk-table__header"
-              >
+              <th scope="col" className="govuk-table__header">
                 Email
               </th>
               <th
