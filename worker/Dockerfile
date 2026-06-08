@@ -14,7 +14,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Install Poetry
-RUN pip install --no-cache-dir poetry==2.3.3 poetry-plugin-export==1.9.0
+RUN pip install --no-cache-dir poetry==2.4.1 poetry-plugin-export==1.9.0
 
 COPY pyproject.toml poetry.lock README.md ./
 

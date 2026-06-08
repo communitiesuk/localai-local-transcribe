@@ -1,6 +1,8 @@
 #tfsec:ignore:aws-elb-alb-not-public:the load balancer must be exposed to the internet in order to communicate with cloudfront
 locals {
-  gds_ia_issuer = "https://sso.service.security.gov.uk"
+  gds_ia_issuer               = "https://sso.service.security.gov.uk"
+  listener_rule_base_priority = 1
+
 }
 
 resource "aws_lb" "main" {
@@ -85,6 +87,7 @@ data "aws_ssm_parameter" "oidc_client_secret" {
 resource "aws_lb_listener_rule" "authentication" {
   count        = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
+  priority     = local.listener_rule_base_priority + 1
 
   action {
     type = "authenticate-oidc"
@@ -121,9 +124,41 @@ resource "aws_lb_listener_rule" "authentication" {
   }
 }
 
+resource "aws_lb_listener_rule" "signout" {
+  count        = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = local.listener_rule_base_priority
+
+  action {
+    target_group_arn = aws_lb_target_group.frontend.id
+    type             = "forward"
+  }
+
+  condition {
+    host_header {
+      values = [var.app_host]
+    }
+  }
+
+  condition {
+    http_header {
+      http_header_name = local.cloudfront_header_name
+      values           = [random_password.cloudfront_header.result]
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = ["/signout", "/signout/"]
+    }
+  }
+}
+
 resource "aws_lb_listener_rule" "forward_no_auth" {
   count        = var.ssl_certs_created && !var.enable_oidc_auth ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
+  priority     = local.listener_rule_base_priority + 2
+
 
   action {
     target_group_arn = aws_lb_target_group.frontend.id
