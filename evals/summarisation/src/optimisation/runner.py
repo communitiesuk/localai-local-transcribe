@@ -9,6 +9,7 @@ import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import dspy
 import orjson
@@ -41,7 +42,7 @@ _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 _thread_local = threading.local()
 
 
-def _run_async(coro):
+def _run_async(coro: Any) -> Any:
     """Run a coroutine using a thread-local event loop to avoid 'Event loop is closed' errors."""
     if not hasattr(_thread_local, "loop") or _thread_local.loop.is_closed():
         _thread_local.loop = asyncio.new_event_loop()
