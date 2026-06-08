@@ -27,7 +27,7 @@ async def get_users(
 async def get_user_count(
     session: AsyncSession,
     organisation: Organisation | None = None,
-):
+) -> int:
     statement = select(func.count(col(User.id)))
 
     if organisation:
