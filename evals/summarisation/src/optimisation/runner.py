@@ -40,12 +40,14 @@ _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
 
 _thread_local = threading.local()
 
+
 def _run_async(coro):
     """Run a coroutine using a thread-local event loop to avoid 'Event loop is closed' errors."""
     if not hasattr(_thread_local, "loop") or _thread_local.loop.is_closed():
         _thread_local.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(_thread_local.loop)
     return _thread_local.loop.run_until_complete(coro)
+
 
 logger = logging.getLogger(__name__)
 
