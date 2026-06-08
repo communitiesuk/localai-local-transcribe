@@ -22,7 +22,7 @@ resource "aws_wafv2_web_acl" "main" {
 
   dynamic "rule" {
     # [{}] causes 1 instance of the block to be created, [] causes 0 instances of the block
-    for_each = length(var.ip_allowlist) > 0 ? [{}] : []
+    for_each = length(var.ip_allowlist) + length(var.ipv6_allowlist) > 0 ? [{}] : []
     content {
       name     = "ip-allowlist"
       priority = 1
@@ -38,8 +38,17 @@ resource "aws_wafv2_web_acl" "main" {
       statement {
         not_statement {
           statement {
-            ip_set_reference_statement {
-              arn = aws_wafv2_ip_set.allowed_ips.arn
+            or_statement {
+              statement {
+                ip_set_reference_statement {
+                  arn = aws_wafv2_ip_set.allowed_ips.arn
+                }
+              }
+              statement {
+                ip_set_reference_statement {
+                  arn = aws_wafv2_ip_set.allowed_ipv6_ips.arn
+                }
+              }
             }
           }
         }
@@ -197,4 +206,13 @@ resource "aws_wafv2_ip_set" "allowed_ips" {
   scope              = "CLOUDFRONT"
   ip_address_version = "IPV4"
   addresses          = var.ip_allowlist
+}
+
+resource "aws_wafv2_ip_set" "allowed_ipv6_ips" {
+  provider = aws.us-east-1
+
+  name               = "waf-allowed-ipv6-ip-set-${var.environment_name}"
+  scope              = "CLOUDFRONT"
+  ip_address_version = "IPV6"
+  addresses          = var.ipv6_allowlist
 }
