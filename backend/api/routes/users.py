@@ -10,11 +10,18 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
+from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_users, get_user_count
+from backend.utils.queries import get_user_count, get_users
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
-from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles, PaginatedUsersResponse
+from common.types import (
+    DataRetentionUpdateResponse,
+    GetUserResponse,
+    PaginatedUsersResponse,
+    UserCreate,
+    UserUpdateRoles,
+)
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -93,8 +100,8 @@ async def list_users(
     organisation: OrganisationAdminDep,
     user: UserDep,
     session: SQLSessionDep,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page: int = Query(DEFAULT_PAGE, ge=DEFAULT_PAGE),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ) -> PaginatedUsersResponse:
     users = []
     if is_system_admin(user):
