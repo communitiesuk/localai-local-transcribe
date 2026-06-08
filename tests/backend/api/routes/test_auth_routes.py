@@ -47,6 +47,3 @@ async def test_sign_out_clears_expected_alb_auth_cookies(client):
         assert any(header.startswith(f"{cookie_name}=") for header in cookie_headers)
 
     assert not any(header.startswith("sessionid=") for header in cookie_headers)
-
-
-
