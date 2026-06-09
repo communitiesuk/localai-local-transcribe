@@ -37,6 +37,7 @@ describe('<GovukRadios />', () => {
     expect(inputs[0].getAttribute('name')).toBe('example')
     expect(inputs[1].getAttribute('name')).toBe('example')
     expect(inputs[0].getAttribute('type')).toBe('radio')
+    expect(inputs[1].getAttribute('type')).toBe('radio')
 
     const labels = container.querySelectorAll(
       'label.govuk-label.govuk-radios__label'
