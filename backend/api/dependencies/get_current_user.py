@@ -47,15 +47,28 @@ async def get_current_user(
         user = (await session.exec(statement)).first()
 
         if not user:
+            # Try to find user by email address
+            statement = select(User).where(User.email == email and User.subject_id is None)
+            user = (await session.exec(statement)).first()
+
+        changed = False
+        if user:
+            # Update subject_id and email only if either has changed
+            if user.subject_id != subject_id:
+                user.subject_id = subject_id
+                changed = True
+            if user.email != email:
+                user.email = email
+                changed = True
+        else:
             # Create new user if doesn't exist
             user = User(email=email, subject_id=subject_id)
+            changed = True
+
+        if changed:
             session.add(user)
             await session.commit()
             await session.refresh(user)
-        elif user.email != email:
-            # Update the user's email if it's different from last time
-            user.email = email
-            await session.commit()
 
         return user
     except MissingAuthTokenError as e:

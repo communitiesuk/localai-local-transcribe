@@ -69,6 +69,47 @@ async def test_get_current_user_existing_user(monkeypatch, session):
 
 
 @pytest.mark.asyncio
+async def test_get_current_user_fallsback_to_email_if_no_subject_id(monkeypatch, session):
+    mock_user = User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=None,
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+    )
+    mock_result = Mock()
+    # first returns no match, then returns the user
+    # as the first query matches on subject id, and the second on email
+    mock_result.first.side_effect = [None, mock_user]
+    session.exec.return_value = mock_result
+
+    # patch in JWT decoding
+    mock_get_user_info = make_mock_get_user_info()
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        mock_get_user_info,  # token unused in test
+    )
+
+    user = await get_current_user(
+        session=session,
+        x_amzn_oidc_data=TEST_TOKEN,
+    )
+
+    # check emails match, and subject id has been populated
+    assert user.email == mock_user.email
+    assert user.subject_id == TEST_SUBJECT_ID
+    mock_get_user_info.assert_called_once_with(TEST_TOKEN)
+    session.commit.assert_awaited_once()
+
+    # check the query filtered by email
+    executed_statement = session.exec.call_args.args[0]
+    compiled = executed_statement.compile()
+    assert "email" in str(compiled)
+    assert user.email in compiled.params.values()
+
+
+@pytest.mark.asyncio
 async def test_get_current_user_updates_email_of_existing_user(monkeypatch, session):
     mock_user = User(
         id=uuid4(),
