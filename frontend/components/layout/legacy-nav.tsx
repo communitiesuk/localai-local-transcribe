@@ -4,7 +4,7 @@ import { NavButton } from '@/components/layout/nav-button'
 import { FileText, Home, Settings, Users } from 'lucide-react'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
-import { userRoles, hasAnyRole } from '@/lib/utils'
+import { UserRole, hasAnyRole } from '@/lib/utils'
 
 export function LegacyNav() {
   const { data: user } = useQuery(getUserUsersMeGetOptions())
@@ -23,8 +23,8 @@ export function LegacyNav() {
             <Settings size="1rem" /> Settings
           </NavButton>
           {hasAnyRole(user?.roles, [
-            userRoles.LOCAL_AUTHORITY_ADMIN,
-            userRoles.MHCLG_SUPPORT_ADMIN,
+            UserRole.LOCAL_AUTHORITY_ADMIN,
+            UserRole.MHCLG_SUPPORT_ADMIN,
           ]) && (
             <NavButton href="/user-management">
               <Users size="1rem" /> User Management

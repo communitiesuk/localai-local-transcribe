@@ -11,7 +11,7 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useState, useEffect } from 'react'
 import { USERS_PER_PAGE } from '@/lib/constants'
-import { userRoles, hasAnyRole } from '@/lib/utils'
+import { UserRole, hasAnyRole } from '@/lib/utils'
 
 export default function UserManagementPage() {
   const router = useRouter()
@@ -39,8 +39,8 @@ export default function UserManagementPage() {
   const totalPages = usersResponse?.total_pages
 
   const isAllowed = hasAnyRole(user?.roles, [
-    userRoles.LOCAL_AUTHORITY_ADMIN,
-    userRoles.MHCLG_SUPPORT_ADMIN,
+    UserRole.LOCAL_AUTHORITY_ADMIN,
+    UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
   useEffect(() => {
@@ -107,10 +107,10 @@ export default function UserManagementPage() {
                 <td className="govuk-table__cell govuk-table__cell--numeric">
                   <div className="flex justify-end gap-3">
                     {hasAnyRole(user?.roles, [
-                      userRoles.LOCAL_AUTHORITY_ADMIN,
+                      UserRole.LOCAL_AUTHORITY_ADMIN,
                     ]) && <strong className="govuk-tag">LA Admin</strong>}
                     {hasAnyRole(user?.roles, [
-                      userRoles.MHCLG_SUPPORT_ADMIN,
+                      UserRole.MHCLG_SUPPORT_ADMIN,
                     ]) && (
                       <strong className="govuk-tag govuk-tag--purple">
                         System Admin

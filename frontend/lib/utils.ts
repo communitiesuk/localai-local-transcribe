@@ -11,10 +11,10 @@ export const formatLabel = (str: string) => {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1)
 }
 
-export const userRoles = {
-  STANDARD_USER: 'standard_user',
-  LOCAL_AUTHORITY_ADMIN: 'local_authority_admin',
-  MHCLG_SUPPORT_ADMIN: 'mhclg_support_admin',
+export enum UserRole {
+  STANDARD_USER = 'standard_user',
+  LOCAL_AUTHORITY_ADMIN = 'local_authority_admin',
+  MHCLG_SUPPORT_ADMIN = 'mhclg_support_admin',
 }
 
 export function hasAnyRole(
