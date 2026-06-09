@@ -17,12 +17,12 @@ export default function UserManagementPage() {
   const router = useRouter()
 
   const {
-    data: user,
+    data: currentUser,
     isLoading: userLoading,
     isError: userError,
   } = useQuery(getUserUsersMeGetOptions())
 
-  const organisationId = user?.organisation_id
+  const organisationId = currentUser?.organisation_id
   const { data: organisation } = useQuery({
     ...getOrganisationOrganisationsOrganisationIdGetOptions({
       path: {
@@ -41,16 +41,16 @@ export default function UserManagementPage() {
   const users = usersResponse?.items
   const totalPages = usersResponse?.total_pages
 
-  const isAllowed = hasAnyRole(user?.roles, [
+  const isAllowed = hasAnyRole(currentUser?.roles, [
     UserRole.LOCAL_AUTHORITY_ADMIN,
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
   useEffect(() => {
-    if (user && !isAllowed) {
+    if (currentUser && !isAllowed) {
       router.replace('/unauthorised')
     }
-  }, [user, isAllowed, router])
+  }, [currentUser, isAllowed, router])
 
   if (userLoading) return <Loader2 className="animate-spin" />
 
