@@ -2,45 +2,25 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/setup-ollama.sh"
-
 cleanup() {
     echo ""
     echo "Shutting down worker..."
-    cleanup_ollama
     exit 0
 }
 
 trap cleanup SIGINT SIGTERM
 
-echo "Starting Minute Worker with MPS Acceleration"
+echo "Starting Local Transcribe Worker"
 echo ""
 
 if [ ! -f .env ]; then
     echo "Creating .env from .env.local..."
     cp .env.local .env
-    echo "IMPORTANT: Edit .env and set WHISPLY_HF_TOKEN"
-    echo "Get token from: https://huggingface.co/settings/tokens"
     echo ""
-    read -p "Press Enter after adding your HuggingFace token to .env..."
 fi
 
 echo "Checks:"
-echo -n "[1/5] MPS availability... "
-MPS_AVAILABLE=$(poetry run python -c "import torch; print(torch.backends.mps.is_available())" 2>/dev/null || echo "false")
-if [ "$MPS_AVAILABLE" = "True" ]; then
-    echo "✓"
-else
-    echo "✗ (will use CPU)"
-fi
-
-echo ""
-echo "[2/5] Ollama Setup:"
-setup_ollama || exit 1
-
-echo ""
-echo "[3/5] Docker Desktop:"
+echo "[1/2] Docker Desktop:"
 echo -n "  Checking Docker... "
 if ! docker info > /dev/null 2>&1; then
     echo "✗ (not running)"
@@ -84,7 +64,7 @@ wait_for_service() {
 }
 
 echo ""
-echo "[4/5] Service Health Checks:"
+echo "[2/2] Service Health Checks:"
 
 # Start db and elasticmq first — backend depends on queues existing
 echo -n "  Starting db and elasticmq... "
@@ -122,7 +102,7 @@ wait_for_service "Frontend" \
 echo "✓"
 
 echo ""
-echo "Rest of the App is Ready:"
+echo "App is Ready:"
 echo "  Application: http://localhost:3000"
 echo ""
 echo "Starting worker (Ctrl+C to stop)..."
