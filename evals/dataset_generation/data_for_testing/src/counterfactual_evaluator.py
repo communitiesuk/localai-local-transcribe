@@ -95,10 +95,7 @@ async def _rewrite_transcript(
 
 
 def _waf_safe(text: str) -> str:
-    # Azure Application Gateway WAF (ModSecurity) flags ASCII single-quote sequences
-    # that match SQL injection patterns (e.g. 'value' = 'other').  Replacing with the
-    # typographic right-single-quotation-mark avoids false-positive WAF blocks while
-    # keeping the text readable.
+    # Azure WAF protection
     return text.replace("'", "\u2019")
 
 
