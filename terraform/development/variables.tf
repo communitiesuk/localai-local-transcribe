@@ -17,6 +17,7 @@ variable "alarm_email_address" {
 }
 
 variable "maintenance_mode_on" {
+  description = "Enable maintenance mode"
   type    = bool
   default = false
 }
