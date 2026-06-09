@@ -133,10 +133,20 @@ async def list_users(
 
 
 @users_router.get("/{user_id}")
-async def get_target_user(
-    _: OrganisationAdminDep,
-    target_user: TargetUserDep,
-) -> GetUserResponse:
+async def get_target_user(user: UserDep, target_user: TargetUserDep, session: SQLSessionDep) -> GetUserResponse:
+    if is_system_admin(user):
+        return to_user_response(target_user)
+
+    if not target_user.organisation_id:
+        raise HTTPException(status_code=403, detail="Only an system admin can access this resource")
+
+    organisation = await session.get(Organisation, target_user.organisation_id)
+    if organisation is None:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can access this resource")
+
     return to_user_response(target_user)
 
 
