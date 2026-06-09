@@ -69,7 +69,7 @@ async def test_get_current_user_existing_user(monkeypatch, session):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_fallsback_to_email_if_no_subject_id(monkeypatch, session):
+async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch, session):
     mock_user = User(
         id=uuid4(),
         email=TEST_EMAIL,
