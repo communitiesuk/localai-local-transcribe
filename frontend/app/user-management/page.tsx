@@ -16,9 +16,11 @@ import { UserRole, hasAnyRole } from '@/lib/utils'
 export default function UserManagementPage() {
   const router = useRouter()
 
-  const { data: user, isLoading: userLoading } = useQuery(
-    getUserUsersMeGetOptions()
-  )
+  const {
+    data: user,
+    isLoading: userLoading,
+    isError: userError,
+  } = useQuery(getUserUsersMeGetOptions())
 
   const organisationId = user?.organisation_id
   const { data: organisation } = useQuery({
@@ -31,10 +33,11 @@ export default function UserManagementPage() {
   })
 
   const [currentPage, setCurrentPage] = useState(1)
-  const { data: usersResponse, isLoading: usersLoading } = useUsers(
-    currentPage,
-    USERS_PER_PAGE
-  )
+  const {
+    data: usersResponse,
+    isLoading: usersLoading,
+    isError: usersError,
+  } = useUsers(currentPage, USERS_PER_PAGE)
   const users = usersResponse?.items
   const totalPages = usersResponse?.total_pages
 
@@ -51,8 +54,10 @@ export default function UserManagementPage() {
 
   if (userLoading) return <Loader2 className="animate-spin" />
 
+  if (userError || usersError) return <p>Error: Failed to load users.</p>
+
   return (
-    <div className="mx-auto max-w-3xl pt-1">
+    <>
       <Button
         variant="link"
         className="mb-4 self-start px-0! underline hover:decoration-2"
@@ -216,6 +221,6 @@ export default function UserManagementPage() {
           </div>
         </nav>
       )}
-    </div>
+    </>
   )
 }
