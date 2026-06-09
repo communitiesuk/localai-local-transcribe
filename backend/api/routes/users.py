@@ -97,14 +97,13 @@ async def create_user(
 
 @users_router.get("")
 async def list_users(
-    organisation: OrganisationAdminDep,
-    user: UserDep,
+    admin: OrganisationAdminDep,
     session: SQLSessionDep,
     page: int = Query(DEFAULT_PAGE, ge=DEFAULT_PAGE),
     page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ) -> PaginatedUsersResponse:
     users = []
-    if is_system_admin(user):
+    if is_system_admin(admin):
         count = await get_user_count(session)
         users = await get_users(
             session,
@@ -112,6 +111,7 @@ async def list_users(
             page_size=page_size,
         )
     else:
+        organisation = await session.get(Organisation, admin.organisation_id)
         count = await get_user_count(
             session,
             organisation=organisation,

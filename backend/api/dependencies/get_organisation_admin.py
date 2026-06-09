@@ -4,11 +4,14 @@ from fastapi import Depends, HTTPException
 
 from backend.api.dependencies.get_current_user import UserDep
 from backend.api.dependencies.get_session import SQLSessionDep
-from common.auth import is_admin_for_org
-from common.database.postgres_models import Organisation
+from common.auth import is_admin_for_org, is_system_admin
+from common.database.postgres_models import Organisation, User
 
 
-async def get_org_admin(user: UserDep, session: SQLSessionDep) -> Organisation:
+async def get_org_admin(user: UserDep, session: SQLSessionDep) -> User:
+    if is_system_admin(user):
+        return user
+
     if not user.organisation_id:
         raise HTTPException(status_code=403, detail="User not in organisation")
 
@@ -22,7 +25,7 @@ async def get_org_admin(user: UserDep, session: SQLSessionDep) -> Organisation:
             detail="Only an organisation admin can perform this action",
         )
 
-    return organisation
+    return user
 
 
-OrganisationAdminDep = Annotated[Organisation, Depends(get_org_admin)]
+OrganisationAdminDep = Annotated[User, Depends(get_org_admin)]
