@@ -78,7 +78,7 @@ export default function UserManagementPage() {
         <p className="govuk-body">Total Users: {usersResponse.total_count}</p>
       )}
 
-      <button type="submit" className="govuk-button" data-module="govuk-button">
+      <button type="button" className="govuk-button" data-module="govuk-button">
         Invite new user
       </button>
 
