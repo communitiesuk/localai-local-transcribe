@@ -67,7 +67,6 @@ requires-poetry = "=2.4.1"
 
 # add common dependencies here
 [tool.poetry.dependencies]
-cryptography = "^44.0.2"
 pydantic-settings = "^2.5.2"
 alembic = "^1.13.3"
 sqlmodel = "^0.0.27"
@@ -83,17 +82,18 @@ sentry-sdk = {extras = ["fastapi"], version = "^2.18.0"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
 asyncpg = "^0.30.0"
 markdownify = "^1.2.0"
-python-multipart = "^0.0.22"
+python-multipart = "^0.0.27"
 i-dot-ai-utilities = "^0.4.4"
 azure-servicebus = "^7.14.2"
 mypy-boto3-sqs = "^1.42.3"
 google-genai = "^1.10.0"
-openai = "^1.42.0"
+openai = "^2.20.0"
 ffmpeg-python = "^0.2.0"
 azure-storage-blob = "^12.26.0"
 azure-identity = "^1.23.1"
 jinja2 = "^3.1.4"
 pydantic = {extras = ["email"], version = "^2.13.4"}
+orjson = "^3.11.9"
 
 [tool.poetry.group.backend.dependencies]
 pyjwt = "^2.9.0"
@@ -119,7 +119,7 @@ pydub = ">=0.25.1,<0.26.0"
 
 [tool.poetry.group.evals-summarisation.dependencies]
 datasets = "^3.6.0"
-dspy-ai = "^2.0.4"
+dspy = "^3.1.3"
 jinja2 = "^3.1.4"
 langchain = "^1.2.10"
 langchain-core = "^1.2.17"

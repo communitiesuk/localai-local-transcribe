@@ -58,7 +58,13 @@ variable "load_balancer_domain_name" {
 
 variable "ip_allowlist" {
   type        = list(string)
-  description = "List of allowed IPs - if empty then no ip restrictions are applied"
+  description = "List of allowed IPs - if both this and ipv6_allowlist are empty then no ip restrictions are applied"
+  default     = []
+}
+
+variable "ipv6_allowlist" {
+  type        = list(string)
+  description = "List of allowed IPv6 IPs - if both this and ip_allowlist are empty then no ip restrictions are applied"
   default     = []
 }
 
