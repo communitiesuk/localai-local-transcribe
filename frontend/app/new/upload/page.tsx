@@ -18,7 +18,7 @@ export default function RecordAudio() {
           </span>
         </Link>
       </Button>
-      <h1 className="text-3xl font-bold">Upload a file</h1>
+      <h1 className="text-3xl font-bold">Upload a recording file</h1>
       <AudioUploadForm />
     </div>
   )
