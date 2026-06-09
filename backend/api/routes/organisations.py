@@ -28,9 +28,13 @@ async def list_organisations(
 
 @organisations_router.get("/organisations/{organisation_id}", response_model=OrganisationResponse, status_code=200)
 async def get_organisation(
-    _: OrganisationAdminDep, session: SQLSessionDep, organisation_id: uuid.UUID
+    admin: OrganisationAdminDep, session: SQLSessionDep, organisation_id: uuid.UUID
 ) -> OrganisationResponse:
     """Get organisation. Only accessible to organisation admins."""
+    if admin.organisation_id != organisation_id:
+        raise HTTPException(
+            status_code=403, detail="This action can only be performed by an admin of this organisation."
+        )
     organisation = await session.get(Organisation, organisation_id)
     if organisation is None:
         raise HTTPException(status_code=404, detail="Organisation not found")
