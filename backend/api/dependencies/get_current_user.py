@@ -47,7 +47,10 @@ async def get_current_user(
         user = (await session.exec(statement)).first()
 
         if not user:
-            # Try to find user by email address
+            # Try to find user by email address, this is a fallback for legacy
+            # accounts which do not yet have a subject id associated.
+            # After this login, a subject id will be added to the account and login
+            # matching by email should no longer be possible
             statement = select(User).where(User.email == email and User.subject_id is None)
             user = (await session.exec(statement)).first()
 
