@@ -4,44 +4,24 @@ import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useQuery } from '@tanstack/react-query'
-import {
-  getUserUsersMeGetOptions,
-  getOrganisationOrganisationsOrganisationIdGetOptions,
-} from '@/lib/client/@tanstack/react-query.gen'
-import { useEffect } from 'react'
-import { UserRole, hasAnyRole } from '@/lib/utils'
+import { UserRole } from '@/lib/utils'
 import PaginatedUsers from '@/components/users/paginated-users'
+import { useAuthorisedUser } from '@/hooks/use-authorised-user'
+import { useOrganisation } from '@/hooks/use-organisation'
 
 export default function UserManagementPage() {
   const router = useRouter()
 
   const {
-    data: currentUser,
+    currentUser,
     isLoading: userLoading,
     isError: userError,
-  } = useQuery(getUserUsersMeGetOptions())
-
-  const organisationId = currentUser?.organisation_id
-  const { data: organisation } = useQuery({
-    ...getOrganisationOrganisationsOrganisationIdGetOptions({
-      path: {
-        organisation_id: organisationId!, // wont be undefined due to enabled
-      },
-    }),
-    enabled: !!organisationId,
-  })
-
-  const isAllowed = hasAnyRole(currentUser?.roles, [
+  } = useAuthorisedUser([
     UserRole.LOCAL_AUTHORITY_ADMIN,
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  useEffect(() => {
-    if (currentUser && !isAllowed) {
-      router.replace('/unauthorised')
-    }
-  }, [currentUser, isAllowed, router])
+  const { data: organisation } = useOrganisation(currentUser?.organisation_id)
 
   if (userLoading) return <Loader2 className="animate-spin" />
 
