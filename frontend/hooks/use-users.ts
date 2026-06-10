@@ -10,5 +10,6 @@ export function useUsers(page: number, pageSize: number = USERS_PER_PAGE) {
         page_size: pageSize,
       },
     }),
+    placeholderData: (previousData) => previousData,
   })
 }

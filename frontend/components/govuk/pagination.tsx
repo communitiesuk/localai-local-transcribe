@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils'
 
+import Link from 'next/link'
+
 type Props = {
   currentPage: number
   totalPages: number
@@ -13,7 +15,7 @@ export function GovukPagination({ currentPage, totalPages, getHref }: Props) {
     <nav className="govuk-pagination" aria-label="Pagination">
       {currentPage > 1 && (
         <div className="govuk-pagination__prev">
-          <a
+          <Link
             className="govuk-link govuk-pagination__link"
             href={getHref(currentPage - 1)}
             rel="prev"
@@ -32,7 +34,7 @@ export function GovukPagination({ currentPage, totalPages, getHref }: Props) {
             <span className="govuk-pagination__link-title">
               Previous<span className="govuk-visually-hidden"> page</span>
             </span>
-          </a>
+          </Link>
         </div>
       )}
       <ul className="govuk-pagination__list">
@@ -44,20 +46,20 @@ export function GovukPagination({ currentPage, totalPages, getHref }: Props) {
               page === currentPage && 'govuk-pagination__item--current'
             )}
           >
-            <a
+            <Link
               className="govuk-link govuk-pagination__link"
               href={getHref(page)}
               aria-label={`Page ${page}`}
               aria-current={page === currentPage ? 'page' : undefined}
             >
               {page}
-            </a>
+            </Link>
           </li>
         ))}
       </ul>
       {currentPage < totalPages && (
         <div className="govuk-pagination__next">
-          <a
+          <Link
             className="govuk-link govuk-pagination__link"
             href={getHref(currentPage + 1)}
             rel="next"
@@ -76,7 +78,7 @@ export function GovukPagination({ currentPage, totalPages, getHref }: Props) {
             >
               <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
             </svg>
-          </a>
+          </Link>
         </div>
       )}
     </nav>
