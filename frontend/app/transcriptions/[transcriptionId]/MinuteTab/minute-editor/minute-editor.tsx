@@ -295,7 +295,7 @@ export function MinuteEditor({
         </div>
       </div>
 
-      {!minuteVersion.too_short && minuteVersion.guardrail_results && (
+      {!minuteVersion.too_short && (
         <GuardrailResponseComponent
           guardrailResults={minuteVersion.guardrail_results}
         />
