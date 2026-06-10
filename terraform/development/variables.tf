@@ -15,3 +15,9 @@ variable "alarm_email_address" {
   type        = string
   sensitive   = true
 }
+
+variable "maintenance_mode_on" {
+  description = "Enable maintenance mode"
+  type        = bool
+  default     = false
+}
