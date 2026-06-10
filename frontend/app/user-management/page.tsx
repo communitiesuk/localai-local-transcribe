@@ -14,6 +14,14 @@ import { useEffect } from 'react'
 import { USERS_PER_PAGE } from '@/lib/constants'
 import { UserRole, hasAnyRole } from '@/lib/utils'
 import { GovukPagination } from '@/components/govuk/pagination'
+import {
+  GovukTable,
+  GovukTableHead,
+  GovukTableBody,
+  GovukTableRow,
+  GovukTableCell,
+  GovukTableHeaderCell,
+} from '@/components/govuk/table'
 
 export default function UserManagementPage() {
   const router = useRouter()
@@ -95,31 +103,22 @@ export default function UserManagementPage() {
       {usersLoading && <Loader2 className="animate-spin" />}
 
       {users && (
-        <table className="govuk-table">
-          <thead className="govuk-table__head">
-            <tr className="govuk-table__row">
-              <th scope="col" className="govuk-table__header">
-                Name
-              </th>
-              <th scope="col" className="govuk-table__header">
-                Email
-              </th>
-              <th
-                scope="col"
-                className="govuk-table__header govuk-table__header--numeric"
-              >
-                {/* View Account placeholder column */}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="govuk-table__body">
+        <GovukTable>
+          <GovukTableHead>
+            <GovukTableRow>
+              <GovukTableHeaderCell>Name</GovukTableHeaderCell>
+              <GovukTableHeaderCell>Email</GovukTableHeaderCell>
+              <GovukTableHeaderCell>
+                &nbsp; {/* View Account placeholder column */}
+              </GovukTableHeaderCell>
+            </GovukTableRow>
+          </GovukTableHead>
+          <GovukTableBody>
             {users.map((user) => (
-              <tr key={user.id} className="govuk-table__row">
-                <td scope="row" className="govuk-table__cell">
-                  {user.name}
-                </td>
-                <td className="govuk-table__cell">{user.email}</td>
-                <td className="govuk-table__cell govuk-table__cell--numeric">
+              <GovukTableRow key={user.id}>
+                <GovukTableCell>{user.name}</GovukTableCell>
+                <GovukTableCell>{user.email}</GovukTableCell>
+                <GovukTableCell>
                   <div className="flex justify-end gap-3">
                     {hasAnyRole(user?.roles, [
                       UserRole.LOCAL_AUTHORITY_ADMIN,
@@ -138,11 +137,11 @@ export default function UserManagementPage() {
                       View Account
                     </a>
                   </div>
-                </td>
-              </tr>
+                </GovukTableCell>
+              </GovukTableRow>
             ))}
-          </tbody>
-        </table>
+          </GovukTableBody>
+        </GovukTable>
       )}
 
       {(totalPages ?? 0) > 1 && (
