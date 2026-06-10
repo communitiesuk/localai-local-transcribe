@@ -39,8 +39,6 @@ This will build and run 5 containers:
 
 #### LLM and Transcription Services
 
-If you want to run these services locally, see `LOCAL_SETUP.md` and follow the instructions there.
-
 If you have access to a supported LLM and Transcription provider, you will need to fill in the associated `.env` variables and configure `common/settings.py` accordingly. For example, to use transcription and LLM services via Azure APIM, update the following values:
 
 ##### In `.env`
@@ -52,7 +50,7 @@ Note:
 - These APIM values can be found on the [Azure APIM Portal](https://portal.api.azc.test.communities.gov.uk/), including:
   - AZURE_APIM_URL in the format `https://{{host}}.gov.uk/{{product_name}}/`
   - AZURE_APIM_API_VERSION in the format `yyyy-mm-dd`
-- The `AZURE_APIM_ACCESS_TOKEN` is short lived and so must be regenerated every 2 hours.
+- The `AZURE_APIM_ACCESS_TOKEN` is short lived and so must be regenerated every 2 hours. Run `./apim.sh` from the project root to fetch a fresh token and update `.env` automatically.
 
 ##### In `common/settings.py`:
 
