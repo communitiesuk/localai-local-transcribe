@@ -23,7 +23,6 @@ RUN poetry export \
       -f requirements.txt \
       --output requirements.txt \
       --with worker \
-      --with local-dev \
       --without dev \
       --without-hashes
 
@@ -64,7 +63,7 @@ RUN groupadd -g 1000 appuser && \
 WORKDIR /app
 
 # Create writable directories
-RUN mkdir -p /app/config /app/logs /app/.whisply_temp && \
+RUN mkdir -p /app/config /app/logs && \
     chown -R appuser:appuser /app
 
 # Copy built site-packages from builder
