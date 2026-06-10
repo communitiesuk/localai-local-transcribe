@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -66,7 +67,7 @@ export default function UserManagementPage() {
   if (userError || usersError) return <p>Error: Failed to load users.</p>
 
   return (
-    <>
+    <Suspense fallback={null}>
       <Button
         variant="link"
         className="mb-4 self-start px-0! underline hover:decoration-2"
@@ -151,6 +152,6 @@ export default function UserManagementPage() {
           getHref={getHref}
         />
       )}
-    </>
+    </Suspense>
   )
 }
