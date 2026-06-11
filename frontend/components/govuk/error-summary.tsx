@@ -2,59 +2,26 @@ import { cn } from '@/lib/utils'
 
 export type ErrorItem = { href?: string; text: string }
 
-type CommonProps = {
+type Props = {
   title?: string
   description?: string
   className?: string
+  errorList: ErrorItem[]
 } & Omit<
   React.HTMLAttributes<HTMLDivElement>,
   'className' | 'children' | 'role'
 >
 
-type ListProps = CommonProps & {
-  errorList: ErrorItem[]
-  errors?: never
-}
-
-type RhfErrors = Record<string, { message?: string } | undefined>
-
-type RhfProps = CommonProps & {
-  errorList?: never
-  errors: RhfErrors
-}
-
-type Props = ListProps | RhfProps
-
-function normaliseErrors(
-  errorList: ErrorItem[] | undefined,
-  errors: RhfErrors | undefined
-): ErrorItem[] {
-  if (errorList) return errorList
-  if (errors) {
-    return Object.entries(errors).map(([name, fieldError]) => ({
-      text: fieldError?.message ?? name,
-    }))
-  }
-  return []
-}
-
-export function GovukErrorSummary(props: Props) {
-  const {
-    title = 'There is a problem',
-    description,
-    className,
-    errorList,
-    errors,
-    ...spreadable
-  } = props as CommonProps & {
-    errorList?: ErrorItem[]
-    errors?: RhfErrors
-  }
-  const items = normaliseErrors(errorList, errors)
-
+export function GovukErrorSummary({
+  title = 'There is a problem',
+  description,
+  className,
+  errorList,
+  ...rest
+}: Props) {
   return (
     <div
-      {...spreadable}
+      {...rest}
       className={cn('govuk-error-summary', className)}
       data-module="govuk-error-summary"
     >
@@ -63,8 +30,8 @@ export function GovukErrorSummary(props: Props) {
         <div className="govuk-error-summary__body">
           {description && <p>{description}</p>}
           <ul className="govuk-list govuk-error-summary__list">
-            {items.map((item, index) => (
-              <li key={`${item.text}-${index}`}>
+            {errorList.map((item) => (
+              <li key={item.text}>
                 {item.href ? <a href={item.href}>{item.text}</a> : item.text}
               </li>
             ))}

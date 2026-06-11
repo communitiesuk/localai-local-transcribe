@@ -12,7 +12,7 @@ type Props = {
   'href' | 'className' | 'children' | 'onClick'
 >
 
-export function GovukBackLinkClient({
+export function GovukBackButton({
   onClick,
   inverse,
   className,

@@ -6,10 +6,7 @@ import {
   createContext,
   forwardRef,
   isValidElement,
-  useCallback,
   useContext,
-  useMemo,
-  useState,
 } from 'react'
 
 type RadiosContextValue = {
@@ -32,17 +29,25 @@ function useRadiosContext(componentName: string): RadiosContextValue {
   return ctx
 }
 
+// A single option for the `options` prop; `hint` is optional.
+export type RadioOption = {
+  label: React.ReactNode
+  value: string
+  hint?: React.ReactNode
+}
+
 type RadiosProps = {
   name: string
   value?: string
-  defaultValue?: string
   onChange?: (value: string) => void
   disabled?: boolean
   className?: string
-  children: React.ReactNode
+  // Primary API. Use GovukRadios.Item children for advanced cases instead.
+  options?: RadioOption[]
+  children?: React.ReactNode
 } & Omit<
   React.HTMLAttributes<HTMLDivElement>,
-  'className' | 'children' | 'onChange' | 'defaultValue'
+  'className' | 'children' | 'onChange'
 >
 
 const GovukRadiosRoot = forwardRef<HTMLDivElement, RadiosProps>(
@@ -50,37 +55,22 @@ const GovukRadiosRoot = forwardRef<HTMLDivElement, RadiosProps>(
     {
       name,
       value,
-      defaultValue,
       onChange,
       disabled,
       className,
+      options,
       children,
       ...rest
     },
     ref
   ) {
-    const isControlled = value !== undefined
-    const [uncontrolledValue, setUncontrolledValue] = useState<
-      string | undefined
-    >(defaultValue)
+    const setValue = (next: string) => onChange?.(next)
 
-    const selectedValue = isControlled ? value : uncontrolledValue
-
-    const setValue = useCallback(
-      (next: string) => {
-        if (!isControlled) {
-          setUncontrolledValue(next)
-        }
-        onChange?.(next)
-      },
-      [isControlled, onChange]
-    )
-
-    // Pre-compute item order at the root. Items are direct children whose
-    // component type === GovukRadiosItem. The first item gets the bare `${name}`
-    // as its id, subsequent items get `${name}-2`, `${name}-3`, … matching the
-    // canonical GDS reference markup.
-    const orderedValues = useMemo(() => {
+    // Canonical GDS ids: first item → `${name}`, rest → `${name}-2`, …
+    const orderedValues = (() => {
+      if (options) {
+        return options.map((o) => o.value)
+      }
       const out: string[] = []
       Children.forEach(children, (child) => {
         if (!isValidElement(child)) return
@@ -92,31 +82,35 @@ const GovukRadiosRoot = forwardRef<HTMLDivElement, RadiosProps>(
         }
       })
       return out
-    }, [children])
+    })()
 
-    const getItemIndex = useCallback(
-      (itemValue: string) => {
-        const idx = orderedValues.indexOf(itemValue)
-        return idx === -1 ? 0 : idx
-      },
-      [orderedValues]
-    )
+    const getItemIndex = (itemValue: string) => {
+      const idx = orderedValues.indexOf(itemValue)
+      return idx === -1 ? 0 : idx
+    }
 
-    const contextValue = useMemo<RadiosContextValue>(
-      () => ({
-        name,
-        selectedValue,
-        disabled: Boolean(disabled),
-        setValue,
-        getItemIndex,
-      }),
-      [name, selectedValue, disabled, setValue, getItemIndex]
-    )
+    const contextValue: RadiosContextValue = {
+      name,
+      selectedValue: value,
+      disabled: Boolean(disabled),
+      setValue,
+      getItemIndex,
+    }
 
     return (
       <RadiosContext.Provider value={contextValue}>
         <div {...rest} ref={ref} className={cn('govuk-radios', className)}>
-          {children}
+          {options
+            ? options.map((option) => (
+                <GovukRadiosItem
+                  key={option.value}
+                  value={option.value}
+                  hint={option.hint}
+                >
+                  {option.label}
+                </GovukRadiosItem>
+              ))
+            : children}
         </div>
       </RadiosContext.Provider>
     )

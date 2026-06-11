@@ -1,26 +1,16 @@
 import { cn } from '@/lib/utils'
 
 type Props = {
-  describedBy?: string
   className?: string
   children: React.ReactNode
 } & Omit<
   React.FieldsetHTMLAttributes<HTMLFieldSetElement>,
-  'className' | 'children' | 'aria-describedby'
+  'className' | 'children'
 >
 
-export function GovukFieldset({
-  describedBy,
-  className,
-  children,
-  ...rest
-}: Props) {
+export function GovukFieldset({ className, children, ...rest }: Props) {
   return (
-    <fieldset
-      {...rest}
-      aria-describedby={describedBy}
-      className={cn('govuk-fieldset', className)}
-    >
+    <fieldset {...rest} className={cn('govuk-fieldset', className)}>
       {children}
     </fieldset>
   )

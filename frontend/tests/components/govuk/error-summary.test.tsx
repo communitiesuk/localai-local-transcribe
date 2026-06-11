@@ -89,30 +89,6 @@ describe('<GovukErrorSummary />', () => {
     expect(first.textContent).toBe('Please fix the errors below.')
   })
 
-  it('mode 2 (RHF errors): renders text-only rows using error.message', () => {
-    render(
-      <GovukErrorSummary
-        errors={{ a: { message: 'A failed' }, b: { message: 'B failed' } }}
-      />
-    )
-    expect(screen.getByText('A failed')).toBeInTheDocument()
-    expect(screen.getByText('B failed')).toBeInTheDocument()
-  })
-
-  it('mode 2 fallback: missing message falls back to the field key', () => {
-    render(<GovukErrorSummary errors={{ a: {} }} />)
-    expect(screen.getByText('a')).toBeInTheDocument()
-  })
-
-  it('regression — mode 2 with empty errors renders an empty list with no crash', () => {
-    const { container } = render(<GovukErrorSummary errors={{}} />)
-    const list = container.querySelector(
-      '.govuk-error-summary__list'
-    ) as HTMLElement
-    expect(list).not.toBeNull()
-    expect(list.children.length).toBe(0)
-  })
-
   it('regression — caller cannot clobber the canonical data-module or className via rest', () => {
     const hostile = { 'data-module': 'evil' } as Record<string, string>
     const { container } = render(

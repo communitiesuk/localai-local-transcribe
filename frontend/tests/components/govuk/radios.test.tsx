@@ -67,33 +67,7 @@ describe('<GovukRadios />', () => {
     expect(inputs[1].checked).toBe(false)
   })
 
-  it('uncontrolled: defaultValue="no" checks the second input on first render', () => {
-    const { container } = render(
-      <GovukRadios name="example" defaultValue="no">
-        <GovukRadios.Item value="yes">Yes</GovukRadios.Item>
-        <GovukRadios.Item value="no">No</GovukRadios.Item>
-      </GovukRadios>
-    )
-    const inputs = container.querySelectorAll(
-      'input.govuk-radios__input'
-    ) as NodeListOf<HTMLInputElement>
-    expect(inputs[0].checked).toBe(false)
-    expect(inputs[1].checked).toBe(true)
-  })
 
-  it('controlled wins: value + defaultValue → controlled wins, defaultValue ignored', () => {
-    const { container } = render(
-      <GovukRadios name="example" value="yes" defaultValue="no">
-        <GovukRadios.Item value="yes">Yes</GovukRadios.Item>
-        <GovukRadios.Item value="no">No</GovukRadios.Item>
-      </GovukRadios>
-    )
-    const inputs = container.querySelectorAll(
-      'input.govuk-radios__input'
-    ) as NodeListOf<HTMLInputElement>
-    expect(inputs[0].checked).toBe(true)
-    expect(inputs[1].checked).toBe(false)
-  })
 
   it('onChange fires with the new value on input change (controlled)', async () => {
     const onChange = vi.fn()
@@ -121,20 +95,7 @@ describe('<GovukRadios />', () => {
     expect((screen.getByLabelText('No') as HTMLInputElement).checked).toBe(true)
   })
 
-  it('onChange fires when uncontrolled state changes via user interaction', async () => {
-    const onChange = vi.fn()
-    render(
-      <GovukRadios name="example" onChange={onChange}>
-        <GovukRadios.Item value="yes">Yes</GovukRadios.Item>
-        <GovukRadios.Item value="no">No</GovukRadios.Item>
-      </GovukRadios>
-    )
-    await userEvent.click(screen.getByLabelText('Yes'))
-    expect(onChange).toHaveBeenLastCalledWith('yes')
-    expect((screen.getByLabelText('Yes') as HTMLInputElement).checked).toBe(
-      true
-    )
-  })
+
 
   it('disabled on parent disables all inputs', () => {
     const { container } = render(
@@ -260,5 +221,95 @@ describe('<GovukRadios />', () => {
     expect((screen.getByLabelText('Yes') as HTMLInputElement).checked).toBe(
       true
     )
+  })
+})
+
+describe('<GovukRadios options={[…]} />', () => {
+  const options = [
+    { label: 'England', value: 'england' },
+    { label: 'Scotland', value: 'scotland' },
+    { label: 'Wales', value: 'wales' },
+  ]
+
+  it('renders all options with canonical markup and auto-derived ids', () => {
+    const { container } = render(
+      <GovukRadios name="where-do-you-live" options={options} />
+    )
+    const items = container.querySelectorAll('.govuk-radios__item')
+    expect(items).toHaveLength(3)
+
+    const inputs = container.querySelectorAll(
+      'input.govuk-radios__input'
+    ) as NodeListOf<HTMLInputElement>
+    expect(inputs[0].getAttribute('id')).toBe('where-do-you-live')
+    expect(inputs[1].getAttribute('id')).toBe('where-do-you-live-2')
+    expect(inputs[2].getAttribute('id')).toBe('where-do-you-live-3')
+    expect(inputs[0].getAttribute('value')).toBe('england')
+    expect(inputs[1].getAttribute('value')).toBe('scotland')
+    expect(inputs[2].getAttribute('value')).toBe('wales')
+
+    const labels = container.querySelectorAll(
+      'label.govuk-label.govuk-radios__label'
+    ) as NodeListOf<HTMLLabelElement>
+    expect(labels[0].textContent).toBe('England')
+    expect(labels[1].textContent).toBe('Scotland')
+    expect(labels[2].textContent).toBe('Wales')
+  })
+
+  it('renders hint text when provided in an option', () => {
+    const optionsWithHint = [
+      { label: 'Yes', value: 'yes', hint: 'Choose this if it applies' },
+      { label: 'No', value: 'no' },
+    ]
+    const { container } = render(
+      <GovukRadios name="example" options={optionsWithHint} />
+    )
+    const hint = container.querySelector(
+      '.govuk-hint.govuk-radios__hint'
+    ) as HTMLElement
+    expect(hint).not.toBeNull()
+    expect(hint.textContent).toBe('Choose this if it applies')
+    const firstInput = container.querySelector(
+      'input.govuk-radios__input'
+    ) as HTMLInputElement
+    expect(firstInput.getAttribute('aria-describedby')).toBe('example-hint')
+  })
+
+  it('controlled: value prop checks the correct option', () => {
+    const { container } = render(
+      <GovukRadios name="where-do-you-live" options={options} value="scotland" />
+    )
+    const inputs = container.querySelectorAll(
+      'input.govuk-radios__input'
+    ) as NodeListOf<HTMLInputElement>
+    expect(inputs[0].checked).toBe(false)
+    expect(inputs[1].checked).toBe(true)
+    expect(inputs[2].checked).toBe(false)
+  })
+
+
+
+  it('onChange fires with the selected value when an option is clicked', async () => {
+    const onChange = vi.fn()
+    render(
+      <GovukRadios
+        name="where-do-you-live"
+        options={options}
+        onChange={onChange}
+      />
+    )
+    await userEvent.click(screen.getByLabelText('Scotland'))
+    expect(onChange).toHaveBeenCalledTimes(1)
+    expect(onChange).toHaveBeenCalledWith('scotland')
+  })
+
+  it('disabled prop disables all rendered option inputs', () => {
+    const { container } = render(
+      <GovukRadios name="where-do-you-live" options={options} disabled />
+    )
+    const inputs = container.querySelectorAll(
+      'input.govuk-radios__input'
+    ) as NodeListOf<HTMLInputElement>
+    inputs.forEach((input) => expect(input.disabled).toBe(true))
   })
 })

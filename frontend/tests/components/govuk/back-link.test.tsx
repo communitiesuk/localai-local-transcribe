@@ -1,5 +1,5 @@
 import { GovukBackLink } from '@/components/govuk/back-link'
-import { GovukBackLinkClient } from '@/components/govuk/back-link-client'
+import { GovukBackButton } from '@/components/govuk/back-button'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -60,10 +60,10 @@ describe('<GovukBackLink /> (server, href)', () => {
   })
 })
 
-describe('<GovukBackLinkClient /> (client, onClick)', () => {
+describe('<GovukBackButton /> (client, onClick)', () => {
   it('renders an <a href="#"> with the canonical govuk-back-link class', () => {
     render(
-      <GovukBackLinkClient onClick={() => undefined}>Back</GovukBackLinkClient>
+      <GovukBackButton onClick={() => undefined}>Back</GovukBackButton>
     )
     const link = screen.getByRole('link', { name: 'Back' })
     expect(link.tagName).toBe('A')
@@ -75,21 +75,21 @@ describe('<GovukBackLinkClient /> (client, onClick)', () => {
     const onClick = vi.fn((event: React.MouseEvent<HTMLAnchorElement>) => {
       expect(event.defaultPrevented).toBe(true)
     })
-    render(<GovukBackLinkClient onClick={onClick}>Back</GovukBackLinkClient>)
+    render(<GovukBackButton onClick={onClick}>Back</GovukBackButton>)
     await userEvent.click(screen.getByRole('link', { name: 'Back' }))
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
   it('defaults the text to "Back" when no children are provided', () => {
-    render(<GovukBackLinkClient onClick={() => undefined} />)
+    render(<GovukBackButton onClick={() => undefined} />)
     expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
   })
 
   it('adds the inverse modifier when inverse is true', () => {
     render(
-      <GovukBackLinkClient onClick={() => undefined} inverse>
+      <GovukBackButton onClick={() => undefined} inverse>
         Back
-      </GovukBackLinkClient>
+      </GovukBackButton>
     )
     expect(screen.getByRole('link', { name: 'Back' })).toHaveClass(
       'govuk-back-link--inverse'
@@ -99,9 +99,9 @@ describe('<GovukBackLinkClient /> (client, onClick)', () => {
   it('regression: spread cannot clobber the canonical className', () => {
     const hostile = { className: 'bad' } as Record<string, string>
     render(
-      <GovukBackLinkClient onClick={() => undefined} {...hostile}>
+      <GovukBackButton onClick={() => undefined} {...hostile}>
         Back
-      </GovukBackLinkClient>
+      </GovukBackButton>
     )
     expect(screen.getByRole('link', { name: 'Back' })).toHaveClass(
       'govuk-back-link'
