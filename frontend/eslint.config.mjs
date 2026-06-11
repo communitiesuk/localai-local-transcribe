@@ -16,13 +16,15 @@ export default defineConfig([
           paths: [
             {
               name: '@/components/ui',
-              message: 'Direct imports from @/components/ui are restricted. Reach for @/components/govuk/* instead. Refer to components/govuk/README.md.',
+              message:
+                'Direct imports from @/components/ui are restricted. Reach for @/components/govuk/* instead. Refer to components/govuk/README.md.',
             },
           ],
           patterns: [
             {
               group: ['@/components/ui/*'],
-              message: 'Imports from @/components/ui/* are restricted. Reach for @/components/govuk/* instead. Refer to components/govuk/README.md.',
+              message:
+                'Imports from @/components/ui/* are restricted. Reach for @/components/govuk/* instead. Refer to components/govuk/README.md.',
             },
           ],
         },

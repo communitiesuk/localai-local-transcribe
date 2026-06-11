@@ -61,14 +61,20 @@ describe('<SettingsPage />', () => {
     render(<SettingsPage />)
 
     // Check heading and back link
-    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Settings' })
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
 
     // Check hint text
-    expect(screen.getByText(/After this period the transcriptions/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/After this period the transcriptions/i)
+    ).toBeInTheDocument()
 
     // Check radio buttons (Yes/No options or retention options)
-    const keepIndefinitely = screen.getByLabelText('Keep indefinitely') as HTMLInputElement
+    const keepIndefinitely = screen.getByLabelText(
+      'Keep indefinitely'
+    ) as HTMLInputElement
     const oneDay = screen.getByLabelText('1 day') as HTMLInputElement
     const sevenDays = screen.getByLabelText('7 days') as HTMLInputElement
     const thirtyDays = screen.getByLabelText('30 days') as HTMLInputElement
@@ -115,10 +121,10 @@ describe('<SettingsPage />', () => {
     )
 
     // Manually trigger onSuccess to verify query invalidation
-    const mutationCallArgs = mockMutateAsync.mock.calls[0];
-    const onSuccessCallback = mutationCallArgs[1]?.onSuccess;
+    const mutationCallArgs = mockMutateAsync.mock.calls[0]
+    const onSuccessCallback = mutationCallArgs[1]?.onSuccess
     if (onSuccessCallback) {
-      onSuccessCallback();
+      onSuccessCallback()
     }
 
     expect(mockInvalidateQueries).toHaveBeenCalled()

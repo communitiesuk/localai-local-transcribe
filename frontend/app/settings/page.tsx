@@ -29,7 +29,7 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto flex max-w-3xl items-center gap-2 pt-1 govuk-body">
+      <div className="govuk-body mx-auto flex max-w-3xl items-center gap-2 pt-1">
         <Loader2 className="animate-spin" />
         Loading...
       </div>
@@ -83,13 +83,16 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
   )
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="govuk-!-margin-top-6">
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="govuk-!-margin-top-6"
+    >
       <GovukFormGroup>
         <GovukFieldset describedBy="dataRetention-hint">
           <GovukLegend size="m">Data Retention Period</GovukLegend>
           <GovukHint id="dataRetention-hint">
-            After this period the transcriptions, minutes and audio recording will
-            be permanently deleted.
+            After this period the transcriptions, minutes and audio recording
+            will be permanently deleted.
           </GovukHint>
           <Controller
             control={form.control}
