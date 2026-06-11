@@ -119,8 +119,8 @@ async def test_update_user_roles(
     [
         ([UserRole.MHCLG_SUPPORT_ADMIN], [UserRole.STANDARD_USER], True, 204),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, 204),
-        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], False, 403),
-        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, 403),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], False, 404),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, 404),
     ],
 )
 async def test_delete_user(
