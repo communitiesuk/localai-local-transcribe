@@ -1,5 +1,6 @@
 import logging
 import uuid
+from functools import cache
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import delete
@@ -10,7 +11,7 @@ from common.database.postgres_models import (
     Chat,
     Transcription,
 )
-from common.services.queue_services import get_queue_service
+from common.services.queue_services import QueueService, ReceiptHandle, get_queue_service
 from common.settings import get_settings
 from common.types import (
     ChatCreateRequest,
@@ -23,9 +24,12 @@ from common.types import (
 
 settings = get_settings()
 chat_router = APIRouter(tags=["Chat"])
-llm_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
-)
+
+
+@cache
+def _get_llm_queue_service() -> QueueService[ReceiptHandle]:
+    return get_queue_service(settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME)
+
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +78,7 @@ async def create_chat(
     session.add(chat)
     await session.commit()
     await session.refresh(chat)
-    llm_queue_service.publish_message(WorkerMessage(id=chat.id, type=TaskType.INTERACTIVE))
+    _get_llm_queue_service().publish_message(WorkerMessage(id=chat.id, type=TaskType.INTERACTIVE))
     return ChatCreateResponse(id=chat.id)
 
 

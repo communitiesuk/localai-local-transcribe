@@ -1,6 +1,7 @@
 import logging
 import math
 import uuid
+from functools import cache
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
@@ -14,7 +15,7 @@ from common.database.postgres_models import (
     Recording,
     Transcription,
 )
-from common.services.queue_services import get_queue_service
+from common.services.queue_services import QueueService, ReceiptHandle, get_queue_service
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import (
@@ -37,9 +38,14 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 transcriptions_router = APIRouter(tags=["Transcriptions"])
-transcription_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
-)
+
+
+@cache
+def _get_transcription_queue_service() -> QueueService[ReceiptHandle]:
+    return get_queue_service(
+        settings.QUEUE_SERVICE_NAME, settings.TRANSCRIPTION_QUEUE_NAME, settings.TRANSCRIPTION_DEADLETTER_QUEUE_NAME
+    )
+
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +140,7 @@ async def create_transcription(
     session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    _get_transcription_queue_service().publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
 
     return TranscriptionCreateResponse(id=transcription.id)
 

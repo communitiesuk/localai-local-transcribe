@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime
+from functools import cache
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import selectinload
@@ -7,7 +8,7 @@ from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
-from common.services.queue_services import get_queue_service
+from common.services.queue_services import QueueService, ReceiptHandle, get_queue_service
 from common.settings import get_settings
 from common.types import (
     EditMessageData,
@@ -22,9 +23,11 @@ from common.types import (
 
 settings = get_settings()
 
-llm_queue_service = get_queue_service(
-    settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME
-)
+
+@cache
+def _get_llm_queue_service() -> QueueService[ReceiptHandle]:
+    return get_queue_service(settings.QUEUE_SERVICE_NAME, settings.LLM_QUEUE_NAME, settings.LLM_DEADLETTER_QUEUE_NAME)
+
 
 minutes_router = APIRouter(tags=["Minutes"])
 
@@ -73,7 +76,7 @@ async def create_minute(
     session.add(minute_version)
     await session.commit()
     await session.refresh(minute_version)
-    llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+    _get_llm_queue_service().publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
 
 
 @minutes_router.get("/minutes/{minutes_id}")
@@ -154,7 +157,7 @@ async def create_minute_version(
     await session.commit()
     await session.refresh(minute_version)
     if request.ai_edit_instructions:
-        llm_queue_service.publish_message(
+        _get_llm_queue_service().publish_message(
             WorkerMessage(
                 id=minute_version.id,
                 data=EditMessageData(source_id=request.ai_edit_instructions.source_id),

@@ -59,7 +59,8 @@ async def test_create_minute_success(mocker, mock_session, mock_minute, mock_min
     mocker.patch("backend.api.routes.minutes.Minute", return_value=minute)
     mocker.patch("backend.api.routes.minutes.MinuteVersion", return_value=minute_version)
 
-    llm = mocker.patch("backend.api.routes.minutes.llm_queue_service")
+    mock_func = mocker.patch("backend.api.routes.minutes._get_llm_queue_service")
+    llm = mock_func.return_value
 
     request = SimpleNamespace(template_name="T", template_id=None, agenda="A")
 

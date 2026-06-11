@@ -210,15 +210,14 @@ def mock_storage_service(mocker):
 
 @pytest.fixture
 def mock_transcription_queue_service(mocker):
-    service = mocker.patch("backend.api.routes.transcriptions.transcription_queue_service")
-    service.publish_message = Mock()
-    return service
+    mock_func = mocker.patch("backend.api.routes.transcriptions._get_transcription_queue_service")
+    return mock_func.return_value
 
 
 @pytest.fixture
-def patch_llm_queue_service(monkeypatch):
+def patch_llm_queue_service(mocker):
     mock_queue = Mock()
-    monkeypatch.setattr("backend.api.routes.chat.llm_queue_service", mock_queue)
+    mocker.patch("backend.api.routes.chat._get_llm_queue_service", return_value=mock_queue)
     return mock_queue
 
 
