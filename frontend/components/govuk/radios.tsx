@@ -52,16 +52,7 @@ type RadiosProps = {
 
 const GovukRadiosRoot = forwardRef<HTMLDivElement, RadiosProps>(
   function GovukRadiosRoot(
-    {
-      name,
-      value,
-      onChange,
-      disabled,
-      className,
-      options,
-      children,
-      ...rest
-    },
+    { name, value, onChange, disabled, className, options, children, ...rest },
     ref
   ) {
     const setValue = (next: string) => onChange?.(next)

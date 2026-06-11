@@ -14,8 +14,6 @@ describe('<GovukFieldset />', () => {
     expect(root).toHaveClass('govuk-fieldset')
   })
 
-
-
   it('composes a caller-supplied className without clobbering the canonical class', () => {
     const { container } = render(
       <GovukFieldset className="mt-4">

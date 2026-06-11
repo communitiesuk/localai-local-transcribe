@@ -44,14 +44,23 @@ function StartIcon() {
   )
 }
 
-function useButtonClasses(variant: Variant, isStartButton?: boolean, className?: string) {
+function useButtonClasses(
+  variant: Variant,
+  isStartButton?: boolean,
+  className?: string
+) {
   const variantClass: Record<Variant, string | undefined> = {
     primary: undefined,
     secondary: 'govuk-button--secondary',
     warning: 'govuk-button--warning',
     inverse: 'govuk-button--inverse',
   }
-  return cn('govuk-button', variantClass[variant], isStartButton && 'govuk-button--start', className)
+  return cn(
+    'govuk-button',
+    variantClass[variant],
+    isStartButton && 'govuk-button--start',
+    className
+  )
 }
 
 export function GovukButton({

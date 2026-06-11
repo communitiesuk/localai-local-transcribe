@@ -62,9 +62,7 @@ describe('<GovukBackLink /> (server, href)', () => {
 
 describe('<GovukBackButton /> (client, onClick)', () => {
   it('renders an <a href="#"> with the canonical govuk-back-link class', () => {
-    render(
-      <GovukBackButton onClick={() => undefined}>Back</GovukBackButton>
-    )
+    render(<GovukBackButton onClick={() => undefined}>Back</GovukBackButton>)
     const link = screen.getByRole('link', { name: 'Back' })
     expect(link.tagName).toBe('A')
     expect(link).toHaveClass('govuk-back-link')

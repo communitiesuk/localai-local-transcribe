@@ -67,8 +67,6 @@ describe('<GovukRadios />', () => {
     expect(inputs[1].checked).toBe(false)
   })
 
-
-
   it('onChange fires with the new value on input change (controlled)', async () => {
     const onChange = vi.fn()
 
@@ -94,8 +92,6 @@ describe('<GovukRadios />', () => {
     expect(onChange).toHaveBeenLastCalledWith('no')
     expect((screen.getByLabelText('No') as HTMLInputElement).checked).toBe(true)
   })
-
-
 
   it('disabled on parent disables all inputs', () => {
     const { container } = render(
@@ -277,7 +273,11 @@ describe('<GovukRadios options={[…]} />', () => {
 
   it('controlled: value prop checks the correct option', () => {
     const { container } = render(
-      <GovukRadios name="where-do-you-live" options={options} value="scotland" />
+      <GovukRadios
+        name="where-do-you-live"
+        options={options}
+        value="scotland"
+      />
     )
     const inputs = container.querySelectorAll(
       'input.govuk-radios__input'
@@ -286,8 +286,6 @@ describe('<GovukRadios options={[…]} />', () => {
     expect(inputs[1].checked).toBe(true)
     expect(inputs[2].checked).toBe(false)
   })
-
-
 
   it('onChange fires with the selected value when an option is clicked', async () => {
     const onChange = vi.fn()

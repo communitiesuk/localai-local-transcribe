@@ -65,8 +65,6 @@ describe('<GovukButton />', () => {
     expect(screen.getByRole('button', { name: 'Working…' })).toBeInTheDocument()
   })
 
-
-
   it('renders the link variant as <a href role="button" draggable={false}> with canonical class', () => {
     render(<GovukButtonLink href="/next">Continue</GovukButtonLink>)
     const link = screen.getByRole('button', { name: 'Continue' })

@@ -3,10 +3,7 @@
 import { GovukButton } from './button'
 
 // Extract only the button variant (no href) to avoid anchor/button event handler conflicts
-type Props = Omit<
-  React.ComponentProps<typeof GovukButton>,
-  'disabled'
-> & {
+type Props = Omit<React.ComponentProps<typeof GovukButton>, 'disabled'> & {
   /** Disables the button and swaps its label while an async op is in flight. */
   isSubmitting?: boolean
   /** Label shown while `isSubmitting` is true. Defaults to `'Saving…'`. */
