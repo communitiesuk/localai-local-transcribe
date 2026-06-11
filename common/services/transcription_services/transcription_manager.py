@@ -25,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 settings = get_settings()
 _adapters = {
-    adapter.name: adapter
-    for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter]
+    adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter]
 }
 storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 
