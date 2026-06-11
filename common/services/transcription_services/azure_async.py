@@ -5,6 +5,7 @@ import logging
 import uuid
 from collections.abc import Generator
 from contextlib import contextmanager
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,7 @@ from azure.storage.blob import BlobClient, ContainerClient, ContainerSasPermissi
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from common.database.postgres_models import DialogueEntry, Recording
-from common.services.storage_services import get_storage_service
+from common.services.storage_services import StorageService, get_storage_service
 from common.services.transcription_services.adapter import AdapterType, TranscriptionAdapter
 from common.services.transcription_services.azure_stt_base import make_stt_request, stt_is_available
 from common.settings import get_settings
@@ -23,7 +24,11 @@ from common.types import TranscriptionJobMessageData
 async_session = aioboto3.Session()
 settings = get_settings()
 logger = logging.getLogger(__name__)
-storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
+
+
+@cache
+def _get_storage_service() -> StorageService:
+    return get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 @contextmanager
@@ -73,7 +78,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
 
         file_name = uuid.uuid4()
         job_name = f"minute-{settings.ENVIRONMENT}-transcription-job-{file_name}"
-        presigned_url = await storage_service.generate_presigned_url_get_object(
+        presigned_url = await _get_storage_service().generate_presigned_url_get_object(
             key=audio_file_path_or_recording.s3_file_key,
             filename=Path(audio_file_path_or_recording.s3_file_key).name,
             expiry_seconds=12 * 60 * 60,

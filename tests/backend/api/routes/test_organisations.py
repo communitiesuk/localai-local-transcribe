@@ -25,12 +25,8 @@ async def test_non_admin_cannot_list_organisations(client, override_user):
 
 
 @pytest.mark.asyncio
-async def test_admin_can_list_organisations(client, override_user, override_session, mock_user, mock_session):
+async def test_admin_can_list_organisations(client, override_user, mock_user):
     mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
-
-    mock_result = Mock()
-    mock_result.all.return_value = []
-    mock_session.exec.return_value = mock_result
 
     response = await client.get("/organisations")
     assert response.status_code == 200

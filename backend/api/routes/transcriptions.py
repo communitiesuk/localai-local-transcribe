@@ -16,7 +16,7 @@ from common.database.postgres_models import (
     Transcription,
 )
 from common.services.queue_services import QueueService, ReceiptHandle, get_queue_service
-from common.services.storage_services import get_storage_service
+from common.services.storage_services import StorageService, get_storage_service
 from common.settings import get_settings
 from common.types import (
     PaginatedTranscriptionsResponse,
@@ -34,10 +34,12 @@ from common.types import (
 
 settings = get_settings()
 
-storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
-
-
 transcriptions_router = APIRouter(tags=["Transcriptions"])
+
+
+@cache
+def _get_storage_service() -> StorageService:
+    return get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 @cache
@@ -105,7 +107,7 @@ async def create_recording(
     recording = Recording(user_id=user.id, s3_file_key=user_upload_s3_file_key)
     session.add(recording)
     await session.commit()
-    presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
+    presigned_url = await _get_storage_service().generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
     await session.refresh(recording)
     return RecordingCreateResponse(id=recording.id, upload_url=presigned_url)
 
@@ -122,7 +124,7 @@ async def create_transcription(
         raise HTTPException(404, detail="Recording not found")
     transcription = Transcription(user_id=current_user.id, title=request.title)
 
-    if not await storage_service.check_object_exists(recording.s3_file_key):
+    if not await _get_storage_service().check_object_exists(recording.s3_file_key):
         raise HTTPException(
             status_code=404,
             detail=f"Recording file not found in S3: {recording.s3_file_key}",
@@ -183,11 +185,11 @@ async def get_recordings_for_transcription(
     unique_recordings = {Path(recording.s3_file_key).suffix: recording for recording in recordings}.values()
     signed_recordings: list[SingleRecording] = []
     for recording in unique_recordings:
-        if not await storage_service.check_object_exists(recording.s3_file_key):
+        if not await _get_storage_service().check_object_exists(recording.s3_file_key):
             continue
         key_path = Path(recording.s3_file_key)
         filename = f"{transcription.title}{key_path.suffix}" if transcription.title else key_path.name
-        presigned_url = await storage_service.generate_presigned_url_get_object(
+        presigned_url = await _get_storage_service().generate_presigned_url_get_object(
             recording.s3_file_key, filename, 60 * 60 * 12
         )
         signed_recordings.append(SingleRecording(id=recording.id, url=presigned_url, extension=key_path.suffix))

@@ -68,10 +68,11 @@ def mock_settings():
 
 @pytest.fixture
 def mock_storage_service():
+    instance = MockStorageService()
     with patch(
-        "common.services.transcription_services.transcription_manager.storage_service", new_callable=MockStorageService
-    ) as mock_storage_service:
-        yield mock_storage_service
+        "common.services.transcription_services.transcription_manager._get_storage_service", return_value=instance
+    ):
+        yield instance
 
 
 @pytest.fixture

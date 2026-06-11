@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime, timedelta
+from functools import cache
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
@@ -8,7 +9,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import JobStatus, MinuteVersion, Recording, Transcription, User
-from common.services.storage_services import get_storage_service
+from common.services.storage_services import StorageService, get_storage_service
 from common.settings import get_settings
 
 logger = logging.getLogger()
@@ -16,7 +17,10 @@ logger.setLevel(logging.INFO)
 
 settings = get_settings()
 
-storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
+
+@cache
+def _get_storage_service() -> StorageService:
+    return get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 async def cleanup_failed_records() -> None:
@@ -74,9 +78,9 @@ async def delete_orphan_records() -> None:
         logger.info("Found %d Recordings with no Transcription.", len(recordings))
         for recording in recordings:
             try:
-                exists = await storage_service.check_object_exists(recording.s3_file_key)
+                exists = await _get_storage_service().check_object_exists(recording.s3_file_key)
                 if exists:
-                    await storage_service.delete(recording.s3_file_key)
+                    await _get_storage_service().delete(recording.s3_file_key)
             except Exception as e:  # noqa: BLE001
                 msg = f"Error deleting recording {recording.id}. Will keep record in database: {e}"
                 logger.error(msg)

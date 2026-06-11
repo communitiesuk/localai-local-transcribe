@@ -201,11 +201,15 @@ def transcription_patch_request():
 
 @pytest.fixture
 def mock_storage_service(mocker):
-    service = mocker.patch("backend.api.routes.transcriptions.storage_service")
-    service.check_object_exists = AsyncMock(return_value=True)
-    service.generate_presigned_url_put_object = AsyncMock(return_value="https://example.s3.amazonaws.com/put-123")
-    service.generate_presigned_url_get_object = AsyncMock(return_value="https://example.s3.amazonaws.com/get-123")
-    return service
+    mock_func = mocker.patch("backend.api.routes.transcriptions._get_storage_service")
+    mock_func.return_value.check_object_exists = AsyncMock(return_value=True)
+    mock_func.return_value.generate_presigned_url_put_object = AsyncMock(
+        return_value="https://example.s3.amazonaws.com/put-123"
+    )
+    mock_func.return_value.generate_presigned_url_get_object = AsyncMock(
+        return_value="https://example.s3.amazonaws.com/get-123"
+    )
+    return mock_func.return_value
 
 
 @pytest.fixture
