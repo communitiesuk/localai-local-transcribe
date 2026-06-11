@@ -1,7 +1,6 @@
 import logging
 import tempfile
 import uuid
-from functools import cache
 from pathlib import Path
 
 import sentry_sdk
@@ -11,12 +10,13 @@ from common.convert_american_to_british_spelling import convert_american_to_brit
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Recording, Transcription
 from common.services.exceptions import TranscriptionFailedError
-from common.services.storage_services import StorageService, get_storage_service
+from common.services.storage_services import get_storage_service
 from common.services.transcription_services import (
     AWSTranscribeAdapter,
     AzureBatchTranscriptionAdapter,
     AzureSpeechAdapter,
     TranscriptionAdapter,
+    WhisplyLocalAdapter,
 )
 from common.services.transcription_services.adapter import AdapterType
 from common.settings import get_settings
@@ -26,13 +26,10 @@ logger = logging.getLogger(__name__)
 
 settings = get_settings()
 _adapters = {
-    adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter]
+    adapter.name: adapter
+    for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter, WhisplyLocalAdapter]
 }
-
-
-@cache
-def _get_storage_service() -> StorageService:
-    return get_storage_service(get_settings().STORAGE_SERVICE_NAME)
+storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 
 
 class TranscriptionServiceManager:
@@ -83,7 +80,7 @@ class TranscriptionServiceManager:
         file_extension = Path(recording.s3_file_key).suffix.lower()
         with tempfile.TemporaryDirectory() as tempdir:
             temp_file_path = Path(tempdir) / Path(recording.s3_file_key).name
-            await _get_storage_service().download(recording.s3_file_key, temp_file_path)
+            await storage_service.download(recording.s3_file_key, temp_file_path)
             recording, file_path, duration_seconds = await self.get_recording_to_process(
                 recording=recording, temp_file_path=temp_file_path, file_extension=file_extension
             )
@@ -123,7 +120,7 @@ class TranscriptionServiceManager:
 
         new_recording_id = uuid.uuid4()
         new_s3_key = str(Path(recording.s3_file_key).with_name(f"{new_recording_id}.mp3"))
-        await _get_storage_service().upload(new_s3_key, new_file_path)
+        await storage_service.upload(new_s3_key, new_file_path)
         with SessionLocal() as session:
             new_recording = Recording(
                 id=new_recording_id,

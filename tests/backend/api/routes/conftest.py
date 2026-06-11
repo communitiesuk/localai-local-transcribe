@@ -201,27 +201,24 @@ def transcription_patch_request():
 
 @pytest.fixture
 def mock_storage_service(mocker):
-    mock_func = mocker.patch("backend.api.routes.transcriptions._get_storage_service")
-    mock_func.return_value.check_object_exists = AsyncMock(return_value=True)
-    mock_func.return_value.generate_presigned_url_put_object = AsyncMock(
-        return_value="https://example.s3.amazonaws.com/put-123"
-    )
-    mock_func.return_value.generate_presigned_url_get_object = AsyncMock(
-        return_value="https://example.s3.amazonaws.com/get-123"
-    )
-    return mock_func.return_value
+    service = mocker.patch("backend.api.routes.transcriptions.storage_service")
+    service.check_object_exists = AsyncMock(return_value=True)
+    service.generate_presigned_url_put_object = AsyncMock(return_value="https://example.s3.amazonaws.com/put-123")
+    service.generate_presigned_url_get_object = AsyncMock(return_value="https://example.s3.amazonaws.com/get-123")
+    return service
 
 
 @pytest.fixture
 def mock_transcription_queue_service(mocker):
-    mock_func = mocker.patch("backend.api.routes.transcriptions._get_transcription_queue_service")
-    return mock_func.return_value
+    service = mocker.patch("backend.api.routes.transcriptions.transcription_queue_service")
+    service.publish_message = Mock()
+    return service
 
 
 @pytest.fixture
-def patch_llm_queue_service(mocker):
+def patch_llm_queue_service(monkeypatch):
     mock_queue = Mock()
-    mocker.patch("backend.api.routes.chat._get_llm_queue_service", return_value=mock_queue)
+    monkeypatch.setattr("backend.api.routes.chat.llm_queue_service", mock_queue)
     return mock_queue
 
 
