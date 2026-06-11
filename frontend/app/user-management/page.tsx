@@ -21,7 +21,9 @@ export default function UserManagementPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const { data: organisation } = useOrganisation(currentUser?.organisation_id)
+  const { data: organisation } = useOrganisation(
+    currentUser?.organisation_id ?? ''
+  )
 
   if (userLoading) return <Loader2 className="animate-spin" />
 

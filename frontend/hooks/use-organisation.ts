@@ -1,13 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { getOrganisationOrganisationsOrganisationIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 
-type PendingOrganisationId = string | null | undefined
-
-export function useOrganisation(organisationId?: PendingOrganisationId) {
+export function useOrganisation(organisationId: string) {
   return useQuery({
     ...getOrganisationOrganisationsOrganisationIdGetOptions({
       path: {
-        organisation_id: organisationId!, // wont be undefined due to enabled
+        organisation_id: organisationId,
       },
     }),
     enabled: !!organisationId,
