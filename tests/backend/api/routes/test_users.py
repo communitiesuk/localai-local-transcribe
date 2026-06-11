@@ -83,7 +83,7 @@ async def test_update_data_retention_invalid(
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.LOCAL_AUTHORITY_ADMIN], 200),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.MHCLG_SUPPORT_ADMIN], 403),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, [UserRole.STANDARD_USER], 403),
-        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], False, [UserRole.LOCAL_AUTHORITY_ADMIN], 403),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], False, [UserRole.LOCAL_AUTHORITY_ADMIN], 404),
     ],
 )
 async def test_update_user_roles(
@@ -120,7 +120,7 @@ async def test_update_user_roles(
         ([UserRole.MHCLG_SUPPORT_ADMIN], [UserRole.STANDARD_USER], True, 204),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, 204),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], False, 404),
-        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, 404),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, 403),
     ],
 )
 async def test_delete_user(
