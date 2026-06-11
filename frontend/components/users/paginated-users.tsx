@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useUsers } from '@/hooks/use-users'
 import { GovukPagination } from '@/components/govuk/pagination'
 import { USERS_PER_PAGE } from '@/lib/constants'
@@ -70,12 +71,12 @@ export default function PaginatedUsers() {
                         System Admin
                       </strong>
                     )}
-                    <a
+                    <Link
                       href="#"
                       className="govuk-link govuk-link--no-visited-state"
                     >
                       View Account
-                    </a>
+                    </Link>
                   </div>
                 </GovukTableCell>
               </GovukTableRow>
