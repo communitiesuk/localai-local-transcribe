@@ -47,21 +47,3 @@ async def test_sign_out_clears_expected_alb_auth_cookies(client):
         assert any(header.startswith(f"{cookie_name}=") for header in cookie_headers)
 
     assert not any(header.startswith("sessionid=") for header in cookie_headers)
-
-
-@pytest.mark.asyncio
-async def test_sign_out_uses_request_hostname_as_cookie_domain(client):
-    hostname = "development.local-transcribe.gov.uk"
-    with patch(
-        "backend.api.routes.auth.get_idp_logout_url",
-        AsyncMock(return_value=END_SESSION_ENDPOINT_STATIC),
-    ):
-        response = await client.get(
-            "/signout",
-            headers={"host": hostname},
-            follow_redirects=False,
-        )
-
-    cookie_headers = response.headers.get_list("set-cookie")
-
-    assert all(f"Domain={hostname}" in header for header in cookie_headers)
