@@ -102,7 +102,8 @@ export default function AdminAddUserPage() {
                 className="govuk-error-message"
               >
                 <span className="govuk-visually-hidden">Error:</span>
-                Please enter an email address with a valid domain.
+                Please enter an email address with a valid domain for your
+                organisation.
               </p>
             )}
 
