@@ -78,7 +78,8 @@ module "frontdoor" {
   cloudwatch_log_expiration_days = local.cloudwatch_log_expiration_days
 
   use_aws_shield_advanced = false
-  enable_oidc_auth        = true
+  maintenance_mode_on     = var.maintenance_mode_on
+  enable_oidc_auth        = false # TODO AIILG-653 reenable after pen testing is complete
   ip_allowlist = [
     # Softwire
     "31.221.86.178/32",
@@ -88,7 +89,16 @@ module "frontdoor" {
     "45.150.142.210/32",
     # MHCLG
     "4.158.35.41/32",
+    # Cyberfort (temporarily allowed for pen testing)
+    # TODO AIILG-653 remove these after pen testing is complete
+    "37.200.119.11/32",
+    "185.10.12.32/28",
+    "176.65.68.112/28",
   ]
+
+  # Cyberfort (temporarily allowed for pen testing)
+  # TODO AIILG-653 remove this after pen testing is complete
+  ipv6_allowlist = ["2a00:1430:2106::/48"]
 
   app_host                                = local.app_host
   internal_access_oidc_client_id_name     = module.secrets.internal_access_oidc_client_id_name
@@ -194,7 +204,7 @@ module "ecs" {
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
   db_security_group_id = module.database.rds_security_group_id
   bastion_sg_id        = module.bastion.security_group_id
-  environment          = "staging"
+  environment          = "local" # TODO AIILG-653 revert to "staging" after pen testing is complete
   data_s3_bucket_name  = module.uploads_bucket.bucket_name
   private_subnet_ids   = module.networking.private_subnets[*].id
   vpc_id               = module.networking.vpc.id
