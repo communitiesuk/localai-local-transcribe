@@ -102,10 +102,12 @@ describe('<ServiceNav />', () => {
 
     const homeLink = screen.getByRole('link', { name: 'Home' })
     const homeItem = homeLink.closest('.govuk-service-navigation__item')
-    
+
     expect(homeItem).toHaveClass('govuk-service-navigation__item--active')
     expect(homeLink).toHaveAttribute('aria-current', 'page')
-    expect(homeLink.querySelector('strong')).toHaveClass('govuk-service-navigation__active-fallback')
+    expect(homeLink.querySelector('strong')).toHaveClass(
+      'govuk-service-navigation__active-fallback'
+    )
   })
 
   it('correctly sets active state for Home on /new and sub-routes', () => {
@@ -125,7 +127,9 @@ describe('<ServiceNav />', () => {
     render(<ServiceNav />)
 
     const recordingsLink = screen.getByRole('link', { name: 'My recordings' })
-    const recordingsItem = recordingsLink.closest('.govuk-service-navigation__item')
+    const recordingsItem = recordingsLink.closest(
+      '.govuk-service-navigation__item'
+    )
 
     expect(recordingsItem).toHaveClass('govuk-service-navigation__item--active')
   })
