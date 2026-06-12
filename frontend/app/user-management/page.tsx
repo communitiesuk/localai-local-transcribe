@@ -47,7 +47,12 @@ export default function UserManagementPage() {
       <h1 className="govuk-heading-l">User Management</h1>
       {organisation && <h2 className="govuk-heading-s">{organisation.name}</h2>}
 
-      <button type="button" className="govuk-button" data-module="govuk-button">
+      <button
+        type="button"
+        className="govuk-button"
+        data-module="govuk-button"
+        onClick={() => router.push('/invite-user')}
+      >
         Invite new user
       </button>
 
