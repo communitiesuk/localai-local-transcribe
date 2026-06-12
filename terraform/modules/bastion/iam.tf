@@ -65,14 +65,25 @@ data "aws_iam_policy_document" "bastion_logs" {
   statement {
     effect = "Allow"
     actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
+
       "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams"
     ]
     resources = ["*"]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+      "logs:DescribeLogStreams"
+    ]
+
+    resources = [module.bastion_logs.log_group_arn, "${module.bastion_logs.log_group_arn}:*"]
+  }
+
+
 }
 
 resource "aws_iam_role_policy" "bastion_logs" {
