@@ -25,7 +25,7 @@ def setup_evaluation(tmp_path, monkeypatch):
         dataset = FakeDataset(samples)
 
         class FakeAzureAdapter:
-            name = "Azure Speech-to-Text"
+            name = "FakeAzure"
 
             @classmethod
             async def start(cls, _audio_file_path):
@@ -34,7 +34,7 @@ def setup_evaluation(tmp_path, monkeypatch):
                 )
 
         class FakeOpenAIAdapter:
-            name = "OpenAI"
+            name = "FakeOpenAI"
 
             @classmethod
             async def start(cls, _audio_file_path):
@@ -80,7 +80,7 @@ def test_run_evaluation_with_fake_adapters(setup_evaluation):
     expected_structure = {
         "summaries": {
             "count": 2,
-            "engines": {"Azure Speech-to-Text", "OpenAI"},
+            "engines": {"FakeAzure", "FakeOpenAI"},
             "required_fields": ["n_examples", "engine_version", "metrics"],
             "metrics_fields": ["wer"],
         },
