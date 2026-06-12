@@ -112,9 +112,12 @@ export function ServiceNav() {
                 return (
                   <li
                     key={item.href}
-                    className={`govuk-service-navigation__item${
-                      active ? 'govuk-service-navigation__item--active' : ''
-                    }`}
+                    className={[
+                      'govuk-service-navigation__item',
+                      active ? 'govuk-service-navigation__item--active' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
                   >
                     {lockNavigation ? (
                       <AlertDialog>
