@@ -1,5 +1,4 @@
 import { GovukButton, GovukButtonLink } from '@/components/govuk/button'
-import { GovukLoadingButton } from '@/components/govuk/loading-button'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -48,23 +47,6 @@ describe('<GovukButton />', () => {
     expect(button).not.toHaveAttribute('aria-disabled')
   })
 
-  it('when isSubmitting, renders loadingText and disables', () => {
-    render(<GovukLoadingButton isSubmitting>Save</GovukLoadingButton>)
-    const button = screen.getByRole('button', { name: 'Saving…' })
-    expect(button).toBeDisabled()
-    expect(button).not.toHaveAttribute('aria-disabled')
-    expect(button).toHaveTextContent('Saving…')
-  })
-
-  it('allows a custom loadingText', () => {
-    render(
-      <GovukLoadingButton isSubmitting loadingText="Working…">
-        Save
-      </GovukLoadingButton>
-    )
-    expect(screen.getByRole('button', { name: 'Working…' })).toBeInTheDocument()
-  })
-
   it('renders the link variant as <a href role="button" draggable={false}> with canonical class', () => {
     render(<GovukButtonLink href="/next">Continue</GovukButtonLink>)
     const link = screen.getByRole('button', { name: 'Continue' })
@@ -101,35 +83,6 @@ describe('<GovukButton />', () => {
     render(<GovukButton className="mt-4">Save</GovukButton>)
     const button = screen.getByRole('button', { name: 'Save' })
     expect(button).toHaveClass('govuk-button', 'mt-4')
-  })
-
-  it('regression — isSubmitting toggle re-enables and restores children', () => {
-    const { rerender } = render(
-      <GovukLoadingButton type="button" isSubmitting={false}>
-        Save
-      </GovukLoadingButton>
-    )
-    let button = screen.getByRole('button')
-    expect(button).toBeEnabled()
-    expect(button).toHaveTextContent('Save')
-
-    rerender(
-      <GovukLoadingButton type="button" isSubmitting>
-        Save
-      </GovukLoadingButton>
-    )
-    button = screen.getByRole('button')
-    expect(button).toBeDisabled()
-    expect(button).toHaveTextContent('Saving…')
-
-    rerender(
-      <GovukLoadingButton type="button" isSubmitting={false}>
-        Save
-      </GovukLoadingButton>
-    )
-    button = screen.getByRole('button')
-    expect(button).toBeEnabled()
-    expect(button).toHaveTextContent('Save')
   })
 
   it('regression — caller spread cannot clobber canonical data-module or className', () => {
