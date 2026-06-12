@@ -70,7 +70,6 @@ describe('<ServiceNav />', () => {
     mockUserRoles = ['standard_user']
     render(<ServiceNav />)
     const links = screen.getAllByRole('link')
-    // First link is service name 'Local Transcribe', followed by navigation links
     const linkTexts = links.map((link) => link.textContent?.trim())
     expect(linkTexts).toEqual([
       'Local Transcribe',
@@ -99,35 +98,35 @@ describe('<ServiceNav />', () => {
   it('correctly sets active state for Home on exact / pathname', () => {
     mockPathname = '/'
     mockUserRoles = ['standard_user']
-    const { container } = render(<ServiceNav />)
-    const homeItem = container.querySelector(
-      '.govuk-service-navigation__item:has(a[href="/"])'
-    )
-    expect(homeItem).toHaveClass('govuk-service-navigation__item--active')
+    render(<ServiceNav />)
+
     const homeLink = screen.getByRole('link', { name: 'Home' })
+    const homeItem = homeLink.closest('.govuk-service-navigation__item')
+    
+    expect(homeItem).toHaveClass('govuk-service-navigation__item--active')
     expect(homeLink).toHaveAttribute('aria-current', 'page')
-    expect(homeLink.querySelector('strong')).toHaveClass(
-      'govuk-service-navigation__active-fallback'
-    )
+    expect(homeLink.querySelector('strong')).toHaveClass('govuk-service-navigation__active-fallback')
   })
 
   it('correctly sets active state for Home on /new and sub-routes', () => {
     mockPathname = '/new/upload'
     mockUserRoles = ['standard_user']
-    const { container } = render(<ServiceNav />)
-    const homeItem = container.querySelector(
-      '.govuk-service-navigation__item:has(a[href="/"])'
-    )
+    render(<ServiceNav />)
+
+    const homeLink = screen.getByRole('link', { name: 'Home' })
+    const homeItem = homeLink.closest('.govuk-service-navigation__item')
+
     expect(homeItem).toHaveClass('govuk-service-navigation__item--active')
   })
 
   it('correctly sets active state for My recordings on /transcriptions and sub-routes', () => {
     mockPathname = '/transcriptions/abc-123'
     mockUserRoles = ['standard_user']
-    const { container } = render(<ServiceNav />)
-    const recordingsItem = container.querySelector(
-      '.govuk-service-navigation__item:has(a[href="/transcriptions"])'
-    )
+    render(<ServiceNav />)
+
+    const recordingsLink = screen.getByRole('link', { name: 'My recordings' })
+    const recordingsItem = recordingsLink.closest('.govuk-service-navigation__item')
+
     expect(recordingsItem).toHaveClass('govuk-service-navigation__item--active')
   })
 
@@ -137,20 +136,15 @@ describe('<ServiceNav />', () => {
     mockLockNavigation = 'Warning: leaving page'
     render(<ServiceNav />)
 
-    // With lockNavigation, the link is rendered as a button triggering AlertDialog
     const templatesBtn = screen.getByRole('button', { name: 'Templates' })
     expect(templatesBtn).toBeInTheDocument()
 
-    // Trigger confirmation click
     fireEvent.click(templatesBtn)
 
-    // Verify dialog warning is visible
     expect(
       screen.getByText('Are you sure you want to leave the page?')
     ).toBeInTheDocument()
     expect(screen.getByText('Warning: leaving page')).toBeInTheDocument()
-
-    // Click Continue
     const continueBtn = screen.getByRole('button', { name: 'Continue' })
     fireEvent.click(continueBtn)
 
