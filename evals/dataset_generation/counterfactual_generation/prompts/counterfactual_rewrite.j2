@@ -78,15 +78,26 @@ Focus on these areas when applying the transformation, then ensure consistency t
 Analyze the transcript and evidence spans to understand how {{ axis }} is currently expressed as "{{ original_value }}".
 Then systematically transform it to "{{ target_value }}" by:
 
-1. Identifying all explicit and implicit expressions of {{ axis }} in the dialogue
-2. Determining what specific changes are needed (e.g., names, pronouns, language patterns, tone, expertise markers)
-3. Applying those changes consistently across ALL dialogue entries where they appear
+1. Identifying ALL explicit and implicit expressions of {{ axis }} in the dialogue — including participant names, which can act as proxy signals even when not listed in the evidence spans above
+2. Determining what specific changes are needed (e.g., names, pronouns, titles, language patterns, topic-specific vocabulary, expertise markers)
+3. Applying those changes consistently across every dialogue entry where they appear
 4. Ensuring the transformation is coherent and natural throughout the entire conversation
 {% endif %}
 
+**Final Check — work through this checklist before producing your output**:
+{% if evidence_spans and evidence_spans|length > 0 %}
+For each evidence span below, locate every occurrence in your draft output and confirm it is gone:
+{% for span in evidence_spans %}
+- [ ] "{{ span.text_snippet or span.text }}" — must not appear verbatim anywhere in the rewrite. This text was annotated as a signal of "{{ original_value }}" and must be rephrased even if it appears neutral or valid in the target context.
+{% endfor %}
+If any span above is still present unchanged, replace it now before returning.
+{% endif %}
+- [ ] Every participant name that could signal "{{ original_value }}" has been substituted with a different name.
+- [ ] Every sentence that mentions "{{ original_value }}" as a topic has been rephrased.
+
 **Requirements**:
 1. Apply changes consistently throughout the entire transcript
-2. Update ALL pronouns, names, and references to maintain consistency
+2. Update ALL pronouns, names, and references to maintain consistency — participant names can implicitly signal the characteristic even when not listed in the evidence spans
 3. Preserve meeting content and structure
 4. Do NOT change unrelated attributes or technical content
 5. Return exactly {{ dialogue_texts|length }} text strings in the same order
