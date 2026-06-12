@@ -6,7 +6,10 @@ export function Header() {
       <div className="govuk-header">
         <div className="govuk-header__container govuk-width-container flex flex-wrap items-center justify-between">
           <div className="govuk-header__logo">
-            <a href="https://www.gov.uk" className="govuk-header__homepage-link">
+            <a
+              href="https://www.gov.uk"
+              className="govuk-header__homepage-link"
+            >
               <span className="govuk-header__logotype">
                 <svg
                   focusable="false"

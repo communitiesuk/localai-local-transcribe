@@ -29,27 +29,33 @@ const navItems: NavItem[] = [
   {
     name: 'Home',
     href: '/',
-    isActive: (pathname: string) => pathname === '/' || pathname === '/new' || pathname.startsWith('/new/'),
+    isActive: (pathname: string) =>
+      pathname === '/' || pathname === '/new' || pathname.startsWith('/new/'),
   },
   {
     name: 'My recordings',
     href: '/transcriptions',
-    isActive: (pathname: string) => pathname === '/transcriptions' || pathname.startsWith('/transcriptions/'),
+    isActive: (pathname: string) =>
+      pathname === '/transcriptions' || pathname.startsWith('/transcriptions/'),
   },
   {
     name: 'Templates',
     href: '/templates',
-    isActive: (pathname: string) => pathname === '/templates' || pathname.startsWith('/templates/'),
+    isActive: (pathname: string) =>
+      pathname === '/templates' || pathname.startsWith('/templates/'),
   },
   {
     name: 'Settings',
     href: '/settings',
-    isActive: (pathname: string) => pathname === '/settings' || pathname.startsWith('/settings/'),
+    isActive: (pathname: string) =>
+      pathname === '/settings' || pathname.startsWith('/settings/'),
   },
   {
     name: 'User management',
     href: '/user-management',
-    isActive: (pathname: string) => pathname === '/user-management' || pathname.startsWith('/user-management/'),
+    isActive: (pathname: string) =>
+      pathname === '/user-management' ||
+      pathname.startsWith('/user-management/'),
     isAdminOnly: true,
   },
 ]
@@ -65,7 +71,9 @@ export function ServiceNav() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const visibleItems = navItems.filter((item) => !item.isAdminOnly || hasAdminRole)
+  const visibleItems = navItems.filter(
+    (item) => !item.isAdminOnly || hasAdminRole
+  )
 
   return (
     <section
@@ -105,7 +113,7 @@ export function ServiceNav() {
                   <li
                     key={item.href}
                     className={`govuk-service-navigation__item${
-                      active ? ' govuk-service-navigation__item--active' : ''
+                      active ? 'govuk-service-navigation__item--active' : ''
                     }`}
                   >
                     {lockNavigation ? (

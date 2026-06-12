@@ -128,9 +128,7 @@ describe('<ServiceNav />', () => {
     const recordingsItem = container.querySelector(
       '.govuk-service-navigation__item:has(a[href="/transcriptions"])'
     )
-    expect(recordingsItem).toHaveClass(
-      'govuk-service-navigation__item--active'
-    )
+    expect(recordingsItem).toHaveClass('govuk-service-navigation__item--active')
   })
 
   it('respects lockNavigation and blocks immediate routing, showing the warning dialog', async () => {
@@ -147,7 +145,9 @@ describe('<ServiceNav />', () => {
     fireEvent.click(templatesBtn)
 
     // Verify dialog warning is visible
-    expect(screen.getByText('Are you sure you want to leave the page?')).toBeInTheDocument()
+    expect(
+      screen.getByText('Are you sure you want to leave the page?')
+    ).toBeInTheDocument()
     expect(screen.getByText('Warning: leaving page')).toBeInTheDocument()
 
     // Click Continue
