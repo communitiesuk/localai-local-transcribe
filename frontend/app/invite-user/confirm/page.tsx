@@ -28,11 +28,11 @@ export default function AdminAddUserConfirmPage() {
     currentUser?.organisation_id ?? ''
   )
 
+  const createUserMutation = useMutation(createUserUsersPostMutation())
+
   if (!name || !email || !organisation?.id) {
     return
   }
-
-  const createUserMutation = useMutation(createUserUsersPostMutation())
 
   const handleCreateUser = async () => {
     try {
@@ -53,6 +53,9 @@ export default function AdminAddUserConfirmPage() {
   return (
     <>
       {userLoading && <Loader2 className="animate-spin" />}
+
+      {userError && <p>Error: Failed to load users.</p>}
+
 
       {
         <div>
