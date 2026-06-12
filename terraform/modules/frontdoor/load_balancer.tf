@@ -14,9 +14,30 @@ resource "aws_lb" "main" {
   security_groups            = [aws_security_group.load_balancer.id]
   subnets                    = var.public_subnet_ids
 
+  access_logs {
+    bucket  = module.alb_logs.bucket
+    prefix  = "alb"
+    enabled = true
+  }
+
   lifecycle {
     prevent_destroy = true
   }
+}
+
+module "alb_logs" {
+  source = "../s3_bucket"
+
+  bucket_name                        = "alb-logs-${var.environment_name}"
+  access_log_bucket_name             = null
+  force_destroy                      = false
+  object_lock_enabled                = false
+  noncurrent_version_expiration_days = null
+  access_s3_log_expiration_days      = 365
+  policy                             = null
+  kms_key_arn                        = null
+  log_writer_service_principals      = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+  log_source_arns                    = [aws_lb.main.arn]
 }
 
 resource "aws_lb_listener" "https" {
