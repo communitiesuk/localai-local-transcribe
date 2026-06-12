@@ -75,7 +75,7 @@
     "@vitest/coverage-v8": "^4.0.17",
     "cpy-cli": "^7.0.0",
     "dotenv-cli": "^11.0.0",
-    "eslint": "^9.15.0",
+    "eslint": "^9",
     "eslint-config-next": "^16.2.1",
     "eslint-config-prettier": "^10.1.5",
     "govuk-frontend": "^6.1.0",
