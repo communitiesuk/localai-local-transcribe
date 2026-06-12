@@ -8,6 +8,7 @@ import {
   isValidElement,
   useContext,
 } from 'react'
+import { GovukLabel } from './label'
 
 type RadiosContextValue = {
   name: string
@@ -150,9 +151,9 @@ function GovukRadiosItem({
         disabled={ctx.disabled}
         aria-describedby={hint ? hintId : undefined}
       />
-      <label className="govuk-label govuk-radios__label" htmlFor={resolvedId}>
+      <GovukLabel className="govuk-radios__label" htmlFor={resolvedId}>
         {children}
-      </label>
+      </GovukLabel>
       {hint && (
         <div className="govuk-hint govuk-radios__hint" id={hintId}>
           {hint}
