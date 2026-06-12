@@ -113,7 +113,7 @@ export function ServiceNav() {
                   <li
                     key={item.href}
                     className={`govuk-service-navigation__item${
-                      active ? ' govuk-service-navigation__item--active' : ''
+                      active ? 'govuk-service-navigation__item--active' : ''
                     }`}
                   >
                     {lockNavigation ? (
