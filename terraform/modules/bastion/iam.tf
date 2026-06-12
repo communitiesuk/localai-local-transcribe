@@ -66,7 +66,7 @@ data "aws_iam_policy_document" "bastion_logs" {
     effect = "Allow"
     actions = [
 
-      "logs:DescribeLogStreams"
+      "logs:DescribeLogGroups",
     ]
     resources = ["*"]
   }
@@ -77,8 +77,7 @@ data "aws_iam_policy_document" "bastion_logs" {
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
-      "logs:DescribeLogGroups",
-
+      "logs:DescribeLogStreams"
     ]
 
     resources = [module.bastion_logs.log_group_arn, "${module.bastion_logs.log_group_arn}:*"]
