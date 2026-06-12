@@ -33,8 +33,6 @@ export default function AdminAddUserPage() {
 
     if (!isAllowedDomain(email, organisation?.allowed_domains ?? [])) {
       console.error('Email domain is not allowed for this organisation.', email)
-      console.log('Allowed domains are:', organisation?.allowed_domains)
-
       setHasError(true)
       return
     }
