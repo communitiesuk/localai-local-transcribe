@@ -176,14 +176,10 @@ async def test_rewrite_transcript_only_passes_axis_spans_to_prompt():
 
 def _build_structured_chat_responses(axes: list[AxisTransformation], num_rewrites: int = 1) -> list:
     responses = []
-    for axis in axes:
-        n_axis_chars = sum(
-            1 for item in REFERENCE["detected_characteristics"] if item["characteristic"].lower() == axis.axis.lower()
-        )
+    for _axis in axes:
         for _ in range(num_rewrites):
             responses.append(type("C", (), {"score": 4, "explanation": "ok"})())
-            for _ in range(n_axis_chars):
-                responses.append(type("L", (), {"reasoning": "r", "score": 2, "explanation": "ok"})())
+            responses.append(type("L", (), {"reasoning": "r", "score": 2, "explanation": "ok"})())
     return responses
 
 
@@ -297,3 +293,48 @@ async def test_evaluate_counterfactual_empty_axes_returns_empty_report():
     assert report["summary"]["num_axes"] == 0
     assert report["summary"]["successful_axis_rate"] == 0.0
     assert report["summary"]["average_coherence"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_evaluate_counterfactual_concealment_uses_axis_original_value():
+    """Concealment must check the axis original_value, not raw attribute_values from reference."""
+    mock_chatbot = AsyncMock()
+    axes = [AxisTransformation(axis="Race", original_value="asian_participants", target_value="all_white_british")]
+    mock_chatbot.structured_chat.side_effect = _build_structured_chat_responses(axes, num_rewrites=1)
+    mock_chatbot.chat.return_value = '["Hi Dr. Smith, I feel pressure.", "Hi Sara, let\'s work through this."]'
+
+    report = await evaluate_counterfactual(REFERENCE, DIALOGUE_ENTRIES, mock_chatbot, axes=axes, num_rewrites=1)
+
+    checks = report["axes"][0]["rewrites"][0]["concealment_checks"]
+    assert len(checks) == 1
+    assert checks[0]["value"] == "asian_participants"
+    assert checks[0]["characteristic"] == "Race"
+
+
+@pytest.mark.asyncio
+async def test_evaluate_counterfactual_single_concealment_check_per_rewrite_multi_attr():
+    """When reference has multiple attribute_values for an axis, only one concealment check is done."""
+    reference_multi_attr = {
+        "detected_characteristics": [
+            {"characteristic": "Sex", "attribute_value": "Male", "evidence_spans": [{"text": "Franz"}]},
+            {"characteristic": "Sex", "attribute_value": "Female", "evidence_spans": [{"text": "Julia"}]},
+        ]
+    }
+    dialogue = [
+        {"speaker": "1", "text": "Hi Franz, it was great."},
+        {"speaker": "2", "text": "Hi Julia, I agree."},
+    ]
+    mock_chatbot = AsyncMock()
+    axes = [AxisTransformation(axis="Sex", original_value="mixed_sexes", target_value="all_male")]
+    mock_chatbot.structured_chat.side_effect = [
+        type("C", (), {"score": 4, "explanation": "ok"})(),
+        type("L", (), {"reasoning": "r", "score": 4, "explanation": "no evidence"})(),
+    ]
+    mock_chatbot.chat.return_value = '["Hi Matthew, it was great.", "Hi Ethan, I agree."]'
+
+    report = await evaluate_counterfactual(reference_multi_attr, dialogue, mock_chatbot, axes=axes, num_rewrites=1)
+
+    checks = report["axes"][0]["rewrites"][0]["concealment_checks"]
+    assert len(checks) == 1
+    assert checks[0]["value"] == "mixed_sexes"
+    assert checks[0]["score"] == 1.0
