@@ -6,12 +6,12 @@ Thin React wrappers around [govuk-frontend](https://github.com/alphagov/govuk-fr
 
 ## Which styling layer to use
 
-| Need                                                  | Reach for                                                                              |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Buttons, links, form fields, error summary, fieldsets | `@/components/govuk/*`                                                                 |
-| Page layout shell (header, footer, phase banner)      | `components/layout/*` (already uses govuk classes)                                     |
-| Spacing / one-off layout tweaks                       | Tailwind utilities on a wrapper `div` only — do not restyle govuk components           |
-| Dialog, popover, tooltip, toast, rich-text menus      | Radix primitives under `@/components/ui/*` — see [Radix exceptions](#radix-exceptions) |
+| Need                                                  | Reach for                                                                                                                                                         |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Buttons, links, form fields, error summary, fieldsets | `@/components/govuk/*`                                                                                                                                            |
+| Page layout shell (header, footer, phase banner)      | `components/layout/*` (already uses govuk classes)                                                                                                                |
+| Spacing / one-off layout tweaks                       | GOV.UK spacing overrides (`govuk-!-margin-*`, `govuk-!-padding-*`) first, or Tailwind spacing utilities on a wrapper `div` only — do not restyle govuk components |
+| Dialog, popover, tooltip, toast, rich-text menus      | Radix primitives under `@/components/ui/*` — see [Radix exceptions](#radix-exceptions)                                                                            |
 
 Do **not** add new imports from `@/components/ui/*` in new code. ESLint enforces this; existing pages are grandfathered until migrated.
 
