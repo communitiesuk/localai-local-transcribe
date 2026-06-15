@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
+import { ReactNode } from 'react'
 
 interface NavItem {
   name: string
@@ -84,6 +85,76 @@ export function ServiceNav() {
     (item) => !item.isAdminOnly || hasAdminRole
   )
 
+  // Reusable component to handle conditional locking alert
+  const SafeLink = ({
+    href,
+    children,
+    ariaCurrent,
+  }: {
+    href: string
+    children: ReactNode
+    ariaCurrent?: 'page'
+  }) => {
+    if (lockNavigation) {
+      return (
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              type="button"
+              className="govuk-service-navigation__link"
+              aria-current={ariaCurrent}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                font: 'inherit',
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              {children}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Are you sure you want to leave the page?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {typeof lockNavigation === 'string'
+                  ? lockNavigation
+                  : `You have a recording that has not been uploaded, are you sure you
+                want to leave this page? (Your recording will be discarded if you
+                do not upload it, or save a local copy.)`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setLockNavigation(false)
+                  router.push(href)
+                }}
+              >
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )
+    }
+
+    return (
+      <Link
+        href={href}
+        className="govuk-service-navigation__link"
+        aria-current={ariaCurrent}
+      >
+        {children}
+      </Link>
+    )
+  }
+
   return (
     <section
       className="govuk-service-navigation"
@@ -93,9 +164,8 @@ export function ServiceNav() {
       <div className="govuk-width-container">
         <div className="govuk-service-navigation__container">
           <span className="govuk-service-navigation__service-name">
-            <Link href="/" className="govuk-service-navigation__link">
-              Local Transcribe
-            </Link>
+            {/* 1. Protected Service Link (No active styles) */}
+            <SafeLink href="/">Local Transcribe</SafeLink>
           </span>
           <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
             <button
@@ -128,60 +198,13 @@ export function ServiceNav() {
                       .filter(Boolean)
                       .join(' ')}
                   >
-                    {lockNavigation ? (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button
-                            type="button"
-                            className="govuk-service-navigation__link"
-                            aria-current={active ? 'page' : undefined}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: 0,
-                              font: 'inherit',
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                            }}
-                          >
-                            {linkContent}
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Are you sure you want to leave the page?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {typeof lockNavigation === 'string'
-                                ? lockNavigation
-                                : `You have a recording that has not been uploaded, are you sure you
-                              want to leave this page? (Your recording will be discarded if you
-                              do not upload it, or save a local copy.)`}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => {
-                                setLockNavigation(false)
-                                router.push(item.href)
-                              }}
-                            >
-                              Continue
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    ) : (
-                      <Link
-                        href={item.href}
-                        className="govuk-service-navigation__link"
-                        aria-current={active ? 'page' : undefined}
-                      >
-                        {linkContent}
-                      </Link>
-                    )}
+                    {/* 2. Protected Navigation Items (With active styling/aria-current) */}
+                    <SafeLink
+                      href={item.href}
+                      ariaCurrent={active ? 'page' : undefined}
+                    >
+                      {linkContent}
+                    </SafeLink>
                   </li>
                 )
               })}
