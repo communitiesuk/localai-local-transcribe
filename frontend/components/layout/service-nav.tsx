@@ -30,7 +30,10 @@ const navItems: NavItem[] = [
     name: 'Home',
     href: '/',
     isActive: (pathname: string) =>
-      pathname === '/' || pathname === '/new' || pathname.startsWith('/new/') || pathname.startsWith('/recordings/'),
+      pathname === '/' ||
+      pathname === '/new' ||
+      pathname.startsWith('/new/') ||
+      pathname.startsWith('/recordings/'),
   },
   {
     name: 'My recordings',
