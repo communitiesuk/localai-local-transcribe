@@ -62,7 +62,7 @@ export default function PaginatedUsers() {
                 <GovukTableCell>
                   <div className="flex justify-end gap-3">
                     {!user?.is_active && (
-                      <strong className="govuk-tag govuk-tag--grey">
+                      <strong className="govuk-tag govuk-tag--red">
                         Inactive
                       </strong>
                     )}
