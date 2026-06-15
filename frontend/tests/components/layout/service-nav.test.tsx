@@ -77,6 +77,7 @@ describe('<ServiceNav />', () => {
       'My recordings',
       'Templates',
       'Settings',
+      'Support',
     ])
   })
 
@@ -91,6 +92,7 @@ describe('<ServiceNav />', () => {
       'My recordings',
       'Templates',
       'Settings',
+      'Support',
       'User management',
     ])
   })
