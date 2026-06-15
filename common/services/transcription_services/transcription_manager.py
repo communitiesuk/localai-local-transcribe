@@ -16,7 +16,6 @@ from common.services.transcription_services import (
     AzureBatchTranscriptionAdapter,
     AzureSpeechAdapter,
     TranscriptionAdapter,
-    WhisplyLocalAdapter,
 )
 from common.services.transcription_services.adapter import AdapterType
 from common.settings import get_settings
@@ -26,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 settings = get_settings()
 _adapters = {
-    adapter.name: adapter
-    for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter, WhisplyLocalAdapter]
+    adapter.name: adapter for adapter in [AzureSpeechAdapter, AWSTranscribeAdapter, AzureBatchTranscriptionAdapter]
 }
 storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
 
