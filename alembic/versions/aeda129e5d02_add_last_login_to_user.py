@@ -25,7 +25,7 @@ def upgrade() -> None:
     op.add_column("user", sa.Column("last_login", sa.TIMESTAMP(timezone=True), nullable=True))
 
     # manual edit
-    # backfill existing users then make column nullable again
+    # backfill existing users then make column nullable again (syncing back to model)
     op.execute('UPDATE "user" SET last_login = NOW() WHERE last_login IS NULL')
     op.alter_column("user", "last_login", nullable=False)
     # ### end Alembic commands ###
