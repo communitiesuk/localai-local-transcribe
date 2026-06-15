@@ -40,7 +40,12 @@ AWS model version: v3.0.1
 **MBM** (market-based method) subtracts renewable energy certificates (RECs) purchased by AWS; it is the appropriate figure when comparing against a provider that actively purchases clean energy, as AWS does.  
 **LBM** (location-based method) uses regional grid-average carbon intensity and is shown for reference only.
 
-**Homeworking context:** At the UK GHG Conversion Factors 2025 homeworking rate (0.334 kg CO₂e/FTE hour [24]), 17,317 g CO₂e (MBM) is equivalent to **51.9 hours (6.5 working days)** of one person working from home. See Appendix HW. Run `documentation/env_assets/aws_carbon.py` to recompute for the latest month.
+**Relatable activity comparisons** for the April 2026 MBM figure (17,317 g CO₂e). See Appendix HW for sources and methodology.
+
+| ≡ homeworking [24] | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ television [28] | ≡ household energy [27] |
+|:---:|:---:|:---:|:---:|:---:|
+| 6.5 working days | 98 km | 149 km | 5 weeks | 2 days |
+
 
 ---
 
@@ -58,7 +63,7 @@ Transcription is handled separately by a dedicated speech-to-text service (Azure
 Peer-reviewed measurements indicate that cloud-based ASR systems exhibit relatively low energy use and CO₂e per hour of audio, particularly when operated in modern data centres [15].
 
 **Large Language Model services**
-LLM inference represents a substantial increase in energy consumption compared to traditional web services. EcoLogits [25] modelling of a typical 500-word-output invocation on the BEST model (GPT-5.1) estimates 1.4–2.1 Wh — roughly 5–7× a comparable Google search (0.3 Wh) [2]. The FAST model (GPT-5-nano) is an order of magnitude cheaper per invocation (0.1 Wh for the same output length).
+LLM inference represents a substantial increase in energy consumption compared to traditional web services. EcoLogits [25] modelling of a typical 500-word-output invocation on the BEST model (GPT-5.1) estimates 1.4–2.1 Wh — roughly 4.7–7× a comparable Google search (0.3 Wh) [2]. The FAST model (GPT-5-nano) is an order of magnitude cheaper per invocation (0.1 Wh for the same output length).
 
 LLM usage is expected to materially increase the environmental footprint of the overall solution. The computational intensity stems from the massive matrix multiplication operations required during autoregressive token generation.
 
@@ -153,7 +158,7 @@ Energy is computed per API invocation via EcoLogits [25]; ranges reflect GPT-5-n
 | UserTemplate DOCUMENT | 4 | 9,260 | 12.1–18.1 Wh | 2.6–3.9 g |
 | SimpleTemplate | 6 | 20,060 | 12.7–18.8 Wh | 2.8–4.1 g |
 
-The dominant cost driver is the **BEST model (GPT-5.1 MoE)**. Templates that use only the FAST model (GPT-5-nano) — Basic Minutes — are 30–40× cheaper than BEST-model templates because GPT-5-nano operates at 96 tokens/second versus GPT-5.1 at 61 tokens/second, and its active parameter footprint is an order of magnitude smaller. The citations pipeline (extract_claims + cite_claims) adds 10,800 output tokens and distinguishes SimpleTemplate from Short 'n' Sweet (1.2–1.7 g CO₂e extra). Detailed usage-frequency breakdown is in Appendix F.2.
+The dominant cost driver is the **BEST model (GPT-5.1 MoE)**. Templates that use only the FAST model (GPT-5-nano) — Basic Minutes — are 26–45× cheaper than BEST-model templates because GPT-5-nano operates at 96 tokens/second versus GPT-5.1 at 61 tokens/second, and its active parameter footprint is an order of magnitude smaller. The lower bound (26×) applies to Short 'n' Sweet and the upper bound (45×) to SimpleTemplate. The citations pipeline (extract_claims + cite_claims) adds 10,800 output tokens and distinguishes SimpleTemplate from Short 'n' Sweet (1.2–1.7 g CO₂e extra). Detailed usage-frequency breakdown is in Appendix F.2.
 
 ---
 
@@ -192,9 +197,15 @@ Applying production usage shares (Appendix F.1):
 
 **Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. LLM's share of total CO₂e ranges from 1% (Basic Minutes) to 37% (SimpleTemplate), with ASR dominating at all template levels.
 
-**Infrastructure vs. AI processing cost:** The AWS hosting layer (Section 2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **2,192 complete 1-hour meetings** (at the usage-weighted midpoint of 7.9 g CO₂e/meeting). The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). Together they represent the full system footprint; the infrastructure layer now dominates AI inference cost by a large margin. Run `documentation/env_assets/aws_carbon.py` to recompute against the latest month.
+**Infrastructure vs. AI processing cost:** The AWS hosting layer (Section 2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **2,192 complete 1-hour meetings** (at the usage-weighted midpoint of 7.9 g CO₂e/meeting). The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). Note that this AWS figure covers only the measured hosting cost for one month; other infrastructure components may not be fully captured.
+**Relatable activity comparisons.** See Appendix HW for sources and methodology.
 
-**Homeworking context:** The usage-weighted per-meeting AI cost (7.9 g CO₂e midpoint) is equivalent to **85 seconds (1.5 minutes)** of a single person working from home, using the UK GHG Conversion Factors 2025 homeworking rate of 0.334 kg CO₂e/FTE hour [24]. By contrast, one month of AWS hosting (April 2026: 17.3 kg CO₂e MBM) equates to approximately **51.9 hours (6.5 working days)** of homeworking. Reducing infrastructure waste (idle resources, over-provisioned instances) therefore yields orders of magnitude more carbon savings than optimising AI prompt length or model selection. See Appendix HW.
+| Cost layer | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ homeworking [24] | ≡ television [28] | ≡ household energy [27] |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Per-meeting AI inference (usage-weighted mid) | 45 m | 68 m | 85 s | 22 min | 81 s |
+| Monthly AWS hosting (April 2026) | 98 km | 149 km | 6.5 working days | 5 weeks | 2 days |
+
+At current measured figures, the hosting layer dominates the AI inference cost by a large margin, though total infrastructure costs may be higher than captured here.
 
 ---
 
@@ -230,28 +241,14 @@ This system uses two types of AI models: Large Language Models (LLMs) for summar
 
 **1-hour SimpleTemplate meeting:** 35.0–41.1 Wh (0.035–0.041 kWh), 7.6–8.9 g CO₂e (midpoint 8.2 g)
 
-**Key finding:** Processing a single 1-hour meeting with SimpleTemplate consumes **0.52× the combined training cost** amortised per user (proxy). This means the per-user training investment exceeds the cost of a single meeting:
-* The amortised training proxy is 1.9× the per-meeting inference cost (28.0 g ÷ 8.2 g midpoint ≈ 3.4×; energy: 72.7 ÷ 38.1 Wh = 1.9×)
-* Inference costs accumulate with each use — after processing about 2 meetings, cumulative inference exceeds the user's share of training costs
-* The training proxy figures (GPT-4/GPT-4o) likely underestimate actual GPT-5.x training costs, making this ratio even more favourable to inference
+**Relatable activity comparisons.** See Appendix HW for sources and methodology.
 
-**Limitations:** Equal-distribution approach does not reflect actual usage patterns but provides a tractable baseline. Training estimates are proxies based on similar-class models; actual GPT-5.x training costs are not publicly available. With 800 million users, training costs are well-amortised; smaller user bases would see proportionally higher per-user impact.
-* Actual training may have included multiple runs, failed attempts, or iterative improvements not captured in published estimates
-* The GPT-4o estimate uses Gopher as a proxy due to similar parameter counts, but architectural differences may affect actual training costs
+| | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ homeworking [24] | ≡ television [28] | ≡ household energy [27] |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Training per user (proxy) | 158 m | 241 m | 5 min | 77 min | 5 min |
+| Per-meeting inference (mid) | 45 m | 68 m | 85 s | 22 min | 81 s |
 
-**Carbon intensity for training:**
-
-Training calculations use US average carbon intensity (384 g CO₂e/kWh) from EcoLogits [25] ElectricityMixRepository (zone='USA'), as most large-scale AI training is conducted in US data centres. This is significantly higher than the GBR average (217 g CO₂e/kWh) used for both ASR and LLM inference, reflecting the carbon-intensive nature of US electricity generation.
-
-**Scope boundaries:**
-
-This analysis includes only the energy consumed during the final training run(s) that produced the deployed models. It excludes:
-* Research and development iterations
-* Preliminary experiments and ablation studies
-* Infrastructure manufacturing and deployment
-* Ongoing fine-tuning and model updates
-
-For comprehensive lifecycle assessment, these additional factors would need to be considered, potentially increasing training impact estimates by a factor of 2-10×.
+Training amounts to 3.4× the per-meeting CO₂e and 1.9× the energy. After processing about 2 meetings, cumulative inference exceeds the user's training share (proxy). See Appendix C for full methodology, limitations, and scope boundaries.
 
 ---
 
@@ -557,6 +554,22 @@ After 2 meetings, cumulative inference costs surpass the per-user training share
 Note: GPT-5.x training costs are unpublished; GPT-4/GPT-4o are proxies only.
 ```
 
+## C.3 Limitations and Scope
+
+**Limitations:** The equal-distribution approach does not reflect actual usage patterns but provides a tractable baseline. Training estimates are proxies based on similar-class models; actual GPT-5.x training costs are not publicly available. With 800 million users, training costs are well-amortised; smaller user bases would see proportionally higher per-user impact.
+
+* Actual training may have included multiple runs, failed attempts, or iterative improvements not captured in published estimates
+* The GPT-4o estimate uses Gopher as a proxy due to similar parameter counts, but architectural differences may affect actual training costs
+
+**Scope boundaries:** This analysis includes only the energy consumed during the final training run(s) that produced the deployed models. It excludes:
+
+* Research and development iterations
+* Preliminary experiments and ablation studies
+* Infrastructure manufacturing and deployment
+* Ongoing fine-tuning and model updates
+
+For comprehensive lifecycle assessment, these additional factors would need to be considered, potentially increasing training impact estimates by a factor of 2–10×.
+
 ---
 
 # Appendix D: Speech-to-Text Training Impact — OWSM Case Study
@@ -807,7 +820,9 @@ This appendix expresses the system's carbon costs in terms of a familiar human-s
 
 ## HW.1 Source Data
 
-**Emission factor source:** UK Government GHG Conversion Factors 2025, published by DESNZ and DEFRA [24].  
+### Homeworking [24]
+
+**Source:** UK Government GHG Conversion Factors 2025, published by DESNZ and DEFRA [24].  
 **URL:** https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025
 
 | Activity | Unit | kg CO₂e |
@@ -818,27 +833,119 @@ This appendix expresses the system's carbon costs in terms of a familiar human-s
 
 Heating dominates at **91%** of the combined factor; office equipment contributes only 9%. The combined rate used throughout this appendix is **333.78 g CO₂e per FTE working hour**.
 
-## HW.2 One Hour of AI Processing
+### Passenger car — average petrol [26]
 
-**Question:** how long must one person work from home to emit the same CO₂e as Local Transcribe processing a single 1-hour meeting?
+**Source:** UK GHG Conversion Factors 2025 methodology paper, DESNZ/DEFRA [26].
 
-| Metric | Value |
-|--------|------:|
-| Usage-weighted meeting CO₂e (Section 8.1) | 7.3–8.5 g (midpoint 7.9 g) |
-| SimpleTemplate meeting CO₂e (Section 8.2) | 7.6–8.9 g (midpoint 8.2 g) |
-| Homeworking rate | 333.78 g CO₂e/h |
+| Factor | Value | Notes |
+|--------|------:|-------|
+| WLTP CO₂, average petrol car | 143.7 g CO₂/km | Table 15 |
+| Real-world uplift (2024 data year) | +22.99% | Table 16 |
+| **Effective real-world factor** | **176.7 g CO₂/km** | Scope 1 direct CO₂ only |
+
+Scope 1 direct CO₂ only; excludes well-to-tank (WTT), CH₄, N₂O and biofuel adjustment.
+
+### Long-haul economy flight [26]
+
+**Source:** UK GHG Conversion Factors 2025 methodology paper, DESNZ/DEFRA [26].
+
+| Factor | Value | Notes |
+|--------|------:|-------|
+| Base emission factor, economy class | 63.2 g CO₂/pkm | Table 39 |
+| Great Circle distance uplift | +8% | Section 8.39 |
+| Radiative forcing (RF) multiplier | ×1.7 | Section 8.43, central estimate |
+| **Effective emission factor** | **116.0 g CO₂e/pkm** | Scope 1 CO₂ × distance uplift × RF |
+
+The RF multiplier accounts for non-CO₂ warming effects from contrails, NOₓ, and other high-altitude emissions.
+
+### UK household daily energy [27]
+
+**Source:** Ofgem Typical Domestic Consumption Values (TDCVs), 2023 in-force values, medium household [27].
+
+| Fuel | kWh/year | kWh/day |
+|------|--------:|--------:|
+| Electricity (Profile Class 1) | 2,700 | 7.40 |
+| Gas (standard credit meter) | 11,500 | 31.51 |
+| **Total** | **14,200** | **38.90** |
+
+Ofgem consulted on revised TDCVs in March 2026 (proposed 2,500 + 9,500 = 12,000 kWh/year); no final determination had been published at the time of this assessment.
+
+### Television power consumption [28]
+
+A typical modern 43–55" LED television uses approximately **100 W** when in active use. No single UK government figure specifies an average TV wattage; this is an indicative estimate based on EU/UK energy label data (UK Statutory Instrument 2021/825), which shows 75–130 kWh/year at 4 hours/day for common screen sizes, implying 50–90 W active power [28].
+
+### CO₂e conversion for television and household comparisons
+
+To enable a single unified table, television and household activity comparisons are expressed on a CO₂e basis using the UK grid carbon intensity (217 g CO₂e/kWh, from EcoLogits [25]):
+
+```
+Television CO₂e rate:
+  100 W × 217 g/kWh ÷ 1,000 ÷ 60 = 0.362 g CO₂e/min
+  (W × g/Wh ÷ min·h⁻¹ = g/min ✓)
+
+Household CO₂e rate (average power = 38,904 Wh/day ÷ 24 h = 1,621 W):
+  1,621 W × 217 g/kWh ÷ 1,000 ÷ 3,600 = 0.0977 g CO₂e/s
+  (W × g/Wh ÷ s·h⁻¹ = g/s ✓)
+```
+
+## HW.2 Activity Comparisons for One Hour of AI Processing
+
+The usage-weighted meeting emits **7.3–8.5 g CO₂e** (midpoint 7.9 g) and uses **33.6–39.1 Wh** of energy (Section 8.1). The five comparisons below express this in human-scale terms. Car and flight use a CO₂e basis; homeworking also uses CO₂e. TV and household use an energy basis.
+
+### Homeworking
 
 ```
 Usage-weighted (min):  7.3 g ÷ 333.78 g/h = 0.0219 h ≈ 78.9 seconds
 Usage-weighted (max):  8.5 g ÷ 333.78 g/h = 0.0255 h ≈ 91.8 seconds
 Usage-weighted (mid): 7.9 g ÷ 333.78 g/h = 0.0237 h ≈ 85 seconds
-
-SimpleTemplate (min):  7.6 g ÷ 333.78 g/h ≈ 82.1 seconds
-SimpleTemplate (max):  8.9 g ÷ 333.78 g/h ≈ 96.4 seconds
-SimpleTemplate (mid): 8.2 g ÷ 333.78 g/h ≈ 89 seconds
 ```
 
-**Conclusion:** Processing one 1-hour meeting costs the same as approximately **85 seconds (1.5 minutes)** of a single person working from home (usage-weighted midpoint). The AI carbon cost at the per-meeting level is negligibly small in human-activity terms.
+### Petrol car (average, Scope 1 real-world)
+
+```
+Effective factor:  143.7 g/km × 1.2299 = 176.7 g CO₂/km
+
+Usage-weighted (min):  7.3 g ÷ 176.7 g/km × 1000 = 41.3 m
+Usage-weighted (max):  8.5 g ÷ 176.7 g/km × 1000 = 48.1 m
+Usage-weighted (mid): 7.9 g ÷ 176.7 g/km × 1000 = 44.7 m
+```
+
+### Long-haul economy flight (with radiative forcing)
+
+```
+Effective factor:  63.2 × 1.08 × 1.7 = 116.0 g CO₂e/pkm
+
+Usage-weighted (min):  7.3 g ÷ 116.0 g/pkm × 1000 = 62.9 m
+Usage-weighted (max):  8.5 g ÷ 116.0 g/pkm × 1000 = 73.3 m
+Usage-weighted (mid): 7.9 g ÷ 116.0 g/pkm × 1000 = 68.1 m
+```
+
+### UK household daily energy
+
+```
+Household daily energy:  (2,700 + 11,500) kWh/yr ÷ 365 = 38.90 kWh/day = 38,904 Wh/day
+
+Usage-weighted (min):  33.6 Wh ÷ 38,904 Wh × 100 = 0.086%
+Usage-weighted (max):  39.1 Wh ÷ 38,904 Wh × 100 = 0.101%
+Usage-weighted (mid): 36.4 Wh ÷ 38,904 Wh × 100 = 0.094% ≈ 0.1%
+
+As time (average household power = 38,904 Wh ÷ 24 h = 1,621 W):
+Usage-weighted (min):  33.6 Wh ÷ 1,621 W × 3,600 = 74.6 s
+Usage-weighted (max):  39.1 Wh ÷ 1,621 W × 3,600 = 86.8 s
+Usage-weighted (mid): 36.4 Wh ÷ 1,621 W × 3,600 = 80.8 s ≈ 81 s
+```
+
+### Television (43–55" LED, 100 W indicative)
+
+```
+Energy per minute of TV:  100 W × 1 min / 60 = 1.667 Wh/min
+
+Usage-weighted (min):  33.6 Wh ÷ 1.667 Wh/min = 20.2 min
+Usage-weighted (max):  39.1 Wh ÷ 1.667 Wh/min = 23.5 min
+Usage-weighted (mid): 36.4 Wh ÷ 1.667 Wh/min = 21.8 min ≈ 22 min
+```
+
+**Summary:** Processing one 1-hour meeting through Local Transcribe is equivalent to approximately 85 seconds of homeworking, driving 45 metres in a petrol car, a passenger flying 68 metres on a long-haul flight, watching TV for 22 minutes, or 81 seconds of average household energy consumption.
 
 ## HW.3 One Month of AWS Hosting
 
@@ -850,19 +957,22 @@ SimpleTemplate (mid): 8.2 g ÷ 333.78 g/h ≈ 89 seconds
 
 One month of AWS infrastructure hosting is equivalent to approximately **6.5 working days** of one person working from home.
 
-Run `documentation/env_assets/aws_carbon.py` for the current month's figure.
 
-## HW.4 Comparison and Conclusions
+## HW.4 Cross-Layer Comparison and Conclusions
 
-| Item | CO₂e | Homeworking equivalent |
-|------|-----:|----------------------:|
-| One 1-hour meeting — AI, usage-weighted (mid) | 7.9 g | 85 seconds |
-| One 1-hour meeting — AI, SimpleTemplate (mid) | 8.2 g | 89 seconds |
-| April 2026 AWS hosting (MBM) | 17,317 g | 51.9 hours (6.5 working days) |
+All comparisons use a unified CO₂e basis. Television and household columns are derived by multiplying the activity's power draw by the UK grid carbon intensity (217 g CO₂e/kWh); see HW.1 for methodology. Training figures use GPT-4/GPT-4o proxies (GPT-5.x training costs are unpublished); AWS figures are for April 2026.
 
-The hosting layer emits approximately **2,192×** more CO₂e per month than the AI cost of a single 1-hour meeting (at the usage-weighted midpoint). In homeworking terms the ratio is starker than ever: weeks of infrastructure running time versus about 85 seconds of AI processing per meeting.
+| Cost layer | CO₂e | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ homeworking [24] | ≡ television [28] | ≡ household energy [27] |
+|------------|------:|:---:|:---:|:---:|:---:|:---:|
+| LLM+ASR training, per user (proxy) | 28 g | 158 m | 241 m | 5 min | 77 min | 5 min |
+| Per-meeting AI inference (usage-weighted mid) | 7.9 g | **45 m** | **68 m** | **85 s** | **22 min** | **81 s** |
+| Monthly AWS hosting (April 2026) | 17,317 g | **98 km** | **149 km** | **6.5 working days** | **5 weeks** | **2 days** |
 
-**Strategic implication:** Carbon reduction efforts should prioritise the infrastructure layer — right-sizing compute, switching off idle resources, and selecting low-carbon AWS regions — over micro-optimising prompt length or model selection. The AI processing cost, while non-zero, is negligibly small compared to the hosting baseline at current usage volumes.
+The hosting layer emits approximately **2,189×** more CO₂e per month than a single AI meeting (usage-weighted midpoint). The amortised training cost is roughly **3.5× one meeting** — a one-time charge that breaks even after only about four meetings of cumulative inference.
+
+In concrete terms, the monthly infrastructure footprint is equivalent to driving 98 km, flying 149 km, 5 weeks of continuous television, or 6.5 working days of homeworking. A single AI meeting equates to 45 m of driving, 68 m of flying, 22 min of TV, or 85 s of homeworking.
+
+At current measured figures, the hosting layer dominates AI inference cost by a large margin. Infrastructure costs are not fully captured in this assessment, so this ratio should be treated as indicative rather than definitive.
 
 ---
 
@@ -917,3 +1027,9 @@ The hosting layer emits approximately **2,192×** more CO₂e per month than the
 [24] Department for Energy Security and Net Zero (DESNZ) and Department for Environment, Food & Rural Affairs (DEFRA), “Greenhouse Gas Reporting: Conversion Factors 2025,” UK Government, 2025. [Online]. Available: https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025
 
 [25] GenAI Impact, “EcoLogits: Tracking the environmental impacts of generative AI models,” v0.10.2, 2025. [Online]. Available: https://github.com/genai-impact/ecologits
+
+[26] Department for Energy Security and Net Zero (DESNZ) and Department for Environment, Food & Rural Affairs (DEFRA), “Greenhouse Gas Reporting: Conversion Factors 2025 — Methodology Paper,” UK Government, 2025. [Online]. Available: https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025
+
+[27] Office of Gas and Electricity Markets (Ofgem), “Typical Domestic Consumption Values consultation,” March 2026. [Online]. Available: https://www.ofgem.gov.uk/consultation-hub/typical-domestic-consumption-values-consultation
+
+[28] UK Statutory Instrument 2021/825, “The Energy Information (Televisions) Regulations 2021,” implementing EU Regulation 2019/2021. [Online]. Available: https://www.legislation.gov.uk/uksi/2021/825/contents/made
