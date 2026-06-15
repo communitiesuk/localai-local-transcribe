@@ -11,17 +11,17 @@ from evals.transcription.src.evaluate import run_evaluation
     ("kwargs", "dataset_len", "expected_load_call"),
     [
         (
-            {"num_samples": 5, "adapter_names": ["azure", "whisply"]},
+            {"num_samples": 5, "adapter_names": ["azure"]},
             10,
             {"num_samples": 5, "sample_duration_fraction": None},
         ),
         (
-            {"sample_duration_fraction": 0.5, "adapter_names": ["azure", "whisply"]},
+            {"sample_duration_fraction": 0.5, "adapter_names": ["azure"]},
             10,
             {"num_samples": None, "sample_duration_fraction": 0.5},
         ),
         (
-            {"adapter_names": ["azure", "whisply"]},
+            {"adapter_names": ["azure"]},
             2,
             {"num_samples": None, "sample_duration_fraction": None},
         ),
@@ -51,6 +51,6 @@ def test_run_evaluation(tmp_path, monkeypatch, kwargs, dataset_len, expected_loa
         assert result is None
         mock_load.assert_called_once_with(**expected_load_call)
         mock_run.assert_called_once()
-        assert len(mock_run.call_args.kwargs["adapters"]) == 2
+        assert len(mock_run.call_args.kwargs["adapters"]) == 1
         assert mock_run.call_args.kwargs["indices"] == list(range(dataset_len))
         mock_save.assert_called_once()
