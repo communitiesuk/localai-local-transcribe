@@ -2,10 +2,52 @@
 <html lang="en" class="govuk-template govuk-template--rebranded">
 <head>
     <meta charset="utf-8">
-    <title>Sorry, the service is unavailable - Private Rented Sector Database - GOV.UK</title>
+    <title>Sorry, the service is unavailable - Local Transcribe - GOV.UK</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#1d70b8">
+    <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="/govuk-frontend-5.11.2.min.css">
+    <style>
+        /* Push the footer to the bottom and let the main content expand */
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        .govuk-template__body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Targets only the main content container child of body to let it grow */
+        body > .govuk-width-container {
+            flex: 1 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .govuk-main-wrapper {
+            flex: 1;
+            padding-top: 140px; 
+            padding-bottom: 40px;
+        }
+
+        .govuk-footer {
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+
+        .govuk-footer__crown {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .govuk-footer__meta {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+    </style>
 </head>
 <body class="govuk-template__body">
 <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">Skip to main content</a>
@@ -46,6 +88,7 @@
             <div class="govuk-grid-column-two-thirds">
                 <h1 class="govuk-heading-l">Sorry, the service is unavailable</h1>
                 <p class="govuk-body">Please try again later</p>
+                <p class="govuk-body">If you need help using this private beta, get in touch by email: <a class="govuk-link" href="mailto:LocalTranscribeSupport@communities.gov.uk">LocalTranscribeSupport@communities.gov.uk</a>.</p>
             </div>
         </div>
     </main>
@@ -68,13 +111,6 @@
         <div class="govuk-footer__meta">
             <div class="govuk-footer__meta-item govuk-footer__meta-item--grow">
                 <h2 class="govuk-visually-hidden">Support links</h2>
-                <div class="govuk-footer__meta-custom">
-                    <span>If you need help using this private beta, get in touch by email:</span>
-                    <a class="govuk-footer__link" href="mailto: PRSDatabase@communities.gov.uk">PRSDatabase@communities.gov.uk</a>
-                    <span>.</span>
-                    <br>
-                    <span>Or by phone: 03034447000</span>
-                </div>
                 <div class="govuk-footer__meta-custom">
                     <span>Built by</span>
                     <a class="govuk-footer__link" href="https://www.gov.uk/government/organisations/ministry-of-housing-communities-local-government">Ministry of Housing, Communities, and Local Government (MHCLG)</a>

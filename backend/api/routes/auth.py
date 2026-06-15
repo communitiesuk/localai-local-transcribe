@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Request, status
+from fastapi import APIRouter, status
 from fastapi.responses import RedirectResponse
 
 from backend.utils.get_idp_logout_url import get_idp_logout_url
@@ -18,16 +18,10 @@ END_SESSION_ENDPOINT_STATIC = "https://sso.service.security.gov.uk/sign-out"
 
 
 @auth_router.get("/signout")
-async def sign_out(request: Request) -> RedirectResponse:
+async def sign_out() -> RedirectResponse:
     """Sign out the user by clearing ALB auth cookies and redirecting to the IdP."""
 
     end_session_endpoint = await get_idp_logout_url() or END_SESSION_ENDPOINT_STATIC
-
-    logger.info("host=%s", request.headers.get("host"))
-    logger.info("x-forwarded-host=%s", request.headers.get("x-forwarded-host"))
-    logger.info("all headers: %s", request.headers.keys())
-
-    domain = request.headers.get("x-forwarded-host") or request.headers.get("host")
 
     response = RedirectResponse(
         url=end_session_endpoint,
@@ -39,11 +33,10 @@ async def sign_out(request: Request) -> RedirectResponse:
         response.delete_cookie(
             cookie_name,
             path="/",
-            domain=domain,
             secure=True,
             httponly=True,
         )
 
-    logger.info("User redirected to IdP logout endpoint: %s from %s", end_session_endpoint, domain)
+    logger.info("User redirected to IdP logout endpoint: %s", end_session_endpoint)
 
     return response

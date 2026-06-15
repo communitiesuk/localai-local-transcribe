@@ -1,6 +1,5 @@
 export { GovukBackLink } from './back-link'
-export { GovukBackLinkClient } from './back-link-client'
-export { GovukButton } from './button'
+export { GovukButton, GovukButtonLink } from './button'
 export { GovukErrorSummary } from './error-summary'
 export type { ErrorItem } from './error-summary'
 export { GovukFieldset } from './fieldset'

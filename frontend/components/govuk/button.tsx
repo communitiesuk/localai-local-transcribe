@@ -7,31 +7,26 @@ type Variant = 'primary' | 'secondary' | 'warning' | 'inverse'
 type CommonProps = {
   variant?: Variant
   isStartButton?: boolean
-  isSubmitting?: boolean
-  loadingText?: string
-  preventDoubleClick?: boolean
   className?: string
   children: React.ReactNode
 }
 
-type ButtonOnly = {
-  href?: never
-} & Omit<
-  React.ButtonHTMLAttributes<HTMLButtonElement>,
-  'className' | 'children' | 'disabled' | 'type'
-> & {
+type ButtonProps = CommonProps &
+  Omit<
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    'className' | 'children' | 'disabled' | 'type'
+  > & {
     disabled?: boolean
     type?: 'submit' | 'button' | 'reset'
   }
 
-type AnchorOnly = {
-  href: string
-} & Omit<
-  React.AnchorHTMLAttributes<HTMLAnchorElement>,
-  'className' | 'children' | 'href' | 'role' | 'draggable'
->
-
-type Props = CommonProps & (ButtonOnly | AnchorOnly)
+type ButtonLinkProps = CommonProps &
+  Omit<
+    React.AnchorHTMLAttributes<HTMLAnchorElement>,
+    'className' | 'children' | 'role' | 'draggable'
+  > & {
+    href: string
+  }
 
 function StartIcon() {
   return (
@@ -49,80 +44,70 @@ function StartIcon() {
   )
 }
 
-export function GovukButton(props: Props) {
-  const {
-    variant = 'primary',
-    isStartButton,
-    isSubmitting,
-    loadingText = 'Saving…',
-    preventDoubleClick,
-    className,
-    children,
-    ...rest
-  } = props
-
+function useButtonClasses(
+  variant: Variant,
+  isStartButton?: boolean,
+  className?: string
+) {
   const variantClass: Record<Variant, string | undefined> = {
     primary: undefined,
     secondary: 'govuk-button--secondary',
     warning: 'govuk-button--warning',
     inverse: 'govuk-button--inverse',
   }
-
-  const classes = cn(
+  return cn(
     'govuk-button',
     variantClass[variant],
     isStartButton && 'govuk-button--start',
     className
   )
+}
 
-  const content = (
-    <>
-      {isSubmitting ? loadingText : children}
-      {isStartButton && <StartIcon />}
-    </>
-  )
-
-  if ('href' in rest && rest.href !== undefined) {
-    const { href, ...anchorRest } = rest as { href: string } & Record<
-      string,
-      unknown
-    >
-    return (
-      <a
-        {...anchorRest}
-        href={href as string}
-        role="button"
-        draggable={false}
-        className={classes}
-        data-module="govuk-button"
-      >
-        {content}
-      </a>
-    )
-  }
-
-  const {
-    disabled: callerDisabled,
-    type,
-    ...buttonRest
-  } = rest as {
-    disabled?: boolean
-    type?: 'submit' | 'button' | 'reset'
-  } & Record<string, unknown>
-
-  const isDisabled = Boolean(isSubmitting || callerDisabled)
+export function GovukButton({
+  variant = 'primary',
+  isStartButton,
+  className,
+  children,
+  disabled,
+  type,
+  ...rest
+}: ButtonProps) {
+  const classes = useButtonClasses(variant, isStartButton, className)
+  const isDisabled = Boolean(disabled)
 
   return (
     <button
-      {...buttonRest}
+      {...rest}
       type={type ?? 'submit'}
       disabled={isDisabled}
-      aria-disabled={isDisabled || undefined}
       className={classes}
       data-module="govuk-button"
-      data-prevent-double-click={preventDoubleClick ? 'true' : undefined}
     >
-      {content}
+      {children}
+      {isStartButton && <StartIcon />}
     </button>
+  )
+}
+
+export function GovukButtonLink({
+  variant = 'primary',
+  isStartButton,
+  className,
+  children,
+  ...rest
+}: ButtonLinkProps) {
+  const classes = useButtonClasses(variant, isStartButton, className)
+
+  return (
+    <a
+      {...rest}
+      role="button"
+      draggable={false}
+      className={classes}
+      data-module="govuk-button"
+    >
+      {children}
+      {isStartButton && <StartIcon />}
+    </a>
   )
 }

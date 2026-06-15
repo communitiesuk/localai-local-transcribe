@@ -14,26 +14,6 @@ describe('<GovukFieldset />', () => {
     expect(root).toHaveClass('govuk-fieldset')
   })
 
-  it('wires describedBy onto aria-describedby', () => {
-    const { container } = render(
-      <GovukFieldset describedBy="hint-id error-id">
-        <span>child</span>
-      </GovukFieldset>
-    )
-    const root = container.firstElementChild as HTMLElement
-    expect(root).toHaveAttribute('aria-describedby', 'hint-id error-id')
-  })
-
-  it('omits aria-describedby when describedBy is not provided', () => {
-    const { container } = render(
-      <GovukFieldset>
-        <span>child</span>
-      </GovukFieldset>
-    )
-    const root = container.firstElementChild as HTMLElement
-    expect(root).not.toHaveAttribute('aria-describedby')
-  })
-
   it('composes a caller-supplied className without clobbering the canonical class', () => {
     const { container } = render(
       <GovukFieldset className="mt-4">

@@ -1,0 +1,40 @@
+### Dimension: Structure & Readability
+
+The summary is logically organised, with appropriate use of sections, headings, paragraph breaks, and sequence, consistent with the applicable meeting template. The output should be easy to read in its target surface — free from stray JSON, XML, or HTML; no render-breaking syntax; and no raw links or markup unless explicitly required by the template.
+
+#### Score Definitions:
+
+- **Score 5 — Excellent:** Template followed precisely; logical flow; appropriate heading hierarchy; easy to navigate without prior context. Clean, render-safe text: no stray JSON/XML/HTML, no markdown-like syntax, and no raw links unless the template explicitly requires them.
+- **Score 4 — Good:** Template followed; sections clearly delineated; minor formatting inconsistencies only.
+- **Score 3 — Adequate:** Template broadly followed; minor ordering issues or missing section headings. May contain minor readability issues (e.g. occasional raw URL or inconsistent formatting) that do not prevent comprehension.
+- **Score 2 — Poor:** Some expected structure present but substantial deviations from template; hard to navigate.
+- **Score 1 — Unacceptable:** No discernible structure; content appears in random order; template not followed; summary consequently unusable. Includes render-breaking artefacts (e.g. stray JSON/XML/HTML, broken tags, or raw system-style markup).
+
+**Hallucination Gate:** No — review is not automatically triggered by low scores on this dimension alone, unless combined with failures in critical dimensions.
+
+#### Worked Examples
+
+**Scenario:** Output must be render-safe plain text following the template. Bad summary contains raw JSON and broken HTML artefacts.
+
+**Transcript Excerpt:**
+```text
+Housing Officer (00:03:00): Reference 6655321b. Date of birth 14 February 1989.
+Housing Officer (00:03:30): Two actions: Housing Officer to share application guidance with the customer; customer to send proof of address by 12 May.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+4. Personal Housing Plan — Jeff Martins
+4.1 Reference: 6655321b
+4.2 Customer DOB: 14 February 1989
+
+Actions
+1. Housing Officer to share application guidance with the customer.
+2. Customer to send proof of address by 12 May 2026.
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+{"ref":"6655321b","dob":"14/2/89","actions":["share guidance","proof of address by 12 May"]} See .cust3627b.docx paragraphs 6 & 7. <br/><b>TODO: fill in background section</b>
+```
+

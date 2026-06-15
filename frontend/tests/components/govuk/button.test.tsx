@@ -1,4 +1,4 @@
-import { GovukButton } from '@/components/govuk/button'
+import { GovukButton, GovukButtonLink } from '@/components/govuk/button'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -26,55 +26,29 @@ describe('<GovukButton />', () => {
       expect(button).toHaveClass('govuk-button')
       if (modifier) {
         expect(button).toHaveClass(modifier)
-      } else {
-        expect(button.className.split(' ')).not.toContain(
-          'govuk-button--secondary'
-        )
       }
+
+      const otherModifiers = [
+        'govuk-button--secondary',
+        'govuk-button--warning',
+        'govuk-button--inverse',
+      ].filter((m) => m !== modifier)
+
+      otherModifiers.forEach((m) => {
+        expect(button.className.split(' ')).not.toContain(m)
+      })
     }
   )
 
-  it('applies disabled + aria-disabled when disabled prop is true', () => {
+  it('applies disabled when disabled prop is true', () => {
     render(<GovukButton disabled>Save</GovukButton>)
     const button = screen.getByRole('button', { name: 'Save' })
     expect(button).toBeDisabled()
-    expect(button).toHaveAttribute('aria-disabled', 'true')
-  })
-
-  it('when isSubmitting, renders loadingText, disables, and adds aria-disabled', () => {
-    render(<GovukButton isSubmitting>Save</GovukButton>)
-    const button = screen.getByRole('button', { name: 'Saving…' })
-    expect(button).toBeDisabled()
-    expect(button).toHaveAttribute('aria-disabled', 'true')
-    expect(button).toHaveTextContent('Saving…')
-  })
-
-  it('allows a custom loadingText', () => {
-    render(
-      <GovukButton isSubmitting loadingText="Working…">
-        Save
-      </GovukButton>
-    )
-    expect(screen.getByRole('button', { name: 'Working…' })).toBeInTheDocument()
-  })
-
-  it('adds data-prevent-double-click when preventDoubleClick is true', () => {
-    render(<GovukButton preventDoubleClick>Save</GovukButton>)
-    expect(screen.getByRole('button', { name: 'Save' })).toHaveAttribute(
-      'data-prevent-double-click',
-      'true'
-    )
-  })
-
-  it('omits data-prevent-double-click when not set', () => {
-    render(<GovukButton>Save</GovukButton>)
-    expect(screen.getByRole('button', { name: 'Save' })).not.toHaveAttribute(
-      'data-prevent-double-click'
-    )
+    expect(button).not.toHaveAttribute('aria-disabled')
   })
 
   it('renders the link variant as <a href role="button" draggable={false}> with canonical class', () => {
-    render(<GovukButton href="/next">Continue</GovukButton>)
+    render(<GovukButtonLink href="/next">Continue</GovukButtonLink>)
     const link = screen.getByRole('button', { name: 'Continue' })
     expect(link.tagName).toBe('A')
     expect(link).toHaveAttribute('href', '/next')
@@ -109,35 +83,6 @@ describe('<GovukButton />', () => {
     render(<GovukButton className="mt-4">Save</GovukButton>)
     const button = screen.getByRole('button', { name: 'Save' })
     expect(button).toHaveClass('govuk-button', 'mt-4')
-  })
-
-  it('regression — isSubmitting toggle re-enables and restores children', () => {
-    const { rerender } = render(
-      <GovukButton type="button" isSubmitting={false}>
-        Save
-      </GovukButton>
-    )
-    let button = screen.getByRole('button')
-    expect(button).toBeEnabled()
-    expect(button).toHaveTextContent('Save')
-
-    rerender(
-      <GovukButton type="button" isSubmitting>
-        Save
-      </GovukButton>
-    )
-    button = screen.getByRole('button')
-    expect(button).toBeDisabled()
-    expect(button).toHaveTextContent('Saving…')
-
-    rerender(
-      <GovukButton type="button" isSubmitting={false}>
-        Save
-      </GovukButton>
-    )
-    button = screen.getByRole('button')
-    expect(button).toBeEnabled()
-    expect(button).toHaveTextContent('Save')
   })
 
   it('regression — caller spread cannot clobber canonical data-module or className', () => {

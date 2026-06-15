@@ -6,12 +6,12 @@ Thin React wrappers around [govuk-frontend](https://github.com/alphagov/govuk-fr
 
 ## Which styling layer to use
 
-| Need                                                  | Reach for                                                                              |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Buttons, links, form fields, error summary, fieldsets | `@/components/govuk/*`                                                                 |
-| Page layout shell (header, footer, phase banner)      | `components/layout/*` (already uses govuk classes)                                     |
-| Spacing / one-off layout tweaks                       | Tailwind utilities on a wrapper `div` only — do not restyle govuk components           |
-| Dialog, popover, tooltip, toast, rich-text menus      | Radix primitives under `@/components/ui/*` — see [Radix exceptions](#radix-exceptions) |
+| Need                                                  | Reach for                                                                                                                                                         |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Buttons, links, form fields, error summary, fieldsets | `@/components/govuk/*`                                                                                                                                            |
+| Page layout shell (header, footer, phase banner)      | `components/layout/*` (already uses govuk classes)                                                                                                                |
+| Spacing / one-off layout tweaks                       | GOV.UK spacing overrides (`govuk-!-margin-*`, `govuk-!-padding-*`) first, or Tailwind spacing utilities on a wrapper `div` only — do not restyle govuk components |
+| Dialog, popover, tooltip, toast, rich-text menus      | Radix primitives under `@/components/ui/*` — see [Radix exceptions](#radix-exceptions)                                                                            |
 
 Do **not** add new imports from `@/components/ui/*` in new code. ESLint enforces this; existing pages are grandfathered until migrated.
 
@@ -35,8 +35,8 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 
 ## Server vs client
 
-- **Default to server components.** Wrappers such as `GovukBackLink`, `GovukFieldset`, `GovukErrorSummary`, and `GovukLabel` have no `'use client'` directive.
-- **Add `'use client'` only when required:** browser APIs, React state, event handlers, or hooks (`GovukButton` with `onClick`, `GovukBackLinkClient`, `GovukRadios`).
+- **Default to server components.** Wrappers such as `GovukFieldset`, `GovukErrorSummary`, and `GovukLabel` have no `'use client'` directive.
+- **Add `'use client'` only when required:** browser APIs, React state, event handlers, or hooks (`GovukButton` with `onClick`, `GovukBackLink` using routing, `GovukRadios`).
 - Pages that use React Hook Form or TanStack Query remain client components (`'use client'` on the page), but can still import server-safe govuk children.
 
 ## React Hook Form
@@ -57,10 +57,11 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
       onChange={onChange}
       disabled={disabled}
       ref={ref}
-    >
-      <GovukRadios.Item value="none">Keep indefinitely</GovukRadios.Item>
-      <GovukRadios.Item value="7">7 days</GovukRadios.Item>
-    </GovukRadios>
+      options={[
+        { label: 'Keep indefinitely', value: 'none' },
+        { label: '7 days', value: '7' },
+      ]}
+    />
   )}
 />
 ```
@@ -76,26 +77,14 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 
 ## Available wrappers
 
-| Export                             | GDS module                            | Client? |
-| ---------------------------------- | ------------------------------------- | ------- |
-| `GovukBackLink`                    | Back link (href)                      | No      |
-| `GovukBackLinkClient`              | Back link (`onClick` / `router.back`) | Yes     |
-| `GovukButton`                      | Button                                | Yes     |
-| `GovukErrorSummary`                | Error summary                         | No      |
-| `GovukFieldset`                    | Fieldset                              | No      |
-| `GovukFormGroup`                   | Form group                            | No      |
-| `GovukHint`                        | Hint                                  | No      |
-| `GovukLabel`                       | Label                                 | No      |
-| `GovukLegend`                      | Legend                                | No      |
-| `GovukRadios` / `GovukRadios.Item` | Radios                                | Yes     |
-
-## Loading states
-
-When data is fetching, use a visually hidden message or a `govuk-!-display-none` toggle. Do not use spinners or animated loaders.
-
-**Preferred pattern:**
-
-```tax
-{isLoading && <p className="govuk-visually-hidden”>Loading users</p>}
-{users && <GovukTable>…</GovukTable>}
-```
+| Export              | GDS module                       | Client? |
+| ------------------- | -------------------------------- | ------- |
+| `GovukBackLink`     | Back link (href or dynamic back) | Yes     |
+| `GovukButton`       | Button                           | Yes     |
+| `GovukErrorSummary` | Error summary                    | No      |
+| `GovukFieldset`     | Fieldset                         | No      |
+| `GovukFormGroup`    | Form group                       | No      |
+| `GovukHint`         | Hint                             | No      |
+| `GovukLabel`        | Label                            | No      |
+| `GovukLegend`       | Legend                           | No      |
+| `GovukRadios`       | Radios                           | Yes     |

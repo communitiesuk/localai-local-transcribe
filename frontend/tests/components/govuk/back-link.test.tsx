@@ -1,16 +1,43 @@
 import { GovukBackLink } from '@/components/govuk/back-link'
-import { GovukBackLinkClient } from '@/components/govuk/back-link-client'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
-describe('<GovukBackLink /> (server, href)', () => {
+const mockBack = vi.fn()
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    back: mockBack,
+  }),
+}))
+
+describe('<GovukBackLink />', () => {
   it('renders an <a> with the canonical govuk-back-link class and provided href', () => {
     render(<GovukBackLink href="/previous">Back</GovukBackLink>)
     const link = screen.getByRole('link', { name: 'Back' })
     expect(link.tagName).toBe('A')
     expect(link).toHaveClass('govuk-back-link')
     expect(link).toHaveAttribute('href', '/previous')
+  })
+
+  it('defaults the href to "#" and triggers router.back() when clicked without href', async () => {
+    render(<GovukBackLink />)
+    const link = screen.getByRole('link', { name: 'Back' })
+    expect(link).toHaveAttribute('href', '#')
+
+    mockBack.mockClear()
+    await userEvent.click(link)
+    expect(mockBack).toHaveBeenCalledTimes(1)
+  })
+
+  it('calls custom onClick handler if provided', async () => {
+    const onClick = vi.fn()
+    render(<GovukBackLink onClick={onClick} />)
+    const link = screen.getByRole('link', { name: 'Back' })
+
+    mockBack.mockClear()
+    await userEvent.click(link)
+    expect(onClick).toHaveBeenCalledTimes(1)
+    expect(mockBack).not.toHaveBeenCalled()
   })
 
   it('defaults the text to "Back" when no children are provided', () => {
@@ -57,54 +84,5 @@ describe('<GovukBackLink /> (server, href)', () => {
     )
     const link = screen.getByRole('link', { name: 'Back' })
     expect(link).toHaveClass('govuk-back-link')
-  })
-})
-
-describe('<GovukBackLinkClient /> (client, onClick)', () => {
-  it('renders an <a href="#"> with the canonical govuk-back-link class', () => {
-    render(
-      <GovukBackLinkClient onClick={() => undefined}>Back</GovukBackLinkClient>
-    )
-    const link = screen.getByRole('link', { name: 'Back' })
-    expect(link.tagName).toBe('A')
-    expect(link).toHaveClass('govuk-back-link')
-    expect(link).toHaveAttribute('href', '#')
-  })
-
-  it('calls onClick and prevents default navigation', async () => {
-    const onClick = vi.fn((event: React.MouseEvent<HTMLAnchorElement>) => {
-      expect(event.defaultPrevented).toBe(true)
-    })
-    render(<GovukBackLinkClient onClick={onClick}>Back</GovukBackLinkClient>)
-    await userEvent.click(screen.getByRole('link', { name: 'Back' }))
-    expect(onClick).toHaveBeenCalledTimes(1)
-  })
-
-  it('defaults the text to "Back" when no children are provided', () => {
-    render(<GovukBackLinkClient onClick={() => undefined} />)
-    expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
-  })
-
-  it('adds the inverse modifier when inverse is true', () => {
-    render(
-      <GovukBackLinkClient onClick={() => undefined} inverse>
-        Back
-      </GovukBackLinkClient>
-    )
-    expect(screen.getByRole('link', { name: 'Back' })).toHaveClass(
-      'govuk-back-link--inverse'
-    )
-  })
-
-  it('regression: spread cannot clobber the canonical className', () => {
-    const hostile = { className: 'bad' } as Record<string, string>
-    render(
-      <GovukBackLinkClient onClick={() => undefined} {...hostile}>
-        Back
-      </GovukBackLinkClient>
-    )
-    expect(screen.getByRole('link', { name: 'Back' })).toHaveClass(
-      'govuk-back-link'
-    )
   })
 })
