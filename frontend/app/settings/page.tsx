@@ -1,7 +1,7 @@
 'use client'
 
 import {
-  GovukBackLinkClient,
+  GovukBackLink,
   GovukButton,
   GovukFieldset,
   GovukFormGroup,
@@ -17,7 +17,6 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
@@ -25,7 +24,6 @@ type UserSettingsForm = { dataRetention: 'none' | `${number}` }
 
 export default function SettingsPage() {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
-  const router = useRouter()
 
   if (!user) {
     return (
@@ -39,7 +37,7 @@ export default function SettingsPage() {
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-two-thirds">
-        <GovukBackLinkClient onClick={() => router.back()} />
+        <GovukBackLink />
         <h1 className="govuk-heading-xl">Settings</h1>
         <p className="govuk-body">Configure your account settings</p>
         <SettingsForm user={user} />
@@ -88,7 +86,7 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
       className="govuk-!-margin-top-6"
     >
       <GovukFormGroup>
-        <GovukFieldset describedBy="dataRetention-hint">
+        <GovukFieldset aria-describedby="dataRetention-hint">
           <GovukLegend size="m">Data Retention Period</GovukLegend>
           <GovukHint id="dataRetention-hint">
             After this period the transcriptions, minutes and audio recording
@@ -104,23 +102,29 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
                 onChange={onChange}
                 disabled={disabled}
                 ref={ref}
-              >
-                <GovukRadios.Item value="none">
-                  Keep indefinitely
-                </GovukRadios.Item>
-                <GovukRadios.Item value="1">1 day</GovukRadios.Item>
-                <GovukRadios.Item value="7">7 days</GovukRadios.Item>
-                <GovukRadios.Item value="30">30 days</GovukRadios.Item>
-                <GovukRadios.Item value="90">90 days</GovukRadios.Item>
-              </GovukRadios>
+                options={[
+                  { label: 'Keep indefinitely', value: 'none' },
+                  { label: '1 day', value: '1' },
+                  { label: '7 days', value: '7' },
+                  { label: '30 days', value: '30' },
+                  { label: '90 days', value: '90' },
+                ]}
+              />
             )}
           />
         </GovukFieldset>
       </GovukFormGroup>
 
       <div className="govuk-!-margin-top-6">
-        <GovukButton type="submit" isSubmitting={isPending}>
-          Save
+        <GovukButton type="submit" disabled={isPending}>
+          {isPending ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </span>
+          ) : (
+            'Save'
+          )}
         </GovukButton>
       </div>
     </form>

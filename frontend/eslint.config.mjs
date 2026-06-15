@@ -48,6 +48,7 @@ export default defineConfig([
       'app/support/page.tsx',
       'app/privacy/page.tsx',
       'app/page.tsx',
+      'app/user-management/**',
     ],
     rules: {
       'no-restricted-imports': 'off',

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
@@ -83,6 +84,8 @@ describe('<SettingsPage />', () => {
     expect(keepIndefinitely).toBeInTheDocument()
     expect(oneDay).toBeInTheDocument()
     expect(sevenDays).toBeInTheDocument()
+    expect(thirtyDays).toBeInTheDocument()
+    expect(ninetyDays).toBeInTheDocument()
 
     // Since initial data_retention_days is 7, the "7 days" option should be checked
     expect(keepIndefinitely.checked).toBe(false)
