@@ -40,7 +40,7 @@ AWS model version: v3.0.1
 **MBM** (market-based method) subtracts renewable energy certificates (RECs) purchased by AWS; it is the appropriate figure when comparing against a provider that actively purchases clean energy, as AWS does.  
 **LBM** (location-based method) uses regional grid-average carbon intensity and is shown for reference only.
 
-**Relatable activity comparisons** for the April 2026 MBM figure (17,317 g CO₂e). See Appendix HW for sources and methodology.
+**Relatable activity comparisons** for the April 2026 MBM figure (17,317 g CO₂e). See Appendix G for sources and methodology.
 
 | ≡ homeworking [24] | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ television [28] | ≡ household energy [27] |
 |:---:|:---:|:---:|:---:|:---:|
@@ -198,7 +198,7 @@ Applying production usage shares (Appendix F.1):
 **Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. LLM's share of total CO₂e ranges from 1% (Basic Minutes) to 37% (SimpleTemplate), with ASR dominating at all template levels.
 
 **Infrastructure vs. AI processing cost:** The AWS hosting layer (Section 2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **2,192 complete 1-hour meetings** (at the usage-weighted midpoint of 7.9 g CO₂e/meeting). The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). Note that this AWS figure covers only the measured hosting cost for one month; other infrastructure components may not be fully captured.
-**Relatable activity comparisons.** See Appendix HW for sources and methodology.
+**Relatable activity comparisons.** See Appendix G for sources and methodology.
 
 | Cost layer | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ homeworking [24] | ≡ television [28] | ≡ household energy [27] |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -241,7 +241,7 @@ This system uses two types of AI models: Large Language Models (LLMs) for summar
 
 **1-hour SimpleTemplate meeting:** 35.0–41.1 Wh (0.035–0.041 kWh), 7.6–8.9 g CO₂e (midpoint 8.2 g)
 
-**Relatable activity comparisons.** See Appendix HW for sources and methodology.
+**Relatable activity comparisons.** See Appendix G for sources and methodology.
 
 | | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ homeworking [24] | ≡ television [28] | ≡ household energy [27] |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -814,11 +814,11 @@ Applying the combined shares from F.2.1. LLM CO₂e midpoints used for weighting
 
 ---
 
-# Appendix HW: Homeworking Displacement Context
+# Appendix G: Homeworking Displacement Context
 
 This appendix expresses the system's carbon costs in terms of a familiar human-scale activity — one person working from home — to help readers calibrate the magnitudes involved.
 
-## HW.1 Source Data
+## G.1 Source Data
 
 ### Homeworking [24]
 
@@ -888,7 +888,7 @@ Household CO₂e rate (average power = 38,904 Wh/day ÷ 24 h = 1,621 W):
   (W × g/Wh ÷ s·h⁻¹ = g/s ✓)
 ```
 
-## HW.2 Activity Comparisons for One Hour of AI Processing
+## G.2 Activity Comparisons for One Hour of AI Processing
 
 The usage-weighted meeting emits **7.3–8.5 g CO₂e** (midpoint 7.9 g) and uses **33.6–39.1 Wh** of energy (Section 8.1). The five comparisons below express this in human-scale terms. Car and flight use a CO₂e basis; homeworking also uses CO₂e. TV and household use an energy basis.
 
@@ -947,7 +947,7 @@ Usage-weighted (mid): 36.4 Wh ÷ 1.667 Wh/min = 21.8 min ≈ 22 min
 
 **Summary:** Processing one 1-hour meeting through Local Transcribe is equivalent to approximately 85 seconds of homeworking, driving 45 metres in a petrol car, a passenger flying 68 metres on a long-haul flight, watching TV for 22 minutes, or 81 seconds of average household energy consumption.
 
-## HW.3 One Month of AWS Hosting
+## G.3 One Month of AWS Hosting
 
 **April 2026 AWS hosting (MBM):** 17,317 g CO₂e (Section 2.2)
 
@@ -958,9 +958,9 @@ Usage-weighted (mid): 36.4 Wh ÷ 1.667 Wh/min = 21.8 min ≈ 22 min
 One month of AWS infrastructure hosting is equivalent to approximately **6.5 working days** of one person working from home.
 
 
-## HW.4 Cross-Layer Comparison and Conclusions
+## G.4 Cross-Layer Comparison and Conclusions
 
-All comparisons use a unified CO₂e basis. Television and household columns are derived by multiplying the activity's power draw by the UK grid carbon intensity (217 g CO₂e/kWh); see HW.1 for methodology. Training figures use GPT-4/GPT-4o proxies (GPT-5.x training costs are unpublished); AWS figures are for April 2026.
+All comparisons use a unified CO₂e basis. Television and household columns are derived by multiplying the activity's power draw by the UK grid carbon intensity (217 g CO₂e/kWh); see G.1 for methodology. Training figures use GPT-4/GPT-4o proxies (GPT-5.x training costs are unpublished); AWS figures are for April 2026.
 
 | Cost layer | CO₂e | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ homeworking [24] | ≡ television [28] | ≡ household energy [27] |
 |------------|------:|:---:|:---:|:---:|:---:|:---:|
