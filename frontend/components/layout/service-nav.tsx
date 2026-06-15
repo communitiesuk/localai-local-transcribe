@@ -76,7 +76,6 @@ interface SafeLinkProps {
   ariaCurrent?: 'page'
 }
 
-// Extract component outside of render to prevent state resetting and performance hits
 function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   const router = useRouter()
   const { lockNavigation, setLockNavigation } = useLockNavigationContext()
