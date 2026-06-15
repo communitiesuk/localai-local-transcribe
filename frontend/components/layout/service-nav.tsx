@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
     name: 'Home',
     href: '/',
     isActive: (pathname: string) =>
-      pathname === '/' || pathname === '/new' || pathname.startsWith('/new/'),
+      pathname === '/' || pathname === '/new' || pathname.startsWith('/new/') || pathname.startsWith('/recordings/'),
   },
   {
     name: 'My recordings',
@@ -49,6 +49,12 @@ const navItems: NavItem[] = [
     href: '/settings',
     isActive: (pathname: string) =>
       pathname === '/settings' || pathname.startsWith('/settings/'),
+  },
+  {
+    name: 'Support',
+    href: '/support',
+    isActive: (pathname: string) =>
+      pathname === '/support' || pathname.startsWith('/support/'),
   },
   {
     name: 'User management',
