@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
@@ -137,6 +137,9 @@ class User(BaseTableMixin, table=True):
     subject_id: str | None = Field(default=None, nullable=True, unique=True)
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+    last_login: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), sa_column=Column(TIMESTAMP(timezone=True), nullable=False)
+    )
     name: str | None = Field(default=None, nullable=True)
     email: str = Field(index=True)
     data_retention_days: int | None = Field(default=30)
