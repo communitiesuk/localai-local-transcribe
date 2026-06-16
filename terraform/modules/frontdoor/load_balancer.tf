@@ -63,7 +63,7 @@ data "aws_iam_policy_document" "alb_logs_bucket_policy" {
 
     actions   = ["s3:PutObject"]
     resources = ["${module.alb_logs.bucket_arn}/*"]
-    
+
 
     condition {
       test     = "StringEquals"
