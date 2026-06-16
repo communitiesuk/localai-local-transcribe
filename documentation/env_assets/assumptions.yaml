@@ -1,0 +1,126 @@
+# ============================================================================
+# Environmental Impact Assessment — Assumptions and Reference Values
+# All figures correspond to numbered citations in documentation/env-impact.md.
+# Constants derived dynamically from EcoLogits (model params, grid intensity,
+# datacenter config) live in calculations.py, not here.
+# ============================================================================
+
+# --- Meeting / transcript ----------------------------------------------------
+meeting:
+  transcript_words: 9000    # X: baseline word count for a 1-hour meeting (~7,500–9,000 typical)
+  num_sections: 6           # Y: default section count for SectionTemplate
+  tokens_per_word: 2        # Conservative estimate for English text [B.1]
+
+# --- ASR study measurements --------------------------------------------------
+# Source: El Bahri et al., "Comparative Analysis of Energy Consumption and Carbon
+# Footprint in Automatic Speech Recognition Systems", MDPI 2025 [15].
+# Whisper used as proxy for Azure Speech (similar open-source ASR system).
+asr_study:
+  total_energy_kwh: 0.49  # Total energy measured over the study sample
+  audio_hours: 22         # Hours of audio processed in the study sample
+  total_co2e_g: 380       # g CO₂e measured over the study sample (reference only;
+                          # combined totals use GBR grid intensity instead, §6)
+
+# --- LLM training energy proxies ---------------------------------------------
+# GPT-5.x training costs are not publicly available.
+# GPT-4 / GPT-4o figures used as order-of-magnitude proxies (likely underestimates).
+# Source: Ji & Jiang, "A systematic review of electricity demand for LLMs" [11]
+llm_training:
+  gpt4_mwh: 57000      # Midpoint of 52,000–62,000 MWh range; proxy for GPT-5.1 class [11]
+  gpt4o_mwh: 1151      # Gopher (280 B params) proxy for GPT-4o (~200 B params) [11][12]
+  user_base: 800000000 # ChatGPT weekly active users at peak [13]
+
+# --- Template prompt word counts ---------------------------------------------
+# Counted directly from source files; see Appendix B for full breakdowns.
+templates:
+  exec_summary_system_words: 129    # Counted from executive_summary.j2
+  document_prompt_fixed_words: 115  # Fixed words in document_prompt, excluding {template}/{date}
+  user_template_content_words: 200  # Assumed average user-defined template content (varies in practice)
+  document_date_words: 7            # Formatted datetime, e.g. "Monday 22 May 2026 14:30:00"
+
+# --- OWSM v3 ASR training configuration -------------------------------------
+# Sources: Peng et al. "Reproducing Whisper-Style Training" [19];
+# NVIDIA A100 spec sheet [20]; Uptime Institute Global DC Survey 2024 [21];
+# Netrality Data Centers high-density colocation guide [22]
+owsm_training:
+  gpu_count: 64               # NVIDIA A100 40GB PCIe GPUs used [19][20]
+  gpu_tdp_w: 250              # TDP per GPU in watts [20]
+  training_days: 10           # Duration of training run [19]
+  server_gpu_draw_w: 3200     # GPU power draw for a server with 8× A100s [22]
+  server_non_gpu_low_w: 500   # Lower bound: CPUs, memory, and other components [22]
+  server_non_gpu_high_w: 1000 # Upper bound: CPUs, memory, and other components [22]
+  pue: 1.56                   # Industry average PUE 2024 [21]
+  user_base: 300000000        # Microsoft Teams monthly active users; amortisation base [23]
+
+# --- Homeworking emission factors --------------------------------------------
+# Source: UK Government GHG Conversion Factors 2025 (DESNZ/DEFRA) [24]
+# Table: "Homeworking" — per FTE working hour, Scope 1+2 combined.
+homeworking:
+  office_equipment_kg_co2e_per_hour: 0.03144  # Office equipment component [24]
+  heating_kg_co2e_per_hour: 0.30234           # Heating component (91% of total) [24]
+  total_kg_co2e_per_hour: 0.33378             # Combined: office equipment + heating [24]
+  working_hours_per_day: 8                    # Standard working day length for displacement comparisons
+
+# --- AWS hosting snapshot ----------------------------------------------------
+# April 2026 MBM monthly CO₂e, fetched via the AWS Sustainability API.
+# Re-run `poetry run python calculations.py` with valid AWS credentials to refresh.
+aws:
+  apr2026_co2e_g: 17317  # g CO₂e (market-based MBM), April 2026
+
+# --- Passenger car comparison ------------------------------------------------
+# Source: UK GHG Conversion Factors 2025 methodology paper (DESNZ/DEFRA) [26]
+car:
+  avg_petrol_wltp_gco2_per_km: 143.7   # Table 15: average petrol car WLTP CO₂/km [26]
+  real_world_uplift_fraction: 0.2299    # Table 16: 2024 data-year real-world uplift (+22.99%) [26]
+
+# --- Long-haul economy flight comparison ------------------------------------
+# Source: UK GHG CF 2025 methodology paper [26], Sections 8.39 and 8.43.
+flight:
+  long_haul_economy_gco2_per_pkm_base: 63.2  # Table 39: economy class, before uplifts [26]
+  distance_uplift_fraction: 0.08              # §8.39: Great Circle distance correction [26]
+  rf_multiplier: 1.7                          # §8.43: radiative forcing central estimate [26]
+
+# --- Television comparison ---------------------------------------------------
+# No single UK government source specifies average TV wattage.
+# Indicative estimate from EU/UK energy label data (UK SI 2021/825), which shows
+# 75–130 kWh/year at 4 h/day for typical 43–55" LED models, implying ~50–90 W. [28]
+television:
+  typical_wattage: 100  # W; conservative round-number indicative estimate [28]
+
+# --- UK household daily energy comparison -----------------------------------
+# Source: Ofgem Typical Domestic Consumption Values (TDCVs), 2023 in-force values,
+# medium household [27]. Ofgem consulted on revised TDCVs in March 2026
+# (proposed 2,500 + 9,500 kWh/year); no final determination at time of writing.
+household:
+  electricity_kwh_per_year: 2700  # Profile Class 1, medium household [27]
+  gas_kwh_per_year: 11500         # Standard credit meter, medium household [27]
+
+# --- Production template usage shares ----------------------------------------
+# Observed across production system, December 2024 – May 2026 (Appendix F.1).
+# Shares sum to 1.0. Lowercase duplicates (general, delivery, cabinet) are
+# merged into the capitalised entries shown here.
+template_usage_shares:
+  - name: "General"
+    share: 0.5241
+    implementation: "SimpleTemplate"
+  - name: "Delivery"
+    share: 0.1523
+    implementation: "DeliveryTemplate"
+  - name: "Short 'n' Sweet"
+    share: 0.1234
+    implementation: "ExecutiveSummary (SimpleTemplate, no citations)"
+  - name: "User generated"
+    share: 0.0960
+    implementation: "UserTemplate DOCUMENT"
+  - name: "Cabinet"
+    share: 0.0589
+    implementation: "SectionTemplate (Y=6)"
+  - name: "Care Assessment"
+    share: 0.0261
+    implementation: "SimpleTemplate (deprecated v1, assumed)"
+  - name: "Planning Committee"
+    share: 0.0120
+    implementation: "SectionTemplate (Y=6)"
+  - name: "Care Assessment V2"
+    share: 0.0073
+    implementation: "SimpleTemplate"

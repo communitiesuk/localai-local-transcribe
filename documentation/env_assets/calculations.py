@@ -26,12 +26,17 @@ Install first: cd documentation/env_assets && poetry install
 import json
 import subprocess
 from datetime import date, timedelta
+from pathlib import Path
 
+import yaml
 from ecologits.electricity_mix_repository import ElectricityMixRepository
 from ecologits.impacts.llm import compute_llm_impacts
 from ecologits.model_repository import ModelRepository
 from ecologits.tracers.utils import PROVIDER_CONFIG_MAP
 from ecologits.utils.range_value import RangeValue
+
+# Load assumptions from YAML (all reference/measured values live there).
+_cfg = yaml.safe_load((Path(__file__).parent / "assumptions.yaml").read_text())
 
 # Load all grid/datacenter/model data from EcoLogits at import time.
 _openai_cfg = PROVIDER_CONFIG_MAP["openai"]
@@ -43,127 +48,93 @@ _nano_model = _model_repo.find_model(provider="openai", model_name="gpt-5-nano")
 _best_model = _model_repo.find_model(provider="openai", model_name="gpt-5.1")
 
 # =============================================================================
-# ASSUMPTIONS — source/measured values; edit these to model different scenarios
+# ASSUMPTIONS — loaded from assumptions.yaml
 # =============================================================================
 
 # --- Meeting / transcript ---
-TRANSCRIPT_WORDS = 9_000  # X: words in transcript (1-hour baseline, ~7,500–9,000 typical)
-NUM_SECTIONS = 6  # Y: sections produced by SectionTemplate
-TOKENS_PER_WORD = 2  # conservative estimate for English text [B.1]
+TRANSCRIPT_WORDS: int = _cfg["meeting"]["transcript_words"]
+NUM_SECTIONS: int = _cfg["meeting"]["num_sections"]
+TOKENS_PER_WORD: int = _cfg["meeting"]["tokens_per_word"]
 
-# --- Carbon intensity (all loaded from EcoLogits ElectricityMixRepository) ---
-# ASR transcription runs on our own infrastructure in the UK.
-ASR_CARBON_INTENSITY_G_PER_KWH: float = _uk_mix.gwp * 1000  # GBR, ≈217 g/kWh [25]
-# LLM training happened in US data centres.
+# --- ASR study measurements [15] ---
+ASR_STUDY_TOTAL_ENERGY_KWH: float = _cfg["asr_study"]["total_energy_kwh"]
+ASR_STUDY_AUDIO_HOURS: int = _cfg["asr_study"]["audio_hours"]
+ASR_STUDY_TOTAL_CO2E_G: int = _cfg["asr_study"]["total_co2e_g"]
+
+# --- LLM training proxies [11] ---
+GPT4_TRAINING_MWH: int = _cfg["llm_training"]["gpt4_mwh"]
+GPT4O_TRAINING_MWH: int = _cfg["llm_training"]["gpt4o_mwh"]
+LLM_USER_BASE: int = _cfg["llm_training"]["user_base"]
+
+# --- Template prompt word counts ---
+EXEC_SUMMARY_SYSTEM_WORDS: int = _cfg["templates"]["exec_summary_system_words"]
+DOCUMENT_PROMPT_FIXED_WORDS: int = _cfg["templates"]["document_prompt_fixed_words"]
+USER_TEMPLATE_CONTENT_WORDS: int = _cfg["templates"]["user_template_content_words"]
+DOCUMENT_DATE_WORDS: int = _cfg["templates"]["document_date_words"]
+
+# --- OWSM v3 training hardware [19][20][21][22] ---
+OWSM_GPU_COUNT: int = _cfg["owsm_training"]["gpu_count"]
+OWSM_GPU_TDP_W: int = _cfg["owsm_training"]["gpu_tdp_w"]
+OWSM_TRAINING_DAYS: int = _cfg["owsm_training"]["training_days"]
+OWSM_SERVER_GPU_DRAW_W: int = _cfg["owsm_training"]["server_gpu_draw_w"]
+OWSM_SERVER_NON_GPU_LOW_W: int = _cfg["owsm_training"]["server_non_gpu_low_w"]
+OWSM_SERVER_NON_GPU_HIGH_W: int = _cfg["owsm_training"]["server_non_gpu_high_w"]
+OWSM_PUE: float = _cfg["owsm_training"]["pue"]
+ASR_USER_BASE: int = _cfg["owsm_training"]["user_base"]
+
+# --- Homeworking emission factors [24] ---
+HOMEWORKING_OFFICE_EQUIPMENT_KG_CO2E_PER_HOUR: float = _cfg["homeworking"]["office_equipment_kg_co2e_per_hour"]
+HOMEWORKING_HEATING_KG_CO2E_PER_HOUR: float = _cfg["homeworking"]["heating_kg_co2e_per_hour"]
+HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR: float = _cfg["homeworking"]["total_kg_co2e_per_hour"]
+WORKING_HOURS_PER_DAY: int = _cfg["homeworking"]["working_hours_per_day"]
+
+# --- AWS hosting snapshot ---
+AWS_APR2026_CO2E_G: int = _cfg["aws"]["apr2026_co2e_g"]
+
+# --- Passenger car [26] ---
+CAR_AVG_PETROL_WLTP_GCO2_PER_KM: float = _cfg["car"]["avg_petrol_wltp_gco2_per_km"]
+CAR_REAL_WORLD_UPLIFT_FRACTION: float = _cfg["car"]["real_world_uplift_fraction"]
+
+# --- Long-haul economy flight [26] ---
+FLIGHT_LONG_HAUL_ECONOMY_GCO2_PER_PKM_BASE: float = _cfg["flight"]["long_haul_economy_gco2_per_pkm_base"]
+FLIGHT_DISTANCE_UPLIFT_FRACTION: float = _cfg["flight"]["distance_uplift_fraction"]
+FLIGHT_RF_MULTIPLIER: float = _cfg["flight"]["rf_multiplier"]
+
+# --- Television [28] ---
+TV_TYPICAL_WATTAGE: int = _cfg["television"]["typical_wattage"]
+
+# --- UK household energy [27] ---
+HOUSEHOLD_ELECTRICITY_KWH_PER_YEAR: int = _cfg["household"]["electricity_kwh_per_year"]
+HOUSEHOLD_GAS_KWH_PER_YEAR: int = _cfg["household"]["gas_kwh_per_year"]
+
+# =============================================================================
+# DERIVED CONSTANTS — computed from EcoLogits API/library calls
+# =============================================================================
+
+# Carbon intensity (loaded from EcoLogits ElectricityMixRepository)
+ASR_CARBON_INTENSITY_G_PER_KWH: float = _uk_mix.gwp * 1000   # GBR, ≈217 g/kWh [25]
 TRAINING_CARBON_INTENSITY_G_PER_KWH: float = _usa_mix.gwp * 1000  # USA, ≈384 g/kWh [25]
+LLM_CARBON_INTENSITY_G_PER_KWH: float = _uk_mix.gwp * 1000   # GBR, used for LLM CO₂e
 
-# --- ASR (transcription) — measurements from study [15], Whisper proxy ---
-ASR_STUDY_TOTAL_ENERGY_KWH = 0.49  # kWh measured over the study sample
-ASR_STUDY_AUDIO_HOURS = 22  # hours of audio in the study sample
-ASR_STUDY_TOTAL_CO2E_G = 380  # g CO₂e measured over the study sample
-# Note: the study's implied carbon intensity (~776 g/kWh) differs from GBR.
-# CO₂e for combined totals (Section 8) is recalculated using GBR for consistency.
-
-# --- LLM models (loaded from EcoLogits ModelRepository at import time) ---
-# GPT-5-nano  — dense architecture; active == total
+# LLM models (loaded from EcoLogits ModelRepository)
 GPT5_NANO_PARAMS_B: RangeValue = _nano_model.architecture.parameters
 GPT5_NANO_TPS: float = _nano_model.deployment.tps
 GPT5_NANO_TTFT: float = _nano_model.deployment.ttft
 
-# GPT-5.1     — MoE architecture
 GPT51_TOTAL_B: int = _best_model.architecture.parameters.total
 GPT51_ACTIVE_B: RangeValue = _best_model.architecture.parameters.active
 GPT51_TPS: float = _best_model.deployment.tps
 GPT51_TTFT: float = _best_model.deployment.ttft
 
-# --- OpenAI data-centre configuration (from EcoLogits PROVIDER_CONFIG_MAP['openai']) ---
-OPENAI_PUE: float = _openai_cfg.datacenter_pue  # Power Usage Effectiveness
-OPENAI_WUE: float = _openai_cfg.datacenter_wue  # Water Usage Effectiveness (L/kWh)
+# OpenAI data-centre configuration (from EcoLogits PROVIDER_CONFIG_MAP)
+OPENAI_PUE: float = _openai_cfg.datacenter_pue
+OPENAI_WUE: float = _openai_cfg.datacenter_wue
 
-# --- UK electricity mix (from EcoLogits ElectricityMixRepository, zone='GBR') ---
-# Used for the energy calculation in EcoLogits (affects embodied hardware estimates).
-UK_GWP_KG_PER_KWH: float = _uk_mix.gwp  # ≈ 217 g CO₂eq/kWh  [gwp]
-UK_ADPE: float = _uk_mix.adpe  # kg Sb-eq / kWh      [adpe]
-UK_PE: float = _uk_mix.pe  # MJ / kWh            [pe]
-UK_WUE: float = _uk_mix.wue  # L / kWh             [wue]
-
-# --- LLM inference carbon intensity (old derivation method) ---
-# CO₂e for LLM inference is computed as: energy_kWh × LLM_CARBON_INTENSITY_G_PER_KWH.
-# GBR (UK) grid intensity from EcoLogits ElectricityMixRepository.
-LLM_CARBON_INTENSITY_G_PER_KWH: float = _uk_mix.gwp * 1000  # ≈ 217 g/kWh GBR
-
-# --- LLM training energy [11] ---
-# GPT-5.x training costs are not publicly available.
-# GPT-4 / GPT-4o figures used as order-of-magnitude proxies (likely underestimates).
-GPT4_TRAINING_MWH = 57_000  # midpoint of 52k–62k MWh range
-GPT4O_TRAINING_MWH = 1_151  # Gopher (280B params) proxy for GPT-4o (~200B params)
-
-# --- LLM user base [13] ---
-LLM_USER_BASE = 800_000_000  # ChatGPT weekly active users at peak
-
-# --- Executive Summary (executive_summary.j2) ---
-EXEC_SUMMARY_SYSTEM_WORDS = 129  # counted directly from executive_summary.j2
-
-# --- UserTemplate DOCUMENT (user_template.py document_prompt) ---
-DOCUMENT_PROMPT_FIXED_WORDS = 115  # fixed words in document_prompt, excluding {template} and {date}
-USER_TEMPLATE_CONTENT_WORDS = 200  # user-defined template content (assumption; varies in practice)
-DOCUMENT_DATE_WORDS = 7  # formatted datetime, e.g. "Monday 22 May 2026 14:30:00"
-
-# --- OWSM v3 training hardware [19][20][21][22] ---
-OWSM_GPU_COUNT = 64  # NVIDIA A100 40GB PCIe GPUs used
-OWSM_GPU_TDP_W = 250  # TDP per GPU in watts [20]
-OWSM_TRAINING_DAYS = 10  # duration of training run
-OWSM_SERVER_GPU_DRAW_W = 3_200  # GPU power draw for a server with 8 A100s [22]
-OWSM_SERVER_NON_GPU_LOW_W = 500  # lower bound, non-GPU components [22]
-OWSM_SERVER_NON_GPU_HIGH_W = 1_000  # upper bound, non-GPU components [22]
-OWSM_PUE = 1.56  # industry average PUE 2024 [21]
-
-# --- ASR user base [23] ---
-ASR_USER_BASE = 300_000_000  # Microsoft Teams monthly active users
-
-# --- Homeworking emission factors [HW] ---
-# Source: UK Government GHG Conversion Factors 2025 (DESNZ/DEFRA)
-# https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025
-# Table: "Homeworking" — per FTE working hour, Scope 1+2 combined
-HOMEWORKING_OFFICE_EQUIPMENT_KG_CO2E_PER_HOUR = 0.03144
-HOMEWORKING_HEATING_KG_CO2E_PER_HOUR = 0.30234
-HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR = 0.33378  # office equipment + heating
-
-WORKING_HOURS_PER_DAY = 8  # standard working day used for homeworking comparisons
-
-# --- AWS hosting snapshot (from aws_carbon.py) ---
-# April 2026 MBM monthly CO₂e. Re-run aws_carbon.py for the current month.
-AWS_APR2026_CO2E_G = 17_317  # g CO₂e, April 2026 hosting
-
-# --- Passenger car comparison [26] ---
-# Source: UK GHG CF 2025 methodology paper, Table 15 (average petrol car WLTP 143.7 gCO₂/km),
-# Table 16 (2024 real-world uplift 22.99%).
-# Scope 1 direct CO₂ only — does not include WTT, CH₄, N₂O, or biofuel adjustment.
-CAR_AVG_PETROL_WLTP_GCO2_PER_KM = 143.7  # Table 15: average petrol car WLTP gCO₂/km [26]
-CAR_REAL_WORLD_UPLIFT_FRACTION = 0.2299  # Table 16: 2024 data-year real-world uplift [26]
-
-# --- Long-haul economy flight comparison [26] ---
-# Source: UK GHG CF 2025 methodology paper, Table 39 (economy class, before uplifts),
-# Section 8.39 (8% Great Circle distance correction), Section 8.43 (RF multiplier 1.7).
-# Scope 1 direct CO₂ × distance uplift × RF multiplier.
-FLIGHT_LONG_HAUL_ECONOMY_GCO2_PER_PKM_BASE = 63.2  # Table 39: long-haul economy, pre-uplift [26]
-FLIGHT_DISTANCE_UPLIFT_FRACTION = 0.08  # Section 8.39: Great Circle distance uplift [26]
-FLIGHT_RF_MULTIPLIER = 1.7  # Section 8.43: radiative forcing central estimate [26]
-
-# --- Television comparison ---
-# No single UK government source specifies average TV wattage.
-# EU/UK energy labels (UK SI 2021/825) report 75–130 kWh/year at 4 h/day use for
-# typical 43–55" LED models, implying ≈50–90 W in use. 100 W is used as a
-# conservative round-number indicative estimate. [28]
-TV_TYPICAL_WATTAGE = 100  # W; indicative, typical modern LED TV
-
-# --- UK household daily energy comparison ---
-# Source: Ofgem Typical Domestic Consumption Values (TDCVs), 2023 in-force values.
-# Medium household: electricity 2,700 kWh/year (Profile Class 1), gas 11,500 kWh/year.
-# Ofgem consulted on revised TDCVs in March 2026 (proposed 2,500 + 9,500 kWh/year)
-# but no final determination had been made at the time of this assessment. [27]
-HOUSEHOLD_ELECTRICITY_KWH_PER_YEAR = 2_700  # Ofgem TDCV 2023, medium [27]
-HOUSEHOLD_GAS_KWH_PER_YEAR = 11_500  # Ofgem TDCV 2023, medium [27]
+# UK electricity mix (from EcoLogits ElectricityMixRepository, zone='GBR')
+UK_GWP_KG_PER_KWH: float = _uk_mix.gwp
+UK_ADPE: float = _uk_mix.adpe
+UK_PE: float = _uk_mix.pe
+UK_WUE: float = _uk_mix.wue
 
 
 # =============================================================================
@@ -466,17 +437,10 @@ def user_template_document(x: float = TRANSCRIPT_WORDS) -> dict:
 # Production usage shares (December 2024 – May 2026, Appendix F.1)
 # =============================================================================
 
-# (template_name, production_share, implementation)
-# Shares sum to 1.0.
+# (template_name, production_share, implementation) — loaded from assumptions.yaml
 TEMPLATE_USAGE_SHARES: list[tuple[str, float, str]] = [
-    ("General", 0.5241, "SimpleTemplate"),  # General 51.32% + general 1.09%
-    ("Delivery", 0.1523, "DeliveryTemplate"),  # Delivery 14.83% + delivery 0.40%
-    ("Short 'n' Sweet", 0.1234, "ExecutiveSummary (SimpleTemplate, no citations)"),
-    ("User generated", 0.0960, "UserTemplate DOCUMENT"),
-    ("Cabinet", 0.0589, "SectionTemplate (Y=6)"),  # Cabinet 5.58% + cabinet 0.31%
-    ("Care Assessment", 0.0261, "SimpleTemplate (deprecated v1, assumed)"),
-    ("Planning Committee", 0.0120, "SectionTemplate (Y=6)"),
-    ("Care Assessment V2", 0.0073, "SimpleTemplate"),
+    (row["name"], row["share"], row["implementation"])
+    for row in _cfg["template_usage_shares"]
 ]
 
 
