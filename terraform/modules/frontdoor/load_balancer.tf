@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "alb_logs_bucket_policy" {
     }
 
     actions   = ["s3:GetBucketAcl"]
-    resources = ["arn:aws:s3:::alb-logs-${var.environment_name}"]
+    resources = [module.alb_logs.bucket_arn]
   }
 
   statement {
@@ -62,13 +62,7 @@ data "aws_iam_policy_document" "alb_logs_bucket_policy" {
     }
 
     actions   = ["s3:PutObject"]
-    resources = ["arn:aws:s3:::alb-logs-${var.environment_name}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "s3:x-amz-acl"
-      values   = ["bucket-owner-full-control"]
-    }
+    resources = ["${module.alb_logs.bucket.arn}/*"]
 
     condition {
       test     = "StringEquals"
