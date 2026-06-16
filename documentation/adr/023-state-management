@@ -1,0 +1,83 @@
+# ADR-023: State management
+
+## Status
+
+Date of decision:
+
+## Context and Problem Statement
+
+Several user journeys within the frontend application require data collected or derived on one page to be available on subsequent pages. Currently, there is no documented or agreed approach for managing state across page transitions, which creates a risk of inconsistent implementations emerging across the codebase.
+
+Different approaches to cross-page state management have varying implications for user experience, persistence, maintainability, testability, performance, and complexity. Some approaches keep state in memory for the duration of a user's session, while others persist data in the browser or encode it within navigation mechanisms.
+
+We need to determine the preferred approach for managing state that must be shared between React pages and routes, and document when that approach should be used to ensure consistency across the frontend application.
+
+## Considered Options
+
+* Browser Storage
+* Zustand
+* React Context API
+* URL Params
+* Redux
+
+
+## Decision Outcome
+
+
+## Pros and Cons of the Options
+
+### Browser Storage
+* Good, because it persists across sessions
+* Good, because it requires no additional dependencies
+* Good, because it's simple to use
+* Good, because it's extensible beyond React
+* Bad, because it's storage is limited and can't be known 
+* Bad, because non-serializable data (e.g. Date objects)can't be stringified
+* Bad, because the data can be mutated indirectly 
+* Bad, because local storage can be vulnerable to XSS attacks
+* Bad, because as it's a client-side API, inconsistencies may arise during SSR
+
+
+### Zustand
+
+* Good, because it provides simple global state management with minimal boilerplate
+* Good, because it allows state to be shared across pages and components
+* Good, because it has a small bundle size and simple API
+* Good, because state updates only re-render subscribed components
+* Good, because persistence can be added through middleware if required
+* Bad, because state is stored in memory by default and is lost on page refresh (mitigated using middleware)
+* Bad, because it introduces an additional dependency to the application
+* Bad, because application state can become difficult to reason about if stores grow without clear ownership boundaries
+
+### React Context API
+
+* Good, because it is built into React and requires no additional dependencies
+* Good, because it allows state to be shared across pages and components
+* Good, because it integrates naturally with existing React patterns
+* Good, because it is suitable for relatively simple and low-frequency state updates
+* Bad, because context updates can trigger unnecessary re-renders if not carefully designed
+* Bad, because managing complex application state can become cumbersome
+* Bad, because it requires additional provider setup and wiring
+* Bad, because state is stored in memory and is lost on page refresh
+
+### URL Parameters
+
+* Good, because state is preserved across page refreshes and browser navigation
+* Good, because state can be bookmarked, shared, and deep-linked
+* Good, because it requires no additional dependencies
+* Good, because it aligns with web navigation conventions
+* Bad, because only small amounts of serializable data can be reasonably stored in URLs
+* Bad, because URLs can become difficult to read and maintain as state grows
+* Bad, because sensitive information should not be exposed in URLs
+* Bad, because additional parsing, validation, and encoding logic is required
+
+### Redux
+
+* Good, because it provides a well-established and widely adopted state management pattern
+* Good, because it centralises application state in a predictable manner
+* Good, because it offers strong debugging and developer tooling
+* Good, because it scales well for large and complex applications
+* Bad, because it introduces additional dependencies and concepts to learn
+* Bad, because it requires more boilerplate than the alternative options
+* Bad, because it may be overly complex for simple cross-page state requirements
+* Bad, because state is stored in memory by default and is lost on page refresh unless persistence is added
