@@ -20,8 +20,8 @@ const sentryConfig = {
       enabled: true,
     },
   },
-  org: 'incubator-for-ai',
-  project: 'minute',
+  org: 'communitiesuk',
+  project: 'localai-local-transcribe',
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,

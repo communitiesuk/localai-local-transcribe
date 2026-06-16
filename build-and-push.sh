@@ -52,10 +52,17 @@ for SERVICE in "${SERVICES[@]}"; do
 
   REPO="${REGISTRY}/${ENVIRONMENT}-${SERVICE}"
   LOCAL_TAG="${ENVIRONMENT}-${SERVICE}:${TAG}"
+  BUILD_ARGS=()
+
+  if [[ "$SERVICE" == "frontend" ]]; then
+    BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_SENTRY_DSN=${SENTRY_DSN:-}")
+    BUILD_ARGS+=(--build-arg "SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN:-}")
+    BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_POSTHOG_API_KEY=${POSTHOG_API_KEY:-}")
+  fi
 
   echo ""
   echo "Building ${SERVICE}..."
-  docker build -q -t "$LOCAL_TAG" -f "${REPO_ROOT}/${SERVICE}/Dockerfile" "$REPO_ROOT"
+  docker build -q "${BUILD_ARGS[@]}" -t "$LOCAL_TAG" -f "${REPO_ROOT}/${SERVICE}/Dockerfile" "$REPO_ROOT"
 
   docker tag "$LOCAL_TAG" "${REPO}:${TAG}"
 
