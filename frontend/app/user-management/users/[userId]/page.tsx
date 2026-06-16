@@ -1,9 +1,9 @@
 'use client'
 
 import { use } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
-import { GovukHeading } from '@/components/govuk'
+import { GovukHeading, GovukButton } from '@/components/govuk'
 import {
   GovukTable,
   GovukTableBody,
@@ -11,7 +11,10 @@ import {
   GovukTableCell,
   GovukTableHeaderCell,
 } from '@/components/govuk/table'
-import { getTargetUserUsersUserIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import {
+  getTargetUserUsersUserIdGetOptions,
+  deleteUserUsersUserIdDeleteMutation,
+} from '@/lib/client/@tanstack/react-query.gen'
 
 export default function UserPage(props: {
   params: Promise<{ userId: string }>
@@ -25,6 +28,10 @@ export default function UserPage(props: {
       },
     }),
   })
+
+  const { mutate: deleteUser } = useMutation(
+    deleteUserUsersUserIdDeleteMutation()
+  )
 
   return (
     <>
@@ -44,6 +51,13 @@ export default function UserPage(props: {
           </GovukTableBody>
         </GovukTable>
       </div>
+
+      <GovukButton
+        variant="warning"
+        onClick={() => deleteUser({ path: { user_id: userId } })}
+      >
+        Delete account
+      </GovukButton>
     </>
   )
 }
