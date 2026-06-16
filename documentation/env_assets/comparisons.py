@@ -29,7 +29,13 @@ from utils import (
 def homeworking_displacement(co2e_g: float) -> dict:
     hw_g_per_hour = HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR * 1_000
     hours = co2e_g / hw_g_per_hour
-    return {"hw_g_per_hour": hw_g_per_hour, "hours": hours, "minutes": hours * 60, "seconds": hours * 3_600, "working_days": hours / WORKING_HOURS_PER_DAY}
+    return {
+        "hw_g_per_hour": hw_g_per_hour,
+        "hours": hours,
+        "minutes": hours * 60,
+        "seconds": hours * 3_600,
+        "working_days": hours / WORKING_HOURS_PER_DAY,
+    }
 
 
 def car_displacement(co2e_g: float) -> dict:
@@ -39,7 +45,9 @@ def car_displacement(co2e_g: float) -> dict:
 
 
 def flight_displacement(co2e_g: float) -> dict:
-    g_per_pkm = FLIGHT_LONG_HAUL_ECONOMY_GCO2_PER_PKM_BASE * (1 + FLIGHT_DISTANCE_UPLIFT_FRACTION) * FLIGHT_RF_MULTIPLIER
+    g_per_pkm = (
+        FLIGHT_LONG_HAUL_ECONOMY_GCO2_PER_PKM_BASE * (1 + FLIGHT_DISTANCE_UPLIFT_FRACTION) * FLIGHT_RF_MULTIPLIER
+    )
     pkm = co2e_g / g_per_pkm
     return {"g_per_pkm": g_per_pkm, "pkm": pkm, "metres": pkm * 1_000}
 
@@ -66,7 +74,15 @@ def household_energy_fraction(energy_wh: float) -> dict:
     daily_wh = (HOUSEHOLD_ELECTRICITY_KWH_PER_YEAR + HOUSEHOLD_GAS_KWH_PER_YEAR) / 365 * 1_000
     avg_w = daily_wh / 24
     hours = energy_wh / avg_w
-    return {"daily_wh": daily_wh, "avg_w": avg_w, "fraction": energy_wh / daily_wh, "percent": energy_wh / daily_wh * 100, "hours": hours, "minutes": hours * 60, "seconds": hours * 3_600}
+    return {
+        "daily_wh": daily_wh,
+        "avg_w": avg_w,
+        "fraction": energy_wh / daily_wh,
+        "percent": energy_wh / daily_wh * 100,
+        "hours": hours,
+        "minutes": hours * 60,
+        "seconds": hours * 3_600,
+    }
 
 
 # =============================================================================
@@ -149,14 +165,19 @@ def display() -> None:
     _row("Heating", f"{HOMEWORKING_HEATING_KG_CO2E_PER_HOUR} kg CO₂e / FTE working hour")
     _row("Combined (homeworking total)", f"{HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR} kg CO₂e / FTE working hour")
     print()
-    _row("Usage-weighted meeting CO₂e", _rng(wt_combined["total_co2e_g_min"], wt_combined["total_co2e_g_max"], "g CO₂e"))
+    _row(
+        "Usage-weighted meeting CO₂e", _rng(wt_combined["total_co2e_g_min"], wt_combined["total_co2e_g_max"], "g CO₂e")
+    )
     _row(
         "≡ homeworking time",
         f"{_rng(hw_wt_min['seconds'], hw_wt_max['seconds'], 's')}"
         f"  ({_rng(hw_wt_min['minutes'], hw_wt_max['minutes'], 'min')})",
     )
     print()
-    _row("SimpleTemplate meeting CO₂e", _rng(simple_combined["total_co2e_g_min"], simple_combined["total_co2e_g_max"], "g CO₂e"))
+    _row(
+        "SimpleTemplate meeting CO₂e",
+        _rng(simple_combined["total_co2e_g_min"], simple_combined["total_co2e_g_max"], "g CO₂e"),
+    )
     _row(
         "≡ homeworking time",
         f"{_rng(hw_st_min['seconds'], hw_st_max['seconds'], 's')}"
@@ -179,23 +200,43 @@ def display() -> None:
     hh_wt_min = household_energy_fraction(wt_combined["total_energy_wh_min"])
     hh_wt_max = household_energy_fraction(wt_combined["total_energy_wh_max"])
     car_g_per_km = CAR_AVG_PETROL_WLTP_GCO2_PER_KM * (1 + CAR_REAL_WORLD_UPLIFT_FRACTION)
-    flight_g_per_pkm = FLIGHT_LONG_HAUL_ECONOMY_GCO2_PER_PKM_BASE * (1 + FLIGHT_DISTANCE_UPLIFT_FRACTION) * FLIGHT_RF_MULTIPLIER
+    flight_g_per_pkm = (
+        FLIGHT_LONG_HAUL_ECONOMY_GCO2_PER_PKM_BASE * (1 + FLIGHT_DISTANCE_UPLIFT_FRACTION) * FLIGHT_RF_MULTIPLIER
+    )
     hh_daily_wh = (HOUSEHOLD_ELECTRICITY_KWH_PER_YEAR + HOUSEHOLD_GAS_KWH_PER_YEAR) / 365 * 1_000
 
     _section("Appendix HW.2: Activity Comparisons [26][27][28]")
     print("  Car and flight use a CO₂e basis; TV and household use an energy basis.")
     print()
-    _row("Car real-world factor (avg petrol, Scope 1)", f"{CAR_AVG_PETROL_WLTP_GCO2_PER_KM} × (1+{CAR_REAL_WORLD_UPLIFT_FRACTION})  = {car_g_per_km:.1f} g CO₂/km  [26]")
-    _row("Usage-weighted CO₂e → petrol car", f"{_rng(wt_combined['total_co2e_g_min'], wt_combined['total_co2e_g_max'], 'g')}  →  {_rng(car_wt_min['metres'], car_wt_max['metres'], 'm')}")
+    _row(
+        "Car real-world factor (avg petrol, Scope 1)",
+        f"{CAR_AVG_PETROL_WLTP_GCO2_PER_KM} × (1+{CAR_REAL_WORLD_UPLIFT_FRACTION})  = {car_g_per_km:.1f} g CO₂/km  [26]",
+    )
+    _row(
+        "Usage-weighted CO₂e → petrol car",
+        f"{_rng(wt_combined['total_co2e_g_min'], wt_combined['total_co2e_g_max'], 'g')}  →  {_rng(car_wt_min['metres'], car_wt_max['metres'], 'm')}",
+    )
     print()
-    _row("Flight factor (long-haul economy, incl. RF)", f"{FLIGHT_LONG_HAUL_ECONOMY_GCO2_PER_PKM_BASE} × 1.08 × {FLIGHT_RF_MULTIPLIER}  = {flight_g_per_pkm:.1f} g CO₂e/pkm  [26]")
-    _row("Usage-weighted CO₂e → long-haul flight", f"{_rng(wt_combined['total_co2e_g_min'], wt_combined['total_co2e_g_max'], 'g')}  →  {_rng(flight_wt_min['metres'], flight_wt_max['metres'], 'm')}")
+    _row(
+        "Flight factor (long-haul economy, incl. RF)",
+        f"{FLIGHT_LONG_HAUL_ECONOMY_GCO2_PER_PKM_BASE} × 1.08 × {FLIGHT_RF_MULTIPLIER}  = {flight_g_per_pkm:.1f} g CO₂e/pkm  [26]",
+    )
+    _row(
+        "Usage-weighted CO₂e → long-haul flight",
+        f"{_rng(wt_combined['total_co2e_g_min'], wt_combined['total_co2e_g_max'], 'g')}  →  {_rng(flight_wt_min['metres'], flight_wt_max['metres'], 'm')}",
+    )
     print()
     _row("Household daily energy (2,700+11,500 kWh/yr ÷ 365)", f"{hh_daily_wh:,.0f} Wh/day  [27]")
-    _row("Usage-weighted energy → household time", f"{_rng(wt_combined['total_energy_wh_min'], wt_combined['total_energy_wh_max'], 'Wh')}  →  {_rng(hh_wt_min['seconds'], hh_wt_max['seconds'], 's')}  ({_rng(hh_wt_min['percent'], hh_wt_max['percent'], '%', dp=3)})")
+    _row(
+        "Usage-weighted energy → household time",
+        f"{_rng(wt_combined['total_energy_wh_min'], wt_combined['total_energy_wh_max'], 'Wh')}  →  {_rng(hh_wt_min['seconds'], hh_wt_max['seconds'], 's')}  ({_rng(hh_wt_min['percent'], hh_wt_max['percent'], '%', dp=3)})",
+    )
     print()
     _row(f'TV typical power (43–55" LED, indicative)  [28]', f"{TV_TYPICAL_WATTAGE} W")
-    _row("Usage-weighted energy → TV viewing", f"{_rng(wt_combined['total_energy_wh_min'], wt_combined['total_energy_wh_max'], 'Wh')}  →  {_rng(tv_wt_min['minutes'], tv_wt_max['minutes'], 'min')}")
+    _row(
+        "Usage-weighted energy → TV viewing",
+        f"{_rng(wt_combined['total_energy_wh_min'], wt_combined['total_energy_wh_max'], 'Wh')}  →  {_rng(tv_wt_min['minutes'], tv_wt_max['minutes'], 'min')}",
+    )
     print()
 
     # Appendix HW.3: cross-layer comparison
@@ -219,11 +260,19 @@ def display() -> None:
     print("  All columns use CO₂e. TV/household: wattage × UK grid intensity (217 g/kWh).")
     print()
     w = 42
-    print(f"  {'Cost layer':<{w}} {'CO₂e':>8}  {'Car':>8}  {'Flight':>10}  {'Homeworking':>13}  {'TV (100 W)':>12}  {'Household':>12}")
+    print(
+        f"  {'Cost layer':<{w}} {'CO₂e':>8}  {'Car':>8}  {'Flight':>10}  {'Homeworking':>13}  {'TV (100 W)':>12}  {'Household':>12}"
+    )
     print(f"  {'-'*w} {'-'*8}  {'-'*8}  {'-'*10}  {'-'*13}  {'-'*12}  {'-'*12}")
-    print(f"  {'LLM+ASR training, per user (proxy)':<{w}} {training_co2e:>6.1f} g  {c_train['metres']:>6.0f} m  {f_train['metres']:>8.0f} m  {hw_train['minutes']:>10.1f} min  {tv_train_co2e['minutes']:>9.1f} min  {hh_train_co2e['minutes']:>9.1f} min")
-    print(f"  {'Per-meeting AI inference (usage-wtd mid)':<{w}} {wt_combined['total_co2e_g']:>6.1f} g  {c_meet['metres']:>6.0f} m  {f_meet['metres']:>8.0f} m  {hw_meet['seconds']:>10.0f} s  {tv_meet_co2e['minutes']:>9.1f} min  {hh_meet_co2e['seconds']:>9.1f} s")
-    print(f"  {'Monthly AWS hosting (April 2026)':<{w}} {AWS_APR2026_CO2E_G:>5,} g  {c_aws['km']:>6.1f} km  {f_aws['pkm']:>8.1f} km  {hw_aws['working_days']:>9.1f} days  {tv_aws_co2e['hours']:>9.1f} h  {hh_aws_co2e['hours']:>9.1f} h")
+    print(
+        f"  {'LLM+ASR training, per user (proxy)':<{w}} {training_co2e:>6.1f} g  {c_train['metres']:>6.0f} m  {f_train['metres']:>8.0f} m  {hw_train['minutes']:>10.1f} min  {tv_train_co2e['minutes']:>9.1f} min  {hh_train_co2e['minutes']:>9.1f} min"
+    )
+    print(
+        f"  {'Per-meeting AI inference (usage-wtd mid)':<{w}} {wt_combined['total_co2e_g']:>6.1f} g  {c_meet['metres']:>6.0f} m  {f_meet['metres']:>8.0f} m  {hw_meet['seconds']:>10.0f} s  {tv_meet_co2e['minutes']:>9.1f} min  {hh_meet_co2e['seconds']:>9.1f} s"
+    )
+    print(
+        f"  {'Monthly AWS hosting (April 2026)':<{w}} {AWS_APR2026_CO2E_G:>5,} g  {c_aws['km']:>6.1f} km  {f_aws['pkm']:>8.1f} km  {hw_aws['working_days']:>9.1f} days  {tv_aws_co2e['hours']:>9.1f} h  {hh_aws_co2e['hours']:>9.1f} h"
+    )
     print()
     ratio = AWS_APR2026_CO2E_G / wt_combined["total_co2e_g"]
     print(f"  Hosting : per-meeting ratio  {AWS_APR2026_CO2E_G:,} ÷ {wt_combined['total_co2e_g']:.1f} = {ratio:,.0f}×")

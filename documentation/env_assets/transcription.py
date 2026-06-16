@@ -34,8 +34,7 @@ def display() -> None:
     )
     _row(
         "CO₂e (GBR, used in combined totals)",
-        f"{r['energy_wh']:.2f} Wh × {ASR_CARBON_INTENSITY_G_PER_KWH:.1f} g/kWh / 1000"
-        f"  = {r['co2e_g_eu27']:.2f} g",
+        f"{r['energy_wh']:.2f} Wh × {ASR_CARBON_INTENSITY_G_PER_KWH:.1f} g/kWh / 1000" f"  = {r['co2e_g_eu27']:.2f} g",
     )
 
 
