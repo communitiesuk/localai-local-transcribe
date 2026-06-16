@@ -69,15 +69,14 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
     Creates and returns a chatbot instance based on the specified model type and name.
 
     This function initializes a ChatBot instance by selecting the appropriate model adapter
-    based on the provided model type. It supports "openai", "ollama" and "gemini" model types. Additional
-    settings required for model initialization are sourced from application settings or passed
-    as keyword arguments. If an unsupported model type is specified, a ValueError is raised.
+    based on the provided model type. It supports "openai", "azure_apim" and "gemini" model types.
+    If an unsupported model type is specified, a ValueError is raised.
 
     Args:
         model_type: A string specifying the type of the model. Supported values are "openai",
-            "ollama" and "gemini".
+            "azure_apim" and "gemini".
         model_name: A string indicating the name of the model to be used.
-        **kwargs: Additional keyword arguments to be passed to the model api call, if required.
+        temperature: The temperature to use for the model.
 
     Returns:
         ChatBot: An instance of the ChatBot class configured with the appropriate model adapter.
@@ -106,16 +105,6 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
                 api_version=settings.AZURE_OPENAI_API_VERSION,
                 azure_deployment=settings.AZURE_DEPLOYMENT,
                 azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
-                temperature=temperature,
-            )
-        )
-    elif model_type == "ollama":
-        from common.llm.adapters.ollama import OllamaModelAdapter
-
-        return ChatBot(
-            OllamaModelAdapter(
-                model=model_name,
-                base_url=settings.OLLAMA_BASE_URL,
                 temperature=temperature,
             )
         )
@@ -149,16 +138,6 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
                     safety_settings=GeminiModelAdapter.no_safety_settings(),
                     temperature=temperature,
                 ),
-            )
-        )
-    elif model_type == "ollama":
-        from common.llm.adapters.ollama import OllamaModelAdapter
-
-        return ChatBot(
-            OllamaModelAdapter(
-                model=model_name,
-                base_url=settings.OLLAMA_BASE_URL,
-                temperature=temperature,
             )
         )
     else:

@@ -104,7 +104,7 @@ Compares transcription services using the AMI Corpus (auto-downloaded to `input/
 
 ```bash
 brew install ffmpeg  # macOS
-poetry install --with worker,local-dev,evals-transcription
+poetry install --with worker,evals-transcription
 ```
 
 ## Usage
