@@ -113,8 +113,6 @@ config/google-credentials.json
 /playwright-report/
 /playwright/.cache/
 
-.whisply_temp/
-
 #testing
 .coverage
 .coverage.*

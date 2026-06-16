@@ -82,7 +82,7 @@ sentry-sdk = {extras = ["fastapi"], version = "^2.18.0"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.42"}
 asyncpg = "^0.30.0"
 markdownify = "^1.2.0"
-python-multipart = "^0.0.27"
+python-multipart = "^0.0.31"
 i-dot-ai-utilities = "^0.4.4"
 azure-servicebus = "^7.14.2"
 mypy-boto3-sqs = "^1.42.3"
@@ -103,9 +103,6 @@ apscheduler = "^3.11.0"
 
 [tool.poetry.group.worker.dependencies]
 ray = {extras = ["default"], version = "^2.53.0"}
-
-[tool.poetry.group.local-dev.dependencies]
-whisply = "^0.13.1"
 
 [tool.poetry.group.evals-transcription.dependencies]
 datasets = "^3.0.0"
@@ -129,7 +126,7 @@ polars = "^1.5.0"
 pydantic = "^2.8.2"
 pyyaml = "^6.0.2"
 tenacity = "^9.0.0"
-typer = "^0.20.0"
+typer = "^0.25.1"
 sentence-transformers = "^3.0.0"
 transformers = "^4.40.0"
 torch = "^2.0.0"

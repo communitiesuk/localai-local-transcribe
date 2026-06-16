@@ -17,14 +17,11 @@ describe('<Header />', () => {
     expect(wrap).toHaveClass('govuk-width-container')
   })
 
-  it('renders the MHCLG logo + Local Transcribe product name linking to /', () => {
+  it('renders the GOV.UK logo linking to https://www.gov.uk', () => {
     render(<Header />)
-    const home = screen.getByRole('link', { name: /Local Transcribe/ })
-    expect(home).toHaveAttribute('href', '/')
+    const home = screen.getByRole('link', { name: /GOV.UK/ })
+    expect(home).toHaveAttribute('href', 'https://www.gov.uk')
     expect(home).toHaveClass('govuk-header__homepage-link')
-    expect(screen.getByText('Local Transcribe')).toHaveClass(
-      'govuk-header__product-name'
-    )
   })
 
   it('renders Sign out as an inverse link pointing at the proxy signout endpoint', () => {
