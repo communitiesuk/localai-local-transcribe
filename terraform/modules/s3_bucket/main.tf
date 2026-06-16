@@ -177,21 +177,17 @@ resource "aws_s3_bucket_policy" "allow_log_writes" {
 
 data "aws_caller_identity" "current" {}
 
-locals {
-  effective_log_source_arns = length(var.log_source_arns) > 0 ? var.log_source_arns : [aws_s3_bucket.main.arn]
-}
 
 data "aws_iam_policy_document" "allow_log_writes" {
   source_policy_documents = [data.aws_iam_policy_document.allow_ssl_requests_only.json]
   statement {
     principals {
       type        = "Service"
-      identifiers = var.log_writer_service_principals
+      identifiers = ["logging.s3.amazonaws.com"]
     }
 
     actions = [
       "s3:PutObject",
-      "s3:PutObjectAcl"
     ]
 
     resources = [
@@ -201,7 +197,7 @@ data "aws_iam_policy_document" "allow_log_writes" {
     condition {
       test     = "ArnLike"
       variable = "aws:SourceArn"
-      values   = local.effective_log_source_arns
+      values   = [aws_s3_bucket.main.arn]
     }
 
     condition {

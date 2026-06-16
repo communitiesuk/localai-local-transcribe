@@ -29,16 +29,55 @@ module "alb_logs" {
   source = "../s3_bucket"
 
   bucket_name                        = "alb-logs-${var.environment_name}"
-  access_log_bucket_name             = null
+  access_log_bucket_name             = "alb-logs-${var.environment_name}-access-logs"
   force_destroy                      = false
   object_lock_enabled                = false
-  noncurrent_version_expiration_days = null
+  noncurrent_version_expiration_days = 700
   access_s3_log_expiration_days      = 365
-  policy                             = null
+  policy                             = data.aws_iam_policy_document.alb_logs_bucket_policy.json
   kms_key_arn                        = null
-  log_writer_service_principals      = ["logdelivery.elasticloadbalancing.amazonaws.com"]
-  log_source_arns                    = [aws_lb.main.arn]
 }
+
+data "aws_iam_policy_document" "alb_logs_bucket_policy" {
+  statement {
+    sid    = "AWSLogDeliveryAclCheck"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+
+    actions   = ["s3:GetBucketAcl"]
+    resources = ["arn:aws:s3:::alb-logs-${var.environment_name}"]
+  }
+
+  statement {
+    sid    = "AWSLogDeliveryWrite"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+
+    actions   = ["s3:PutObject"]
+    resources = ["arn:aws:s3:::alb-logs-${var.environment_name}/AWSLogs/${data.aws_caller_identity.current.account_id}/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceArn"
+      values   = [aws_lb.main.arn]
+    }
+  }
+}
+
 
 resource "aws_lb_listener" "https" {
   count = var.ssl_certs_created ? 1 : 0

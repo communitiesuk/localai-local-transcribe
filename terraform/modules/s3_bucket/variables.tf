@@ -42,15 +42,3 @@ variable "object_lock_enabled" {
   type        = bool
   default     = false
 }
-
-variable "log_writer_service_principals" {
-  description = "List of service principals allowed to write logs to the bucket (e.g. logging.s3.amazonaws.com, elasticloadbalancing.amazonaws.com)"
-  type        = list(string)
-  default     = ["logging.s3.amazonaws.com"]
-}
-
-variable "log_source_arns" {
-  description = "Optional list of ARNs that are allowed as the SourceArn in the log-write policy (e.g. ALB ARN, CloudFront distribution ARN). If empty, defaults to the main bucket ARN so S3 server access logging works."
-  type        = list(string)
-  default     = []
-}
