@@ -232,6 +232,7 @@ module "ecs" {
   azure_apim_client_secret_arn    = module.secrets.azure_apim_client_secret_arn
   azure_apim_scope_arn            = module.secrets.azure_apim_scope_arn
   azure_apim_subscription_key_arn = module.secrets.azure_apim_subscription_key_arn
+  sentry_dsn_arn                  = module.secrets.sentry_dsn_arn
 }
 
 module "uploads_bucket" {
