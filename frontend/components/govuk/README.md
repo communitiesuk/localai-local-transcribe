@@ -66,7 +66,7 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 />
 ```
 
-`GovukErrorSummary` accepts either `errorList={[{ href: '#field', text: '…' }]}` or `errors={form.formState.errors}` (uses each field's `message`).
+`GovukErrorSummary` accepts `errorList={[{ href: '#field', text: '…' }]}`.
 
 ## Adding a new wrapper
 
@@ -81,6 +81,7 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 | ------------------- | -------------------------------- | ------- |
 | `GovukBackLink`     | Back link (href or dynamic back) | Yes     |
 | `GovukButton`       | Button                           | Yes     |
+| `GovukButtonLink`   | Button link                      | Yes     |
 | `GovukErrorSummary` | Error summary                    | No      |
 | `GovukFieldset`     | Fieldset                         | No      |
 | `GovukFormGroup`    | Form group                       | No      |
