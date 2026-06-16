@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DimensionEvaluation",
+  "description": "Human-style judicial evaluation of a single rubric dimension.",
+  "type": "object",
+  "required": ["evidence", "rationale", "score"],
+  "additionalProperties": false,
+  "properties": {
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Observations, examples, or references from the summary or transcript considered by the judge."
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 20,
+      "description": "The judge’s reasoning, explaining how the evidence satisfies or fails the rubric criteria."
+    },
+    "score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "The final verdict for this dimension, determined after considering the evidence and rationale."
+    }
+  }
+}

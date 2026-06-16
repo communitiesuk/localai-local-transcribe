@@ -1,0 +1,40 @@
+### Dimension: Factual Accuracy
+
+All facts, figures, names, decisions, and attributed statements in the summary are directly supported by and consistent with the source transcript.
+
+#### Score Definitions:
+
+- **Score 5 — Excellent:** All material data points are precise, correct, and directly traceable to the transcript. No ambiguity introduced by paraphrase.
+- **Score 4 — Good:** All assertions are accurate; wording is consistently precise with only trivial stylistic looseness. No material loss of specificity in owners, timings, modality, or quantities.
+- **Score 3 — Adequate:** Mostly accurate; paraphrasing is acceptable where it preserves meaning and does not introduce new facts. Some noticeable imprecision or loss of specificity remains without materially misleading the reader.
+- **Score 2 — Poor:** At least one significant factual error that could mislead the reader; minor errors also present.
+- **Score 1 — Unacceptable:** Multiple factual errors or hallucinations; numbers, names, descriptions of events or decisions are incorrect or fabricated.
+
+**Hallucination Gate:** Yes — scores ≤ 3 on this dimension require human review due to hallucination risk.
+
+#### Worked Examples
+
+**Scenario:** Good summary correctly attributes the NHS Maudsley referral and condition. Bad summary fabricates a dental appointment.
+
+**Transcript Excerpt:**
+```text
+Housing Officer (00:34:12): Right, so we agreed that Mr Okafor would be referred to NHS Maudsley Hospital for a further assessment of his bipolar condition. That referral will be arranged by the Haringey Local Authority caseworker before the next meeting, which is scheduled for 21 July.
+Customer (00:34:45): Yes, that's correct. I understand.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+Personal Housing Plan — Emmanuel Okafor
+Reference: HAR-2026-00412
+
+The customer agreed to a further assessment of his bipolar condition by the NHS Maudsley Hospital, to be arranged by the Haringey Local Authority caseworker before the next meeting on 21 July.
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+Personal Housing Plan — Emmanuel Okafor
+Reference: HAR-2026-00412
+
+The customer consented to a dental health check-up following his decision to quit his job and retrain as a dental technician. A referral to a community clinic was discussed.
+```
+

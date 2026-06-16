@@ -1,0 +1,11 @@
+{% if template_name %}
+You are evaluating summary '{{ summary_id }}' for transcript reference '{{ transcript_ref }}'.
+{% else %}
+You are evaluating summary '{{ summary_id }}' for transcript reference '{{ transcript_ref }}'.
+{% endif %}
+---
+Transcript:
+{{ transcript_text }}
+
+Summary:
+{{ summary_text }}

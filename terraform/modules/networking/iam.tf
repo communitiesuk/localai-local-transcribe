@@ -34,13 +34,24 @@ data "aws_iam_policy_document" "vpc_flow_logs" {
   statement {
     effect = "Allow"
     actions = [
+
+      "logs:DescribeLogGroups",
+    ]
+    resources = ["*"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
-      "logs:DescribeLogGroups",
       "logs:DescribeLogStreams"
     ]
-    resources = ["*"]
+    resources = [
+      module.vpc_flow_logs_accepted.log_group_arn,
+      module.vpc_flow_logs_rejected.log_group_arn,
+      "${module.vpc_flow_logs_accepted.log_group_arn}:*",
+    "${module.vpc_flow_logs_rejected.log_group_arn}:*"]
   }
 }
 

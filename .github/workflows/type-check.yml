@@ -4,7 +4,7 @@ name: type-check
 
 env:
   PYTHON_VERSION: "3.12"
-  POETRY_VERSION: "2.3.3"
+  POETRY_VERSION: "2.4.1"
 
 on:
   pull_request:

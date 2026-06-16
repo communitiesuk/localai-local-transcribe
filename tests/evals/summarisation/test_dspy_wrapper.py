@@ -19,7 +19,7 @@ def test_init_sets_model_and_adapter(mock_adapter):
 
     assert wrapper.adapter == mock_adapter
     assert wrapper.model == "test-model"
-    assert wrapper.history == []
+    assert wrapper.wrapper_history == []
 
 
 def test_call_with_prompt_converts_to_messages(mock_adapter):
@@ -59,11 +59,11 @@ def test_call_records_history(mock_adapter):
     wrapper(prompt="First call")
     wrapper(prompt="Second call", temperature=0.5)
 
-    assert len(wrapper.history) == 2
-    assert wrapper.history[0]["messages"] == [{"role": "user", "content": "First call"}]
-    assert wrapper.history[0]["response"] == "Test response"
-    assert wrapper.history[0]["kwargs"] == {}
-    assert wrapper.history[1]["kwargs"] == {"temperature": 0.5}
+    assert len(wrapper.wrapper_history) == 2
+    assert wrapper.wrapper_history[0]["messages"] == [{"role": "user", "content": "First call"}]
+    assert wrapper.wrapper_history[0]["response"] == "Test response"
+    assert wrapper.wrapper_history[0]["kwargs"] == {}
+    assert wrapper.wrapper_history[1]["kwargs"] == {"temperature": 0.5}
 
 
 def test_inspect_history_returns_last_n(mock_adapter):
@@ -152,6 +152,6 @@ def test_multiple_calls_with_different_message_formats(mock_adapter):
     wrapper(prompt="Prompt call")
     wrapper(messages=[{"role": "user", "content": "Message call"}])
 
-    assert len(wrapper.history) == 2
-    assert wrapper.history[0]["messages"] == [{"role": "user", "content": "Prompt call"}]
-    assert wrapper.history[1]["messages"] == [{"role": "user", "content": "Message call"}]
+    assert len(wrapper.wrapper_history) == 2
+    assert wrapper.wrapper_history[0]["messages"] == [{"role": "user", "content": "Prompt call"}]
+    assert wrapper.wrapper_history[1]["messages"] == [{"role": "user", "content": "Message call"}]

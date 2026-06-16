@@ -1,5 +1,8 @@
 import Footer from '@/components/layout/footer'
+import { GovukInit } from '@/components/layout/govuk-init'
 import { Header } from '@/components/layout/header'
+import { ServiceNav } from '@/components/layout/service-nav'
+import { PhaseBanner } from '@/components/layout/phase-banner'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
 import PosthogProvider from '@/providers/posthog'
@@ -23,21 +26,35 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={inter.className}>
-      <head></head>
-      <body>
+    <html lang="en" className={`govuk-template ${inter.className}`}>
+      <body className="govuk-template__body js-enabled govuk-frontend-supported">
+        <a
+          href="#main-content"
+          className="govuk-skip-link"
+          data-module="govuk-skip-link"
+        >
+          Skip to main content
+        </a>
+
         <TanstackQueryProvider>
           <PosthogProvider>
             <LockNavigationProvider>
               <RecordingDbProvider>
-                <div className="flex min-h-screen flex-col justify-between">
-                  <div>
-                    <Header />
-                    <main>{children}</main>
-                  </div>
-                  <Footer />
+                <Header />
+                <ServiceNav />
+                <div className="govuk-width-container">
+                  <PhaseBanner />
                 </div>
+
+                <div className="govuk-width-container">
+                  <main id="main-content" className="govuk-main-wrapper">
+                    {children}
+                  </main>
+                </div>
+
+                <Footer />
                 <Toaster />
+                <GovukInit />
               </RecordingDbProvider>
             </LockNavigationProvider>
           </PosthogProvider>

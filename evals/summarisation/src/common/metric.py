@@ -1,15 +1,108 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 
 import dspy
+from pydantic import BaseModel, ConfigDict, Field
 
-from common.settings import get_settings
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
 from evals.summarisation.src.common.config import AppConfig
-from evals.summarisation.src.common.dspy_wrapper import DSPyModelAdapterWrapper
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
-from evals.summarisation.src.common.signatures import JudgeRatingSignature
+from evals.summarisation.src.constants import CONCURRENCY
+from evals.summarisation.src.judge import build_system_prompt, build_user_message
+
+
+def load_system_prompt(dimension: str | None = None) -> str:
+    """Return the rendered system prompt for a given rubric dimension.
+
+    Uses the existing Jinja template via ``build_system_prompt``.
+    """
+    return build_system_prompt(dimension)
+
+
+def make_dynamic_signature(metric_name: str, rubric: str) -> type[dspy.Signature]:
+    """Create a DSPy ``Signature`` subclass for a specific evaluation metric.
+
+    The generated class contains the fields expected by the judge LLM and embeds
+    the provided *rubric* text in its docstring.
+    """
+    class_name = f"{metric_name.title().replace('_', '')}Signature"
+    docstring = f"Rubric for {metric_name}: {rubric}"
+    attrs = {
+        "__doc__": docstring,
+        "dialogue": dspy.InputField(desc="Dialogue text"),
+        "reference_summary": dspy.InputField(desc="Gold summary from dataset"),
+        "candidate_summary": dspy.InputField(desc="Model-generated summary"),
+        "evaluation_result": dspy.OutputField(desc="JSON with rating and reason"),
+    }
+    return type(class_name, (dspy.Signature,), attrs)
+
+
+class DimensionEvaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(description="The name of the evaluation dimension (e.g. clarity, correctness).")
+    rationale: str = Field(description="The rationale behind the score.")
+    score: int = Field(description="The score assigned to this dimension.", ge=0, le=5)
+
+
+class RubricEvaluation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    dimensions: list[DimensionEvaluation] = Field(description="A list of evaluation dimension scores and rationales.")
+
+
+async def call_llm_judge(system: str, user: str) -> dict:
+    adapter = build_azure_apim_adapter()
+
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+    response = await adapter.structured_chat(messages, RubricEvaluation)
+
+    dimensions_dict = {}
+    for item in response.dimensions:
+        dimensions_dict[item.name] = {"score": item.score, "rationale": item.rationale}
+
+    return {"dimensions": dimensions_dict}
+
+
+async def call_llm_judge_parallel(
+    *,
+    summary_id: str,
+    transcript_ref: str,
+    transcript_text: str,
+    summary_text: str,
+    dimensions: list[str],
+) -> dict:
+    """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
+    semaphore = asyncio.Semaphore(CONCURRENCY)  # Limit concurrency to prevent rate limits
+
+    async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
+        async with semaphore:
+            sys_prompt = build_system_prompt(dim)
+            user_msg = build_user_message(
+                summary_id=summary_id,
+                transcript_ref=transcript_ref,
+                transcript_text=transcript_text,
+                summary_text=summary_text,
+            )
+            res = await call_llm_judge(sys_prompt, user_msg)
+            dim_data = res["dimensions"].get(dim)
+            if dim_data is None and res["dimensions"]:
+                first_key = next(iter(res["dimensions"]))
+                dim_data = res["dimensions"][first_key]
+            if dim_data is None:
+                dim_data = {"score": 1, "rationale": "Missing evaluation data"}
+            return dim, dim_data
+
+    tasks = [evaluate_single_dim(d) for d in dimensions]
+    results = await asyncio.gather(*tasks)
+
+    merged_dimensions = dict(results)
+    return {"dimensions": merged_dimensions}
 
 
 @dataclass(frozen=True)
@@ -19,7 +112,6 @@ class DialogSummaryMetric:
     name: str
     criterion: str
     pass_threshold: int
-    lm: dspy.LM
 
     def evaluate(
         self,
@@ -27,20 +119,41 @@ class DialogSummaryMetric:
         example: DialogExample,
         prediction: dspy.Prediction,
     ) -> MetricResult:
-        """Evaluates prediction against example using judge LLM for specific criterion."""
-        with dspy.context(lm=self.lm):
-            pred = dspy.Predict(JudgeRatingSignature)(
-                dialogue=example.dialogue,
-                reference_summary=example.reference_summary,
-                candidate_summary=prediction.summary,
-                criterion=self.criterion,
+        """Evaluates prediction against example using rubric judge LLM for specific criterion."""
+        rubric_dim = self.criterion
+        # Map configured metric names to rubric dimension names
+        if rubric_dim == "faithfulness":
+            rubric_dim = "accuracy"
+        elif rubric_dim in ("conciseness", "coherence"):
+            rubric_dim = "readability"
+
+        sys_prompt = build_system_prompt(rubric_dim)
+        user_msg = build_user_message(
+            summary_id=example.example_id,
+            transcript_ref=str(example.example_id),
+            transcript_text=example.dialogue,
+            summary_text=prediction.summary,
+        )
+
+        rubric_evaluation = asyncio.run(call_llm_judge(sys_prompt, user_msg))
+
+        dim_eval = rubric_evaluation["dimensions"].get(rubric_dim)
+        if dim_eval is None and rubric_evaluation["dimensions"]:
+            first_key = next(iter(rubric_evaluation["dimensions"]))
+            dim_eval = rubric_evaluation["dimensions"][first_key]
+
+        if dim_eval is None:
+            return MetricResult(
+                score=0.0,
+                reason=f"Dimension '{rubric_dim}' not found in rubric evaluation.",
             )
 
-        rating = int(pred.rating)
-        passed = rating >= self.pass_threshold
+        score = int(dim_eval["score"])
+        scaled_score = (score - 1) / 4.0
+
         return MetricResult(
-            score=1.0 if passed else 0.0,
-            reason=f"rating={rating} threshold={self.pass_threshold} :: {pred.reason}",
+            score=scaled_score,
+            reason=f"rubric_{rubric_dim}_score={score} :: {dim_eval['rationale']}",
         )
 
 
@@ -48,17 +161,14 @@ def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:
     """Builds list of judge metrics from configuration."""
     metrics: list[DialogSummaryMetric] = []
 
-    settings = get_settings()
-    adapter = build_azure_apim_adapter()
-    judge_lm = DSPyModelAdapterWrapper(adapter=adapter, model_name=settings.BEST_LLM_MODEL_NAME)
-
     for name in cfg.metrics:
+        rubric_dim = name
+
         metrics.append(
             DialogSummaryMetric(
-                name=f"judge_{name}",
-                criterion=name,
+                name=f"rubric_{rubric_dim}",
+                criterion=rubric_dim,
                 pass_threshold=cfg.judge.pass_threshold,
-                lm=judge_lm,
             )
         )
 

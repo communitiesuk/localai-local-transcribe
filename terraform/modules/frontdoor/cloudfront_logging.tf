@@ -63,7 +63,7 @@ data "aws_iam_policy_document" "allow_cloudfront_log_writes" {
       identifiers = ["delivery.logs.amazonaws.com"]
     }
 
-    actions = ["s3:PutObject", "s3:PutObjectAcl", "s3:AbortMultipartUpload", "s3:ListBucket"]
+    actions = ["s3:PutObject", "s3:PutObjectAcl", "s3:AbortMultipartUpload"]
 
     resources = ["${aws_s3_bucket.cloudfront_logs.arn}/*"]
 
@@ -88,11 +88,26 @@ data "aws_iam_policy_document" "allow_cloudfront_log_writes" {
       identifiers = ["delivery.logs.amazonaws.com"]
     }
 
-    actions = ["s3:GetBucketAcl"]
+    actions = ["s3:ListBucket", "s3:GetBucketAcl"]
 
     resources = [
       aws_s3_bucket.cloudfront_logs.arn
     ]
+
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values = [
+        aws_cloudwatch_log_delivery_destination.cloudfront_logs.arn
+      ]
+    }
   }
 
   statement {
@@ -117,7 +132,6 @@ data "aws_iam_policy_document" "allow_cloudfront_log_writes" {
     }
   }
 }
-
 
 resource "aws_s3_bucket_public_access_block" "cloudfront_logs" {
   bucket = aws_s3_bucket.cloudfront_logs.id

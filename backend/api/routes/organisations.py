@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from common.auth import is_system_admin
+from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation
 from common.types import OrganisationCreateRequest, OrganisationPatchRequest, OrganisationResponse
 
@@ -24,6 +24,19 @@ async def list_organisations(
 
     result = await session.exec(select(Organisation).order_by(Organisation.name))
     return [OrganisationResponse.model_validate(org) for org in result.all()]
+
+
+@organisations_router.get("/organisations/{organisation_id}", response_model=OrganisationResponse, status_code=200)
+async def get_organisation(user: UserDep, session: SQLSessionDep, organisation_id: uuid.UUID) -> OrganisationResponse:
+    """Get organisation. Only accessible to organisation admins."""
+    organisation = await session.get(Organisation, organisation_id)
+    if organisation is None:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
+
+    return OrganisationResponse.model_validate(organisation)
 
 
 @organisations_router.post("/organisations", response_model=OrganisationResponse, status_code=201)
