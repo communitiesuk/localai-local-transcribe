@@ -2,7 +2,7 @@
 # Environmental Impact Assessment — Assumptions and Reference Values
 # All figures correspond to numbered citations in documentation/env-impact.md.
 # Constants derived dynamically from EcoLogits (model params, grid intensity,
-# datacenter config) live in calculations.py, not here.
+# datacenter config) live in utils.py, not here.
 # ============================================================================
 
 # --- Meeting / transcript ----------------------------------------------------

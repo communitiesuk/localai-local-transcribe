@@ -156,7 +156,7 @@ def display() -> None:
     hw_st_max = homeworking_displacement(simple_combined["total_co2e_g_max"])
     heating_pct = HOMEWORKING_HEATING_KG_CO2E_PER_HOUR / HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR * 100
 
-    _section("Appendix HW: Homeworking Displacement  [UK GHG CF 2025]")
+    _section("Appendix G.1: Homeworking Displacement  [UK GHG CF 2025]")
     print("  Source: UK Government GHG Conversion Factors 2025 (DESNZ/DEFRA)")
     print("  https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025")
     print("  Category: Homeworking (office equipment + heating), per FTE working hour, Scope 1+2.")
@@ -191,10 +191,12 @@ def display() -> None:
     print()
 
     # Appendix HW.2: additional activity comparisons
-    car_wt_min = car_displacement(wt_combined["total_co2e_g_min"])
-    car_wt_max = car_displacement(wt_combined["total_co2e_g_max"])
-    flight_wt_min = flight_displacement(wt_combined["total_co2e_g_min"])
-    flight_wt_max = flight_displacement(wt_combined["total_co2e_g_max"])
+    co2e_wt_min_r = round(wt_combined["total_co2e_g_min"], 1)
+    co2e_wt_max_r = round(wt_combined["total_co2e_g_max"], 1)
+    car_wt_min = car_displacement(co2e_wt_min_r)
+    car_wt_max = car_displacement(co2e_wt_max_r)
+    flight_wt_min = flight_displacement(co2e_wt_min_r)
+    flight_wt_max = flight_displacement(co2e_wt_max_r)
     tv_wt_min = tv_displacement(wt_combined["total_energy_wh_min"])
     tv_wt_max = tv_displacement(wt_combined["total_energy_wh_max"])
     hh_wt_min = household_energy_fraction(wt_combined["total_energy_wh_min"])
@@ -205,7 +207,7 @@ def display() -> None:
     )
     hh_daily_wh = (HOUSEHOLD_ELECTRICITY_KWH_PER_YEAR + HOUSEHOLD_GAS_KWH_PER_YEAR) / 365 * 1_000
 
-    _section("Appendix HW.2: Activity Comparisons [26][27][28]")
+    _section("Appendix G.2: Activity Comparisons [26][27][28]")
     print("  Car and flight use a CO₂e basis; TV and household use an energy basis.")
     print()
     _row(
@@ -256,7 +258,7 @@ def display() -> None:
     tv_aws_co2e = tv_co2e_time(AWS_APR2026_CO2E_G)
     hh_aws_co2e = household_co2e_time(AWS_APR2026_CO2E_G)
 
-    _section("Appendix HW.3: Cross-Layer Activity Comparison (unified CO₂e basis)")
+    _section("Appendix G.4: Cross-Layer Activity Comparison (unified CO₂e basis)")
     print("  All columns use CO₂e. TV/household: wattage × UK grid intensity (217 g/kWh).")
     print()
     w = 42
@@ -274,8 +276,9 @@ def display() -> None:
         f"  {'Monthly AWS hosting (April 2026)':<{w}} {AWS_APR2026_CO2E_G:>5,} g  {c_aws['km']:>6.1f} km  {f_aws['pkm']:>8.1f} km  {hw_aws['working_days']:>9.1f} days  {tv_aws_co2e['hours']:>9.1f} h  {hh_aws_co2e['hours']:>9.1f} h"
     )
     print()
-    ratio = AWS_APR2026_CO2E_G / wt_combined["total_co2e_g"]
-    print(f"  Hosting : per-meeting ratio  {AWS_APR2026_CO2E_G:,} ÷ {wt_combined['total_co2e_g']:.1f} = {ratio:,.0f}×")
+    per_meeting_g = round(wt_combined["total_co2e_g"], 1)
+    ratio = AWS_APR2026_CO2E_G / per_meeting_g
+    print(f"  Hosting : per-meeting ratio  {AWS_APR2026_CO2E_G:,} ÷ {per_meeting_g:.1f} = {ratio:,.0f}×")
     print()
 
 

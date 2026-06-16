@@ -968,7 +968,7 @@ All comparisons use a unified CO₂e basis. Television and household columns are
 | Per-meeting AI inference (usage-weighted mid) | 7.9 g | **45 m** | **68 m** | **85 s** | **22 min** | **81 s** |
 | Monthly AWS hosting (April 2026) | 17,317 g | **98 km** | **149 km** | **6.5 working days** | **5 weeks** | **2 days** |
 
-The hosting layer emits approximately **2,189×** more CO₂e per month than a single AI meeting (usage-weighted midpoint). The amortised training cost is roughly **3.5× one meeting** — a one-time charge that breaks even after only about four meetings of cumulative inference.
+The hosting layer emits approximately **2,192×** more CO₂e per month than a single AI meeting (usage-weighted midpoint). The amortised training cost is roughly **3.5× one meeting** — a one-time charge that breaks even after only about four meetings of cumulative inference.
 
 In concrete terms, the monthly infrastructure footprint is equivalent to driving 98 km, flying 149 km, 5 weeks of continuous television, or 6.5 working days of homeworking. A single AI meeting equates to 45 m of driving, 68 m of flying, 22 min of TV, or 85 s of homeworking.
 
