@@ -14,10 +14,10 @@ data "aws_iam_policy_document" "log_group_kms" {
       "kms:Decrypt*",
       "kms:ReEncrypt*",
       "kms:GenerateDataKey*",
-      "kms:Describe*"
+      "kms:DescribeKey"
     ]
 
-    resources = ["*"]
+    resources = [aws_kms_key.main.arn]
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"

@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Any
 
@@ -86,14 +87,20 @@ async def _rewrite_transcript(
         original_value=axis_transform.original_value,
         target_value=axis_transform.target_value,
         evidence_spans=axis_spans,
+        custom_instructions=axis_transform.instructions,
     )
     chatbot.clear_history()
     response = await chatbot.chat(messages=[{"role": "user", "content": prompt}])
     return parse_llm_response(response)
 
 
+def _waf_safe(text: str) -> str:
+    # Azure WAF protection
+    return text.replace("'", "\u2019")
+
+
 async def _assess_coherence(chatbot: ChatBot, transcript: str) -> CoherenceResponse:
-    prompt = get_template(ASSESS_COHERENCE_TEMPLATE).render(transcript=transcript)
+    prompt = get_template(ASSESS_COHERENCE_TEMPLATE).render(transcript=_waf_safe(transcript))
     chatbot.clear_history()
     return await chatbot.structured_chat([{"role": "user", "content": prompt}], CoherenceResponse)
 
@@ -102,7 +109,7 @@ async def _assess_concealment(
     chatbot: ChatBot, transcript: str, characteristic: str, value: str
 ) -> ConcealmentResponse:
     prompt = get_template(ASSESS_CONCEALMENT_TEMPLATE).render(
-        transcript=transcript, characteristic=characteristic, value=value
+        transcript=_waf_safe(transcript), characteristic=characteristic, value=value
     )
     chatbot.clear_history()
     return await chatbot.structured_chat([{"role": "user", "content": prompt}], ConcealmentResponse)
@@ -116,7 +123,6 @@ async def evaluate_counterfactual(
     num_rewrites: int = 2,
 ) -> dict[str, Any]:
     span_contexts = extract_span_contexts(reference)
-    characteristics = extract_characteristics(reference)
     dialogue_texts = [entry["text"] for entry in dialogue_entries]
 
     axis_results: list[dict[str, Any]] = []
@@ -127,10 +133,24 @@ async def evaluate_counterfactual(
 
         rewrites: list[dict[str, Any]] = []
         for i in range(num_rewrites):
-            rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
-
+            max_retries = 3
+            rewritten_texts = []
+            for attempt in range(max_retries):
+                rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
+                if len(rewritten_texts) == len(dialogue_entries):
+                    break
+                logging.warning(
+                    "Count mismatch for %s axis (got %d, expected %d), retry %d/%d",
+                    axis_transform.axis,
+                    len(rewritten_texts),
+                    len(dialogue_entries),
+                    attempt + 1,
+                    max_retries,
+                )
             if len(rewritten_texts) != len(dialogue_entries):
-                msg = f"LLM returned {len(rewritten_texts)} lines but dialogue has {len(dialogue_entries)}"
+                n_got = len(rewritten_texts)
+                n_expected = len(dialogue_entries)
+                msg = f"LLM returned {n_got} lines but dialogue has {n_expected} after {max_retries} attempts"
                 raise ValueError(msg)
             rewritten_transcript = "\n".join(
                 f"{entry.get('speaker', str(j + 1))}: {text}"
@@ -140,21 +160,19 @@ async def evaluate_counterfactual(
             checks = check_removals(rewritten_transcript, original_values)
             coherence = await _assess_coherence(chatbot, rewritten_transcript)
 
-            axis_characteristics = [
-                (char, value) for char, value in characteristics if char.lower() == axis_transform.axis.lower()
+            readable_value = axis_transform.original_value.replace("_", " ")
+            concealment_result = await _assess_concealment(
+                chatbot, rewritten_transcript, axis_transform.axis, readable_value
+            )
+            concealment_checks = [
+                {
+                    "characteristic": axis_transform.axis,
+                    "value": axis_transform.original_value,
+                    "score": round((concealment_result.score - 1) / 3, 4),
+                    "explanation": concealment_result.explanation,
+                    "reasoning": concealment_result.reasoning,
+                }
             ]
-            concealment_checks = []
-            for char, value in axis_characteristics:
-                result = await _assess_concealment(chatbot, rewritten_transcript, char, value)
-                concealment_checks.append(
-                    {
-                        "characteristic": char,
-                        "value": value,
-                        "score": round((result.score - 1) / 3, 4),
-                        "explanation": result.explanation,
-                        "reasoning": result.reasoning,
-                    }
-                )
 
             unexpected_edits = [
                 {"original": c["original_value"], "occurrences_remaining": c["occurrences"]}

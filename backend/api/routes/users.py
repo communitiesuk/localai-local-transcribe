@@ -1,23 +1,29 @@
 import logging
+import math
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from backend.api.dependencies import (
     OrganisationAdminDep,
     SQLSessionDep,
-    SystemAdminDep,
     TargetUserDep,
     UserDep,
 )
+from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_users
+from backend.utils.queries import get_user_count, get_users
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
-from common.types import DataRetentionUpdateResponse, GetUserResponse, UserCreate, UserUpdateRoles
+from common.types import (
+    DataRetentionUpdateResponse,
+    GetUserResponse,
+    PaginatedUsersResponse,
+    UserCreate,
+    UserUpdateRoles,
+)
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
-org_users_router = APIRouter(prefix="/orgs/{organisation_id}/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
 
@@ -91,32 +97,56 @@ async def create_user(
 
 @users_router.get("")
 async def list_users(
-    _: SystemAdminDep,
+    admin: OrganisationAdminDep,
     session: SQLSessionDep,
-) -> list[GetUserResponse]:
-    users = await get_users(session)
-    return [to_user_response(user) for user in users]
+    page: int = Query(DEFAULT_PAGE, ge=DEFAULT_PAGE),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+) -> PaginatedUsersResponse:
+    users = []
+    if is_system_admin(admin):
+        count = await get_user_count(session)
+        users = await get_users(
+            session,
+            page=page,
+            page_size=page_size,
+        )
+    else:
+        organisation = await session.get(Organisation, admin.organisation_id)
+        count = await get_user_count(
+            session,
+            organisation=organisation,
+        )
+        users = await get_users(
+            session,
+            organisation=organisation,
+            page=page,
+            page_size=page_size,
+        )
+
+    return PaginatedUsersResponse(
+        items=[to_user_response(u) for u in users],
+        total_count=count,
+        page=page,
+        page_size=page_size,
+        total_pages=math.ceil(count / page_size) or 1,
+    )
 
 
 @users_router.get("/{user_id}")
-async def list_user(
-    _: SystemAdminDep,
-    target_user: TargetUserDep,
-) -> GetUserResponse:
-    return to_user_response(target_user)
+async def get_target_user(user: UserDep, target_user: TargetUserDep, session: SQLSessionDep) -> GetUserResponse:
+    if is_system_admin(user):
+        return to_user_response(target_user)
 
+    if not target_user.organisation_id:
+        raise HTTPException(status_code=403, detail="Only an system admin can access this resource")
 
-@org_users_router.get("")
-async def list_users_in_org(
-    organisation: OrganisationAdminDep,
-    session: SQLSessionDep,
-) -> list[GetUserResponse]:
-    users = await get_users(session, organisation)
-    return [to_user_response(user) for user in users]
+    organisation = await session.get(Organisation, target_user.organisation_id)
+    if organisation is None:
+        raise HTTPException(status_code=404, detail="Organisation not found")
 
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Only an organisation admin can access this resource")
 
-@org_users_router.get("/{user_id}")
-async def list_user_in_org(_: OrganisationAdminDep, target_user: TargetUserDep) -> GetUserResponse:
     return to_user_response(target_user)
 
 
@@ -126,27 +156,39 @@ async def update_user_roles(
 ) -> GetUserResponse:
     involves_system_admin_role = UserRole.MHCLG_SUPPORT_ADMIN in data.roles or is_system_admin(target_user)
 
-    # only a system admin can grant/revoke system admin
-    if involves_system_admin_role and not is_system_admin(user):
-        raise HTTPException(
-            status_code=403,
-            detail="Only a system admin can perform this action",
+    if is_system_admin(user):
+        # system admins can update any user
+        pass
+    else:
+        # only a system admin can grant/revoke system admin
+        if involves_system_admin_role:
+            raise HTTPException(
+                status_code=403,
+                detail="Only a system admin can perform this action",
+            )
+
+        if not target_user.organisation_id:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        organisation = await session.get(
+            Organisation,
+            target_user.organisation_id,
         )
+        if not organisation:
+            raise HTTPException(
+                status_code=404,
+                detail="Organisation not found",
+            )
 
-    if not target_user.organisation_id:
-        raise HTTPException(status_code=404, detail="User not found within organisation")
-
-    organisation = await session.get(Organisation, target_user.organisation_id)
-    if not organisation:
-        raise HTTPException(status_code=404, detail="Organisation not found")
-
-    if not is_admin_for_org(user, organisation):
-        raise HTTPException(status_code=403, detail="Only an organisation admin can update user roles")
+        if not is_admin_for_org(user, organisation):
+            raise HTTPException(
+                status_code=404,
+                detail="User not found",
+            )
 
     target_user.roles = data.roles
 
     session.add(target_user)
-
     await session.commit()
     await session.refresh(target_user)
 
@@ -155,18 +197,23 @@ async def update_user_roles(
 
 @users_router.delete("/{user_id}", status_code=204)
 async def delete_user(session: SQLSessionDep, user: UserDep, target_user: TargetUserDep) -> None:
-    if is_system_admin(target_user) and not is_system_admin(user):
+    if is_system_admin(user):  # system admin can delete any user
+        await session.delete(target_user)
+        await session.commit()
+        return
+
+    if is_system_admin(target_user):
         raise HTTPException(status_code=403, detail="Only a system admin can perform this action")
 
     if not target_user.organisation_id:
-        raise HTTPException(status_code=404, detail="User not found within organisation")
+        raise HTTPException(status_code=404, detail="User not found")
 
     organisation = await session.get(Organisation, target_user.organisation_id)
     if not organisation:
         raise HTTPException(status_code=404, detail="Organisation not found")
 
     if not is_admin_for_org(user, organisation):
-        raise HTTPException(status_code=403, detail="Only an organisation admin can delete a user")
+        raise HTTPException(status_code=404, detail="User not found")
 
     await session.delete(target_user)
     await session.commit()
