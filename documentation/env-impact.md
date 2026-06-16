@@ -63,9 +63,9 @@ Transcription is handled separately by a dedicated speech-to-text service (Azure
 Peer-reviewed measurements indicate that cloud-based ASR systems exhibit relatively low energy use and CO₂e per hour of audio, particularly when operated in modern data centres [15].
 
 **Large Language Model services**
-LLM inference represents a substantial increase in energy consumption compared to traditional web services. EcoLogits [25] modelling of a typical 500-word-output invocation on the BEST model (GPT-5.1) estimates 1.4–2.1 Wh — roughly 4.7–7× a comparable Google search (0.3 Wh) [2]. The FAST model (GPT-5-nano) is an order of magnitude cheaper per invocation (0.1 Wh for the same output length).
+LLM inference often come with a sizable increase to the energy consumption of web services. EcoLogits [25] modelling of a typical 500-word-output invocation on the BEST model (GPT-5.1) estimates 1.4–2.1 Wh — roughly 4.7–7× a comparable Google search (0.3 Wh) [2]. The FAST model (GPT-5-nano) is an order of magnitude cheaper per invocation (0.1 Wh for the same output length).
 
-LLM usage is expected to materially increase the environmental footprint of the overall solution. The computational intensity stems from the massive matrix multiplication operations required during autoregressive token generation.
+LLM usage adds meaningfully to the overall environmental footprint, with its share growing as usage scales. The energy cost is intrinsic to how these models work — each token generated requires large matrix operations.
 
 ---
 
@@ -197,7 +197,7 @@ Applying production usage shares (Appendix F.1):
 
 **Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. LLM's share of total CO₂e ranges from 1% (Basic Minutes) to 37% (SimpleTemplate), with ASR dominating at all template levels.
 
-**Infrastructure vs. AI processing cost:** The AWS hosting layer (Section 2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **2,192 complete 1-hour meetings** (at the usage-weighted midpoint of 7.9 g CO₂e/meeting). The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). Note that this AWS figure covers only the measured hosting cost for one month; other infrastructure components may not be fully captured.
+**Infrastructure vs. AI processing cost:** The AWS hosting layer (Section 2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **2,192 complete 1-hour meetings** (at the usage-weighted midpoint of 7.9 g CO₂e/meeting). The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). This AWS figure covers only the hosting layer; Azure AI inference costs (Section 3) are tracked separately.
 **Relatable activity comparisons.** See Appendix G for sources and methodology.
 
 | Cost layer | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ homeworking [24] | ≡ television [28] | ≡ household energy [27] |
@@ -205,13 +205,13 @@ Applying production usage shares (Appendix F.1):
 | Per-meeting AI inference (usage-weighted mid) | 45 m | 68 m | 85 s | 22 min | 81 s |
 | Monthly AWS hosting (April 2026) | 98 km | 149 km | 6.5 working days | 5 weeks | 2 days |
 
-At current measured figures, the hosting layer dominates the AI inference cost by a large margin, though total infrastructure costs may be higher than captured here.
+At current measured figures, the hosting layer dominates the AI inference of a 1h meeting by a large margin. It's important to note though that AI inference consumption will grow faster than infrastructure cost with scale. 
 
 ---
 
 ## 10. AI Model Training Impact
 
-Model training represents a substantial one-time energy investment amortised across all users. Following the Final Discovery Report methodology, we distribute training costs equally across all users on a subscription basis. Training emissions are one-time costs, unlike inference costs which recur with each use.
+Model training carries a sizeable one-time energy cost, amortised across all users. Following the Final Discovery Report methodology, we distribute training costs equally across all users on a subscription basis. Training emissions are one-time costs, unlike inference costs which recur with each use.
 
 This system uses two types of AI models: Large Language Models (LLMs) for summarisation and Speech-to-Text (ASR) models for transcription. Both contribute to the overall training footprint.
 
@@ -972,7 +972,7 @@ The hosting layer emits approximately **2,189×** more CO₂e per month than a s
 
 In concrete terms, the monthly infrastructure footprint is equivalent to driving 98 km, flying 149 km, 5 weeks of continuous television, or 6.5 working days of homeworking. A single AI meeting equates to 45 m of driving, 68 m of flying, 22 min of TV, or 85 s of homeworking.
 
-At current measured figures, the hosting layer dominates AI inference cost by a large margin. Infrastructure costs are not fully captured in this assessment, so this ratio should be treated as indicative rather than definitive.
+At current measured figures, the hosting layer dominates AI inference of a 1h meeting by a large margin. As usage scales, AI inference costs will grow faster, gradually narrowing this gap.
 
 ---
 
