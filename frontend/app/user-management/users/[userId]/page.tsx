@@ -3,7 +3,14 @@
 import { use } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { GovukHeading } from '@/components/govuk/heading'
+import { GovukHeading } from '@/components/govuk'
+import {
+  GovukTable,
+  GovukTableBody,
+  GovukTableRow,
+  GovukTableCell,
+  GovukTableHeaderCell,
+} from '@/components/govuk/table'
 import { getTargetUserUsersUserIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 
 export default function UserPage(props: {
@@ -22,8 +29,21 @@ export default function UserPage(props: {
   return (
     <>
       <GovukHeading>Edit user permissions</GovukHeading>
-      <p>{userId}</p>
-      {JSON.stringify(userResponse.data, null, 2)}
+
+      <div>
+        <GovukTable>
+          <GovukTableBody>
+            <GovukTableRow>
+              <GovukTableHeaderCell>Name</GovukTableHeaderCell>
+              <GovukTableCell>{userResponse.data?.name}</GovukTableCell>
+            </GovukTableRow>
+            <GovukTableRow>
+              <GovukTableHeaderCell>Email address</GovukTableHeaderCell>
+              <GovukTableCell>{userResponse.data?.email}</GovukTableCell>
+            </GovukTableRow>
+          </GovukTableBody>
+        </GovukTable>
+      </div>
     </>
   )
 }
