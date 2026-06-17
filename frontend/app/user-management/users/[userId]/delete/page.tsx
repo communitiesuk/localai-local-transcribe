@@ -64,8 +64,11 @@ export default function UserPageDelete(props: {
       <GovukHeading>Delete user account: {targetUser?.name}</GovukHeading>
 
       <p className="govuk-body">
-        Are you sure you want to delete the user account for {targetUser?.name}{' '}
-        ({targetUser?.email})?
+        Are you sure you want to delete the user account for{' '}
+        <strong>
+          {targetUser?.name} ({targetUser?.email})
+        </strong>
+        ?
       </p>
 
       <p className="govuk-body">
