@@ -1,17 +1,14 @@
 'use client'
 
 import { Suspense } from 'react'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft, Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { GovukBackLink } from '@/components/govuk'
+import { Loader2 } from 'lucide-react'
 import { UserRole } from '@/lib/utils'
 import PaginatedUsers from '@/components/users/paginated-users'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 
 export default function UserManagementPage() {
-  const router = useRouter()
-
   const {
     currentUser,
     isLoading: userLoading,
@@ -31,18 +28,7 @@ export default function UserManagementPage() {
 
   return (
     <>
-      <Button
-        variant="link"
-        className="mb-4 self-start px-0! underline hover:decoration-2"
-        onClick={() => {
-          router.back()
-        }}
-      >
-        <span className="flex items-center">
-          <ChevronLeft />
-          Back
-        </span>
-      </Button>
+      <GovukBackLink />
 
       <h1 className="govuk-heading-l">User Management</h1>
       {organisation && <h2 className="govuk-heading-s">{organisation.name}</h2>}

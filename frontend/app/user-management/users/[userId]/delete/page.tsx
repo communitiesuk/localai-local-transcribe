@@ -4,7 +4,12 @@ import { use, useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 
-import { GovukHeading, GovukButton, GovukWarningText } from '@/components/govuk'
+import {
+  GovukHeading,
+  GovukButton,
+  GovukWarningText,
+  GovukBackLink,
+} from '@/components/govuk'
 import {
   getTargetUserUsersUserIdGetOptions,
   deleteUserUsersUserIdDeleteMutation,
@@ -61,6 +66,7 @@ export default function UserPageDelete(props: {
 
   return (
     <>
+      <GovukBackLink />
       <GovukHeading>Delete user account: {targetUser?.name}</GovukHeading>
 
       <p className="govuk-body">
@@ -86,12 +92,18 @@ export default function UserPageDelete(props: {
         associate recordings
       </GovukWarningText>
 
-      <GovukButton
-        variant="warning"
-        onClick={() => deleteUser({ path: { user_id: userId } })}
-      >
-        Delete account
-      </GovukButton>
+      <div className="flex items-baseline gap-x-5">
+        <GovukButton
+          variant="warning"
+          onClick={() => deleteUser({ path: { user_id: userId } })}
+        >
+          Delete account
+        </GovukButton>
+
+        <a className="govuk-link" href="/user-management">
+          Cancel
+        </a>
+      </div>
     </>
   )
 }

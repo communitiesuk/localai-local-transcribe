@@ -3,7 +3,11 @@
 import { use, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { GovukHeading, GovukButtonLink } from '@/components/govuk'
+import {
+  GovukHeading,
+  GovukButtonLink,
+  GovukBackLink,
+} from '@/components/govuk'
 import {
   GovukTable,
   GovukTableBody,
@@ -51,6 +55,7 @@ export default function UserPage(props: {
 
   return (
     <>
+      <GovukBackLink />
       <GovukHeading>Edit user permissions</GovukHeading>
 
       <div>
