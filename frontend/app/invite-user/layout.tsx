@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import { HistoryBackButton } from '@/components/ui/history-back-button'
+import { GovukBackLink } from '@/components/govuk'
 
 export default function AdminAddUserLayout({
   children,
@@ -8,7 +8,7 @@ export default function AdminAddUserLayout({
 }) {
   return (
     <div className="p-6 pt-1">
-      <HistoryBackButton />
+      <GovukBackLink />
       {children}
     </div>
   )
