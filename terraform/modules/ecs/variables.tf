@@ -219,11 +219,6 @@ variable "azure_apim_subscription_key_arn" {
   type        = string
 }
 
-variable "sentry_dsn_arn" {
-  description = "ARN of the SSM parameter containing the Sentry DSN"
-  type        = string
-}
-
 variable "lb_listener_exists" {
   description = "Indicates whether the load balancer listener has been created"
   type        = bool

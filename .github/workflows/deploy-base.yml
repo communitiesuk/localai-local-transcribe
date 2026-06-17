@@ -13,10 +13,6 @@ on:
         required: true
       slack-webhook-url:
         required: true
-      sentry-dsn:
-        required: false
-      sentry-auth-token:
-        required: false
 
 permissions:
   id-token: write
@@ -50,9 +46,6 @@ jobs:
           file: ${{ matrix.service }}/Dockerfile
           push: true
           tags: ${{ secrets.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.environment }}-${{ matrix.service }}:${{ github.sha }}
-          build-args: |
-            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.sentry-dsn }}
-            SENTRY_AUTH_TOKEN=${{ secrets.sentry-auth-token }}
       
       - name: Notify Slack on build failure
         env:

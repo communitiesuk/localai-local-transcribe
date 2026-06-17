@@ -48,8 +48,3 @@ output "azure_apim_subscription_key_arn" {
   description = "ARN of the SSM parameter containing the Azure APIM subscription key"
   value       = aws_ssm_parameter.azure_apim_subscription_key.arn
 }
-
-output "sentry_dsn_arn" {
-  description = "ARN of the SSM parameter containing the Sentry DSN"
-  value       = aws_ssm_parameter.sentry_dsn.arn
-}

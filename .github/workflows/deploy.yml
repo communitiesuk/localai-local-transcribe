@@ -24,8 +24,6 @@ jobs:
       aws-account-id: ${{ secrets.DEV_AWS_ACCOUNT_ID }}
       alarm-email-address: ${{ secrets.DEV_ALARM_EMAIL_ADDRESS }}
       slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_DEV }}
-      sentry-dsn: ${{ secrets.DEV_SENTRY_DSN }}
-      sentry-auth-token: ${{ secrets.DEV_SENTRY_AUTH_TOKEN }}
   
   deploy-staging:
     if: github.event_name == 'workflow_dispatch' && inputs.environment == 'staging'
@@ -36,8 +34,6 @@ jobs:
       aws-account-id: ${{ secrets.STAGING_AWS_ACCOUNT_ID }}
       alarm-email-address: ${{ secrets.STAGING_ALARM_EMAIL_ADDRESS }}
       slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_STAGING  }}
-      sentry-dsn: ${{ secrets.STAGING_SENTRY_DSN }}
-      sentry-auth-token: ${{ secrets.STAGING_SENTRY_AUTH_TOKEN }}
 
 
     

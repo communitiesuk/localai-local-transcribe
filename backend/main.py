@@ -30,12 +30,15 @@ async def lifespan(app_: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
 
 # init sentry, if used
 if settings.SENTRY_DSN:
-    sentry_init_opts: dict[str, Any] = {
-        "send_default_pii": settings.ENVIRONMENT != "prod",
-        "traces_sample_rate": 1.0,
-        "profile_session_sample_rate": 0.2 if settings.ENVIRONMENT == "prod" else 1.0,
-        "profile_lifecycle": "manual" if settings.ENVIRONMENT == "prod" else "trace",
-    }
+    if settings.ENVIRONMENT == "prod":
+        sentry_init_opts: dict[str, Any] = {"traces_sample_rate": 1.0, "profile_session_sample_rate": 0.2}
+    else:
+        sentry_init_opts = {
+            "send_default_pii": True,
+            "traces_sample_rate": 1.0,
+            "profile_session_sample_rate": 1.0,
+            "profile_lifecycle": "trace",
+        }
     sentry_sdk.init(settings.SENTRY_DSN, environment=settings.ENVIRONMENT, **sentry_init_opts)
 app = FastAPI(lifespan=lifespan, openapi_url="/api/openapi.json")
 
