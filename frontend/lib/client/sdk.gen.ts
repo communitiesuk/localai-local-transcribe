@@ -110,6 +110,8 @@ import type {
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses,
+  SignOutSignoutGetData,
+  SignOutSignoutGetResponses,
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchErrors,
   UpdateDataRetentionUsersDataRetentionPatchResponses,
@@ -855,3 +857,17 @@ export const updateOrganisationOrganisationsOrganisationIdPatch = <
       ...options.headers,
     },
   })
+
+/**
+ * Sign Out
+ *
+ * Sign out the user by clearing ALB auth cookies and redirecting to the IdP.
+ */
+export const signOutSignoutGet = <ThrowOnError extends boolean = false>(
+  options?: Options<SignOutSignoutGetData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    SignOutSignoutGetResponses,
+    unknown,
+    ThrowOnError
+  >({ url: '/signout', ...options })

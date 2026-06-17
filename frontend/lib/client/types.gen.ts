@@ -175,6 +175,14 @@ export type GetUserResponse = {
    */
   updated_datetime: string
   /**
+   * Last Login
+   */
+  last_login: string
+  /**
+   * Is Active
+   */
+  is_active: boolean
+  /**
    * Name
    */
   name: string | null
@@ -2334,3 +2342,17 @@ export type UpdateOrganisationOrganisationsOrganisationIdPatchResponses = {
 
 export type UpdateOrganisationOrganisationsOrganisationIdPatchResponse =
   UpdateOrganisationOrganisationsOrganisationIdPatchResponses[keyof UpdateOrganisationOrganisationsOrganisationIdPatchResponses]
+
+export type SignOutSignoutGetData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/signout'
+}
+
+export type SignOutSignoutGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown
+}
