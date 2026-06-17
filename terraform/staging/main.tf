@@ -104,7 +104,6 @@ module "frontdoor" {
   internal_access_oidc_client_id_name     = module.secrets.internal_access_oidc_client_id_name
   internal_access_oidc_client_secret_name = module.secrets.internal_access_oidc_client_secret_name
 
-  depends_on = [module.secrets]
 }
 
 module "certificates" {
