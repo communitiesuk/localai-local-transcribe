@@ -61,7 +61,7 @@ async def test_get_current_user_existing_user(monkeypatch, session):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_creates_user(monkeypatch, session):
+async def test_get_current_user_does_not_create_user_if_doesnt_exist(monkeypatch, session):
     mock_result = Mock()
     mock_result.first.return_value = None  # no user currently exists
     session.exec.return_value = mock_result
@@ -73,17 +73,15 @@ async def test_get_current_user_creates_user(monkeypatch, session):
         mock_get_user_info,
     )
 
-    user = await get_current_user(
-        session=session,
-        x_amzn_oidc_data=TEST_TOKEN,
-    )
+    with pytest.raises(HTTPException) as exception:
+        await get_current_user(
+            session=session,
+            x_amzn_oidc_data=TEST_TOKEN,
+        )
 
-    assert user.email == new_user_email
+    assert exception.value.status_code == 401
     mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    # new user is created, subject_id is added
-    session.add.assert_called_once()
-    session.commit.assert_awaited_once()
-    session.refresh.assert_awaited_once()
+    session.commit.assert_not_called()
 
 
 @pytest.mark.asyncio

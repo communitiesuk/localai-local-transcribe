@@ -20,7 +20,7 @@ async def get_current_user(
 ) -> User:
     """
     Called on every endpoint to decode JWT passed in every request.
-    Gets or creates the user based on the email in the JWT
+    Gets the user based on the email in the JWT
     Args:
         x_amzn_oidc_data: The incoming JWT from the auth provider, passed via the frontend app
     Returns:
@@ -49,11 +49,7 @@ async def get_current_user(
         user = (await session.exec(statement)).first()
 
         if not user:
-            # Create new user if doesn't exist
-            user = User(email=email, subject_id=subject_id)
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
+            raise unauthorised_error
 
         if user.subject_id is None:
             user.subject_id = subject_id
