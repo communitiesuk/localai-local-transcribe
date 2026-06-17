@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { GovukHeading, GovukButtonLink } from '@/components/govuk'
@@ -12,19 +12,42 @@ import {
   GovukTableHeaderCell,
 } from '@/components/govuk/table'
 import { getTargetUserUsersUserIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { useAuthorisedOrgUser } from '@/hooks/use-authorised-user'
+import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 
 export default function UserPage(props: {
   params: Promise<{ userId: string }>
 }) {
+  const router = useRouter()
+
   const { userId } = use(props.params)
 
-  const userResponse = useQuery({
+  const { data: targetUser, isLoading: targetUserLoading } = useQuery({
     ...getTargetUserUsersUserIdGetOptions({
       path: {
         user_id: userId,
       },
     }),
   })
+
+  const { isAllowed, isLoading: authLoading } = useAuthorisedOrgUser(
+    targetUser?.organisation_id ?? undefined
+  )
+
+  const authReady = !targetUserLoading && !authLoading
+
+  useEffect(() => {
+    if (authReady && !isAllowed) {
+      router.replace('/unauthorised')
+    }
+  }, [authReady, isAllowed, router])
+
+  if (targetUserLoading || authLoading) {
+    return <Loader2 className="animate-spin" />
+  }
+
+  if (!isAllowed) return null
 
   return (
     <>
@@ -35,11 +58,11 @@ export default function UserPage(props: {
           <GovukTableBody>
             <GovukTableRow>
               <GovukTableHeaderCell>Name</GovukTableHeaderCell>
-              <GovukTableCell>{userResponse.data?.name}</GovukTableCell>
+              <GovukTableCell>{targetUser?.name}</GovukTableCell>
             </GovukTableRow>
             <GovukTableRow>
               <GovukTableHeaderCell>Email address</GovukTableHeaderCell>
-              <GovukTableCell>{userResponse.data?.email}</GovukTableCell>
+              <GovukTableCell>{targetUser?.email}</GovukTableCell>
             </GovukTableRow>
           </GovukTableBody>
         </GovukTable>
