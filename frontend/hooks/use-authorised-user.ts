@@ -31,24 +31,22 @@ export function useAuthorisedUser(allowedRoles: UserRole[]) {
 
 export function useAuthorisedOrgUser(organisationId?: string) {
   const {
-    data: currentUser,
+    data: user,
     isLoading,
     isError,
   } = useQuery(getUserUsersMeGetOptions())
 
-  const isSystemAdmin = currentUser?.roles.includes(
-    UserRole.MHCLG_SUPPORT_ADMIN
-  )
+  const isSystemAdmin = user?.roles.includes(UserRole.MHCLG_SUPPORT_ADMIN)
 
   const isOrganisationAdmin =
     !!organisationId &&
-    currentUser?.roles.includes(UserRole.LOCAL_AUTHORITY_ADMIN) &&
-    currentUser.organisation_id === organisationId
+    user?.roles.includes(UserRole.LOCAL_AUTHORITY_ADMIN) &&
+    user.organisation_id === organisationId
 
   const isAllowed = isSystemAdmin || isOrganisationAdmin
 
   return {
-    currentUser,
+    user,
     isLoading,
     isError,
     isAllowed,

@@ -27,9 +27,11 @@ export default function UserPageDelete(props: {
     }),
   })
 
-  const { isAllowed, isLoading: authLoading } = useAuthorisedOrgUser(
-    targetUser?.organisation_id ?? undefined
-  )
+  const {
+    isAllowed,
+    isLoading: authLoading,
+    user: currentUser,
+  } = useAuthorisedOrgUser(targetUser?.organisation_id ?? undefined)
 
   const authReady = !targetUserLoading && !authLoading
 
@@ -39,10 +41,15 @@ export default function UserPageDelete(props: {
     }
   }, [authReady, isAllowed, router])
 
+  let redirectPath = '/user-management'
+  if (currentUser?.id === targetUser?.id) {
+    redirectPath = '/' // go to hompage if user deletes themself
+  }
+
   const { mutate: deleteUser } = useMutation({
     ...deleteUserUsersUserIdDeleteMutation(),
     onSuccess() {
-      router.replace('/user-management')
+      router.replace(redirectPath)
     },
   })
 
