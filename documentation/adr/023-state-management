@@ -23,6 +23,8 @@ We need to determine the preferred approach for managing state that must be shar
 
 ## Decision Outcome
 
+Zustand, because it provides a lightweight and straightforward mechanism for sharing state across React pages without introducing significant boilerplate or additional complexity. It enables components to subscribe to only the state they require, reducing unnecessary re-renders compared to React Context, while avoiding the implementation and maintenance overhead associated with Redux. Unlike URL parameters, it does not expose application state through navigation, and unlike direct browser storage usage, it provides a reactive state management layer with a single source of truth for application state. In addition, it offers optional persistence middleware, allowing state to be seamlessly persisted to browser storage when cross-session or refresh resilience is required without changing the core application state model.
+
 
 ## Pros and Cons of the Options
 
