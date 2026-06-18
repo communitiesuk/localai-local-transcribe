@@ -31,12 +31,14 @@ def make_mock_get_user_info(email: str = TEST_EMAIL, is_authorised: bool = True)
 
 @pytest.mark.asyncio
 async def test_get_current_user_existing_user(monkeypatch, session):
+    existing_last_login = datetime.now(UTC)
     mock_user = User(
         id=uuid4(),
         email=TEST_EMAIL,
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
+        last_login=existing_last_login,
     )
     mock_result = Mock()
     mock_result.first.return_value = mock_user
@@ -57,7 +59,9 @@ async def test_get_current_user_existing_user(monkeypatch, session):
     # check emails match and no new user is created
     assert user.email == mock_user.email
     mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    session.commit.assert_called_once()  # one call for subject_id
+    # one call for subject_id, one for last_login
+    assert session.commit.await_count == 2
+    assert user.last_login > existing_last_login
 
 
 @pytest.mark.asyncio
@@ -80,10 +84,11 @@ async def test_get_current_user_creates_user(monkeypatch, session):
 
     assert user.email == new_user_email
     mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    # new user is created, subject_id is added
+    # new user is created with email and subject_id, last_login updated
     session.add.assert_called_once()
-    session.commit.assert_awaited_once()
+    assert session.commit.await_count == 2
     session.refresh.assert_awaited_once()
+    assert user.last_login is not None
 
 
 @pytest.mark.asyncio
