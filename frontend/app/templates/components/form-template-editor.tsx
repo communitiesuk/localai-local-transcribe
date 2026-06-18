@@ -1,11 +1,14 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import {
+  GovukButton,
+  GovukErrorSummary,
+  GovukFormGroup,
+  GovukHint,
+  GovukLabel,
+} from '@/components/govuk'
 import { TemplateData } from '@/types/templates'
-import { ArrowDown, ArrowUp, Save, Trash } from 'lucide-react'
+import { ArrowDown, ArrowUp, Loader2, Trash } from 'lucide-react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
 export const FormTemplateEditor = ({
@@ -14,6 +17,8 @@ export const FormTemplateEditor = ({
   onSubmit: (data: TemplateData) => void
 }) => {
   const form = useFormContext<TemplateData>()
+  const { errors, isSubmitting, isSubmitted } = form.formState
+
   const fieldArray = useFieldArray({
     control: form.control,
     name: 'questions',
@@ -22,156 +27,256 @@ export const FormTemplateEditor = ({
       required: { value: true, message: 'Must have at least one question.' },
     },
   })
+
+  const errorList = [
+    errors.name?.message && {
+      href: '#template-name',
+      text: errors.name.message,
+    },
+    errors.description?.message && {
+      href: '#template-description',
+      text: errors.description.message,
+    },
+    errors.questions?.root?.message && {
+      href: '#template-questions',
+      text: errors.questions.root.message,
+    },
+  ].filter(Boolean) as { href: string; text: string }[]
+
   return (
     <form
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-6"
       onSubmit={form.handleSubmit(onSubmit)}
+      noValidate
     >
-      <div className="flex gap-2">
-        <Button type="submit">
-          <Save />
-          Save
-        </Button>
-        <div className="flex-1 text-xs text-red-600">
-          <p>
-            {form.formState.errors.questions?.root?.message
-              ? form.formState.errors.questions?.root?.message
-              : null}
-          </p>
-          <p>
-            {form.formState.errors.name?.message
-              ? form.formState.errors.name?.message
-              : null}
-          </p>
-          <p>
-            {form.formState.errors.description?.message
-              ? form.formState.errors.description?.message
-              : null}
-          </p>
-        </div>
+      {isSubmitted && errorList.length > 0 && (
+        <GovukErrorSummary
+          title="There is a problem"
+          errorList={errorList}
+          className="govuk-!-margin-bottom-6"
+          data-testid="error-summary"
+        />
+      )}
+
+      <div className="flex items-center gap-4">
+        <GovukButton
+          type="submit"
+          disabled={isSubmitting}
+          className="govuk-!-margin-bottom-0"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" aria-hidden="true" />
+              Saving…
+            </>
+          ) : (
+            'Save'
+          )}
+        </GovukButton>
       </div>
-      <div className="flex flex-col gap-4 rounded-lg border p-4">
-        <div>
-          <h4 className="font-semibold">Template details</h4>
-          <p className="text-muted-foreground text-sm">
-            Add a name and description so you can find your template later. Name
-            and description are not used to generate your minute, any structure
-            and style instructions should be added to the template content
-            field.
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="name">Template Name</Label>
-          <Input
-            {...form.register('name', {
-              required: { value: true, message: 'Name required' },
-            })}
-            className="mt-2"
+
+      {/* Template details */}
+      <div className="rounded-lg border border-[#b1b4b6] p-6">
+        <h4 className="govuk-heading-s">Template details</h4>
+        <GovukHint className="govuk-!-margin-bottom-4">
+          Add a name and description so you can find your template later. Name
+          and description are not used to generate your minute — add structure
+          and style instructions to the template content field below.
+        </GovukHint>
+
+        <GovukFormGroup
+          hasError={!!errors.name}
+          className="govuk-!-margin-bottom-4"
+        >
+          <GovukLabel htmlFor="template-name">Template Name</GovukLabel>
+          {errors.name?.message && (
+            <p id="template-name-error" className="govuk-error-message">
+              <span className="govuk-visually-hidden">Error:</span>{' '}
+              {errors.name.message}
+            </p>
+          )}
+          <input
+            id="template-name"
+            className={`govuk-input govuk-!-margin-top-1${errors.name ? 'govuk-input--error' : ''}`}
             placeholder="Name your template"
-          />
-        </div>
-        <div>
-          <Label htmlFor="name">Description</Label>
-          <Textarea
-            {...form.register('description', {
-              required: { value: true, message: 'Description required' },
+            aria-describedby={errors.name ? 'template-name-error' : undefined}
+            {...form.register('name', {
+              required: { value: true, message: 'Enter a template name' },
             })}
-            className="mt-2"
+          />
+        </GovukFormGroup>
+
+        <GovukFormGroup
+          hasError={!!errors.description}
+          className="govuk-!-margin-bottom-0"
+        >
+          <GovukLabel htmlFor="template-description">Description</GovukLabel>
+          {errors.description?.message && (
+            <p id="template-description-error" className="govuk-error-message">
+              <span className="govuk-visually-hidden">Error:</span>{' '}
+              {errors.description.message}
+            </p>
+          )}
+          <textarea
+            id="template-description"
+            className={`govuk-textarea govuk-!-margin-top-1${errors.description ? 'govuk-textarea--error' : ''}`}
+            rows={3}
             placeholder="A description to help identify the template."
-          />
-        </div>
-      </div>
-      <div className="flex flex-col gap-4 rounded-lg border p-4">
-        <div className="mb-4">
-          <h4 className="font-semibold">Template content</h4>
-          <p className="text-muted-foreground text-sm">
-            Add questions that you would like to be answered based on the
-            transcript, for each question you can provide a description of how
-            to answer that question including any style guidance specific to
-            that question. Use the &ldquo;Style guide&rdquo; to provide style
-            guidance that will apply every question.
-          </p>
-        </div>
-        <div>
-          <Label>Style guide</Label>
-          <Textarea
-            {...form.register('content')}
-            className="mt-2"
-            placeholder="Enter any guidance that should be followed throughout the whole form."
-          />
-        </div>
-        <div>
-          <Label className="mb-2">Questions</Label>
-          {fieldArray.fields.map((field, index, array) => (
-            <div
-              key={field.id}
-              className="mb-4 flex gap-1 rounded-md border p-2"
-            >
-              <div className="flex min-h-full flex-col justify-center gap-1">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  disabled={index == 0}
-                  onClick={() => {
-                    fieldArray.swap(index, index - 1)
-                  }}
-                >
-                  <ArrowUp />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  disabled={index == array.length - 1}
-                  onClick={() => {
-                    fieldArray.swap(index, index + 1)
-                  }}
-                >
-                  <ArrowDown />
-                </Button>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => {
-                    fieldArray.remove(index)
-                  }}
-                >
-                  <Trash />
-                </Button>
-              </div>
-              <div className="flex-1">
-                <div className="text-muted-foreground mb-2 rounded text-xs">
-                  Question {index + 1}
-                </div>
-                <Textarea
-                  {...form.register(`questions.${index}.title`)}
-                  placeholder="Question text"
-                  className="min-h-none mb-2"
-                  rows={1}
-                />
-                <Textarea
-                  {...form.register(`questions.${index}.description`)}
-                  rows={3}
-                  placeholder="(optional) Description of how to answer the question, what information to include, and style guidance."
-                />
-              </div>
-            </div>
-          ))}
-          <Button
-            type="button"
-            onClick={() =>
-              fieldArray.append({
-                title: '',
-                description: '',
-                position: form.watch('questions')?.length || 0,
-              })
+            aria-describedby={
+              errors.description ? 'template-description-error' : undefined
             }
+            {...form.register('description', {
+              required: { value: true, message: 'Enter a description' },
+            })}
+          />
+        </GovukFormGroup>
+      </div>
+
+      {/* Template content */}
+      <div className="rounded-lg border border-[#b1b4b6] p-6">
+        <h4 className="govuk-heading-s">Template content</h4>
+        <GovukHint className="govuk-!-margin-bottom-4">
+          Add questions that you would like to be answered based on the
+          transcript. For each question you can provide a description of how to
+          answer it, including any style guidance. Use the &ldquo;Style
+          guide&rdquo; to provide guidance that applies to every question.
+        </GovukHint>
+
+        <GovukFormGroup className="govuk-!-margin-bottom-4">
+          <GovukLabel htmlFor="template-style-guide">Style guide</GovukLabel>
+          <GovukHint
+            id="style-guide-hint"
+            className="govuk-!-margin-top-1 govuk-!-margin-bottom-2"
           >
-            Add question
-          </Button>
-        </div>
+            Optional. Enter guidance that should be followed throughout the
+            whole form.
+          </GovukHint>
+          <textarea
+            id="template-style-guide"
+            className="govuk-textarea"
+            rows={3}
+            placeholder="Enter any guidance that should be followed throughout the whole form."
+            aria-describedby="style-guide-hint"
+            {...form.register('content')}
+          />
+        </GovukFormGroup>
+
+        <GovukFormGroup
+          hasError={!!errors.questions?.root}
+          id="template-questions"
+          className="govuk-!-margin-bottom-0"
+        >
+          <GovukLabel size="s" className="govuk-!-margin-bottom-2">
+            Questions
+          </GovukLabel>
+          {errors.questions?.root?.message && (
+            <p
+              id="template-questions-error"
+              className="govuk-error-message govuk-!-margin-bottom-2"
+            >
+              <span className="govuk-visually-hidden">Error:</span>{' '}
+              {errors.questions.root.message}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {fieldArray.fields.map((field, index, array) => (
+              <div
+                key={field.id}
+                className="rounded-md border border-[#b1b4b6] bg-[#f3f2f1] p-4"
+              >
+                <div className="flex gap-3">
+                  {/* Reorder controls */}
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <GovukButton
+                      type="button"
+                      variant="secondary"
+                      disabled={index === 0}
+                      onClick={() => fieldArray.swap(index, index - 1)}
+                      className="govuk-!-margin-bottom-0 px-2 py-1"
+                      aria-label={`Move question ${index + 1} up`}
+                    >
+                      <ArrowUp size={16} aria-hidden="true" />
+                    </GovukButton>
+                    <GovukButton
+                      type="button"
+                      variant="secondary"
+                      disabled={index === array.length - 1}
+                      onClick={() => fieldArray.swap(index, index + 1)}
+                      className="govuk-!-margin-bottom-0 px-2 py-1"
+                      aria-label={`Move question ${index + 1} down`}
+                    >
+                      <ArrowDown size={16} aria-hidden="true" />
+                    </GovukButton>
+                    <GovukButton
+                      type="button"
+                      variant="warning"
+                      onClick={() => fieldArray.remove(index)}
+                      className="govuk-!-margin-bottom-0 px-2 py-1"
+                      aria-label={`Delete question ${index + 1}`}
+                    >
+                      <Trash size={16} aria-hidden="true" />
+                    </GovukButton>
+                  </div>
+
+                  {/* Question fields */}
+                  <div className="flex flex-1 flex-col gap-3">
+                    <p className="govuk-hint govuk-!-margin-bottom-0">
+                      Question {index + 1}
+                    </p>
+                    <GovukFormGroup className="govuk-!-margin-bottom-0">
+                      <GovukLabel htmlFor={`question-title-${index}`} size="s">
+                        Question text
+                      </GovukLabel>
+                      <textarea
+                        id={`question-title-${index}`}
+                        className="govuk-textarea govuk-!-margin-top-1"
+                        rows={1}
+                        placeholder="Question text"
+                        {...form.register(`questions.${index}.title`)}
+                      />
+                    </GovukFormGroup>
+                    <GovukFormGroup className="govuk-!-margin-bottom-0">
+                      <GovukLabel
+                        htmlFor={`question-description-${index}`}
+                        size="s"
+                      >
+                        Description{' '}
+                        <span className="govuk-hint govuk-!-display-inline">
+                          (optional)
+                        </span>
+                      </GovukLabel>
+                      <textarea
+                        id={`question-description-${index}`}
+                        className="govuk-textarea govuk-!-margin-top-1"
+                        rows={3}
+                        placeholder="Description of how to answer the question, what information to include, and style guidance."
+                        {...form.register(`questions.${index}.description`)}
+                      />
+                    </GovukFormGroup>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="govuk-!-margin-top-3">
+            <GovukButton
+              type="button"
+              variant="secondary"
+              className="govuk-!-margin-bottom-0"
+              onClick={() =>
+                fieldArray.append({
+                  title: '',
+                  description: '',
+                  position: form.watch('questions')?.length || 0,
+                })
+              }
+            >
+              Add question
+            </GovukButton>
+          </div>
+        </GovukFormGroup>
       </div>
     </form>
   )

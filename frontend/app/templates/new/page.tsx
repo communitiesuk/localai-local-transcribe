@@ -8,7 +8,7 @@ import {
   exampleFormTemplates,
 } from '@/app/templates/data/example-templates'
 import { TemplateTypeSelect } from '@/app/templates/new/template-type-select'
-import { Button } from '@/components/ui/button'
+import { GovukButton } from '@/components/govuk'
 import { TemplateType } from '@/lib/client'
 import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { TemplateData } from '@/types/templates'
@@ -56,7 +56,7 @@ function NewTemplateContent() {
     },
   })
   const onSubmit = async (data: TemplateData) => {
-    await await saveTemplate({
+    await saveTemplate({
       body: {
         ...data,
         questions:
@@ -82,15 +82,17 @@ function NewTemplateContent() {
   if (templateType == 'document') {
     return (
       <FormProvider {...form}>
-        <header className="mb-6">
-          <div className="mb-1 flex items-center gap-2">
-            <h1 className="text-3xl font-bold">New template</h1>
+        <header className="govuk-!-margin-bottom-6">
+          <div className="govuk-!-margin-bottom-2 flex items-center gap-4">
+            <h1 className="govuk-heading-xl govuk-!-margin-bottom-0">
+              New template
+            </h1>
             <ExampleTemplatesDialog
               onSelectTemplate={onSelectExample}
               examples={exampleDocumentTemplates}
             />
           </div>
-          <p className="text-muted-foreground">
+          <p className="govuk-body govuk-hint">
             Design your minute template. You can describe a structure and
             provide style guidance. Try an example to get started.
           </p>
@@ -103,15 +105,17 @@ function NewTemplateContent() {
   if (templateType == 'form') {
     return (
       <FormProvider {...form}>
-        <header className="mb-6">
-          <div className="mb-1 flex items-center gap-2">
-            <h1 className="text-3xl font-bold">New template</h1>
+        <header className="govuk-!-margin-bottom-6">
+          <div className="govuk-!-margin-bottom-2 flex items-center gap-4">
+            <h1 className="govuk-heading-xl govuk-!-margin-bottom-0">
+              New template
+            </h1>
             <ExampleTemplatesDialog
               onSelectTemplate={onSelectExample}
               examples={exampleFormTemplates}
             />
           </div>
-          <p className="text-muted-foreground">
+          <p className="govuk-body govuk-hint">
             Design your minute template. You can describe a structure and
             provide style guidance. Try an example to get started.
           </p>
@@ -120,26 +124,32 @@ function NewTemplateContent() {
       </FormProvider>
     )
   }
+
   return (
     <div>
-      <h2>Template type</h2>
+      <h2 className="govuk-heading-m">Template type</h2>
+      <p className="govuk-body govuk-hint govuk-!-margin-bottom-4">
+        Choose the type of template you would like to create.
+      </p>
       <TemplateTypeSelect value={selectedType} onChange={setSelectedType} />
-      <Button
+      <GovukButton
         type="button"
         onClick={() => {
           form.setValue('type', selectedType!)
         }}
         disabled={!selectedType}
+        className="govuk-!-margin-bottom-0 flex items-center gap-2"
+        isStartButton
       >
-        Next <ArrowRight />
-      </Button>
+        Next <ArrowRight size={16} aria-hidden="true" />
+      </GovukButton>
     </div>
   )
 }
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="govuk-body">Loading…</div>}>
       <NewTemplateContent />
     </Suspense>
   )

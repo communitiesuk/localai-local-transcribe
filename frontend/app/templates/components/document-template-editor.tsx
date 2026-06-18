@@ -1,10 +1,13 @@
 'use client'
 
 import { TemplateEditorToolbar } from '@/app/templates/components/editor/editor-toolbar'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import {
+  GovukButton,
+  GovukErrorSummary,
+  GovukFormGroup,
+  GovukHint,
+  GovukLabel,
+} from '@/components/govuk'
 import { TemplateData } from '@/types/templates'
 import Document from '@tiptap/extension-document'
 import HardBreak from '@tiptap/extension-hard-break'
@@ -12,7 +15,7 @@ import Paragraph from '@tiptap/extension-paragraph'
 import Text from '@tiptap/extension-text'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { Loader2, Save } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
 
@@ -22,88 +25,152 @@ export const DocumentTemplateEditor = ({
   onSubmit: (data: TemplateData) => void
 }) => {
   const form = useFormContext<TemplateData>()
+  const { errors, isSubmitting, isSubmitted } = form.formState
+
+  const errorList = [
+    errors.name?.message && {
+      href: '#template-name',
+      text: errors.name.message,
+    },
+    errors.description?.message && {
+      href: '#template-description',
+      text: errors.description.message,
+    },
+    errors.content?.message && {
+      href: '#template-content',
+      text: errors.content.message,
+    },
+  ].filter(Boolean) as { href: string; text: string }[]
+
   return (
     <form
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-6"
       onSubmit={form.handleSubmit(onSubmit)}
+      noValidate
     >
-      <div className="flex gap-2">
-        <Button type="submit">
-          <Save /> Save
-        </Button>
-        {form.formState.isSubmitting && (
-          <div>
-            <Loader2 className="animate-spin" />
-            Submitting...
-          </div>
-        )}
-        <div className="flex-1 text-xs text-red-600">
-          <p>
-            {form.formState.errors.content?.message
-              ? form.formState.errors.content.message
-              : null}
-          </p>
-          <p>
-            {form.formState.errors.name?.message
-              ? form.formState.errors.name?.message
-              : null}
-          </p>
-          <p>
-            {form.formState.errors.description?.message
-              ? form.formState.errors.description?.message
-              : null}
-          </p>
-        </div>
-      </div>
-      <div className="flex flex-col gap-4 rounded-lg border p-4">
-        <div>
-          <h4 className="font-semibold">Template details</h4>
-          <p className="text-muted-foreground text-sm">
-            Add a name and description so you can find your template later. Name
-            and description are not used to generate your minute, any structure
-            and style instructions should be added to the template content
-            field.
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="name">Template Name</Label>
-          <Input
-            {...form.register('name')}
-            className="mt-2"
-            placeholder="Name your template"
-          />
-        </div>
-        <div>
-          <Label htmlFor="name">Description</Label>
-          <Textarea
-            {...form.register('description', {
-              required: { value: true, message: 'Description required' },
-            })}
-            className="mt-2"
-            placeholder="A description to help identify the template."
-          />
-        </div>
-      </div>
-      <div className="rounded-md border p-4">
-        <Label htmlFor="content" className="text-md font-semibold">
-          Template Content
-        </Label>
-        <p className="text-muted-foreground mt-1 mb-2 text-sm">
-          The template content should look how you would like the minutes to
-          look. Use placeholder text to describe what you would like in each
-          section and provide style guidance, including examples if necessary.
-          You may need to iterate on your template to get the best results.
-        </p>
-        <Controller
-          name="content"
-          control={form.control}
-          rules={{
-            required: { value: true, message: 'Template content required.' },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <ControlledEditor onChange={onChange} value={value} />
-          )}
+      {isSubmitted && errorList.length > 0 && (
+        <GovukErrorSummary
+          title="There is a problem"
+          errorList={errorList}
+          className="govuk-!-margin-bottom-6"
+          data-testid="error-summary"
         />
+      )}
+
+      <div className="flex items-center gap-4">
+        <GovukButton
+          type="submit"
+          disabled={isSubmitting}
+          className="govuk-!-margin-bottom-0"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" aria-hidden="true" />
+              Saving…
+            </>
+          ) : (
+            'Save'
+          )}
+        </GovukButton>
+      </div>
+
+      <div className="rounded-lg border border-[#b1b4b6] p-6">
+        <h4 className="govuk-heading-s">Template details</h4>
+        <GovukHint className="govuk-!-margin-bottom-4">
+          Add a name and description so you can find your template later. Name
+          and description are not used to generate your minute — add structure
+          and style instructions to the template content field below.
+        </GovukHint>
+
+        <GovukFormGroup
+          hasError={!!errors.name}
+          className="govuk-!-margin-bottom-4"
+        >
+          <GovukLabel htmlFor="template-name">Template Name</GovukLabel>
+          {errors.name?.message && (
+            <p id="template-name-error" className="govuk-error-message">
+              <span className="govuk-visually-hidden">Error:</span>{' '}
+              {errors.name.message}
+            </p>
+          )}
+          <input
+            id="template-name"
+            className={`govuk-input govuk-!-margin-top-1${errors.name ? 'govuk-input--error' : ''}`}
+            placeholder="Name your template"
+            aria-describedby={errors.name ? 'template-name-error' : undefined}
+            {...form.register('name', {
+              required: { value: true, message: 'Enter a template name' },
+            })}
+          />
+        </GovukFormGroup>
+
+        <GovukFormGroup
+          hasError={!!errors.description}
+          className="govuk-!-margin-bottom-0"
+        >
+          <GovukLabel htmlFor="template-description">Description</GovukLabel>
+          {errors.description?.message && (
+            <p id="template-description-error" className="govuk-error-message">
+              <span className="govuk-visually-hidden">Error:</span>{' '}
+              {errors.description.message}
+            </p>
+          )}
+          <textarea
+            id="template-description"
+            className={`govuk-textarea govuk-!-margin-top-1${errors.description ? 'govuk-textarea--error' : ''}`}
+            rows={3}
+            placeholder="A description to help identify the template."
+            aria-describedby={
+              errors.description ? 'template-description-error' : undefined
+            }
+            {...form.register('description', {
+              required: { value: true, message: 'Enter a description' },
+            })}
+          />
+        </GovukFormGroup>
+      </div>
+
+      <div className="rounded-md border border-[#b1b4b6] p-4">
+        <GovukFormGroup
+          hasError={!!errors.content}
+          className="govuk-!-margin-bottom-0"
+        >
+          <GovukLabel htmlFor="template-content" size="m">
+            Template Content
+          </GovukLabel>
+          <GovukHint
+            id="template-content-hint"
+            className="govuk-!-margin-top-1 govuk-!-margin-bottom-3"
+          >
+            The template content should look how you would like the minutes to
+            look. Use placeholder text to describe what you would like in each
+            section and provide style guidance, including examples if necessary.
+            You may need to iterate on your template to get the best results.
+          </GovukHint>
+          {errors.content?.message && (
+            <p
+              id="template-content-error"
+              className="govuk-error-message govuk-!-margin-bottom-2"
+            >
+              <span className="govuk-visually-hidden">Error:</span>{' '}
+              {errors.content.message}
+            </p>
+          )}
+          <Controller
+            name="content"
+            control={form.control}
+            rules={{
+              required: { value: true, message: 'Add some template content' },
+            }}
+            render={({ field: { onChange, value } }) => (
+              <ControlledEditor
+                onChange={onChange}
+                value={value}
+                hasError={!!errors.content}
+              />
+            )}
+          />
+        </GovukFormGroup>
       </div>
     </form>
   )
@@ -112,9 +179,11 @@ export const DocumentTemplateEditor = ({
 const ControlledEditor = ({
   onChange,
   value,
+  hasError,
 }: {
   onChange: (v: string) => void
   value: string
+  hasError?: boolean
 }) => {
   const editor = useEditor({
     extensions: [StarterKit, Document, Paragraph, Text, HardBreak],
@@ -129,10 +198,14 @@ const ControlledEditor = ({
       editor.commands.setContent(value || '')
     }
   }, [editor, value])
+
   return (
-    <div>
+    <div
+      className={`rounded-xl border${hasError ? 'border-[#d4351c]' : 'border-[#b1b4b6]'}`}
+      id="template-content"
+    >
       <TemplateEditorToolbar editor={editor} />
-      <div className="rounded-xl rounded-t-none border border-t-0 shadow">
+      <div className="rounded-b-xl border-t border-[#b1b4b6]">
         <EditorContent
           editor={editor}
           className="editor-content"
