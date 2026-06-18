@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -140,9 +140,25 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
+const MOBILE_BREAKPOINT = 768
+
 export function ServiceNav() {
   const pathname = usePathname()
   const { data: user } = useQuery(getUserUsersMeGetOptions())
+  const [isMobile, setIsMobile] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < MOBILE_BREAKPOINT
+      setIsMobile(mobile)
+      // Collapse the menu automatically when resizing to desktop
+      if (!mobile) setIsMenuOpen(false)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const hasAdminRole = hasAnyRole(user?.roles, [
     UserRole.LOCAL_AUTHORITY_ADMIN,
@@ -156,7 +172,6 @@ export function ServiceNav() {
   return (
     <section
       className="govuk-service-navigation"
-      data-module="govuk-service-navigation"
       aria-label="Service information"
     >
       <div className="govuk-width-container">
@@ -169,12 +184,17 @@ export function ServiceNav() {
               type="button"
               className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle"
               aria-controls="navigation"
-              hidden
-              aria-hidden="true"
+              aria-expanded={isMenuOpen}
+              hidden={!isMobile}
+              onClick={() => setIsMenuOpen((open) => !open)}
             >
               Menu
             </button>
-            <ul className="govuk-service-navigation__list" id="navigation">
+            <ul
+              className="govuk-service-navigation__list"
+              id="navigation"
+              hidden={isMobile && !isMenuOpen}
+            >
               {visibleItems.map((item) => {
                 const active = item.isActive(pathname)
                 const linkContent = active ? (
