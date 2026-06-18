@@ -24,7 +24,11 @@ export default function UserPageDelete(props: {
 
   const { userId } = use(props.params)
 
-  const { data: targetUser, isLoading: targetUserLoading } = useQuery({
+  const {
+    data: targetUser,
+    isLoading: targetUserLoading,
+    isError: targetUserError,
+  } = useQuery({
     ...getTargetUserUsersUserIdGetOptions({
       path: {
         user_id: userId,
@@ -36,6 +40,7 @@ export default function UserPageDelete(props: {
     isAllowed,
     isLoading: authLoading,
     user: currentUser,
+    isError: authError,
   } = useAuthorisedOrgUser(targetUser?.organisation_id ?? undefined)
 
   const authReady = !targetUserLoading && !authLoading
@@ -63,6 +68,8 @@ export default function UserPageDelete(props: {
   }
 
   if (!isAllowed) return null
+
+  if (targetUserError || authError) return <p>Error: Failed to load user.</p>
 
   return (
     <>
@@ -100,7 +107,7 @@ export default function UserPageDelete(props: {
           Delete account
         </GovukButton>
 
-        <a className="govuk-link" href="/user-management">
+        <a className="govuk-link" href={`/user-management/users/${userId}`}>
           Cancel
         </a>
       </div>

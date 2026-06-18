@@ -27,7 +27,11 @@ export default function UserPage(props: {
 
   const { userId } = use(props.params)
 
-  const { data: targetUser, isLoading: targetUserLoading } = useQuery({
+  const {
+    data: targetUser,
+    isLoading: targetUserLoading,
+    isError: targetUserError,
+  } = useQuery({
     ...getTargetUserUsersUserIdGetOptions({
       path: {
         user_id: userId,
@@ -35,9 +39,11 @@ export default function UserPage(props: {
     }),
   })
 
-  const { isAllowed, isLoading: authLoading } = useAuthorisedOrgUser(
-    targetUser?.organisation_id ?? undefined
-  )
+  const {
+    isAllowed,
+    isLoading: authLoading,
+    isError: authError,
+  } = useAuthorisedOrgUser(targetUser?.organisation_id ?? undefined)
 
   const authReady = !targetUserLoading && !authLoading
 
@@ -53,9 +59,11 @@ export default function UserPage(props: {
 
   if (!isAllowed) return null
 
+  if (targetUserError || authError) return <p>Error: Failed to load user.</p>
+
   return (
     <>
-      <GovukBackLink />
+      <GovukBackLink href="/user-management" />
       <GovukHeading>Edit user permissions</GovukHeading>
 
       <div>
