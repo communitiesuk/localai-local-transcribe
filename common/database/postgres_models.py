@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum, auto
-from typing import TypedDict
+from typing import Any, TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import TIMESTAMP, Column, Enum, ForeignKey, Text, text
@@ -166,6 +166,10 @@ class Recording(BaseTableMixin, table=True):
     s3_file_key: str
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
     transcription: "Transcription" = Relationship(back_populates="recordings")
+    recording_metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        sa_column=Column(JSONB, nullable=False),
+    )
 
 
 class Chat(BaseTableMixin, table=True):
