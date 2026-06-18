@@ -12,7 +12,7 @@ from backend.api.dependencies import (
 )
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_user_count, get_users
+from backend.utils.queries import get_user_by_email, get_user_count, get_users
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
 from common.types import (
@@ -72,6 +72,10 @@ async def create_user(
     session: SQLSessionDep,
     user: UserDep,
 ) -> GetUserResponse:
+    is_existing_user = await get_user_by_email(session, data.email)
+    if is_existing_user:
+        raise HTTPException(status_code=409, detail=f"A user with email '{data.email}' already exists")
+
     organisation = await session.get(Organisation, data.organisation_id)
     if not organisation:
         raise HTTPException(status_code=404, detail="Organisation not found")
