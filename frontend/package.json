@@ -62,7 +62,7 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.93.0",
+    "@hey-api/openapi-ts": "^0.97.0",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.3",
