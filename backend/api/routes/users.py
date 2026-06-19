@@ -72,16 +72,16 @@ async def create_user(
     session: SQLSessionDep,
     user: UserDep,
 ) -> GetUserResponse:
-    is_existing_user = await get_user_by_email(session, data.email)
-    if is_existing_user:
-        raise HTTPException(status_code=409, detail=f"A user with email '{data.email}' already exists")
-
     organisation = await session.get(Organisation, data.organisation_id)
     if not organisation:
         raise HTTPException(status_code=404, detail="Organisation not found")
 
     if not is_admin_for_org(user, organisation):
-        raise HTTPException(status_code=403, detail="Only an organisation admin can create a new user")
+        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
+
+    is_existing_user = await get_user_by_email(session, data.email)
+    if is_existing_user:
+        raise HTTPException(status_code=409, detail=f"A user with email '{data.email}' already exists")
 
     email_domain = data.email.split("@")[1]
     lowered_allowed_domains = [domain.lower() for domain in organisation.allowed_domains]
