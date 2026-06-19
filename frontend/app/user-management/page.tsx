@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -12,6 +12,7 @@ import { useOrganisation } from '@/hooks/use-organisation'
 
 export default function UserManagementPage() {
   const router = useRouter()
+  const [numberOfOrgs, setNumberOfOrgs] = useState(0)
 
   const {
     currentUser,
@@ -49,8 +50,33 @@ export default function UserManagementPage() {
         </span>
       </Button>
 
-      <h1 className="govuk-heading-l">User Management</h1>
-      {organisation && <h2 className="govuk-heading-s">{organisation.name}</h2>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
+          User Management
+        </h1>
+
+        {isSystemAdmin && (
+          <strong className="govuk-tag govuk-tag--grey">System Admin</strong>
+        )}
+      </div>
+      {isSystemAdmin && (
+        <>
+          <div className="govuk-form-group govuk-!-padding-top-1">
+            <label className="govuk-label" htmlFor="sortOrgs">
+              Selected council:
+            </label>
+            <select className="govuk-select" id="sortOrgs" name="sortOrgs">
+              <option value="published">Recently published</option>
+            </select>
+          </div>
+
+          <div>Total accounts: {numberOfOrgs}</div>
+        </>
+      )}
+
+      {!isSystemAdmin && organisation && (
+        <h2 className="govuk-heading-s">{organisation.name}</h2>
+      )}
 
       <div className="flex items-center gap-4">
         <button
