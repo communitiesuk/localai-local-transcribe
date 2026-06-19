@@ -151,10 +151,10 @@ async def test_delete_user(
 @pytest.mark.asyncio
 async def test_create_user_returns_409_when_email_already_exists(
     override_session,
-    override_user,
+    override_support_admin_user,
     make_user,
 ):
-    existing_user = make_user(roles=UserRole.STANDARD_USER)
+    existing_user = make_user()
 
     with patch(
         "backend.api.routes.users.get_user_by_email",
