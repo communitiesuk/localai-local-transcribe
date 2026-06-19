@@ -141,7 +141,10 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-const MOBILE_BREAKPOINT = 1024 /*keeps all navbar items on one line*/
+// Empirically determined: the narrowest width at which all six nav items
+// ('User management' being the longest) fit on a single row without wrapping.
+// Not a standard GOV.UK breakpoint — chosen to match this nav's content.
+const MOBILE_BREAKPOINT = 923
 
 export function ServiceNav() {
   const pathname = usePathname()
@@ -193,7 +196,8 @@ export function ServiceNav() {
             <ul
               className={cn(
                 'govuk-service-navigation__list',
-                isMobile && !isMenuOpen ? 'max-h-0 overflow-hidden' : 'max-h-96'
+                isMobile && !isMenuOpen ? 'max-h-0 overflow-hidden' : 'max-h-96',
+                isMobile && isMenuOpen && 'flex-col'
               )}
               style={{ transition: 'max-height 0.2s ease-in-out' }}
               id="navigation"
