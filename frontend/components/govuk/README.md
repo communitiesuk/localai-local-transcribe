@@ -82,6 +82,7 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 | `GovukBackLink`     | Back link (href or dynamic back) | Yes     |
 | `GovukButton`       | Button                           | Yes     |
 | `GovukButtonLink`   | Button link                      | Yes     |
+| `GovukDetails`      | Details                          | No      |
 | `GovukErrorSummary` | Error summary                    | No      |
 | `GovukFieldset`     | Fieldset                         | No      |
 | `GovukFormGroup`    | Form group                       | No      |
@@ -89,3 +90,4 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 | `GovukLabel`        | Label                            | No      |
 | `GovukLegend`       | Legend                           | No      |
 | `GovukRadios`       | Radios                           | Yes     |
+| `GovukTextarea`     | Textarea                         | Yes     |
