@@ -267,26 +267,14 @@
   color: red;
 }
 
-/*
- * Service navigation layout overrides.
- *
- * GOV.UK Frontend switches .govuk-service-navigation__container to
- * flex-direction:row at 40.0625em (~641px) and shows/hides the toggle at
- * ~28.125em (~450px). React owns show/hide via the `hidden` attribute
- * (see service-nav.tsx). These overrides align GOV.UK's container and list
- * layout with our single 768px breakpoint.
- */
-
-/* Below 768px — keep container stacked, Menu button below service name */
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
   .govuk-service-navigation__container {
     flex-direction: column !important;
     align-items: flex-start !important;
   }
 }
 
-/* 768px and above — service name + nav side by side, list as horizontal row */
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .govuk-service-navigation__container {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -298,4 +286,8 @@
     flex-direction: row !important;
     flex-wrap: nowrap !important;
   }
+}
+
+.govuk-service-navigation__link {
+  white-space: nowrap;
 }

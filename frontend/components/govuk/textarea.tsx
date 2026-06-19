@@ -14,7 +14,9 @@ type Props = {
 >
 
 export const GovukTextarea = forwardRef<HTMLTextAreaElement, Props>(
-  function GovukTextarea({ id, name, rows = 5, className, ...rest }, ref) {
+  function GovukTextarea({ id, name, rows = 5, className, 'aria-invalid': ariaInvalid, ...rest }, ref) {
+    const hasError = ariaInvalid === true || ariaInvalid === 'true'
+    
     return (
       <textarea
         {...rest}
@@ -22,7 +24,12 @@ export const GovukTextarea = forwardRef<HTMLTextAreaElement, Props>(
         id={id}
         name={name}
         rows={rows}
-        className={cn('govuk-textarea', className)}
+        aria-invalid={ariaInvalid}
+        className={cn(
+          'govuk-textarea',
+          hasError && 'govuk-textarea--error',
+          className
+        )}
       />
     )
   }

@@ -141,7 +141,7 @@ function EditDomainsForm({
               name="domains"
               rows={8}
               aria-describedby={
-                domainsError ? 'domains-hint domains-error' : 'domains-hint'
+                domainsError ? 'domains-error domains-hint' : 'domains-hint'
               }
               value={value}
               onChange={onChange}
@@ -152,24 +152,14 @@ function EditDomainsForm({
         />
       </GovukFormGroup>
 
-      <div className="flex items-center gap-4">
+      <div className="govuk-button-group">
         <GovukButton type="submit" disabled={isPending}>
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </span>
-          ) : (
-            'Save'
-          )}
+          Save
         </GovukButton>
-        <Link
-          href="/user-management"
-          className="govuk-link govuk-link--no-visited-state"
-        >
+        <Link href="/user-management" className="govuk-link">
           Cancel
-        </Link>
-      </div>
+      </Link>
+    </div>
 
       <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 

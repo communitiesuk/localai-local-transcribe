@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
+import { cn } from '@/lib/utils'
 
 interface NavItem {
   name: string
@@ -140,7 +141,7 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-const MOBILE_BREAKPOINT = 768
+const MOBILE_BREAKPOINT = 1024
 
 export function ServiceNav() {
   const pathname = usePathname()
@@ -191,10 +192,14 @@ export function ServiceNav() {
               Menu
             </button>
             <ul
-              className="govuk-service-navigation__list"
+              className={cn(
+                'govuk-service-navigation__list',
+                isMobile && !isMenuOpen ? 'max-h-0 overflow-hidden' : 'max-h-96'
+              )}
+              style={{ transition: 'max-height 0.2s ease-in-out' }}
               id="navigation"
-              hidden={isMobile && !isMenuOpen}
-            >
+              aria-hidden={isMobile && !isMenuOpen}
+>
               {visibleItems.map((item) => {
                 const active = item.isActive(pathname)
                 const linkContent = active ? (
