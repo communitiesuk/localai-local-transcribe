@@ -1,0 +1,99 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Religion or Belief{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING RELIGION OR BELIEF
+
+Flag any reference that indicates a person's religion, religious belief, or philosophical belief (or lack thereof).
+
+**What to detect:**
+1. **Direct reference to religion or belief** — explicit naming of a religion or faith.
+2. **Active religious participation and community** — ANY reference to a personal religious gathering, community, or practice MUST be flagged, regardless of surrounding context:
+   - `"my congregation"`, `"our mosque"`, `"my church"`, `"my synagogue"`, `"attending shul"`, `"our temple"`, `"my faith community"`, `"our faith"`.
+   - Return the full possessive phrase as the span. Do NOT skip these even if the passage seems non-religious.
+3. **Religious festivity references** — `"Eid"`, `"Ramadan"`, `"Hanukkah"`, `"Christmas"` in personal context.
+4. **First names as religion proxies** — names strongly associated with a faith tradition: `"Mohammed"` → Muslim, `"Faezeh"` → Muslim/Persian, `"Moshe"` → Jewish.
+5. **Last names as religion proxies** — Jewish surnames (e.g. Cohen, Levy, Katz, Bernstein, Weiss, Goldstein, Blum) → Religion or Belief: Jewish. These surnames signal a religious/cultural tradition.
+6. **Religious titles or honorifics** — `"Imam"`, `"Rabbi"`, `"Reverend"`, `"Father"`, `"Sister"`, `"Cantor"`, `"Sheikh"` → Religion or Belief. Return the full title + name as a single span (e.g. `"Imam Hassan"`, `"Rabbi Moshe Goldstein"`).
+7. **Pious or devout descriptors** — `"pious"`, `"devout"`, `"her faith"`, `"our faith"`.
+
+**What NOT to detect:**
+- Names and titles of housing officers or caseworkers conducting the review (service role exclusion). Exception: religious leaders acting as applicants or advocates ARE subjects and must be flagged.
+- **General South/East Asian names** — names like `"Raj"`, `"Dinesh"`, `"Priya"`, `"Anita"` indicate a South Asian ethnic background (Race), NOT a religion. Only flag Religion when the name strongly and specifically implies one particular religion (e.g. `"Mohammed"` → Muslim, `"Moshe"` → Jewish). Being South Asian or East Asian is NOT itself a religion indicator.
+- **Abstract value concepts** — `"fairness"`, `"justice"`, `"equality"`, `"integrity"` are NEVER Religion or Belief evidence spans, even in a passage about a religious person.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+pious Faezeh, whose rape shatters her faith
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Religion or Belief",
+      "attribute_value": "Religious or Pious",
+      "evidence_spans": [{"text": "pious Faezeh"}, {"text": "her faith"}],
+      "confidence": 0.95
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Mohammed, aged 67, discussed his retirement plans with the younger team members.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Religion or Belief",
+      "attribute_value": "Muslim (name proxy)",
+      "evidence_spans": [{"text": "Mohammed"}],
+      "confidence": 0.75
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Imam Hassan and Mrs Okafor attended the community meeting. Hassan spoke about housing needs.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Religion or Belief",
+      "attribute_value": "Muslim (religious title proxy)",
+      "evidence_spans": [{"text": "Imam Hassan"}, {"text": "Hassan"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Applicant: My congregation has been incredibly supportive since I moved here. We gather every week and celebrate our faith together.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Religion or Belief",
+      "attribute_value": "Religious (active community participation)",
+      "evidence_spans": [{"text": "My congregation"}, {"text": "our faith"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Priya spoke about fairness and equality during the interview. She has lived in this country for fifteen years.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+{% endblock %}
