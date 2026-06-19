@@ -196,7 +196,9 @@ export function ServiceNav() {
             <ul
               className={cn(
                 'govuk-service-navigation__list',
-                isMobile && !isMenuOpen ? 'max-h-0 overflow-hidden' : 'max-h-96',
+                isMobile && !isMenuOpen
+                  ? 'max-h-0 overflow-hidden'
+                  : 'max-h-96',
                 isMobile && isMenuOpen && 'flex-col'
               )}
               style={{ transition: 'max-height 0.2s ease-in-out' }}
