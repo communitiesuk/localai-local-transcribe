@@ -37,10 +37,10 @@ async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> 
     failed_chunks: list[int] = []
     chunks = build_chunks(transcript, config.chunking.chunk_size_chars, config.chunking.overlap_chars)
 
+    base_path = root_dir / config.prompts.agent_base_template
     for idx, (chunk_text, offset) in enumerate(chunks):
         logger.info("  -> Sending Chunk %d of %d to Azure...", idx + 1, len(chunks))
         try:
-            base_path = root_dir / config.prompts.agent_base_template
             detected = await process_chunk_parallel(chunk_text, offset, base_path, chatbot)
             all_detected_characteristics.extend(detected)
             logger.info("     Found %d characteristics in chunk %d", len(detected), idx + 1)
