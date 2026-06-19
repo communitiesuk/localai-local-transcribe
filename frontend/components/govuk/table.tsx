@@ -67,7 +67,7 @@ export function GovukTableRow({
 export function GovukTableHeaderCell({
   children,
   ...rest
-}: React.HTMLAttributes<HTMLTableCellElement>) {
+}: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th className="govuk-table__header" {...rest}>
       {children}
@@ -78,7 +78,7 @@ export function GovukTableHeaderCell({
 export function GovukTableCell({
   children,
   ...rest
-}: React.HTMLAttributes<HTMLTableCellElement>) {
+}: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <td className="govuk-table__cell" {...rest}>
       {children}
