@@ -266,3 +266,38 @@
 .editor-content code:not(pre code) {
   color: red;
 }
+
+@media (max-width: 922px) {
+  .govuk-service-navigation__container {
+    /* govuk-frontend sets flex-direction: row from ~641px (tablet breakpoint),
+       causing nav items to wrap below the service name before our React-owned
+       toggle collapses them. Force column to prevent that intermediate state. */
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+
+@media (min-width: 923px) {
+  .govuk-service-navigation__container {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+  }
+
+  .govuk-service-navigation__list {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+  }
+}
+
+.govuk-service-navigation__link {
+  white-space: nowrap;
+}
+.govuk-service-navigation__item {
+  /* Reset tablet-era vertical margins so open menu spacing
+       matches the native mobile collapsed-menu appearance */
+  margin-top: 6px !important;
+  padding: 6px !important;
+  line-height: inherit !important;
+}
