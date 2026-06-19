@@ -46,7 +46,6 @@ describe('<ServiceNav />', () => {
     const { container } = render(<ServiceNav />)
     const outer = container.querySelector('section.govuk-service-navigation')
     expect(outer).not.toBeNull()
-    // data-module is intentionally absent — React owns the toggle, not govuk-frontend JS
     expect(outer).not.toHaveAttribute('data-module')
     expect(outer?.querySelector('.govuk-width-container')).not.toBeNull()
     expect(

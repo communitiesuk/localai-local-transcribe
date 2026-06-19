@@ -153,7 +153,6 @@ export function ServiceNav() {
     const handleResize = () => {
       const mobile = window.innerWidth < MOBILE_BREAKPOINT
       setIsMobile(mobile)
-      // Collapse the menu automatically when resizing to desktop
       if (!mobile) setIsMenuOpen(false)
     }
     handleResize()
