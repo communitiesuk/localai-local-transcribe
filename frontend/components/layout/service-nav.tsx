@@ -141,7 +141,7 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-const MOBILE_BREAKPOINT = 1024
+const MOBILE_BREAKPOINT = 1024 /*keeps all navbar items on one line*/
 
 export function ServiceNav() {
   const pathname = usePathname()

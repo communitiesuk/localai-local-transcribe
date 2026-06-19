@@ -269,6 +269,9 @@
 
 @media (max-width: 1023px) {
   .govuk-service-navigation__container {
+    /* govuk-frontend sets flex-direction: row from ~641px (tablet breakpoint),
+       causing nav items to wrap below the service name before our React-owned
+       toggle collapses them. Force column to prevent that intermediate state. */
     flex-direction: column !important;
     align-items: flex-start !important;
   }
