@@ -57,8 +57,6 @@ export default function UserPage(props: {
     return <Loader2 className="animate-spin" />
   }
 
-  if (!isAllowed) return null
-
   if (targetUserError || authError) return <p>Error: Failed to load user.</p>
 
   return (
