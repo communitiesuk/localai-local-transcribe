@@ -199,7 +199,7 @@ export function ServiceNav() {
               style={{ transition: 'max-height 0.2s ease-in-out' }}
               id="navigation"
               aria-hidden={isMobile && !isMenuOpen}
->
+            >
               {visibleItems.map((item) => {
                 const active = item.isActive(pathname)
                 const linkContent = active ? (

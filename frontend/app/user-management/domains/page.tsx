@@ -158,8 +158,8 @@ function EditDomainsForm({
         </GovukButton>
         <Link href="/user-management" className="govuk-link">
           Cancel
-      </Link>
-    </div>
+        </Link>
+      </div>
 
       <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 
