@@ -71,21 +71,47 @@ LLM usage adds meaningfully to the overall environmental footprint, with its sha
 
 ## 4. Water Usage Considerations
 
-### 4.1 Context and scale
+AI infrastructure has two distinct water footprints. **Scope 1** is the water a data centre draws directly for on-site cooling (§4.1). **Scope 2** is the water consumed upstream, at the power stations generating the electricity the data centre buys (§4.2). Throughout, we separate **withdrawal** — water drawn from a source, most of which returns to the water cycle — from **consumption**, the water actually lost (primarily to evaporation). Only consumption represents permanent loss.
 
-Water consumption in data centres is driven primarily by cooling system design. Evaporative cooling is the dominant source of consumptive water use, while dry or closed-loop systems can substantially reduce or eliminate it [1], [6].
+### 4.1 Scope 1 — Direct cooling water
 
-In the UK, 51% of data centres use waterless cooling, 44% use hybrid systems, and only 5% use water-based cooling exclusively [6]. Among those that do use water, consumption is relatively modest: 64% use less than 10 million litres per year (approximately equivalent to 200 people) [6].
+Direct water use is driven primarily by cooling system design. Evaporative cooling is the dominant source of consumptive use, while dry or closed-loop systems can substantially reduce or eliminate it [1], [6].
 
-At continental scale, data centres do not represent a major water-consuming sector compared to agriculture and heavy industry [4], [6]. However, 32% of the European population lives in water-stressed areas [5], and England faces a projected 5 billion litre public water shortage by 2055 [3].
+For the providers relevant here it is small. In the UK, 51% of data centres use waterless cooling, 44% use hybrid systems, and only 5% rely exclusively on water-based cooling [6]. Among those that do use water, consumption is modest — 64% use less than 10 million litres per year, roughly equivalent to 200 people [6]. Most of this use is **non-consumptive**: water is returned to the source shortly after withdrawal, with minimal atmospheric loss or chemical contamination compared with other industrial uses [7], [4].
 
-### 4.2 Water cycle and local impact
+At continental scale, data centres are not a major water-consuming sector compared with agriculture and heavy industry [4], [6]. **The primary concern is placement**: siting high water-use data centres in water-stressed regions compounds existing problems [3], [5] — 32% of the European population lives in water-stressed areas [5], and England faces a projected 5 billion litre public water shortage by 2055 [3]. Scope 1 impact is therefore **local and contextual** and not permanent loss. For most datacenters in the UK, the use water for cooling is minimal.
 
-Most data centre water use is non-consumptive—water is returned to the source or hydrologic system shortly after withdrawal, with minimal atmospheric loss and minimal chemical contamination compared to other industrial uses [7], [4].
+### 4.2 Scope 2 — Water embedded in purchased electricity
 
-**The primary concern is placement**: locating high water-use data centres in water-stressed regions compounds existing problems [3], [5]. Water impact is **local and contextual**, not permanent loss.
+Generating grid electricity itself consumes water, mostly to cool thermoelectric power stations. We estimate Scope 2 water by multiplying each component's electricity use (kWh, Sections 6–10) by the WRI grid-average water use factors [29]; UK-hosted activity uses the Great Britain factors of **166.6 L/kWh withdrawn, 2.35 L/kWh consumed** (Appendix H lists the source factors and conversions).
 
-**Note:** Hardware manufacturing for AI infrastructure requires water in the production process [1], which is not accounted for in this report.
+#### 4.2.1 Per 1-hour meeting
+
+| Component | Energy | Withdrawal | Consumption |
+|---|---|---|---|
+| Transcription (ASR) | 22.3 Wh | 3.71 L | 52.3 mL |
+| LLM inference (usage-weighted) | 11.4–16.9 Wh | 1.89–2.81 L | 26.7–39.6 mL |
+| **Combined (ASR + LLM)** | **33.6–39.1 Wh** | **5.60–6.52 L** | **79.0–91.8 mL** |
+
+A single 1-hour meeting therefore embeds roughly **6 L of withdrawn water** but only about **85 mL of consumed (lost) water** — under a teacup. Transcription dominates the water footprint (≈61% of combined energy), mirroring its share of the carbon footprint.
+
+#### 4.2.2 Monthly AWS hosting
+
+The AWS Sustainability API reports carbon, not electricity. `water.py` fetches the latest available month's **location-based** emissions (which are built on grid averages) and recovers energy by dividing by the GB grid intensity (217.4 g CO₂e/kWh); the GB water factors are then applied. For the April 2026 figure (64,309 g CO₂e, §2.2) this is ≈**296 kWh**, embedding approximately **49,300 L (493 hL) withdrawn** for the month — of which only about **694 L is consumed (lost)**, the remainder returning to source.
+
+#### 4.2.3 Model training
+
+Amortised over the user base (Appendices C–D), one-off model training embeds roughly **28 L withdrawn / 229 mL consumed per user**, calculated on the US grid (which has higher water-use factors than the UK; Appendix H).
+
+#### 4.2.4 Combined view
+
+| Layer | Basis | Withdrawal | Consumption |
+|---|---|---|---|
+| AI processing (ASR + LLM) | per 1-hour meeting | 5.60–6.52 L | 79–92 mL |
+| Model training | per user (one-off) | 28 L | 229 mL |
+| AWS hosting | per month | 49,300 L (493 hL) | 694 L |
+
+The bases differ, so this is a sense-of-scale comparison rather than a sum. Measured by water *consumed* — the portion actually lost — monthly AWS hosting (≈694 L) is about four orders of magnitude greater than a single meeting's AI processing (≈85 mL); the withdrawal figures, most of which returns to source, scale by the same ratio. This mirrors the carbon pattern (§G.4): right-sizing infrastructure saves far more than trimming prompts.
 
 ### 4.3 Recommendation
 
@@ -102,6 +128,8 @@ Most data centre water use is non-consumptive—water is returned to the source 
 * ASR and LLM inference run on UK infrastructure
 * Carbon intensity (inference): **GBR = 217 g CO₂e/kWh** [25]
 * Carbon intensity (training): **US average = 384 g CO₂e/kWh** [25]
+* Scope 2 water (inference/hosting): **GBR = 166.6 L/kWh withdrawal, 2.35 L/kWh consumption** [29] (§4.2)
+* Scope 2 water (training): **US average = 386.1 L/kWh withdrawal, 3.14 L/kWh consumption** [29] (§4.2)
 * ASR emissions from academic measurements [15]
 * LLM inference energy from EcoLogits [25] LCA regression model (Appendix E)
 * GPT-5.x training costs are not publicly available
@@ -198,6 +226,9 @@ Applying production usage shares (Appendix F.1):
 **Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. LLM's share of total CO₂e ranges from 1% (Basic Minutes) to 37% (SimpleTemplate), with ASR dominating at all template levels.
 
 **Infrastructure vs. AI processing cost:** The AWS hosting layer (Section 2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **2,192 complete 1-hour meetings** (at the usage-weighted midpoint of 7.9 g CO₂e/meeting). The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). This AWS figure covers only the hosting layer; Azure AI inference costs (Section 3) are tracked separately.
+
+**Water footprint:** Scope 2 water embedded in the electricity is small. A usage-weighted 1-hour meeting *consumes* roughly **85 mL** (about **6 L** withdrawn, nearly all returned to source), while one month of AWS hosting consumes ≈**694 L** — the same hosting-dominates pattern as carbon. Direct (Scope 1) cooling water is minimal for the UK-hosted providers used (§4).
+
 **Relatable activity comparisons.** See Appendix G for sources and methodology.
 
 | Cost layer | ≡ petrol car [26] | ≡ long-haul flight [26] | ≡ homeworking [24] | ≡ television [28] | ≡ household energy [27] |
@@ -976,6 +1007,21 @@ At current measured figures, the hosting layer dominates AI inference of a 1h me
 
 ---
 
+# Appendix H: Scope 2 Water Use Calculation
+
+Scope 2 water (§4.2) is estimated using the WRI methodology [29]: multiply each component's electricity use (kWh, Sections 6–10) by a grid-average water use factor. The published factors are in **US gallons per kWh**; the main text uses their metric equivalents, converted here at **1 US gallon = 3.785411784 L**.
+
+| Grid | Applied to | Withdrawal (gal/kWh → L/kWh) | Consumption (gal/kWh → L/kWh) |
+|---|---|---|---|
+| Great Britain | Inference (ASR + LLM) and AWS hosting — UK-hosted | 44 → 166.56 | 0.62 → 2.347 |
+| United States | Model training | 102 → 386.11 | 0.83 → 3.142 |
+
+**Withdrawal** is water drawn from a source, most of which returns to the water cycle; **consumption** is water actually lost, primarily to evaporation (§4). The ~70× gap between the two factors reflects this — most withdrawn water is not lost.
+
+Inference and AWS hosting are assumed to run on UK infrastructure (§5.1) and use the Great Britain factors; model training runs on US infrastructure and uses the United States factors. AWS reports carbon rather than energy, so its electricity is recovered from the location-based emission figure (which is built on grid averages) before the factors are applied: `kWh = LBM g CO₂e ÷ GB grid intensity (217.4 g/kWh)`. `water.py` pulls the latest available month from the AWS Sustainability API live, falling back to the recorded April 2026 snapshot when credentials are unavailable. All figures are reproducible via `documentation/env_assets/water.py`.
+
+---
+
 # References
 
 [1] N. Jegham, M. Abdelatti, C. Y. Koh, L. Elmoubarki and A. Hendawi, "How Hungry is AI? Benchmarking Energy, Water, and Carbon Footprint of LLM Inference," arXiv:2505.09598v6, Nov. 2025. [Online]. Available: https://arxiv.org/abs/2505.09598
@@ -1033,3 +1079,5 @@ At current measured figures, the hosting layer dominates AI inference of a 1h me
 [27] Office of Gas and Electricity Markets (Ofgem), “Typical Domestic Consumption Values consultation,” March 2026. [Online]. Available: https://www.ofgem.gov.uk/consultation-hub/typical-domestic-consumption-values-consultation
 
 [28] UK Statutory Instrument 2021/825, “The Energy Information (Televisions) Regulations 2021,” implementing EU Regulation 2019/2021. [Online]. Available: https://www.legislation.gov.uk/uksi/2021/825/contents/made
+
+[29] M. Reig, T. Luo, T. Shiao and S. Bartosch, “Guidance for Calculating Water Use Embedded in Purchased Electricity,” World Resources Institute, Washington, DC, 2020. [Online]. Available: https://files.wri.org/d8/s3fs-public/guidance-calculating-water-use-embedded-purchased-electricity_0.pdf

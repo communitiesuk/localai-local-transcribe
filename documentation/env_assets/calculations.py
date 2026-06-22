@@ -17,12 +17,14 @@ import comparisons
 import llm_inference
 import training
 import transcription
+import water
 
 
 def main() -> None:
     transcription.display()
     llm_inference.display()
     training.display()
+    water.display()
     comparisons.display()
     try:
         aws.display()

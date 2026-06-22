@@ -9,7 +9,6 @@ from pathlib import Path
 
 import yaml
 from ecologits.electricity_mix_repository import ElectricityMixRepository
-from ecologits.impacts.llm import compute_llm_impacts  # re-exported for llm_inference
 from ecologits.model_repository import ModelRepository
 from ecologits.tracers.utils import PROVIDER_CONFIG_MAP
 from ecologits.utils.range_value import RangeValue
@@ -58,7 +57,22 @@ HOMEWORKING_HEATING_KG_CO2E_PER_HOUR: float = _cfg["homeworking"]["heating_kg_co
 HOMEWORKING_TOTAL_KG_CO2E_PER_HOUR: float = _cfg["homeworking"]["total_kg_co2e_per_hour"]
 WORKING_HOURS_PER_DAY: int = _cfg["homeworking"]["working_hours_per_day"]
 
+WATER_GB_WITHDRAWAL_GAL_PER_KWH: float = _cfg["water"]["gb_withdrawal_gal_per_kwh"]
+WATER_GB_CONSUMPTION_GAL_PER_KWH: float = _cfg["water"]["gb_consumption_gal_per_kwh"]
+WATER_US_WITHDRAWAL_GAL_PER_KWH: float = _cfg["water"]["us_withdrawal_gal_per_kwh"]
+WATER_US_CONSUMPTION_GAL_PER_KWH: float = _cfg["water"]["us_consumption_gal_per_kwh"]
+LITRES_PER_US_GALLON: float = _cfg["water"]["litres_per_us_gallon"]
+WATER_GB_WITHDRAWAL_L_PER_KWH: float = WATER_GB_WITHDRAWAL_GAL_PER_KWH * LITRES_PER_US_GALLON
+WATER_GB_CONSUMPTION_L_PER_KWH: float = WATER_GB_CONSUMPTION_GAL_PER_KWH * LITRES_PER_US_GALLON
+WATER_US_WITHDRAWAL_L_PER_KWH: float = WATER_US_WITHDRAWAL_GAL_PER_KWH * LITRES_PER_US_GALLON
+WATER_US_CONSUMPTION_L_PER_KWH: float = WATER_US_CONSUMPTION_GAL_PER_KWH * LITRES_PER_US_GALLON
+WATER_FACTORS_L_PER_KWH: dict = {
+    "gb": (WATER_GB_WITHDRAWAL_L_PER_KWH, WATER_GB_CONSUMPTION_L_PER_KWH),
+    "us": (WATER_US_WITHDRAWAL_L_PER_KWH, WATER_US_CONSUMPTION_L_PER_KWH),
+}
+
 AWS_APR2026_CO2E_G: int = _cfg["aws"]["apr2026_co2e_g"]
+AWS_APR2026_LBM_CO2E_G: int = _cfg["aws"]["apr2026_lbm_co2e_g"]
 
 CAR_AVG_PETROL_WLTP_GCO2_PER_KM: float = _cfg["car"]["avg_petrol_wltp_gco2_per_km"]
 CAR_REAL_WORLD_UPLIFT_FRACTION: float = _cfg["car"]["real_world_uplift_fraction"]
@@ -104,6 +118,26 @@ UK_WUE: float = _uk_mix.wue
 
 def words_to_tokens(words: float) -> float:
     return words * TOKENS_PER_WORD
+
+
+def scope2_water(energy_wh: float, grid: str = "gb") -> dict:
+    """Scope 2 water embedded in `energy_wh` of grid electricity (litres).
+
+    grid: "gb" for UK-hosted inference, "us" for model training.
+    Withdrawal = total water drawn from source (mostly returned, §4.1).
+    Consumption = water actually lost, primarily to evaporation.
+    """
+    withdrawal_l_per_kwh, consumption_l_per_kwh = WATER_FACTORS_L_PER_KWH[grid]
+    kwh = energy_wh / 1_000
+    return {
+        "withdrawal_l": kwh * withdrawal_l_per_kwh,
+        "consumption_l": kwh * consumption_l_per_kwh,
+    }
+
+
+def _ml(litres: float) -> str:
+    """Format a litre quantity, switching to millilitres below 1 L."""
+    return f"{litres * 1_000:.1f} mL" if abs(litres) < 1 else f"{litres:.2f} L"
 
 
 def combined_impact(llm: dict, asr: dict) -> dict:
