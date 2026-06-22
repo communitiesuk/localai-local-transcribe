@@ -57,12 +57,9 @@ async def get_current_user(
 
         changed = False
         if user:
-            # Update subject_id and email only if either has changed
+            # Update subject_id if has changed
             if user.subject_id != subject_id:
                 user.subject_id = subject_id
-                changed = True
-            if user.email != email:
-                user.email = email
                 changed = True
         else:
             # Create new user if doesn't exist

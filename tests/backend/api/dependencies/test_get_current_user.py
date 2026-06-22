@@ -149,39 +149,6 @@ async def test_get_current_user_doesnt_fall_back_to_email_if__subject_id(monkeyp
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_updates_email_of_existing_user(monkeypatch, session):
-    mock_user = User(
-        id=uuid4(),
-        email=TEST_EMAIL,
-        subject_id=TEST_SUBJECT_ID,
-        data_retention_days=30,
-        created_datetime=datetime.now(UTC),
-        updated_datetime=datetime.now(UTC),
-    )
-    mock_result = Mock()
-    mock_result.first.return_value = mock_user
-    session.exec.return_value = mock_result  # return mock user as a db result
-
-    new_email = "new_email"
-    # patch in JWT decoding
-    mock_get_user_info = make_mock_get_user_info(email=new_email)
-    monkeypatch.setattr(
-        "backend.api.dependencies.get_current_user.get_user_info",
-        mock_get_user_info,  # token unused in test
-    )
-
-    user = await get_current_user(
-        session=session,
-        x_amzn_oidc_data=TEST_TOKEN,
-    )
-
-    # check emails match and is saved to the database
-    assert user.email == new_email
-    mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    assert session.commit.await_count == 2
-
-
-@pytest.mark.asyncio
 async def test_get_current_user_creates_user(monkeypatch, session):
     mock_result = Mock()
     mock_result.first.return_value = None  # no user currently exists
