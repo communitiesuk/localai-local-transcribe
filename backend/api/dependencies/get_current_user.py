@@ -52,7 +52,7 @@ async def get_current_user(
             # accounts which do not yet have a subject id associated.
             # After this login, a subject id will be added to the account and login
             # matching by email should no longer be possible
-            statement = select(User).where(User.email == email and User.subject_id is None)
+            statement = select(User).where((User.email == email) & (User.subject_id.is_(None)))
             user = (await session.exec(statement)).first()
 
         if not user:
