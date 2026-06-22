@@ -32,7 +32,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@sentry/nextjs": "^10.45.0",
+    "@sentry/nextjs": "^10.58.0",
     "@tanstack/react-query": "^5.80.7",
     "@tiptap/core": "^2.14.0",
     "@tiptap/extension-document": "^2.14.0",
@@ -49,7 +49,7 @@
     "lucide-react": "^0.544.0",
     "next": "^16.2.6",
     "next-themes": "^0.4.6",
-    "posthog-js": "^1.252.0",
+    "posthog-js": "^1.390.2",
     "posthog-node": "^5.9.1",
     "prosemirror-state": "^1.4.3",
     "prosemirror-view": "^1.40.0",
@@ -62,7 +62,7 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "^0.93.0",
+    "@hey-api/openapi-ts": "^0.97.0",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.3",
