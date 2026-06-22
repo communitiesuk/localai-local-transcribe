@@ -1,7 +1,7 @@
 import Footer from '@/components/layout/footer'
 import { GovukInit } from '@/components/layout/govuk-init'
 import { Header } from '@/components/layout/header'
-import { LegacyNav } from '@/components/layout/legacy-nav'
+import { ServiceNav } from '@/components/layout/service-nav'
 import { PhaseBanner } from '@/components/layout/phase-banner'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
@@ -41,7 +41,7 @@ export default function RootLayout({
             <LockNavigationProvider>
               <RecordingDbProvider>
                 <Header />
-                <LegacyNav />
+                <ServiceNav />
                 <div className="govuk-width-container">
                   <PhaseBanner />
                 </div>
