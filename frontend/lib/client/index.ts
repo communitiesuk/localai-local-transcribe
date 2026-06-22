@@ -42,6 +42,7 @@ export {
   updateDataRetentionUsersDataRetentionPatch,
   updateOrganisationOrganisationsOrganisationIdPatch,
   updateUserRolesUsersUserIdRolesPatch,
+  userExistsUsersUserExistsGet,
 } from './sdk.gen'
 export type {
   AgendaUsage,
@@ -276,6 +277,12 @@ export type {
   UpdateUserRolesUsersUserIdRolesPatchResponse,
   UpdateUserRolesUsersUserIdRolesPatchResponses,
   UserCreate,
+  UserExistsResponse,
+  UserExistsUsersUserExistsGetData,
+  UserExistsUsersUserExistsGetError,
+  UserExistsUsersUserExistsGetErrors,
+  UserExistsUsersUserExistsGetResponse,
+  UserExistsUsersUserExistsGetResponses,
   UserRole,
   UserUpdateRoles,
   ValidationError,

@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
-import { UserRole } from '@/lib/utils'
+import { hasAnyRole, UserRole } from '@/lib/utils'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { createUserUsersPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { Loader2 } from 'lucide-react'
@@ -34,22 +34,47 @@ export default function AdminAddUserConfirmPage() {
     return
   }
 
+  const is_Support_Admin = hasAnyRole(currentUser?.roles, [
+    UserRole.MHCLG_SUPPORT_ADMIN,
+  ])
+  const is_LA_Admin = hasAnyRole(currentUser?.roles, [
+    UserRole.LOCAL_AUTHORITY_ADMIN,
+  ])
+
   const handleCreateUser = async () => {
-    try {
-      await createUserMutation.mutateAsync({
-        body: {
-          name: name,
-          email: email,
-          organisation_id: organisation?.id,
-        },
-      })
-      router.push('/user-management')
-    } catch (error) {
-      console.error('Failed to create user:', error)
-      // Error logic not detailed by UCD
+    if (!is_Support_Admin && !is_LA_Admin) return
+    if (is_Support_Admin) {
+      try {
+        await createUserMutation.mutateAsync({
+          body: {
+            name: name,
+            email: email,
+            organisation_id: organisation?.id,
+          },
+        })
+        router.push('/user-management')
+      } catch (error) {
+        console.error('Failed to create user:', error)
+        // Error logic not detailed by UCD
+      }
+    }
+
+    if (is_LA_Admin) {
+      try {
+        await createUserMutation.mutateAsync({
+          body: {
+            name: name,
+            email: email,
+            organisation_id: organisation?.id,
+          },
+        })
+        router.push('/user-management')
+      } catch (error) {
+        console.error('Failed to create user:', error)
+        // Error logic not detailed by UCD
+      }
     }
   }
-
   return (
     <>
       {userLoading && <Loader2 className="animate-spin" />}

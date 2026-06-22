@@ -7,9 +7,13 @@ import { useOrganisation } from '@/hooks/use-organisation'
 import { UserRole } from '@/lib/utils'
 import isAllowedDomain from '@/utils/allowed-domains'
 import { Loader2 } from 'lucide-react'
+import { userExistsUsersUserExistsGet } from '@/lib/client'
 
 export default function AdminAddUserPage() {
   const router = useRouter()
+  const invalidDomainError =
+    'Please enter an email address with a valid domain for your organisation.'
+  const existingEmailError = 'This email is already registered with an account'
 
   const {
     currentUser,
@@ -27,24 +31,34 @@ export default function AdminAddUserPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [hasError, setHasError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(invalidDomainError)
 
-  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
 
+    if (!currentUser?.organisation_id) {
+      return
+    }
+
     if (!isAllowedDomain(email, organisation?.allowed_domains ?? [])) {
-      console.error('Email domain is not allowed for this organisation.', email)
+      console.error(invalidDomainError, email)
+      setErrorMessage(invalidDomainError)
       setHasError(true)
       return
     }
-    /*
-        TODO: Validate if email exists
-        This should ideally be handled in the backend during creation
-        Created AIILG-668 to cover this work, but for now, allowing the user 
-        to proceed to the confirmation page where the actual creation happens.
-        An error message should be displayed if the email is invalid or already exists
-        For now, solely checking if the email is lies within the accepted domains 
-        list and displaying the set error message if not
-        */
+
+    const response = await userExistsUsersUserExistsGet({
+      query: {
+        email,
+        organisation_id: currentUser.organisation_id,
+      },
+    })
+
+    if (response.data?.exists) {
+      setErrorMessage(existingEmailError)
+      setHasError(true)
+      return
+    }
 
     router.push(
       `/invite-user/confirm?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`
@@ -53,6 +67,7 @@ export default function AdminAddUserPage() {
 
   const handleCancel = (e: React.SyntheticEvent<HTMLAnchorElement>) => {
     e.preventDefault()
+    setErrorMessage('')
     setHasError(false)
   }
 
@@ -100,8 +115,7 @@ export default function AdminAddUserPage() {
                 className="govuk-error-message"
               >
                 <span className="govuk-visually-hidden">Error:</span>
-                Please enter an email address with a valid domain for your
-                organisation.
+                {errorMessage}
               </p>
             )}
 

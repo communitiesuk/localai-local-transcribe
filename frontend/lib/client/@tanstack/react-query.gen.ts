@@ -51,6 +51,7 @@ import {
   updateDataRetentionUsersDataRetentionPatch,
   updateOrganisationOrganisationsOrganisationIdPatch,
   updateUserRolesUsersUserIdRolesPatch,
+  userExistsUsersUserExistsGet,
 } from '../sdk.gen'
 import type {
   CreateChatTranscriptionsTranscriptionIdChatPostData,
@@ -163,6 +164,9 @@ import type {
   UpdateUserRolesUsersUserIdRolesPatchData,
   UpdateUserRolesUsersUserIdRolesPatchError,
   UpdateUserRolesUsersUserIdRolesPatchResponse,
+  UserExistsUsersUserExistsGetData,
+  UserExistsUsersUserExistsGetError,
+  UserExistsUsersUserExistsGetResponse,
 } from '../types.gen'
 
 export type QueryKey<TOptions extends Options> = [
@@ -788,6 +792,34 @@ export const updateUserRolesUsersUserIdRolesPatchMutation = (
   }
   return mutationOptions
 }
+
+export const userExistsUsersUserExistsGetQueryKey = (
+  options: Options<UserExistsUsersUserExistsGetData>
+) => createQueryKey('userExistsUsersUserExistsGet', options)
+
+/**
+ * User Exists
+ */
+export const userExistsUsersUserExistsGetOptions = (
+  options: Options<UserExistsUsersUserExistsGetData>
+) =>
+  queryOptions<
+    UserExistsUsersUserExistsGetResponse,
+    UserExistsUsersUserExistsGetError,
+    UserExistsUsersUserExistsGetResponse,
+    ReturnType<typeof userExistsUsersUserExistsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await userExistsUsersUserExistsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: userExistsUsersUserExistsGetQueryKey(options),
+  })
 
 export const listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey =
   (

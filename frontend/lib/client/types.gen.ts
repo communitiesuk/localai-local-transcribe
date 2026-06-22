@@ -869,6 +869,16 @@ export type UserCreate = {
 }
 
 /**
+ * UserExistsResponse
+ */
+export type UserExistsResponse = {
+  /**
+   * Exists
+   */
+  exists: boolean
+}
+
+/**
  * UserRole
  */
 export type UserRole =
@@ -1451,6 +1461,48 @@ export type UpdateUserRolesUsersUserIdRolesPatchResponses = {
 
 export type UpdateUserRolesUsersUserIdRolesPatchResponse =
   UpdateUserRolesUsersUserIdRolesPatchResponses[keyof UpdateUserRolesUsersUserIdRolesPatchResponses]
+
+export type UserExistsUsersUserExistsGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query: {
+    /**
+     * Email
+     */
+    email: string
+    /**
+     * Organisation Id
+     */
+    organisation_id: string
+  }
+  url: '/users/user/exists'
+}
+
+export type UserExistsUsersUserExistsGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type UserExistsUsersUserExistsGetError =
+  UserExistsUsersUserExistsGetErrors[keyof UserExistsUsersUserExistsGetErrors]
+
+export type UserExistsUsersUserExistsGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: UserExistsResponse
+}
+
+export type UserExistsUsersUserExistsGetResponse =
+  UserExistsUsersUserExistsGetResponses[keyof UserExistsUsersUserExistsGetResponses]
 
 export type ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData =
   {
