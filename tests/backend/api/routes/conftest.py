@@ -45,6 +45,28 @@ def mock_user() -> User:
 
 
 @pytest.fixture
+def mock_support_admin() -> User:
+    return User(
+        id=uuid4(),
+        email=mock_email,
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+        roles=[UserRole.MHCLG_SUPPORT_ADMIN],
+    )
+
+
+@pytest.fixture
+def override_support_admin_user(mock_support_admin):
+    async def _override():
+        return mock_support_admin
+
+    app.dependency_overrides[get_current_user] = _override
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+@pytest.fixture
 def override_user(mock_user):
     async def _override():
         return mock_user

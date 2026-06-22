@@ -1,0 +1,98 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Marriage and Civil Partnership{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING MARRIAGE AND CIVIL PARTNERSHIP
+
+Flag any reference that reveals a person's marital or civil partnership status.
+
+**What to detect:**
+1. **Courtesy titles indicating marriage** — `"Mrs"` → Married; `"Mr"` in context establishing marriage status.
+2. **Explicit partner/spouse/husband/wife/civil partner language** — `"my husband"`, `"my wife"`, `"my spouse"`, `"my civil partner"`, `"my partner"` (in an established relationship context).
+3. **Compound intimate phrases that cumulatively establish a life-companion role** — `"my rock, my cheerleader, my everything"` (return the entire list as one span), `"My partner in every sense of the word"`, `"grateful to have been by your side"` (where contextually clear this is a long-term partner).
+4. **First-person or second-person possessive phrases that establish a partner bond**.
+
+**What NOT to detect:**
+- **Generic affective or journey language alone** — `"for us"`, `"the journey"`, `"our shared path"`, `"what we've been through"`, `"the love we've shared"`, `"the love we've built"`, `"a stable life together"`, `"the privilege of knowing you"`, `"being part of your story"` — NONE of these alone constitute M&CP evidence.
+- **Even in a passage that contains explicit M&CP evidence**, do NOT retroactively label every nearby emotional phrase as an additional M&CP span. Return only spans that are themselves direct life-companion evidence.
+- **Adoption aspirations** — `"we're ready to share that with a child"` → not M&CP.
+- **First-person / second-person standalone pronouns** (`"I"`, `"we"`, `"you"`) → never valid evidence spans.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+Mrs. Chen, who is expecting her second child, requested flexible working arrangements.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Marriage and Civil Partnership",
+      "attribute_value": "Married",
+      "evidence_spans": [{"text": "Mrs. Chen"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+I just want to say how grateful I am. You've been my rock, my cheerleader, my everything. My partner in every sense of the word.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Marriage and Civil Partnership",
+      "attribute_value": "Married or Civil Partner (implicit emotional-bond language)",
+      "evidence_spans": [
+        {"text": "my rock, my cheerleader, my everything"},
+        {"text": "My partner in every sense of the word"}
+      ],
+      "confidence": 0.85
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Imam Hassan and Mrs Okafor attended the community meeting.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Marriage and Civil Partnership",
+      "attribute_value": "Married",
+      "evidence_spans": [{"text": "Mrs Okafor"}],
+      "confidence": 0.85
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+This has been quite a journey for all of us. The love and commitment shown here is truly remarkable.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+
+[INPUT START]
+María and I have been together through everything. We started this journey as a couple.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Marriage and Civil Partnership",
+      "attribute_value": "Couple (joint first-person reference)",
+      "evidence_spans": [{"text": "María and I"}],
+      "confidence": 0.80
+    }
+  ]
+}
+[OUTPUT END]
+{% endblock %}

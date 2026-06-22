@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
@@ -72,6 +73,9 @@ async def get_current_user(
             session.add(user)
             await session.commit()
             await session.refresh(user)
+
+        user.last_login = datetime.now(UTC)
+        await session.commit()
 
         return user
     except MissingAuthTokenError as e:

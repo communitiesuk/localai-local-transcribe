@@ -25,9 +25,9 @@ if __name__ == "__main__":
     reference = load_json(output_dir / "reference.json")
 
     transcript = get_transcript_file(INPUT_DIR / args.name)
-    run_characteristics_pipeline(transcript)
+    output_stem = run_characteristics_pipeline(transcript)
 
-    hypothesis_path = copy_characteristics_output(output_dir, transcript.stem)
+    hypothesis_path = copy_characteristics_output(output_dir, output_stem)
     hypothesis = load_json(hypothesis_path)
     logging.info("Saved hypothesis → %s", hypothesis_path)
 
