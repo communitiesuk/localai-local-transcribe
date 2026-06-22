@@ -46,18 +46,23 @@ export default function UserPage(props: {
   } = useAuthorisedOrgUser(targetUser?.organisation_id ?? undefined)
 
   const authReady = !targetUserLoading && !authLoading
+  const pageError = targetUserError || authError
 
   useEffect(() => {
-    if (authReady && !isAllowed) {
+    if (pageError) {
+      router.replace('/generic-error')
+    }
+
+    if (!pageError && authReady && !isAllowed) {
       router.replace('/unauthorised')
     }
-  }, [authReady, isAllowed, router])
+  }, [pageError, authReady, isAllowed, router])
 
   if (targetUserLoading || authLoading) {
     return <Loader2 className="animate-spin" />
   }
 
-  if (targetUserError || authError) return <p>Error: Failed to load user.</p>
+  if (pageError) return null
 
   return (
     <>

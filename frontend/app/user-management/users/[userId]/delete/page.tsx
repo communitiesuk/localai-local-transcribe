@@ -44,17 +44,20 @@ export default function UserPageDelete(props: {
   } = useAuthorisedOrgUser(targetUser?.organisation_id ?? undefined)
 
   const authReady = !targetUserLoading && !authLoading
+  const pageError = targetUserError || authError
 
   useEffect(() => {
-    if (authReady && !isAllowed) {
+    if (pageError) {
+      router.replace('/generic-error')
+    }
+
+    if (!pageError && authReady && !isAllowed) {
       router.replace('/unauthorised')
     }
-  }, [authReady, isAllowed, router])
+  }, [pageError, authReady, isAllowed, router])
 
-  let redirectPath = '/user-management'
-  if (currentUser?.id === targetUser?.id) {
-    redirectPath = '/' // go to hompage if user deletes themself
-  }
+  let redirectPath =
+    currentUser?.id === targetUser?.id ? '/' : '/user-management' // go to hompage if user deletes themself
 
   const { mutate: deleteUser } = useMutation({
     ...deleteUserUsersUserIdDeleteMutation(),
@@ -67,7 +70,7 @@ export default function UserPageDelete(props: {
     return <Loader2 className="animate-spin" />
   }
 
-  if (targetUserError || authError) return <p>Error: Failed to load user.</p>
+  if (pageError) return null
 
   return (
     <>
