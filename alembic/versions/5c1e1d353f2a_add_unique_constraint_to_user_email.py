@@ -45,19 +45,15 @@ def upgrade() -> None:
     """)
 
     # Enforces future case-insensitive uniqueness
-    op.execute("""
-        CREATE UNIQUE INDEX ix_user_email_lower
-        ON "user" (LOWER(email))
-    """)
+    op.create_index(
+        "ix_user_email_lower",
+        "user",
+        [sa.text("LOWER(email)")],
+        unique=True,
+    )
 
 
 def downgrade() -> None:
-    op.execute("DROP INDEX IF EXISTS ix_user_email_lower")
-
-    op.create_index(
-        op.f("ix_user_email"),
-        "user",
-        ["email"],
-        unique=False,
-    )
+    op.drop_index("ix_user_email_lower", table_name="user")
+    op.create_index(op.f("ix_user_email"), "user", ["email"], unique=False)
     # Note: deletions performed during upgrade() are not restored on downgrade.
