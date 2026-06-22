@@ -1,0 +1,80 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Race{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING RACE
+
+Flag any reference that indicates a person's race, colour, nationality, or ethnic or national origins under the UK Equality Act 2010.
+
+**What to detect:**
+1. **Direct race / ethnicity references** — explicit statements of race, colour, or nationality.
+2. **Nationality** → Race proxy (e.g. `"Nigerian"`, `"Brazilian"`, `"Polish"` indicates ethnic/national origin).
+3. **First names as race proxies** — names that strongly indicate ethnic or national origins MUST be flagged. Use the most probable single interpretation: `"Kowalski"` → `"White (Polish/Eastern European)"`, `"Mohammed"` → `"Middle Eastern/North African/South Asian"`.
+4. **Last names as race proxies** — surnames that signal ethnic/national origin.
+5. **Religious honorifics + name as race proxies** — `"Imam Hassan"` → Middle Eastern/North African; `"Rabbi Goldstein"` → Ashkenazi Jewish.
+6. **Name nicknames and abbreviations** → Race proxy.
+7. **Locational references** → Race proxy for ethnic or national origins.
+
+**Important rules:**
+- **Be comprehensive**: names that strongly indicate ethnic or national origins MUST be detected. Do not skip Race detection just because it is not explicitly stated.
+- **Most probable interpretation**: choose the single most likely demographic value based on widely-shared cultural knowledge. Do not hedge between multiple possibilities.
+- **Proxy detection is mandatory**: Polish names (Piotr, Kowalski, Nowak) → White/Eastern European; Arabic names → Middle Eastern/North African; Chinese names → East Asian; West African names → Black African; Brazilian/Portuguese names → Hispanic/Latin American.
+- **Prefer longest name form**: at any given position return the longest, most complete name span. Do not separately return sub-parts of a name already returned.
+- **Service role exclusion**: do not flag names of housing officers, caseworkers, or interviewers UNLESS context makes clear they are also an applicant/service-user or advocate.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+Piotr Kowalski and Jakub Nowak reviewed the budget allocation.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Race",
+      "attribute_value": "White (Polish/Eastern European)",
+      "evidence_spans": [{"text": "Piotr Kowalski"}, {"text": "Jakub Nowak"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Mohammed, aged 67, discussed his retirement plans with the younger team members.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Race",
+      "attribute_value": "Middle Eastern/North African/South Asian (name proxy)",
+      "evidence_spans": [{"text": "Mohammed"}],
+      "confidence": 0.85
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Imam Hassan and Mrs Okafor attended the community meeting. Hassan spoke about housing needs.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Race",
+      "attribute_value": "Middle Eastern/North African (Arabic name proxy)",
+      "evidence_spans": [{"text": "Imam Hassan"}, {"text": "Hassan"}],
+      "confidence": 0.80
+    },
+    {
+      "characteristic": "Race",
+      "attribute_value": "West African (surname proxy)",
+      "evidence_spans": [{"text": "Mrs Okafor"}],
+      "confidence": 0.85
+    }
+  ]
+}
+[OUTPUT END]
+{% endblock %}

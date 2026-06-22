@@ -1,0 +1,119 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Sex{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING SEX
+
+Flag any reference that reveals or implies a person's sex (male or female).
+
+**What to detect:**
+1. **Courtesy titles** — `"Mrs"`, `"Ms"`, `"Miss"` → Female; `"Mr"` → Male. Return the full title + name span (e.g. `"Mrs Osei"`).
+2. **Explicit sex / gender references** — `"woman"`, `"man"`, `"female"`, `"male"`, `"women"`, `"men"`, `"The women"`.
+3. **Third-person gendered pronouns in context** — `"she"`, `"her"` → Female; `"he"`, `"him"`, `"his"` → Male. **Return the name or title span as the evidence — NOT the bare pronoun itself.** (The pronoun is a cue; the span should be the name.)
+4. **First names as sex proxies** — names that strongly indicate sex: `"Thomas"` → Male, `"Sarah"` → Female, `"Mohammed"` → Male, `"Piotr"` → Male.
+5. **Last names with gendered title** — `"Mrs Ahmed"` → Female.
+6. **Religious honorifics** — `"Imam"` → Male (in most traditions), `"Rabbi"` → Male (in most traditions). Return the full title + name span.
+
+**What NOT to detect:**
+- **Standalone third-person pronouns or contractions** (`"she"`, `"her"`, `"he"`, `"him"`, `"she's"`, `"he's"`) as bare evidence spans — use the name or title span instead.
+- **Possessive-noun phrases** (`"her health"`, `"her case"`, `"her doctor"`, `"his team"`) — these use pronouns grammatically, not as sex indicators. Do not return these as Sex evidence.
+- **Disability or medical descriptions** (`"an amputee"`, `"mobility issues"`, `"blind"`, `"deaf"`, `"using a wheelchair"`) — these describe health status, not sex. Do not use medical descriptions as Sex evidence spans.
+- **First-person / second-person pronouns** (`"I"`, `"me"`, `"my"`, `"we"`, `"you"`) → no sex information.
+- **Service role exclusion**: do not flag sex of housing officers/caseworkers conducting the review.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+Thomas and Sarah discussed the project timeline.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Male",
+      "evidence_spans": [{"text": "Thomas"}],
+      "confidence": 0.95
+    },
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Female",
+      "evidence_spans": [{"text": "Sarah"}],
+      "confidence": 0.95
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Piotr Kowalski and Jakub Nowak reviewed the budget allocation.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Male",
+      "evidence_spans": [{"text": "Piotr Kowalski"}, {"text": "Jakub Nowak"}],
+      "confidence": 0.95
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Mohammed, aged 67, discussed his retirement plans.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Male",
+      "evidence_spans": [{"text": "Mohammed"}],
+      "confidence": 0.98
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Imam Hassan and Mrs Okafor attended the community meeting. Hassan spoke about housing needs.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Male",
+      "evidence_spans": [{"text": "Imam Hassan"}, {"text": "Hassan"}],
+      "confidence": 0.85
+    },
+    {
+      "characteristic": "Sex",
+      "attribute_value": "Female",
+      "evidence_spans": [{"text": "Mrs Okafor"}],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+The caseworker noted: "Her current property is unsuitable. Her health has been affected."
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+
+[INPUT START]
+The applicant, an amputee, uses prosthetic limbs to manage daily activities.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+{% endblock %}

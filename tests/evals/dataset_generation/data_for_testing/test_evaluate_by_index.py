@@ -1,3 +1,5 @@
+import pytest
+
 from evals.dataset_generation.data_for_testing.src.evaluator import evaluate_by_index, extract_spans
 
 
@@ -7,6 +9,29 @@ def make_span(start, end):
 
 def make_multi_span(*spans):
     return {"detected_characteristics": [{"evidence_spans": [{"start_index": s, "end_index": e} for s, e in spans]}]}
+
+
+def make_char_span(char: str, start: int, end: int) -> dict:
+    return {
+        "detected_characteristics": [
+            {
+                "characteristic": char,
+                "evidence_spans": [{"start_index": start, "end_index": end, "text": "span"}],
+            }
+        ]
+    }
+
+
+def make_multi_char(entries: list[tuple[str, int, int]]) -> dict:
+    return {
+        "detected_characteristics": [
+            {
+                "characteristic": char,
+                "evidence_spans": [{"start_index": start, "end_index": end, "text": "span"}],
+            }
+            for char, start, end in entries
+        ]
+    }
 
 
 def make_empty():
@@ -240,3 +265,55 @@ def test_extract_spans_filters_incomplete_indices():
 
     assert len(spans) == 1
     assert spans[0] == {"start_index": 0, "end_index": 5}
+
+
+@pytest.mark.parametrize(
+    ("reference", "hypothesis", "tp", "fn", "fp"),
+    [
+        pytest.param(
+            make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)]),
+            make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)]),
+            2,
+            0,
+            0,
+            id="same_position_different_chars_each_get_own_tp",
+        ),
+        pytest.param(
+            make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)]),
+            make_multi_char([("Religion", 5, 15), ("Sex", 5, 15), ("Race", 5, 15)]),
+            2,
+            0,
+            1,
+            id="extra_characteristic_at_same_position_is_fp",
+        ),
+        pytest.param(
+            make_char_span("Disability", 5, 15),
+            make_char_span("Race", 5, 15),
+            1,
+            0,
+            0,
+            id="fallback_to_different_char_when_no_same_char_available",
+        ),
+    ],
+)
+def test_characteristic_matching_counts(reference: dict, hypothesis: dict, tp: int, fn: int, fp: int) -> None:
+    result = evaluate_by_index(reference, hypothesis)
+    summary = result["summary"]
+    assert summary["true_positive"] == tp
+    assert summary["false_negative"] == fn
+    assert summary["false_positive"] == fp
+
+
+def test_prefer_same_characteristic_over_any_covering_span():
+    reference = make_char_span("Sex", 5, 15)
+    hypothesis = make_multi_char([("Religion", 5, 15), ("Sex", 5, 15)])
+
+    result = evaluate_by_index(reference, hypothesis)
+    summary = result["summary"]
+
+    assert summary["true_positive"] == 1
+    assert summary["false_negative"] == 0
+    assert summary["false_positive"] == 1
+
+    covering = result["annotation_results"][0]["covering_hypothesis"]
+    assert covering["start_index"] == 5

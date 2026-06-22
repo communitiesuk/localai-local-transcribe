@@ -104,7 +104,6 @@ module "frontdoor" {
   internal_access_oidc_client_id_name     = module.secrets.internal_access_oidc_client_id_name
   internal_access_oidc_client_secret_name = module.secrets.internal_access_oidc_client_secret_name
 
-  depends_on = [module.secrets]
 }
 
 module "certificates" {
@@ -232,6 +231,7 @@ module "ecs" {
   azure_apim_client_secret_arn    = module.secrets.azure_apim_client_secret_arn
   azure_apim_scope_arn            = module.secrets.azure_apim_scope_arn
   azure_apim_subscription_key_arn = module.secrets.azure_apim_subscription_key_arn
+  sentry_dsn_arn                  = module.secrets.sentry_dsn_arn
 }
 
 module "uploads_bucket" {

@@ -1,0 +1,91 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Age{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING AGE
+
+Flag any reference that reveals or implies a person's age or life stage.
+
+**What to detect:**
+1. **Explicit age / DOB** — numerical age, birth year, or date of birth: `"aged 67"`, `"born in 1951"`, `"is 72 years old"`.
+2. **First-person age references** — `"my age"`, `"our age"`, `"at my age"`, `"given my age"`, `"at your age"`.
+3. **Generational references** — phrases that place a person in a generation.
+4. **Relational role indicating age** — e.g. `"grandfather"`, `"teenager"`, `"retiree"`.
+5. **Life event date anchors** — events that imply age: `"retirement plans"`, `"retirement party"`.
+6. **Life stage markers** — `"an elderly woman"`, `"older adult"`, `"young professional"`. Return the descriptive phrase itself as the span.
+7. **Caregiving references that imply age** — when caring for an elderly person implies their age.
+8. **Names as age proxies** — ONLY when a person's age has been established by an **explicit number** in the transcript (e.g. `"aged 58"`, `"is 72 years old"`), every subsequent mention of their name is an Age proxy. Include all name occurrences as evidence spans. **Descriptive adjectives alone (`"elderly"`, `"old"`, `"young"`) do NOT trigger this rule** — return only the descriptor itself, not the person's name as an additional Age proxy.
+
+**What NOT to detect:**
+- Physical limitations (mobility, cannot manage stairs) → these are **Disability**, not Age.
+- Policy-context age discussion (`"age might impact the ability"`, `"age is a factor"` in an evaluation context) → not a personal Age span.
+- A single bare word `"age"` alone → not a valid Age span. An Age span must contain at least two words and must refer to a specific person's actual age.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+Mohammed, aged 67, discussed his retirement plans with the younger team members.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Age",
+      "attribute_value": "Senior (67 years old)",
+      "evidence_spans": [{"text": "aged 67"}, {"text": "retirement plans"}],
+      "confidence": 1.0
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+At our age, we find it harder to navigate all the new technology, but we manage.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Age",
+      "attribute_value": "Age (first-person self-reference)",
+      "evidence_spans": [{"text": "our age"}],
+      "confidence": 0.85
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+Housing officer reviewed the case. She noted that an elderly woman named Mrs Osei cannot walk without assistance.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Age",
+      "attribute_value": "Elderly",
+      "evidence_spans": [{"text": "an elderly woman"}],
+      "confidence": 0.95
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+The interviewer asked: how do you think age might impact your ability to manage the property?
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+
+[INPUT START]
+The panel noted that age could be a relevant consideration when assessing long-term care capacity.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+{% endblock %}

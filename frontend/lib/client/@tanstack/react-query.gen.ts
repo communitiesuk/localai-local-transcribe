@@ -47,6 +47,7 @@ import {
   listUsersUsersGet,
   type Options,
   saveTranscriptionTranscriptionsTranscriptionIdPatch,
+  signOutSignoutGet,
   updateDataRetentionUsersDataRetentionPatch,
   updateOrganisationOrganisationsOrganisationIdPatch,
   updateUserRolesUsersUserIdRolesPatch,
@@ -152,6 +153,7 @@ import type {
   SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
   SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse,
+  SignOutSignoutGetData,
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchError,
   UpdateDataRetentionUsersDataRetentionPatchResponse,
@@ -1503,3 +1505,33 @@ export const updateOrganisationOrganisationsOrganisationIdPatchMutation = (
   }
   return mutationOptions
 }
+
+export const signOutSignoutGetQueryKey = (
+  options?: Options<SignOutSignoutGetData>
+) => createQueryKey('signOutSignoutGet', options)
+
+/**
+ * Sign Out
+ *
+ * Sign out the user by clearing ALB auth cookies and redirecting to the IdP.
+ */
+export const signOutSignoutGetOptions = (
+  options?: Options<SignOutSignoutGetData>
+) =>
+  queryOptions<
+    unknown,
+    DefaultError,
+    unknown,
+    ReturnType<typeof signOutSignoutGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await signOutSignoutGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: signOutSignoutGetQueryKey(options),
+  })

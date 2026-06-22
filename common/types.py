@@ -100,6 +100,8 @@ class GetUserResponse(BaseModel):
     id: uuid.UUID
     created_datetime: datetime
     updated_datetime: datetime
+    last_login: datetime
+    is_active: bool
     name: str | None
     email: str
     data_retention_days: int | None
