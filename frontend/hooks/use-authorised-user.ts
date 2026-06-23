@@ -28,35 +28,3 @@ export function useAuthorisedUser(allowedRoles: UserRole[]) {
     isError,
   }
 }
-
-export function useAuthorisedOrgUser(organisationId?: string) {
-  const {
-    data: user,
-    isLoading,
-    isError,
-  } = useQuery(getUserUsersMeGetOptions())
-
-  let isAllowed: boolean | undefined // undefined if auth unknown
-
-  if (user) {
-    const isSystemAdmin = user.roles.includes(UserRole.MHCLG_SUPPORT_ADMIN)
-    if (isSystemAdmin) {
-      isAllowed = true
-    } else if (organisationId !== undefined) {
-      const isOrganisationAdmin =
-        user.roles.includes(UserRole.LOCAL_AUTHORITY_ADMIN) &&
-        user.organisation_id === organisationId
-      isAllowed = isOrganisationAdmin
-    } else {
-      // data pending so isAllowed undefined
-      isAllowed = undefined
-    }
-  }
-
-  return {
-    user,
-    isLoading,
-    isError,
-    isAllowed,
-  }
-}

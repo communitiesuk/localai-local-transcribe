@@ -16,7 +16,6 @@ import {
   GovukTableHeaderCell,
 } from '@/components/govuk/table'
 import { getTargetUserUsersUserIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { useAuthorisedOrgUser } from '@/hooks/use-authorised-user'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
@@ -39,30 +38,17 @@ export default function UserPage(props: {
     }),
   })
 
-  const {
-    isAllowed,
-    isLoading: authLoading,
-    isError: authError,
-  } = useAuthorisedOrgUser(targetUser?.organisation_id ?? undefined)
-
-  const authReady = !targetUserLoading && !authLoading
-  const pageError = targetUserError || authError
-
   useEffect(() => {
-    if (pageError) {
+    if (targetUserError) {
       router.replace('/generic-error')
     }
+  }, [targetUserError, router])
 
-    if (authReady && isAllowed === false) {
-      router.replace('/unauthorised')
-    }
-  }, [pageError, authReady, isAllowed, router])
-
-  if (targetUserLoading || authLoading) {
+  if (targetUserLoading) {
     return <Loader2 className="animate-spin" />
   }
 
-  if (pageError) return null
+  if (targetUserError) return null
 
   return (
     <>

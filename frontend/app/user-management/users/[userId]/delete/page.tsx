@@ -11,10 +11,10 @@ import {
   GovukBackLink,
 } from '@/components/govuk'
 import {
+  getUserUsersMeGetOptions,
   getTargetUserUsersUserIdGetOptions,
   deleteUserUsersUserIdDeleteMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { useAuthorisedOrgUser } from '@/hooks/use-authorised-user'
 import { Loader2 } from 'lucide-react'
 
 export default function UserPageDelete(props: {
@@ -23,6 +23,8 @@ export default function UserPageDelete(props: {
   const router = useRouter()
 
   const { userId } = use(props.params)
+
+  const { data: currentUser } = useQuery({ ...getUserUsersMeGetOptions() })
 
   const {
     data: targetUser,
@@ -36,25 +38,11 @@ export default function UserPageDelete(props: {
     }),
   })
 
-  const {
-    isAllowed,
-    isLoading: authLoading,
-    user: currentUser,
-    isError: authError,
-  } = useAuthorisedOrgUser(targetUser?.organisation_id ?? undefined)
-
-  const authReady = !targetUserLoading && !authLoading
-  const pageError = targetUserError || authError
-
   useEffect(() => {
-    if (pageError) {
+    if (targetUserError) {
       router.replace('/generic-error')
     }
-
-    if (authReady && isAllowed === false) {
-      router.replace('/unauthorised')
-    }
-  }, [pageError, authReady, isAllowed, router])
+  }, [targetUserError, router])
 
   const redirectPath =
     currentUser?.id === targetUser?.id ? '/' : '/user-management' // go to hompage if user deletes themself
@@ -66,11 +54,11 @@ export default function UserPageDelete(props: {
     },
   })
 
-  if (targetUserLoading || authLoading) {
+  if (targetUserLoading) {
     return <Loader2 className="animate-spin" />
   }
 
-  if (pageError) return null
+  if (targetUserError) return null
 
   return (
     <>
