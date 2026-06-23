@@ -77,7 +77,7 @@ export default function PaginatedUsers() {
                       </strong>
                     )}
                     <Link
-                      href="#"
+                      href={`/user-management/users/${user?.id}`}
                       className="govuk-link govuk-link--no-visited-state"
                     >
                       View Account

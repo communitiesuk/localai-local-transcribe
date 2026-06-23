@@ -192,24 +192,6 @@ class Settings(BaseSettings):
         description="Browser-accessible backend URL for generating direct upload URLs in local storage.",
     )
 
-    WHISPLY_DEVICE: str = Field(
-        default="auto",
-        description="Device for Whisply transcription: auto, cpu, gpu, mps, or mlx",
-    )
-    WHISPLY_MODEL: str = Field(
-        default="large-v3-turbo",
-        description="Whisper model to use for Whisply transcription",
-    )
-    WHISPLY_HF_TOKEN: str | None = Field(
-        default=None,
-        description="HuggingFace token required for Whisply speaker diarization",
-    )
-    WHISPER_URL: str = Field(
-        default="http://localhost:11434/v1",
-        description="Base URL for faster-whisper-server providing OpenAI compatible API for transcription",
-    )
-    OLLAMA_BASE_URL: str = Field(default="http://localhost:11434/v1")
-
     # use a dotenv file for local development
     if dotenv_detected:
         model_config = SettingsConfigDict(env_file=DOT_ENV_PATH, extra="ignore")

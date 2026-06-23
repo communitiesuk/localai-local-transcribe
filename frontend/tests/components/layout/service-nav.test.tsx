@@ -46,7 +46,11 @@ describe('<ServiceNav />', () => {
     const { container } = render(<ServiceNav />)
     const outer = container.querySelector('section.govuk-service-navigation')
     expect(outer).not.toBeNull()
+<<<<<<< HEAD
     expect(outer).toHaveAttribute('data-module', 'govuk-service-navigation')
+=======
+    expect(outer).not.toHaveAttribute('data-module')
+>>>>>>> development
     expect(outer?.querySelector('.govuk-width-container')).not.toBeNull()
     expect(
       outer?.querySelector('.govuk-service-navigation__container')

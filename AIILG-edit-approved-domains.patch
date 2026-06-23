@@ -1,0 +1,717 @@
+diff --git a/frontend/app/user-management/domains/page.tsx b/frontend/app/user-management/domains/page.tsx
+new file mode 100644
+index 0000000..c36b3ec
+--- /dev/null
++++ b/frontend/app/user-management/domains/page.tsx
+@@ -0,0 +1,188 @@
++'use client'
++
++import {
++  GovukBackLink,
++  GovukButton,
++  GovukDetails,
++  GovukErrorSummary,
++  GovukFormGroup,
++  GovukHint,
++  GovukLabel,
++  GovukTextarea,
++} from '@/components/govuk'
++import { useAuthorisedUser } from '@/hooks/use-authorised-user'
++import { useOrganisation } from '@/hooks/use-organisation'
++import { OrganisationResponse } from '@/lib/client'
++import {
++  getOrganisationOrganisationsOrganisationIdGetQueryKey,
++  updateOrganisationOrganisationsOrganisationIdPatchMutation,
++} from '@/lib/client/@tanstack/react-query.gen'
++import { UserRole } from '@/lib/utils'
++import { useMutation, useQueryClient } from '@tanstack/react-query'
++import { Loader2 } from 'lucide-react'
++import Link from 'next/link'
++import { useRouter } from 'next/navigation'
++import { useCallback } from 'react'
++import { Controller, useForm } from 'react-hook-form'
++import { toast } from 'sonner'
++
++function parseDomains(value: string): string[] {
++  return value
++    .split('\n')
++    .map((domain) => domain.trim())
++    .filter(Boolean)
++}
++
++type EditDomainsForm = { domains: string }
++
++export default function EditApprovedDomainsPage() {
++  const { currentUser, isLoading: userLoading } = useAuthorisedUser([
++    UserRole.MHCLG_SUPPORT_ADMIN,
++  ])
++
++  const { data: organisation, isLoading: organisationLoading } =
++    useOrganisation(currentUser?.organisation_id ?? '')
++
++  if (userLoading || organisationLoading || !organisation) {
++    return (
++      <div className="govuk-body flex items-center gap-2">
++        <Loader2 className="animate-spin" />
++        Loading...
++      </div>
++    )
++  }
++
++  return (
++    <>
++      <GovukBackLink />
++      <h1 className="govuk-heading-l">Edit approved domains</h1>
++      <EditDomainsForm organisation={organisation} />
++    </>
++  )
++}
++
++function EditDomainsForm({
++  organisation,
++}: {
++  organisation: OrganisationResponse
++}) {
++  const router = useRouter()
++  const queryClient = useQueryClient()
++
++  const form = useForm<EditDomainsForm>({
++    defaultValues: {
++      domains: organisation.allowed_domains.join('\n'),
++    },
++  })
++
++  const { mutateAsync, isPending } = useMutation({
++    ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
++  })
++
++  const onSubmit = useCallback(
++    async (data: EditDomainsForm) => {
++      await mutateAsync(
++        {
++          path: { organisation_id: organisation.id },
++          body: { allowed_domains: parseDomains(data.domains) },
++        },
++        {
++          onSuccess() {
++            queryClient.invalidateQueries({
++              queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
++                path: { organisation_id: organisation.id },
++              }),
++            })
++            toast.success('Approved domains updated')
++            router.push('/user-management')
++          },
++          onError() {
++            toast.error('Failed to update approved domains')
++          },
++        }
++      )
++    },
++    [mutateAsync, organisation.id, queryClient, router]
++  )
++
++  const domainsError = form.formState.errors.domains
++
++  return (
++    <form onSubmit={form.handleSubmit(onSubmit)}>
++      {domainsError && (
++        <GovukErrorSummary
++          errorList={[{ href: '#domains', text: domainsError.message ?? '' }]}
++        />
++      )}
++
++      <GovukFormGroup hasError={!!domainsError}>
++        <GovukLabel htmlFor="domains">Approved domains</GovukLabel>
++        <GovukHint id="domains-hint">
++          Please list any approved domains on individual lines and without the
++          &apos;@&apos; symbol (e.g. &apos;communities.gov.uk&apos;).
++        </GovukHint>
++        {domainsError && (
++          <p id="domains-error" className="govuk-error-message">
++            <span className="govuk-visually-hidden">Error:</span>{' '}
++            {domainsError.message}
++          </p>
++        )}
++        <Controller
++          control={form.control}
++          name="domains"
++          rules={{
++            validate: (value) =>
++              parseDomains(value).length > 0 ||
++              'Enter at least one approved domain',
++          }}
++          render={({ field: { value, onChange, ref, disabled } }) => (
++            <GovukTextarea
++              id="domains"
++              name="domains"
++              rows={8}
++              aria-describedby={
++                domainsError ? 'domains-hint domains-error' : 'domains-hint'
++              }
++              value={value}
++              onChange={onChange}
++              disabled={disabled}
++              ref={ref}
++            />
++          )}
++        />
++      </GovukFormGroup>
++
++      <div className="flex items-center gap-4">
++        <GovukButton type="submit" disabled={isPending}>
++          {isPending ? (
++            <span className="flex items-center gap-2">
++              <Loader2 className="h-4 w-4 animate-spin" />
++              Saving...
++            </span>
++          ) : (
++            'Save'
++          )}
++        </GovukButton>
++        <Link
++          href="/user-management"
++          className="govuk-link govuk-link--no-visited-state"
++        >
++          Cancel
++        </Link>
++      </div>
++
++      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
++
++      <GovukDetails summary="More about approved domains">
++        <p className="govuk-body">
++          These are the email address domains that are able to be invited to a
++          given organisation using Internal Access authentication.
++        </p>
++        <p className="govuk-body">
++          Email addresses without an associated approved domain will not be able
++          to be invited.
++        </p>
++      </GovukDetails>
++    </form>
++  )
++}
+diff --git a/frontend/app/user-management/page.tsx b/frontend/app/user-management/page.tsx
+index 50c7ef4..f2b7dfd 100644
+--- a/frontend/app/user-management/page.tsx
++++ b/frontend/app/user-management/page.tsx
+@@ -3,8 +3,9 @@
+ import { Suspense } from 'react'
+ import { Button } from '@/components/ui/button'
+ import { ChevronLeft, Loader2 } from 'lucide-react'
++import Link from 'next/link'
+ import { useRouter } from 'next/navigation'
+-import { UserRole } from '@/lib/utils'
++import { UserRole, hasAnyRole } from '@/lib/utils'
+ import PaginatedUsers from '@/components/users/paginated-users'
+ import { useAuthorisedUser } from '@/hooks/use-authorised-user'
+ import { useOrganisation } from '@/hooks/use-organisation'
+@@ -25,6 +26,10 @@ export default function UserManagementPage() {
+     currentUser?.organisation_id ?? ''
+   )
+ 
++  const isSystemAdmin = hasAnyRole(currentUser?.roles, [
++    UserRole.MHCLG_SUPPORT_ADMIN,
++  ])
++
+   if (userLoading) return <Loader2 className="animate-spin" />
+ 
+   if (userError) return <p>Error: Failed to load users.</p>
+@@ -47,9 +52,23 @@ export default function UserManagementPage() {
+       <h1 className="govuk-heading-l">User Management</h1>
+       {organisation && <h2 className="govuk-heading-s">{organisation.name}</h2>}
+ 
+-      <button type="button" className="govuk-button" data-module="govuk-button">
+-        Invite new user
+-      </button>
++      <div className="flex items-center gap-4">
++        <button
++          type="button"
++          className="govuk-button"
++          data-module="govuk-button"
++        >
++          Invite new user
++        </button>
++        {isSystemAdmin && (
++          <Link
++            href="/user-management/domains"
++            className="govuk-link govuk-link--no-visited-state"
++          >
++            Edit approved domains
++          </Link>
++        )}
++      </div>
+ 
+       <Suspense fallback={null}>
+         <PaginatedUsers />
+diff --git a/frontend/components/govuk/README.md b/frontend/components/govuk/README.md
+index 5c0f14f..089fc54 100644
+--- a/frontend/components/govuk/README.md
++++ b/frontend/components/govuk/README.md
+@@ -82,6 +82,7 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
+ | `GovukBackLink`     | Back link (href or dynamic back) | Yes     |
+ | `GovukButton`       | Button                           | Yes     |
+ | `GovukButtonLink`   | Button link                      | Yes     |
++| `GovukDetails`      | Details                          | No      |
+ | `GovukErrorSummary` | Error summary                    | No      |
+ | `GovukFieldset`     | Fieldset                         | No      |
+ | `GovukFormGroup`    | Form group                       | No      |
+@@ -89,3 +90,4 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
+ | `GovukLabel`        | Label                            | No      |
+ | `GovukLegend`       | Legend                           | No      |
+ | `GovukRadios`       | Radios                           | Yes     |
++| `GovukTextarea`     | Textarea                         | Yes     |
+diff --git a/frontend/components/govuk/details.tsx b/frontend/components/govuk/details.tsx
+new file mode 100644
+index 0000000..c2c9544
+--- /dev/null
++++ b/frontend/components/govuk/details.tsx
+@@ -0,0 +1,25 @@
++import { cn } from '@/lib/utils'
++
++type Props = {
++  summary: React.ReactNode
++  className?: string
++  children: React.ReactNode
++} & Omit<
++  React.DetailsHTMLAttributes<HTMLDetailsElement>,
++  'className' | 'children'
++>
++
++export function GovukDetails({ summary, className, children, ...rest }: Props) {
++  return (
++    <details
++      {...rest}
++      className={cn('govuk-details', className)}
++      data-module="govuk-details"
++    >
++      <summary className="govuk-details__summary">
++        <span className="govuk-details__summary-text">{summary}</span>
++      </summary>
++      <div className="govuk-details__text">{children}</div>
++    </details>
++  )
++}
+diff --git a/frontend/components/govuk/index.ts b/frontend/components/govuk/index.ts
+index 390f637..5861d70 100644
+--- a/frontend/components/govuk/index.ts
++++ b/frontend/components/govuk/index.ts
+@@ -1,5 +1,6 @@
+ export { GovukBackLink } from './back-link'
+ export { GovukButton, GovukButtonLink } from './button'
++export { GovukDetails } from './details'
+ export { GovukErrorSummary } from './error-summary'
+ export type { ErrorItem } from './error-summary'
+ export { GovukFieldset } from './fieldset'
+@@ -8,3 +9,4 @@ export { GovukHint } from './hint'
+ export { GovukLabel } from './label'
+ export { GovukLegend } from './legend'
+ export { GovukRadios } from './radios'
++export { GovukTextarea } from './textarea'
+diff --git a/frontend/components/govuk/textarea.tsx b/frontend/components/govuk/textarea.tsx
+new file mode 100644
+index 0000000..07e4eba
+--- /dev/null
++++ b/frontend/components/govuk/textarea.tsx
+@@ -0,0 +1,29 @@
++'use client'
++
++import { cn } from '@/lib/utils'
++import { forwardRef } from 'react'
++
++type Props = {
++  id: string
++  name?: string
++  rows?: number
++  className?: string
++} & Omit<
++  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
++  'className' | 'rows' | 'id'
++>
++
++export const GovukTextarea = forwardRef<HTMLTextAreaElement, Props>(
++  function GovukTextarea({ id, name, rows = 5, className, ...rest }, ref) {
++    return (
++      <textarea
++        {...rest}
++        ref={ref}
++        id={id}
++        name={name}
++        rows={rows}
++        className={cn('govuk-textarea', className)}
++      />
++    )
++  }
++)
+diff --git a/frontend/tests/app/user-management/domains/page.test.tsx b/frontend/tests/app/user-management/domains/page.test.tsx
+new file mode 100644
+index 0000000..0232137
+--- /dev/null
++++ b/frontend/tests/app/user-management/domains/page.test.tsx
+@@ -0,0 +1,175 @@
++/* eslint-disable @typescript-eslint/no-explicit-any */
++import { render, screen } from '@testing-library/react'
++import userEvent from '@testing-library/user-event'
++import { describe, expect, it, vi, beforeEach } from 'vitest'
++import EditApprovedDomainsPage from '@/app/user-management/domains/page'
++import { useMutation, useQueryClient } from '@tanstack/react-query'
++import { useAuthorisedUser } from '@/hooks/use-authorised-user'
++import { useOrganisation } from '@/hooks/use-organisation'
++
++const mockBack = vi.fn()
++const mockPush = vi.fn()
++vi.mock('next/navigation', () => ({
++  useRouter: () => ({
++    back: mockBack,
++    push: mockPush,
++  }),
++}))
++
++vi.mock('sonner', () => ({
++  toast: {
++    success: vi.fn(),
++    error: vi.fn(),
++  },
++}))
++
++vi.mock('@/hooks/use-authorised-user', () => ({
++  useAuthorisedUser: vi.fn(),
++}))
++
++vi.mock('@/hooks/use-organisation', () => ({
++  useOrganisation: vi.fn(),
++}))
++
++vi.mock('@tanstack/react-query', async (importOriginal) => {
++  const actual = await importOriginal<typeof import('@tanstack/react-query')>()
++  return {
++    ...actual,
++    useMutation: vi.fn(),
++    useQueryClient: vi.fn(),
++  }
++})
++
++describe('<EditApprovedDomainsPage />', () => {
++  const mockMutateAsync = vi.fn()
++  const mockInvalidateQueries = vi.fn()
++
++  beforeEach(() => {
++    vi.clearAllMocks()
++
++    vi.mocked(useAuthorisedUser).mockReturnValue({
++      currentUser: {
++        id: 'user-1',
++        organisation_id: 'org-1',
++      },
++      isAllowed: true,
++      isLoading: false,
++      isError: false,
++    } as any)
++
++    vi.mocked(useOrganisation).mockReturnValue({
++      data: {
++        id: 'org-1',
++        name: 'Maidstone Borough Council',
++        allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
++        created_datetime: '2025-01-01T00:00:00Z',
++        updated_datetime: '2025-01-01T00:00:00Z',
++      },
++      isLoading: false,
++    } as any)
++
++    vi.mocked(useMutation).mockReturnValue({
++      mutateAsync: mockMutateAsync,
++      isPending: false,
++    } as any)
++
++    vi.mocked(useQueryClient).mockReturnValue({
++      invalidateQueries: mockInvalidateQueries,
++    } as any)
++  })
++
++  it('renders a loading state while the user or organisation is loading', () => {
++    vi.mocked(useOrganisation).mockReturnValue({
++      data: undefined,
++      isLoading: true,
++    } as any)
++
++    render(<EditApprovedDomainsPage />)
++    expect(screen.getByText('Loading...')).toBeInTheDocument()
++  })
++
++  it('renders the heading, back link, and prepopulates the textarea with the approved domains', () => {
++    render(<EditApprovedDomainsPage />)
++
++    expect(
++      screen.getByRole('heading', { name: 'Edit approved domains' })
++    ).toBeInTheDocument()
++    expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
++
++    const textarea = screen.getByLabelText('Approved domains', {
++      exact: false,
++    }) as HTMLTextAreaElement
++    expect(textarea.value).toBe('maidstone.gov.uk\ncommunities.gov.uk')
++  })
++
++  it('renders the hint text and the expandable help section', () => {
++    render(<EditApprovedDomainsPage />)
++
++    expect(
++      screen.getByText(/Please list any approved domains/i)
++    ).toBeInTheDocument()
++    expect(screen.getByText('More about approved domains')).toBeInTheDocument()
++    expect(screen.getByText(/able to be invited to a/i)).toBeInTheDocument()
++  })
++
++  it('triggers router.back on back link click', async () => {
++    render(<EditApprovedDomainsPage />)
++    await userEvent.click(screen.getByRole('link', { name: 'Back' }))
++    expect(mockBack).toHaveBeenCalledTimes(1)
++  })
++
++  it('submits the parsed domains list, invalidates the query, and navigates back on success', async () => {
++    mockMutateAsync.mockResolvedValueOnce({})
++    render(<EditApprovedDomainsPage />)
++
++    const textarea = screen.getByLabelText('Approved domains', {
++      exact: false,
++    })
++    await userEvent.clear(textarea)
++    await userEvent.type(
++      textarea,
++      'maidstone.gov.uk\n\n  communities.gov.uk  \n'
++    )
++
++    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
++
++    expect(mockMutateAsync).toHaveBeenCalledWith(
++      {
++        path: { organisation_id: 'org-1' },
++        body: { allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'] },
++      },
++      expect.any(Object)
++    )
++
++    const mutationCallArgs = mockMutateAsync.mock.calls[0]
++    const onSuccessCallback = mutationCallArgs[1]?.onSuccess
++    onSuccessCallback?.()
++
++    expect(mockInvalidateQueries).toHaveBeenCalled()
++    expect(mockPush).toHaveBeenCalledWith('/user-management')
++  })
++
++  it('shows a validation error and does not submit when all domains are removed', async () => {
++    render(<EditApprovedDomainsPage />)
++
++    const textarea = screen.getByLabelText('Approved domains', {
++      exact: false,
++    })
++    await userEvent.clear(textarea)
++
++    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
++
++    expect(
++      await screen.findAllByText('Enter at least one approved domain')
++    ).not.toHaveLength(0)
++    expect(mockMutateAsync).not.toHaveBeenCalled()
++  })
++
++  it('renders a Cancel link back to user management', () => {
++    render(<EditApprovedDomainsPage />)
++    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
++      'href',
++      '/user-management'
++    )
++  })
++})
+diff --git a/frontend/tests/components/govuk/details.test.tsx b/frontend/tests/components/govuk/details.test.tsx
+new file mode 100644
+index 0000000..bb281b3
+--- /dev/null
++++ b/frontend/tests/components/govuk/details.test.tsx
+@@ -0,0 +1,78 @@
++import { GovukDetails } from '@/components/govuk/details'
++import { render, screen } from '@testing-library/react'
++import { describe, expect, it } from 'vitest'
++
++describe('<GovukDetails />', () => {
++  it('renders a details element with the canonical class and data-module', () => {
++    const { container } = render(
++      <GovukDetails summary="More about approved domains">
++        <p>Body text</p>
++      </GovukDetails>
++    )
++    const root = container.firstElementChild as HTMLElement
++    expect(root.tagName).toBe('DETAILS')
++    expect(root).toHaveClass('govuk-details')
++    expect(root).toHaveAttribute('data-module', 'govuk-details')
++  })
++
++  it('renders the summary text inside the canonical summary markup', () => {
++    render(
++      <GovukDetails summary="More about approved domains">
++        <p>Body text</p>
++      </GovukDetails>
++    )
++    const summary = screen.getByText('More about approved domains')
++    expect(summary.tagName).toBe('SPAN')
++    expect(summary).toHaveClass('govuk-details__summary-text')
++    expect(summary.parentElement).toHaveClass('govuk-details__summary')
++  })
++
++  it('renders children inside the canonical text wrapper', () => {
++    const { container } = render(
++      <GovukDetails summary="Help">
++        <p>Some explanatory text</p>
++      </GovukDetails>
++    )
++    const text = container.querySelector('.govuk-details__text') as HTMLElement
++    expect(text).not.toBeNull()
++    expect(text.textContent).toBe('Some explanatory text')
++  })
++
++  it('is closed by default and opens when the open prop is set', () => {
++    const { container, rerender } = render(
++      <GovukDetails summary="Help">
++        <p>Body</p>
++      </GovukDetails>
++    )
++    const root = container.querySelector('details') as HTMLDetailsElement
++    expect(root.open).toBe(false)
++
++    rerender(
++      <GovukDetails summary="Help" open>
++        <p>Body</p>
++      </GovukDetails>
++    )
++    expect(
++      (container.querySelector('details') as HTMLDetailsElement).open
++    ).toBe(true)
++  })
++
++  it('composes a caller-supplied className without clobbering the canonical class', () => {
++    const { container } = render(
++      <GovukDetails summary="Help" className="mt-4">
++        <p>Body</p>
++      </GovukDetails>
++    )
++    const root = container.firstElementChild as HTMLElement
++    expect(root).toHaveClass('govuk-details', 'mt-4')
++  })
++
++  it('forwards arbitrary HTML attributes via spread', () => {
++    render(
++      <GovukDetails summary="Help" data-testid="domains-help">
++        <p>Body</p>
++      </GovukDetails>
++    )
++    expect(screen.getByTestId('domains-help')).toBeInTheDocument()
++  })
++})
+diff --git a/frontend/tests/components/govuk/textarea.test.tsx b/frontend/tests/components/govuk/textarea.test.tsx
+new file mode 100644
+index 0000000..4a3ea91
+--- /dev/null
++++ b/frontend/tests/components/govuk/textarea.test.tsx
+@@ -0,0 +1,100 @@
++import { GovukTextarea } from '@/components/govuk/textarea'
++import { render, screen } from '@testing-library/react'
++import userEvent from '@testing-library/user-event'
++import { createRef } from 'react'
++import { Controller, useForm } from 'react-hook-form'
++import { describe, expect, it, vi } from 'vitest'
++
++describe('<GovukTextarea />', () => {
++  it('renders a textarea with the canonical govuk-textarea class and a default of 5 rows', () => {
++    render(<GovukTextarea id="example" />)
++    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement
++    expect(textarea.tagName).toBe('TEXTAREA')
++    expect(textarea).toHaveClass('govuk-textarea')
++    expect(textarea).toHaveAttribute('id', 'example')
++    expect(textarea).toHaveAttribute('rows', '5')
++  })
++
++  it('wires name and a custom rows count through to the rendered element', () => {
++    render(<GovukTextarea id="example" name="example" rows={8} />)
++    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement
++    expect(textarea).toHaveAttribute('name', 'example')
++    expect(textarea).toHaveAttribute('rows', '8')
++  })
++
++  it('renders the provided value', () => {
++    render(<GovukTextarea id="example" value="line one" readOnly />)
++    const textarea = screen.getByRole('textbox') as HTMLTextAreaElement
++    expect(textarea.value).toBe('line one')
++  })
++
++  it('calls onChange with the new value when typed into', async () => {
++    const onChange = vi.fn()
++    render(<GovukTextarea id="example" onChange={onChange} />)
++    const textarea = screen.getByRole('textbox')
++    await userEvent.type(textarea, 'a')
++    expect(onChange).toHaveBeenCalled()
++  })
++
++  it('disabled prop disables the rendered element', () => {
++    render(<GovukTextarea id="example" disabled />)
++    const textarea = screen.getByRole('textbox')
++    expect(textarea).toBeDisabled()
++  })
++
++  it('forwards a ref to the underlying textarea element', () => {
++    const ref = createRef<HTMLTextAreaElement>()
++    render(<GovukTextarea id="example" ref={ref} />)
++    expect(ref.current).toBeInstanceOf(HTMLTextAreaElement)
++  })
++
++  it('composes a caller-supplied className without clobbering the canonical class', () => {
++    render(<GovukTextarea id="example" className="mt-2" />)
++    const textarea = screen.getByRole('textbox')
++    expect(textarea).toHaveClass('govuk-textarea', 'mt-2')
++  })
++
++  it('forwards arbitrary HTML attributes via spread', () => {
++    render(<GovukTextarea id="example" aria-describedby="example-hint" />)
++    const textarea = screen.getByRole('textbox')
++    expect(textarea).toHaveAttribute('aria-describedby', 'example-hint')
++  })
++
++  it('integrates with react-hook-form via <Controller>', async () => {
++    const onSubmit = vi.fn()
++    type Form = { domains: string }
++
++    function Wrapper() {
++      const { control, handleSubmit } = useForm<Form>({
++        defaultValues: { domains: '' },
++      })
++      return (
++        <form onSubmit={handleSubmit(onSubmit)}>
++          <Controller
++            control={control}
++            name="domains"
++            render={({ field: { value, onChange, ref, disabled } }) => (
++              <GovukTextarea
++                id="domains"
++                name="domains"
++                value={value}
++                onChange={onChange}
++                disabled={disabled}
++                ref={ref}
++              />
++            )}
++          />
++          <button type="submit">Submit</button>
++        </form>
++      )
++    }
++
++    render(<Wrapper />)
++    await userEvent.type(screen.getByRole('textbox'), 'communities.gov.uk')
++    await userEvent.click(screen.getByRole('button', { name: 'Submit' }))
++    expect(onSubmit).toHaveBeenCalledTimes(1)
++    expect(onSubmit.mock.calls[0][0]).toEqual({
++      domains: 'communities.gov.uk',
++    })
++  })
++})

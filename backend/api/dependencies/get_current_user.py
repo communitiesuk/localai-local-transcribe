@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
@@ -43,26 +44,35 @@ async def get_current_user(
             logger.info("User {email} does not have the required permissions", email=email)
             raise unauthorised_error
 
-        # Try to find existing user
-
-        statement = select(User).where(User.email == email)
+        statement = select(User).where(User.subject_id == subject_id)
         user = (await session.exec(statement)).first()
 
         if not user:
+            # Try to find user by email address, this is a fallback for legacy
+            # accounts which do not yet have a subject id associated.
+            # After this login, a subject id will be added to the account and login
+            # matching by email should no longer be possible
+            statement = select(User).where(User.email == email and User.subject_id is None)
+            user = (await session.exec(statement)).first()
+
+        changed = False
+        if user:
+            # Update subject_id if has changed
+            if user.subject_id != subject_id:
+                user.subject_id = subject_id
+                changed = True
+        else:
             # Create new user if doesn't exist
             user = User(email=email, subject_id=subject_id)
+            changed = True
+
+        if changed:
             session.add(user)
             await session.commit()
             await session.refresh(user)
 
-        if user.subject_id is None:
-            user.subject_id = subject_id
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
-
-        if user.subject_id != subject_id:
-            raise unauthorised_error
+        user.last_login = datetime.now(UTC)
+        await session.commit()
 
         return user
     except MissingAuthTokenError as e:
