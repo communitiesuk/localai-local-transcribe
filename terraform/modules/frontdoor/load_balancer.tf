@@ -61,15 +61,11 @@ data "aws_iam_policy_document" "alb_logs_bucket_policy" {
       identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
     }
 
-    actions   = ["s3:PutObject"]
-    resources = ["${module.alb_logs.bucket_arn}/*"]
+    actions = ["s3:PutObject"]
+    resources = [
+      "${module.alb_logs.bucket_arn}/alb/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
+    ]
 
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceArn"
-      values   = [aws_lb.main.arn]
-    }
   }
 }
 
