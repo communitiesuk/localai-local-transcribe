@@ -51,7 +51,7 @@ export default function UserPageDelete(props: {
       router.replace('/generic-error')
     }
 
-    if (!pageError && authReady && !isAllowed) {
+    if (authReady && isAllowed === false) {
       router.replace('/unauthorised')
     }
   }, [pageError, authReady, isAllowed, router])

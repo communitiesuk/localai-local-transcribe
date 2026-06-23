@@ -53,7 +53,7 @@ export default function UserPage(props: {
       router.replace('/generic-error')
     }
 
-    if (!pageError && authReady && !isAllowed) {
+    if (authReady && isAllowed === false) {
       router.replace('/unauthorised')
     }
   }, [pageError, authReady, isAllowed, router])
