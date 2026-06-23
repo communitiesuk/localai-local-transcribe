@@ -28,8 +28,8 @@ resource "aws_lb" "main" {
 module "alb_logs" {
   source = "../s3_bucket"
 
-  bucket_name                        = "alb-logs-${var.environment_name}-${data.aws_caller_identity.current.account_id}"
-  access_log_bucket_name             = "alb-logs-${var.environment_name}-access-logs-${data.aws_caller_identity.current.account_id}"
+  bucket_name                        = "local-transcribe-alb-logs-${var.environment_name}"
+  access_log_bucket_name             = "local-transcribe-alb-logs-access-logs-${var.environment_name}"
   force_destroy                      = false
   object_lock_enabled                = false
   noncurrent_version_expiration_days = 700
