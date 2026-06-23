@@ -61,12 +61,26 @@ data "aws_iam_policy_document" "alb_logs_bucket_policy" {
       identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
     }
 
-    actions = ["s3:PutObject"]
-    resources = [
-      "${module.alb_logs.bucket_arn}/alb/AWSLogs/${data.aws_caller_identity.current.account_id}/*"
-    ]
+    actions   = ["s3:PutObject"]
+    resources = ["${module.alb_logs.bucket_arn}/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceArn"
+      values   = [aws_lb.main.arn]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values = [
+        "arn:aws:elasticloadbalancing:eu-west-2:${data.aws_caller_identity.current.account_id}:loadbalancer/*",
+      ]
+
+    }
 
   }
+
 }
 
 
