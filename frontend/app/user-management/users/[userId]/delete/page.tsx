@@ -59,7 +59,7 @@ export default function UserPageDelete(props: {
   let redirectPath =
     currentUser?.id === targetUser?.id ? '/' : '/user-management' // go to hompage if user deletes themself
 
-  const { mutate: deleteUser } = useMutation({
+  const { mutate: deleteUser, isPending: deletePending } = useMutation({
     ...deleteUserUsersUserIdDeleteMutation(),
     onSuccess() {
       router.replace(redirectPath)
@@ -105,7 +105,7 @@ export default function UserPageDelete(props: {
           variant="warning"
           onClick={() => deleteUser({ path: { user_id: userId } })}
         >
-          Delete account
+          {deletePending ? 'Deleting account...' : 'Delete account'}
         </GovukButton>
 
         <a className="govuk-link" href={`/user-management/users/${userId}`}>
