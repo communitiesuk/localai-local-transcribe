@@ -56,7 +56,7 @@ export default function UserPageDelete(props: {
     }
   }, [pageError, authReady, isAllowed, router])
 
-  let redirectPath =
+  const redirectPath =
     currentUser?.id === targetUser?.id ? '/' : '/user-management' // go to hompage if user deletes themself
 
   const { mutate: deleteUser, isPending: deletePending } = useMutation({
