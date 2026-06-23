@@ -14,10 +14,65 @@ resource "aws_lb" "main" {
   security_groups            = [aws_security_group.load_balancer.id]
   subnets                    = var.public_subnet_ids
 
+  access_logs {
+    bucket  = module.alb_logs.bucket
+    prefix  = "alb"
+    enabled = true
+  }
+
   lifecycle {
     prevent_destroy = true
   }
 }
+
+module "alb_logs" {
+  source = "../s3_bucket"
+
+  bucket_name                        = "local-transcribe-alb-logs-${var.environment_name}"
+  access_log_bucket_name             = "local-transcribe-alb-logs-access-logs-${var.environment_name}"
+  force_destroy                      = false
+  object_lock_enabled                = false
+  noncurrent_version_expiration_days = 700
+  access_s3_log_expiration_days      = 365
+  policy                             = data.aws_iam_policy_document.alb_logs_bucket_policy.json
+  kms_key_arn                        = null
+}
+
+data "aws_iam_policy_document" "alb_logs_bucket_policy" {
+  statement {
+    sid    = "AWSLogDeliveryAclCheck"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+
+    actions   = ["s3:GetBucketAcl"]
+    resources = [module.alb_logs.bucket_arn]
+  }
+
+  statement {
+    sid    = "AWSLogDeliveryWrite"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+
+    actions   = ["s3:PutObject"]
+    resources = ["${module.alb_logs.bucket_arn}/*"]
+
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceArn"
+      values   = [aws_lb.main.arn]
+    }
+  }
+}
+
 
 resource "aws_lb_listener" "https" {
   count = var.ssl_certs_created ? 1 : 0

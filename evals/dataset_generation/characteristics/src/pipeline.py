@@ -6,7 +6,7 @@ from common.llm.client import create_chatbot
 from evals.dataset_generation.characteristics.src.chunker import (
     build_chunks,
     deduplicate_characteristics,
-    process_chunk,
+    process_chunk_parallel,
 )
 from evals.dataset_generation.characteristics.src.schema import (
     CharacteristicDetection,
@@ -21,9 +21,7 @@ logger = logging.getLogger(__name__)
 
 async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> ProcessedFileResult:
     """Processes a single transcript file, extracting characteristics in chunks."""
-    prompt_rel_path = Path(config.prompts.extraction_template)
-    template_name = prompt_rel_path.stem
-    prompt_path = root_dir / prompt_rel_path
+    template_name = Path(config.prompts.agent_base_template).stem
     model_name = config.model.model
 
     logger.info("Processing %s using model '%s'", file_path.name, model_name)
@@ -37,12 +35,13 @@ async def process_file(file_path: Path, config: EvalsConfig, root_dir: Path) -> 
 
     all_detected_characteristics: list[CharacteristicDetection] = []
     failed_chunks: list[int] = []
-    chunks = build_chunks(transcript)
+    chunks = build_chunks(transcript, config.chunking.chunk_size_chars, config.chunking.overlap_chars)
 
+    base_path = root_dir / config.prompts.agent_base_template
     for idx, (chunk_text, offset) in enumerate(chunks):
         logger.info("  -> Sending Chunk %d of %d to Azure...", idx + 1, len(chunks))
         try:
-            detected = await process_chunk(chunk_text, offset, prompt_path, chatbot)
+            detected = await process_chunk_parallel(chunk_text, offset, base_path, chatbot)
             all_detected_characteristics.extend(detected)
             logger.info("     Found %d characteristics in chunk %d", len(detected), idx + 1)
         except (ValueError, RuntimeError, ConnectionError, TimeoutError) as e:
