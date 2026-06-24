@@ -51,15 +51,19 @@ export default function UserManagementPage() {
 
       <h1 className="govuk-heading-l">User Management</h1>
       {organisation && <h2 className="govuk-heading-s">{organisation.name}</h2>}
-
-      <button
-        type="button"
-        className="govuk-button"
-        data-module="govuk-button"
-        onClick={() => router.push('/invite-user')}
-      >
-        Invite new user
-      </button>
+      <div className="flex items-center gap-4">
+        <Link href="/invite-user" className="govuk-button">
+          Invite new user
+        </Link>
+        {isSystemAdmin && (
+          <Link
+            href="/user-management/domains"
+            className="govuk-link govuk-link--no-visited-state"
+          >
+            Edit approved domains
+          </Link>
+        )}
+      </div>
 
       <Suspense fallback={null}>
         <PaginatedUsers />
