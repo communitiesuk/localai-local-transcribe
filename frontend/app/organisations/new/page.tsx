@@ -19,16 +19,6 @@ import {
 } from '@/components/govuk'
 
 export default function CreateOrganisation() {
-  const router = useRouter()
-
-  const { mutate: createOrganisation, isPending: createOrganisationPending } =
-    useMutation({
-      ...createOrganisationOrganisationsPostMutation(),
-      onSuccess() {
-        router.replace('/#')
-      },
-    })
-
   return (
     <>
       <GovukHeading>Create organisation</GovukHeading>
@@ -50,7 +40,18 @@ function CreateOrganisationForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<Inputs>({})
-  const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data, errors) // createOrg here
+  const router = useRouter()
+
+  const { mutate: createOrganisation, isPending: createOrganisationPending } =
+    useMutation({
+      ...createOrganisationOrganisationsPostMutation(),
+      onSuccess(data: OrganisationResponse) {
+        router.replace(`/organisations/${data.id}`)
+      },
+    })
+
+  const onSubmit: SubmitHandler<Inputs> = (data) =>
+    createOrganisation({ body: { name: data.name, allowed_domains: [] } })
 
   const organisationNameError = errors.name
 
@@ -76,35 +77,15 @@ function CreateOrganisationForm() {
             {...register('name', { required: 'Enter an organisation name' })}
           />
         </GovukFormGroup>
-        <GovukButton type="submit">Craete organisation</GovukButton>
+        <div className="govuk-button-group">
+          <GovukButton type="submit" disabled={createOrganisationPending}>
+            Create organisation
+          </GovukButton>
+          <Link href="/user-management" className="govuk-link">
+            Cancel
+          </Link>
+        </div>
       </form>
     </>
-  )
-}
-
-function ExampleForm() {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<Inputs>()
-  const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data)
-
-  console.log(watch('example')) // watch input value by passing the name of it
-
-  return (
-    /* "handleSubmit" will validate your inputs before invoking "onSubmit" */
-    <form onSubmit={handleSubmit(onSubmit)}>
-      {/* register your input into the hook by invoking the "register" function */}
-      <input defaultValue="test" {...register('example')} />
-
-      {/* include validation with required or other standard HTML validation rules */}
-      <input {...register('exampleRequired', { required: true })} />
-      {/* errors will return when field validation fails  */}
-      {errors.exampleRequired && <span>This field is required</span>}
-
-      <input type="submit" />
-    </form>
   )
 }
