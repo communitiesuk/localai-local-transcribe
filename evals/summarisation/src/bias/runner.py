@@ -13,9 +13,11 @@ from evals.summarisation.src.bias.data.record_builder import (
     generate_supplementary_comparisons,
     process_counterfactual_file,
 )
-from evals.summarisation.src.bias.output_formatter import create_plotting_output, create_summary
+from evals.summarisation.src.bias.output_formatter import build_results, create_summary
 from evals.summarisation.src.bias.regard_scorer import REGARDScorer
 from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
+from evals.summarisation.src.bias.spc import load_spc_baseline
+from evals.summarisation.src.bias.thresholds import apply_thresholds
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import AppConfig, build_metrics
 
@@ -40,6 +42,7 @@ async def run_counterfactual_eval(
     metrics = build_metrics(cfg)
     sentiment_analyzer = SentimentAnalyzer()
     regard_scorer = REGARDScorer()
+    spc_baseline = load_spc_baseline(input_dir)
 
     if cfg.run.num_iterations is None:
         msg = "num_iterations must be specified in config for bias evaluations"
@@ -83,10 +86,11 @@ async def run_counterfactual_eval(
         baseline_to_variants, run_id, num_iterations, metrics, cfg
     )
 
-    plotting_output = create_plotting_output(all_records, supplementary_records, run_id, cfg, num_iterations)
+    results = build_results(all_records, supplementary_records, run_id, cfg, num_iterations)
+    apply_thresholds(results, all_records, spc_baseline)
     try:
         with results_path.open("wb") as f:
-            f.write(orjson.dumps(plotting_output.model_dump(), option=orjson.OPT_INDENT_2))
+            f.write(orjson.dumps(results.model_dump(), option=orjson.OPT_INDENT_2))
     except OSError as e:
         msg = f"Failed to write results to {results_path}: {e}"
         logger.error(msg)

@@ -6,6 +6,7 @@ import pytest
 from pydantic import ValidationError
 
 from evals.summarisation.src.bias.bias_types import CounterfactualInput
+from evals.summarisation.src.bias.constants import SPC_BASELINE_FILENAME
 from evals.summarisation.src.bias.data.loader import discover_counterfactual_files, load_counterfactual_json
 
 
@@ -124,6 +125,20 @@ def test_discover_counterfactual_files_no_json_files(tmp_path):
 
     with pytest.raises(ValueError, match="No JSON files found"):
         discover_counterfactual_files(tmp_path)
+
+
+def test_discover_counterfactual_files_excludes_spc_baseline(tmp_path, sample_counterfactual_data):
+    json_file = tmp_path / "test.json"
+    json_file.write_text(json.dumps(sample_counterfactual_data), encoding="utf-8")
+
+    baseline_file = tmp_path / SPC_BASELINE_FILENAME
+    baseline_file.write_text(json.dumps({"metrics": {}}), encoding="utf-8")
+
+    files = discover_counterfactual_files(tmp_path)
+
+    assert len(files) == 1
+    assert files[0].name == "test.json"
+    assert baseline_file.exists()
 
 
 def test_discover_counterfactual_files_nonexistent_directory(tmp_path):

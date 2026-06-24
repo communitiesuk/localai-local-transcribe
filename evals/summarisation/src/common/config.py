@@ -7,16 +7,29 @@ import yaml
 from pydantic import BaseModel, Field
 
 type MetricName = Literal[
-    "faithfulness",
+    "accuracy",
+    "numerical_accuracy",
+    "template_fit",
     "coverage",
-    "conciseness",
-    "coherence",
+    "action_clarity",
+    "professional_tone",
+    "readability",
+    "auditability",
 ]
 
 
 def default_criteria() -> list[MetricName]:
     """Returns default list of evaluation criteria."""
-    return ["faithfulness", "coverage", "conciseness", "coherence"]
+    return [
+        "accuracy",
+        "numerical_accuracy",
+        "template_fit",
+        "coverage",
+        "action_clarity",
+        "professional_tone",
+        "readability",
+        "auditability",
+    ]
 
 
 class RunConfig(BaseModel):

@@ -11,7 +11,7 @@ from evals.summarisation.src.bias.bias_types import (
     IterationMetrics,
     MetricStatistics,
 )
-from evals.summarisation.src.bias.output_formatter import create_plotting_output, create_summary
+from evals.summarisation.src.bias.output_formatter import build_results, create_summary
 from evals.summarisation.src.common import AppConfig
 
 
@@ -39,14 +39,14 @@ def sample_iteration_metrics():
     return [
         IterationMetrics(
             metrics={
-                "faithfulness": CounterfactualMetricResult(score=0.8, reason="Good"),
+                "accuracy": CounterfactualMetricResult(score=0.8, reason="Good"),
                 "coverage": CounterfactualMetricResult(score=0.7, reason="OK"),
             },
             sentiment_score=0.5,
         ),
         IterationMetrics(
             metrics={
-                "faithfulness": CounterfactualMetricResult(score=0.9, reason="Great"),
+                "accuracy": CounterfactualMetricResult(score=0.9, reason="Great"),
                 "coverage": CounterfactualMetricResult(score=0.8, reason="Better"),
             },
             sentiment_score=0.6,
@@ -71,11 +71,11 @@ def sample_record(sample_iteration_metrics):
         iterations_original=sample_iteration_metrics,
         iterations_counterfactual=sample_iteration_metrics,
         metrics_original_stats={
-            "faithfulness": MetricStatistics(mean=0.85, std=0.05, values=[0.8, 0.9]),
+            "accuracy": MetricStatistics(mean=0.85, std=0.05, values=[0.8, 0.9]),
             "coverage": MetricStatistics(mean=0.75, std=0.05, values=[0.7, 0.8]),
         },
         metrics_counterfactual_stats={
-            "faithfulness": MetricStatistics(mean=0.80, std=0.05, values=[0.75, 0.85]),
+            "accuracy": MetricStatistics(mean=0.80, std=0.05, values=[0.75, 0.85]),
             "coverage": MetricStatistics(mean=0.70, std=0.05, values=[0.65, 0.75]),
         },
         sentiment_delta_stats=MetricStatistics(mean=0.05, std=0.02, values=[0.05, 0.05]),
@@ -146,9 +146,9 @@ def test_create_summary_aggregates_metrics(sample_config, sample_record):
     assert axis_data["num_comparisons"] == 1
     assert axis_data["avg_sentiment_delta"] == pytest.approx(0.05)
     assert "avg_judge_score_delta" in axis_data
-    assert "faithfulness" in axis_data["avg_judge_score_delta"]
+    assert "accuracy" in axis_data["avg_judge_score_delta"]
     assert "coverage" in axis_data["avg_judge_score_delta"]
-    assert axis_data["avg_judge_score_delta"]["faithfulness"] == pytest.approx(-0.05)
+    assert axis_data["avg_judge_score_delta"]["accuracy"] == pytest.approx(-0.05)
     assert axis_data["avg_judge_score_delta"]["coverage"] == pytest.approx(-0.05)
 
 
@@ -164,7 +164,7 @@ def test_create_plotting_output_basic(mock_settings, mock_analyzer_class, sample
     run_id = "test-run-plot"
     num_iterations = 2
 
-    output = create_plotting_output(records, supplementary_records, run_id, sample_config, num_iterations)
+    output = build_results(records, supplementary_records, run_id, sample_config, num_iterations)
 
     assert output.run_id == run_id
     assert output.num_iterations == num_iterations
@@ -190,7 +190,7 @@ def test_create_plotting_output_with_supplementary(mock_settings, mock_analyzer_
     run_id = "test-run-supp"
     num_iterations = 2
 
-    output = create_plotting_output(records, supplementary_records, run_id, sample_config, num_iterations)
+    output = build_results(records, supplementary_records, run_id, sample_config, num_iterations)
 
     assert len(output.comparisons) == 2
     assert output.comparisons[0].is_supplementary is False
@@ -212,7 +212,7 @@ def test_create_plotting_output_parses_group_names(mock_settings, mock_analyzer_
     run_id = "test-run-names"
     num_iterations = 2
 
-    output = create_plotting_output(records, supplementary_records, run_id, sample_config, num_iterations)
+    output = build_results(records, supplementary_records, run_id, sample_config, num_iterations)
 
     assert output.comparisons[0].group_a_name == "Male"
     assert output.comparisons[0].group_b_name == "Female"
@@ -232,13 +232,13 @@ def test_create_plotting_output_includes_sentiment_metric(
     run_id = "test-run-sentiment"
     num_iterations = 2
 
-    output = create_plotting_output(records, supplementary_records, run_id, sample_config, num_iterations)
+    output = build_results(records, supplementary_records, run_id, sample_config, num_iterations)
 
     metrics = output.comparisons[0].metrics
     metric_names = [m.metric_name for m in metrics]
     assert len(metrics) == 3
     assert "sentiment" in metric_names
-    assert "faithfulness" in metric_names
+    assert "accuracy" in metric_names
     assert "coverage" in metric_names
     sentiment_metric = next(m for m in metrics if m.metric_name == "sentiment")
     assert sentiment_metric.original_mean == pytest.approx(0.55)

@@ -7,8 +7,6 @@ from pathlib import Path
 import orjson
 import typer
 
-from evals.summarisation.src.bias.bias_types import PlottingOutput
-from evals.summarisation.src.bias.visualization.reporter import generate_visualizations
 from evals.summarisation.src.common import load_config
 from evals.summarisation.src.hallucination.types import HallucinationInput
 
@@ -34,15 +32,8 @@ async def run_bias_eval(config: Path) -> None:
 
     run_id, results_path = await run_counterfactual_eval(cfg, input_dir, output_dir)
 
-    with results_path.open("rb") as f:
-        plotting_output = PlottingOutput.model_validate(orjson.loads(f.read()))
-
-    run_output_dir = output_dir / run_id
-    generate_visualizations(plotting_output.comparisons, run_output_dir)
-
     typer.echo(f"\nRun ID: {run_id}")
     typer.echo(f"Results: {results_path}")
-    typer.echo(f"Visualizations: {run_output_dir / 'visualizations'}")
 
     tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
     if tasks:

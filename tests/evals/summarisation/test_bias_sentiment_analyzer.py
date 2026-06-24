@@ -82,6 +82,25 @@ def test_compute_sentiment_neutral(mock_sentiment_pipeline):
     assert result == 0.0
 
 
+def test_compute_sentiment_distribution_includes_neutral(mock_sentiment_pipeline):
+    mock_pipe, mock_tokenizer = mock_sentiment_pipeline
+
+    mock_pipe.return_value = [
+        [
+            {"label": "positive", "score": 0.6},
+            {"label": "neutral", "score": 0.3},
+            {"label": "negative", "score": 0.1},
+        ]
+    ]
+
+    analyzer = SentimentAnalyzer()
+    dist = analyzer.compute_sentiment_distribution("This is mostly good.")
+
+    assert dist == pytest.approx({"positive": 0.6, "neutral": 0.3, "negative": 0.1})
+    # compute_sentiment must stay consistent with the distribution (positive - negative)
+    assert analyzer.compute_sentiment("This is mostly good.") == pytest.approx(0.5)
+
+
 def test_split_text_by_tokens_single_chunk(mock_sentiment_pipeline):
     mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 

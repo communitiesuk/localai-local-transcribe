@@ -79,7 +79,7 @@ poetry run python evals/summarisation/src/bias/visualize.py \
 **Key parameters:**
 - `num_iterations`: Number of times to run each transcript through summarization (default: 5)
 - `input_dir`: Directory containing counterfactual JSON files (default: `evals/dataset_generation/counterfactual_generation/output`)
-- `metrics`: Judge metrics to evaluate (faithfulness, coverage, conciseness, coherence)
+- `metrics`: Judge metrics to evaluate (accuracy, numerical_accuracy, template_fit, coverage, action_clarity, professional_tone, readability, auditability)
 - `prompt_version`: Prompt version to use (e.g., `dev`, `prod`)
 
 ### Output
