@@ -21,7 +21,12 @@ const headingTag = {
   6: 'h6',
 } as const
 
-function Section({ heading, headingLevel = 2, className, children }: SectionProps) {
+function Section({
+  heading,
+  headingLevel = 2,
+  className,
+  children,
+}: SectionProps) {
   const Heading = headingTag[headingLevel]
 
   return (
@@ -36,7 +41,12 @@ function Section({ heading, headingLevel = 2, className, children }: SectionProp
   )
 }
 
-export function GovukAccordion({ id, className, children, ...rest }: AccordionProps) {
+export function GovukAccordion({
+  id,
+  className,
+  children,
+  ...rest
+}: AccordionProps) {
   return (
     <div
       {...rest}

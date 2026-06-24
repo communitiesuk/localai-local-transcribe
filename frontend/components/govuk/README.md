@@ -144,6 +144,7 @@ Pass `headingLevel` (2–6, default 2) on each Section to match surrounding docu
 Renders an `important` (default) or `success` banner.
 
 ARIA roles follow the GOV.UK pattern:
+
 - `important` → `role="region"` with `aria-labelledby`
 - `success` → `role="alert"` with `aria-labelledby`
 
