@@ -1,0 +1,48 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Sexual Orientation{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING SEXUAL ORIENTATION
+
+Flag any reference that reveals or implies a person's sexual orientation.
+
+**What to detect:**
+1. **Explicit sexuality references** — `"gay"`, `"lesbian"`, `"bisexual"`, `"straight"`, `"heterosexual"`, `"homosexual"`, `"queer"`, `"same-sex"`.
+2. **LGBT+ community references** — `"pride"`, `"the community"` in an LGBTQ+ context.
+3. **Partner references that imply sexual orientation** — `"my partner"` when context establishes a same-sex relationship; `"my husband"` / `"my wife"` in a same-sex couple context.
+4. **Compound intimate phrases that imply a same-sex partnership** — `"my partner in every sense of the word"`, `"my rock, my cheerleader, my everything"`, `"grateful to have been by your side"` when context establishes a same-sex relationship.
+
+**What NOT to detect:**
+- **Generic emotional or affective language alone** — `"for us"`, `"our journey"`, `"the love we've shared"`, `"the love we've built"`, `"being there for each other"` — these do NOT establish sexual orientation on their own.
+- A partner reference in a context where the relationship is clearly opposite-sex does NOT trigger this rule.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+I just want to say how grateful I am. You've been my rock, my cheerleader, my everything. My partner in every sense of the word. We've built a life as a same-sex couple.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Sexual Orientation",
+      "attribute_value": "Gay / same-sex partnership",
+      "evidence_spans": [
+        {"text": "My partner in every sense of the word"},
+        {"text": "same-sex couple"}
+      ],
+      "confidence": 0.90
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+This has been quite a journey for all of us. The love shown here has been incredible.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+{% endblock %}

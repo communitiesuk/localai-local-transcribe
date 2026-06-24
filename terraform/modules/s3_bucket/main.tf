@@ -177,6 +177,7 @@ resource "aws_s3_bucket_policy" "allow_log_writes" {
 
 data "aws_caller_identity" "current" {}
 
+
 data "aws_iam_policy_document" "allow_log_writes" {
   source_policy_documents = [data.aws_iam_policy_document.allow_ssl_requests_only.json]
   statement {
@@ -186,7 +187,7 @@ data "aws_iam_policy_document" "allow_log_writes" {
     }
 
     actions = [
-      "s3:PutObject"
+      "s3:PutObject",
     ]
 
     resources = [
