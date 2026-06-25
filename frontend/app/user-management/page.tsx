@@ -4,12 +4,13 @@ import { Suspense, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { UserRole, hasAnyRole } from '@/lib/utils'
 import PaginatedUsers from '@/components/users/paginated-users'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
+import { GovukBackLink } from '@/components/govuk'
+import { useRouter } from 'next/navigation'
 
 export default function UserManagementPage() {
   const router = useRouter()
@@ -40,18 +41,7 @@ export default function UserManagementPage() {
 
   return (
     <>
-      <Button
-        variant="link"
-        className="mb-4 self-start px-0! underline hover:decoration-2"
-        onClick={() => {
-          router.back()
-        }}
-      >
-        <span className="flex items-center">
-          <ChevronLeft />
-          Back
-        </span>
-      </Button>
+      <GovukBackLink />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <h1 className="govuk-heading-l govuk-!-margin-bottom-0">

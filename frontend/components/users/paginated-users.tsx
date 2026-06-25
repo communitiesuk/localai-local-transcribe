@@ -111,7 +111,7 @@ export default function PaginatedUsers({ organisationID }: Props) {
                       </strong>
                     )}
                     <Link
-                      href="#"
+                      href={`/user-management/users/${user?.id}`}
                       className="govuk-link govuk-link--no-visited-state"
                     >
                       View Account
