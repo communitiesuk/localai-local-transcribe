@@ -261,15 +261,21 @@ async def test_admin_can_list_organisation_users(
     mock_session.get.return_value = organisation
 
     mock_result = Mock()
+    mock_result.one.return_value = 2
     mock_result.all.return_value = [user1, user2]
     mock_session.exec.return_value = mock_result
 
     response = await client.get(f"/organisations/{organisation.id}/users")
 
     assert response.status_code == 200
+
     data = response.json()
-    assert isinstance(data, list)
-    assert {item["id"] for item in data} == {str(user1.id), str(user2.id)}
+    assert data["total_count"] == 2
+    assert data["page"] == 1
+    assert data["page_size"] == 10
+    assert data["total_pages"] == 1
+    assert isinstance(data["items"], list)
+    assert {item["id"] for item in data["items"]} == {str(user1.id), str(user2.id)}
 
 
 @pytest.mark.asyncio
