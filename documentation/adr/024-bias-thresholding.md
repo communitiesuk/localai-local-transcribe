@@ -16,6 +16,7 @@ Model providers will tweak their models over time. This will likely introduce va
 2. Established rule of thumb - the 4/5 rule
 3. Control charts (Statistical Process Control)
 4. Minimum Detectable Effect (MDE) sizing
+5. Statistical equivalence testing (TOST)
 
 ## Decision Outcome
 
@@ -67,6 +68,17 @@ Rather than asking "what's the threshold for bad?", ask "what's the smallest bia
 * Bad, because it is tough to explain to a non-technical audience beyond "no detectable bias", which is really a claim that our hyperparameter selection is good.
 * Bad, because it can be noisy, especially where we see explainable, "useful" bias.
 
+### 5. Statistical equivalence testing (TOST)
+
+Flip the question from "is the bias gap below the line?" to "do we have real evidence the gap is small?". We agree an acceptable margin per metric up front, plus a confidence level (default 95%), and a run passes only if the measured gap and its uncertainty both sit inside that margin — so a small or noisy sample cannot earn a "no bias" verdict by accident. Outcomes are three-way: pass (we have the evidence), fail (the gap is already over the line), and review (best guess is fine but the sample is too small to be sure, usually resolved by gathering more data). Adapted from a fairness-testing method (Lo, Datta & Salami, 2025).
+
+* Good, because it statistically removes the false "no bias" result, with a confidence rating behind it.
+* Good, because everything is measured as a gap between the pair, so no separate "acceptable score" is needed per metric.
+* Bad, because proving a gap is small needs far more data than spotting one, and our current dataset is potentially too small.
+* Bad, because it is, in the authors' own words, an extension of the 4/5 rule, which is not an ideal rule to build on.
+* Bad, because margins must be agreed for the judge metrics too, more work and less immediately practical than the rule-based check.
+
 ## More Information
 
 * Metrics in scope: LLM-as-judge scores and the Regard sentiment score, computed over factual/counterfactual transcript pairs.
+* Equivalence-testing source: Lo, V. S. Y., Datta, S., Salami, Y. (2025). Bringing practical statistical science to AI and predictive model fairness testing. *AI and Ethics*, 5, 2149–2164. https://doi.org/10.1007/s43681-024-00518-2
