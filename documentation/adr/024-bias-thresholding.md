@@ -8,7 +8,7 @@ Date of decision: 2026-06-23
 
 ## Context and Problem Statement
 
-Model providers will tweak their models over time. This will likely introduce variance into our measured bias scores. Our intended response to bias is to improve our base template prompts, and over time we expect to keep driving bias down through this prompt-improvement work rather than treat any single level as "good enough" forever. The open question is timing: intervening too early is wasteful (we would be chasing statistical fluctuations), but we want to know if significant interventions are need. So we need both a floor that defines unacceptable bias and a signal that distinguishes a real regression from noise.
+Model providers will tweak their models over time. This will likely introduce variance into our measured bias scores. Our intended response to bias is to improve our base template prompts, and over time we expect to keep driving bias down through this prompt-improvement work rather than treat any single level as "good enough" forever. The open question is timing: intervening too early is wasteful (we would be chasing statistical fluctuations), but we want to know if significant interventions are needed. So we need both a floor that defines unacceptable bias and a signal that distinguishes a real regression from noise.
 
 ## Considered Options
 
@@ -43,7 +43,7 @@ An accepted bias figure that is widely cited in AI bias research: the likelihood
 
 * Good, because it is an easy framework to work with and apply.
 * Good, because it is used in a lot of research as a threshold.
-* Good, because for the judge metric we get a acceptability definits essentially for free (they are defined for summarisation evaluation anyways)
+* Good, because for the judge metric we get acceptability definitions essentially for free (they are defined for summarisation evaluation anyways)
 * Bad, because it is not treated as a definite "fine" mark with respect to UK law.
 * Bad, because it offers a relatively shallow framing of the bias problem.
 
@@ -70,7 +70,7 @@ Rather than asking "what's the threshold for bad?", ask "what's the smallest bia
 
 ### 5. Statistical equivalence testing (TOST)
 
-Flip the question from "is the bias gap below the line?" to "do we have real evidence the gap is small?". We agree an acceptable margin per metric up front, plus a confidence level (default 95%), and a run passes only if the measured gap and its uncertainty both sit inside that margin — so a small or noisy sample cannot earn a "no bias" verdict by accident. Outcomes are three-way: pass (we have the evidence), fail (the gap is already over the line), and review (best guess is fine but the sample is too small to be sure, usually resolved by gathering more data). Adapted from a fairness-testing method (Lo, Datta & Salami, 2025).
+Flip the question from "is the bias gap below the line?" to "do we have real evidence the gap is small?". We agree an acceptable margin per metric up front, plus a significance level α (default 0.05, which under TOST implies 90% confidence), and a run passes only if the measured gap and its uncertainty both sit inside that margin — so a small or noisy sample cannot earn a "no bias" verdict by accident. Outcomes are three-way: pass (we have the evidence), fail (the gap is already over the line), and review (best guess is fine but the sample is too small to be sure, usually resolved by gathering more data). Adapted from a fairness-testing method (Lo, Datta & Salami, 2025).
 
 * Good, because it statistically removes the false "no bias" result, with a confidence rating behind it.
 * Good, because everything is measured as a gap between the pair, so no separate "acceptable score" is needed per metric.
