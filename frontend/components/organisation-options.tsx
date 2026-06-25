@@ -1,11 +1,11 @@
 type OrganisationOptionProps = {
-    id: string
-    name: string
+  id: string
+  name: string
 }
 
 export default function OrganisationOption({
-    id,
-    name,
+  id,
+  name,
 }: OrganisationOptionProps) {
-    return <option value={id}>{name}</option>
+  return <option value={id}>{name}</option>
 }
