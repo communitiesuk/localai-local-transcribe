@@ -46,7 +46,7 @@ function CreateOrganisationForm() {
     useMutation({
       ...createOrganisationOrganisationsPostMutation(),
       onSuccess(data: OrganisationResponse) {
-        router.replace(`/organisations/${data.id}`)
+        router.replace(`/organisations/${data.id}/domains`)
       },
     })
 
