@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { useUsers } from '@/hooks/use-users'
 import { GovukPagination } from '@/components/govuk/pagination'
 import { USERS_PER_PAGE } from '@/lib/constants'
 import { useSearchParams } from 'next/navigation'
@@ -15,8 +14,18 @@ import {
   GovukTableCell,
   GovukTableHeaderCell,
 } from '@/components/govuk/table'
+import {
+  listOrganisationsUsersOrganisationsOrganisationIdUsersGetOptions,
+  listUsersUsersGetOptions,
+} from '@/lib/client/@tanstack/react-query.gen'
+import { useQuery } from '@tanstack/react-query'
 
-export default function PaginatedUsers() {
+type Props = {
+  organisationID: string
+}
+
+export default function PaginatedUsers({ organisationID }: Props) {
+  const isSysAdmin = organisationID !== ''
   const searchParams = useSearchParams()
   const currentPage = Number(searchParams.get('page') ?? '1')
 
@@ -26,22 +35,47 @@ export default function PaginatedUsers() {
     return `?${params.toString()}`
   }
 
+  const localAdminQuery = useQuery({
+    ...listUsersUsersGetOptions({
+      query: {
+        page: currentPage,
+        page_size: USERS_PER_PAGE,
+      },
+    }),
+    enabled: !isSysAdmin,
+  })
+
+  const sysAdminQuery = useQuery({
+    ...listOrganisationsUsersOrganisationsOrganisationIdUsersGetOptions({
+      path: {
+        organisation_id: organisationID,
+      },
+      query: {
+        page: currentPage,
+        page_size: USERS_PER_PAGE,
+      },
+    }),
+    enabled: isSysAdmin,
+  })
+
+  const activeQuery = isSysAdmin ? sysAdminQuery : localAdminQuery
   const {
-    data: usersResponse,
-    isLoading: usersLoading,
-    isError: usersError,
-  } = useUsers(currentPage, USERS_PER_PAGE)
+    data: {
+      items: users,
+      total_pages: totalPages,
+      total_count: totalCount,
+    } = {},
+    isLoading,
+    error,
+  } = activeQuery
 
-  const users = usersResponse?.items
-  const totalPages = usersResponse?.total_pages
-
-  if (usersError) return <p>Error: Failed to load users.</p>
+  if (error) return <p>Error: Failed to load users.</p>
 
   return (
     <>
-      {usersLoading && <Loader2 className="animate-spin" />}
+      {isLoading && <Loader2 className="animate-spin" />}
 
-      <p className="govuk-body">Total Users: {usersResponse?.total_count}</p>
+      <p className="govuk-body">Total Users: {totalCount ?? 0}</p>
 
       {users && (
         <GovukTable>

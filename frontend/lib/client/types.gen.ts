@@ -2343,6 +2343,54 @@ export type UpdateOrganisationOrganisationsOrganisationIdPatchResponses = {
 export type UpdateOrganisationOrganisationsOrganisationIdPatchResponse =
   UpdateOrganisationOrganisationsOrganisationIdPatchResponses[keyof UpdateOrganisationOrganisationsOrganisationIdPatchResponses]
 
+export type ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path: {
+    /**
+     * Organisation Id
+     */
+    organisation_id: string
+  }
+  query?: {
+    /**
+     * Page
+     */
+    page?: number
+    /**
+     * Page Size
+     */
+    page_size?: number
+  }
+  url: '/organisations/{organisation_id}/users'
+}
+
+export type ListOrganisationsUsersOrganisationsOrganisationIdUsersGetErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type ListOrganisationsUsersOrganisationsOrganisationIdUsersGetError =
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetErrors[keyof ListOrganisationsUsersOrganisationsOrganisationIdUsersGetErrors]
+
+export type ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponses =
+  {
+    /**
+     * Successful Response
+     */
+    200: PaginatedUsersResponse
+  }
+
+export type ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse =
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponses[keyof ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponses]
+
 export type SignOutSignoutGetData = {
   body?: never
   path?: never

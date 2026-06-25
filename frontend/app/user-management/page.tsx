@@ -8,11 +8,12 @@ import { useRouter } from 'next/navigation'
 import { UserRole, hasAnyRole } from '@/lib/utils'
 import PaginatedUsers from '@/components/users/paginated-users'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
-import { useOrganisation } from '@/hooks/use-organisation'
+import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
+import OrganisationOption from '@/components/organisation-options'
 
 export default function UserManagementPage() {
   const router = useRouter()
-  const [numberOfOrgs, setNumberOfOrgs] = useState(0)
+  const [selectedOrganisation, setSelectedOrganisation] = useState('')
 
   const {
     currentUser,
@@ -26,10 +27,12 @@ export default function UserManagementPage() {
   const { data: organisation } = useOrganisation(
     currentUser?.organisation_id ?? ''
   )
-
   const isSystemAdmin = hasAnyRole(currentUser?.roles, [
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
+
+  const { data: allOrganistions } = useGetOrganisations(isSystemAdmin)
+  const numberOfOrgs = allOrganistions?.length ?? 0
 
   if (userLoading) return <Loader2 className="animate-spin" />
 
@@ -65,8 +68,24 @@ export default function UserManagementPage() {
             <label className="govuk-label" htmlFor="sortOrgs">
               Selected council:
             </label>
-            <select className="govuk-select" id="sortOrgs" name="sortOrgs">
-              <option value="published">Recently published</option>
+            <select
+              className="govuk-select"
+              id="sortOrgs"
+              name="sortOrgs"
+              value={selectedOrganisation}
+              onChange={(e) => setSelectedOrganisation(e.target.value)}
+            >
+              <option value="" disabled>
+                Select Organisation
+              </option>
+              {allOrganistions &&
+                allOrganistions.map((org) => (
+                  <OrganisationOption
+                    key={org.id}
+                    id={org.id}
+                    name={org.name}
+                  />
+                ))}
             </select>
           </div>
 
@@ -97,7 +116,7 @@ export default function UserManagementPage() {
       </div>
 
       <Suspense fallback={null}>
-        <PaginatedUsers />
+        <PaginatedUsers organisationID={selectedOrganisation} />
       </Suspense>
     </>
   )
