@@ -134,10 +134,9 @@ describe('<GovukAccordion />', () => {
         </GovukAccordion.Section>
       </GovukAccordion>
     )
-    expect(container.querySelector('.govuk-accordion__section-button')).toHaveAttribute(
-      'id',
-      'my-accordion-heading-1'
-    )
+    expect(
+      container.querySelector('.govuk-accordion__section-button')
+    ).toHaveAttribute('id', 'my-accordion-heading-1')
   })
 
   it('renders the content div with the canonical id', () => {
@@ -148,21 +147,28 @@ describe('<GovukAccordion />', () => {
         </GovukAccordion.Section>
       </GovukAccordion>
     )
-    expect(container.querySelector('.govuk-accordion__section-content')).toHaveAttribute(
-      'id',
-      'my-accordion-content-1'
-    )
+    expect(
+      container.querySelector('.govuk-accordion__section-content')
+    ).toHaveAttribute('id', 'my-accordion-content-1')
   })
 
   it('increments ids correctly across multiple sections', () => {
     const { container } = render(
       <GovukAccordion id="my-accordion">
-        <GovukAccordion.Section heading="One"><p>A</p></GovukAccordion.Section>
-        <GovukAccordion.Section heading="Two"><p>B</p></GovukAccordion.Section>
+        <GovukAccordion.Section heading="One">
+          <p>A</p>
+        </GovukAccordion.Section>
+        <GovukAccordion.Section heading="Two">
+          <p>B</p>
+        </GovukAccordion.Section>
       </GovukAccordion>
     )
-    const buttons = container.querySelectorAll('.govuk-accordion__section-button')
-    const contents = container.querySelectorAll('.govuk-accordion__section-content')
+    const buttons = container.querySelectorAll(
+      '.govuk-accordion__section-button'
+    )
+    const contents = container.querySelectorAll(
+      '.govuk-accordion__section-content'
+    )
     expect(buttons[0]).toHaveAttribute('id', 'my-accordion-heading-1')
     expect(buttons[1]).toHaveAttribute('id', 'my-accordion-heading-2')
     expect(contents[0]).toHaveAttribute('id', 'my-accordion-content-1')

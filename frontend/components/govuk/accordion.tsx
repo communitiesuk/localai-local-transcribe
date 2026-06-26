@@ -26,24 +26,44 @@ const headingTag = {
   6: 'h6',
 } as const
 
-function Section({ heading, headingLevel = 2, className, children, _accordionId, _index }: SectionProps) {
+function Section({
+  heading,
+  headingLevel = 2,
+  className,
+  children,
+  _accordionId,
+  _index,
+}: SectionProps) {
   const Heading = headingTag[headingLevel]
-  const headingId = _accordionId ? `${_accordionId}-heading-${_index}` : undefined
-  const contentId = _accordionId ? `${_accordionId}-content-${_index}` : undefined
+  const headingId = _accordionId
+    ? `${_accordionId}-heading-${_index}`
+    : undefined
+  const contentId = _accordionId
+    ? `${_accordionId}-content-${_index}`
+    : undefined
 
   return (
     <div className={cn('govuk-accordion__section', className)}>
       <div className="govuk-accordion__section-header">
         <Heading className="govuk-accordion__section-heading">
-          <span className="govuk-accordion__section-button" id={headingId}>{heading}</span>
+          <span className="govuk-accordion__section-button" id={headingId}>
+            {heading}
+          </span>
         </Heading>
       </div>
-      <div className="govuk-accordion__section-content" id={contentId}>{children}</div>
+      <div className="govuk-accordion__section-content" id={contentId}>
+        {children}
+      </div>
     </div>
   )
 }
 
-export function GovukAccordion({ id, className, children, ...rest }: AccordionProps) {
+export function GovukAccordion({
+  id,
+  className,
+  children,
+  ...rest
+}: AccordionProps) {
   const injected = React.Children.map(children, (child, index) =>
     React.isValidElement(child)
       ? React.cloneElement(child as React.ReactElement<SectionProps>, {
