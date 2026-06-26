@@ -129,19 +129,6 @@ export function EditDomainsForm({
           Cancel
         </Link>
       </div>
-
-      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
-
-      <GovukDetails summary="More about approved domains">
-        <p className="govuk-body">
-          These are the email address domains that are able to be invited to a
-          given organisation using Internal Access authentication.
-        </p>
-        <p className="govuk-body">
-          Email addresses without an associated approved domain will not be able
-          to be invited.
-        </p>
-      </GovukDetails>
     </form>
   )
 }

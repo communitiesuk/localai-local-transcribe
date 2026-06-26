@@ -79,7 +79,9 @@ function CreateOrganisationForm() {
         </GovukFormGroup>
         <div className="govuk-button-group">
           <GovukButton type="submit" disabled={createOrganisationPending}>
-            Create organisation
+            {createOrganisationPending
+              ? 'Creating organisation'
+              : 'Create organisation'}
           </GovukButton>
           <Link href="/user-management" className="govuk-link">
             Cancel

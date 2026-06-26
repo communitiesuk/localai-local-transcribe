@@ -53,7 +53,7 @@ export default function UserManagementPage() {
       <h1 className="govuk-heading-l">User Management</h1>
       {organisation && <h2 className="govuk-heading-s">{organisation.name}</h2>}
 
-      <div className="flex gap-5">
+      <div className="govuk-button-group">
         <GovukButton>Invite new user</GovukButton>
 
         {hasAnyRole(currentUser?.roles, [UserRole.MHCLG_SUPPORT_ADMIN]) && (
@@ -64,9 +64,13 @@ export default function UserManagementPage() {
       </div>
 
       {isSystemAdmin && (
-        <GovukButtonLink href="/user-management/domains" variant="secondary">
-          Edit approved domains
-        </GovukButtonLink>
+        <>
+          <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
+
+          <GovukButtonLink href="/user-management/domains" variant="secondary">
+            Edit approved domains
+          </GovukButtonLink>
+        </>
       )}
 
       <Suspense fallback={null}>
