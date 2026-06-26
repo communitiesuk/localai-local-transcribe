@@ -2,15 +2,14 @@
 
 ## Status
 
-gDate of decision: 
+Proposed
+
+Date of decision: TBC 
 
 ## Context and Problem Statement
 
-Several user journeys within the frontend application require data collected or derived on one page to be available on subsequent pages. Currently, there is no documented or agreed approach for managing state across page transitions, which creates a risk of inconsistent implementations emerging across the codebase.
-
-Different approaches to cross-page state management have varying implications for user experience, persistence, maintainability, testability, performance, and complexity. Some approaches keep state in memory for the duration of a user's session, while others persist data in the browser or encode it within navigation mechanisms.
-
-We need to determine the preferred approach for managing state that must be shared between React pages and routes, and document when that approach should be used to ensure consistency across the frontend application.
+Many user journeys require data from one page to be available on subsequente pages. We currently don't have an agreed
+approach for supporting this pattern. What default approach should we adopt?
 
 ## Considered Options
 
@@ -22,11 +21,10 @@ We need to determine the preferred approach for managing state that must be shar
 * Redux
 * Server-side state
 
-
 ## Decision Outcome
 
-Zustand, because it provides a lightweight and straightforward mechanism for sharing state across React pages without introducing significant boilerplate or additional complexity. It enables components to subscribe to only the state they require, reducing unnecessary re-renders compared to React Context, while avoiding the implementation and maintenance overhead associated with Redux. Unlike URL parameters, it does not expose application state through navigation, and unlike direct browser storage usage, it provides a reactive state management layer with a single source of truth for application state. In addition, it offers optional persistence middleware, allowing state to be persisted to browser storage when cross-session or refresh resilience is required without changing the core application state model.
-
+Zustand, because it is simple, lightweight, performant, integrates well with React, and
+offers optional persistance.
 
 ## Pros and Cons of the Options
 
@@ -36,18 +34,15 @@ A brower based storage option that allows for the storage of data as key-value p
 user's device. The stored data doesn't expire and persists even after users close & reopen
 the browser.
 
-
 * Good, because it requires no additional dependencies
 * Good, because it's simple to use
 * Good, because it's extensible beyond React
-* Neutral, because it persists across sessions
-* Neutral, because while JSON marshalling allows non-serializable types (e.g. Date objects), 
-  deserialisation returns a plain string instead of the original type presenting a risk of data loss 
+* Neutral, because it persists across sessions (which is sometimes useful, or sometimes unexpected)
+* Neutral, because some data structures require careful / marshalling
 * Bad, because the data can be mutated indirectly 
 * Bad, because local storage can be vulnerable to XSS attacks
 * Bad, because as it's a client-side API, inconsistencies may arise during SSR
  
-
 # Session Storage
 
 Near identical to local storage with the exception that stored data doesn't persist when a 
@@ -58,15 +53,12 @@ user closes their tab, browser or window.
 * Good, because it's extensible beyond React
 * Good, because data is automatically cleared on tab/window close, reducing data exposure
 * Good, because data is scoped to a single tab, preventing unintended cross-tab data sharing
-* Neutral, because while JSON marshalling allows non-serializable types (e.g. Date objects),
-  deserialisation returns a plain string instead of the original type presenting a risk of data loss
+* Neutral, because some data structures require careful / marshalling
 * Neutral, because tab-scoped isolation may be a limitation for workflows spanning multiple   
-tabs where continuity is expected
+sessions where continuity is expected
 * Bad, because the data can be mutated indirectly
 * Bad, because session storage can be vulnerable to XSS attacks
 * Bad, because as it's a client-side API, inconsistencies may arise during SSR
-
-
 
 ### Zustand
 
@@ -77,10 +69,9 @@ A lightweight state management library best suited for managing small to medium 
 * Good, because it has a small bundle size and simple API
 * Good, because state updates only re-render subscribed components
 * Good, because persistence can be added through middleware if required
-* Bad, because state is stored in memory by default and is lost on page refresh (mitigated using middleware)
+* Bad, because state is stored in memory by default and is lost on page refresh (can be mitigated using middleware)
 * Bad, because it introduces an additional dependency to the application
 * Bad, because application state can become difficult to reason about if stores grow without clear ownership boundaries
-
 
 ### React Context API
 
@@ -97,7 +88,6 @@ via the `useContext` hook.
 * Bad, because it requires additional provider setup and wiring
 * Bad, because state is stored in memory and is lost on page refresh
 
-
 ### URL Parameters
 
 A means of encoding parts of an application's state directly in the URL through query parameters. 
@@ -110,7 +100,6 @@ A means of encoding parts of an application's state directly in the URL through 
 * Bad, because URLs can become difficult to read and maintain as state grows
 * Bad, because sensitive information should not be exposed in URLs
 * Bad, because additional parsing, validation, and encoding logic is required
-
 
 ### Redux
 
@@ -126,23 +115,19 @@ through a unidirectional data flow and a centralised store.
 * Bad, because it may be overly complex for simple cross-page state requirements
 * Bad, because state is stored in memory by default and is lost on page refresh unless persistence is added
 
-
 ### Server-side state
 
 A means of managing application state on the server rather than the client, with state 
-changes triggered via server requests and reflected through updated responses. This ensures 
-data persistence, consistency and security across multiple requests and sessions.
+changes triggered via server requests and reflected through updated responses - either on a
+per-session basis (e.g. Redis + session ID in cookie) or persisted (e.g. to a database).
 
 * Good, because it aligns with GDS recommendations to avoid SPAs and not require 
   JavaScript for core functionality
-* Good, because state is never exposed to client-side vulnerabilities such as XSS, 
-  reducing the attack surface compared to the aforementioned browser-based storage options
+* Good, because potentially sensitive state is not held long-term on the client-side
 * Good, because state is consistently reflected across all tabs, devices and sessions 
   without any additional synchronisation logic
 * Good, because it leverages existing server infrastructure (e.g. PostgreSQL) without 
   requiring additional client-side state management dependencies
-* Neutral, because some use cases (e.g. ephemeral session data, high-frequency reads) 
-  may be better served by a dedicated caching layer such as Redis
 * Neutral, because server-side rendering moves complexity from the client to the server, 
   which may require architectural changes
 * Bad, because fetching and reflecting server-side state during SPA-style client 
