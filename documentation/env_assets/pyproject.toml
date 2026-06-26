@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "env-assets"
+version = "0.1.0"
+description = "Environmental impact calculations for Local Transcribe, including EcoLogits comparison"
+authors = []
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+ecologits = ">=0.10"
+pyyaml = "^6.0.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
