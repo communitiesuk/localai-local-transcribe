@@ -1,6 +1,8 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { GovukHeading, GovukDetails } from '@/components/govuk'
 import { EditDomainsForm } from '@/components/organisations/domains-form'
 import { useOrganisation } from '@/hooks/use-organisation'
@@ -10,6 +12,7 @@ import { UserRole } from '@/lib/utils'
 export default function EditOrganisationDomains(props: {
   params: Promise<{ organisationId: string }>
 }) {
+  const router = useRouter()
   const _ = useAuthorisedUser([UserRole.MHCLG_SUPPORT_ADMIN])
 
   const { organisationId } = use(props.params)
@@ -19,6 +22,17 @@ export default function EditOrganisationDomains(props: {
     isLoading: organisationLoading,
     isError: organisationError,
   } = useOrganisation(organisationId)
+
+  useEffect(() => {
+    if (organisationError) {
+      router.replace('/generic-error')
+    }
+  }, [organisationError, router])
+
+  if (organisationLoading) {
+    return <Loader2 className="animate-spin" />
+  }
+  if (organisationError) return null
 
   return (
     <>
