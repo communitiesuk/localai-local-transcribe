@@ -142,14 +142,14 @@ async def get_target_user(user: UserDep, target_user: TargetUserDep, session: SQ
         return to_user_response(target_user)
 
     if not target_user.organisation_id:
-        raise HTTPException(status_code=403, detail="Only an system admin can access this resource")
+        raise HTTPException(status_code=404, detail="Resource not found")
 
     organisation = await session.get(Organisation, target_user.organisation_id)
     if organisation is None:
-        raise HTTPException(status_code=404, detail="Organisation not found")
+        raise HTTPException(status_code=404, detail="Resource not found")
 
     if not is_admin_for_org(user, organisation):
-        raise HTTPException(status_code=403, detail="Only an organisation admin can access this resource")
+        raise HTTPException(status_code=404, detail="Resource not found")
 
     return to_user_response(target_user)
 
