@@ -79,18 +79,18 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 
 | Export                    | GDS module                       | Client? |
 | ------------------------- | -------------------------------- | ------- |
-| `GovukAccordion`          | Accordion                        | No      |
+| `GovukAccordion`          | Accordion                        | Yes     |
 | `GovukBackLink`           | Back link (href or dynamic back) | Yes     |
 | `GovukButton`             | Button                           | Yes     |
 | `GovukButtonLink`         | Button link                      | Yes     |
-| `GovukDetails`            | Details                          | No      |
+| `GovukDetails`            | Details                          | Yes     |
 | `GovukErrorSummary`       | Error summary                    | No      |
 | `GovukFieldset`           | Fieldset                         | No      |
 | `GovukFormGroup`          | Form group                       | No      |
 | `GovukHint`               | Hint                             | No      |
 | `GovukLabel`              | Label                            | No      |
 | `GovukLegend`             | Legend                           | No      |
-| `GovukNotificationBanner` | Notification banner              | No      |
+| `GovukNotificationBanner` | Notification banner              | Yes     |
 | `GovukRadios`             | Radios                           | Yes     |
 | `GovukTag`                | Tag                              | No      |
 | `GovukTextarea`           | Textarea                         | Yes     |
@@ -144,7 +144,6 @@ Pass `headingLevel` (2–6, default 2) on each Section to match surrounding docu
 Renders an `important` (default) or `success` banner.
 
 ARIA roles follow the GOV.UK pattern:
-
 - `important` → `role="region"` with `aria-labelledby`
 - `success` → `role="alert"` with `aria-labelledby`
 

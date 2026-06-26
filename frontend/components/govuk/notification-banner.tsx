@@ -1,3 +1,5 @@
+'use client'
+
 import { cn } from '@/lib/utils'
 
 type Variant = 'important' | 'success'
@@ -8,10 +10,7 @@ type Props = {
   titleId?: string
   className?: string
   children: React.ReactNode
-} & Omit<
-  React.HTMLAttributes<HTMLDivElement>,
-  'className' | 'children' | 'role'
->
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'children' | 'role'>
 
 const defaultTitles: Record<Variant, string> = {
   important: 'Important',
