@@ -4,7 +4,7 @@ from typing import TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import TIMESTAMP, Column, Enum, ForeignKey, Text, text
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY, CITEXT, JSONB
 from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
@@ -141,7 +141,7 @@ class User(BaseTableMixin, table=True):
         default_factory=lambda: datetime.now(UTC), sa_column=Column(TIMESTAMP(timezone=True), nullable=False)
     )
     name: str | None = Field(default=None, nullable=True)
-    email: str = Field(index=True, unique=True)
+    email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
     data_retention_days: int | None = Field(default=30)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
     roles: list[UserRole] = Field(
