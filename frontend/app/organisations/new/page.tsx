@@ -38,6 +38,7 @@ function CreateOrganisationForm() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<Inputs>({})
   const router = useRouter()
@@ -47,6 +48,15 @@ function CreateOrganisationForm() {
       ...createOrganisationOrganisationsPostMutation(),
       onSuccess(data: OrganisationResponse) {
         router.replace(`/organisations/${data.id}/domains`)
+      },
+      onError(error) {
+        const detail = error?.detail
+        const message =
+          typeof detail === 'string' ? detail : 'An error occurred'
+
+        setError('name', {
+          message,
+        })
       },
     })
 
