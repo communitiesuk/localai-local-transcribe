@@ -15,12 +15,14 @@ import {
   getTargetUserUsersUserIdGetOptions,
   deleteUserUsersUserIdDeleteMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { Loader2 } from 'lucide-react'
 
 export default function UserPageDelete(props: {
   params: Promise<{ userId: string }>
 }) {
   const router = useRouter()
+  const setBanner = useBannerStore((store) => store.setBanner)
 
   const { userId } = use(props.params)
 
@@ -50,6 +52,7 @@ export default function UserPageDelete(props: {
   const { mutate: deleteUser, isPending: deletePending } = useMutation({
     ...deleteUserUsersUserIdDeleteMutation(),
     onSuccess() {
+      setBanner('this is a test')
       router.replace(redirectPath)
     },
   })
