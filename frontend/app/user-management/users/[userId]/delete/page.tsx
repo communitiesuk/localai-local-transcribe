@@ -18,6 +18,24 @@ import {
 import { useBannerStore } from '@/stores/use-banner-store'
 import { Loader2 } from 'lucide-react'
 
+function formatCurrentDateTime() {
+  const now = new Date()
+
+  const time = now.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+
+  const date = now.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  return `${time} on ${date}`
+}
+
 export default function UserPageDelete(props: {
   params: Promise<{ userId: string }>
 }) {
@@ -52,7 +70,11 @@ export default function UserPageDelete(props: {
   const { mutate: deleteUser, isPending: deletePending } = useMutation({
     ...deleteUserUsersUserIdDeleteMutation(),
     onSuccess() {
-      setBanner('this is a test')
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: `${targetUser?.name} was successfully deleted at ${formatCurrentDateTime()}`,
+      })
       router.replace(redirectPath)
     },
   })

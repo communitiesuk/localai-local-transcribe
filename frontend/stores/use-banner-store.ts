@@ -1,13 +1,19 @@
 import { create } from 'zustand'
 
+type Banner = {
+  variant: 'success' | 'default'
+  title: string
+  message: string
+}
+
 type BannerState = {
-  message: string | null
-  setBanner: (message: string) => void
+  banner: Banner | null
+  setBanner: (banner: Banner) => void
   clearBanner: () => void
 }
 
 export const useBannerStore = create<BannerState>((set) => ({
-  message: null,
-  setBanner: (message: string) => set({ message }),
-  clearBanner: () => set({ message: null }),
+  banner: null,
+  setBanner: (banner) => set({ banner }),
+  clearBanner: () => set({ banner: null }),
 }))

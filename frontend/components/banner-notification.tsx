@@ -1,20 +1,23 @@
 'use client'
 
 import { useBannerStore } from '@/stores/use-banner-store'
+import { GovukNotificationBanner } from '@/components/govuk/banner'
 
 export function BannerNotification() {
-  const message = useBannerStore((store) => store.message)
+  const { banner } = useBannerStore()
   const clearBanner = useBannerStore((store) => store.clearBanner)
 
-  if (!message) {
+  if (!banner) {
     return null
   }
 
   return (
-    <div>
-      <p>Toast goes here</p>
-      <p>{message}</p>
+    <>
+      <GovukNotificationBanner title={banner.title} variant={banner.variant}>
+        {banner.message}
+      </GovukNotificationBanner>
+
       <button onClick={clearBanner}>Dismiss</button>
-    </div>
+    </>
   )
 }
