@@ -1,7 +1,7 @@
 'use client'
 
 import { useBannerStore } from '@/stores/use-banner-store'
-import { GovukNotificationBanner } from '@/components/govuk/banner'
+import { GovukNotificationBanner } from '@/components/govuk/notification-banner'
 
 export function BannerNotification() {
   const { banner } = useBannerStore()

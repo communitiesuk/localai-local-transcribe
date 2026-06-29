@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 type Banner = {
-  variant: 'success' | 'default'
+  variant: 'important' | 'success'
   title: string
   message: string
 }
