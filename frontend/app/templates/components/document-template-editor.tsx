@@ -95,7 +95,7 @@ export const DocumentTemplateEditor = ({
           )}
           <input
             id="template-name"
-            className={`govuk-input govuk-!-margin-top-1${errors.name ? ' govuk-input--error' : ''}`}
+            className={`govuk-input govuk-!-margin-top-1${errors.name ? 'govuk-input--error' : ''}`}
             placeholder="Name your template"
             aria-describedby={errors.name ? 'template-name-error' : undefined}
             {...form.register('name', {
@@ -117,7 +117,7 @@ export const DocumentTemplateEditor = ({
           )}
           <input
             id="template-description"
-            className={`govuk-input govuk-!-margin-top-1${errors.description ? ' govuk-input--error' : ''}`}
+            className={`govuk-input govuk-!-margin-top-1${errors.description ? 'govuk-input--error' : ''}`}
             placeholder="A description to help identify the template."
             aria-describedby={
               errors.description ? 'template-description-error' : undefined
