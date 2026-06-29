@@ -1,8 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { ChevronLeft, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { UserRole, hasAnyRole } from '@/lib/utils'
 import PaginatedUsers from '@/components/users/paginated-users'
@@ -13,7 +12,6 @@ import { GovukBackLink } from '@/components/govuk'
 import { useRouter } from 'next/navigation'
 
 export default function UserManagementPage() {
-  const router = useRouter()
   const [selectedOrganisation, setSelectedOrganisation] = useState('')
 
   const {
