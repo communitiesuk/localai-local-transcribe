@@ -159,7 +159,6 @@ export function ServiceNav() {
   const { data: user } = useQuery(getUserUsersMeGetOptions())
   const [isMobile, setIsMobile] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const clearBanner = useBannerStore((store) => store.clearBanner)
 
   useEffect(() => {
     const handleResize = () => {
