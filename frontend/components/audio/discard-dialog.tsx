@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import { GovukButton } from '@/components/govuk'
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { Trash2 } from 'lucide-react'
 import { Dispatch, SetStateAction } from 'react'
+
 export const DiscardConfirmDialog = ({
   open,
   setOpen,
@@ -31,22 +32,20 @@ export const DiscardConfirmDialog = ({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex gap-3">
-          <Button
+          <GovukButton
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => setOpen(false)}
-            className="h-12"
           >
             Cancel
-          </Button>
-          <Button
+          </GovukButton>
+          <GovukButton
             type="button"
-            variant="destructive"
+            variant="warning"
             onClick={onClickConfirm}
-            className="h-12 hover:bg-red-800"
           >
-            <Trash2 /> Discard recording
-          </Button>
+            <Trash2 aria-hidden="true" /> Discard recording
+          </GovukButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,10 +1,10 @@
 'use client'
 
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
-import { Button } from '@/components/ui/button'
+import { GovukButton } from '@/components/govuk'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { cn } from '@/lib/utils'
-import { CheckCircle, CloudUpload, FileX, Info } from 'lucide-react'
+import { CheckCircle, CloudUpload, FileX } from 'lucide-react'
 import Dropzone from 'react-dropzone'
 import { Controller, FormProvider } from 'react-hook-form'
 
@@ -15,11 +15,10 @@ export const AudioUploadForm = () => {
     <FormProvider {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="mt-6 flex flex-col gap-4"
+        className="govuk-!-margin-top-6 flex flex-col gap-4"
       >
-        <div className="flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
-          <Info className="size-4 shrink-0" />
-          <p>Maximum file size: 5GB</p>
+        <div className="govuk-inset-text">
+          <p className="govuk-body">Maximum file size: 5GB</p>
         </div>
         <Controller
           control={form.control}
@@ -79,10 +78,10 @@ export const AudioUploadForm = () => {
                         </div>
                         {!isDragActive && (
                           <>
-                            <div className="text-xs">or</div>
-                            <Button className="rounded-l-full rounded-r-full bg-blue-50 text-blue-700 hover:bg-blue-100">
+                            <div className="govuk-body text-xs">or</div>
+                            <GovukButton type="button" variant="secondary">
                               Choose a file
-                            </Button>
+                            </GovukButton>
                           </>
                         )}
                       </div>
@@ -92,7 +91,7 @@ export const AudioUploadForm = () => {
                           <div className="flex h-5 w-5 items-center justify-center text-green-500">
                             <CheckCircle />
                           </div>
-                          <div className="text-sm text-slate-500">
+                          <div className="govuk-body text-sm">
                             {file instanceof File ? file.name : 'recording'}
                           </div>
                         </div>

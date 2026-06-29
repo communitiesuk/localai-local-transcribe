@@ -34,13 +34,12 @@ export default defineConfig([
   {
     files: [
       'components/ui/**',
-      'components/audio/**',
+      'components/audio/discard-dialog.tsx',
       'components/recent-meetings/**',
       'components/template-select/**',
       'components/layout/**',
       'app/transcriptions/**',
       'app/templates/**',
-      'app/new/**',
       'components/transcription-title-editor.tsx',
       'components/status-icon.tsx',
       'components/download-button.tsx',

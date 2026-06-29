@@ -1,18 +1,8 @@
 'use client'
 
+import { GovukButton } from '@/components/govuk'
 import React, { useEffect, useRef, useState } from 'react'
 import { Pause, Play, Square } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -38,7 +28,7 @@ export default function RecordingControl({
   const analyserRef = useRef<AnalyserNode | null>(null)
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
-  const [showStopDialog, setShowStopDialog] = useState(false)
+  const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [localIsPaused, setLocalIsPaused] = useState(false)
 
   const mediaTracks = stream ? stream.getAudioTracks() : []
@@ -48,12 +38,10 @@ export default function RecordingControl({
       : localIsPaused
 
   useEffect(() => {
-    // Check if we have a valid stream with audio tracks
     const isValidStream =
       stream && stream.active && stream.getAudioTracks().length > 0
 
     if (!isValidStream || !isRecording) {
-      // Clean up if not recording or invalid stream
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
@@ -64,14 +52,12 @@ export default function RecordingControl({
       analyserRef.current = null
       dataArrayRef.current = null
 
-      // Clear canvas if it exists
       const canvas = canvasRef.current
       if (canvas) {
         const ctx = canvas.getContext('2d')
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-          // Draw a placeholder message
           if (canvas.width > 0 && canvas.height > 0) {
             ctx.fillStyle = '#666'
             ctx.font = '14px sans-serif'
@@ -88,9 +74,7 @@ export default function RecordingControl({
       return
     }
 
-    // Initialize audio context and analyzer
     try {
-      // Always recreate the audio context when the stream changes
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(console.error)
         audioContextRef.current = null
@@ -105,7 +89,6 @@ export default function RecordingControl({
       const bufferLength = analyserRef.current.frequencyBinCount
       dataArrayRef.current = new Uint8Array(bufferLength)
 
-      // Create a media stream source and connect it to the analyzer
       const source = audioContextRef.current.createMediaStreamSource(stream)
       source.connect(analyserRef.current)
     } catch (error) {
@@ -123,12 +106,9 @@ export default function RecordingControl({
         const { width, height } = canvas
         if (width === 0 || height === 0) return
 
-        // If not recording or missing the analyzer/data array, show a placeholder
         if (!isRecording || !analyserRef.current || !dataArrayRef.current) {
-          // Clear the canvas
           ctx.clearRect(0, 0, width, height)
 
-          // Draw a pulsing placeholder
           const time = Date.now() / 1000
           const pulseSize = Math.sin(time * 2) * 0.1 + 0.9
 
@@ -143,7 +123,6 @@ export default function RecordingControl({
           )
           ctx.fill()
 
-          // Show waiting text
           ctx.fillStyle = '#fff'
           ctx.font = '14px sans-serif'
           ctx.textAlign = 'center'
@@ -157,18 +136,14 @@ export default function RecordingControl({
         const analyser = analyserRef.current
         const dataArray = dataArrayRef.current
 
-        // Clear the canvas completely instead of fade effect
         ctx.clearRect(0, 0, width, height)
 
-        // Get frequency data
         analyser.getByteFrequencyData(dataArray)
 
-        // Calculate average frequency
         const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
         const hasAudioData = average > 5
 
         if (!hasAudioData || isPaused) {
-          // Draw a pulsing placeholder
           const time = Date.now() / 1000
           const pulseSize = Math.sin(time * 2) * 0.1 + 0.9
 
@@ -183,7 +158,6 @@ export default function RecordingControl({
           )
           ctx.fill()
         } else {
-          // Draw frequency bars
           const barCount = Math.min(dataArray.length / 2, 64)
           const barWidth = (width / barCount) * 0.8
           const barSpacing = 2
@@ -213,7 +187,6 @@ export default function RecordingControl({
             const y = (height - barHeight) / 2
             const radius = Math.min(barWidth / 2, 4)
 
-            // Draw rounded rectangle
             ctx.beginPath()
             ctx.moveTo(x + radius, y)
             ctx.lineTo(x + barWidth - radius, y)
@@ -232,7 +205,6 @@ export default function RecordingControl({
             ctx.fill()
           }
 
-          // Add center pulse for strong signals
           if (average > 20) {
             const centerX = width / 2
             const centerY = height / 2
@@ -264,7 +236,6 @@ export default function RecordingControl({
       animationRef.current = requestAnimationFrame(draw)
     }
 
-    // Handle canvas resizing
     const resizeCanvas = () => {
       if (canvasRef.current) {
         const canvas = canvasRef.current
@@ -312,12 +283,12 @@ export default function RecordingControl({
   }
 
   const handleStopRecording = () => {
-    setShowStopDialog(true)
+    setShowStopConfirm(true)
   }
 
   const confirmStop = () => {
     onStopRecording()
-    setShowStopDialog(false)
+    setShowStopConfirm(false)
   }
 
   return (
@@ -339,55 +310,56 @@ export default function RecordingControl({
         )}
       </div>
 
-      {isRecording && (
+      {isRecording && !showStopConfirm && (
         <div className="flex justify-between gap-2">
-          <Button
+          <GovukButton
             type="button"
             onClick={togglePause}
-            variant="outline"
-            className="flex-1"
+            variant="secondary"
           >
             {isPaused ? (
               <>
-                <Play className="mr-2 size-4" />
+                <Play className="mr-2 size-4" aria-hidden="true" />
                 Resume Recording
               </>
             ) : (
               <>
-                <Pause className="mr-2 size-4" />
+                <Pause className="mr-2 size-4" aria-hidden="true" />
                 Pause Recording
               </>
             )}
-          </Button>
-          <Button
+          </GovukButton>
+          <GovukButton
             type="button"
             onClick={handleStopRecording}
-            variant="destructive"
-            className="flex-1"
+            variant="warning"
           >
-            <Square className="mr-2 size-4" />
+            <Square className="mr-2 size-4" aria-hidden="true" />
             Stop Recording
-          </Button>
+          </GovukButton>
         </div>
       )}
 
-      <AlertDialog open={showStopDialog} onOpenChange={setShowStopDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Stop Recording?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to stop recording? You won&apos;t be able to
-              resume recording after stopping.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmStop}>
+      {showStopConfirm && (
+        <div className="govuk-inset-text">
+          <p className="govuk-body">
+            Are you sure you want to stop recording? You won&apos;t be able to
+            resume recording after stopping.
+          </p>
+          <div className="flex gap-2">
+            <GovukButton type="button" onClick={confirmStop} variant="warning">
               Stop Recording
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </GovukButton>
+            <GovukButton
+              type="button"
+              onClick={() => setShowStopConfirm(false)}
+              variant="secondary"
+            >
+              Cancel
+            </GovukButton>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

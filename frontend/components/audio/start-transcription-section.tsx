@@ -1,7 +1,6 @@
 import { TranscriptionForm } from '@/components/audio/types'
 import { TemplateSelect } from '@/components/template-select/template-select'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { GovukButton, GovukTextarea } from '@/components/govuk'
 import { Loader2 } from 'lucide-react'
 import { Controller, useFormContext } from 'react-hook-form'
 
@@ -14,16 +13,14 @@ export const StartTranscriptionSection = ({
 }) => {
   const form = useFormContext<TranscriptionForm>()
   const selectedTemplate = form.watch('template')
-  // Fetch templates from API
 
   if (!isShowing) {
     return null
   }
   return (
-    <div className="mt-4 flex flex-col gap-2">
-      <Button
+    <div className="govuk-!-margin-top-4 flex flex-col gap-2">
+      <GovukButton
         type="submit"
-        className="w-full bg-blue-500 hover:bg-blue-800 active:bg-yellow-400"
         disabled={
           isPending ||
           !isShowing ||
@@ -32,13 +29,14 @@ export const StartTranscriptionSection = ({
         }
       >
         {isPending ? (
-          <>
-            <Loader2 className="animate-spin" /> Uploading
-          </>
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            Uploading
+          </span>
         ) : (
           'Upload'
         )}
-      </Button>
+      </GovukButton>
       <Controller
         control={form.control}
         name="template"
@@ -47,20 +45,21 @@ export const StartTranscriptionSection = ({
         )}
       />
       {selectedTemplate.agenda_usage != 'not_used' && (
-        <div className="mb-4 rounded">
-          <h3 className="text-semibold m">
+        <div className="govuk-form-group">
+          <label className="govuk-label" htmlFor="agenda">
             Agenda (
             {selectedTemplate.agenda_usage == 'optional'
               ? 'optional'
               : 'required'}
-            ):
-          </h3>
-          <p className="text-muted-foreground text-sm">
+            )
+          </label>
+          <div id="agenda-hint" className="govuk-hint">
             Add discussion points from the meeting that should be included in
             the summary.
-          </p>
-          <Textarea
-            className="bg-white"
+          </div>
+          <GovukTextarea
+            id="agenda"
+            aria-describedby="agenda-hint"
             placeholder={`Agenda item 1
 Agenda item 2
 Agenda item 3
