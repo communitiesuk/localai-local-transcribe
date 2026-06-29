@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 from typing import TypedDict, cast
 
-from transformers import AutoTokenizer, PreTrainedTokenizer, pipeline
+from transformers import AutoTokenizer, pipeline
 from transformers.pipelines.text_classification import TextClassificationPipeline
+from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
 from evals.summarisation.src.bias.constants import (
     SENTIMENT_CHUNK_OVERLAP,
@@ -31,7 +32,7 @@ class SentimentAnalyzer:
         self.sentiment_pipeline: TextClassificationPipeline = pipeline(  # type: ignore[call-overload]
             "sentiment-analysis", model=SENTIMENT_MODEL_NAME, top_k=None
         )
-        self.tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(SENTIMENT_MODEL_NAME)
+        self.tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(SENTIMENT_MODEL_NAME)
 
     def _split_text_by_tokens(self, text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
         """Splits text into overlapping chunks based on token count."""
@@ -42,7 +43,7 @@ class SentimentAnalyzer:
         while start < len(tokens):
             end = start + chunk_size
             chunk_tokens = tokens[start:end]
-            chunk_text = self.tokenizer.decode(chunk_tokens, skip_special_tokens=True)
+            chunk_text = cast(str, self.tokenizer.decode(chunk_tokens, skip_special_tokens=True))
             chunks.append(chunk_text)
             start = end - chunk_overlap if end < len(tokens) else end
         return chunks if chunks else [text]

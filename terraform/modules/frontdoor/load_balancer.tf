@@ -13,6 +13,7 @@ resource "aws_lb" "main" {
   load_balancer_type         = "application"
   security_groups            = [aws_security_group.load_balancer.id]
   subnets                    = var.public_subnet_ids
+  depends_on                 = [module.alb_logs]
 
   access_logs {
     bucket  = module.alb_logs.bucket
@@ -66,11 +67,16 @@ data "aws_iam_policy_document" "alb_logs_bucket_policy" {
 
 
     condition {
-      test     = "StringEquals"
+      test     = "ArnLike"
       variable = "aws:SourceArn"
-      values   = [aws_lb.main.arn]
+      values = [
+        "arn:aws:elasticloadbalancing:eu-west-2:${data.aws_caller_identity.current.account_id}:loadbalancer/*",
+      ]
+
     }
+
   }
+
 }
 
 
