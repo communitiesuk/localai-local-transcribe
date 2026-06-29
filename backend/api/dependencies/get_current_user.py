@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
-from sqlmodel import select
+from sqlmodel import col, select
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
@@ -21,13 +21,12 @@ async def get_current_user(
 ) -> User:
     """
     Called on every endpoint to decode JWT passed in every request.
-    Gets or creates the user based on the email in the JWT
+    Gets the user based on the email in the JWT
     Args:
         x_amzn_oidc_data: The incoming JWT from the auth provider, passed via the frontend app
     Returns:
         User: The user matching the username in the token
     """
-
     authorization: str | None = x_amzn_oidc_data
 
     try:
@@ -53,21 +52,16 @@ async def get_current_user(
             # accounts which do not yet have a subject id associated.
             # After this login, a subject id will be added to the account and login
             # matching by email should no longer be possible
-            statement = select(User).where(User.email == email and User.subject_id is None)
+            statement = select(User).where(User.email == email, col(User.subject_id).is_(None))
             user = (await session.exec(statement)).first()
 
-        changed = False
-        if user:
-            # Update subject_id if has changed
-            if user.subject_id != subject_id:
-                user.subject_id = subject_id
-                changed = True
-        else:
-            # Create new user if doesn't exist
-            user = User(email=email, subject_id=subject_id)
-            changed = True
+        if not user:
+            # Do not automatically create new accounts on login
+            raise unauthorised_error
 
-        if changed:
+        # Update subject_id if it has changed (e.g. legacy account matched by email)
+        if user.subject_id != subject_id:
+            user.subject_id = subject_id
             session.add(user)
             await session.commit()
             await session.refresh(user)
