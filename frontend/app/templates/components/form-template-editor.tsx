@@ -8,7 +8,7 @@ import {
   GovukLabel,
 } from '@/components/govuk'
 import { TemplateData } from '@/types/templates'
-import { ArrowDown, ArrowUp, Loader2, Trash } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
 export const FormTemplateEditor = ({
@@ -76,8 +76,8 @@ export const FormTemplateEditor = ({
       </div>
 
       {/* Template details */}
-      <div className="rounded-lg border border-[#b1b4b6] p-6">
-        <h4 className="govuk-heading-s">Template details</h4>
+      <div>
+        <h2 className="govuk-heading-m">Template details</h2>
         <GovukHint className="govuk-!-margin-bottom-4">
           Add a name and description so you can find your template later. Name
           and description are not used to generate your minute — add structure
@@ -88,7 +88,7 @@ export const FormTemplateEditor = ({
           hasError={!!errors.name}
           className="govuk-!-margin-bottom-4"
         >
-          <GovukLabel htmlFor="template-name">Template Name</GovukLabel>
+          <GovukLabel htmlFor="template-name">Template name</GovukLabel>
           {errors.name?.message && (
             <p id="template-name-error" className="govuk-error-message">
               <span className="govuk-visually-hidden">Error:</span>{' '}
@@ -97,7 +97,7 @@ export const FormTemplateEditor = ({
           )}
           <input
             id="template-name"
-            className={`govuk-input govuk-!-margin-top-1${errors.name ? 'govuk-input--error' : ''}`}
+            className={`govuk-input govuk-!-margin-top-1${errors.name ? ' govuk-input--error' : ''}`}
             placeholder="Name your template"
             aria-describedby={errors.name ? 'template-name-error' : undefined}
             {...form.register('name', {
@@ -117,10 +117,9 @@ export const FormTemplateEditor = ({
               {errors.description.message}
             </p>
           )}
-          <textarea
+          <input
             id="template-description"
-            className={`govuk-textarea govuk-!-margin-top-1${errors.description ? 'govuk-textarea--error' : ''}`}
-            rows={3}
+            className={`govuk-input govuk-!-margin-top-1${errors.description ? ' govuk-input--error' : ''}`}
             placeholder="A description to help identify the template."
             aria-describedby={
               errors.description ? 'template-description-error' : undefined
@@ -133,8 +132,8 @@ export const FormTemplateEditor = ({
       </div>
 
       {/* Template content */}
-      <div className="rounded-lg border border-[#b1b4b6] p-6">
-        <h4 className="govuk-heading-s">Template content</h4>
+      <div>
+        <h2 className="govuk-heading-m">Template content</h2>
         <GovukHint className="govuk-!-margin-bottom-4">
           Add questions that you would like to be answered based on the
           transcript. For each question you can provide a description of how to
@@ -185,76 +184,71 @@ export const FormTemplateEditor = ({
                 key={field.id}
                 className="rounded-md border border-[#b1b4b6] bg-[#f3f2f1] p-4"
               >
-                <div className="flex gap-3">
-                  {/* Reorder controls */}
-                  <div className="flex shrink-0 flex-col gap-1">
-                    <GovukButton
+                {/* Question header row */}
+                <div className="govuk-!-margin-bottom-3 flex items-center justify-between">
+                  <span className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">
+                    Question {index + 1}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
                       type="button"
-                      variant="secondary"
+                      className="govuk-link govuk-body-s"
                       disabled={index === 0}
                       onClick={() => fieldArray.swap(index, index - 1)}
-                      className="govuk-!-margin-bottom-0 px-2 py-1"
                       aria-label={`Move question ${index + 1} up`}
                     >
-                      <ArrowUp size={16} aria-hidden="true" />
-                    </GovukButton>
-                    <GovukButton
+                      Move up
+                    </button>
+                    <button
                       type="button"
-                      variant="secondary"
+                      className="govuk-link govuk-body-s"
                       disabled={index === array.length - 1}
                       onClick={() => fieldArray.swap(index, index + 1)}
-                      className="govuk-!-margin-bottom-0 px-2 py-1"
                       aria-label={`Move question ${index + 1} down`}
                     >
-                      <ArrowDown size={16} aria-hidden="true" />
-                    </GovukButton>
-                    <GovukButton
+                      Move down
+                    </button>
+                    <button
                       type="button"
-                      variant="warning"
+                      className="govuk-link govuk-body-s"
+                      style={{ color: '#d4351c' }}
                       onClick={() => fieldArray.remove(index)}
-                      className="govuk-!-margin-bottom-0 px-2 py-1"
                       aria-label={`Delete question ${index + 1}`}
                     >
-                      <Trash size={16} aria-hidden="true" />
-                    </GovukButton>
+                      Delete
+                    </button>
                   </div>
+                </div>
 
-                  {/* Question fields */}
-                  <div className="flex flex-1 flex-col gap-3">
-                    <p className="govuk-hint govuk-!-margin-bottom-0">
-                      Question {index + 1}
-                    </p>
-                    <GovukFormGroup className="govuk-!-margin-bottom-0">
-                      <GovukLabel htmlFor={`question-title-${index}`} size="s">
-                        Question text
-                      </GovukLabel>
-                      <textarea
-                        id={`question-title-${index}`}
-                        className="govuk-textarea govuk-!-margin-top-1"
-                        rows={1}
-                        placeholder="Question text"
-                        {...form.register(`questions.${index}.title`)}
-                      />
-                    </GovukFormGroup>
-                    <GovukFormGroup className="govuk-!-margin-bottom-0">
-                      <GovukLabel
-                        htmlFor={`question-description-${index}`}
-                        size="s"
-                      >
-                        Description{' '}
-                        <span className="govuk-hint govuk-!-display-inline">
-                          (optional)
-                        </span>
-                      </GovukLabel>
-                      <textarea
-                        id={`question-description-${index}`}
-                        className="govuk-textarea govuk-!-margin-top-1"
-                        rows={3}
-                        placeholder="Description of how to answer the question, what information to include, and style guidance."
-                        {...form.register(`questions.${index}.description`)}
-                      />
-                    </GovukFormGroup>
-                  </div>
+                {/* Question fields */}
+                <div className="flex flex-col gap-3">
+                  <GovukFormGroup className="govuk-!-margin-bottom-0">
+                    <GovukLabel htmlFor={`question-title-${index}`} size="s">
+                      Question text
+                    </GovukLabel>
+                    <input
+                      id={`question-title-${index}`}
+                      className="govuk-input govuk-!-margin-top-1"
+                      placeholder="Question text"
+                      {...form.register(`questions.${index}.title`)}
+                    />
+                  </GovukFormGroup>
+                  <GovukFormGroup className="govuk-!-margin-bottom-0">
+                    <GovukLabel
+                      htmlFor={`question-description-${index}`}
+                      size="s"
+                    >
+                      Optional description of how to answer the question, what
+                      information to include and style guidance:
+                    </GovukLabel>
+                    <textarea
+                      id={`question-description-${index}`}
+                      className="govuk-textarea govuk-!-margin-top-1"
+                      rows={3}
+                      placeholder="Description of how to answer the question, what information to include, and style guidance."
+                      {...form.register(`questions.${index}.description`)}
+                    />
+                  </GovukFormGroup>
                 </div>
               </div>
             ))}

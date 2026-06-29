@@ -74,8 +74,8 @@ export const DocumentTemplateEditor = ({
         </GovukButton>
       </div>
 
-      <div className="rounded-lg border border-[#b1b4b6] p-6">
-        <h4 className="govuk-heading-s">Template details</h4>
+      <div>
+        <h2 className="govuk-heading-m">Template details</h2>
         <GovukHint className="govuk-!-margin-bottom-4">
           Add a name and description so you can find your template later. Name
           and description are not used to generate your minute — add structure
@@ -86,7 +86,7 @@ export const DocumentTemplateEditor = ({
           hasError={!!errors.name}
           className="govuk-!-margin-bottom-4"
         >
-          <GovukLabel htmlFor="template-name">Template Name</GovukLabel>
+          <GovukLabel htmlFor="template-name">Template name</GovukLabel>
           {errors.name?.message && (
             <p id="template-name-error" className="govuk-error-message">
               <span className="govuk-visually-hidden">Error:</span>{' '}
@@ -95,7 +95,7 @@ export const DocumentTemplateEditor = ({
           )}
           <input
             id="template-name"
-            className={`govuk-input govuk-!-margin-top-1${errors.name ? 'govuk-input--error' : ''}`}
+            className={`govuk-input govuk-!-margin-top-1${errors.name ? ' govuk-input--error' : ''}`}
             placeholder="Name your template"
             aria-describedby={errors.name ? 'template-name-error' : undefined}
             {...form.register('name', {
@@ -115,10 +115,9 @@ export const DocumentTemplateEditor = ({
               {errors.description.message}
             </p>
           )}
-          <textarea
+          <input
             id="template-description"
-            className={`govuk-textarea govuk-!-margin-top-1${errors.description ? 'govuk-textarea--error' : ''}`}
-            rows={3}
+            className={`govuk-input govuk-!-margin-top-1${errors.description ? ' govuk-input--error' : ''}`}
             placeholder="A description to help identify the template."
             aria-describedby={
               errors.description ? 'template-description-error' : undefined
@@ -130,13 +129,13 @@ export const DocumentTemplateEditor = ({
         </GovukFormGroup>
       </div>
 
-      <div className="rounded-md border border-[#b1b4b6] p-4">
+      <div>
         <GovukFormGroup
           hasError={!!errors.content}
           className="govuk-!-margin-bottom-0"
         >
           <GovukLabel htmlFor="template-content" size="m">
-            Template Content
+            Template content
           </GovukLabel>
           <GovukHint
             id="template-content-hint"
@@ -170,6 +169,9 @@ export const DocumentTemplateEditor = ({
               />
             )}
           />
+          <p className="govuk-hint govuk-!-margin-top-2">
+            You can enter up to 200 characters
+          </p>
         </GovukFormGroup>
       </div>
     </form>

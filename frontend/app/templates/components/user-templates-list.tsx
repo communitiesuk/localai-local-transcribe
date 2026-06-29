@@ -22,18 +22,11 @@ import {
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Copy,
-  Edit,
-  FileSpreadsheet,
-  FileType,
-  FileWarning,
-  Loader2,
-  Trash2,
-} from 'lucide-react'
+import { Copy, Edit, FileWarning, Loader2, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useMemo } from 'react'
+import { FileSpreadsheet, FileType } from 'lucide-react'
 
 export const UserTemplatesList = () => {
   const {
@@ -69,25 +62,17 @@ export const UserTemplatesList = () => {
   return (
     <div>
       <div className="govuk-!-margin-bottom-4">
-        <div className="flex items-center gap-4">
-          <h3 className="govuk-heading-m govuk-!-margin-bottom-0 flex items-center gap-2">
-            <FileType className="h-6 w-6 text-gray-700" />
-            Document
-          </h3>
-        </div>
-        <p className="govuk-body govuk-hint govuk-!-margin-top-1">
+        <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Document</h2>
+        <p className="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-4">
           Customise the structure and style of your minutes.
         </p>
-      </div>
-      <div className="govuk-!-margin-bottom-8 grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="flex flex-col justify-center gap-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 shadow-sm">
+        <div className="govuk-!-margin-bottom-4 flex items-center gap-4">
           <GovukButtonLink
             href="/templates/new?type=document"
-            isStartButton
             variant="secondary"
-            className="govuk-!-margin-bottom-0 flex items-center justify-center"
+            className="govuk-!-margin-bottom-0"
           >
-            Create a new template
+            Create template
           </GovukButtonLink>
           <ExampleTemplatesDialog
             onSelectTemplate={(example) => {
@@ -96,29 +81,29 @@ export const UserTemplatesList = () => {
             examples={exampleDocumentTemplates}
           />
         </div>
-        {documentTemplates.map((template) => (
-          <TemplateCard template={template} key={template.id} />
-        ))}
       </div>
-      <div className="govuk-!-margin-bottom-4">
-        <div className="flex items-center gap-4">
-          <h3 className="govuk-heading-m govuk-!-margin-bottom-0 flex items-center gap-2">
-            <FileSpreadsheet className="h-6 w-6 text-gray-700" /> Form
-          </h3>
+      {documentTemplates.length > 0 && (
+        <div className="govuk-!-margin-bottom-8 grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {documentTemplates.map((template) => (
+            <TemplateCard template={template} key={template.id} />
+          ))}
         </div>
-        <p className="govuk-body govuk-hint govuk-!-margin-top-1">
+      )}
+
+      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
+
+      <div className="govuk-!-margin-bottom-4">
+        <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Form</h2>
+        <p className="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-4">
           For complex summarisation of meetings into many questions and answers.
         </p>
-      </div>
-      <div className="grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="flex flex-col justify-center gap-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 shadow-sm">
+        <div className="govuk-!-margin-bottom-4 flex items-center gap-4">
           <GovukButtonLink
             href="/templates/new?type=form"
-            isStartButton
             variant="secondary"
-            className="govuk-!-margin-bottom-0 flex items-center justify-center"
+            className="govuk-!-margin-bottom-0"
           >
-            Create a new template
+            Create template
           </GovukButtonLink>
           <ExampleTemplatesDialog
             onSelectTemplate={(example) => {
@@ -127,10 +112,14 @@ export const UserTemplatesList = () => {
             examples={exampleFormTemplates}
           />
         </div>
-        {formTemplates.map((template) => (
-          <TemplateCard template={template} key={template.id} />
-        ))}
       </div>
+      {formTemplates.length > 0 && (
+        <div className="grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {formTemplates.map((template) => (
+            <TemplateCard template={template} key={template.id} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
