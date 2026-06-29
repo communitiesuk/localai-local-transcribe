@@ -20,11 +20,13 @@ Model providers will tweak their models over time. This will likely introduce va
 
 ## Decision Outcome
 
-We will use control charts as the ongoing monitoring mechanism, anchored by the 4/5 rule.
+We will combine the 4/5 rule with control charts: the 4/5 rule sets the floor, and control charts provide the ongoing monitoring. Statistical equivalence testing (TOST, option 5) is planned for the future, with the 4/5 work making it easier rather than redundant.
 
-Control charts watches for drift and regressions. On their own they can detect change relative to a baseline. The assumption is that baseline is acceptable. The 4/5 rule supplies the missing baseline, by defining the minimum acceptable level of bias.
+Control charts watch for drift and regressions relative to a baseline, but assume that baseline is acceptable. The 4/5 rule supplies the missing baseline by defining the minimum acceptable level of bias.
 
-Crucially, 4/5 is a floor, not a target. It establishes the minimum we will tolerate, but it is not where we intend to stay. As prompt improvement and optimisation work proceeds, we will actively strive to suppress bias well below what the 4/5 rule strictly necessitates. In future once our new performance becomes stable, we will baseline based on that improved performance.
+Crucially, 4/5 is a floor, not a target. It is the minimum we will tolerate, not where we intend to stay: as prompt-improvement work proceeds we will drive bias well below it, and once that improved performance is stable we will re-baseline against it.
+
+TOST is the natural next step. It is more demanding — an agreed margin per metric, and far more data to prove a gap is small than to spot one — but starting with 4/5 and control charts generates exactly the paired factual/counterfactual data TOST needs, lowering the cost of adopting it later.
 
 ## Pros and Cons of the Options
 
