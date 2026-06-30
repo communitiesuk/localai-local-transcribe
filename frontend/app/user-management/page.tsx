@@ -59,7 +59,7 @@ export default function UserManagementPage() {
   return (
     <>
       <GovukBackLink />
-      <BannerNotification/>
+      <BannerNotification />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
