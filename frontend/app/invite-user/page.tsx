@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
+import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { UserRole } from '@/lib/utils'
 import isAllowedDomain from '@/utils/allowed-domains'
@@ -16,6 +17,17 @@ export default function AdminAddUserPage() {
   const existingEmailError = 'This email is already registered with an account'
 
   const {
+    name: storedName,
+    email: storedEmail,
+    setInviteDetails,
+    clearInviteDetails,
+  } = useInviteUserStore()
+  const [name, setName] = useState(storedName)
+  const [email, setEmail] = useState(storedEmail)
+  const [hasError, setHasError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(invalidDomainError)
+
+  const {
     currentUser,
     isLoading: userLoading,
     isError: userError,
@@ -27,11 +39,6 @@ export default function AdminAddUserPage() {
   const { data: organisation } = useOrganisation(
     currentUser?.organisation_id ?? ''
   )
-
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [hasError, setHasError] = useState(false)
-  const [errorMessage, setErrorMessage] = useState(invalidDomainError)
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -60,13 +67,13 @@ export default function AdminAddUserPage() {
       return
     }
 
-    router.push(
-      `/invite-user/confirm?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`
-    )
+    setInviteDetails(name, email)
+    router.push('/invite-user/confirm')
   }
 
   const handleCancel = (e: React.SyntheticEvent<HTMLAnchorElement>) => {
     e.preventDefault()
+    clearInviteDetails()
     setErrorMessage('')
     setHasError(false)
   }

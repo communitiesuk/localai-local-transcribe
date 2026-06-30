@@ -1,8 +1,10 @@
 'use client'
 
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { hasAnyRole, UserRole } from '@/lib/utils'
+import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { createUserUsersPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { Loader2 } from 'lucide-react'
@@ -10,10 +12,8 @@ import { useMutation } from '@tanstack/react-query'
 
 export default function AdminAddUserConfirmPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const name = searchParams.get('name')
-  const email = searchParams.get('email')
+  const { name, email, clearInviteDetails } = useInviteUserStore()
+  const submitInProgress = useRef(false)
 
   const {
     currentUser,
@@ -30,8 +30,15 @@ export default function AdminAddUserConfirmPage() {
 
   const createUserMutation = useMutation(createUserUsersPostMutation())
 
+  useEffect(() => {
+    if (submitInProgress.current) return
+    if (!name || !email) {
+      router.replace('/invite-user')
+    }
+  }, [name, email, router])
+
   if (!name || !email || !organisation?.id) {
-    return
+    return <Loader2 className="animate-spin" />
   }
 
   const is_Support_Admin = hasAnyRole(currentUser?.roles, [
@@ -42,7 +49,9 @@ export default function AdminAddUserConfirmPage() {
   ])
 
   const handleCreateUser = async () => {
+    submitInProgress.current = true
     if (!is_Support_Admin && !is_LA_Admin) return
+
     if (is_Support_Admin) {
       try {
         await createUserMutation.mutateAsync({
@@ -53,9 +62,11 @@ export default function AdminAddUserConfirmPage() {
           },
         })
         router.push('/user-management')
+        clearInviteDetails()
       } catch (error) {
+        submitInProgress.current = false
         console.error('Failed to create user:', error)
-        // Error logic not detailed by UCD
+        // Awaiting error logic from UCD
       }
     }
 
@@ -69,9 +80,11 @@ export default function AdminAddUserConfirmPage() {
           },
         })
         router.push('/user-management')
+        clearInviteDetails()
       } catch (error) {
+        submitInProgress.current = false
         console.error('Failed to create user:', error)
-        // Error logic not detailed by UCD
+        // Awaiting error logic from UCD
       }
     }
   }

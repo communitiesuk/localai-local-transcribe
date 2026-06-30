@@ -27,6 +27,17 @@ async def get_current_user(
     Returns:
         User: The user matching the username in the token
     """
+
+    if settings.ENVIRONMENT == "local":
+        statement = select(User).where(User.email == "john.doe@communities.gov.uk")
+
+    user = (await session.exec(statement)).one_or_none()
+
+    if not user:
+        error_message = "Local test user not found. Please ensure a user with email"
+
+        raise ValueError(error_message)
+    return user
     authorization: str | None = x_amzn_oidc_data
 
     try:
