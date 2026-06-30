@@ -8,11 +8,14 @@ import { EditDomainsForm } from '@/components/organisations/domains-form'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { UserRole } from '@/lib/utils'
+import { useNewOrgStore } from '@/stores/use-new-org-store'
 
 export default function EditOrganisationDomains(props: {
   params: Promise<{ organisationId: string }>
 }) {
   const router = useRouter()
+  const { newOrg } = useNewOrgStore()
+  const setNewOrg = useNewOrgStore((store) => store.setNewOrg)
   const _ = useAuthorisedUser([UserRole.MHCLG_SUPPORT_ADMIN])
 
   const { organisationId } = use(props.params)

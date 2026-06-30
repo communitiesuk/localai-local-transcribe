@@ -18,6 +18,8 @@ import {
   GovukErrorSummary,
 } from '@/components/govuk'
 
+import { useNewOrgStore } from '@/stores/use-new-org-store'
+
 export default function CreateOrganisation() {
   return (
     <>
@@ -34,6 +36,7 @@ export default function CreateOrganisation() {
 }
 
 function CreateOrganisationForm() {
+  const setNewOrg = useNewOrgStore((store) => store.setNewOrg)
   type Inputs = { name: string }
   const {
     register,
@@ -60,8 +63,12 @@ function CreateOrganisationForm() {
       },
     })
 
-  const onSubmit: SubmitHandler<Inputs> = (data) =>
-    createOrganisation({ body: { name: data.name, allowed_domains: [] } })
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    setNewOrg({
+      name: data.name,
+      allowedDomains: [],
+    })
+  }
 
   const organisationNameError = errors.name
 
