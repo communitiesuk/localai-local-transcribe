@@ -22,18 +22,18 @@ import { useQuery } from '@tanstack/react-query'
 
 type Props = {
   organisationID: string
+  isSystemAdmin: boolean
+  getHref: (page: number) => string
 }
 
-export default function PaginatedUsers({ organisationID }: Props) {
-  const isSysAdmin = organisationID !== ''
+export default function PaginatedUsers({
+  organisationID,
+  isSystemAdmin,
+  getHref,
+}: Props) {
+  const hasSelectedOrganisation = organisationID !== ''
   const searchParams = useSearchParams()
   const currentPage = Number(searchParams.get('page') ?? '1')
-
-  function getHref(page: number) {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('page', String(page))
-    return `?${params.toString()}`
-  }
 
   const localAdminQuery = useQuery({
     ...listUsersUsersGetOptions({
@@ -42,7 +42,7 @@ export default function PaginatedUsers({ organisationID }: Props) {
         page_size: USERS_PER_PAGE,
       },
     }),
-    enabled: !isSysAdmin,
+    enabled: !isSystemAdmin,
   })
 
   const sysAdminQuery = useQuery({
@@ -55,10 +55,10 @@ export default function PaginatedUsers({ organisationID }: Props) {
         page_size: USERS_PER_PAGE,
       },
     }),
-    enabled: isSysAdmin,
+    enabled: isSystemAdmin && hasSelectedOrganisation,
   })
 
-  const activeQuery = isSysAdmin ? sysAdminQuery : localAdminQuery
+  const activeQuery = isSystemAdmin ? sysAdminQuery : localAdminQuery
   const {
     data: {
       items: users,
@@ -77,19 +77,25 @@ export default function PaginatedUsers({ organisationID }: Props) {
 
       <p className="govuk-body">Total Users: {totalCount ?? 0}</p>
 
-      {users && (
-        <GovukTable>
-          <GovukTableHead>
+      <GovukTable>
+        <GovukTableHead>
+          <GovukTableRow>
+            <GovukTableHeaderCell>Name</GovukTableHeaderCell>
+            <GovukTableHeaderCell>Email</GovukTableHeaderCell>
+            <GovukTableHeaderCell>
+              &nbsp; {/* View Account placeholder column */}
+            </GovukTableHeaderCell>
+          </GovukTableRow>
+        </GovukTableHead>
+        <GovukTableBody>
+          {isSystemAdmin && !hasSelectedOrganisation ? (
             <GovukTableRow>
-              <GovukTableHeaderCell>Name</GovukTableHeaderCell>
-              <GovukTableHeaderCell>Email</GovukTableHeaderCell>
-              <GovukTableHeaderCell>
-                &nbsp; {/* View Account placeholder column */}
-              </GovukTableHeaderCell>
+              <GovukTableCell colSpan={3}>
+                Please select an organisation to view associated users.
+              </GovukTableCell>
             </GovukTableRow>
-          </GovukTableHead>
-          <GovukTableBody>
-            {users.map((user) => (
+          ) : (
+            users?.map((user) => (
               <GovukTableRow key={user.id}>
                 <GovukTableCell>{user.name}</GovukTableCell>
                 <GovukTableCell>{user.email}</GovukTableCell>
@@ -119,10 +125,10 @@ export default function PaginatedUsers({ organisationID }: Props) {
                   </div>
                 </GovukTableCell>
               </GovukTableRow>
-            ))}
-          </GovukTableBody>
-        </GovukTable>
-      )}
+            ))
+          )}
+        </GovukTableBody>
+      </GovukTable>
 
       {(totalPages ?? 0) > 1 && (
         <GovukPagination

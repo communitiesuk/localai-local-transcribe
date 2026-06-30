@@ -1,5 +1,4 @@
 import logging
-import math
 import uuid
 
 from fastapi import APIRouter, HTTPException, Query
@@ -7,8 +6,7 @@ from sqlmodel import select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
-from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_user_count, get_users
+from backend.utils.queries import get_paginated_users
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation
 from common.types import (
@@ -137,21 +135,4 @@ async def list_organisations_users(
     if organisation is None:
         raise HTTPException(status_code=404, detail="Organisation not found")
 
-    count = await get_user_count(
-        session,
-        organisation=organisation,
-    )
-    users = await get_users(
-        session,
-        organisation=organisation,
-        page=page,
-        page_size=page_size,
-    )
-
-    return PaginatedUsersResponse(
-        items=[to_user_response(u) for u in users],
-        total_count=count,
-        page=page,
-        page_size=page_size,
-        total_pages=math.ceil(count / page_size) or 1,
-    )
+    return await get_paginated_users(session, organisation, page, page_size)

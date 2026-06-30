@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, ChangeEvent } from 'react'
 import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { UserRole, hasAnyRole } from '@/lib/utils'
@@ -9,10 +9,23 @@ import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
 import { GovukBackLink } from '@/components/govuk'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function UserManagementPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const [selectedOrganisation, setSelectedOrganisation] = useState('')
+
+  function buildPageUrl(page: number): string {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(page))
+    return `?${params.toString()}`
+  }
+
+  function getHref(page: number): string {
+    return buildPageUrl(page)
+  }
 
   const {
     currentUser,
@@ -31,7 +44,12 @@ export default function UserManagementPage() {
   ])
 
   const { data: allOrganistions } = useGetOrganisations(isSystemAdmin)
-  const numberOfOrgs = allOrganistions?.length ?? 0
+
+  const handleOrganisationChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value
+    setSelectedOrganisation(value)
+    router.replace(buildPageUrl(1))
+  }
 
   if (userLoading) return <Loader2 className="animate-spin" />
 
@@ -61,7 +79,7 @@ export default function UserManagementPage() {
               id="sortOrgs"
               name="sortOrgs"
               value={selectedOrganisation}
-              onChange={(e) => setSelectedOrganisation(e.target.value)}
+              onChange={handleOrganisationChange}
             >
               <option value="" disabled>
                 Select Organisation
@@ -76,8 +94,6 @@ export default function UserManagementPage() {
                 ))}
             </select>
           </div>
-
-          <div>Total accounts: {numberOfOrgs}</div>
         </>
       )}
 
@@ -104,7 +120,13 @@ export default function UserManagementPage() {
       </div>
 
       <Suspense fallback={null}>
-        <PaginatedUsers organisationID={selectedOrganisation} />
+        <PaginatedUsers
+          organisationID={
+            isSystemAdmin ? selectedOrganisation : (organisation?.id ?? '')
+          }
+          isSystemAdmin={isSystemAdmin}
+          getHref={getHref}
+        />
       </Suspense>
     </>
   )
