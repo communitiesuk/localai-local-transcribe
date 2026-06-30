@@ -10,15 +10,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { useUpdateTranscription } from '@/hooks/use-update-transcription-speakers'
 import { TranscriptionMetadata } from '@/lib/client'
-import {
-  listTranscriptionsTranscriptionsGetQueryKey,
-  saveTranscriptionTranscriptionsTranscriptionIdPatchMutation,
-} from '@/lib/client/@tanstack/react-query.gen'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader, Save } from 'lucide-react'
 import posthog from 'posthog-js'
-import { Dispatch, SetStateAction } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 export const RenameDialog = ({
@@ -30,19 +26,8 @@ export const RenameDialog = ({
   setOpen: Dispatch<SetStateAction<boolean>>
   transcription: TranscriptionMetadata
 }) => {
-  const queryClient = useQueryClient()
-  const { mutate: saveTranscription, isPending } = useMutation({
-    ...saveTranscriptionTranscriptionsTranscriptionIdPatchMutation(),
-    onSuccess() {
-      queryClient.invalidateQueries({
-        queryKey: listTranscriptionsTranscriptionsGetQueryKey(),
-      })
-      posthog.capture('edited_transcript_title', {
-        transcriptionId: transcription.id,
-      })
-      setOpen(false)
-    },
-  })
+  const { updateTitle } = useUpdateTranscription(transcription.id)
+  const [isPending, setIsPending] = useState(false)
   const form = useForm<{ title: string | undefined }>({
     defaultValues: { title: transcription.title ?? undefined },
   })
@@ -50,11 +35,17 @@ export const RenameDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <form
-          onSubmit={form.handleSubmit(({ title }) => {
-            saveTranscription({
-              path: { transcription_id: transcription.id },
-              body: { title },
-            })
+          onSubmit={form.handleSubmit(async ({ title }) => {
+            setIsPending(true)
+            try {
+              await updateTitle(title ?? null)
+              posthog.capture('edited_transcript_title', {
+                transcriptionId: transcription.id,
+              })
+              setOpen(false)
+            } finally {
+              setIsPending(false)
+            }
           })}
         >
           <DialogHeader>
