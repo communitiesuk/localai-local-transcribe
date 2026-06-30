@@ -115,16 +115,8 @@ async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch
 
 @pytest.mark.asyncio
 async def test_get_current_user_doesnt_fall_back_to_email_if__subject_id(monkeypatch, session):
-    mock_user = User(
-        id=uuid4(),
-        email=TEST_EMAIL,
-        subject_id=TEST_SUBJECT_ID,
-        data_retention_days=30,
-        created_datetime=datetime.now(UTC),
-        updated_datetime=datetime.now(UTC),
-    )
     mock_result = Mock()
-    mock_result.first.return_value = None
+    mock_result.first.return_value = None  # no match by subject_id or email fallback
     session.exec.return_value = mock_result
 
     # patch in JWT decoding
@@ -135,21 +127,20 @@ async def test_get_current_user_doesnt_fall_back_to_email_if__subject_id(monkeyp
         mock_get_user_info,  # token unused in test
     )
 
-    user = await get_current_user(
-        session=session,
-        x_amzn_oidc_data=TEST_TOKEN,
-    )
+    # no account is created when there is no matching subject_id; the user is unauthorised
+    with pytest.raises(HTTPException) as exception:
+        await get_current_user(
+            session=session,
+            x_amzn_oidc_data=TEST_TOKEN,
+        )
 
-    # check a new account as been created rather than matching with the other
-    assert user.email == mock_user.email
-    assert user.subject_id == different_subject_id
-    assert user.id != mock_user.id
+    assert exception.value.status_code == 401
     mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    assert session.commit.await_count == 2
+    session.commit.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_creates_user(monkeypatch, session):
+async def test_get_current_user_does_not_create_user_if_doesnt_exist(monkeypatch, session):
     mock_result = Mock()
     mock_result.first.return_value = None  # no user currently exists
     session.exec.return_value = mock_result
@@ -161,18 +152,15 @@ async def test_get_current_user_creates_user(monkeypatch, session):
         mock_get_user_info,
     )
 
-    user = await get_current_user(
-        session=session,
-        x_amzn_oidc_data=TEST_TOKEN,
-    )
+    with pytest.raises(HTTPException) as exception:
+        await get_current_user(
+            session=session,
+            x_amzn_oidc_data=TEST_TOKEN,
+        )
 
-    assert user.subject_id == new_user_subject_id
+    assert exception.value.status_code == 401
     mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    # new user is created with email and subject_id, last_login updated
-    session.add.assert_called_once()
-    assert session.commit.await_count == 2
-    session.refresh.assert_awaited_once()
-    assert user.last_login is not None
+    session.commit.assert_not_called()
 
 
 @pytest.mark.asyncio

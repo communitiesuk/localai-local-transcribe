@@ -80,7 +80,6 @@ class Delivery(Template):
         sections: DeliveryMeetingSections = await chatbot.structured_chat(
             initial_messages, response_format=DeliveryMeetingSections
         )
-        hallucinations = await chatbot.hallucination_check()
         # attendees
         attendee_list = await chatbot.structured_chat([cls.get_messages_for_attendees()], response_format=AttendeeList)
 
@@ -102,8 +101,5 @@ class Delivery(Template):
                 action_index += 1
 
         final = header + "\n\n" + initial_draft
-        final, _total_claims, citation_hallucinations = await add_citations_to_minute(
-            transcript=transcript, initial_draft=final
-        )
-        hallucinations += citation_hallucinations
-        return MinuteAndHallucinations(text=final, total_claims=_total_claims, hallucinations=hallucinations)
+        final, total_claims, hallucinations = await add_citations_to_minute(transcript=transcript, initial_draft=final)
+        return MinuteAndHallucinations(text=final, total_claims=total_claims, hallucinations=hallucinations)

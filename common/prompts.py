@@ -78,10 +78,6 @@ def get_meeting_detection_prompt(transcript: list[DialogueEntry]) -> list[dict[s
     ]
 
 
-def get_hallucination_detection_messages() -> list[dict[str, str]]:
-    return [{"role": "user", "content": _render("hallucination_detection.j2")}]
-
-
 def get_accuracy_check_messages(minute: str, transcript: list[DialogueEntry]) -> list[dict[str, str]]:
     return [
         {
