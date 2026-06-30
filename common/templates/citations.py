@@ -2,7 +2,7 @@ import re
 
 from pydantic import BaseModel
 
-from common.database.postgres_models import DialogueEntry, HallucinationType
+from common.database.postgres_models import DialogueEntry
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_cite_claims_prompt, get_extract_claims_prompt
 from common.types import LLMHallucination
@@ -55,7 +55,6 @@ async def add_citations_to_minute(
 
     uncited_hallucinations = [
         LLMHallucination(
-            hallucination_type=HallucinationType.FACTUAL_FABRICATION,
             hallucination_text=cc.claim,
             hallucination_reason="Could not find supporting evidence in the transcript",
         )
