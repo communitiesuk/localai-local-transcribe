@@ -48,7 +48,7 @@ async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
 
 
 async def get_paginated_users(
-    session,
+    session: AsyncSession,
     organisation: Organisation | None,
     page: int,
     page_size: int,
