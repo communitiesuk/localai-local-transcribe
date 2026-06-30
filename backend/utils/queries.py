@@ -38,7 +38,6 @@ async def get_user_count(
 
 
 async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
-    normalized_email = email.lower()
-    query = select(User).where(func.lower(User.email) == normalized_email)
-    result = await session.execute(query)
-    return result.scalar_one_or_none()
+    query = select(User).where(User.email == email)
+    result = await session.exec(query)
+    return result.one_or_none()

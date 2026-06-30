@@ -12,22 +12,20 @@ from tenacity import (
 
 from common.azure_apim_auth import build_azure_apim_token_provider
 from common.llm.adapters import AzureAPIMModelAdapter, GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
-from common.prompts import get_hallucination_detection_messages
 from common.settings import get_settings
-from common.types import LLMHallucination, LLMHallucinationList
 
 settings = get_settings()
 
 
 class ChatBot:
     """
-    Represents an interface for engaging in conversational AI tasks, including general chat,
-    structured interactions, and hallucination detection.
+    Represents an interface for engaging in conversational AI tasks, including general chat
+    and structured interactions.
 
     This class provides methods for interacting with an underlying model adapter to perform various
     chat functionalities. It includes support for retry mechanisms to ensure robust performance in
     case of failures, with methods optimized for both general conversation and specific structured
-    responses. The hallucination detection method is available for examining the accuracy of responses.
+    responses.
 
     Attributes:
         adapter (ModelAdapter): The underlying adapter interface that handles communication
@@ -40,14 +38,6 @@ class ChatBot:
 
     def clear_history(self) -> None:
         self.messages = []
-
-    async def hallucination_check(self) -> list[LLMHallucination]:
-        if settings.HALLUCINATION_CHECK:
-            result = await self.structured_chat(
-                messages=get_hallucination_detection_messages(), response_format=LLMHallucinationList
-            )
-            return result.hallucinations
-        return []
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
     async def chat(self, messages: list[dict[str, str]]) -> str:
