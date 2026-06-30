@@ -44,7 +44,10 @@ export default function UserManagementPage() {
         <GovukButton>Invite new user</GovukButton>
 
         {hasAnyRole(currentUser?.roles, [UserRole.MHCLG_SUPPORT_ADMIN]) && (
-          <GovukButtonLink href="/organisations/new" variant="secondary">
+          <GovukButtonLink
+            href="/user-management/organisations/new"
+            variant="secondary"
+          >
             Create new organisation
           </GovukButtonLink>
         )}
@@ -54,7 +57,10 @@ export default function UserManagementPage() {
         <>
           <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
-          <GovukButtonLink href="/user-management/domains" variant="secondary">
+          <GovukButtonLink
+            href="/user-management/organisations/domains"
+            variant="secondary"
+          >
             Edit approved domains
           </GovukButtonLink>
         </>

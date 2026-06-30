@@ -63,7 +63,7 @@ function CreateNewOrganisationNameForm() {
       name: data.name,
       allowedDomains: [],
     })
-    router.replace('/organisations/new/domains')
+    router.replace('/user-management/organisations/new/domains')
   }
 
   const organisationNameError = errors.name

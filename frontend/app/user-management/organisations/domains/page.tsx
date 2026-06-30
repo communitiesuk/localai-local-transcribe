@@ -29,9 +29,6 @@ export default function EditApprovedDomainsPage() {
     onSuccess() {
       router.replace(`/user-management`)
     },
-    onError() {
-      router.replace('/generic-error')
-    },
   })
 
   // non-null assertion - onSubmit only called once organisation has loaded
