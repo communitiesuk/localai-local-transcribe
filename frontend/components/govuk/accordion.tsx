@@ -58,7 +58,7 @@ function Section({
   )
 }
 
-export function GovukAccordion({
+function GovukAccordionBase({
   id,
   className,
   children,
@@ -85,4 +85,6 @@ export function GovukAccordion({
   )
 }
 
-GovukAccordion.Section = Section
+GovukAccordionBase.Section = Section
+
+export const GovukAccordion = GovukAccordionBase
