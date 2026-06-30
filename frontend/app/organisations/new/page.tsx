@@ -1,9 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useForm, SubmitHandler } from 'react-hook-form'
 import Link from 'next/link'
+import { useForm, SubmitHandler } from 'react-hook-form'
 
+import { useQuery } from '@tanstack/react-query'
+import { listOrganisationsOrganisationsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+
+import { Loader2 } from 'lucide-react'
 import {
   GovukHeading,
   GovukFormGroup,
@@ -13,8 +17,8 @@ import {
   GovukDetails,
   GovukErrorSummary,
 } from '@/components/govuk'
-
 import { useNewOrgStore } from '@/stores/use-new-org-store'
+import { useEffect } from 'react'
 
 export default function CreateNewOrganisationName() {
   return (
@@ -32,7 +36,16 @@ export default function CreateNewOrganisationName() {
 }
 
 function CreateNewOrganisationNameForm() {
+  const router = useRouter()
+
+  const {
+    data: organisations,
+    isLoading: organisationsLoading,
+    isError: organisationsError,
+  } = useQuery(listOrganisationsOrganisationsGetOptions())
+  const organisationNames = organisations?.map((org) => org.name)
   const setNewOrg = useNewOrgStore((store) => store.setNewOrg)
+
   type Inputs = { name: string }
   const {
     register,
@@ -40,12 +53,10 @@ function CreateNewOrganisationNameForm() {
     setError,
     formState: { errors },
   } = useForm<Inputs>({})
-  const router = useRouter()
 
   const onSubmit: SubmitHandler<Inputs> = (data) => {
-    console.log(data.name) // logs eo1 but does not set error and moves to '/organisations/new/domains'
-    if (['eo1'].includes(data.name)) {
-      setError('name', { message: 'this is a test' })
+    if (organisationNames?.includes(data.name)) {
+      setError('name', { message: 'Organisation name already in use.' })
       return
     }
     setNewOrg({
@@ -56,6 +67,14 @@ function CreateNewOrganisationNameForm() {
   }
 
   const organisationNameError = errors.name
+
+  useEffect(() => {
+    if (organisationsError) {
+      router.replace('/generic-error')
+    }
+  }, [organisationsError, router])
+
+  if (organisationsLoading) return <Loader2 />
 
   return (
     <>
@@ -74,7 +93,7 @@ function CreateNewOrganisationNameForm() {
           <GovukLabel>Organisation name</GovukLabel>
           <GovukInput
             id="name"
-            {...register('name', { required: 'Enter an organisation name' })}
+            {...register('name', { required: 'Enter an organisation name.' })}
           />
         </GovukFormGroup>
         <div className="govuk-button-group">
