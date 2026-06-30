@@ -1,4 +1,4 @@
-# ADR-023: State management
+# ADR-025: State management
 
 ## Status
 
