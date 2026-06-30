@@ -4,10 +4,6 @@ import { useRouter } from 'next/navigation'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import Link from 'next/link'
 
-import { useMutation } from '@tanstack/react-query'
-import { OrganisationResponse } from '@/lib/client'
-import { createOrganisationOrganisationsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
-
 import {
   GovukHeading,
   GovukFormGroup,
@@ -20,12 +16,12 @@ import {
 
 import { useNewOrgStore } from '@/stores/use-new-org-store'
 
-export default function CreateOrganisation() {
+export default function CreateNewOrganisationName() {
   return (
     <>
       <GovukHeading>Create organisation</GovukHeading>
 
-      <CreateOrganisationForm />
+      <CreateNewOrganisationNameForm />
 
       <GovukDetails summary="What will happen after you create an organisation">
         Once created, you will be able to find it in the drop down on the user
@@ -35,7 +31,7 @@ export default function CreateOrganisation() {
   )
 }
 
-function CreateOrganisationForm() {
+function CreateNewOrganisationNameForm() {
   const setNewOrg = useNewOrgStore((store) => store.setNewOrg)
   type Inputs = { name: string }
   const {
@@ -46,36 +42,23 @@ function CreateOrganisationForm() {
   } = useForm<Inputs>({})
   const router = useRouter()
 
-  const { mutate: createOrganisation, isPending: createOrganisationPending } =
-    useMutation({
-      ...createOrganisationOrganisationsPostMutation(),
-      onSuccess(data: OrganisationResponse) {
-        router.replace(`/organisations/${data.id}/domains`)
-      },
-      onError(error) {
-        const detail = error?.detail
-        const message =
-          typeof detail === 'string' ? detail : 'An error occurred'
-
-        setError('name', {
-          message,
-        })
-      },
-    })
-
   const onSubmit: SubmitHandler<Inputs> = (data) => {
+    console.log(data.name) // logs eo1 but does not set error and moves to '/organisations/new/domains'
+    if (['eo1'].includes(data.name)) {
+      setError('name', { message: 'this is a test' })
+      return
+    }
     setNewOrg({
       name: data.name,
       allowedDomains: [],
     })
+    router.replace('/organisations/new/domains')
   }
 
   const organisationNameError = errors.name
 
   return (
     <>
-      {errors.name && <span>This field is required</span>}
-
       {organisationNameError && (
         <>
           <GovukErrorSummary
@@ -95,11 +78,7 @@ function CreateOrganisationForm() {
           />
         </GovukFormGroup>
         <div className="govuk-button-group">
-          <GovukButton type="submit" disabled={createOrganisationPending}>
-            {createOrganisationPending
-              ? 'Creating organisation'
-              : 'Create organisation'}
-          </GovukButton>
+          <GovukButton type="submit">Next</GovukButton>
           <Link href="/user-management" className="govuk-link">
             Cancel
           </Link>

@@ -1,78 +1,31 @@
 'use client'
 
+import Link from 'next/link'
+import { Controller, useForm } from 'react-hook-form'
 import {
   GovukButton,
-  GovukDetails,
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
   GovukLabel,
   GovukTextarea,
 } from '@/components/govuk'
-import { OrganisationResponse } from '@/lib/client'
-import {
-  getOrganisationOrganisationsOrganisationIdGetQueryKey,
-  updateOrganisationOrganisationsOrganisationIdPatchMutation,
-} from '@/lib/client/@tanstack/react-query.gen'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useCallback } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { parseDomains } from '@/lib/utils'
 
-type EditDomainsFormData = { domains: string }
-
-function parseDomains(value: string): string[] {
-  return value
-    .split('\n')
-    .map((domain) => domain.trim())
-    .filter(Boolean)
-}
+export type EditDomainsFormData = { domains: string }
 
 export function EditDomainsForm({
-  organisation,
+  defaultValues,
+  onSubmit,
 }: {
-  organisation: OrganisationResponse
+  defaultValues: string[]
+  onSubmit: (data: EditDomainsFormData) => void
 }) {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-
   const form = useForm<EditDomainsFormData>({
     defaultValues: {
-      domains: organisation.allowed_domains.join('\n'),
+      domains: defaultValues.join('\n'),
     },
   })
-
-  const { mutateAsync, isPending } = useMutation({
-    ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
-  })
-
-  const onSubmit = useCallback(
-    async (data: EditDomainsFormData) => {
-      await mutateAsync(
-        {
-          path: { organisation_id: organisation.id },
-          body: { allowed_domains: parseDomains(data.domains) },
-        },
-        {
-          onSuccess() {
-            queryClient.invalidateQueries({
-              queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
-                path: { organisation_id: organisation.id },
-              }),
-            })
-            toast.success('Approved domains updated')
-            router.push('/user-management')
-          },
-          onError() {
-            toast.error('Failed to update approved domains')
-          },
-        }
-      )
-    },
-    [mutateAsync, organisation.id, queryClient, router]
-  )
 
   const domainsError = form.formState.errors.domains
 
@@ -122,9 +75,7 @@ export function EditDomainsForm({
       </GovukFormGroup>
 
       <div className="govuk-button-group">
-        <GovukButton type="submit" disabled={isPending}>
-          Save
-        </GovukButton>
+        <GovukButton type="submit">Save</GovukButton>
         <Link href="/user-management" className="govuk-link">
           Cancel
         </Link>

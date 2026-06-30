@@ -25,3 +25,10 @@ export function hasAnyRole(
 
   return userRolesList.some((role) => allowedRoles.includes(role))
 }
+
+export function parseDomains(value: string): string[] {
+  return value
+    .split('\n')
+    .map((domain) => domain.trim())
+    .filter(Boolean)
+}
