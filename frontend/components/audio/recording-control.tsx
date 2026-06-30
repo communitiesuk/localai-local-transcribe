@@ -312,11 +312,7 @@ export default function RecordingControl({
 
       {isRecording && !showStopConfirm && (
         <div className="flex justify-between gap-2">
-          <GovukButton
-            type="button"
-            onClick={togglePause}
-            variant="secondary"
-          >
+          <GovukButton type="button" onClick={togglePause} variant="secondary">
             {isPaused ? (
               <>
                 <Play className="mr-2 size-4" aria-hidden="true" />

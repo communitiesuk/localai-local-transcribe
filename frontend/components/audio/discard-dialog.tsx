@@ -39,11 +39,7 @@ export const DiscardConfirmDialog = ({
           >
             Cancel
           </GovukButton>
-          <GovukButton
-            type="button"
-            variant="warning"
-            onClick={onClickConfirm}
-          >
+          <GovukButton type="button" variant="warning" onClick={onClickConfirm}>
             <Trash2 aria-hidden="true" /> Discard recording
           </GovukButton>
         </DialogFooter>

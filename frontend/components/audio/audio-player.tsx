@@ -121,11 +121,7 @@ export default function AudioPlayerComponent({
         </div>
       </div>
       <div className="flex justify-end bg-gray-50 p-2 dark:bg-gray-900">
-        <a
-          href={audioUrl}
-          download={filename}
-          className="govuk-link text-sm"
-        >
+        <a href={audioUrl} download={filename} className="govuk-link text-sm">
           Save to Computer
         </a>
       </div>

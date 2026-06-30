@@ -23,7 +23,7 @@ export const InstructionsTabs = () => {
         {TABS.map((tab) => (
           <li
             key={tab.id}
-            className={`govuk-tabs__list-item${activeTab === tab.id ? ' govuk-tabs__list-item--selected' : ''}`}
+            className={`govuk-tabs__list-item${activeTab === tab.id ? 'govuk-tabs__list-item--selected' : ''}`}
             role="presentation"
           >
             <a
@@ -74,7 +74,7 @@ export const InstructionsTabs = () => {
       </ul>
 
       <div
-        className={`govuk-tabs__panel${activeTab !== 'windows' ? ' govuk-tabs__panel--hidden' : ''}`}
+        className={`govuk-tabs__panel${activeTab !== 'windows' ? 'govuk-tabs__panel--hidden' : ''}`}
         id="windows"
         role="tabpanel"
         aria-labelledby="tab_windows"
@@ -118,7 +118,7 @@ export const InstructionsTabs = () => {
       </div>
 
       <div
-        className={`govuk-tabs__panel${activeTab !== 'macos' ? ' govuk-tabs__panel--hidden' : ''}`}
+        className={`govuk-tabs__panel${activeTab !== 'macos' ? 'govuk-tabs__panel--hidden' : ''}`}
         id="macos"
         role="tabpanel"
         aria-labelledby="tab_macos"
@@ -154,9 +154,9 @@ export const InstructionsTabs = () => {
           </li>
           <li>
             <p className="govuk-body">
-              <strong>Keep both tabs open</strong> - Don&apos;t close either
-              tab during recording. Switching between tabs is fine, but both
-              must remain open.
+              <strong>Keep both tabs open</strong> - Don&apos;t close either tab
+              during recording. Switching between tabs is fine, but both must
+              remain open.
             </p>
           </li>
         </ol>
