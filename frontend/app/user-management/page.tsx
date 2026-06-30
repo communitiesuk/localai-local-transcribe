@@ -10,6 +10,7 @@ import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
 import { GovukBackLink } from '@/components/govuk'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { BannerNotification } from '@/components/banner-notification'
 
 export default function UserManagementPage() {
   const router = useRouter()
@@ -58,6 +59,7 @@ export default function UserManagementPage() {
   return (
     <>
       <GovukBackLink />
+      <BannerNotification/>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <h1 className="govuk-heading-l govuk-!-margin-bottom-0">

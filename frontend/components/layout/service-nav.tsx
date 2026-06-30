@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { UserRole, hasAnyRole } from '@/lib/utils'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -80,6 +81,12 @@ interface SafeLinkProps {
 function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   const router = useRouter()
   const { lockNavigation, setLockNavigation } = useLockNavigationContext()
+  const clearBanner = useBannerStore((store) => store.clearBanner)
+
+  const handleClick = () => {
+    // banner shouldn't persist on page change
+    clearBanner()
+  }
 
   if (lockNavigation) {
     return (
@@ -135,6 +142,7 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
       href={href}
       className="govuk-service-navigation__link"
       aria-current={ariaCurrent}
+      onClick={handleClick}
     >
       {children}
     </Link>
