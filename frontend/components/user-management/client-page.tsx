@@ -40,7 +40,7 @@ export default function UserManagementClient() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const { data: allOrganistions } = useGetOrganisations(isSystemAdmin)
+  const { data: allOrganisations } = useGetOrganisations(isSystemAdmin)
 
   const handleOrganisationChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value
@@ -82,8 +82,8 @@ export default function UserManagementClient() {
               <option value="" disabled>
                 Select Organisation
               </option>
-              {allOrganistions &&
-                allOrganistions.map((org) => (
+              {allOrganisations &&
+                allOrganisations.map((org) => (
                   <OrganisationOption
                     key={org.id}
                     id={org.id}
