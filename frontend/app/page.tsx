@@ -7,36 +7,37 @@ import { Suspense } from 'react'
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-3xl p-6">
+    <div className="govuk-grid-row">
       <PosthogBanner />
-      <div className="mb-4">
-        <h1 className="mb-4 text-4xl font-bold">
+      <div className="govuk-grid-column-three-quarters">
+        <h1 className="govuk-heading-l govuk-!-margin-bottom-3">
           AI transcription and drafting service
         </h1>
-        <p className="text-slate-600">
+        <p className="govuk-body govuk-hint">
+
           Transcribe and summarise your meetings with AI. Click the New Meeting
           button below to begin. Suitable up to{' '}
           <span className="font-bold">OFFICIAL SENSITIVE</span>.
         </p>
+        <Button
+          className="mb-6 w-full bg-blue-500 p-6 hover:bg-blue-800 active:bg-amber-400"
+          asChild
+        >
+          <Link href="/new">
+            <Plus />
+            New meeting
+          </Link>
+        </Button>
+        <Suspense
+          fallback={
+            <div className="flex w-full items-center justify-center">
+              <Loader2 className="animate-spin" />
+            </div>
+          }
+        >
+          <PaginatedTranscriptions />
+        </Suspense>
       </div>
-      <Button
-        className="mb-6 w-full bg-blue-500 p-6 hover:bg-blue-800 active:bg-amber-400"
-        asChild
-      >
-        <Link href="/new">
-          <Plus />
-          New meeting
-        </Link>
-      </Button>
-      <Suspense
-        fallback={
-          <div className="flex w-full items-center justify-center">
-            <Loader2 className="animate-spin" />
-          </div>
-        }
-      >
-        <PaginatedTranscriptions />
-      </Suspense>
     </div>
   )
 }
