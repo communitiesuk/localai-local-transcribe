@@ -175,6 +175,14 @@ export type GetUserResponse = {
    */
   updated_datetime: string
   /**
+   * Last Login
+   */
+  last_login: string
+  /**
+   * Is Active
+   */
+  is_active: boolean
+  /**
    * Name
    */
   name: string | null
@@ -233,16 +241,6 @@ export type HttpValidationError = {
 }
 
 /**
- * HallucinationType
- */
-export type HallucinationType =
-  | 'factual_fabrication'
-  | 'nonsensical'
-  | 'contradiction'
-  | 'misleading'
-  | 'other'
-
-/**
  * JobStatus
  */
 export type JobStatus =
@@ -250,28 +248,6 @@ export type JobStatus =
   | 'in_progress'
   | 'completed'
   | 'failed'
-
-/**
- * LLMHallucination
- */
-export type LlmHallucination = {
-  /**
-   * Type of hallucination
-   */
-  hallucination_type: HallucinationType
-  /**
-   * Hallucination Text
-   *
-   * Text of hallucination
-   */
-  hallucination_text?: string | null
-  /**
-   * Hallucination Reason
-   *
-   * Reason for hallucination
-   */
-  hallucination_reason?: string | null
-}
 
 /**
  * Minute
@@ -428,10 +404,6 @@ export type MinuteVersionResponse = {
    * Guardrail Results
    */
   guardrail_results?: Array<GuardrailResultResponse>
-  /**
-   * Hallucinations
-   */
-  hallucinations?: Array<LlmHallucination>
 }
 
 /**
@@ -2334,3 +2306,17 @@ export type UpdateOrganisationOrganisationsOrganisationIdPatchResponses = {
 
 export type UpdateOrganisationOrganisationsOrganisationIdPatchResponse =
   UpdateOrganisationOrganisationsOrganisationIdPatchResponses[keyof UpdateOrganisationOrganisationsOrganisationIdPatchResponses]
+
+export type SignOutSignoutGetData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/signout'
+}
+
+export type SignOutSignoutGetResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown
+}

@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from common.database.postgres_models import (
     ContentSource,
     DialogueEntry,
-    HallucinationType,
     JobStatus,
     TemplateType,
     UserRole,
@@ -100,6 +99,8 @@ class GetUserResponse(BaseModel):
     id: uuid.UUID
     created_datetime: datetime
     updated_datetime: datetime
+    last_login: datetime
+    is_active: bool
     name: str | None
     email: str
     data_retention_days: int | None
@@ -175,13 +176,8 @@ class GuardrailResultResponse(BaseModel):
 
 
 class LLMHallucination(BaseModel):
-    hallucination_type: HallucinationType = Field(description="Type of hallucination")
-    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
-    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
-
-
-class LLMHallucinationList(BaseModel):
-    hallucinations: list[LLMHallucination] = Field(description="List of detected hallucinations")
+    hallucination_text: str = Field(description="The uncited claim flagged as a potential hallucination")
+    hallucination_reason: str | None = Field(description="Reason the claim was flagged", default=None)
 
 
 class GuardrailScore(BaseModel):
@@ -200,7 +196,6 @@ class MinuteVersionResponse(BaseModel):
     content_source: ContentSource
     too_short: bool = False
     guardrail_results: list[GuardrailResultResponse] = []
-    hallucinations: list[LLMHallucination] = []
 
 
 class SpeakerPrediction(BaseModel):

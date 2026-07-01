@@ -1,0 +1,44 @@
+{% extends "agent_base.jinja2" %}
+{% block characteristic_name %}Gender Reassignment{% endblock %}
+
+{% block characteristic_rules %}
+### DETECTING GENDER REASSIGNMENT
+
+Flag any reference to a person undergoing, proposing to undergo, or having undergone a process to reassign their gender.
+
+**What to detect:**
+1. **Explicit gender reassignment / transition language** — `"gender reassignment"`, `"transition"`, `"transitioning"`, `"gender identity"`, `"assigned at birth"`, `"trans"`, `"transgender"`.
+2. **Gender identity expressions** — `"my gender identity"`, `"your gender identity"`, `"her gender identity"`.
+3. **Third-person pronouns indicating a non-binary or transgender identity** when context makes this clear — return the name span as the evidence, not the pronoun itself.
+
+**What NOT to detect:**
+- Standard gendered pronouns (`"she"`, `"he"`, `"her"`, `"his"`) used for cisgender individuals — these indicate **Sex**, not Gender Reassignment.
+- General gender discussion without reference to reassignment or transition.
+{% endblock %}
+
+{% block characteristic_examples %}
+[INPUT START]
+The counsellor noted that the client had requested support regarding their gender identity and the process of transition.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": [
+    {
+      "characteristic": "Gender Reassignment",
+      "attribute_value": "Gender identity / transition",
+      "evidence_spans": [{"text": "gender identity"}, {"text": "transition"}],
+      "confidence": 0.95
+    }
+  ]
+}
+[OUTPUT END]
+
+[INPUT START]
+She discussed her housing needs with the officer.
+[INPUT END]
+[OUTPUT START]
+{
+  "detected_characteristics": []
+}
+[OUTPUT END]
+{% endblock %}

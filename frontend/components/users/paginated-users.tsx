@@ -61,6 +61,11 @@ export default function PaginatedUsers() {
                 <GovukTableCell>{user.email}</GovukTableCell>
                 <GovukTableCell>
                   <div className="flex justify-end gap-3">
+                    {!user?.is_active && (
+                      <strong className="govuk-tag govuk-tag--red">
+                        Inactive
+                      </strong>
+                    )}
                     {hasAnyRole(user?.roles, [
                       UserRole.LOCAL_AUTHORITY_ADMIN,
                     ]) && <strong className="govuk-tag">LA Admin</strong>}
@@ -72,7 +77,7 @@ export default function PaginatedUsers() {
                       </strong>
                     )}
                     <Link
-                      href="#"
+                      href={`/user-management/users/${user?.id}`}
                       className="govuk-link govuk-link--no-visited-state"
                     >
                       View Account

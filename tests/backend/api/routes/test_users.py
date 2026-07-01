@@ -2,6 +2,7 @@
 # needed for pytest fixtures
 
 from datetime import datetime
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -145,3 +146,30 @@ async def test_delete_user(
         response = await ac.delete(f"/users/{target_user.id}")
 
     assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+async def test_create_user_returns_409_when_email_already_exists(
+    override_session,
+    override_support_admin_user,
+    make_user,
+):
+    existing_user = make_user()
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=existing_user),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": existing_user.email,
+                    "roles": existing_user.roles,
+                    "organisation_id": str(existing_user.organisation_id),
+                },
+            )
+
+    assert response.json()["detail"] == f"A user with email '{existing_user.email}' already exists"
+    assert response.status_code == 409

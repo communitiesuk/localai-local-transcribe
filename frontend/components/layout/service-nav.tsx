@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,10 +14,12 @@ import {
 } from '@/components/ui/alert-dialog'
 import { getUserUsersMeGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { UserRole, hasAnyRole } from '@/lib/utils'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
+import { cn } from '@/lib/utils'
 
 interface NavItem {
   name: string
@@ -79,6 +81,12 @@ interface SafeLinkProps {
 function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   const router = useRouter()
   const { lockNavigation, setLockNavigation } = useLockNavigationContext()
+  const clearBanner = useBannerStore((store) => store.clearBanner)
+
+  const handleClick = () => {
+    // banner shouldn't persist on page change
+    clearBanner()
+  }
 
   if (lockNavigation) {
     return (
@@ -134,15 +142,34 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
       href={href}
       className="govuk-service-navigation__link"
       aria-current={ariaCurrent}
+      onClick={handleClick}
     >
       {children}
     </Link>
   )
 }
 
+// Empirically determined: the narrowest width at which all six nav items
+// ('User management' being the longest) fit on a single row without wrapping.
+// Not a standard GOV.UK breakpoint — chosen to match this nav's content.
+const MOBILE_BREAKPOINT = 923
+
 export function ServiceNav() {
   const pathname = usePathname()
   const { data: user } = useQuery(getUserUsersMeGetOptions())
+  const [isMobile, setIsMobile] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < MOBILE_BREAKPOINT
+      setIsMobile(mobile)
+      if (!mobile) setIsMenuOpen(false)
+    }
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const hasAdminRole = hasAnyRole(user?.roles, [
     UserRole.LOCAL_AUTHORITY_ADMIN,
@@ -156,7 +183,6 @@ export function ServiceNav() {
   return (
     <section
       className="govuk-service-navigation"
-      data-module="govuk-service-navigation"
       aria-label="Service information"
     >
       <div className="govuk-width-container">
@@ -169,12 +195,24 @@ export function ServiceNav() {
               type="button"
               className="govuk-service-navigation__toggle govuk-js-service-navigation-toggle"
               aria-controls="navigation"
-              hidden
-              aria-hidden="true"
+              aria-expanded={isMenuOpen}
+              hidden={!isMobile}
+              onClick={() => setIsMenuOpen((open) => !open)}
             >
               Menu
             </button>
-            <ul className="govuk-service-navigation__list" id="navigation">
+            <ul
+              className={cn(
+                'govuk-service-navigation__list',
+                isMobile && !isMenuOpen
+                  ? 'max-h-0 overflow-hidden'
+                  : 'max-h-96',
+                isMobile && isMenuOpen && 'flex-col'
+              )}
+              style={{ transition: 'max-height 0.2s ease-in-out' }}
+              id="navigation"
+              aria-hidden={isMobile && !isMenuOpen}
+            >
               {visibleItems.map((item) => {
                 const active = item.isActive(pathname)
                 const linkContent = active ? (

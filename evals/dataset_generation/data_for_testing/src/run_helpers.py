@@ -19,9 +19,15 @@ def get_transcript_file(subdir: Path) -> Path:
     return max(files, key=lambda f: f.stat().st_mtime)
 
 
-def run_characteristics_pipeline(transcript_file: Path) -> None:
+def run_characteristics_pipeline(transcript_file: Path) -> str:
+    """Run the characteristics pipeline and return the output file stem.
+
+    Uses the instance directory name (not the transcript filename) so that multiple
+    instances sharing the same transcript filename do not overwrite each other's output.
+    """
+    instance_name = transcript_file.parent.name
     with tempfile.TemporaryDirectory() as tmp_input_dir:
-        shutil.copy2(transcript_file, Path(tmp_input_dir) / transcript_file.name)
+        shutil.copy2(transcript_file, Path(tmp_input_dir) / f"{instance_name}.json")
         config_yaml = f"""
 model:
   provider: azure_apim
@@ -32,7 +38,7 @@ dataset:
 run:
   output_dir: "{CHARACTERISTICS_OUTPUT_DIR}"
 prompts:
-  extraction_template: evals/dataset_generation/characteristics/prompts/characteristic_extraction.jinja2
+  agent_base_template: evals/dataset_generation/characteristics/prompts/agent_base.jinja2
 """
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
             tmp.write(config_yaml)
@@ -59,6 +65,8 @@ prompts:
             logging.error("STDOUT:\n%s", e.stdout)
             logging.error("STDERR:\n%s", e.stderr)
             raise
+
+    return instance_name
 
 
 def copy_characteristics_output(output_dir: Path, transcript_stem: str) -> Path:

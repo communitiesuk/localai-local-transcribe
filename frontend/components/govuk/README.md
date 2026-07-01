@@ -77,15 +77,85 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 
 ## Available wrappers
 
-| Export              | GDS module                       | Client? |
-| ------------------- | -------------------------------- | ------- |
-| `GovukBackLink`     | Back link (href or dynamic back) | Yes     |
-| `GovukButton`       | Button                           | Yes     |
-| `GovukButtonLink`   | Button link                      | Yes     |
-| `GovukErrorSummary` | Error summary                    | No      |
-| `GovukFieldset`     | Fieldset                         | No      |
-| `GovukFormGroup`    | Form group                       | No      |
-| `GovukHint`         | Hint                             | No      |
-| `GovukLabel`        | Label                            | No      |
-| `GovukLegend`       | Legend                           | No      |
-| `GovukRadios`       | Radios                           | Yes     |
+| Export                    | GDS module                       | Client? |
+| ------------------------- | -------------------------------- | ------- |
+| `GovukAccordion`          | Accordion                        | Yes     |
+| `GovukBackLink`           | Back link (href or dynamic back) | Yes     |
+| `GovukButton`             | Button                           | Yes     |
+| `GovukButtonLink`         | Button link                      | Yes     |
+| `GovukDetails`            | Details                          | Yes     |
+| `GovukErrorSummary`       | Error summary                    | No      |
+| `GovukFieldset`           | Fieldset                         | No      |
+| `GovukFormGroup`          | Form group                       | No      |
+| `GovukHint`               | Hint                             | No      |
+| `GovukLabel`              | Label                            | No      |
+| `GovukLegend`             | Legend                           | No      |
+| `GovukNotificationBanner` | Notification banner              | Yes     |
+| `GovukRadios`             | Radios                           | Yes     |
+| `GovukTag`                | Tag                              | No      |
+| `GovukTextarea`           | Textarea                         | Yes     |
+
+## Display wrappers
+
+### GovukTag
+
+Renders a `<strong>` pill. Pass a `colour` prop for one of the ten canonical variants:
+`grey`, `green`, `turquoise`, `blue`, `light-blue`, `purple`, `pink`, `red`, `orange`, `yellow`.
+Omit `colour` for the default blue.
+
+```tsx
+<GovukTag>Active</GovukTag>
+<GovukTag colour="grey">Inactive</GovukTag>
+```
+
+### GovukDetails
+
+Disclosure panel backed by govuk-frontend JS (bootstrapped via `<GovukInit />`).
+Pass a `summary` prop for the visible toggle text; children go in the revealed panel.
+
+```tsx
+<GovukDetails summary="Help with this field">
+  <p className="govuk-body">Explanatory text.</p>
+</GovukDetails>
+```
+
+### GovukAccordion
+
+Expandable sections backed by govuk-frontend JS (bootstrapped via `<GovukInit />`).
+Requires an `id` prop (used by the JS to derive internal ARIA IDs).
+Uses the `GovukAccordion.Section` compound child.
+Pass `headingLevel` (2–6, default 2) on each Section to match surrounding document structure.
+
+> **govuk-frontend JS dependency:** `GovukDetails` and `GovukAccordion` rely on `<GovukInit />` being present in the layout to bootstrap the disclosure behaviour. The static markup is rendered server-side; the JS adds toggle controls and ARIA attributes at mount time.
+
+```tsx
+<GovukAccordion id="help-accordion">
+  <GovukAccordion.Section heading="Who can use this service">
+    <p className="govuk-body">Anyone with a GOV.UK account.</p>
+  </GovukAccordion.Section>
+  <GovukAccordion.Section heading="How long data is kept">
+    <p className="govuk-body">Up to 90 days.</p>
+  </GovukAccordion.Section>
+</GovukAccordion>
+```
+
+### GovukNotificationBanner
+
+Renders an `important` (default) or `success` banner.
+
+ARIA roles follow the GOV.UK pattern:
+
+- `important` → `role="region"` with `aria-labelledby`
+- `success` → `role="alert"` with `aria-labelledby`
+
+When more than one banner appears on the same page, pass a unique `titleId` to each so `aria-labelledby` stays valid.
+
+```tsx
+<GovukNotificationBanner>
+  <p className="govuk-body">There may be a delay in processing your request.</p>
+</GovukNotificationBanner>
+
+<GovukNotificationBanner variant="success" titleId="save-banner-title">
+  <h3 className="govuk-notification-banner__heading">Template saved</h3>
+</GovukNotificationBanner>
+```

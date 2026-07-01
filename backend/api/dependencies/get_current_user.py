@@ -1,7 +1,8 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
-from sqlmodel import select
+from sqlmodel import col, select
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
@@ -20,7 +21,7 @@ async def get_current_user(
 ) -> User:
     """
     Called on every endpoint to decode JWT passed in every request.
-    Gets or creates the user based on the email in the JWT
+    Gets the user based on the email in the JWT
     Args:
         x_amzn_oidc_data: The incoming JWT from the auth provider, passed via the frontend app
     Returns:
@@ -43,26 +44,30 @@ async def get_current_user(
             logger.info("User {email} does not have the required permissions", email=email)
             raise unauthorised_error
 
-        # Try to find existing user
-
-        statement = select(User).where(User.email == email)
+        statement = select(User).where(User.subject_id == subject_id)
         user = (await session.exec(statement)).first()
 
         if not user:
-            # Create new user if doesn't exist
-            user = User(email=email, subject_id=subject_id)
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
+            # Try to find user by email address, this is a fallback for legacy
+            # accounts which do not yet have a subject id associated.
+            # After this login, a subject id will be added to the account and login
+            # matching by email should no longer be possible
+            statement = select(User).where(User.email == email, col(User.subject_id).is_(None))
+            user = (await session.exec(statement)).first()
 
-        if user.subject_id is None:
+        if not user:
+            # Do not automatically create new accounts on login
+            raise unauthorised_error
+
+        # Update subject_id if it has changed (e.g. legacy account matched by email)
+        if user.subject_id != subject_id:
             user.subject_id = subject_id
             session.add(user)
             await session.commit()
             await session.refresh(user)
 
-        if user.subject_id != subject_id:
-            raise unauthorised_error
+        user.last_login = datetime.now(UTC)
+        await session.commit()
 
         return user
     except MissingAuthTokenError as e:
