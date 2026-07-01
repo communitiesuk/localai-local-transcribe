@@ -9,6 +9,7 @@ import {
   GovukInput,
   GovukLabel,
 } from '@/components/govuk'
+import { cn } from '@/lib/utils'
 import { TemplateData } from '@/types/templates'
 import Document from '@tiptap/extension-document'
 import HardBreak from '@tiptap/extension-hard-break'
@@ -58,23 +59,25 @@ export const DocumentTemplateEditor = ({
         />
       )}
 
-      <div className="flex items-center gap-4">
-        <GovukButton
-          type="submit"
-          disabled={isSubmitting}
-          className="govuk-!-margin-bottom-0"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="animate-spin" aria-hidden="true" />
-              Saving…
-            </>
-          ) : (
-            'Save'
-          )}
-        </GovukButton>
+      <div>
+        <div className="flex items-center gap-4">
+          <GovukButton
+            type="submit"
+            disabled={isSubmitting}
+            className="govuk-!-margin-bottom-0"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin" aria-hidden="true" />
+                Saving…
+              </>
+            ) : (
+              'Save'
+            )}
+          </GovukButton>
+        </div>
+        <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-4 govuk-!-margin-bottom-0" />
       </div>
-      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
       <div>
         <h2 className="govuk-heading-m govuk-!-margin-bottom-1">
@@ -207,12 +210,13 @@ const ControlledEditor = ({
       id="template-content"
       tabIndex={-1}
       onFocus={() => editor?.commands.focus()}
+      className={cn('govuk-textarea p-0', hasError && 'govuk-textarea--error')}
     >
       <TemplateEditorToolbar editor={editor} />
       <div>
         <EditorContent
           editor={editor}
-          className={`editor-content govuk-textarea${hasError ? 'govuk-textarea--error' : ''}`}
+          className="editor-content"
           data-testid="template-content-editor"
         />
       </div>

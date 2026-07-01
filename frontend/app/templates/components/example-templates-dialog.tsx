@@ -55,7 +55,7 @@ export function ExampleTemplatesDialog({
         <button
           type="button"
           className="govuk-link"
-          style={{ color: '#1a65a6' }}
+          style={{ color: 'var(--govuk-link-colour)' }}
         >
           Try an example
         </button>

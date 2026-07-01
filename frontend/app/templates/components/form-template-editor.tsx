@@ -70,21 +70,24 @@ export const FormTemplateEditor = ({
         />
       )}
 
-      <div className="flex items-center gap-4">
-        <GovukButton
-          type="submit"
-          disabled={isSubmitting}
-          className="govuk-!-margin-bottom-0"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="animate-spin" aria-hidden="true" />
-              Saving…
-            </>
-          ) : (
-            'Save'
-          )}
-        </GovukButton>
+      <div>
+        <div className="flex items-center gap-4">
+          <GovukButton
+            type="submit"
+            disabled={isSubmitting}
+            className="govuk-!-margin-bottom-0"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin" aria-hidden="true" />
+                Saving…
+              </>
+            ) : (
+              'Save'
+            )}
+          </GovukButton>
+        </div>
+        <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-4 govuk-!-margin-bottom-0" />
       </div>
 
       {/* Template details */}
@@ -175,7 +178,7 @@ export const FormTemplateEditor = ({
           id="template-questions"
           className="govuk-!-margin-bottom-0"
         >
-          <h3 className="govuk-heading-s govuk-!-margin-bottom-2">Questions</h3>
+          <h3 className="govuk-heading-m govuk-!-margin-bottom-2">Questions</h3>
           {errors.questions?.root?.message && (
             <p
               id="template-questions-error"
@@ -197,7 +200,12 @@ export const FormTemplateEditor = ({
                     <li className="govuk-summary-card__action">
                       <button
                         type="button"
-                        className="govuk-link govuk-body-s"
+                        className="govuk-link govuk-body-s font-bold"
+                        style={
+                          index !== 0
+                            ? { color: 'var(--govuk-link-colour)' }
+                            : undefined
+                        }
                         disabled={index === 0}
                         onClick={() => fieldArray.swap(index, index - 1)}
                         aria-label={`Move question ${index + 1} up`}
@@ -208,7 +216,12 @@ export const FormTemplateEditor = ({
                     <li className="govuk-summary-card__action">
                       <button
                         type="button"
-                        className="govuk-link govuk-body-s"
+                        className="govuk-link govuk-body-s font-bold"
+                        style={
+                          index !== array.length - 1
+                            ? { color: 'var(--govuk-link-colour)' }
+                            : undefined
+                        }
                         disabled={index === array.length - 1}
                         onClick={() => fieldArray.swap(index, index + 1)}
                         aria-label={`Move question ${index + 1} down`}
@@ -235,7 +248,7 @@ export const FormTemplateEditor = ({
                       hasError={!!errors.questions?.[index]?.title}
                       className="govuk-!-margin-bottom-0"
                     >
-                      <GovukLabel htmlFor={`question-title-${index}`} size="s">
+                      <GovukLabel htmlFor={`question-title-${index}`}>
                         Question text
                       </GovukLabel>
                       {errors.questions?.[index]?.title?.message && (
@@ -265,10 +278,7 @@ export const FormTemplateEditor = ({
                       />
                     </GovukFormGroup>
                     <GovukFormGroup className="govuk-!-margin-bottom-0">
-                      <GovukLabel
-                        htmlFor={`question-description-${index}`}
-                        size="s"
-                      >
+                      <GovukLabel htmlFor={`question-description-${index}`}>
                         Optional description of how to answer the question, what
                         information to include and style guidance:
                       </GovukLabel>
