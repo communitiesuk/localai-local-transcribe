@@ -77,7 +77,9 @@ export const DocumentTemplateEditor = ({
       <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
       <div>
-        <h2 className="govuk-heading-m govuk-!-margin-bottom-1">Template details</h2>
+        <h2 className="govuk-heading-m govuk-!-margin-bottom-1">
+          Template details
+        </h2>
         <GovukHint className="govuk-!-margin-bottom-4">
           Add a name and description so you can find your template later. Name
           and description are not used to generate your minute — add structure
@@ -210,7 +212,7 @@ const ControlledEditor = ({
       <div>
         <EditorContent
           editor={editor}
-          className={`editor-content govuk-textarea${hasError ? ' govuk-textarea--error' : ''}`}
+          className={`editor-content govuk-textarea${hasError ? 'govuk-textarea--error' : ''}`}
           data-testid="template-content-editor"
         />
       </div>

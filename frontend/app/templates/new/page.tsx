@@ -118,7 +118,6 @@ function NewTemplateContent() {
       </FormProvider>
     )
   }
-
 }
 
 export default function Page() {

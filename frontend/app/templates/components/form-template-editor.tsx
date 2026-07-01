@@ -43,14 +43,16 @@ export const FormTemplateEditor = ({
       href: '#template-questions',
       text: errors.questions.root.message,
     },
-    ...(fieldArray.fields.map((_, index) =>
-      errors.questions?.[index]?.title?.message
-        ? {
-            href: `#question-title-${index}`,
-            text: `Question ${index + 1}: ${errors.questions![index]!.title!.message}`,
-          }
-        : null
-    ).filter(Boolean) as { href: string; text: string }[]),
+    ...(fieldArray.fields
+      .map((_, index) =>
+        errors.questions?.[index]?.title?.message
+          ? {
+              href: `#question-title-${index}`,
+              text: `Question ${index + 1}: ${errors.questions![index]!.title!.message}`,
+            }
+          : null
+      )
+      .filter(Boolean) as { href: string; text: string }[]),
   ].filter(Boolean) as { href: string; text: string }[]
 
   return (
@@ -173,9 +175,7 @@ export const FormTemplateEditor = ({
           id="template-questions"
           className="govuk-!-margin-bottom-0"
         >
-          <h3 className="govuk-heading-s govuk-!-margin-bottom-2">
-            Questions
-          </h3>
+          <h3 className="govuk-heading-s govuk-!-margin-bottom-2">Questions</h3>
           {errors.questions?.root?.message && (
             <p
               id="template-questions-error"
@@ -257,7 +257,10 @@ export const FormTemplateEditor = ({
                             : undefined
                         }
                         {...form.register(`questions.${index}.title`, {
-                          required: { value: true, message: 'Enter a question' },
+                          required: {
+                            value: true,
+                            message: 'Enter a question',
+                          },
                         })}
                       />
                     </GovukFormGroup>

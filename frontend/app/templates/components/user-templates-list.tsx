@@ -149,9 +149,9 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
       <div>
         <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
           {template.type === 'document' ? (
-            <FileType className="govuk-!-display-inline govuk-!-margin-right-2 align-middle h-5 w-5 text-gray-500" />
+            <FileType className="govuk-!-display-inline govuk-!-margin-right-2 h-5 w-5 align-middle text-gray-500" />
           ) : (
-            <FileSpreadsheet className="govuk-!-display-inline govuk-!-margin-right-2 align-middle h-5 w-5 text-gray-500" />
+            <FileSpreadsheet className="govuk-!-display-inline govuk-!-margin-right-2 h-5 w-5 align-middle text-gray-500" />
           )}
           {template.name}
         </h3>
