@@ -18,21 +18,22 @@ export default function CreateNewOrganisationDomains() {
   const clearNewOrg = useNewOrgStore((store) => store.clearNewOrg)
   const setBanner = useBannerStore((store) => store.setBanner)
 
-  const { mutate: createOrganisation } = useMutation({
-    ...createOrganisationOrganisationsPostMutation(),
-    onSuccess() {
-      setBanner({
-        variant: 'success',
-        title: 'Organisation created',
-        message: `Successfully created '${newOrg!.name}' at ${formatCurrentDateTime()}`,
-      })
-      clearNewOrg()
-      router.replace(`/user-management`)
-    },
-    onError() {
-      router.replace('/generic-error')
-    },
-  })
+  const { mutate: createOrganisation, isPending: createOrganisationPending } =
+    useMutation({
+      ...createOrganisationOrganisationsPostMutation(),
+      onSuccess() {
+        setBanner({
+          variant: 'success',
+          title: 'Organisation created',
+          message: `Successfully created '${newOrg!.name}' at ${formatCurrentDateTime()}`,
+        })
+        clearNewOrg()
+        router.replace(`/user-management`)
+      },
+      onError() {
+        router.replace('/generic-error')
+      },
+    })
 
   const onSubmit = (data: EditDomainsFormData) => {
     createOrganisation({
@@ -50,7 +51,13 @@ export default function CreateNewOrganisationDomains() {
 
       <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 
-      <EditDomainsForm defaultValues={[]} onSubmit={onSubmit} />
+      <EditDomainsForm
+        defaultValues={[]}
+        onSubmit={onSubmit}
+        isPending={createOrganisationPending}
+        buttonText="Create organistaion"
+        buttonPendingText="Creating organisation..."
+      />
 
       <DomainsDetails />
     </>

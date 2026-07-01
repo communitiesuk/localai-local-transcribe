@@ -17,9 +17,15 @@ export type EditDomainsFormData = { domains: string }
 export function EditDomainsForm({
   defaultValues,
   onSubmit,
+  isPending = false,
+  buttonText = 'Save',
+  buttonPendingText = 'Saving',
 }: {
   defaultValues: string[]
   onSubmit: (data: EditDomainsFormData) => void
+  isPending?: boolean
+  buttonText?: string
+  buttonPendingText?: string
 }) {
   const form = useForm<EditDomainsFormData>({
     defaultValues: {
@@ -75,7 +81,9 @@ export function EditDomainsForm({
       </GovukFormGroup>
 
       <div className="govuk-button-group">
-        <GovukButton type="submit">Save</GovukButton>
+        <GovukButton type="submit" disabled={isPending}>
+          {isPending ? buttonPendingText : buttonText}
+        </GovukButton>
         <Link href="/user-management" className="govuk-link">
           Cancel
         </Link>
