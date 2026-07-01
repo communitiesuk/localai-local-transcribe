@@ -74,7 +74,7 @@ function CreateNewOrganisationNameForm() {
     }
   }, [organisationsError, router])
 
-  if (organisationsLoading) return <Loader2 />
+  if (organisationsLoading) return <Loader2 className="animate-spin" />
 
   return (
     <>
