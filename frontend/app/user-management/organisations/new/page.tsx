@@ -9,6 +9,7 @@ import { listOrganisationsOrganisationsGetOptions } from '@/lib/client/@tanstack
 
 import { Loader2 } from 'lucide-react'
 import {
+  GovukBackLink,
   GovukHeading,
   GovukFormGroup,
   GovukLabel,
@@ -23,9 +24,13 @@ import { useEffect } from 'react'
 export default function CreateNewOrganisationName() {
   return (
     <>
+      <GovukBackLink href="/user-management" />
+
       <GovukHeading>Create organisation</GovukHeading>
 
       <CreateNewOrganisationNameForm />
+
+      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 
       <GovukDetails summary="What will happen after you create an organisation">
         Once created, you will be able to find it in the drop down on the user
@@ -98,7 +103,10 @@ function CreateNewOrganisationNameForm() {
         </GovukFormGroup>
         <div className="govuk-button-group">
           <GovukButton type="submit">Next</GovukButton>
-          <Link href="/user-management" className="govuk-link">
+          <Link
+            href="/user-management"
+            className="govuk-link govuk-link--no-visited-state"
+          >
             Cancel
           </Link>
         </div>

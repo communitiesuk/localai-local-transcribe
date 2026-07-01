@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useMutation } from '@tanstack/react-query'
 import { createOrganisationOrganisationsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 
-import { GovukHeading } from '@/components/govuk'
+import { GovukHeading, GovukBackLink } from '@/components/govuk'
 import { EditDomainsForm } from '@/components/organisations/domains-form'
 import DomainsDetails from '@/components/organisations/domains-details'
 import type { EditDomainsFormData } from '@/components/organisations/domains-form'
@@ -47,9 +47,9 @@ export default function CreateNewOrganisationDomains() {
 
   return (
     <>
-      <GovukHeading>Create organisation</GovukHeading>
+      <GovukBackLink href="/user-management/organisations/new" />
 
-      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
+      <GovukHeading>Create organisation</GovukHeading>
 
       <EditDomainsForm
         defaultValues={[]}
@@ -58,6 +58,8 @@ export default function CreateNewOrganisationDomains() {
         buttonText="Create organistaion"
         buttonPendingText="Creating organisation..."
       />
+
+      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 
       <DomainsDetails />
     </>

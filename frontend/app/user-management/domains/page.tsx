@@ -20,7 +20,7 @@ export default function EditApprovedDomainsPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  // BUG: replace with id from dropdown once implemented
+  // BUG-714: replace with id from dropdown once implemented (688)
   const { data: organisation, isLoading: organisationLoading } =
     useOrganisation(currentUser?.organisation_id ?? '')
 
