@@ -162,12 +162,6 @@ class Settings(BaseSettings):
     POSTHOG_API_KEY: str | None = Field(description="PostHog API key for analytics", default=None)
     POSTHOG_HOST: str = Field(description="PostHog service host URL", default="https://eu.i.posthog.com")
 
-    HALLUCINATION_CHECK: bool = Field(
-        description="Should the LLM check for hallucinations? Note that the results of"
-        " this are currently not surfaced in the UI",
-        default=False,
-    )
-
     GUARDRAIL_THRESHOLD: float = Field(
         default=0.7,
         description="Guardrail threshold for LLM responses",

@@ -17,7 +17,7 @@ import tiktoken
 from datasets import load_dataset
 from dspy.evaluate import Evaluate
 
-from common.database.postgres_models import DialogueEntry, HallucinationType
+from common.database.postgres_models import DialogueEntry
 from common.llm.adapters.llm_constants import MAX_COMPLETION_TOKENS as MAX_TOKENS
 from common.llm.adapters.llm_constants import TEMPERATURE
 from common.settings import get_settings
@@ -213,18 +213,14 @@ class EvalRun:
                 run.state.metric_scores[name].append(res.score)
 
             if run.hallucination_enabled:
-                uncited_claims = [
-                    h.hallucination_text
-                    for h in getattr(pred, "hallucinations", [])
-                    if h.hallucination_type == HallucinationType.FACTUAL_FABRICATION
-                ]
+                uncited_claims = [h.hallucination_text for h in pred.hallucinations]
                 run.state.hallucination_inputs.append(
                     HallucinationInput(
                         example_id=ex.example_id,
                         hypothesis_model=run.model_name,
                         summary_html=pred.candidate.summary,
                         uncited_claims=uncited_claims,
-                        total_claims=getattr(pred, "total_claims", 0),
+                        total_claims=pred.total_claims,
                     )
                 )
 

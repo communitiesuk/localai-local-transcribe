@@ -6,7 +6,6 @@ from common.prompts import (
     get_chat_with_transcript_system_message,
     get_cite_claims_prompt,
     get_extract_claims_prompt,
-    get_hallucination_detection_messages,
     get_meeting_detection_prompt,
     get_meeting_title_prompt,
     get_minutes_messages,
@@ -74,13 +73,6 @@ def test_get_meeting_detection_prompt_structure():
     assert len(messages) == 2
     assert messages[0]["role"] == "system"
     assert "long meeting" in messages[0]["content"]
-
-
-def test_get_hallucination_detection_messages():
-    messages = get_hallucination_detection_messages()
-    assert len(messages) == 1
-    assert messages[0]["role"] == "user"
-    assert "hallucination" in messages[0]["content"]
 
 
 def test_get_section_for_agenda_prompt():
