@@ -1,17 +1,6 @@
-import React from 'react'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+'use client'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { GovukAccordion } from '@/components/govuk/accordion'
 
 export default function SupportPage() {
   return (
@@ -48,26 +37,21 @@ export default function SupportPage() {
           </Card>
         </div>
 
-        <Accordion type="single" collapsible className="w-full">
-          <AccordionItem value="faq-1">
-            <AccordionTrigger>
-              How do I start a new transcription?
-            </AccordionTrigger>
-            <AccordionContent>
-              Upload your audio/video file or start a new recording directly
+        <GovukAccordion id="support-faq" className="w-full">
+          <GovukAccordion.Section heading="How do I start a new transcription?" _accordionId='new-transcription'>
+            <p className='govuk-body'>
+              Upload your audio or video file, or start a new recording directly
               from your browser.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="faq-2">
-            <AccordionTrigger>
-              What file formats are supported?
-            </AccordionTrigger>
-            <AccordionContent>
+            </p>
+          </GovukAccordion.Section>
+
+          <GovukAccordion.Section heading="What file formats are supported?" _accordionId='file-formats'>
+            <p className='govuk-body'>
               We support most common audio and video formats including MP3, WAV,
               MP4, and M4A.
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+            </p>
+          </GovukAccordion.Section>
+        </GovukAccordion>
       </div>
     </div>
   )
