@@ -7,23 +7,17 @@ import {
   exampleDocumentTemplates,
   exampleFormTemplates,
 } from '@/app/templates/data/example-templates'
-import { TemplateTypeSelect } from '@/app/templates/new/template-type-select'
-import { GovukButton } from '@/components/govuk'
 import { TemplateType } from '@/lib/client'
 import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
-import { ArrowRight } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
-import { Suspense, useState } from 'react'
+import { Suspense } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 
 function NewTemplateContent() {
-  const [selectedType, setSelectedType] = useState<TemplateType | undefined>(
-    undefined
-  )
   const searchParams = useSearchParams()
   const templateTypeParam = searchParams.get('type')
   const templateExampleParam = searchParams.get('example')
@@ -83,8 +77,8 @@ function NewTemplateContent() {
     return (
       <FormProvider {...form}>
         <header className="govuk-!-margin-bottom-6">
-          <div className="govuk-!-margin-bottom-2 flex items-center gap-4">
-            <h1 className="govuk-heading-xl govuk-!-margin-bottom-0">
+          <div className="govuk-!-margin-bottom-2 flex items-baseline gap-4">
+            <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
               New template
             </h1>
             <ExampleTemplatesDialog
@@ -106,8 +100,8 @@ function NewTemplateContent() {
     return (
       <FormProvider {...form}>
         <header className="govuk-!-margin-bottom-6">
-          <div className="govuk-!-margin-bottom-2 flex items-center gap-4">
-            <h1 className="govuk-heading-xl govuk-!-margin-bottom-0">
+          <div className="govuk-!-margin-bottom-2 flex items-baseline gap-4">
+            <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
               New template
             </h1>
             <ExampleTemplatesDialog
@@ -125,26 +119,6 @@ function NewTemplateContent() {
     )
   }
 
-  return (
-    <div>
-      <h2 className="govuk-heading-m">Template type</h2>
-      <p className="govuk-body govuk-hint govuk-!-margin-bottom-4">
-        Choose the type of template you would like to create.
-      </p>
-      <TemplateTypeSelect value={selectedType} onChange={setSelectedType} />
-      <GovukButton
-        type="button"
-        onClick={() => {
-          form.setValue('type', selectedType!)
-        }}
-        disabled={!selectedType}
-        className="govuk-!-margin-bottom-0 flex items-center gap-2"
-        isStartButton
-      >
-        Next <ArrowRight size={16} aria-hidden="true" />
-      </GovukButton>
-    </div>
-  )
 }
 
 export default function Page() {

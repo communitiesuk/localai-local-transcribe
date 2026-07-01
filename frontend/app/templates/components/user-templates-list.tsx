@@ -10,6 +10,7 @@ import {
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
@@ -22,7 +23,7 @@ import {
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Copy, Edit, FileWarning, Loader2, Trash2 } from 'lucide-react'
+import { FileWarning, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useMemo } from 'react'
@@ -97,7 +98,7 @@ export const UserTemplatesList = () => {
         <p className="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-4">
           For complex summarisation of meetings into many questions and answers.
         </p>
-        <div className="govuk-!-margin-bottom-4 flex items-center gap-4">
+        <div className="govuk-!-margin-bottom-4 flex items-baseline gap-4">
           <GovukButtonLink
             href="/templates/new?type=form"
             variant="secondary"
@@ -146,14 +147,14 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <div>
-        <h4 className="govuk-heading-s govuk-!-margin-bottom-1 flex items-center gap-2">
+        <h3 className="govuk-heading-s govuk-!-margin-bottom-1">
           {template.type === 'document' ? (
-            <FileType className="h-5 w-5 text-gray-500" />
+            <FileType className="govuk-!-display-inline govuk-!-margin-right-2 align-middle h-5 w-5 text-gray-500" />
           ) : (
-            <FileSpreadsheet className="h-5 w-5 text-gray-500" />
+            <FileSpreadsheet className="govuk-!-display-inline govuk-!-margin-right-2 align-middle h-5 w-5 text-gray-500" />
           )}
           {template.name}
-        </h4>
+        </h3>
         <p className="govuk-hint govuk-!-font-size-14 govuk-!-margin-bottom-0">
           Updated {new Date(template.updated_datetime!).toLocaleDateString()}
         </p>
@@ -165,16 +166,15 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
         <GovukButtonLink
           href={`/templates/${template.id}`}
           variant="secondary"
-          className="govuk-!-margin-bottom-0 flex items-center gap-2"
+          className="govuk-!-margin-bottom-0"
         >
-          <Edit size={14} />
           Edit template
         </GovukButtonLink>
 
         <GovukButton
           type="button"
           variant="secondary"
-          className="govuk-!-margin-bottom-0 flex items-center gap-2"
+          className="govuk-!-margin-bottom-0"
           onClick={() => {
             duplicationMutation.mutate({
               path: { template_id: template.id },
@@ -182,11 +182,6 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
           }}
           disabled={duplicationMutation.isPending}
         >
-          {duplicationMutation.isPending ? (
-            <Loader2 className="animate-spin" size={14} />
-          ) : (
-            <Copy size={14} />
-          )}
           Make a copy
         </GovukButton>
         <DeleteConfirmDialog
@@ -217,22 +212,17 @@ const DeleteConfirmDialog = ({
       <GovukButton
         type="button"
         variant="warning"
-        className="govuk-!-margin-bottom-0 flex items-center gap-2"
+        className="govuk-!-margin-bottom-0"
         disabled={isDeleting}
       >
-        {isDeleting ? (
-          <Loader2 className="animate-spin" size={14} />
-        ) : (
-          <Trash2 size={14} />
-        )}
         Delete
       </GovukButton>
     </AlertDialogTrigger>
     <AlertDialogContent>
       <AlertDialogHeader>
-        <h2 className="govuk-heading-m govuk-!-margin-bottom-3">
+        <AlertDialogTitle className="govuk-heading-m govuk-!-margin-bottom-3">
           Delete Template
-        </h2>
+        </AlertDialogTitle>
         <p className="govuk-body">
           Are you sure you want to delete &quot;{template.name}
           &quot;? This action cannot be undone.

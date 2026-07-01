@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { TemplateData } from '@/types/templates'
@@ -51,15 +52,15 @@ export function ExampleTemplatesDialog({
       }}
     >
       <DialogTrigger asChild>
-        <button type="button" className="govuk-link govuk-body">
+        <button type="button" className="govuk-link">
           Try an example
         </button>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <h2 className="govuk-heading-m govuk-!-margin-bottom-4">
+          <DialogTitle className="govuk-heading-m govuk-!-margin-bottom-4">
             Try an example
-          </h2>
+          </DialogTitle>
         </DialogHeader>
         <GovukRadios
           name="example-template"

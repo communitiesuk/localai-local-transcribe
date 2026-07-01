@@ -6,6 +6,7 @@ import {
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
+  GovukInput,
   GovukLabel,
 } from '@/components/govuk'
 import { TemplateData } from '@/types/templates'
@@ -73,9 +74,10 @@ export const DocumentTemplateEditor = ({
           )}
         </GovukButton>
       </div>
+      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
       <div>
-        <h2 className="govuk-heading-m">Template details</h2>
+        <h2 className="govuk-heading-m govuk-!-margin-bottom-1">Template details</h2>
         <GovukHint className="govuk-!-margin-bottom-4">
           Add a name and description so you can find your template later. Name
           and description are not used to generate your minute — add structure
@@ -93,10 +95,10 @@ export const DocumentTemplateEditor = ({
               {errors.name.message}
             </p>
           )}
-          <input
+          <GovukInput
             id="template-name"
-            className={`govuk-input govuk-!-margin-top-1${errors.name ? 'govuk-input--error' : ''}`}
-            placeholder="Name your template"
+            className="govuk-!-margin-top-1"
+            aria-invalid={!!errors.name}
             aria-describedby={errors.name ? 'template-name-error' : undefined}
             {...form.register('name', {
               required: { value: true, message: 'Enter a template name' },
@@ -115,10 +117,10 @@ export const DocumentTemplateEditor = ({
               {errors.description.message}
             </p>
           )}
-          <input
+          <GovukInput
             id="template-description"
-            className={`govuk-input govuk-!-margin-top-1${errors.description ? 'govuk-input--error' : ''}`}
-            placeholder="A description to help identify the template."
+            className="govuk-!-margin-top-1"
+            aria-invalid={!!errors.description}
             aria-describedby={
               errors.description ? 'template-description-error' : undefined
             }
@@ -169,9 +171,6 @@ export const DocumentTemplateEditor = ({
               />
             )}
           />
-          <p className="govuk-hint govuk-!-margin-top-2">
-            You can enter up to 200 characters
-          </p>
         </GovukFormGroup>
       </div>
     </form>
@@ -203,14 +202,15 @@ const ControlledEditor = ({
 
   return (
     <div
-      className={`rounded-xl border${hasError ? 'border-[#d4351c]' : 'border-[#b1b4b6]'}`}
       id="template-content"
+      tabIndex={-1}
+      onFocus={() => editor?.commands.focus()}
     >
       <TemplateEditorToolbar editor={editor} />
-      <div className="rounded-b-xl border-t border-[#b1b4b6]">
+      <div>
         <EditorContent
           editor={editor}
-          className="editor-content"
+          className={`editor-content govuk-textarea${hasError ? ' govuk-textarea--error' : ''}`}
           data-testid="template-content-editor"
         />
       </div>

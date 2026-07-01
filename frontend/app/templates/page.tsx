@@ -5,7 +5,7 @@ export default function TemplatesPage() {
     <div>
       <header className="govuk-!-margin-bottom-6">
         <div className="flex items-center gap-3">
-          <h1 className="govuk-heading-xl govuk-!-margin-bottom-0">
+          <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
             Your templates
           </h1>
           <strong className="govuk-tag govuk-tag--blue">Experimental</strong>

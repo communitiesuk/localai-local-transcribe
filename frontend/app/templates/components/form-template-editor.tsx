@@ -5,7 +5,9 @@ import {
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
+  GovukInput,
   GovukLabel,
+  GovukTextarea,
 } from '@/components/govuk'
 import { TemplateData } from '@/types/templates'
 import { Loader2 } from 'lucide-react'
@@ -41,6 +43,14 @@ export const FormTemplateEditor = ({
       href: '#template-questions',
       text: errors.questions.root.message,
     },
+    ...(fieldArray.fields.map((_, index) =>
+      errors.questions?.[index]?.title?.message
+        ? {
+            href: `#question-title-${index}`,
+            text: `Question ${index + 1}: ${errors.questions![index]!.title!.message}`,
+          }
+        : null
+    ).filter(Boolean) as { href: string; text: string }[]),
   ].filter(Boolean) as { href: string; text: string }[]
 
   return (
@@ -95,10 +105,10 @@ export const FormTemplateEditor = ({
               {errors.name.message}
             </p>
           )}
-          <input
+          <GovukInput
             id="template-name"
-            className={`govuk-input govuk-!-margin-top-1${errors.name ? 'govuk-input--error' : ''}`}
-            placeholder="Name your template"
+            className="govuk-!-margin-top-1"
+            aria-invalid={!!errors.name}
             aria-describedby={errors.name ? 'template-name-error' : undefined}
             {...form.register('name', {
               required: { value: true, message: 'Enter a template name' },
@@ -117,10 +127,10 @@ export const FormTemplateEditor = ({
               {errors.description.message}
             </p>
           )}
-          <input
+          <GovukInput
             id="template-description"
-            className={`govuk-input govuk-!-margin-top-1${errors.description ? 'govuk-input--error' : ''}`}
-            placeholder="A description to help identify the template."
+            className="govuk-!-margin-top-1"
+            aria-invalid={!!errors.description}
             aria-describedby={
               errors.description ? 'template-description-error' : undefined
             }
@@ -150,11 +160,9 @@ export const FormTemplateEditor = ({
             Optional. Enter guidance that should be followed throughout the
             whole form.
           </GovukHint>
-          <textarea
+          <GovukTextarea
             id="template-style-guide"
-            className="govuk-textarea"
             rows={3}
-            placeholder="Enter any guidance that should be followed throughout the whole form."
             aria-describedby="style-guide-hint"
             {...form.register('content')}
           />
@@ -165,9 +173,9 @@ export const FormTemplateEditor = ({
           id="template-questions"
           className="govuk-!-margin-bottom-0"
         >
-          <GovukLabel size="s" className="govuk-!-margin-bottom-2">
+          <h3 className="govuk-heading-s govuk-!-margin-bottom-2">
             Questions
-          </GovukLabel>
+          </h3>
           {errors.questions?.root?.message && (
             <p
               id="template-questions-error"
@@ -180,75 +188,95 @@ export const FormTemplateEditor = ({
 
           <div className="flex flex-col gap-3">
             {fieldArray.fields.map((field, index, array) => (
-              <div
-                key={field.id}
-                className="rounded-md border border-[#b1b4b6] bg-[#f3f2f1] p-4"
-              >
-                {/* Question header row */}
-                <div className="govuk-!-margin-bottom-3 flex items-center justify-between">
-                  <span className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-0">
+              <div key={field.id} className="govuk-summary-card">
+                <div className="govuk-summary-card__title-wrapper">
+                  <h3 className="govuk-summary-card__title">
                     Question {index + 1}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      className="govuk-link govuk-body-s"
-                      disabled={index === 0}
-                      onClick={() => fieldArray.swap(index, index - 1)}
-                      aria-label={`Move question ${index + 1} up`}
-                    >
-                      Move up
-                    </button>
-                    <button
-                      type="button"
-                      className="govuk-link govuk-body-s"
-                      disabled={index === array.length - 1}
-                      onClick={() => fieldArray.swap(index, index + 1)}
-                      aria-label={`Move question ${index + 1} down`}
-                    >
-                      Move down
-                    </button>
-                    <button
-                      type="button"
-                      className="govuk-link govuk-body-s"
-                      style={{ color: '#d4351c' }}
-                      onClick={() => fieldArray.remove(index)}
-                      aria-label={`Delete question ${index + 1}`}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  </h3>
+                  <ul className="govuk-summary-card__actions">
+                    <li className="govuk-summary-card__action">
+                      <button
+                        type="button"
+                        className="govuk-link govuk-body-s"
+                        disabled={index === 0}
+                        onClick={() => fieldArray.swap(index, index - 1)}
+                        aria-label={`Move question ${index + 1} up`}
+                      >
+                        Move up
+                      </button>
+                    </li>
+                    <li className="govuk-summary-card__action">
+                      <button
+                        type="button"
+                        className="govuk-link govuk-body-s"
+                        disabled={index === array.length - 1}
+                        onClick={() => fieldArray.swap(index, index + 1)}
+                        aria-label={`Move question ${index + 1} down`}
+                      >
+                        Move down
+                      </button>
+                    </li>
+                    <li className="govuk-summary-card__action">
+                      <GovukButton
+                        type="button"
+                        variant="warning"
+                        className="govuk-!-margin-bottom-0"
+                        onClick={() => fieldArray.remove(index)}
+                        aria-label={`Delete question ${index + 1}`}
+                      >
+                        Delete
+                      </GovukButton>
+                    </li>
+                  </ul>
                 </div>
-
-                {/* Question fields */}
-                <div className="flex flex-col gap-3">
-                  <GovukFormGroup className="govuk-!-margin-bottom-0">
-                    <GovukLabel htmlFor={`question-title-${index}`} size="s">
-                      Question text
-                    </GovukLabel>
-                    <input
-                      id={`question-title-${index}`}
-                      className="govuk-input govuk-!-margin-top-1"
-                      placeholder="Question text"
-                      {...form.register(`questions.${index}.title`)}
-                    />
-                  </GovukFormGroup>
-                  <GovukFormGroup className="govuk-!-margin-bottom-0">
-                    <GovukLabel
-                      htmlFor={`question-description-${index}`}
-                      size="s"
+                <div className="govuk-summary-card__content">
+                  <div className="flex flex-col gap-3">
+                    <GovukFormGroup
+                      hasError={!!errors.questions?.[index]?.title}
+                      className="govuk-!-margin-bottom-0"
                     >
-                      Optional description of how to answer the question, what
-                      information to include and style guidance:
-                    </GovukLabel>
-                    <textarea
-                      id={`question-description-${index}`}
-                      className="govuk-textarea govuk-!-margin-top-1"
-                      rows={3}
-                      placeholder="Description of how to answer the question, what information to include, and style guidance."
-                      {...form.register(`questions.${index}.description`)}
-                    />
-                  </GovukFormGroup>
+                      <GovukLabel htmlFor={`question-title-${index}`} size="s">
+                        Question text
+                      </GovukLabel>
+                      {errors.questions?.[index]?.title?.message && (
+                        <p
+                          id={`question-title-${index}-error`}
+                          className="govuk-error-message"
+                        >
+                          <span className="govuk-visually-hidden">Error:</span>{' '}
+                          {errors.questions[index].title.message}
+                        </p>
+                      )}
+                      <GovukInput
+                        id={`question-title-${index}`}
+                        className="govuk-!-margin-top-1"
+                        aria-invalid={!!errors.questions?.[index]?.title}
+                        aria-describedby={
+                          errors.questions?.[index]?.title
+                            ? `question-title-${index}-error`
+                            : undefined
+                        }
+                        {...form.register(`questions.${index}.title`, {
+                          required: { value: true, message: 'Enter a question' },
+                        })}
+                      />
+                    </GovukFormGroup>
+                    <GovukFormGroup className="govuk-!-margin-bottom-0">
+                      <GovukLabel
+                        htmlFor={`question-description-${index}`}
+                        size="s"
+                      >
+                        Optional description of how to answer the question, what
+                        information to include and style guidance:
+                      </GovukLabel>
+                      <GovukTextarea
+                        id={`question-description-${index}`}
+                        className="govuk-!-margin-top-1"
+                        rows={3}
+                        {...form.register(`questions.${index}.description`)}
+                      />
+                    </GovukFormGroup>
+                  </div>
                 </div>
               </div>
             ))}
