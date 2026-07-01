@@ -52,7 +52,11 @@ export function ExampleTemplatesDialog({
       }}
     >
       <DialogTrigger asChild>
-        <button type="button" className="govuk-link">
+        <button
+          type="button"
+          className="govuk-link"
+          style={{ color: '#1a65a6' }}
+        >
           Try an example
         </button>
       </DialogTrigger>
