@@ -199,7 +199,7 @@ module "ecs" {
   private_subnet_ids   = module.networking.private_subnets[*].id
   vpc_id               = module.networking.vpc.id
   app_url              = local.app_host
-  apim_allowed_cidrs   = ["<test-ip>/32"]
+  apim_allowed_cidrs = ["172.166.171.45/32"]
 
   frontend_image_name = "${module.ecr.ecr_frontend_repository_url}:${var.image_tag}"
   backend_image_name  = "${module.ecr.ecr_backend_repository_url}:${var.image_tag}"
