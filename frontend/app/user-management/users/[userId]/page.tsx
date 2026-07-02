@@ -33,6 +33,8 @@ import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { GetUserResponse, UserRole } from '@/lib/client'
 import { Controller, useForm } from 'react-hook-form'
+import { useBannerStore } from '@/stores/use-banner-store'
+import { formatCurrentDateTime } from '@/lib/utils'
 
 export default function UserPage(props: {
   params: Promise<{ userId: string }>
@@ -116,6 +118,9 @@ export default function UserPage(props: {
 type UserRoleForm = { role: UserRole }
 
 function RolesForm({ user }: { user: GetUserResponse }) {
+  const router = useRouter()
+  const setBanner = useBannerStore((store) => store.setBanner)
+
   const form = useForm<UserRoleForm>({
     defaultValues: {
       role: user.roles ? (user.roles[0] as UserRole) : undefined,
@@ -142,11 +147,25 @@ function RolesForm({ user }: { user: GetUserResponse }) {
             queryClient.invalidateQueries({
               queryKey: getUserUsersMeGetQueryKey(),
             })
+            setBanner({
+              variant: 'success',
+              title: 'Success',
+              message: `Permissions for ${user.name ?? user.email} saved at ${formatCurrentDateTime()}`,
+            })
+            router.replace('/user-management')
           },
         }
       )
     },
-    [user.id, mutateAsync, queryClient]
+    [
+      user.id,
+      user.name,
+      user.email,
+      setBanner,
+      mutateAsync,
+      queryClient,
+      router,
+    ]
   )
 
   return (
@@ -183,14 +202,7 @@ function RolesForm({ user }: { user: GetUserResponse }) {
 
       <div className="govuk-!-margin-top-6">
         <GovukButton type="submit" disabled={isPending}>
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
-            </span>
-          ) : (
-            'Save changes'
-          )}
+          Save changes
         </GovukButton>
       </div>
     </form>
