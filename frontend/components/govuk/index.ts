@@ -1,6 +1,6 @@
 export { GovukAccordion } from './accordion'
 export { GovukBackLink } from './back-link'
-export { GovukButton, GovukButtonLink } from './button'
+export { GovukButton, GovukButtonGroup, GovukButtonLink } from './button'
 export { GovukDetails } from './details'
 export { GovukErrorSummary } from './error-summary'
 export type { ErrorItem } from './error-summary'

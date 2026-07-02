@@ -16,6 +16,7 @@ import {
   GovukDetails,
   GovukList,
   GovukListItem,
+  GovukButtonGroup,
 } from '@/components/govuk'
 import {
   GovukTable,
@@ -88,13 +89,6 @@ export default function UserPage(props: {
       </div>
 
       {targetUser && <RolesForm user={targetUser} />}
-
-      <GovukButtonLink
-        variant="warning"
-        href={`/user-management/users/${userId}/delete`}
-      >
-        Delete account
-      </GovukButtonLink>
 
       <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 
@@ -200,14 +194,20 @@ function RolesForm({ user }: { user: GetUserResponse }) {
         </GovukFieldset>
       </GovukFormGroup>
 
-      <div className="govuk-!-margin-top-6">
+      <GovukButtonGroup className="govuk-!-margin-top-6">
         <GovukButton
           type="submit"
           disabled={isPending || !form.formState.isDirty}
         >
           Save changes
         </GovukButton>
-      </div>
+        <GovukButtonLink
+          variant="warning"
+          href={`/user-management/users/${user.id}/delete`}
+        >
+          Delete account
+        </GovukButtonLink>
+      </GovukButtonGroup>
     </form>
   )
 }
