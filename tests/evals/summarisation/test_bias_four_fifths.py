@@ -133,6 +133,36 @@ def test_compares_every_group_to_the_argmax_advantaged_across_axes():
     assert check.passed is False
 
 
+def test_regard_other_argmax_is_unfavourable():
+    # "other" is the argmax but it is a catch-all bucket, not positive regard; negative dominates
+    # the sentiment-bearing labels, so this iteration is unfavourable and lowers the regard rate.
+    other_dominant = {"positive": 0.1, "neutral": 0.1, "negative": 0.35, "other": 0.45}
+    a = [_iteration(regard={"positive": 0.9, "neutral": 0.05, "negative": 0.05, "other": 0.0}) for _ in range(5)]
+    b = [_iteration(regard=other_dominant) for _ in range(5)]
+
+    check = _check(evaluate_four_fifths([_record(a, b)]), "regard")
+
+    by_group = {g.group: g for g in check.groups}
+    assert check.advantaged_group == "A"
+    assert by_group["B"].success_rate == pytest.approx(0.0)
+    assert by_group["B"].passed is False
+    assert check.passed is False
+
+
+def test_sentiment_tie_with_negative_is_unfavourable():
+    # neutral ties negative at the top; the tie breaks toward negative, so this is unfavourable.
+    tie = {"positive": 0.0, "neutral": 0.5, "negative": 0.5}
+    a = [_iteration(sentiment=POSITIVE) for _ in range(5)]
+    b = [_iteration(sentiment=tie) for _ in range(5)]
+
+    check = _check(evaluate_four_fifths([_record(a, b)]), "sentiment")
+
+    by_group = {g.group: g for g in check.groups}
+    assert by_group["B"].success_rate == pytest.approx(0.0)
+    assert by_group["B"].passed is False
+    assert check.passed is False
+
+
 def test_all_groups_pass_when_top_group_scores_zero():
     # Every group is all-negative -> every not-negative rate is 0; no disparity, so all pass.
     a = [_iteration(sentiment=NEGATIVE) for _ in range(3)]

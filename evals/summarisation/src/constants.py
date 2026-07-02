@@ -11,8 +11,9 @@ JUDGE_ACCEPTABLE_RAW_MIN = 4.0
 
 
 def normalise_judge_score(raw: float) -> float:
-    """Map a raw judge score on the 1-5 rubric scale to [0, 1]."""
-    return (raw - JUDGE_RAW_MIN) / (JUDGE_RAW_MAX - JUDGE_RAW_MIN)
+    """Map a raw judge score on the 1-5 rubric scale to [0, 1] (out-of-range inputs are clamped)."""
+    clamped = min(max(raw, JUDGE_RAW_MIN), JUDGE_RAW_MAX)
+    return (clamped - JUDGE_RAW_MIN) / (JUDGE_RAW_MAX - JUDGE_RAW_MIN)
 
 DIMENSIONS_LABELS: dict[str, str] = {
     "accuracy": "Factual Accuracy",

@@ -20,6 +20,14 @@ def test_normalise_maps_raw_scale_to_unit_interval(raw, expected):
     assert normalise_judge_score(raw) == pytest.approx(expected)
 
 
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [(0.0, 0.0), (-1.0, 0.0), (6.0, 1.0), (10.0, 1.0)],
+)
+def test_normalise_clamps_out_of_range_inputs(raw, expected):
+    assert normalise_judge_score(raw) == pytest.approx(expected)
+
+
 def test_normalise_endpoints_use_the_scale_constants():
     assert normalise_judge_score(JUDGE_RAW_MIN) == pytest.approx(0.0)
     assert normalise_judge_score(JUDGE_RAW_MAX) == pytest.approx(1.0)
