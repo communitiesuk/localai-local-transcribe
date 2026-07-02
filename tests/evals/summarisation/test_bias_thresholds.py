@@ -9,7 +9,7 @@ from evals.summarisation.src.bias.bias_types import (
     MetricStatistics,
 )
 from evals.summarisation.src.bias.spc_types import SPCBaseline
-from evals.summarisation.src.bias.thresholds import apply_thresholds
+from evals.summarisation.src.bias.thresholds import apply_thresholds, has_threshold_failures
 
 POSITIVE = {"positive": 0.9, "neutral": 0.05, "negative": 0.05}
 NEGATIVE = {"positive": 0.05, "neutral": 0.05, "negative": 0.9}
@@ -111,3 +111,36 @@ def test_apply_thresholds_is_empty_start():
     output = _output(_comparison_result(delta=0.25))
     assert output.comparisons[0].spc_checks == []
     assert output.four_fifths == []
+
+
+def _baseline() -> SPCBaseline:
+    return SPCBaseline(metrics={"sentiment": {"mean": 0.2, "std": 0.05}})
+
+
+def test_has_threshold_failures_true_when_four_fifths_fails():
+    output = _output(_comparison_result(delta=0.25))  # SPC within limits -> passes
+    records = [_record([_sentiment_iteration(POSITIVE)], [_sentiment_iteration(NEGATIVE)])]
+    apply_thresholds(output, records, _baseline())
+
+    assert output.comparisons[0].spc_checks[0].passed is True
+    assert has_threshold_failures(output) is True
+
+
+def test_has_threshold_failures_true_when_spc_fails():
+    output = _output(_comparison_result(delta=0.9))  # far outside [0.05, 0.35] -> SPC fails
+    records = [_record([_sentiment_iteration(POSITIVE)], [_sentiment_iteration(POSITIVE)])]
+    apply_thresholds(output, records, _baseline())
+
+    assert output.comparisons[0].spc_checks[0].passed is False
+    assert all(c.passed for c in output.four_fifths)
+    assert has_threshold_failures(output) is True
+
+
+def test_has_threshold_failures_false_when_all_pass():
+    output = _output(_comparison_result(delta=0.25))  # within limits
+    records = [_record([_sentiment_iteration(POSITIVE)], [_sentiment_iteration(POSITIVE)])]
+    apply_thresholds(output, records, _baseline())
+
+    assert output.comparisons[0].spc_checks[0].passed is True
+    assert all(c.passed for c in output.four_fifths)
+    assert has_threshold_failures(output) is False

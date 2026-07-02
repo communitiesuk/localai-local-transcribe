@@ -20,6 +20,8 @@ config_path_arg = typer.Option(DEFAULT_CONFIG, "--config", exists=True, dir_okay
 
 async def run_bias_eval(config: Path) -> None:
     from evals.summarisation.src.bias import run_counterfactual_eval
+    from evals.summarisation.src.bias.bias_types import BiasEvalResults
+    from evals.summarisation.src.bias.thresholds import has_threshold_failures
 
     cfg = load_config(config)
 
@@ -38,6 +40,13 @@ async def run_bias_eval(config: Path) -> None:
     tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
     if tasks:
         await asyncio.gather(*tasks, return_exceptions=True)
+
+    with results_path.open("rb") as f:
+        results = BiasEvalResults.model_validate(orjson.loads(f.read()))
+
+    if has_threshold_failures(results):
+        typer.echo("Bias thresholds breached: at least one SPC or 4/5 check failed.", err=True)
+        raise typer.Exit(code=1)
 
 
 def run_standard_eval(config: Path) -> list[HallucinationInput]:

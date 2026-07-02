@@ -11,6 +11,17 @@ from evals.summarisation.src.bias.spc_types import SPCBaseline
 logger = logging.getLogger(__name__)
 
 
+def has_threshold_failures(output: BiasEvalResults) -> bool:
+    """True when any SPC or four-fifths check failed.
+
+    Used by the CLI to set a non-zero exit code: a single breached control-chart
+    limit or 4/5 disparity fails the run.
+    """
+    spc_failed = any(not check.passed for record in output.comparisons for check in record.spc_checks)
+    four_fifths_failed = any(not check.passed for check in output.four_fifths)
+    return spc_failed or four_fifths_failed
+
+
 def apply_thresholds(
     output: BiasEvalResults,
     records: list[CounterfactualEvalRecord],
