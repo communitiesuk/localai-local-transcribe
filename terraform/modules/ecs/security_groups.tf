@@ -138,3 +138,27 @@ resource "aws_vpc_security_group_egress_rule" "worker_https_egress" {
   to_port           = 443
   security_group_id = aws_security_group.worker.id
 }
+resource "aws_vpc_security_group_egress_rule" "frontend_egress_to_vpc_endpoints" {
+  description                  = "Allow frontend https egress to AWS service VPC endpoints"
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = var.vpc_endpoints_security_group_id
+  security_group_id            = aws_security_group.frontend.id
+}
+resource "aws_vpc_security_group_egress_rule" "backend_egress_to_vpc_endpoints" {
+  description                  = "Allow backend https egress to AWS service VPC endpoints"
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = var.vpc_endpoints_security_group_id
+  security_group_id            = aws_security_group.backend.id
+}
+resource "aws_vpc_security_group_egress_rule" "worker_egress_to_vpc_endpoints" {
+  description                  = "Allow worker https egress to AWS service VPC endpoints"
+  ip_protocol                  = "tcp"
+  from_port                    = 443
+  to_port                      = 443
+  referenced_security_group_id = var.vpc_endpoints_security_group_id
+  security_group_id            = aws_security_group.worker.id
+}

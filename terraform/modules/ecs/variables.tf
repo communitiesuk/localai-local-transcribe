@@ -254,3 +254,7 @@ variable "sentry_allowed_cidrs" {
   type        = list(string)
   default     = ["34.160.81.0/32", "34.102.210.18/32"]
 }
+variable "vpc_endpoints_security_group_id" {
+  description = "Security group ID for AWS service VPC endpoints (ECR, Secrets Manager, SSM, CloudWatch Logs, SQS, KMS)"
+  type        = string
+}
