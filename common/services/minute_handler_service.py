@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from typing import cast
 from uuid import UUID
 
@@ -13,7 +12,6 @@ from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import (
     DialogueEntry,
     GuardrailResult,
-    Hallucination,
     JobStatus,
     Minute,
     MinuteVersion,
@@ -31,7 +29,6 @@ from common.settings import get_settings
 from common.templates.user_template import generate_user_template
 from common.types import (
     GuardrailScore,
-    LLMHallucination,
     MeetingType,
     MinuteAndHallucinations,
 )
@@ -46,18 +43,6 @@ class MinuteGenerationFailedError(Exception):
 
 
 class MinuteHandlerService:
-    @staticmethod
-    def convert_llm_hallucination_to_db_hallucination(
-        llm_hallucination: LLMHallucination, minute_version_id: UUID
-    ) -> Hallucination:
-        return Hallucination(
-            id=uuid.uuid4(),
-            hallucination_text=llm_hallucination.hallucination_text,
-            hallucination_reason=llm_hallucination.hallucination_reason,
-            hallucination_type=llm_hallucination.hallucination_type,
-            minute_version_id=minute_version_id,
-        )
-
     @staticmethod
     def save_guardrail_result(
         minute_version_id: UUID,
@@ -94,7 +79,6 @@ class MinuteHandlerService:
         html_content: str | None = None,
         status: JobStatus | None = None,
         error: str | None = None,
-        hallucinations: list[LLMHallucination] | None = None,
     ) -> None:
         with SessionLocal() as session:
             minute_version = session.get(MinuteVersion, minute_version_id)
@@ -108,11 +92,6 @@ class MinuteHandlerService:
                 minute_version.status = status
             if error:
                 minute_version.error = error
-            if hallucinations:
-                minute_version.hallucinations = [
-                    MinuteHandlerService.convert_llm_hallucination_to_db_hallucination(hallucination, minute_version_id)
-                    for hallucination in hallucinations
-                ]
             session.add(minute_version)
             session.commit()
 
@@ -203,7 +182,6 @@ class MinuteHandlerService:
             logger.info("%s: Predicted minute version %s", minute_version.minute_id, meeting_type)
             result = await cls.generate_minutes(meeting_type, minute_version.minute)
             html_content = result.text
-            hallucinations = result.hallucinations
 
             await cls._run_accuracy_guardrail(
                 minute_version_id=minute_version.id,
@@ -216,7 +194,6 @@ class MinuteHandlerService:
             cls.update_minute_version(
                 minute_version.id,
                 html_content=html_content,
-                hallucinations=hallucinations,
                 status=JobStatus.COMPLETED,
             )
 
@@ -269,7 +246,6 @@ class MinuteHandlerService:
                 minute_version_id=target_minute_version.id,
                 status=JobStatus.COMPLETED,
                 html_content=generated.text,
-                hallucinations=generated.hallucinations,
             )
 
         except Exception as e:
@@ -344,8 +320,7 @@ class MinuteHandlerService:
     ) -> MinuteAndHallucinations:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         choice = await chatbot.chat(messages=get_basic_minutes_prompt(transcript))
-        hallucinations = await chatbot.hallucination_check()
-        return MinuteAndHallucinations(text=choice, total_claims=0, hallucinations=hallucinations)
+        return MinuteAndHallucinations(text=choice, total_claims=0, hallucinations=[])
 
     @classmethod
     def predict_meeting(cls, dialogue_entries: list[DialogueEntry]) -> MeetingType:
@@ -370,12 +345,11 @@ class MinuteHandlerService:
             messages=get_ai_edit_initial_messages(minutes, edit_instructions, transcript)
         )
         edited_minutes = edited_minutes.removeprefix("```html").removesuffix("```")
-        hallucinations = await chatbot.hallucination_check()
 
         return MinuteAndHallucinations(
             text=edited_minutes,
-            total_claims=len(hallucinations),
-            hallucinations=hallucinations,
+            total_claims=0,
+            hallucinations=[],
         )
 
     @classmethod

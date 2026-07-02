@@ -6,7 +6,6 @@ import pytest
 
 from common.database.postgres_models import (
     DialogueEntry,
-    Hallucination,
     JobStatus,
     Minute,
     MinuteVersion,
@@ -19,7 +18,7 @@ from common.services.minute_handler_service import (
     MinuteHandlerService,
 )
 from common.settings import get_settings
-from common.types import HallucinationType, LLMHallucination, MeetingType, MinuteAndHallucinations
+from common.types import MeetingType, MinuteAndHallucinations
 
 mock_email = "tests@local-transcribe.com"
 settings = get_settings()
@@ -39,15 +38,6 @@ def mock_user() -> User:
 @pytest.fixture
 def mock_dialogue_entry():
     return DialogueEntry(speaker="John", text="hello world", start_time=0.0, end_time=1.0)
-
-
-@pytest.fixture
-def mock_llm_hallucination():
-    return LLMHallucination(
-        hallucination_type=HallucinationType.NONSENSICAL,
-        hallucination_text="this string is hallucinating",
-        hallucination_reason="for reasons unknown",
-    )
 
 
 @pytest.fixture
@@ -102,17 +92,6 @@ def mock_transcription(mock_minute, mock_user) -> Transcription:
     )
 
 
-def test_convert_llm_hallucination_to_db_hallucination(mock_llm_hallucination, mock_minute_version):
-    result = MinuteHandlerService.convert_llm_hallucination_to_db_hallucination(
-        mock_llm_hallucination, mock_minute_version.id
-    )
-
-    assert isinstance(result, Hallucination)
-    assert result.hallucination_text == mock_llm_hallucination.hallucination_text
-    assert result.hallucination_reason == mock_llm_hallucination.hallucination_reason
-    assert result.minute_version_id == mock_minute_version.id
-
-
 def test_update_minute_version_updates_fields(mock_session, mock_minute_version):
     ctx, session = mock_session
     content = "<p>html content</p>"
@@ -124,7 +103,6 @@ def test_update_minute_version_updates_fields(mock_session, mock_minute_version)
             html_content=content,
             status=new_status,
             error=None,
-            hallucinations=None,
         )
 
     assert mock_minute_version.html_content == content
@@ -142,19 +120,6 @@ def test_update_minute_version_raises_if_not_found(mock_session, mock_minute_ver
         pytest.raises(ValueError, match=f"MinuteVersion not found for id: {mock_minute_version.id}"),
     ):
         MinuteHandlerService.update_minute_version(mock_minute_version.id)
-
-
-def test_update_minute_version_converts_llm_hallucinations(mock_session, mock_minute_version, mock_llm_hallucination):
-    ctx, session = mock_session
-
-    with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
-        MinuteHandlerService.update_minute_version(
-            mock_minute_version.id,
-            hallucinations=[mock_llm_hallucination],
-        )
-
-    assert len(mock_minute_version.hallucinations) == 1
-    assert isinstance(mock_minute_version.hallucinations[0], Hallucination)
 
 
 @pytest.mark.asyncio
@@ -266,7 +231,6 @@ async def test_generate_basic_minutes(mock_dialogue_entry, mocker):
     chatbot_output = "I am a chatbot"
     mock_chatbot = AsyncMock()
     mock_chatbot.chat = AsyncMock(return_value=chatbot_output)
-    mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
     result = await MinuteHandlerService.generate_basic_minutes([mock_dialogue_entry])
@@ -281,7 +245,6 @@ async def test_edit_minutes_with_ai(mock_dialogue_entry, mocker):
     text_content = "edited minutes"
     mock_chatbot = AsyncMock()
     mock_chatbot.chat = AsyncMock(return_value=text_content)
-    mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
     result = await MinuteHandlerService.edit_minutes_with_ai(
@@ -299,7 +262,6 @@ async def test_edit_minutes_with_ai_strips_code_fences(mock_dialogue_entry, mock
     chatbot_output = "edited minutes"
     mock_chatbot = AsyncMock()
     mock_chatbot.chat = AsyncMock(return_value=f"```html<p>{chatbot_output}</p>```")
-    mock_chatbot.hallucination_check = AsyncMock(return_value=[])
     mocker.patch("common.services.minute_handler_service.create_default_chatbot", return_value=mock_chatbot)
 
     result = await MinuteHandlerService.edit_minutes_with_ai(
@@ -467,7 +429,6 @@ async def test_process_minute_generation_message_success(
     MinuteHandlerService.update_minute_version.assert_called_once_with(
         mock_minute_version.id,
         html_content=dialogue,
-        hallucinations=[],
         status=JobStatus.COMPLETED,
     )
 
@@ -533,7 +494,6 @@ async def test_process_minute_edit_message_success(
         minute_version_id=target.id,
         status=JobStatus.COMPLETED,
         html_content=output,
-        hallucinations=[],
     )
 
 

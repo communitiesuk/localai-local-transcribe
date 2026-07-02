@@ -39,6 +39,7 @@ export async function proxy(req: NextRequest) {
 
     // Authorise user for frontend access
     let authResult: UserAuthorisationResult | null = null
+    let backendAuthResponse: Response | null = null
 
     if (process.env.ENVIRONMENT !== 'local') {
       const token = req.headers.get('x-amzn-oidc-data')
@@ -52,23 +53,34 @@ export async function proxy(req: NextRequest) {
 
       if (verifier) {
         authResult = await parseAuthToken(verifier, token)
+
+        if (authResult?.isAuthorised !== true) {
+          console.error(`User is not authorised to access ${pathname}`)
+          return redirectToUnauthorised(req)
+        }
+
+        console.info(
+          `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
+        )
       }
+      backendAuthResponse = await fetch(
+        `${process.env.BACKEND_HOST}/users/me`,
+        {
+          headers: { 'x-amzn-oidc-data': token },
+        }
+      )
     } else {
       authResult = {
         email: 'test@test.co.uk',
         isAuthorised: true,
         authReason: 'LOCAL_TESTING',
       }
+      backendAuthResponse = await fetch(`${process.env.BACKEND_HOST}/users/me`)
     }
 
-    if (authResult?.isAuthorised !== true) {
-      console.error(`User is not authorised to access ${pathname}`)
+    if (backendAuthResponse.status === 401) {
       return redirectToUnauthorised(req)
     }
-
-    console.info(
-      `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
-    )
 
     return NextResponse.next()
   } catch (error) {

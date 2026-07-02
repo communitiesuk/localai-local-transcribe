@@ -99,14 +99,13 @@ class SimpleTemplate(Template, Protocol):
             msg = f"Minute {minute.id} has no dialogue entries"
             raise ValueError(msg)
         minutes = await chatbot.chat(cls.prompt(transcript, minute.agenda))
-        hallucinations = await chatbot.hallucination_check()
         if cls.citations_required:
-            minutes, total_claims, citation_hallucinations = await add_citations_to_minute(
+            minutes, total_claims, hallucinations = await add_citations_to_minute(
                 transcript=transcript, initial_draft=minutes
             )
-            hallucinations += citation_hallucinations
         else:
             total_claims = 0
+            hallucinations = []
         return MinuteAndHallucinations(text=minutes, total_claims=total_claims, hallucinations=hallucinations)
 
 
@@ -189,13 +188,9 @@ class SectionTemplate(Template, Protocol):
                         get_section_for_agenda_prompt(section),
                     ]
                 )
-                final_sections.append(section_contents)
-                all_hallucinations = await chatbot.hallucination_check()
             else:
                 section_contents = await chatbot.chat([get_section_for_agenda_prompt(section)])
-                final_sections.append(section_contents)
-                hallucinations = await chatbot.hallucination_check()
-                all_hallucinations.extend(hallucinations)
+            final_sections.append(section_contents)
 
         initial_draft = "\n".join(final_sections)
         if cls.citations_required:
