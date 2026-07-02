@@ -5,7 +5,7 @@ JUDGE_RAW_MIN = 1.0
 JUDGE_RAW_MAX = 5.0
 
 # Floor on the raw 1-5 judge scale at or above which a single judge score is acceptable.
-# TODO: 4.0 is a placeholder floor — set it concretely once we have calibration data.
+# TODO(AIILG-678): 4.0 is a placeholder floor — set it concretely once we have calibration data.
 # https://mhclgdigital.atlassian.net/browse/AIILG-678
 JUDGE_ACCEPTABLE_RAW_MIN = 4.0
 
