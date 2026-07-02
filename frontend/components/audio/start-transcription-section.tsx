@@ -1,6 +1,12 @@
 import { TranscriptionForm } from '@/components/audio/types'
 import { TemplateSelect } from '@/components/template-select/template-select'
-import { GovukButton, GovukTextarea } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukFormGroup,
+  GovukHint,
+  GovukLabel,
+  GovukTextarea,
+} from '@/components/govuk'
 import { Loader2 } from 'lucide-react'
 import { Controller, useFormContext } from 'react-hook-form'
 
@@ -18,7 +24,44 @@ export const StartTranscriptionSection = ({
     return null
   }
   return (
-    <div className="govuk-!-margin-top-4 flex flex-col gap-2">
+    <div className="govuk-!-margin-top-4">
+      <h2 className="govuk-heading-m">Choose a template</h2>
+      <GovukHint className="govuk-!-margin-bottom-4">
+        Choose a template style for your meeting summary
+      </GovukHint>
+      <Controller
+        control={form.control}
+        name="template"
+        render={({ field: { value, onChange } }) => (
+          <TemplateSelect value={value} onChange={onChange} />
+        )}
+      />
+      {selectedTemplate?.agenda_usage != 'not_used' && (
+        <GovukFormGroup className="govuk-!-margin-top-4">
+          <GovukLabel htmlFor="agenda">
+            Agenda (
+            {selectedTemplate?.agenda_usage == 'optional'
+              ? 'optional'
+              : 'required'}
+            )
+          </GovukLabel>
+          <GovukHint id="agenda-hint">
+            Add discussion points from the meeting that should be included in
+            the summary.
+          </GovukHint>
+          <GovukTextarea
+            id="agenda"
+            aria-describedby="agenda-hint"
+            rows={5}
+            {...form.register('agenda', {
+              required: selectedTemplate?.agenda_usage == 'required',
+            })}
+          />
+          <GovukHint className="govuk-!-margin-top-1">
+            You can enter up to 500 characters
+          </GovukHint>
+        </GovukFormGroup>
+      )}
       <GovukButton
         type="submit"
         disabled={
@@ -27,49 +70,17 @@ export const StartTranscriptionSection = ({
           !selectedTemplate ||
           (selectedTemplate.agenda_usage == 'required' && !form.watch('agenda'))
         }
+        className="govuk-!-margin-top-4"
       >
         {isPending ? (
-          <span className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          <>
+            <Loader2 className="animate-spin" aria-hidden="true" />
             Uploading
-          </span>
+          </>
         ) : (
           'Upload'
         )}
       </GovukButton>
-      <Controller
-        control={form.control}
-        name="template"
-        render={({ field: { value, onChange } }) => (
-          <TemplateSelect value={value} onChange={onChange} />
-        )}
-      />
-      {selectedTemplate.agenda_usage != 'not_used' && (
-        <div className="govuk-form-group">
-          <label className="govuk-label" htmlFor="agenda">
-            Agenda (
-            {selectedTemplate.agenda_usage == 'optional'
-              ? 'optional'
-              : 'required'}
-            )
-          </label>
-          <div id="agenda-hint" className="govuk-hint">
-            Add discussion points from the meeting that should be included in
-            the summary.
-          </div>
-          <GovukTextarea
-            id="agenda"
-            aria-describedby="agenda-hint"
-            placeholder={`Agenda item 1
-Agenda item 2
-Agenda item 3
-...`}
-            {...form.register('agenda', {
-              required: selectedTemplate.agenda_usage == 'required',
-            })}
-          />
-        </div>
-      )}
     </div>
   )
 }

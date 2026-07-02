@@ -1,11 +1,11 @@
 import { TemplateRadioGroup } from '@/components/template-select/template-radio-group'
+import { GovukAccordion } from '@/components/govuk'
 import {
   getTemplatesTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { Template } from '@/types/templates'
 import { useQuery } from '@tanstack/react-query'
-import { FileText } from 'lucide-react'
 
 export const TemplateSelect = ({
   value,
@@ -15,11 +15,14 @@ export const TemplateSelect = ({
   value: Template
 }) => {
   return (
-    <div>
-      <DefaultTemplateSelect value={value} onChange={onChange} />
-      <h4 className="font-bold">Your templates</h4>
-      <UserTemplateSelect value={value} onChange={onChange} />
-    </div>
+    <GovukAccordion id="template-select-accordion">
+      <GovukAccordion.Section heading="General templates">
+        <DefaultTemplateSelect value={value} onChange={onChange} />
+      </GovukAccordion.Section>
+      <GovukAccordion.Section heading="Your templates">
+        <UserTemplateSelect value={value} onChange={onChange} />
+      </GovukAccordion.Section>
+    </GovukAccordion>
   )
 }
 
@@ -35,8 +38,9 @@ export const DefaultTemplateSelect = ({
   )
   return (
     <TemplateRadioGroup
+      name="template"
       templates={templates.map((t) => ({
-        id: `DEFAULT::${t.name}`, // Prefix to stop name clashes between default and user templates
+        id: `DEFAULT::${t.name}`,
         name: t.name,
         description: t.description,
       }))}
@@ -52,11 +56,12 @@ export const DefaultTemplateSelect = ({
           })
         }
       }}
-      value={`DEFAULT::${value.name}`}
+      value={`DEFAULT::${value?.name}`}
       isLoading={isLoadingTemplates}
     />
   )
 }
+
 export const UserTemplateSelect = ({
   onChange,
   value,
@@ -69,15 +74,15 @@ export const UserTemplateSelect = ({
   )
   if (!isLoading && !templates.length) {
     return (
-      <p className="text-muted-foreground mb-4 flex items-center gap-1 text-sm">
-        You haven&apos;t made any templates yet. Click the
-        <FileText className="inline" size="1rem" /> button above to create and
+      <p className="govuk-body">
+        You haven&apos;t made any templates yet. Go to Templates to create and
         edit your templates.
       </p>
     )
   }
   return (
     <TemplateRadioGroup
+      name="template"
       templates={templates.map((t) => ({
         id: t.id!,
         name: t.name,
@@ -93,7 +98,7 @@ export const UserTemplateSelect = ({
           })
         }
       }}
-      value={value.id!}
+      value={value?.id!}
       isLoading={isLoading}
     />
   )
