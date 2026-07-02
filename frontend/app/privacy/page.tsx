@@ -1,4 +1,3 @@
-
 export default function PrivacyPage() {
   return (
     <div className="govuk-grid-row">

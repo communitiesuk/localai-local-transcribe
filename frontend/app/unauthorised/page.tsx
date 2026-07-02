@@ -1,54 +1,36 @@
 import React from 'react'
+import {
+  GovukPanel,
+  GovukPanelHeader,
+  GovukPanelTitle,
+  GovukPanelContent,
+} from '@/components/govuk/panel'
 
 function Unauthorised(): React.JSX.Element {
   return (
     <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f9fafb',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        padding: '1rem',
-        font: 'inter',
-        paddingTop: '4rem',
-      }}
+      className="govuk-!-padding-top-9"
+      style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}
     >
-      <div
-        style={{
-          backgroundColor: 'white',
-          padding: '2rem',
-          borderRadius: '0.5rem',
-          boxShadow:
-            '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-          maxWidth: '28rem',
-          width: '100%',
-          textAlign: 'center',
-          font: 'inter',
-        }}
-      >
-        <h1
-          style={{
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            color: '#1f2937',
-            marginBottom: '0.75rem',
-            font: 'inter',
-          }}
-        >
-          Unauthorised Access
-        </h1>
-
-        <p
-          style={{
-            color: '#4b5563',
-            marginBottom: '1.5rem',
-          }}
-        >
-          Sorry, you don&apos;t have permission to access this page. Please
-          contact your administrator if you believe this is an error.
-        </p>
+      <div className="govuk-width-container">
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-one-third govuk-grid-column-one-third govuk-!-margin-0-auto">
+            <GovukPanel padding={6} border>
+              <GovukPanelHeader>
+                <GovukPanelTitle className="govuk-heading-m govuk-!-text-align-centre">
+                  Unauthorised Access
+                </GovukPanelTitle>
+              </GovukPanelHeader>
+              <GovukPanelContent>
+                <p className="govuk-body govuk-!-text-align-centre">
+                  Sorry, you don&apos;t have permission to access this page.
+                  Please contact your administrator if you believe this is an
+                  error.
+                </p>
+              </GovukPanelContent>
+            </GovukPanel>
+          </div>
+        </div>
       </div>
     </div>
   )

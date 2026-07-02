@@ -15,7 +15,6 @@ export default function Home() {
           AI transcription and drafting service
         </h1>
         <p className="govuk-body govuk-hint">
-
           Transcribe and summarise your meetings with AI. Click the New Meeting
           button below to begin. Suitable up to{' '}
           <span className="font-bold">OFFICIAL SENSITIVE</span>.
