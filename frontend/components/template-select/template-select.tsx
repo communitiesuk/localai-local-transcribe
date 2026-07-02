@@ -1,5 +1,5 @@
 import { TemplateRadioGroup } from '@/components/template-select/template-radio-group'
-import { GovukAccordion } from '@/components/govuk'
+import { GovukDetails } from '@/components/govuk'
 import {
   getTemplatesTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetOptions,
@@ -15,14 +15,14 @@ export const TemplateSelect = ({
   value: Template
 }) => {
   return (
-    <GovukAccordion id="template-select-accordion">
-      <GovukAccordion.Section heading="General templates">
+    <>
+      <GovukDetails summary="General templates" open>
         <DefaultTemplateSelect value={value} onChange={onChange} />
-      </GovukAccordion.Section>
-      <GovukAccordion.Section heading="Your templates">
+      </GovukDetails>
+      <GovukDetails summary="Your templates">
         <UserTemplateSelect value={value} onChange={onChange} />
-      </GovukAccordion.Section>
-    </GovukAccordion>
+      </GovukDetails>
+    </>
   )
 }
 
