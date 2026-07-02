@@ -244,3 +244,13 @@ variable "data_s3_bucket_name" {
   description = "name of the S3 bucket for data storage"
   type        = string
 }
+variable "apim_allowed_cidrs" {
+  description = "APIM outbound IPs — needed for worker's LLM calls"
+  type        = list(string)
+}
+
+variable "sentry_allowed_cidrs" {
+  description = "Sentry outbound IPs — needed for frontend, backend, and worker error reporting"
+  type        = list(string)
+  default     = ["34.160.81.0/32", "34.102.210.18/32"]
+}
