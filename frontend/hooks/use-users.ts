@@ -2,7 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 import { listUsersUsersGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { USERS_PER_PAGE } from '@/lib/constants'
 
-export function useUsers(page: number, pageSize: number = USERS_PER_PAGE) {
+export function useUsers(
+  page: number,
+  pageSize: number = USERS_PER_PAGE,
+  enabled: boolean
+) {
   return useQuery({
     ...listUsersUsersGetOptions({
       query: {
@@ -11,5 +15,6 @@ export function useUsers(page: number, pageSize: number = USERS_PER_PAGE) {
       },
     }),
     placeholderData: (previousData) => previousData,
+    enabled: enabled,
   })
 }
