@@ -1,8 +1,6 @@
 import { PosthogBanner } from '@/components/posthog-banner'
 import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
-import { Button } from '@/components/ui/button'
 import { Loader2, Plus } from 'lucide-react'
-import Link from 'next/link'
 import { GovukButtonLink } from '@/components/govuk'
 import { Suspense } from 'react'
 
@@ -19,22 +17,14 @@ export default function Home() {
           button below to begin. Suitable up to{' '}
           <span className="font-bold">OFFICIAL SENSITIVE</span>.
         </p>
-        <Button
-          className="mb-6 w-full bg-blue-500 p-6 hover:bg-blue-800 active:bg-amber-400"
-          asChild
-        >
-          <Link href="/new">
-            <Plus />
-            New meeting
-          </Link>
-        </Button>
+
         <GovukButtonLink
           href="/new"
           variant="primary"
-          className="flex !h-auto !w-full !items-center !justify-center gap-2 !rounded-sm !border-0 !bg-blue-500 !p-0 !text-base !shadow-none hover:!bg-blue-800 active:!bg-amber-400"
+          className="!flex !w-full !items-center !justify-center gap-2 !rounded-sm !border-0 !bg-blue-500 !px-4 !py-3 !shadow-none hover:!bg-blue-800 active:!bg-amber-400"
         >
           <Plus />
-          New meeting
+          <span className="font-semibold"> New meeting</span>
         </GovukButtonLink>
 
         <Suspense

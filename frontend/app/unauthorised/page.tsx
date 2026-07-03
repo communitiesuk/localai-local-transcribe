@@ -13,8 +13,8 @@ function Unauthorised(): React.JSX.Element {
       style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}
     >
       <div className="govuk-width-container">
-        <div className="govuk-grid-row">
-          <div className="govuk-grid-column-one-third govuk-grid-column-one-third govuk-!-margin-0-auto">
+        <div className="govuk-grid-row flex justify-center">
+          <div className="govuk-grid-column-two-third govuk-grid-column-one-third govuk-!-margin-0-auto">
             <GovukPanel padding={6} border>
               <GovukPanelHeader>
                 <GovukPanelTitle className="govuk-heading-m govuk-!-text-align-centre">
