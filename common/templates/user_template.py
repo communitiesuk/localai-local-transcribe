@@ -86,8 +86,7 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
         ]
         chatbot = create_default_chatbot(FastOrBestLLM.BEST)
         response = await chatbot.chat(messages)
-        hallucinations = await chatbot.hallucination_check()
-        return MinuteAndHallucinations(text=response, total_claims=0, hallucinations=hallucinations)
+        return MinuteAndHallucinations(text=response, total_claims=0, hallucinations=[])
     else:
         qa_pairs: list[tuple[str, str]] = []
         for question in template.questions:

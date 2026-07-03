@@ -57,7 +57,6 @@ class MinuteVersion(BaseTableMixin, table=True):
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     minute_id: UUID = Field(foreign_key="minute.id", ondelete="CASCADE")
     minute: Mapped["Minute"] = Relationship(back_populates="minute_versions")
-    hallucinations: Mapped[list["Hallucination"]] = Relationship(back_populates="minute_version", cascade_delete=True)
     html_content: str = Field(default="", sa_column_kwargs={"server_default": ""})
     guardrail_results: Mapped[list["GuardrailResult"]] = Relationship(
         back_populates="minute_version", cascade_delete=True
@@ -93,25 +92,6 @@ class Minute(BaseTableMixin, table=True):
         cascade_delete=True,
         sa_relationship_kwargs={"order_by": col(MinuteVersion.created_datetime).desc()},
     )
-
-
-class HallucinationType(StrEnum):
-    FACTUAL_FABRICATION = auto()
-    NONSENSICAL = auto()
-    CONTRADICTION = auto()
-    MISLEADING = auto()
-    OTHER = auto()
-
-
-class Hallucination(BaseTableMixin, table=True):
-    __tablename__ = "hallucination"
-    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
-    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
-    minute_version_id: UUID = Field(foreign_key="minute_version.id", ondelete="CASCADE")
-    minute_version: MinuteVersion = Relationship(back_populates="hallucinations")
-    hallucination_type: HallucinationType = Field(description="Type of hallucination", default=HallucinationType.OTHER)
-    hallucination_text: str | None = Field(description="Text of hallucination", default=None)
-    hallucination_reason: str | None = Field(description="Reason for hallucination", default=None)
 
 
 class Organisation(BaseTableMixin, table=True):

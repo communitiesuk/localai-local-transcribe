@@ -2,7 +2,6 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from common.database.postgres_models import HallucinationType
 from common.templates.citations import (
     CitationResult,
     ClaimCitation,
@@ -122,7 +121,6 @@ async def test_add_citations_to_minute_returns_uncited_claims_as_hallucinations(
     assert "John mentioned the timeline" in result_minute
     assert result_total_claims == 2
     assert len(result_hallucinations) == 1
-    assert result_hallucinations[0].hallucination_type == HallucinationType.FACTUAL_FABRICATION
     assert result_hallucinations[0].hallucination_text == "John mentioned the timeline"
 
 

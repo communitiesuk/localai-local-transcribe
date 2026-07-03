@@ -8,6 +8,7 @@ import { UserRole, hasAnyRole } from '@/lib/utils'
 import PaginatedUsers from '@/components/users/paginated-users'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
+import { BannerNotification } from '@/components/banner-notification'
 
 export default function UserManagementPage() {
   const {
@@ -34,6 +35,8 @@ export default function UserManagementPage() {
   return (
     <>
       <GovukBackLink />
+
+      <BannerNotification />
 
       <h1 className="govuk-heading-l">User Management</h1>
       {organisation && <h2 className="govuk-heading-s">{organisation.name}</h2>}
