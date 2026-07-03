@@ -156,7 +156,9 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
           {template.name}
         </h3>
         <p className="govuk-hint govuk-!-font-size-14 govuk-!-margin-bottom-0">
-          Updated {new Date(template.updated_datetime!).toLocaleDateString()}
+          {template.updated_datetime
+            ? `Updated ${new Date(template.updated_datetime).toLocaleDateString()}`
+            : 'Not yet updated'}
         </p>
       </div>
       <div className="govuk-body govuk-!-font-size-16 flex-1 text-gray-700">

@@ -60,22 +60,20 @@ export const DocumentTemplateEditor = ({
       )}
 
       <div>
-        <div className="flex items-center gap-4">
-          <GovukButton
-            type="submit"
-            disabled={isSubmitting}
-            className="govuk-!-margin-bottom-0"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="animate-spin" aria-hidden="true" />
-                Saving…
-              </>
-            ) : (
-              'Save'
-            )}
-          </GovukButton>
-        </div>
+        <GovukButton
+          type="submit"
+          disabled={isSubmitting}
+          className="govuk-!-margin-bottom-0"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" aria-hidden="true" />
+              Saving…
+            </>
+          ) : (
+            'Save'
+          )}
+        </GovukButton>
         <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-4 govuk-!-margin-bottom-0" />
       </div>
 

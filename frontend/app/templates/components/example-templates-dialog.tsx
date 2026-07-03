@@ -52,13 +52,13 @@ export function ExampleTemplatesDialog({
       }}
     >
       <DialogTrigger asChild>
-        <button
-          type="button"
-          className="govuk-link"
-          style={{ color: 'var(--govuk-link-colour)' }}
+        <a
+          href="#"
+          className="govuk-link govuk-!-font-size-19 govuk-!-margin-bottom-0"
+          onClick={(e) => e.preventDefault()}
         >
           Try an example
-        </button>
+        </a>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>

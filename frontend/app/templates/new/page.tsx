@@ -76,7 +76,7 @@ function NewTemplateContent() {
   if (templateType == 'document') {
     return (
       <FormProvider {...form}>
-        <header className="govuk-!-margin-bottom-6">
+        <header className="govuk-!-margin-bottom-4">
           <div className="govuk-!-margin-bottom-2 flex items-baseline gap-4">
             <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
               New template
@@ -86,7 +86,7 @@ function NewTemplateContent() {
               examples={exampleDocumentTemplates}
             />
           </div>
-          <p className="govuk-body govuk-hint">
+          <p className="govuk-body govuk-hint govuk-!-margin-bottom-0">
             Design your minute template. You can describe a structure and
             provide style guidance. Try an example to get started.
           </p>
@@ -99,7 +99,7 @@ function NewTemplateContent() {
   if (templateType == 'form') {
     return (
       <FormProvider {...form}>
-        <header className="govuk-!-margin-bottom-6">
+        <header className="govuk-!-margin-bottom-4">
           <div className="govuk-!-margin-bottom-2 flex items-baseline gap-4">
             <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
               New template
@@ -109,7 +109,7 @@ function NewTemplateContent() {
               examples={exampleFormTemplates}
             />
           </div>
-          <p className="govuk-body govuk-hint">
+          <p className="govuk-body govuk-hint govuk-!-margin-bottom-0">
             Design your minute template. You can describe a structure and
             provide style guidance. Try an example to get started.
           </p>

@@ -71,22 +71,20 @@ export const FormTemplateEditor = ({
       )}
 
       <div>
-        <div className="flex items-center gap-4">
-          <GovukButton
-            type="submit"
-            disabled={isSubmitting}
-            className="govuk-!-margin-bottom-0"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="animate-spin" aria-hidden="true" />
-                Saving…
-              </>
-            ) : (
-              'Save'
-            )}
-          </GovukButton>
-        </div>
+        <GovukButton
+          type="submit"
+          disabled={isSubmitting}
+          className="govuk-!-margin-bottom-0"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="animate-spin" aria-hidden="true" />
+              Saving…
+            </>
+          ) : (
+            'Save'
+          )}
+        </GovukButton>
         <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-4 govuk-!-margin-bottom-0" />
       </div>
 
@@ -200,12 +198,7 @@ export const FormTemplateEditor = ({
                     <li className="govuk-summary-card__action">
                       <button
                         type="button"
-                        className="govuk-link govuk-body-s font-bold"
-                        style={
-                          index !== 0
-                            ? { color: 'var(--govuk-link-colour)' }
-                            : undefined
-                        }
+                        className="govuk-link govuk-body-s govuk-!-font-weight-bold"
                         disabled={index === 0}
                         onClick={() => fieldArray.swap(index, index - 1)}
                         aria-label={`Move question ${index + 1} up`}
@@ -216,12 +209,7 @@ export const FormTemplateEditor = ({
                     <li className="govuk-summary-card__action">
                       <button
                         type="button"
-                        className="govuk-link govuk-body-s font-bold"
-                        style={
-                          index !== array.length - 1
-                            ? { color: 'var(--govuk-link-colour)' }
-                            : undefined
-                        }
+                        className="govuk-link govuk-body-s govuk-!-font-weight-bold"
                         disabled={index === array.length - 1}
                         onClick={() => fieldArray.swap(index, index + 1)}
                         aria-label={`Move question ${index + 1} down`}
