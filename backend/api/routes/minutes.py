@@ -170,16 +170,7 @@ async def create_minute_version(
         ai_edit_instructions=minute_version.ai_edit_instructions,
         html_content=minute_version.html_content,
         content_source=minute_version.content_source,
-        guardrail_results=[
-            GuardrailResultResponse(
-                id=guardrail_result.id,
-                passed=guardrail_result.passed,
-                score=guardrail_result.score,
-                reasoning=guardrail_result.reasoning,
-                error=guardrail_result.error,
-            )
-            for guardrail_result in minute_version.guardrail_results
-        ],
+        guardrail_results=[],
     )
 
 
