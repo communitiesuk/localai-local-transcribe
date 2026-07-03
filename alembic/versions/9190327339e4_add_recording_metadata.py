@@ -1,8 +1,8 @@
-"""add recording metadata cols
+"""add recording metadata
 
-Revision ID: 1a5ab99dec57
-Revises: f4510d2ab4af
-Create Date: 2026-06-25 14:38:48.229294
+Revision ID: 9190327339e4
+Revises: d7f3a9c21e84
+Create Date: 2026-07-03 13:26:46.800282
 
 """
 
@@ -14,8 +14,8 @@ import sqlmodel
 
 
 # revision identifiers, used by Alembic.
-revision: str = "1a5ab99dec57"
-down_revision: Union[str, None] = "f4510d2ab4af"
+revision: str = "9190327339e4"
+down_revision: Union[str, None] = "d7f3a9c21e84"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
