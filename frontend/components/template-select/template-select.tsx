@@ -98,7 +98,7 @@ export const UserTemplateSelect = ({
           })
         }
       }}
-      value={value?.id!}
+      value={value?.id ?? ''}
       isLoading={isLoading}
     />
   )
