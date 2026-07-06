@@ -18,10 +18,7 @@ export default function Home() {
           <span className="font-bold">OFFICIAL SENSITIVE</span>.
         </p>
 
-        <GovukButtonLink
-          href="/new"
-          variant="primary"
-        >
+        <GovukButtonLink href="/new" variant="primary">
           <Plus />
           <span className="font-semibold">New meeting</span>
         </GovukButtonLink>
@@ -39,4 +36,3 @@ export default function Home() {
     </div>
   )
 }
-

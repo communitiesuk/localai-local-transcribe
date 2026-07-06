@@ -8,9 +8,7 @@ import {
 
 function Unauthorised(): React.JSX.Element {
   return (
-    <div
-      className="govuk-!-padding-top-9"
-    >
+    <div className="govuk-!-padding-top-9">
       <div className="govuk-grid-row flex justify-center">
         <div className="govuk-grid-column-two-thirds govuk-grid-column-one-third">
           <GovukPanel padding={6} border>
