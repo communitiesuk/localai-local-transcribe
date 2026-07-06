@@ -223,3 +223,77 @@ async def test_update_organisation_not_found(
 
     mock_session.commit.assert_not_awaited()
     mock_session.refresh.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_non_admin_cannot_list_organisation_users(
+    client,
+    override_user,
+    override_session,
+    mock_session,
+):
+    organisation_id = uuid.uuid4()
+
+    response = await client.get(f"/organisations/{organisation_id}/users")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Not authorized to access this resource"
+
+
+@pytest.mark.asyncio
+async def test_admin_can_list_organisation_users(
+    client,
+    override_user,
+    override_session,
+    mock_user,
+    mock_session,
+    make_organisation,
+    make_user,
+):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+
+    organisation = make_organisation()
+    organisation.id = uuid.uuid4()
+
+    user1 = make_user(organisation_id=organisation.id)
+    user2 = make_user(organisation_id=organisation.id)
+
+    mock_session.get.return_value = organisation
+
+    mock_result = Mock()
+    mock_result.one.return_value = 2
+    mock_result.all.return_value = [user1, user2]
+    mock_session.exec.return_value = mock_result
+
+    response = await client.get(f"/organisations/{organisation.id}/users")
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["total_count"] == 2
+    assert data["page"] == 1
+    assert data["page_size"] == 10
+    assert data["total_pages"] == 1
+    assert isinstance(data["items"], list)
+    assert {item["id"] for item in data["items"]} == {str(user1.id), str(user2.id)}
+
+
+@pytest.mark.asyncio
+async def test_list_organisation_users_organisation_not_found(
+    client,
+    override_user,
+    override_session,
+    mock_user,
+    mock_session,
+):
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+
+    organisation_id = uuid.uuid4()
+    mock_session.get.return_value = None
+
+    response = await client.get(f"/organisations/{organisation_id}/users")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Organisation not found"
+
+    mock_session.exec.assert_not_awaited()
