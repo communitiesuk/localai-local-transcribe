@@ -52,13 +52,12 @@ export function ExampleTemplatesDialog({
       }}
     >
       <DialogTrigger asChild>
-        <a
-          href="#"
+        <button
+          type="button"
           className="govuk-link govuk-!-font-size-19 govuk-!-margin-bottom-0"
-          onClick={(e) => e.preventDefault()}
         >
           Try an example
-        </a>
+        </button>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
