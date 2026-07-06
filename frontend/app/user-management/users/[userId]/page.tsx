@@ -173,7 +173,7 @@ function RolesForm({ user }: { user: GetUserResponse }) {
         <GovukFieldset aria-describedby="role-hint">
           <GovukLegend size="m">Role</GovukLegend>
           <GovukHint id="role-hint">
-            Different roles come with varying access to Local Transcribe's
+            Different roles come with varying access to Local Transcribe&apos;s
             features
           </GovukHint>
           <Controller
