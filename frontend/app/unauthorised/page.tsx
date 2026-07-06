@@ -10,7 +10,7 @@ function Unauthorised(): React.JSX.Element {
   return (
     <div className="govuk-!-padding-top-9">
       <div className="govuk-grid-row flex justify-center">
-        <div className="govuk-grid-column-two-thirds govuk-grid-column-one-third">
+        <div className="govuk-grid-column-two-thirds">
           <GovukPanel padding={6} border>
             <GovukPanelHeader>
               <GovukPanelTitle className="govuk-heading-m govuk-!-text-align-centre">
