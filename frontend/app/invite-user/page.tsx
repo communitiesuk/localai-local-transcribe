@@ -19,6 +19,7 @@ export default function AdminAddUserPage() {
   const {
     name: storedName,
     email: storedEmail,
+    organisationId,
     setInviteDetails,
     clearInviteDetails,
   } = useInviteUserStore()
@@ -37,7 +38,7 @@ export default function AdminAddUserPage() {
   ])
 
   const { data: organisation } = useOrganisation(
-    currentUser?.organisation_id ?? ''
+    organisationId || currentUser?.organisation_id || ''
   )
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
@@ -67,7 +68,7 @@ export default function AdminAddUserPage() {
       return
     }
 
-    setInviteDetails(name, email)
+    setInviteDetails(name, email, organisationId)
     router.push('/invite-user/confirm')
   }
 

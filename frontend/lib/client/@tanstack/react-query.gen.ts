@@ -43,6 +43,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   listMinuteVersionsMinutesMinuteIdVersionsGet,
   listOrganisationsOrganisationsGet,
+  listOrganisationsUsersOrganisationsOrganisationIdUsersGet,
   listTranscriptionsTranscriptionsGet,
   listUsersUsersGet,
   type Options,
@@ -145,6 +146,9 @@ import type {
   ListOrganisationsOrganisationsGetData,
   ListOrganisationsOrganisationsGetError,
   ListOrganisationsOrganisationsGetResponse,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetError,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetError,
   ListTranscriptionsTranscriptionsGetResponse,
@@ -1537,6 +1541,114 @@ export const updateOrganisationOrganisationsOrganisationIdPatchMutation = (
   }
   return mutationOptions
 }
+
+export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetQueryKey =
+  (
+    options: Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
+  ) =>
+    createQueryKey(
+      'listOrganisationsUsersOrganisationsOrganisationIdUsersGet',
+      options
+    )
+
+/**
+ * List Organisations Users
+ */
+export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetOptions =
+  (
+    options: Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
+  ) =>
+    queryOptions<
+      ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse,
+      ListOrganisationsUsersOrganisationsOrganisationIdUsersGetError,
+      ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse,
+      ReturnType<
+        typeof listOrganisationsUsersOrganisationsOrganisationIdUsersGetQueryKey
+      >
+    >({
+      queryFn: async ({ queryKey, signal }) => {
+        const { data } =
+          await listOrganisationsUsersOrganisationsOrganisationIdUsersGet({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true,
+          })
+        return data
+      },
+      queryKey:
+        listOrganisationsUsersOrganisationsOrganisationIdUsersGetQueryKey(
+          options
+        ),
+    })
+
+export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteQueryKey =
+  (
+    options: Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
+  ): QueryKey<
+    Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
+  > =>
+    createQueryKey(
+      'listOrganisationsUsersOrganisationsOrganisationIdUsersGet',
+      options,
+      true
+    )
+
+/**
+ * List Organisations Users
+ */
+export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteOptions =
+  (
+    options: Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
+  ) =>
+    infiniteQueryOptions<
+      ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse,
+      ListOrganisationsUsersOrganisationsOrganisationIdUsersGetError,
+      InfiniteData<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse>,
+      QueryKey<
+        Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
+      >,
+      | number
+      | Pick<
+          QueryKey<
+            Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
+          >[0],
+          'body' | 'headers' | 'path' | 'query'
+        >
+    >(
+      // @ts-ignore
+      {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+          // @ts-ignore
+          const page: Pick<
+            QueryKey<
+              Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
+            >[0],
+            'body' | 'headers' | 'path' | 'query'
+          > =
+            typeof pageParam === 'object'
+              ? pageParam
+              : {
+                  query: {
+                    page: pageParam,
+                  },
+                }
+          const params = createInfiniteParams(queryKey, page)
+          const { data } =
+            await listOrganisationsUsersOrganisationsOrganisationIdUsersGet({
+              ...options,
+              ...params,
+              signal,
+              throwOnError: true,
+            })
+          return data
+        },
+        queryKey:
+          listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteQueryKey(
+            options
+          ),
+      }
+    )
 
 export const signOutSignoutGetQueryKey = (
   options?: Options<SignOutSignoutGetData>

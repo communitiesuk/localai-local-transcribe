@@ -12,7 +12,8 @@ import { useMutation } from '@tanstack/react-query'
 
 export default function AdminAddUserConfirmPage() {
   const router = useRouter()
-  const { name, email, clearInviteDetails } = useInviteUserStore()
+  const { name, email, organisationId, clearInviteDetails } =
+    useInviteUserStore()
   const submitInProgress = useRef(false)
 
   const {
@@ -52,13 +53,38 @@ export default function AdminAddUserConfirmPage() {
     submitInProgress.current = true
     if (!is_Support_Admin && !is_LA_Admin) return
 
+    if (!name || !email) {
+      console.error('Missing required fields for user creation:', {
+        name,
+        email,
+      })
+      submitInProgress.current = false
+      return
+    }
+
     if (is_Support_Admin) {
+      console.log('Creating user as Support Admin:', {
+        name,
+        email,
+        organisationId,
+      })
+
       try {
+        if (!organisationId) {
+          console.error(
+            'Organisation ID is missing for Support Admin user creation.'
+          )
+          submitInProgress.current = false
+          return
+        }
+
+        console.log('Creating user with organisation ID:', organisationId)
+
         await createUserMutation.mutateAsync({
           body: {
             name: name,
             email: email,
-            organisation_id: organisation?.id,
+            organisation_id: organisationId,
           },
         })
         router.push('/user-management')

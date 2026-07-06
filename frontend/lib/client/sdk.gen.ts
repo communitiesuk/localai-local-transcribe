@@ -101,6 +101,9 @@ import type {
   ListOrganisationsOrganisationsGetData,
   ListOrganisationsOrganisationsGetErrors,
   ListOrganisationsOrganisationsGetResponses,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetErrors,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponses,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetErrors,
   ListTranscriptionsTranscriptionsGetResponses,
@@ -874,6 +877,23 @@ export const updateOrganisationOrganisationsOrganisationIdPatch = <
       ...options.headers,
     },
   })
+
+/**
+ * List Organisations Users
+ */
+export const listOrganisationsUsersOrganisationsOrganisationIdUsersGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).get<
+    ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponses,
+    ListOrganisationsUsersOrganisationsOrganisationIdUsersGetErrors,
+    ThrowOnError
+  >({ url: '/organisations/{organisation_id}/users', ...options })
 
 /**
  * Sign Out
