@@ -27,7 +27,7 @@ import {
 } from '@/components/govuk/table'
 import {
   getTargetUserUsersUserIdGetOptions,
-  getUserUsersMeGetQueryKey,
+  getTargetUserUsersUserIdGetQueryKey,
   updateUserRolesUsersUserIdRolesPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useRouter } from 'next/navigation'
@@ -139,7 +139,9 @@ function RolesForm({ user }: { user: GetUserResponse }) {
         {
           onSuccess() {
             queryClient.invalidateQueries({
-              queryKey: getUserUsersMeGetQueryKey(),
+              queryKey: getTargetUserUsersUserIdGetQueryKey({
+                path: { user_id: user.id },
+              }),
             })
             setBanner({
               variant: 'success',
