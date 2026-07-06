@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect } from 'react'
+import { use } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import {
@@ -16,14 +16,11 @@ import {
   GovukTableHeaderCell,
 } from '@/components/govuk/table'
 import { getTargetUserUsersUserIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
 export default function UserPage(props: {
   params: Promise<{ userId: string }>
 }) {
-  const router = useRouter()
-
   const { userId } = use(props.params)
 
   const {
@@ -38,17 +35,15 @@ export default function UserPage(props: {
     }),
   })
 
-  useEffect(() => {
-    if (targetUserError) {
-      router.replace('/generic-error')
-    }
-  }, [targetUserError, router])
-
   if (targetUserLoading) {
     return <Loader2 className="animate-spin" />
   }
 
-  if (targetUserError) return null
+  // Surface the failure to the nearest error boundary (app/error.tsx),
+  // which renders the canonical GOV.UK "there is a problem" page.
+  if (targetUserError) {
+    throw new Error('Unable to load user')
+  }
 
   return (
     <>

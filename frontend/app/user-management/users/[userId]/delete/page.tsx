@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect } from 'react'
+import { use } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 
@@ -58,12 +58,6 @@ export default function UserPageDelete(props: {
     }),
   })
 
-  useEffect(() => {
-    if (targetUserError) {
-      router.replace('/generic-error')
-    }
-  }, [targetUserError, router])
-
   const redirectPath =
     currentUser?.id === targetUser?.id ? '/' : '/user-management' // go to hompage if user deletes themself
 
@@ -83,7 +77,11 @@ export default function UserPageDelete(props: {
     return <Loader2 className="animate-spin" />
   }
 
-  if (targetUserError) return null
+  // Surface the failure to the nearest error boundary (app/error.tsx),
+  // which renders the canonical GOV.UK "there is a problem" page.
+  if (targetUserError) {
+    throw new Error('Unable to load user')
+  }
 
   return (
     <>
