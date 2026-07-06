@@ -10,7 +10,7 @@ import {
 
 export default function SupportPage() {
   return (
-    <div className="govuk-width-container app-width-container--narrow">
+    <div className="govuk-grid-row">
       <div className="govuk-!-padding-top-6">
         <h1 className="govuk-heading-xl">Support Center</h1>
 

@@ -21,10 +21,9 @@ export default function Home() {
         <GovukButtonLink
           href="/new"
           variant="primary"
-          className="!flex !w-full !items-center !justify-center gap-2 !rounded-sm !border-0 !bg-blue-500 !px-4 !py-3 !shadow-none hover:!bg-blue-800 active:!bg-amber-400"
         >
           <Plus />
-          <span className="font-semibold"> New meeting</span>
+          <span className="font-semibold">New meeting</span>
         </GovukButtonLink>
 
         <Suspense
@@ -41,4 +40,3 @@ export default function Home() {
   )
 }
 
-// Todo: Fix button
