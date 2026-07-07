@@ -13,6 +13,7 @@ import {
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { OrganisationResponse } from '@/lib/client'
+import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import {
   getOrganisationOrganisationsOrganisationIdGetQueryKey,
   updateOrganisationOrganisationsOrganisationIdPatchMutation,
@@ -40,8 +41,10 @@ export default function EditApprovedDomainsPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
+  const { organisationId: selectedOrganisationId } = useInviteUserStore()
+
   const { data: organisation, isLoading: organisationLoading } =
-    useOrganisation(currentUser?.organisation_id ?? '')
+    useOrganisation(selectedOrganisationId || currentUser?.organisation_id || '')
 
   if (userLoading || organisationLoading || !organisation) {
     return (
@@ -56,6 +59,9 @@ export default function EditApprovedDomainsPage() {
     <>
       <GovukBackLink />
       <h1 className="govuk-heading-l">Edit approved domains</h1>
+      <h2 className="govuk-heading-s govuk-!-margin-bottom-2">
+        {organisation.name}
+      </h2>
       <EditDomainsForm organisation={organisation} />
     </>
   )
@@ -87,12 +93,13 @@ function EditDomainsForm({
           body: { allowed_domains: parseDomains(data.domains) },
         },
         {
-          onSuccess() {
-            queryClient.invalidateQueries({
-              queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
+          onSuccess(updatedOrganisation) {
+            queryClient.setQueryData(
+              getOrganisationOrganisationsOrganisationIdGetQueryKey({
                 path: { organisation_id: organisation.id },
               }),
-            })
+              updatedOrganisation
+            )
             toast.success('Approved domains updated')
             router.push('/user-management')
           },

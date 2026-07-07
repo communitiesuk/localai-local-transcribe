@@ -2,13 +2,12 @@
 
 import { Suspense, useState, ChangeEvent } from 'react'
 import { Loader2 } from 'lucide-react'
-import Link from 'next/link'
 import { UserRole, hasAnyRole } from '@/lib/utils'
 import PaginatedUsers from '@/components/users/paginated-users'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
-import { GovukBackLink } from '@/components/govuk'
+import { GovukBackLink, GovukButton } from '@/components/govuk'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BannerNotification } from '@/components/banner-notification'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
@@ -115,15 +114,16 @@ export default function UserManagementClient() {
           Invite new user
         </button>
         {isSystemAdmin && (
-          <Link
-            href="/user-management/domains"
-            className="govuk-link govuk-link--no-visited-state"
+          <GovukButton
+            type="button"
+            variant="secondary"
+            disabled={!selectedOrganisation}
+            onClick={() => router.push('/user-management/domains')}
           >
             Edit approved domains
-          </Link>
+          </GovukButton>
         )}
       </div>
-
       <Suspense fallback={null}>
         <PaginatedUsers
           organisationID={
