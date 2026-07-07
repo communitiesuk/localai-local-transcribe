@@ -36,6 +36,7 @@ resource "aws_s3_object" "assets" {
       png   = "image/png"
       ico   = "image/x-icon"
       json  = "application/json"
+      woff  = "font/woff"
       woff2 = "font/woff2"
     },
     regex("[^.]+$", each.value),
