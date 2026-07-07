@@ -3,6 +3,7 @@
 import {
   GovukBackLink,
   GovukButton,
+  GovukButtonGroup,
   GovukDetails,
   GovukErrorSummary,
   GovukFormGroup,
@@ -161,14 +162,14 @@ function EditDomainsForm({
         />
       </GovukFormGroup>
 
-      <div className="govuk-button-group">
+      <GovukButtonGroup>
         <GovukButton type="submit" disabled={isPending}>
           Save
         </GovukButton>
         <Link href="/user-management" className="govuk-link">
           Cancel
         </Link>
-      </div>
+      </GovukButtonGroup>
 
       <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 
