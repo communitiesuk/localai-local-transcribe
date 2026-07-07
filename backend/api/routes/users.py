@@ -1,8 +1,9 @@
 import logging
-import math
 from datetime import UTC, datetime
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import EmailStr
 
 from backend.api.dependencies import (
     OrganisationAdminDep,
@@ -12,7 +13,7 @@ from backend.api.dependencies import (
 )
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_user_by_email, get_user_count, get_users
+from backend.utils.queries import get_paginated_users, get_user_by_email
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
 from common.types import (
@@ -20,6 +21,7 @@ from common.types import (
     GetUserResponse,
     PaginatedUsersResponse,
     UserCreate,
+    UserExistsResponse,
     UserUpdateRoles,
 )
 
@@ -106,34 +108,11 @@ async def list_users(
     page: int = Query(DEFAULT_PAGE, ge=DEFAULT_PAGE),
     page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ) -> PaginatedUsersResponse:
-    users = []
     if is_system_admin(admin):
-        count = await get_user_count(session)
-        users = await get_users(
-            session,
-            page=page,
-            page_size=page_size,
-        )
+        return await get_paginated_users(session, None, page, page_size)
     else:
         organisation = await session.get(Organisation, admin.organisation_id)
-        count = await get_user_count(
-            session,
-            organisation=organisation,
-        )
-        users = await get_users(
-            session,
-            organisation=organisation,
-            page=page,
-            page_size=page_size,
-        )
-
-    return PaginatedUsersResponse(
-        items=[to_user_response(u) for u in users],
-        total_count=count,
-        page=page,
-        page_size=page_size,
-        total_pages=math.ceil(count / page_size) or 1,
-    )
+        return await get_paginated_users(session, organisation, page, page_size)
 
 
 @users_router.get("/{user_id}")
@@ -221,3 +200,22 @@ async def delete_user(session: SQLSessionDep, user: UserDep, target_user: Target
 
     await session.delete(target_user)
     await session.commit()
+
+
+@users_router.get("/user/exists", response_model=UserExistsResponse)
+async def user_exists(
+    email: EmailStr,
+    organisation_id: UUID,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> UserExistsResponse:
+    organisation = await session.get(Organisation, organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
+
+    existing_user = await get_user_by_email(session, email)
+
+    return UserExistsResponse(exists=existing_user is not None)
