@@ -44,7 +44,9 @@ export default function EditApprovedDomainsPage() {
   const { organisationId: selectedOrganisationId } = useInviteUserStore()
 
   const { data: organisation, isLoading: organisationLoading } =
-    useOrganisation(selectedOrganisationId || currentUser?.organisation_id || '')
+    useOrganisation(
+      selectedOrganisationId || currentUser?.organisation_id || ''
+    )
 
   if (userLoading || organisationLoading || !organisation) {
     return (
