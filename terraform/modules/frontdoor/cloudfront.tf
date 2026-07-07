@@ -63,6 +63,16 @@ resource "aws_cloudfront_distribution" "main" {
     viewer_protocol_policy = "redirect-to-https"
   }
 
+  # security.txt must be before the general maintenance route so it has higher priority and is served first
+  ordered_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = aws_cloudfront_cache_policy.main.id
+    path_pattern           = "/.well-known/security.txt"
+    target_origin_id       = local.maintenance_origin_id
+    viewer_protocol_policy = "redirect-to-https"
+  }
+
   ordered_cache_behavior {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]

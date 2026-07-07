@@ -6,6 +6,13 @@ module "maintenance_page_bucket" {
   policy                        = data.aws_iam_policy_document.maintenance_page.json
 }
 
+resource "aws_s3_object" "security_txt" {
+  bucket       = module.maintenance_page_bucket.bucket
+  key          = ".well-known/security.txt"
+  source       = "../modules/frontdoor/well_known/security.txt"
+  content_type = "text/plain"
+}
+
 # The index file needs to match the path name so it can be found
 resource "aws_s3_object" "maintenance_page_index_file" {
   bucket        = module.maintenance_page_bucket.bucket
