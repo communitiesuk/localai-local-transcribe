@@ -14,9 +14,9 @@ describe('<GovukList />', () => {
     expect(root.className).toBe('govuk-list')
   })
 
-  it('renders an <ol> with number modifier when type is "ordered"', () => {
+  it('renders an <ol> with number modifier when type is "number"', () => {
     const { container } = render(
-      <GovukList type="ordered">
+      <GovukList type="number">
         <GovukListItem>One</GovukListItem>
       </GovukList>
     )
@@ -25,9 +25,9 @@ describe('<GovukList />', () => {
     expect(root).toHaveClass('govuk-list', 'govuk-list--number')
   })
 
-  it('renders an <ul> with number modifier when type is "unordered"', () => {
+  it('renders an <ul> with number modifier when type is "bullet"', () => {
     const { container } = render(
-      <GovukList type="unordered">
+      <GovukList type="bullet">
         <GovukListItem>Item</GovukListItem>
       </GovukList>
     )

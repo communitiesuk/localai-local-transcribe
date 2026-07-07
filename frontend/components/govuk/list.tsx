@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 
 type Props = {
-  type?: 'unordered' | 'ordered'
+  type?: 'bullet' | 'number'
   spaced?: boolean
   className?: string
   children: React.ReactNode
@@ -22,7 +22,7 @@ export function GovukList({
     className
   )
 
-  if (type === 'ordered') {
+  if (type === 'number') {
     return (
       <ol className={listClassName} {...rest}>
         {children}
