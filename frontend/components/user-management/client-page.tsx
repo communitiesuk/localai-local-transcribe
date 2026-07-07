@@ -7,7 +7,13 @@ import PaginatedUsers from '@/components/users/paginated-users'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
-import { GovukBackLink, GovukButton, GovukButtonLink } from '@/components/govuk'
+import {
+  GovukBackLink,
+  GovukButton,
+  GovukButtonLink,
+  GovukTag,
+  GovukHeading,
+} from '@/components/govuk'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BannerNotification } from '@/components/banner-notification'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
@@ -63,11 +69,12 @@ export default function UserManagementClient() {
       <GovukBackLink />
       <BannerNotification />
 
-      <h1 className="govuk-heading-l">User Management</h1>
-
-      {isSystemAdmin && (
-        <strong className="govuk-tag govuk-tag--grey">System Admin</strong>
-      )}
+      <div className="flex items-baseline gap-4">
+        <GovukHeading>User Management</GovukHeading>
+        <GovukTag className="relative -top-px" colour="grey">
+          System Admin
+        </GovukTag>
+      </div>
 
       {isSystemAdmin && (
         <>
