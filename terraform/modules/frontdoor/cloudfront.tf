@@ -9,11 +9,12 @@ resource "aws_cloudfront_origin_access_identity" "maintenance_oai" {
 
 #tfsec:ignore:aws-cloudfront-enable-logging: TODO we will be implementing logging later
 resource "aws_cloudfront_distribution" "main" {
-  aliases         = var.ssl_certs_created ? var.cloudfront_domain_names : []
-  enabled         = true
-  http_version    = "http2and3"
-  is_ipv6_enabled = true
-  price_class     = "PriceClass_100" # Extra latency outside of UK/Europe, but cheaper
+  aliases             = var.ssl_certs_created ? var.cloudfront_domain_names : []
+  enabled             = true
+  http_version        = "http2and3"
+  is_ipv6_enabled     = true
+  price_class         = "PriceClass_100" # Extra latency outside of UK/Europe, but cheaper
+  default_root_object = "maintenance"
 
   web_acl_id = aws_wafv2_web_acl.main.arn
 
