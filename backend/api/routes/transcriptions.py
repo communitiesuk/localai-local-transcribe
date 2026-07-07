@@ -238,8 +238,8 @@ async def update_transcription_title(
     current_user: UserDep,
 ) -> None:
     """Update a transcription title."""
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
     if request.title is not None:
-        transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
         transcription.title = request.title
         await session.commit()
 
