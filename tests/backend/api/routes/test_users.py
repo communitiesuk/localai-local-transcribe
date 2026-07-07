@@ -173,3 +173,80 @@ async def test_create_user_returns_409_when_email_already_exists(
 
     assert response.json()["detail"] == f"A user with email '{existing_user.email}' already exists"
     assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_user_exists_returns_true_when_user_exists(
+    override_session, override_support_admin_user, make_user, make_organisation
+):
+    existing_user = make_user()
+    organisation = make_organisation()
+
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=existing_user),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.get(f"/users/user/exists?email={existing_user.email}&organisation_id={organisation.id}")
+
+    assert response.status_code == 200
+    assert response.json() == {"exists": True}
+
+
+@pytest.mark.asyncio
+async def test_user_exists_returns_false_when_user_not_found(
+    override_session, override_support_admin_user, make_organisation
+):
+    organisation = make_organisation()
+
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.get(f"/users/user/exists?email=notfound@example.com&organisation_id={organisation.id}")
+
+    assert response.status_code == 200
+    assert response.json() == {"exists": False}
+
+
+@pytest.mark.asyncio
+async def test_user_exists_forbidden_for_non_admin(override_session, override_user, make_organisation):
+    organisation = make_organisation()
+
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+    error_message = "Not authorized to access this resource"
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.get(f"/users/user/exists?email=someone@example.com&organisation_id={organisation.id}")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == error_message
+
+
+@pytest.mark.asyncio
+async def test_user_exists_organisation_not_found(override_session, override_support_admin_user):
+    mock_session = override_session
+    mock_session.get.return_value = None
+    error_message = "Organisation not found"
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.get(f"/users/user/exists?email=someone@example.com&organisation_id={uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == error_message

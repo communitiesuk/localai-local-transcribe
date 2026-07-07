@@ -11,7 +11,9 @@ describe('<GovukAccordion />', () => {
         </GovukAccordion.Section>
       </GovukAccordion>
     )
-    const root = container.firstElementChild as HTMLElement
+    const root = container.querySelector(
+      '[data-module="govuk-accordion"]'
+    ) as HTMLElement
     expect(root.tagName).toBe('DIV')
     expect(root).toHaveClass('govuk-accordion')
     expect(root).toHaveAttribute('data-module', 'govuk-accordion')
@@ -25,7 +27,8 @@ describe('<GovukAccordion />', () => {
         </GovukAccordion.Section>
       </GovukAccordion>
     )
-    expect(container.firstElementChild).toHaveAttribute('id', 'my-accordion')
+    const root = container.querySelector('[data-module="govuk-accordion"]')
+    expect(root).toHaveAttribute('id', 'my-accordion')
   })
 
   it('renders a Section with the canonical section structure', () => {
@@ -112,7 +115,8 @@ describe('<GovukAccordion />', () => {
         </GovukAccordion.Section>
       </GovukAccordion>
     )
-    expect(container.firstElementChild).toHaveClass('govuk-accordion', 'mt-4')
+    const root = container.querySelector('[data-module="govuk-accordion"]')
+    expect(root).toHaveClass('govuk-accordion', 'mt-4')
   })
 
   it('forwards arbitrary HTML attributes on the accordion root', () => {
