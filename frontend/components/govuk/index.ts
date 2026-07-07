@@ -7,6 +7,7 @@ export type { ErrorItem } from './error-summary'
 export { GovukFieldset } from './fieldset'
 export { GovukFormGroup } from './form-group'
 export { GovukHint } from './hint'
+export { GovukInput } from './input'
 export { GovukLabel } from './label'
 export { GovukLegend } from './legend'
 export { GovukNotificationBanner } from './notification-banner'
@@ -15,4 +16,11 @@ export { GovukHeading } from './heading'
 export { GovukWarningText } from './warning'
 export { GovukTag } from './tag'
 export { GovukTextarea } from './textarea'
-export { GovukInput } from './input'
+export {
+  GovukPanel,
+  GovukPanelHeader,
+  GovukPanelTitle,
+  GovukPanelDescription,
+  GovukPanelContent,
+  GovukPanelFooter,
+} from './panel'

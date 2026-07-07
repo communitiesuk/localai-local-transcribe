@@ -101,6 +101,9 @@ import type {
   ListOrganisationsOrganisationsGetData,
   ListOrganisationsOrganisationsGetErrors,
   ListOrganisationsOrganisationsGetResponses,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetErrors,
+  ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponses,
   ListTranscriptionsTranscriptionsGetData,
   ListTranscriptionsTranscriptionsGetErrors,
   ListTranscriptionsTranscriptionsGetResponses,
@@ -121,6 +124,9 @@ import type {
   UpdateUserRolesUsersUserIdRolesPatchData,
   UpdateUserRolesUsersUserIdRolesPatchErrors,
   UpdateUserRolesUsersUserIdRolesPatchResponses,
+  UserExistsUsersUserExistsGetData,
+  UserExistsUsersUserExistsGetErrors,
+  UserExistsUsersUserExistsGetResponses,
 } from './types.gen'
 
 export type Options<
@@ -410,6 +416,20 @@ export const updateUserRolesUsersUserIdRolesPatch = <
       ...options.headers,
     },
   })
+
+/**
+ * User Exists
+ */
+export const userExistsUsersUserExistsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UserExistsUsersUserExistsGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    UserExistsUsersUserExistsGetResponses,
+    UserExistsUsersUserExistsGetErrors,
+    ThrowOnError
+  >({ url: '/users/user/exists', ...options })
 
 /**
  * List Minutes For Transcription
@@ -857,6 +877,23 @@ export const updateOrganisationOrganisationsOrganisationIdPatch = <
       ...options.headers,
     },
   })
+
+/**
+ * List Organisations Users
+ */
+export const listOrganisationsUsersOrganisationsOrganisationIdUsersGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).get<
+    ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponses,
+    ListOrganisationsUsersOrganisationsOrganisationIdUsersGetErrors,
+    ThrowOnError
+  >({ url: '/organisations/{organisation_id}/users', ...options })
 
 /**
  * Sign Out

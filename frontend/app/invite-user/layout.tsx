@@ -1,7 +1,7 @@
-import { GovukBackLink } from '@/components/govuk'
 import { ReactNode } from 'react'
+import { GovukBackLink } from '@/components/govuk'
 
-export default async function TemplatesLayout({
+export default function AdminAddUserLayout({
   children,
 }: {
   children: ReactNode
