@@ -32,16 +32,8 @@ async def run_counterfactual_eval(
     """
     Runs counterfactual bias evaluation on dataset and generates results and summary.
     """
-    run_id = str(uuid.uuid4())
-    run_output_dir = output_dir / run_id
-    run_output_dir.mkdir(parents=True, exist_ok=True)
-
-    results_path = run_output_dir / RESULTS_FILENAME
-    summary_path = run_output_dir / SUMMARY_FILENAME
-
-    metrics = build_metrics(cfg)
-    sentiment_analyzer = SentimentAnalyzer()
-    regard_scorer = REGARDScorer()
+    # Validate required inputs before any expensive setup or output side-effects: a missing
+    # SPC baseline (required in bias mode) must fail fast, before models load or dirs are created.
     spc_baseline = load_spc_baseline(input_dir)
 
     if cfg.run.num_iterations is None:
@@ -52,6 +44,17 @@ async def run_counterfactual_eval(
     if num_iterations <= 0:
         msg = f"num_iterations must be positive, got {num_iterations}"
         raise ValueError(msg)
+
+    run_id = str(uuid.uuid4())
+    run_output_dir = output_dir / run_id
+    run_output_dir.mkdir(parents=True, exist_ok=True)
+
+    results_path = run_output_dir / RESULTS_FILENAME
+    summary_path = run_output_dir / SUMMARY_FILENAME
+
+    metrics = build_metrics(cfg)
+    sentiment_analyzer = SentimentAnalyzer()
+    regard_scorer = REGARDScorer()
 
     counterfactual_files = discover_counterfactual_files(input_dir)
     logger.info("Found %d counterfactual files to process", len(counterfactual_files))
