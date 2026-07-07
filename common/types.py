@@ -321,3 +321,7 @@ class OrganisationCreateRequest(BaseModel):
 
 class OrganisationPatchRequest(BaseModel):
     allowed_domains: list[str]
+
+
+class UserExistsResponse(BaseModel):
+    exists: bool
