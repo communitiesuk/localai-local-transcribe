@@ -38,7 +38,7 @@ export const RenameDialog = ({
           onSubmit={form.handleSubmit(async ({ title }) => {
             setIsPending(true)
             try {
-              await updateTitle(title ?? null)
+              await updateTitle(title)
               posthog.capture('edited_transcript_title', {
                 transcriptionId: transcription.id,
               })

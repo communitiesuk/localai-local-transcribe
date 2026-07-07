@@ -87,10 +87,11 @@ export const useUpdateTranscription = (transcriptionId: string) => {
   )
 
   const updateTitle = useCallback(
-    async (title: string | null) => {
+    async (title: string | null | undefined) => {
+      const normalizedTitle = title || null
       await updateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatch({
         path: { transcription_id: transcriptionId },
-        body: { title },
+        body: { title: normalizedTitle },
         throwOnError: true,
       })
       await Promise.all([

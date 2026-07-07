@@ -26,7 +26,7 @@ export const TranscriptionTitleEditor = ({
   const titleValue = useWatch({ name: 'title', control: form.control })
   const onSubmit = useCallback(
     async ({ title }: { title: string }) => {
-      await updateTitle(title || null)
+      await updateTitle(title)
       posthog.capture('edited_transcript_title', {
         transcriptionId: transcriptionId,
       })

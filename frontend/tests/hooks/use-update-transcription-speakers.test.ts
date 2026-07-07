@@ -164,4 +164,20 @@ describe('use-update-transcription-speakers hooks', () => {
       queryKey: ['transcriptions'],
     })
   })
+
+  it('normalizes empty title to null for updateTitle', async () => {
+    const { result } = renderHook(() => useUpdateTranscription('abc'))
+
+    await act(async () => {
+      await result.current.updateTitle('')
+    })
+
+    expect(
+      updateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatch
+    ).toHaveBeenCalledWith({
+      path: { transcription_id: 'abc' },
+      body: { title: null },
+      throwOnError: true,
+    })
+  })
 })
