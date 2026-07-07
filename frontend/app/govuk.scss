@@ -3,3 +3,39 @@
 @use 'govuk-frontend/dist/govuk/index' with (
   $govuk-assets-path: '/assets/govuk/'
 );
+
+// govuk-frontend sets link colours via :link and :visited pseudo-classes.
+// :link only fires for unvisited <a> elements; href="#" is treated as visited
+// (current page), so neither :link nor :visited reliably applies. These rules
+// compensate so that <a> and <button> elements using govuk-link get the
+// correct colour regardless of link/visited state.
+a.govuk-link,
+button.govuk-link {
+  color: var(--govuk-link-colour);
+
+  &:hover {
+    color: var(--govuk-link-hover-colour);
+  }
+
+  &:active {
+    color: var(--govuk-link-active-colour);
+  }
+}
+
+a.govuk-link:focus,
+button.govuk-link:focus {
+  color: var(--govuk-focus-text-colour);
+}
+
+a.govuk-link:disabled,
+button.govuk-link:disabled {
+  color: var(--govuk-secondary-text-colour);
+  cursor: not-allowed;
+}
+
+// Summary-card action links (e.g. "Move up" on the first question, "Move down"
+// on the last) are disabled at the list edges but should stay link-blue to
+// match the design, rather than picking up the greyed disabled colour above.
+.govuk-summary-card__action button.govuk-link:disabled {
+  color: var(--govuk-link-colour);
+}

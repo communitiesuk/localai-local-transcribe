@@ -1,4 +1,4 @@
-import { HistoryBackButton } from '@/components/ui/history-back-button'
+import { GovukBackLink } from '@/components/govuk'
 import { ReactNode } from 'react'
 
 export default async function TemplatesLayout({
@@ -8,7 +8,7 @@ export default async function TemplatesLayout({
 }) {
   return (
     <div className="p-6 pt-1">
-      <HistoryBackButton />
+      <GovukBackLink />
       {children}
     </div>
   )
