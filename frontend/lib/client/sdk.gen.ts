@@ -124,6 +124,9 @@ import type {
   UpdateUserRolesUsersUserIdRolesPatchData,
   UpdateUserRolesUsersUserIdRolesPatchErrors,
   UpdateUserRolesUsersUserIdRolesPatchResponses,
+  UserExistsUsersUserExistsGetData,
+  UserExistsUsersUserExistsGetErrors,
+  UserExistsUsersUserExistsGetResponses,
 } from './types.gen'
 
 export type Options<
@@ -413,6 +416,20 @@ export const updateUserRolesUsersUserIdRolesPatch = <
       ...options.headers,
     },
   })
+
+/**
+ * User Exists
+ */
+export const userExistsUsersUserExistsGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<UserExistsUsersUserExistsGetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    UserExistsUsersUserExistsGetResponses,
+    UserExistsUsersUserExistsGetErrors,
+    ThrowOnError
+  >({ url: '/users/user/exists', ...options })
 
 /**
  * List Minutes For Transcription

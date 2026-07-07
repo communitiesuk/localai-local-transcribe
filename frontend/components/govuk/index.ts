@@ -15,3 +15,11 @@ export { GovukHeading } from './heading'
 export { GovukWarningText } from './warning'
 export { GovukTag } from './tag'
 export { GovukTextarea } from './textarea'
+export {
+  GovukPanel,
+  GovukPanelHeader,
+  GovukPanelTitle,
+  GovukPanelDescription,
+  GovukPanelContent,
+  GovukPanelFooter,
+} from './panel'

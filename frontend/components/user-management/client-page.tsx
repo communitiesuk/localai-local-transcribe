@@ -11,12 +11,14 @@ import OrganisationOption from '@/components/organisation-options'
 import { GovukBackLink } from '@/components/govuk'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BannerNotification } from '@/components/banner-notification'
+import { useInviteUserStore } from '@/stores/use-invite-user-store'
 
 export default function UserManagementClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [selectedOrganisation, setSelectedOrganisation] = useState('')
+  const { setInviteDetails } = useInviteUserStore()
 
   function getHref(page: number): string {
     const params = new URLSearchParams(searchParams.toString())
@@ -45,7 +47,12 @@ export default function UserManagementClient() {
   const handleOrganisationChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value
     setSelectedOrganisation(value)
+    setInviteDetails('', '', value)
     router.replace(getHref(1))
+  }
+
+  const handleInviteUser = () => {
+    router.push('/invite-user')
   }
 
   if (userLoading) return <Loader2 className="animate-spin" />
@@ -101,9 +108,9 @@ export default function UserManagementClient() {
 
       <div className="flex items-center gap-4">
         <button
-          type="button"
           className="govuk-button"
-          data-module="govuk-button"
+          onClick={handleInviteUser}
+          disabled={isSystemAdmin && !selectedOrganisation}
         >
           Invite new user
         </button>
