@@ -43,6 +43,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 describe('<EditApprovedDomainsPage />', () => {
   const mockMutateAsync = vi.fn()
   const mockInvalidateQueries = vi.fn()
+  const mockSetQueryData = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -75,6 +76,7 @@ describe('<EditApprovedDomainsPage />', () => {
 
     vi.mocked(useQueryClient).mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      setQueryData: mockSetQueryData,
     } as any)
   })
 
@@ -118,8 +120,15 @@ describe('<EditApprovedDomainsPage />', () => {
     expect(mockBack).toHaveBeenCalledTimes(1)
   })
 
-  it('submits the parsed domains list, invalidates the query, and navigates back on success', async () => {
-    mockMutateAsync.mockResolvedValueOnce({})
+  it('submits the parsed domains list, updates the cache, and navigates back on success', async () => {
+    const updatedOrganisation = {
+      id: 'org-1',
+      name: 'Maidstone Borough Council',
+      allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
+      created_datetime: '2025-01-01T00:00:00Z',
+      updated_datetime: '2025-01-01T00:00:00Z',
+    }
+    mockMutateAsync.mockResolvedValueOnce(updatedOrganisation)
     render(<EditApprovedDomainsPage />)
 
     const textarea = screen.getByLabelText('Approved domains', {
@@ -143,9 +152,12 @@ describe('<EditApprovedDomainsPage />', () => {
 
     const mutationCallArgs = mockMutateAsync.mock.calls[0]
     const onSuccessCallback = mutationCallArgs[1]?.onSuccess
-    onSuccessCallback?.()
+    onSuccessCallback?.(updatedOrganisation)
 
-    expect(mockInvalidateQueries).toHaveBeenCalled()
+    expect(mockSetQueryData).toHaveBeenCalledWith(
+      expect.any(Object),
+      updatedOrganisation
+    )
     expect(mockPush).toHaveBeenCalledWith('/user-management')
   })
 
