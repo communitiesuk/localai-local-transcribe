@@ -7,7 +7,10 @@ import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
 import { GovukBackLink } from '@/components/govuk'
-import { EditDomainsForm, EditDomainsFormData } from '@/components/organisations/domains-form'
+import {
+  EditDomainsForm,
+  EditDomainsFormData,
+} from '@/components/organisations/domains-form'
 import DomainsDetails from '@/components/organisations/domains-details'
 
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
@@ -31,7 +34,9 @@ export default function EditApprovedDomainsPage() {
   const { organisationId: selectedOrganisationId } = useInviteUserStore()
 
   const { data: organisation, isLoading: organisationLoading } =
-    useOrganisation(selectedOrganisationId || currentUser?.organisation_id || '')
+    useOrganisation(
+      selectedOrganisationId || currentUser?.organisation_id || ''
+    )
 
   const { mutateAsync, isPending } = useMutation({
     ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
