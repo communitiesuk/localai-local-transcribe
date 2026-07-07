@@ -64,10 +64,6 @@ poetry install --with evals-summarisation
 ```bash
 # Run bias evaluation using unified entry point
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/counterfactual.yaml
-
-# Generate visualizations from results
-poetry run python evals/summarisation/src/bias/visualize.py \
-  evals/summarisation/output/counterfactual/<run_id>/results.jsonl
 ```
 
 **Note:** The unified entry point (`src/main.py`) automatically determines whether to run standard or bias evaluation based on the `eval_type` field in the config.
@@ -87,12 +83,6 @@ poetry run python evals/summarisation/src/bias/visualize.py \
 Results written to `evals/summarisation/output/counterfactual/<run_id>/`:
 - `results.jsonl` - Detailed per-example results with all iterations
 - `summary.json` - Aggregated statistics across all examples
-- `visualizations/` - Generated plots showing bias analysis (created by `visualize.py`)
-
-**Visualizations include:**
-- Per-metric comparison plots showing distribution shifts between original and counterfactual groups
-- Statistical measures: mean, std, min/max across iterations
-- Semantic similarity and sentiment comparison between groups
 
 # Transcription Evaluation
 

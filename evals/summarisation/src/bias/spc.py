@@ -15,18 +15,14 @@ logger = logging.getLogger(__name__)
 def load_spc_baseline(input_dir: Path) -> SPCBaseline:
     """Loads the SPC baseline stashed alongside the inputs.
 
-    The baseline lives at ``<input_dir>/spc_baseline.yaml``. A missing file is a
-    graceful skip: an empty baseline is returned and control-chart checks emit no
-    verdicts. A present-but-malformed file still raises, since that is a genuine
-    error rather than a deliberate absence.
+    The baseline lives at ``<input_dir>/spc_baseline.yaml`` and is a required
+    input: a missing file raises, since control-chart checks cannot run without
+    it.
     """
     path = input_dir / SPC_BASELINE_FILENAME
     if not path.exists():
-        logger.warning(
-            "No SPC baseline found at %s; skipping control-chart checks (SPC verdicts will be empty)",
-            path,
-        )
-        return SPCBaseline(metrics={})
+        msg = f"SPC baseline not found at {path}; it is a required input for control-chart checks"
+        raise FileNotFoundError(msg)
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     baseline = SPCBaseline.model_validate(data)
     logger.info("Loaded SPC baseline with %d metric(s) at sigma=%s", len(baseline.metrics), SPC_SIGMA)

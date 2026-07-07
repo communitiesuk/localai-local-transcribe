@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 from evals.summarisation.src.bias.bias_types import CounterfactualInput
-from evals.summarisation.src.bias.constants import SPC_BASELINE_FILENAME
 
 
 def load_counterfactual_json(file_path: Path) -> CounterfactualInput:
@@ -15,16 +14,12 @@ def load_counterfactual_json(file_path: Path) -> CounterfactualInput:
 
 
 def discover_counterfactual_files(input_dir: Path) -> list[Path]:
-    """Discovers all JSON files in input directory for counterfactual evaluation.
-
-    The SPC baseline file (if present) is excluded — it is configuration, not a
-    counterfactual transcript pair.
-    """
+    """Discovers all JSON files in input directory for counterfactual evaluation."""
     if not input_dir.exists():
         msg = f"Input directory does not exist: {input_dir}"
         raise ValueError(msg)
 
-    json_files = [path for path in input_dir.glob("**/*.json") if path.name != SPC_BASELINE_FILENAME]
+    json_files = list(input_dir.glob("**/*.json"))
     if not json_files:
         msg = f"No JSON files found in {input_dir}"
         raise ValueError(msg)

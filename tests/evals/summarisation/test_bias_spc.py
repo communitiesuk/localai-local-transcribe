@@ -101,12 +101,9 @@ def test_evaluate_spc_skips_metrics_absent_from_baseline(baseline):
     assert checks == []
 
 
-def test_load_spc_baseline_missing_skips(tmp_path, caplog):
-    with caplog.at_level("WARNING"):
-        baseline = load_spc_baseline(tmp_path)
-
-    assert baseline.metrics == {}
-    assert "No SPC baseline found" in caplog.text
+def test_load_spc_baseline_missing_raises(tmp_path):
+    with pytest.raises(FileNotFoundError, match="required input"):
+        load_spc_baseline(tmp_path)
 
 
 def test_load_spc_baseline_malformed_raises(tmp_path):
