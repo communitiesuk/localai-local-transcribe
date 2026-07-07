@@ -23,12 +23,13 @@ variable "force_destroy" {
 variable "noncurrent_version_expiration_days" {
   type        = number
   description = "Set to null to skip creating a bucket lifecycle configuration"
-  default     = 180
+  default     = 365
 }
 
 variable "access_s3_log_expiration_days" {
   type        = number
-  description = "The number of days to retain s3 access logs"
+  description = "Set to null to skip creating a bucket lifecycle configuration"
+  default     = 365
 }
 
 variable "policy" {

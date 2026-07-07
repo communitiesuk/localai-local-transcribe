@@ -92,8 +92,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
   count = var.noncurrent_version_expiration_days == null ? 0 : 1
 
   depends_on = [aws_s3_bucket_versioning.main]
+  bucket     = aws_s3_bucket.main.id
 
-  bucket = aws_s3_bucket.main.id
+  rule {
+    id = "expire-old-logs"
+    filter {}
+    expiration {
+      days = var.access_s3_log_expiration_days
+    }
+    status = "Enabled"
+  }
 
   rule {
     id = "expire-old-versions"
@@ -146,6 +154,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "log_bucket" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "log_bucket" {
+  count  = var.noncurrent_version_expiration_days == null ? 0 : 1
   bucket = aws_s3_bucket.log_bucket.id
 
   rule {
@@ -155,6 +164,26 @@ resource "aws_s3_bucket_lifecycle_configuration" "log_bucket" {
 
     expiration {
       days = var.access_s3_log_expiration_days
+    }
+
+    status = "Enabled"
+  }
+
+  rule {
+    id = "expire-old-versions"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 14
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.noncurrent_version_expiration_days
+    }
+
+    expiration {
+      expired_object_delete_marker = true
     }
 
     status = "Enabled"

@@ -1,9 +1,10 @@
 module "maintenance_page_bucket" {
-  source                        = "../s3_bucket"
-  bucket_name                   = "local-transcribe-maintenance-page-${var.environment_name}"
-  access_log_bucket_name        = "local-transcribe-maintenance-page-access-logs-${var.environment_name}"
-  access_s3_log_expiration_days = 700
-  policy                        = data.aws_iam_policy_document.maintenance_page.json
+  source                             = "../s3_bucket"
+  bucket_name                        = "local-transcribe-maintenance-page-${var.environment_name}"
+  access_log_bucket_name             = "local-transcribe-maintenance-page-access-logs-${var.environment_name}"
+  access_s3_log_expiration_days      = 365
+  noncurrent_version_expiration_days = 365
+  policy                             = data.aws_iam_policy_document.maintenance_page.json
 }
 
 # The index file needs to match the path name so it can be found
