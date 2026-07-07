@@ -6,6 +6,7 @@ import EditApprovedDomainsPage from '@/app/user-management/organisations/domains
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
+import { getOrganisationOrganisationsOrganisationIdGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
 
 const mockBack = vi.fn()
 const mockPush = vi.fn()
@@ -35,6 +36,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@tanstack/react-query')>()
   return {
     ...actual,
+    setQueryData: vi.fn(),
     useMutation: vi.fn(),
     useQueryClient: vi.fn(),
   }
@@ -43,6 +45,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 describe('<EditApprovedDomainsPage />', () => {
   const mockMutateAsync = vi.fn()
   const mockInvalidateQueries = vi.fn()
+  const mockSetQueryData = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -75,6 +78,7 @@ describe('<EditApprovedDomainsPage />', () => {
 
     vi.mocked(useQueryClient).mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
+      setQueryData: mockSetQueryData,
     } as any)
   })
 
@@ -118,7 +122,7 @@ describe('<EditApprovedDomainsPage />', () => {
     expect(mockBack).toHaveBeenCalledTimes(1)
   })
 
-  it('submits the parsed domains list, invalidates the query, and navigates back on success', async () => {
+  it('submits the parsed domains list, updates the query cache, and navigates back on success', async () => {
     mockMutateAsync.mockResolvedValueOnce({})
     render(<EditApprovedDomainsPage />)
 
@@ -141,11 +145,22 @@ describe('<EditApprovedDomainsPage />', () => {
       expect.any(Object)
     )
 
+    const mockUpdatedOrganisation = {
+      id: 'org-1',
+      name: 'Maidstone Borough Council',
+      allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
+    }
+
     const mutationCallArgs = mockMutateAsync.mock.calls[0]
     const onSuccessCallback = mutationCallArgs[1]?.onSuccess
-    onSuccessCallback?.()
+    onSuccessCallback?.(mockUpdatedOrganisation)
 
-    expect(mockInvalidateQueries).toHaveBeenCalled()
+    expect(mockSetQueryData).toHaveBeenCalledWith(
+      getOrganisationOrganisationsOrganisationIdGetQueryKey({
+        path: { organisation_id: 'org-1' },
+      }),
+      mockUpdatedOrganisation
+    )
     expect(mockPush).toHaveBeenCalledWith('/user-management')
   })
 

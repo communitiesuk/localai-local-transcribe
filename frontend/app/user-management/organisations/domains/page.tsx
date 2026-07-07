@@ -11,7 +11,6 @@ import {
   EditDomainsForm,
   EditDomainsFormData,
 } from '@/components/organisations/domains-form'
-import DomainsDetails from '@/components/organisations/domains-details'
 
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
@@ -92,10 +91,6 @@ export default function EditApprovedDomainsPage() {
         onSubmit={onSubmit}
         isPending={isPending}
       />
-
-      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
-
-      <DomainsDetails />
     </>
   )
 }
