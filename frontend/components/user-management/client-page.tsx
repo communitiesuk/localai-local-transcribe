@@ -60,6 +60,10 @@ export default function UserManagementClient() {
     router.push('/invite-user')
   }
 
+  const handleEditDomains = () => {
+    router.push('/user-management/organisations/domains')
+  }
+
   if (userLoading) return <Loader2 className="animate-spin" />
 
   if (userError) return <p>Error: Failed to load users.</p>
@@ -131,12 +135,13 @@ export default function UserManagementClient() {
         <>
           <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
-          <GovukButtonLink
-            href="/user-management/organisations/domains"
+          <GovukButton
+            onClick={handleEditDomains}
             variant="secondary"
+            disabled={isSystemAdmin && !selectedOrganisation}
           >
             Edit approved domains
-          </GovukButtonLink>
+          </GovukButton>
         </>
       )}
 
