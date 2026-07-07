@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { useForm, SubmitHandler } from 'react-hook-form'
 
@@ -19,7 +19,6 @@ import {
   GovukErrorSummary,
 } from '@/components/govuk'
 import { useNewOrgStore } from '@/stores/use-new-org-store'
-import { useEffect } from 'react'
 
 export default function CreateNewOrganisationName() {
   return (
@@ -73,11 +72,9 @@ function CreateNewOrganisationNameForm() {
 
   const organisationNameError = errors.name
 
-  useEffect(() => {
-    if (organisationsError) {
-      router.replace('/generic-error')
-    }
-  }, [organisationsError, router])
+  if (organisationsError) {
+    redirect('/generic-error')
+  }
 
   if (organisationsLoading) return <Loader2 className="animate-spin" />
 
