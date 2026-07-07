@@ -15,6 +15,7 @@ def normalise_judge_score(raw: float) -> float:
     clamped = min(max(raw, JUDGE_RAW_MIN), JUDGE_RAW_MAX)
     return (clamped - JUDGE_RAW_MIN) / (JUDGE_RAW_MAX - JUDGE_RAW_MIN)
 
+
 DIMENSIONS_LABELS: dict[str, str] = {
     "accuracy": "Factual Accuracy",
     "numerical_accuracy": "Numeric Fidelity",
