@@ -93,7 +93,7 @@ export default function UserPage(props: {
       <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 
       <GovukDetails summary="Breakdown of role-based permissions">
-        <GovukList spaced>
+        <GovukList spaced type="bullet">
           <GovukListItem>
             <strong>Standard user:</strong> can create and manage their own
             meetings and meeting summaries.
