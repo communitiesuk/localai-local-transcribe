@@ -9,6 +9,7 @@ from sqlmodel import col, func, select
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
 from common.database.postgres_models import (
+    DialogueEntry,
     Minute,
     MinuteVersion,
     Recording,
@@ -21,13 +22,16 @@ from common.types import (
     PaginatedTranscriptionsResponse,
     RecordingCreateRequest,
     RecordingCreateResponse,
+    RenameSpeakerRequest,
     SingleRecording,
     TaskType,
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
     TranscriptionMetadata,
-    TranscriptionPatchRequest,
+    UpdateDialogueEntrySpeakerRequest,
+    UpdateDialogueEntryTextRequest,
+    UpdateTranscriptionTitleRequest,
     WorkerMessage,
 )
 
@@ -42,6 +46,45 @@ transcription_queue_service = get_queue_service(
 )
 
 logger = logging.getLogger(__name__)
+
+
+async def _get_owned_transcription_or_404(
+    session: SQLSessionDep,
+    transcription_id: uuid.UUID,
+    current_user: UserDep,
+) -> Transcription:
+    transcription = await session.get(Transcription, transcription_id)
+    if not transcription or transcription.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Transcription not found")
+    return transcription
+
+
+def _get_dialogue_entries(transcription: Transcription) -> list[DialogueEntry]:
+    return list(transcription.dialogue_entries or [])
+
+
+def _get_dialogue_entry_or_404(dialogue_entries: list[DialogueEntry], entry_index: int) -> DialogueEntry:
+    if entry_index < 0 or entry_index >= len(dialogue_entries):
+        raise HTTPException(status_code=404, detail="Dialogue entry not found")
+    return dialogue_entries[entry_index]
+
+
+def _validate_dialogue_entry(
+    entry: DialogueEntry,
+    *,
+    expected_speaker: str | None = None,
+    expected_start_time: float | None = None,
+    expected_end_time: float | None = None,
+    expected_text: str | None = None,
+) -> None:
+    if expected_speaker is not None and entry["speaker"] != expected_speaker:
+        raise HTTPException(status_code=409, detail="Dialogue entry speaker has changed")
+    if expected_start_time is not None and entry["start_time"] != expected_start_time:
+        raise HTTPException(status_code=409, detail="Dialogue entry start time has changed")
+    if expected_end_time is not None and entry["end_time"] != expected_end_time:
+        raise HTTPException(status_code=409, detail="Dialogue entry end time has changed")
+    if expected_text is not None and entry["text"] != expected_text:
+        raise HTTPException(status_code=409, detail="Dialogue entry text has changed")
 
 
 @transcriptions_router.get("/transcriptions", response_model=PaginatedTranscriptionsResponse)
@@ -146,9 +189,7 @@ async def get_transcription(
     current_user: UserDep,
 ) -> TranscriptionGetResponse:
     """Get a specific transcription by ID."""
-    transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Transcription not found")
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
     return TranscriptionGetResponse(
         id=transcription.id,
         status=transcription.status,
@@ -189,37 +230,110 @@ async def get_recordings_for_transcription(
     return signed_recordings
 
 
-@transcriptions_router.patch("/transcriptions/{transcription_id}", response_model=Transcription)
-async def save_transcription(
+@transcriptions_router.patch("/transcriptions/{transcription_id}/title", status_code=204)
+async def update_transcription_title(
     transcription_id: uuid.UUID,
-    transcription_data: TranscriptionPatchRequest,
+    request: UpdateTranscriptionTitleRequest,
     session: SQLSessionDep,
     current_user: UserDep,
-) -> Transcription:
-    """Save or update a transcription."""
-    logger.info("saving transcription for user %s", current_user.id)
-    # Use the transcription service to handle the save operation
-    transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Transcription not found")
+) -> None:
+    """Update a transcription title."""
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
+    if request.title is not None:
+        transcription.title = request.title
+        await session.commit()
 
-    if transcription_data.title is not None:
-        transcription.title = transcription_data.title
-    if transcription_data.dialogue_entries is not None:
-        transcription.dialogue_entries = transcription_data.dialogue_entries
+
+@transcriptions_router.patch("/transcriptions/{transcription_id}/speakers", status_code=204)
+async def rename_speaker_everywhere(
+    transcription_id: uuid.UUID,
+    request: RenameSpeakerRequest,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> None:
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
+    dialogue_entries = _get_dialogue_entries(transcription)
+
+    transcription.dialogue_entries = [
+        {
+            "text": entry["text"],
+            "start_time": entry["start_time"],
+            "end_time": entry["end_time"],
+            "speaker": request.new_speaker if entry["speaker"] == request.original_speaker else entry["speaker"],
+        }
+        for entry in dialogue_entries
+    ]
     await session.commit()
-    await session.refresh(transcription)
 
-    return transcription
+
+@transcriptions_router.patch(
+    "/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/speaker", status_code=204
+)
+async def update_dialogue_entry_speaker(
+    transcription_id: uuid.UUID,
+    entry_index: int,
+    request: UpdateDialogueEntrySpeakerRequest,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> None:
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
+    dialogue_entries = _get_dialogue_entries(transcription)
+    existing_entry = _get_dialogue_entry_or_404(dialogue_entries, entry_index)
+    _validate_dialogue_entry(
+        existing_entry,
+        expected_speaker=request.expected_speaker,
+        expected_start_time=request.expected_start_time,
+        expected_end_time=request.expected_end_time,
+    )
+
+    transcription.dialogue_entries = [
+        {
+            "text": entry["text"],
+            "start_time": entry["start_time"],
+            "end_time": entry["end_time"],
+            "speaker": request.new_speaker if index == entry_index else entry["speaker"],
+        }
+        for index, entry in enumerate(dialogue_entries)
+    ]
+    await session.commit()
+
+
+@transcriptions_router.patch("/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/text", status_code=204)
+async def update_dialogue_entry_text(
+    transcription_id: uuid.UUID,
+    entry_index: int,
+    request: UpdateDialogueEntryTextRequest,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> None:
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
+    dialogue_entries = _get_dialogue_entries(transcription)
+    existing_entry = _get_dialogue_entry_or_404(dialogue_entries, entry_index)
+    _validate_dialogue_entry(
+        existing_entry,
+        expected_text=request.expected_text,
+        expected_speaker=request.expected_speaker,
+        expected_start_time=request.expected_start_time,
+        expected_end_time=request.expected_end_time,
+    )
+
+    transcription.dialogue_entries = [
+        {
+            "speaker": entry["speaker"],
+            "start_time": entry["start_time"],
+            "end_time": entry["end_time"],
+            "text": request.new_text if index == entry_index else entry["text"],
+        }
+        for index, entry in enumerate(dialogue_entries)
+    ]
+    await session.commit()
 
 
 @transcriptions_router.delete("/transcriptions/{transcription_id}", status_code=204)
 async def delete_transcription(transcription_id: uuid.UUID, session: SQLSessionDep, current_user: UserDep) -> None:
     """Delete a specific transcription by ID."""
     # First check if the transcription exists and belongs to the user
-    transcription = await session.get(Transcription, transcription_id)
-    if not transcription or transcription.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Transcription not found")
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
 
     # Delete the transcription
     await session.delete(transcription)

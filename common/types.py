@@ -59,9 +59,28 @@ class TranscriptionConfirmResponse(BaseModel):
     id: uuid.UUID
 
 
-class TranscriptionPatchRequest(BaseModel):
+class UpdateTranscriptionTitleRequest(BaseModel):
     title: str | None = None
-    dialogue_entries: list[DialogueEntry] | None = None
+
+
+class RenameSpeakerRequest(BaseModel):
+    original_speaker: str
+    new_speaker: str
+
+
+class UpdateDialogueEntrySpeakerRequest(BaseModel):
+    new_speaker: str
+    expected_speaker: str | None = None
+    expected_start_time: float | None = None
+    expected_end_time: float | None = None
+
+
+class UpdateDialogueEntryTextRequest(BaseModel):
+    new_text: str
+    expected_text: str | None = None
+    expected_speaker: str | None = None
+    expected_start_time: float | None = None
+    expected_end_time: float | None = None
 
 
 class ChatCreateRequest(BaseModel):

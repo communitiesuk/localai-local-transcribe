@@ -110,17 +110,26 @@ import type {
   ListUsersUsersGetData,
   ListUsersUsersGetErrors,
   ListUsersUsersGetResponses,
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors,
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses,
+  RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchData,
+  RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchErrors,
+  RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponses,
   SignOutSignoutGetData,
   SignOutSignoutGetResponses,
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchErrors,
   UpdateDataRetentionUsersDataRetentionPatchResponses,
+  UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchData,
+  UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchErrors,
+  UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponses,
+  UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchData,
+  UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchErrors,
+  UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponses,
   UpdateOrganisationOrganisationsOrganisationIdPatchData,
   UpdateOrganisationOrganisationsOrganisationIdPatchErrors,
   UpdateOrganisationOrganisationsOrganisationIdPatchResponses,
+  UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchData,
+  UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchErrors,
+  UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponses,
   UpdateUserRolesUsersUserIdRolesPatchData,
   UpdateUserRolesUsersUserIdRolesPatchErrors,
   UpdateUserRolesUsersUserIdRolesPatchResponses,
@@ -257,32 +266,6 @@ export const getTranscriptionTranscriptionsTranscriptionIdGet = <
   >({ url: '/transcriptions/{transcription_id}', ...options })
 
 /**
- * Save Transcription
- *
- * Save or update a transcription.
- */
-export const saveTranscriptionTranscriptionsTranscriptionIdPatch = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<
-    SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
-    ThrowOnError
-  >
-) =>
-  (options.client ?? client).patch<
-    SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses,
-    SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors,
-    ThrowOnError
-  >({
-    url: '/transcriptions/{transcription_id}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  })
-
-/**
  * Get Recordings For Transcription
  */
 export const getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet =
@@ -297,6 +280,101 @@ export const getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecording
       GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetErrors,
       ThrowOnError
     >({ url: '/transcriptions/{transcription_id}/recordings', ...options })
+
+/**
+ * Update Transcription Title
+ *
+ * Update a transcription title.
+ */
+export const updateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatch = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<
+    UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchData,
+    ThrowOnError
+  >
+) =>
+  (options.client ?? client).patch<
+    UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponses,
+    UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchErrors,
+    ThrowOnError
+  >({
+    url: '/transcriptions/{transcription_id}/title',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
+
+/**
+ * Rename Speaker Everywhere
+ */
+export const renameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatch =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchData,
+      ThrowOnError
+    >
+  ) =>
+    (options.client ?? client).patch<
+      RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponses,
+      RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchErrors,
+      ThrowOnError
+    >({
+      url: '/transcriptions/{transcription_id}/speakers',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
+
+/**
+ * Update Dialogue Entry Speaker
+ */
+export const updateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatch =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchData,
+      ThrowOnError
+    >
+  ) =>
+    (options.client ?? client).patch<
+      UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponses,
+      UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchErrors,
+      ThrowOnError
+    >({
+      url: '/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/speaker',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
+
+/**
+ * Update Dialogue Entry Text
+ */
+export const updateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatch =
+  <ThrowOnError extends boolean = false>(
+    options: Options<
+      UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchData,
+      ThrowOnError
+    >
+  ) =>
+    (options.client ?? client).patch<
+      UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponses,
+      UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchErrors,
+      ThrowOnError
+    >({
+      url: '/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/text',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
 
 /**
  * Get User
