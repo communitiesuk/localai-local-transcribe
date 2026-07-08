@@ -93,7 +93,7 @@ export default function AudioPlayerComponent({
             type="button"
             onClick={togglePlayPause}
             aria-label={isPlaying ? 'Pause' : 'Play'}
-            className="flex size-10 items-center justify-center rounded-full bg-[#1d70b8] text-white hover:bg-[#003078]"
+            className="flex size-10 items-center justify-center rounded-full bg-[var(--govuk-link-colour)] text-white hover:bg-[var(--govuk-link-hover-colour)]"
           >
             {isPlaying ? <Pause size={18} /> : <Play size={18} />}
           </button>

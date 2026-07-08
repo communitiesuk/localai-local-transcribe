@@ -32,7 +32,7 @@ export const AudioUploadForm = () => {
                 <div
                   {...getRootProps()}
                   className={cn(
-                    'govuk-!-margin-bottom-4 cursor-pointer border-2 border-[#b1b4b6] p-6',
+                    'govuk-!-margin-bottom-4 cursor-pointer border-2 border-[var(--govuk-border-colour)] p-6',
                     file instanceof File
                       ? 'border-solid bg-[#f3f2f1]'
                       : 'border-dashed'

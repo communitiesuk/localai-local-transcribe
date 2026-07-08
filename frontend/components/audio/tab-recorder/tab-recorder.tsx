@@ -3,7 +3,7 @@
 import { Mic } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { GovukButton } from '@/components/govuk'
+import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import {
@@ -12,7 +12,6 @@ import {
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
-import { InstructionsTabs } from '@/components/audio/tab-recorder/instructions'
 import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
@@ -288,16 +287,10 @@ function TabRecorder({
         <div className="flex flex-col space-y-4">
           {!isRecording ? (
             <>
-              <div className="space-y-4 py-2">
-                <InstructionsTabs />
-              </div>
-              <div className="govuk-form-group">
-                <label
-                  className="govuk-label"
-                  htmlFor="virtual-microphone-select"
-                >
-                  Choose your microphone:
-                </label>
+              <GovukFormGroup>
+                <GovukLabel htmlFor="virtual-microphone-select">
+                  Choose microphone
+                </GovukLabel>
                 <select
                   className="govuk-select w-full"
                   id="virtual-microphone-select"
@@ -311,11 +304,23 @@ function TabRecorder({
                     </option>
                   ))}
                 </select>
+              </GovukFormGroup>
+
+              <div className="govuk-inset-text govuk-!-margin-top-0">
+                <p className="govuk-body">
+                  Open your virtual meeting in another tab, then start recording
+                  below. When prompted, share that tab and switch on &quot;Share
+                  audio&quot;.
+                </p>
+                <GovukButton
+                  type="button"
+                  onClick={startRecording}
+                  className="govuk-!-margin-bottom-0"
+                >
+                  <Mic className="mr-2 size-4" aria-hidden="true" />
+                  Start recording
+                </GovukButton>
               </div>
-              <GovukButton type="button" onClick={startRecording}>
-                <Mic className="mr-2 size-4" aria-hidden="true" />
-                Start Recording Virtual Meeting
-              </GovukButton>
             </>
           ) : (
             <div className="space-y-4">

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import RecordingControl from './recording-control'
 
-import { GovukButton } from '@/components/govuk'
+import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
@@ -113,6 +113,8 @@ function MicRecorderComponent({
 
       mediaRecorder.onerror = () => {
         setError('Recording error occurred. Please try again.')
+        // Don't call stopRecording here as it might cause a loop
+        // Just clean up manually if needed
         stopAllTracks()
       }
 
@@ -134,13 +136,15 @@ function MicRecorderComponent({
         stopAllTracks()
       }
 
+      // Start recording
       setRecordedAudio(null)
       await requestWakeLock()
-      mediaRecorder.start(1000)
+      mediaRecorder.start(1000) // Collect data every second
       setIsRecording(true)
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
     }
+    // Create a media recorder from the composed stream
   }, [
     addRecording,
     form,
@@ -152,16 +156,19 @@ function MicRecorderComponent({
   ])
 
   const stopRecording = useCallback(() => {
+    // Prevent multiple calls to stopRecording
     if (!mediaRecorderRef.current || !isRecording) {
       return
     }
     try {
+      // Only call stop() if the state is not 'inactive'
       if (mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop()
       } else {
         stopAllTracks()
       }
     } catch {
+      // Clean up streams even if stop fails
       stopAllTracks()
     }
   }, [isRecording, stopAllTracks])
@@ -224,10 +231,10 @@ function MicRecorderComponent({
         </div>
       ) : !isRecording ? (
         <div className="flex flex-col space-y-4">
-          <div className="govuk-form-group">
-            <label className="govuk-label" htmlFor="microphone-select">
-              1. Choose microphone
-            </label>
+          <GovukFormGroup>
+            <GovukLabel htmlFor="microphone-select">
+              Choose microphone
+            </GovukLabel>
             <select
               className="govuk-select w-full"
               id="microphone-select"
@@ -240,25 +247,21 @@ function MicRecorderComponent({
                 </option>
               ))}
             </select>
-          </div>
+          </GovukFormGroup>
 
-          <div className="flex flex-col items-start">
-            <span className="govuk-label govuk-!-margin-bottom-2">
-              2. Start recording
-            </span>
-            <div className="govuk-inset-text govuk-!-margin-bottom-2">
-              <p className="govuk-body">
-                This will record the audio from your device&apos;s microphone.
-                That means only in-person meetings or calls that are played out
-                loud will be picked up. Make sure you check there are sound
-                waves appearing in the audio recorder. If not, refresh the page
-                and make sure you&apos;ve allowed microphone access in your
-                browser.
-              </p>
-            </div>
-            <GovukButton type="button" onClick={startRecording}>
+          <div className="govuk-inset-text govuk-!-margin-top-0">
+            <p className="govuk-body">
+              This records audio from your microphone, so only in-person
+              meetings or calls played out loud will be picked up. Check that
+              sound waves appear once you start.
+            </p>
+            <GovukButton
+              type="button"
+              onClick={startRecording}
+              className="govuk-!-margin-bottom-0"
+            >
               <Mic className="mr-2 size-4" aria-hidden="true" />
-              Start new recording
+              Start recording
             </GovukButton>
           </div>
         </div>
