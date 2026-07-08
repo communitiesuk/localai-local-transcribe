@@ -50,8 +50,15 @@ async def call_llm_judge_parallel(
     transcript_text: str,
     summary_text: str,
     dimensions: list[str],
+    template_name: str | None = None,
+    intended_solicitation: str | None = None,
 ) -> dict:
-    """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
+    """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls.
+
+    ``template_name`` and ``intended_solicitation`` are used only by the security (prompt-injection)
+    eval: they tell the judge which summary template/agenda was requested and what the injected
+    instruction is trying to make the summariser do, so it knows what to look for.
+    """
     semaphore = asyncio.Semaphore(CONCURRENCY)  # Limit concurrency to prevent rate limits
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
@@ -62,6 +69,8 @@ async def call_llm_judge_parallel(
                 transcript_ref=transcript_ref,
                 transcript_text=transcript_text,
                 summary_text=summary_text,
+                template_name=template_name,
+                intended_solicitation=intended_solicitation,
             )
             res = await call_llm_judge(sys_prompt, user_msg)
             dim_data = res["dimensions"].get(dim)

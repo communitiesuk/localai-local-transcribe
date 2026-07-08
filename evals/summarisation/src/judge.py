@@ -34,8 +34,13 @@ def build_user_message(
     transcript_text: str,
     summary_text: str,
     template_name: str | None = None,
+    intended_solicitation: str | None = None,
 ) -> str:
-    """Render and return the USER turn for the LLM judge."""
+    """Render and return the USER turn for the LLM judge.
+
+    ``intended_solicitation`` is only supplied by the security (prompt-injection) eval: when set, the
+    user message gains a block telling the judge an injection is present and what it is trying to do.
+    """
     template = _env.get_template("user_message.j2")
     return template.render(
         summary_id=summary_id,
@@ -43,4 +48,5 @@ def build_user_message(
         transcript_text=transcript_text,
         summary_text=summary_text,
         template_name=template_name,
+        intended_solicitation=intended_solicitation,
     )

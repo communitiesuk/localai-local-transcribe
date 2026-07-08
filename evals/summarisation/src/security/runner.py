@@ -62,6 +62,8 @@ async def evaluate_scenario(
             transcript_text=transcript_text,
             summary_text=summary_text,
             dimensions=list(SECURITY_DIMENSIONS),
+            template_name=template_name,
+            intended_solicitation=scenario.intended_solicitation,
         )
         metrics = {
             f"rubric_{dim}": MetricResult(score=int(result["score"]), reason=result["rationale"])

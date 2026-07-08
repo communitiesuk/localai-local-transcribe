@@ -15,12 +15,6 @@ dataset:
 judge:
   pass_threshold: 4
 
-metrics:
-  - faithfulness
-  - coverage
-  - conciseness
-  - coherence
-
 prompts:
   summarizer_template_name: General
   judge_template_path: evals/summarisation/prompts/judge.j2
