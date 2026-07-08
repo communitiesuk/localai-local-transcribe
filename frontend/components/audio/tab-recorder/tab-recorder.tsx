@@ -1,6 +1,5 @@
 'use client'
 
-import { Mic } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
@@ -317,7 +316,6 @@ function TabRecorder({
                   onClick={startRecording}
                   className="govuk-!-margin-bottom-0"
                 >
-                  <Mic className="mr-2 size-4" aria-hidden="true" />
                   Start recording
                 </GovukButton>
               </div>
