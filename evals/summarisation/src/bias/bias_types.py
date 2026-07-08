@@ -5,6 +5,8 @@ from typing import Any, NotRequired, TypedDict
 from pydantic import BaseModel, Field
 
 from common.database.postgres_models import DialogueEntry
+from evals.summarisation.src.bias.four_fifths_types import FourFifthsCheck
+from evals.summarisation.src.bias.spc_types import SPCCheck
 
 
 class OriginalTranscript(BaseModel):
@@ -76,6 +78,10 @@ class IterationMetrics(BaseModel):
 
     metrics: dict[str, CounterfactualMetricResult]
     sentiment_score: float = Field(ge=-1.0, le=1.0)
+    sentiment_distribution: dict[str, float] | None = Field(
+        default=None,
+        description="Raw sentiment probabilities (positive/neutral/negative) behind sentiment_score; debug signal.",
+    )
     regard_scores: dict[str, float] | None = None
 
 
@@ -136,9 +142,9 @@ class ComparisonMetrics(BaseModel):
     counterfactual_values: list[float]
 
 
-class PlottingRecord(BaseModel):
+class ComparisonResult(BaseModel):
     """
-    Single comparison record formatted for visualization.
+    Metrics and threshold verdicts for a single counterfactual comparison.
     """
 
     comparison_id: str
@@ -146,20 +152,24 @@ class PlottingRecord(BaseModel):
     axis_of_change: str
     group_a_name: str
     group_b_name: str
-    is_supplementary: bool
 
     metrics: list[ComparisonMetrics]
     sentiment_delta: MetricStatistics
     regard_delta: MetricStatistics | None = None
+
+    sentiment_distribution_original: list[dict[str, float]]
+    sentiment_distribution_counterfactual: list[dict[str, float]]
+    # Populated by the post-processing threshold step (see thresholds.apply_thresholds).
+    spc_checks: list[SPCCheck] = Field(default_factory=list)
 
     num_iterations: int
     hypothesis_model: str
     prompt_version: str
 
 
-class PlottingOutput(BaseModel):
+class BiasEvalResults(BaseModel):
     """
-    Complete plotting output with all comparison records for visualization.
+    Complete bias-evaluation output: per-comparison metrics plus threshold verdicts.
     """
 
     run_id: str
@@ -169,7 +179,9 @@ class PlottingOutput(BaseModel):
     prompt_version: str
     num_iterations: int
 
-    comparisons: list[PlottingRecord]
+    comparisons: list[ComparisonResult]
+    # Populated by the post-processing threshold step (see thresholds.apply_thresholds).
+    four_fifths: list[FourFifthsCheck] = Field(default_factory=list)
 
 
 class CounterfactualRunSummary(BaseModel):

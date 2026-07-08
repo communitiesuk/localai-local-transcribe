@@ -18,10 +18,9 @@ judge:
   pass_threshold: 4
 
 metrics:
-  - faithfulness
+  - accuracy
   - coverage
-  - conciseness
-  - coherence
+  - readability
 
 prompts:
   summarizer_template_name: General
