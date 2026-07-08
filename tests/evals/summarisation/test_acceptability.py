@@ -1,3 +1,10 @@
+"""
+Tests the judge-score acceptability floor: checks the raw-4 -> normalised-0.75
+threshold boundary is inclusive.
+
+Exercises: evals.summarisation.src.acceptability.JudgeAcceptabilityClassifier.
+"""
+
 from __future__ import annotations
 
 import pytest

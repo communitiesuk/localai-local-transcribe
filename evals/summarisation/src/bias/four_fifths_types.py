@@ -1,3 +1,15 @@
+"""
+Pydantic result models for the four-fifths rule: GroupSuccessRate (one group's
+rate and ratio to the top group) and FourFifthsCheck (the per-characteristic,
+per-metric verdict).
+
+Pipeline: the serialised output shape of bias/four_fifths.py, carried through
+into the bias eval results JSON.
+
+Depends on: pydantic.
+Depended on by: bias/four_fifths.py, bias/thresholds.py, bias/bias_types.py.
+"""
+
 from __future__ import annotations
 
 from pydantic import BaseModel

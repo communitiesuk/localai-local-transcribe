@@ -1,3 +1,14 @@
+"""
+Judge-score acceptability floor: decides whether a normalised judge score (raw
+1-5 rubric mapped to [0, 1]) clears the "acceptable" threshold (raw 4 by default).
+
+Pipeline: a shared primitive for the bias thresholds — the four-fifths rule uses
+it to turn per-iteration judge scores into favourable/unfavourable outcomes.
+
+Depends on: constants (JUDGE_ACCEPTABLE_RAW_MIN, normalise_judge_score).
+Depended on by: bias/four_fifths.py.
+"""
+
 from __future__ import annotations
 
 from evals.summarisation.src.constants import JUDGE_ACCEPTABLE_RAW_MIN, normalise_judge_score

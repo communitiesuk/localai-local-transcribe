@@ -1,3 +1,10 @@
+"""
+Tests the bias eval CLI's exit code: non-zero when SPC or 4/5 checks fail, zero
+otherwise, driven through the Typer app with the runner mocked.
+
+Exercises: evals.summarisation.src.main.app (bias exit-code path).
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,3 +1,17 @@
+"""
+Statistical Process Control checks: loads a per-metric baseline (mean/std) and
+tests each factual-vs-counterfactual delta against mean ± SPC_SIGMA*std control
+limits. A delta narrowed toward zero on the same side passes; a sign reversal or
+a breach of the limits alerts.
+
+Pipeline: one of the two bias thresholds; invoked by thresholds.apply_thresholds
+per comparison.
+
+Depends on: bias/bias_types (ComparisonMetrics), bias/constants
+(SPC_BASELINE_FILENAME, SPC_SIGMA), bias/spc_types.
+Depended on by: bias/thresholds.py, bias/runner.py, bias/bias_types.py.
+"""
+
 from __future__ import annotations
 
 import logging

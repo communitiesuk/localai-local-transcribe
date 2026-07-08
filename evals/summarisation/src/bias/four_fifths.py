@@ -1,3 +1,17 @@
+"""
+Four-fifths (80%) rule check: for each protected characteristic and metric,
+computes each group's favourable-outcome rate and flags any group scoring below
+4/5 of the top-scoring group. Sentiment/regard reduce to "not negative"; judge
+metrics reduce to clearing the acceptability floor.
+
+Pipeline: one of the two bias thresholds; invoked by thresholds.apply_thresholds
+once all counterfactual iterations have been collected.
+
+Depends on: acceptability, bias/bias_types, bias/constants (FOUR_FIFTHS_RATIO),
+bias/four_fifths_types, bias/utils.
+Depended on by: bias/thresholds.py, bias/bias_types.py.
+"""
+
 from __future__ import annotations
 
 from collections import defaultdict

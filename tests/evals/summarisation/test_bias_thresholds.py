@@ -1,3 +1,11 @@
+"""
+Tests threshold application end to end: attaching SPC and 4/5 verdicts to a built
+output and the has_threshold_failures exit-code signal.
+
+Exercises: evals.summarisation.src.bias.thresholds (apply_thresholds,
+has_threshold_failures).
+"""
+
 from __future__ import annotations
 
 from evals.summarisation.src.bias.bias_types import (

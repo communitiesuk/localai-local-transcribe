@@ -1,3 +1,17 @@
+"""
+Applies the SPC and four-fifths checks to a completed bias evaluation: attaches
+per-comparison verdicts to the output, logs alert summaries, and exposes
+has_threshold_failures for the CLI to set its exit code.
+
+Pipeline: post-processing step run after summarisation and judging; both checks
+are pure functions of the collected records, so they can re-run without repeating
+the expensive work.
+
+Depends on: bias/bias_types, bias/four_fifths, bias/four_fifths_types, bias/spc,
+bias/spc_types.
+Depended on by: main.py, bias/runner.py.
+"""
+
 from __future__ import annotations
 
 import logging

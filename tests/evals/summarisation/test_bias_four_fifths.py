@@ -1,3 +1,10 @@
+"""
+Tests the four-fifths rule: group rate aggregation, ratio-to-advantaged-group
+pass/fail, and the sentiment/regard "not negative" reduction.
+
+Exercises: evals.summarisation.src.bias.four_fifths.evaluate_four_fifths.
+"""
+
 from __future__ import annotations
 
 import pytest

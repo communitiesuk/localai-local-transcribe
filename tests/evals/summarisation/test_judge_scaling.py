@@ -1,3 +1,11 @@
+"""
+Tests judge-score normalisation: the raw 1-5 -> [0, 1] mapping (with clamping)
+and its use inside the summary metric.
+
+Exercises: evals.summarisation.src.constants.normalise_judge_score and
+evals.summarisation.src.common.metric.DialogSummaryMetric.
+"""
+
 from __future__ import annotations
 
 import pytest

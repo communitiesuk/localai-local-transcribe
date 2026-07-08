@@ -1,3 +1,14 @@
+"""
+Pydantic models for SPC: baseline stats (SPCBaselineStat, SPCBaseline) and the
+per-metric verdict (SPCCheck).
+
+Pipeline: the baseline is loaded as input to bias/spc.py; SPCCheck is the check's
+output, carried through into the bias eval results JSON.
+
+Depends on: pydantic.
+Depended on by: bias/spc.py, bias/thresholds.py, bias/bias_types.py.
+"""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field

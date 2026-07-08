@@ -1,3 +1,11 @@
+"""
+Tests the SPC checks: baseline loading/validation, control-limit pass/fail, and
+the narrowed-toward-zero exception.
+
+Exercises: evals.summarisation.src.bias.spc (load_spc_baseline, check_metric,
+evaluate_spc).
+"""
+
 from __future__ import annotations
 
 import pytest
