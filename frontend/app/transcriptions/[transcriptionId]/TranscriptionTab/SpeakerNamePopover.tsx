@@ -25,10 +25,6 @@ export const SpeakerNamePopover = ({
   const [newName, setNewName] = useState(entry.speaker)
   const [isSaving, setIsSaving] = useState(false)
 
-  useEffect(() => {
-    setNewName(entry.speaker)
-  }, [entry.speaker])
-
   const handleUpdateAll = useCallback(async () => {
     setIsSaving(true)
     try {
