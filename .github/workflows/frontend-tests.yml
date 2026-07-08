@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: eslint-resolved-config
-          path: ci-config.json
+          path: frontend/ci-config.json
 
       - name: Lint
         working-directory: frontend
