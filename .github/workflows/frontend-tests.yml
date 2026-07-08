@@ -22,6 +22,18 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Print ESLint resolved config (debug)
+        working-directory: frontend
+        run: |
+          npx eslint --print-config "app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor.tsx" > ci-config.json
+          cat ci-config.json
+
+      - name: Upload resolved config artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-resolved-config
+          path: ci-config.json
+
       - name: Lint
         working-directory: frontend
         run: npm run lint
