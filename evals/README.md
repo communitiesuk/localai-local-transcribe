@@ -80,7 +80,7 @@ poetry run python -m evals.summarisation.src.main --config evals/summarisation/c
 
 ### Output
 
-Results written to `evals/summarisation/output/counterfactual/<run_id>/`:
+Results written to `evals/summarisation/output/bias/<run_id>/`:
 - `results.jsonl` - Detailed per-example results with all iterations
 - `summary.json` - Aggregated statistics across all examples
 
