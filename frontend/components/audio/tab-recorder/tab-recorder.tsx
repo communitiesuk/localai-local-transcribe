@@ -84,6 +84,8 @@ function TabRecorder({
   const streamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
+
   useTabCloseWarning(isRecording || !!recordedAudio)
 
   const stopAllTracks = useCallback(() => {
@@ -178,6 +180,7 @@ function TabRecorder({
         )
       }
       screenStreamRef.current = screenStream
+      setStream(screenStream)
 
       // Create a new audio context for processing audio and for pausing
       const newAudioContext = new AudioContext()
@@ -348,7 +351,7 @@ function TabRecorder({
           ) : (
             <div className="space-y-4">
               <RecordingControl
-                stream={streamRef.current}
+                stream={stream}
                 isRecording={isRecording}
                 onStopRecording={stopRecording}
                 onPauseStateChange={handlePauseStateChange}
