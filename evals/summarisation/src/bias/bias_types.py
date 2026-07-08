@@ -152,7 +152,6 @@ class ComparisonResult(BaseModel):
     axis_of_change: str
     group_a_name: str
     group_b_name: str
-    is_supplementary: bool
 
     metrics: list[ComparisonMetrics]
     sentiment_delta: MetricStatistics

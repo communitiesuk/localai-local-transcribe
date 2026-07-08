@@ -77,6 +77,7 @@ poetry run python -m evals.summarisation.src.main --config evals/summarisation/c
 - `input_dir`: Directory containing counterfactual JSON files (default: `evals/dataset_generation/counterfactual_generation/output`)
 - `metrics`: Judge metrics to evaluate (accuracy, numerical_accuracy, template_fit, coverage, action_clarity, professional_tone, readability, auditability)
 - `prompt_version`: Prompt version to use (e.g., `dev`, `prod`)
+- `emit_spc_baseline`: When `true`, derive an SPC baseline from this run's factual-vs-counterfactual deltas and write `spc_baseline.yaml` to the run output dir, instead of loading a baseline and applying threshold checks. Copy the emitted file into `input_dir` to drive control-chart checks on subsequent runs.
 
 ### Output
 

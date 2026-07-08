@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
+from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer, sentiment_score_from_distribution
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def test_sentiment_analyzer_initialization(mock_sentiment_pipeline):
     assert analyzer.tokenizer == mock_tokenizer
 
 
-def test_compute_sentiment_positive(mock_sentiment_pipeline):
+def test_sentiment_score_positive(mock_sentiment_pipeline):
     mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_pipe.return_value = [
@@ -44,13 +44,13 @@ def test_compute_sentiment_positive(mock_sentiment_pipeline):
     ]
 
     analyzer = SentimentAnalyzer()
-    result = analyzer.compute_sentiment("This is great!")
+    result = sentiment_score_from_distribution(analyzer.compute_sentiment_distribution("This is great!"))
 
     assert result == 0.8
     assert mock_pipe.called
 
 
-def test_compute_sentiment_negative(mock_sentiment_pipeline):
+def test_sentiment_score_negative(mock_sentiment_pipeline):
     mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_pipe.return_value = [
@@ -61,12 +61,12 @@ def test_compute_sentiment_negative(mock_sentiment_pipeline):
     ]
 
     analyzer = SentimentAnalyzer()
-    result = analyzer.compute_sentiment("This is terrible!")
+    result = sentiment_score_from_distribution(analyzer.compute_sentiment_distribution("This is terrible!"))
 
     assert result == pytest.approx(-0.6)
 
 
-def test_compute_sentiment_neutral(mock_sentiment_pipeline):
+def test_sentiment_score_neutral(mock_sentiment_pipeline):
     mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_pipe.return_value = [
@@ -77,7 +77,7 @@ def test_compute_sentiment_neutral(mock_sentiment_pipeline):
     ]
 
     analyzer = SentimentAnalyzer()
-    result = analyzer.compute_sentiment("This is okay.")
+    result = sentiment_score_from_distribution(analyzer.compute_sentiment_distribution("This is okay."))
 
     assert result == 0.0
 
@@ -97,8 +97,8 @@ def test_compute_sentiment_distribution_includes_neutral(mock_sentiment_pipeline
     dist = analyzer.compute_sentiment_distribution("This is mostly good.")
 
     assert dist == pytest.approx({"positive": 0.6, "neutral": 0.3, "negative": 0.1})
-    # compute_sentiment must stay consistent with the distribution (positive - negative)
-    assert analyzer.compute_sentiment("This is mostly good.") == pytest.approx(0.5)
+    # the scalar score stays consistent with the distribution (positive - negative)
+    assert sentiment_score_from_distribution(dist) == pytest.approx(0.5)
 
 
 def test_split_text_by_tokens_single_chunk(mock_sentiment_pipeline):
@@ -135,7 +135,7 @@ def test_split_text_by_tokens_multiple_chunks(mock_sentiment_pipeline):
     assert len(chunks) > 1
 
 
-def test_compute_sentiment_multiple_chunks(mock_sentiment_pipeline):
+def test_sentiment_score_multiple_chunks(mock_sentiment_pipeline):
     mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     long_token_list = list(range(250))
@@ -150,7 +150,9 @@ def test_compute_sentiment_multiple_chunks(mock_sentiment_pipeline):
     ]
 
     analyzer = SentimentAnalyzer()
-    result = analyzer.compute_sentiment("very long text that will be chunked")
+    result = sentiment_score_from_distribution(
+        analyzer.compute_sentiment_distribution("very long text that will be chunked")
+    )
 
     assert isinstance(result, float)
     assert -1.0 <= result <= 1.0

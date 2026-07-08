@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -152,19 +152,15 @@ def test_create_summary_aggregates_metrics(sample_config, sample_record):
     assert axis_data["avg_judge_score_delta"]["coverage"] == pytest.approx(-0.05)
 
 
-@patch("evals.summarisation.src.bias.output_formatter.SentimentAnalyzer")
 @patch("evals.summarisation.src.bias.output_formatter.get_settings")
-def test_create_plotting_output_basic(mock_settings, mock_analyzer_class, sample_config, sample_record):
+def test_create_plotting_output_basic(mock_settings, sample_config, sample_record):
     mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
-    mock_analyzer = MagicMock()
-    mock_analyzer_class.return_value = mock_analyzer
 
     records = [sample_record]
-    supplementary_records: list[CounterfactualEvalRecord] = []
     run_id = "test-run-plot"
     num_iterations = 2
 
-    output = build_results(records, supplementary_records, run_id, sample_config, num_iterations)
+    output = build_results(records, run_id, sample_config, num_iterations)
 
     assert output.run_id == run_id
     assert output.num_iterations == num_iterations
@@ -173,66 +169,32 @@ def test_create_plotting_output_basic(mock_settings, mock_analyzer_class, sample
     assert len(output.comparisons) == 1
     assert output.comparisons[0].protected_characteristic == "gender"
     assert output.comparisons[0].axis_of_change == "male_to_female"
-    assert output.comparisons[0].is_supplementary is False
     assert output.comparisons[0].num_iterations == num_iterations
 
 
-@patch("evals.summarisation.src.bias.output_formatter.SentimentAnalyzer")
 @patch("evals.summarisation.src.bias.output_formatter.get_settings")
-def test_create_plotting_output_with_supplementary(mock_settings, mock_analyzer_class, sample_config, sample_record):
+def test_create_plotting_output_parses_group_names(mock_settings, sample_config, sample_record):
     mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
-    mock_analyzer = MagicMock()
-    mock_analyzer.compute_sentiment.return_value = 0.5
-    mock_analyzer_class.return_value = mock_analyzer
 
     records = [sample_record]
-    supplementary_records = [sample_record.model_copy(update={"axis_of_change": "female_to_male"})]
-    run_id = "test-run-supp"
-    num_iterations = 2
-
-    output = build_results(records, supplementary_records, run_id, sample_config, num_iterations)
-
-    assert len(output.comparisons) == 2
-    assert output.comparisons[0].is_supplementary is False
-    assert output.comparisons[0].axis_of_change == "male_to_female"
-    assert output.comparisons[1].is_supplementary is True
-    assert output.comparisons[1].axis_of_change == "female_to_male"
-    assert mock_analyzer.compute_sentiment.call_count == 4
-
-
-@patch("evals.summarisation.src.bias.output_formatter.SentimentAnalyzer")
-@patch("evals.summarisation.src.bias.output_formatter.get_settings")
-def test_create_plotting_output_parses_group_names(mock_settings, mock_analyzer_class, sample_config, sample_record):
-    mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
-    mock_analyzer = MagicMock()
-    mock_analyzer_class.return_value = mock_analyzer
-
-    records = [sample_record]
-    supplementary_records: list[CounterfactualEvalRecord] = []
     run_id = "test-run-names"
     num_iterations = 2
 
-    output = build_results(records, supplementary_records, run_id, sample_config, num_iterations)
+    output = build_results(records, run_id, sample_config, num_iterations)
 
     assert output.comparisons[0].group_a_name == "Male"
     assert output.comparisons[0].group_b_name == "Female"
 
 
-@patch("evals.summarisation.src.bias.output_formatter.SentimentAnalyzer")
 @patch("evals.summarisation.src.bias.output_formatter.get_settings")
-def test_create_plotting_output_includes_sentiment_metric(
-    mock_settings, mock_analyzer_class, sample_config, sample_record
-):
+def test_create_plotting_output_includes_sentiment_metric(mock_settings, sample_config, sample_record):
     mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
-    mock_analyzer = MagicMock()
-    mock_analyzer_class.return_value = mock_analyzer
 
     records = [sample_record]
-    supplementary_records: list[CounterfactualEvalRecord] = []
     run_id = "test-run-sentiment"
     num_iterations = 2
 
-    output = build_results(records, supplementary_records, run_id, sample_config, num_iterations)
+    output = build_results(records, run_id, sample_config, num_iterations)
 
     metrics = output.comparisons[0].metrics
     metric_names = [m.metric_name for m in metrics]

@@ -15,8 +15,6 @@ from evals.summarisation.src.bias.bias_types import (
     CounterfactualRunSummary,
     IterationMetrics,
 )
-from evals.summarisation.src.bias.regard_scorer import REGARDScorer
-from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
 from evals.summarisation.src.bias.utils import parse_group_names
 from evals.summarisation.src.common import AppConfig
 
@@ -71,8 +69,6 @@ def _comparison_result(
     comparison_id: str,
     metrics: list[ComparisonMetrics],
     num_iterations: int,
-    *,
-    is_supplementary: bool,
 ) -> ComparisonResult:
     """Wraps a record's metrics into a serialisable comparison result."""
     group_a_name, group_b_name = parse_group_names(record.axis_of_change)
@@ -82,7 +78,6 @@ def _comparison_result(
         axis_of_change=record.axis_of_change,
         group_a_name=group_a_name,
         group_b_name=group_b_name,
-        is_supplementary=is_supplementary,
         metrics=metrics,
         sentiment_delta=record.sentiment_delta_stats,
         regard_delta=record.regard_delta_stats,
@@ -96,7 +91,6 @@ def _comparison_result(
 
 def build_results(
     records: list[CounterfactualEvalRecord],
-    supplementary_records: list[CounterfactualEvalRecord],
     run_id: str,
     cfg: AppConfig,
     num_iterations: int,
@@ -119,25 +113,7 @@ def build_results(
             [it.regard_scores["negative"] for it in record.iterations_counterfactual if it.regard_scores],
         )
         comparison_id = f"{record.protected_characteristic}_{record.axis_of_change}_{idx}"
-        comparison_results.append(
-            _comparison_result(record, comparison_id, metrics, num_iterations, is_supplementary=False)
-        )
-
-    sentiment_analyzer = SentimentAnalyzer()
-    regard_scorer = REGARDScorer()
-
-    for idx, record in enumerate(supplementary_records):
-        metrics = _comparison_metrics(
-            record,
-            [sentiment_analyzer.compute_sentiment(s) for s in record.hypothesis_summaries_original],
-            [sentiment_analyzer.compute_sentiment(s) for s in record.hypothesis_summaries_counterfactual],
-            [regard_scorer.score_summary(s).negative for s in record.hypothesis_summaries_original],
-            [regard_scorer.score_summary(s).negative for s in record.hypothesis_summaries_counterfactual],
-        )
-        comparison_id = f"{record.protected_characteristic}_{record.axis_of_change}_supplementary_{idx}"
-        comparison_results.append(
-            _comparison_result(record, comparison_id, metrics, num_iterations, is_supplementary=True)
-        )
+        comparison_results.append(_comparison_result(record, comparison_id, metrics, num_iterations))
 
     return BiasEvalResults(
         run_id=run_id,

@@ -12,9 +12,15 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from evals.summarisation.src.bias.bias_types import ComparisonMetrics
+from evals.summarisation.src.bias.bias_types import ComparisonMetrics, ComparisonResult, MetricStatistics
 from evals.summarisation.src.bias.constants import SPC_BASELINE_FILENAME
-from evals.summarisation.src.bias.spc import check_metric, evaluate_spc, load_spc_baseline
+from evals.summarisation.src.bias.spc import (
+    build_spc_baseline,
+    check_metric,
+    evaluate_spc,
+    load_spc_baseline,
+    save_spc_baseline,
+)
 from evals.summarisation.src.bias.spc_types import SPCBaseline, SPCBaselineStat
 
 
@@ -130,3 +136,69 @@ def test_load_spc_baseline_reads_file(tmp_path):
     baseline = load_spc_baseline(tmp_path)
 
     assert baseline.metrics["sentiment"].mean == pytest.approx(0.1)
+
+
+def _comparison_result(deltas: dict[str, float]) -> ComparisonResult:
+    empty = MetricStatistics(mean=0.0, std=0.0, values=[])
+    return ComparisonResult(
+        comparison_id="c",
+        protected_characteristic="gender",
+        axis_of_change="male_to_female",
+        group_a_name="Male",
+        group_b_name="Female",
+        metrics=[_comparison(name, delta) for name, delta in deltas.items()],
+        sentiment_delta=empty,
+        sentiment_distribution_original=[],
+        sentiment_distribution_counterfactual=[],
+        num_iterations=1,
+        hypothesis_model="m",
+        prompt_version="v",
+    )
+
+
+def test_build_spc_baseline_computes_mean_and_std():
+    comparisons = [
+        _comparison_result({"sentiment": 0.1}),
+        _comparison_result({"sentiment": 0.3}),
+        _comparison_result({"sentiment": 0.2}),
+    ]
+
+    baseline = build_spc_baseline(comparisons)
+
+    assert baseline.metrics["sentiment"].mean == pytest.approx(0.2)
+    assert baseline.metrics["sentiment"].std == pytest.approx(0.1)
+
+
+def test_build_spc_baseline_skips_single_observation_metric():
+    # "sentiment" has two observations; "regard" appears once -> not enough to form a band.
+    comparisons = [
+        _comparison_result({"sentiment": 0.1, "regard": 0.5}),
+        _comparison_result({"sentiment": 0.3}),
+    ]
+
+    baseline = build_spc_baseline(comparisons)
+
+    assert "sentiment" in baseline.metrics
+    assert "regard" not in baseline.metrics
+
+
+def test_build_spc_baseline_skips_zero_variance_metric():
+    comparisons = [_comparison_result({"sentiment": 0.2}), _comparison_result({"sentiment": 0.2})]
+
+    with pytest.raises(ValueError, match="no metric"):
+        build_spc_baseline(comparisons)
+
+
+def test_save_spc_baseline_round_trips_through_load(tmp_path):
+    comparisons = [
+        _comparison_result({"sentiment": 0.1}),
+        _comparison_result({"sentiment": 0.3}),
+    ]
+    baseline = build_spc_baseline(comparisons, description="test run")
+
+    path = save_spc_baseline(baseline, tmp_path)
+
+    assert path == tmp_path / SPC_BASELINE_FILENAME
+    reloaded = load_spc_baseline(tmp_path)
+    assert reloaded.metrics["sentiment"].mean == pytest.approx(0.2)
+    assert reloaded.description == "test run"

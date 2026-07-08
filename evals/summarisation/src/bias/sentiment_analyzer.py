@@ -58,8 +58,8 @@ class SentimentAnalyzer:
 
         Returns the chunk-averaged probabilities for each label as
         ``{"positive": p, "neutral": p, "negative": p}``. Labels not returned by
-        the model default to 0.0. This is the debug-level signal behind
-        :meth:`compute_sentiment`.
+        the model default to 0.0. Feeds :func:`sentiment_score_from_distribution`
+        to produce the scalar sentiment score.
         """
         chunks = self._split_text_by_tokens(text, SENTIMENT_CHUNK_SIZE, SENTIMENT_CHUNK_OVERLAP)
 
@@ -91,7 +91,3 @@ class SentimentAnalyzer:
             "neutral": float(sum(neu_scores) / n),
             "negative": float(sum(neg_scores) / n),
         }
-
-    def compute_sentiment(self, text: str) -> float:
-        """Computes average sentiment score for text, ranging from -1 (negative) to 1 (positive)."""
-        return sentiment_score_from_distribution(self.compute_sentiment_distribution(text))

@@ -58,7 +58,6 @@ def _comparison_result(delta: float) -> ComparisonResult:
         axis_of_change="male_to_female",
         group_a_name="Male",
         group_b_name="Female",
-        is_supplementary=False,
         metrics=[
             ComparisonMetrics(
                 metric_name="sentiment",
