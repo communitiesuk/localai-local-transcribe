@@ -600,6 +600,20 @@ export type RecordingCreateResponse = {
 }
 
 /**
+ * RenameSpeakerRequest
+ */
+export type RenameSpeakerRequest = {
+  /**
+   * Original Speaker
+   */
+  original_speaker: string
+  /**
+   * New Speaker
+   */
+  new_speaker: string
+}
+
+/**
  * SingleRecording
  */
 export type SingleRecording = {
@@ -671,47 +685,6 @@ export type TemplateResponse = {
  * TemplateType
  */
 export type TemplateType = 'document' | 'form'
-
-/**
- * Transcription
- */
-export type Transcription = {
-  /**
-   * Id
-   */
-  id?: string
-  /**
-   * Created Datetime
-   */
-  created_datetime?: string
-  /**
-   * Updated Datetime
-   */
-  updated_datetime?: string
-  /**
-   * Title
-   */
-  title?: string | null
-  /**
-   * Dialogue Entries
-   */
-  dialogue_entries?: Array<DialogueEntry> | null
-  status?: JobStatus
-  /**
-   * Error
-   */
-  error?: string | null
-  /**
-   * User Id
-   */
-  user_id?: string | null
-  /**
-   * Legacy Minute Versions
-   */
-  legacy_minute_versions?: Array<{
-    [key: string]: unknown
-  }> | null
-}
 
 /**
  * TranscriptionCreateRequest
@@ -798,17 +771,61 @@ export type TranscriptionMetadata = {
 }
 
 /**
- * TranscriptionPatchRequest
+ * UpdateDialogueEntrySpeakerRequest
  */
-export type TranscriptionPatchRequest = {
+export type UpdateDialogueEntrySpeakerRequest = {
+  /**
+   * New Speaker
+   */
+  new_speaker: string
+  /**
+   * Expected Speaker
+   */
+  expected_speaker?: string | null
+  /**
+   * Expected Start Time
+   */
+  expected_start_time?: number | null
+  /**
+   * Expected End Time
+   */
+  expected_end_time?: number | null
+}
+
+/**
+ * UpdateDialogueEntryTextRequest
+ */
+export type UpdateDialogueEntryTextRequest = {
+  /**
+   * New Text
+   */
+  new_text: string
+  /**
+   * Expected Text
+   */
+  expected_text?: string | null
+  /**
+   * Expected Speaker
+   */
+  expected_speaker?: string | null
+  /**
+   * Expected Start Time
+   */
+  expected_start_time?: number | null
+  /**
+   * Expected End Time
+   */
+  expected_end_time?: number | null
+}
+
+/**
+ * UpdateTranscriptionTitleRequest
+ */
+export type UpdateTranscriptionTitleRequest = {
   /**
    * Title
    */
   title?: string | null
-  /**
-   * Dialogue Entries
-   */
-  dialogue_entries?: Array<DialogueEntry> | null
 }
 
 /**
@@ -1085,44 +1102,6 @@ export type GetTranscriptionTranscriptionsTranscriptionIdGetResponses = {
 export type GetTranscriptionTranscriptionsTranscriptionIdGetResponse =
   GetTranscriptionTranscriptionsTranscriptionIdGetResponses[keyof GetTranscriptionTranscriptionsTranscriptionIdGetResponses]
 
-export type SaveTranscriptionTranscriptionsTranscriptionIdPatchData = {
-  body: TranscriptionPatchRequest
-  headers?: {
-    /**
-     * X-Amzn-Oidc-Data
-     */
-    'x-amzn-oidc-data'?: string | null
-  }
-  path: {
-    /**
-     * Transcription Id
-     */
-    transcription_id: string
-  }
-  query?: never
-  url: '/transcriptions/{transcription_id}'
-}
-
-export type SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError
-}
-
-export type SaveTranscriptionTranscriptionsTranscriptionIdPatchError =
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors[keyof SaveTranscriptionTranscriptionsTranscriptionIdPatchErrors]
-
-export type SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses = {
-  /**
-   * Successful Response
-   */
-  200: Transcription
-}
-
-export type SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse =
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses[keyof SaveTranscriptionTranscriptionsTranscriptionIdPatchResponses]
-
 export type GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData =
   {
     body?: never
@@ -1165,6 +1144,178 @@ export type GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordings
 
 export type GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponse =
   GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses[keyof GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetResponses]
+
+export type UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchData =
+  {
+    body: UpdateTranscriptionTitleRequest
+    headers?: {
+      /**
+       * X-Amzn-Oidc-Data
+       */
+      'x-amzn-oidc-data'?: string | null
+    }
+    path: {
+      /**
+       * Transcription Id
+       */
+      transcription_id: string
+    }
+    query?: never
+    url: '/transcriptions/{transcription_id}/title'
+  }
+
+export type UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError
+  }
+
+export type UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchError =
+  UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchErrors[keyof UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchErrors]
+
+export type UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void
+  }
+
+export type UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponse =
+  UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponses[keyof UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponses]
+
+export type RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchData =
+  {
+    body: RenameSpeakerRequest
+    headers?: {
+      /**
+       * X-Amzn-Oidc-Data
+       */
+      'x-amzn-oidc-data'?: string | null
+    }
+    path: {
+      /**
+       * Transcription Id
+       */
+      transcription_id: string
+    }
+    query?: never
+    url: '/transcriptions/{transcription_id}/speakers'
+  }
+
+export type RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError
+  }
+
+export type RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchError =
+  RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchErrors[keyof RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchErrors]
+
+export type RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void
+  }
+
+export type RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponse =
+  RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponses[keyof RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponses]
+
+export type UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchData =
+  {
+    body: UpdateDialogueEntrySpeakerRequest
+    headers?: {
+      /**
+       * X-Amzn-Oidc-Data
+       */
+      'x-amzn-oidc-data'?: string | null
+    }
+    path: {
+      /**
+       * Transcription Id
+       */
+      transcription_id: string
+      /**
+       * Entry Index
+       */
+      entry_index: number
+    }
+    query?: never
+    url: '/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/speaker'
+  }
+
+export type UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError
+  }
+
+export type UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchError =
+  UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchErrors[keyof UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchErrors]
+
+export type UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void
+  }
+
+export type UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponse =
+  UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponses[keyof UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponses]
+
+export type UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchData =
+  {
+    body: UpdateDialogueEntryTextRequest
+    headers?: {
+      /**
+       * X-Amzn-Oidc-Data
+       */
+      'x-amzn-oidc-data'?: string | null
+    }
+    path: {
+      /**
+       * Transcription Id
+       */
+      transcription_id: string
+      /**
+       * Entry Index
+       */
+      entry_index: number
+    }
+    query?: never
+    url: '/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/text'
+  }
+
+export type UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchErrors =
+  {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError
+  }
+
+export type UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchError =
+  UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchErrors[keyof UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchErrors]
+
+export type UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponses =
+  {
+    /**
+     * Successful Response
+     */
+    204: void
+  }
+
+export type UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponse =
+  UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponses[keyof UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponses]
 
 export type GetUserUsersMeGetData = {
   body?: never
