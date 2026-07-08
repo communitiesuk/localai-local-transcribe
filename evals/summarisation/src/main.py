@@ -49,6 +49,31 @@ async def run_bias_eval(config: Path) -> None:
         raise typer.Exit(code=1)
 
 
+async def run_security_eval(config: Path) -> None:
+    from evals.summarisation.src.security import run_security_eval as _run_security_eval
+
+    cfg = load_config(config)
+
+    if cfg.run.input_dir is None:
+        msg = "input_dir must be specified in config under run.input_dir for security evaluation"
+        raise ValueError(msg)
+
+    input_dir = Path(cfg.run.input_dir)
+    output_dir = Path(cfg.run.output_dir)
+
+    run_id, results_path = await _run_security_eval(cfg, input_dir, output_dir)
+
+    run_output_dir = output_dir / run_id
+    typer.echo(f"\nRun ID: {run_id}")
+    typer.echo(f"Results: {results_path}")
+    typer.echo(f"Report: {run_output_dir / 'report.md'}")
+    typer.echo(f"Conclusions: {run_output_dir / 'CONCLUSIONS.md'}")
+
+    tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
 def run_standard_eval(config: Path) -> list[HallucinationInput]:
     from evals.summarisation.src.optimisation import run_eval
 
@@ -79,10 +104,12 @@ def run(
 
     if cfg.run.eval_type == "bias":
         asyncio.run(run_bias_eval(config))
+    elif cfg.run.eval_type == "security":
+        asyncio.run(run_security_eval(config))
     elif cfg.run.eval_type == "standard":
         hallucination_inputs = run_standard_eval(config)
     else:
-        msg = f"Unknown eval_type: {cfg.run.eval_type}. Must be 'standard' or 'bias'"
+        msg = f"Unknown eval_type: {cfg.run.eval_type}. Must be 'standard', 'bias' or 'security'"
         raise ValueError(msg)
 
     if cfg.hallucination.enabled:
