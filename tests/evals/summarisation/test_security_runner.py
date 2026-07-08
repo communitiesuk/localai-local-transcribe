@@ -69,7 +69,6 @@ def test_run_security_eval_writes_artifacts(cfg, input_dir):
     assert results_path.exists()
     assert (run_dir / "summary.json").exists()
     assert (run_dir / "report.md").exists()
-    assert (run_dir / "CONCLUSIONS.md").exists()
 
     records = [json.loads(line) for line in results_path.read_text().splitlines() if line.strip()]
     assert len(records) == 3

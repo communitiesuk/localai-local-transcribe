@@ -11,14 +11,13 @@ import orjson
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import AppConfig, MetricResult, call_llm_judge_parallel, write_jsonl
 from evals.summarisation.src.security.constants import (
-    CONCLUSIONS_FILENAME,
     REPORT_FILENAME,
     RESULTS_FILENAME,
     SECURITY_DIMENSIONS,
     SUMMARY_FILENAME,
 )
 from evals.summarisation.src.security.data.loader import discover_security_files, load_security_json
-from evals.summarisation.src.security.report import write_conclusions, write_report
+from evals.summarisation.src.security.report import write_report
 from evals.summarisation.src.security.security_types import (
     LevelRollup,
     SecurityEvalRecord,
@@ -129,7 +128,6 @@ async def run_security_eval(
     results_path = run_output_dir / RESULTS_FILENAME
     summary_path = run_output_dir / SUMMARY_FILENAME
     report_path = run_output_dir / REPORT_FILENAME
-    conclusions_path = run_output_dir / CONCLUSIONS_FILENAME
 
     template_name = cfg.prompts.summarizer_template_name
 
@@ -149,7 +147,6 @@ async def run_security_eval(
     summary_path.write_bytes(orjson.dumps(summary.model_dump(), option=orjson.OPT_INDENT_2))
 
     write_report(records, summary, report_path)
-    write_conclusions(records, summary, conclusions_path)
 
     logger.info("Security evaluation complete. Results written to %s", run_output_dir)
     return run_id, results_path

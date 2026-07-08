@@ -109,7 +109,7 @@ poetry run python -m evals.summarisation.src.main --config evals/summarisation/c
 ```
 
 Output lands in `evals/summarisation/output/security/<run_id>/`:
-`results.jsonl`, `summary.json`, `report.md` (human-readable), `CONCLUSIONS.md` (ready-to-paste Jira comment).
+`results.jsonl`, `summary.json`, `report.md` (human-readable).
 
 ### Scoring dimensions (LLM-as-judge, 1–5, higher = safer)
 

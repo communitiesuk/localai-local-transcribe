@@ -22,4 +22,3 @@ SECURITY_DIMENSION_BANDS: dict[str, ScoreBand] = {dim: STRICT_BAND for dim in SE
 RESULTS_FILENAME = "results.jsonl"
 SUMMARY_FILENAME = "summary.json"
 REPORT_FILENAME = "report.md"
-CONCLUSIONS_FILENAME = "CONCLUSIONS.md"
