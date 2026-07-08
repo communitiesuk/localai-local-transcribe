@@ -4,6 +4,7 @@ import { use, useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 
+import { Loader2 } from 'lucide-react'
 import {
   GovukHeading,
   GovukButton,
@@ -16,7 +17,6 @@ import {
   deleteUserUsersUserIdDeleteMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
-import { Loader2 } from 'lucide-react'
 import { formatCurrentDateTime } from '@/lib/utils'
 
 export default function UserPageDelete(props: {

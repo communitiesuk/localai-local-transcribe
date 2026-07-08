@@ -3,7 +3,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Transcription } from '@/lib/client'
+import { TranscriptionGetResponse } from '@/lib/client'
 import { CitationPopoverState } from '@/hooks/use-citation-popover'
 import CitationPopoverContent from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/citation-popover'
 
@@ -11,7 +11,7 @@ interface CitationPopoverWrapperProps {
   citationPopover: CitationPopoverState | null
   isPopoverOpen: boolean
   onOpenChange: (open: boolean) => void
-  transcription: Transcription
+  transcription: TranscriptionGetResponse
 }
 
 export function CitationPopoverWrapper({
