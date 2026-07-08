@@ -111,3 +111,20 @@ export function GovukButtonLink({
     </a>
   )
 }
+
+type ButtonGroupProps = {
+  className?: string
+  children: React.ReactNode
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'children'>
+
+export function GovukButtonGroup({
+  className,
+  children,
+  ...rest
+}: ButtonGroupProps) {
+  return (
+    <div {...rest} className={cn('govuk-button-group', className)}>
+      {children}
+    </div>
+  )
+}

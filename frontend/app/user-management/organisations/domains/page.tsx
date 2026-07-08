@@ -7,7 +7,7 @@ import { parseDomains } from '@/lib/utils'
 import type { EditDomainsFormData } from '@/components/organisations/domains-form'
 import { useRouter } from 'next/navigation'
 import { useMutation } from '@tanstack/react-query'
-import { GovukBackLink } from '@/components/govuk'
+import { GovukBackLink, GovukDetails } from '@/components/govuk'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { UserRole } from '@/lib/utils'
@@ -20,7 +20,7 @@ export default function EditApprovedDomainsPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  // BUG-714: replace with id from dropdown once implemented (688)
+  // BUG: replace with id from dropdown once implemented
   const { data: organisation, isLoading: organisationLoading } =
     useOrganisation(currentUser?.organisation_id ?? '')
 
@@ -28,9 +28,6 @@ export default function EditApprovedDomainsPage() {
     ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
     onSuccess() {
       router.replace(`/user-management`)
-    },
-    onError() {
-      router.replace('/generic-error')
     },
   })
 
