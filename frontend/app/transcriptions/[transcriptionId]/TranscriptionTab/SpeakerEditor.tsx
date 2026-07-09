@@ -71,7 +71,6 @@ export const SpeakerEditor = ({
             {Array.from(speakers.entries()).map(([speaker, entries]) => (
               <div key={speaker} className="flex w-full justify-between gap-1">
                 <SpeakerNameEditor
-                  key={speaker}
                   speaker={speaker}
                   onSave={onSave(speaker)}
                   selected={selected == speaker}

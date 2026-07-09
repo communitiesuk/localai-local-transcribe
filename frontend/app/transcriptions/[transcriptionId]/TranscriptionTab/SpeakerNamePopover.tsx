@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/popover'
 import { PenIcon } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 export const SpeakerNamePopover = ({
   entry,
@@ -54,8 +54,16 @@ export const SpeakerNamePopover = ({
     },
     [newName, onUpdateSingle]
   )
+
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open)
+
+    if (open) {
+      setNewName(entry.speaker)
+    }
+  }
   return (
-    <Popover open={open} onOpenChange={(open) => setOpen(open)}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <div
           className="group flex max-w-[200px] min-w-[100px] cursor-pointer items-start space-x-1"

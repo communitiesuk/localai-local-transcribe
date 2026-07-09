@@ -285,7 +285,6 @@ export function TranscriptionTab({
                     </Button>
                   )}
                   <SpeakerNamePopover
-                    key={index}
                     entry={entry}
                     index={index}
                     onUpdateAll={handleRenameSpeakerEverywhere}
