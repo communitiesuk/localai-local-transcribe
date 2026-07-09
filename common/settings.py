@@ -149,6 +149,9 @@ class Settings(BaseSettings):
     # if using azure-service-bus
     AZURE_SB_CONNECTION_STRING: str | None = Field(description="Azure service bus connection string", default=None)
 
+    GOVNOTIFY_API_KEY: str = Field()
+    GOVNOTIFY_INVITE_TEMPLATE_ID: str = Field()
+
     # if running the worker inside a docker container (use "0.0.0.0" )
     RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
 

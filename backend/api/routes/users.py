@@ -2,7 +2,7 @@ import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import EmailStr
 
 from backend.api.dependencies import (
@@ -11,11 +11,13 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
+from backend.services.notifications.client import Notification
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
+from common.settings import get_settings
 from common.types import (
     DataRetentionUpdateResponse,
     GetUserResponse,
@@ -24,6 +26,10 @@ from common.types import (
     UserExistsResponse,
     UserUpdateRoles,
 )
+
+settings = get_settings()
+
+notification = Notification()
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -73,6 +79,7 @@ async def create_user(
     data: UserCreate,
     session: SQLSessionDep,
     user: UserDep,
+    background_tasks: BackgroundTasks,
 ) -> GetUserResponse:
     organisation = await session.get(Organisation, data.organisation_id)
     if not organisation:
@@ -97,6 +104,7 @@ async def create_user(
     session.add(new_user)
     await session.commit()
     await session.refresh(new_user)
+    background_tasks.add_task(notification.send_email, data.email)
 
     return to_user_response(new_user)
 
