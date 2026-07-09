@@ -9,13 +9,17 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/components/ui/select'
-import { Transcription } from '@/lib/client'
+import { TranscriptionGetResponse } from '@/lib/client'
 import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
 import { AudioWaveform } from 'lucide-react'
 import { useState } from 'react'
 
-export function MinuteTab({ transcription }: { transcription: Transcription }) {
+export function MinuteTab({
+  transcription,
+}: {
+  transcription: TranscriptionGetResponse
+}) {
   const { data: minutes = [], isLoading } = useQuery({
     ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
       {

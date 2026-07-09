@@ -86,35 +86,35 @@ def test_compute_statistics_two_values():
 def test_compute_metric_statistics_single_metric():
     iterations = [
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
             sentiment_score=0.5,
         ),
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.9, reason="Great")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.9, reason="Great")},
             sentiment_score=0.6,
         ),
     ]
     result = compute_metric_statistics(iterations)
-    assert "faithfulness" in result
+    assert "accuracy" in result
     assert len(result) == 1
-    assert result["faithfulness"].mean == pytest.approx(0.85)
-    assert result["faithfulness"].std == pytest.approx(0.07071067811865476)
-    assert result["faithfulness"].values == pytest.approx([0.8, 0.9])
-    assert len(result["faithfulness"].values) == 2
+    assert result["accuracy"].mean == pytest.approx(0.85)
+    assert result["accuracy"].std == pytest.approx(0.07071067811865476)
+    assert result["accuracy"].values == pytest.approx([0.8, 0.9])
+    assert len(result["accuracy"].values) == 2
 
 
 def test_compute_metric_statistics_multiple_metrics():
     iterations = [
         IterationMetrics(
             metrics={
-                "faithfulness": CounterfactualMetricResult(score=0.8, reason="Good"),
+                "accuracy": CounterfactualMetricResult(score=0.8, reason="Good"),
                 "coverage": CounterfactualMetricResult(score=0.7, reason="OK"),
             },
             sentiment_score=0.5,
         ),
         IterationMetrics(
             metrics={
-                "faithfulness": CounterfactualMetricResult(score=0.9, reason="Great"),
+                "accuracy": CounterfactualMetricResult(score=0.9, reason="Great"),
                 "coverage": CounterfactualMetricResult(score=0.8, reason="Better"),
             },
             sentiment_score=0.6,
@@ -122,11 +122,11 @@ def test_compute_metric_statistics_multiple_metrics():
     ]
     result = compute_metric_statistics(iterations)
     assert len(result) == 2
-    assert "faithfulness" in result
+    assert "accuracy" in result
     assert "coverage" in result
-    assert result["faithfulness"].mean == pytest.approx(0.85)
-    assert result["faithfulness"].std == pytest.approx(0.07071067811865476)
-    assert result["faithfulness"].values == pytest.approx([0.8, 0.9])
+    assert result["accuracy"].mean == pytest.approx(0.85)
+    assert result["accuracy"].std == pytest.approx(0.07071067811865476)
+    assert result["accuracy"].values == pytest.approx([0.8, 0.9])
     assert result["coverage"].mean == pytest.approx(0.75)
     assert result["coverage"].std == pytest.approx(0.07071067811865476)
     assert result["coverage"].values == pytest.approx([0.7, 0.8])
@@ -135,21 +135,21 @@ def test_compute_metric_statistics_multiple_metrics():
 def test_compute_comparison_statistics_basic():
     original_iterations = [
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
             sentiment_score=0.5,
         ),
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.9, reason="Great")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.9, reason="Great")},
             sentiment_score=0.6,
         ),
     ]
     cf_iterations = [
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.7, reason="OK")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.7, reason="OK")},
             sentiment_score=0.4,
         ),
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
             sentiment_score=0.5,
         ),
     ]
@@ -163,13 +163,13 @@ def test_compute_comparison_statistics_basic():
 def test_compute_comparison_statistics_positive_delta():
     original_iterations = [
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.5, reason="OK")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.5, reason="OK")},
             sentiment_score=0.3,
         ),
     ]
     cf_iterations = [
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.7, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.7, reason="Good")},
             sentiment_score=0.7,
         ),
     ]
@@ -193,7 +193,7 @@ def test_compute_metric_statistics_empty_iterations():
 def test_compute_metric_statistics_mismatched_keys():
     iterations = [
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
             sentiment_score=0.5,
         ),
         IterationMetrics(
@@ -208,17 +208,17 @@ def test_compute_metric_statistics_mismatched_keys():
 def test_compute_comparison_statistics_mismatched_lengths():
     original_iterations = [
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
             sentiment_score=0.5,
         ),
     ]
     cf_iterations = [
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.7, reason="OK")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.7, reason="OK")},
             sentiment_score=0.4,
         ),
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
             sentiment_score=0.5,
         ),
     ]

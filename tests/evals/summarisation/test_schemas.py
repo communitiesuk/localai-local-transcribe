@@ -34,7 +34,7 @@ def test_eval_record_contract_serializes_to_json():
     example_id = "1"
     model_name = "gpt-5-nano"
     run_id = "test_run"
-    faithfulness_score = 3.5
+    accuracy_score = 3.5
 
     example = DialogExample(example_id=example_id, dialogue="Hello", reference_summary="Hi")
     candidate = DialogSummary(
@@ -43,7 +43,7 @@ def test_eval_record_contract_serializes_to_json():
         prompt_version="v1",
         generation_config=GenerationConfig(temperature=0.2, max_tokens=256),
     )
-    metrics = {"faithfulness": MetricResult(score=faithfulness_score, reason="Good")}
+    metrics = {"accuracy": MetricResult(score=accuracy_score, reason="Good")}
 
     record = EvalRecord(
         run_id=run_id,
@@ -62,7 +62,7 @@ def test_eval_record_contract_serializes_to_json():
     assert deserialized["run_id"] == run_id
     assert deserialized["example"]["example_id"] == example_id
     assert deserialized["candidate"]["model"] == model_name
-    assert deserialized["metrics"]["faithfulness"]["score"] == faithfulness_score
+    assert deserialized["metrics"]["accuracy"]["score"] == accuracy_score
 
 
 def test_eval_record_contract_handles_optional_reference_summary():
