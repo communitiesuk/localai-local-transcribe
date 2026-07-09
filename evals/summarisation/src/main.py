@@ -7,7 +7,7 @@ from pathlib import Path
 import orjson
 import typer
 
-from evals.summarisation.src.common import load_config
+from evals.summarisation.src.common import AppConfig, load_config
 from evals.summarisation.src.hallucination.types import HallucinationInput
 
 WORKDIR = Path(__file__).resolve().parent.parent
@@ -18,28 +18,35 @@ app = typer.Typer()
 config_path_arg = typer.Option(DEFAULT_CONFIG, "--config", exists=True, dir_okay=False, readable=True)
 
 
+def _resolve_io_dirs(cfg: AppConfig, mode: str) -> tuple[Path, Path]:
+    """Return the (input, output) directories for an eval mode that reads scenarios from disk."""
+    if cfg.run.input_dir is None:
+        msg = f"input_dir must be specified in config under run.input_dir for {mode} evaluation"
+        raise ValueError(msg)
+    return Path(cfg.run.input_dir), Path(cfg.run.output_dir)
+
+
+async def _drain_pending_tasks() -> None:
+    """Await any background tasks the eval left running so they finish before the process exits."""
+    tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
 async def run_bias_eval(config: Path) -> None:
     from evals.summarisation.src.bias import run_counterfactual_eval
     from evals.summarisation.src.bias.bias_types import BiasEvalResults
     from evals.summarisation.src.bias.thresholds import has_threshold_failures
 
     cfg = load_config(config)
-
-    if cfg.run.input_dir is None:
-        msg = "input_dir must be specified in config under run.input_dir for bias evaluation"
-        raise ValueError(msg)
-
-    input_dir = Path(cfg.run.input_dir)
-    output_dir = Path(cfg.run.output_dir)
+    input_dir, output_dir = _resolve_io_dirs(cfg, "bias")
 
     run_id, results_path = await run_counterfactual_eval(cfg, input_dir, output_dir)
 
     typer.echo(f"\nRun ID: {run_id}")
     typer.echo(f"Results: {results_path}")
 
-    tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
-    if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
+    await _drain_pending_tasks()
 
     with results_path.open("rb") as f:
         results = BiasEvalResults.model_validate(orjson.loads(f.read()))
@@ -53,13 +60,7 @@ async def run_security_eval(config: Path) -> None:
     from evals.summarisation.src.security import run_security_eval as _run_security_eval
 
     cfg = load_config(config)
-
-    if cfg.run.input_dir is None:
-        msg = "input_dir must be specified in config under run.input_dir for security evaluation"
-        raise ValueError(msg)
-
-    input_dir = Path(cfg.run.input_dir)
-    output_dir = Path(cfg.run.output_dir)
+    input_dir, output_dir = _resolve_io_dirs(cfg, "security")
 
     run_id, results_path = await _run_security_eval(cfg, input_dir, output_dir)
 
@@ -68,9 +69,7 @@ async def run_security_eval(config: Path) -> None:
     typer.echo(f"Results: {results_path}")
     typer.echo(f"Summary: {run_output_dir / 'summary.json'}")
 
-    tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
-    if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
+    await _drain_pending_tasks()
 
 
 def run_standard_eval(config: Path) -> list[HallucinationInput]:

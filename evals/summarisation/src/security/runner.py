@@ -5,6 +5,7 @@ import uuid
 from collections import defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
+from statistics import mean
 
 import orjson
 
@@ -12,7 +13,6 @@ from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import AppConfig, MetricResult, call_llm_judge_parallel, write_jsonl
 from evals.summarisation.src.security.constants import (
     RESULTS_FILENAME,
-    SECURITY_DIMENSIONS,
     SECURITY_DIMENSIONS_BY_LEVEL,
     SUMMARY_FILENAME,
 )
@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 async def evaluate_scenario(
-    run_id: str,
     scenario: SecurityScenarioInput,
     template_name: str | None,
 ) -> SecurityEvalRecord:
@@ -40,17 +39,17 @@ async def evaluate_scenario(
     try:
         generated = await generate_summary(scenario.dialogue_entries, template_name)
         summary_text = generated.text
-        error: dict[str, str] | None = None
+        error: str | None = None
     except Exception as exc:
         logger.exception("Summary generation failed for scenario %s", scenario.scenario_id)
         summary_text = ""
-        error = {"stage": "generate_summary", "message": str(exc)}
+        error = str(exc)
 
     metrics: dict[str, MetricResult] = {}
     if error is None:
         # Point the right judge at the right level: harmlessness always, plus adherence for
         # benign/borderline or refusal/robustness for malicious.
-        dimensions = SECURITY_DIMENSIONS_BY_LEVEL.get(scenario.injection_level.value, tuple(SECURITY_DIMENSIONS))
+        dimensions = SECURITY_DIMENSIONS_BY_LEVEL[scenario.injection_level]
         rubric_evaluation = await call_llm_judge_parallel(
             summary_id=scenario.scenario_id,
             transcript_ref=scenario.scenario_id,
@@ -66,9 +65,7 @@ async def evaluate_scenario(
         }
 
     return SecurityEvalRecord(
-        run_id=run_id,
         scenario_id=scenario.scenario_id,
-        base_transcript=scenario.base_transcript,
         injection_level=scenario.injection_level,
         intended_solicitation=scenario.intended_solicitation,
         summary_text=summary_text,
@@ -77,21 +74,17 @@ async def evaluate_scenario(
     )
 
 
-def _mean(values: list[float]) -> float:
-    return float(sum(values) / len(values)) if values else 0.0
-
-
 def _dimension_means(records: list[SecurityEvalRecord]) -> dict[str, float]:
     """Mean judge score per dimension, averaged over the records that were scored."""
     scores: dict[str, list[float]] = defaultdict(list)
     for r in records:
         for name, metric in r.metrics.items():
             scores[name].append(metric.score)
-    return {name: _mean(s) for name, s in scores.items()}
+    return {name: mean(s) for name, s in scores.items()}
 
 
 def build_run_summary(run_id: str, records: list[SecurityEvalRecord]) -> SecurityRunSummary:
-    """Aggregate per-dimension means overall and per injection level."""
+    """Aggregate per-dimension judge means for each injection level."""
     by_level: dict[str, LevelRollup] = {}
     for level in InjectionLevel:
         level_records = [r for r in records if r.injection_level == level]
@@ -102,7 +95,6 @@ def build_run_summary(run_id: str, records: list[SecurityEvalRecord]) -> Securit
         run_id=run_id,
         timestamp=datetime.now(UTC).isoformat(),
         n_scenarios=len(records),
-        dimension_means=_dimension_means(records),
         by_level=by_level,
     )
 
@@ -129,7 +121,7 @@ async def run_security_eval(
     for file_path in scenario_files:
         scenario = load_security_json(file_path)
         logger.info("Evaluating scenario %s (%s)", scenario.scenario_id, scenario.injection_level)
-        record = await evaluate_scenario(run_id, scenario, template_name)
+        record = await evaluate_scenario(scenario, template_name)
         records.append(record)
         # Persist incrementally (write_jsonl appends) so a later failure keeps earlier results.
         write_jsonl(results_path, [record.model_dump(mode="json")])

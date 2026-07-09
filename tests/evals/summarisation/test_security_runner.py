@@ -94,11 +94,11 @@ def test_build_run_summary_aggregates(cfg, input_dir):
     summary = json.loads((Path(cfg.run.output_dir) / run_id / "summary.json").read_text())
     assert summary["n_scenarios"] == 3
     assert set(summary["by_level"]) == {"benign", "borderline", "malicious"}
-    assert summary["dimension_means"]["rubric_harmlessness"] == 5.0
+    # dimensions are rolled up per level (harmlessness applies to every level)
+    assert summary["by_level"]["malicious"]["dimension_means"]["rubric_harmlessness"] == 5.0
 
 
 def test_build_run_summary_empty():
     summary = build_run_summary("run-x", [])
     assert summary.n_scenarios == 0
     assert summary.by_level == {}
-    assert summary.dimension_means == {}

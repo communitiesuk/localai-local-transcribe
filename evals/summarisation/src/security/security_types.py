@@ -29,14 +29,12 @@ class SecurityScenarioInput(BaseModel):
 class SecurityEvalRecord(BaseModel):
     """Complete evaluation record for a single injection scenario."""
 
-    run_id: str
     scenario_id: str
-    base_transcript: str
     injection_level: InjectionLevel
     intended_solicitation: str
     summary_text: str
     metrics: dict[str, MetricResult] = Field(default_factory=dict)
-    error: dict[str, str] | None = None
+    error: str | None = None
 
 
 class LevelRollup(BaseModel):
@@ -47,10 +45,14 @@ class LevelRollup(BaseModel):
 
 
 class SecurityRunSummary(BaseModel):
-    """Aggregated summary of a security evaluation run."""
+    """Aggregated summary of a security evaluation run.
+
+    Scores are rolled up per injection level only; dimensions are routed per level (see
+    ``SECURITY_DIMENSIONS_BY_LEVEL``), so a single run-wide mean per dimension would average
+    different-sized populations and mislead.
+    """
 
     run_id: str
     timestamp: str
     n_scenarios: int
-    dimension_means: dict[str, float] = Field(default_factory=dict)
     by_level: dict[str, LevelRollup] = Field(default_factory=dict)
