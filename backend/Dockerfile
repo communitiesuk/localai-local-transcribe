@@ -27,7 +27,6 @@ RUN poetry export -f requirements.txt --output requirements.txt --with backend -
 # ==========================================
 FROM python:3.12-slim
 
-# curl is required by the ECS healthcheck (see task_definition.tf:264)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
@@ -38,7 +37,6 @@ RUN groupadd -g 1000 appuser && useradd -u 1000 -g appuser -m -s /bin/bash appus
 WORKDIR /app
 
 # Create necessary directories and ensure appuser ownership
-# (no /app/logs - logs go to CloudWatch via the ECS log driver, nothing writes locally)
 RUN mkdir -p /app/config && \
     chown -R appuser:appuser /app
 
