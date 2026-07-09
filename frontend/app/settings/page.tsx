@@ -103,7 +103,6 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
                 disabled={disabled}
                 ref={ref}
                 options={[
-                  { label: 'Keep indefinitely', value: 'none' },
                   { label: '1 day', value: '1' },
                   { label: '7 days', value: '7' },
                   { label: '30 days', value: '30' },
