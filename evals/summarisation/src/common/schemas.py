@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime
-from typing import Literal, TypedDict
+from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -41,9 +41,6 @@ class DialogSummary(BaseModel):
     model: str
     prompt_version: str
     generation_config: GenerationConfig
-
-
-CriteriaName = Literal["faithfulness", "coverage", "conciseness", "coherence"]
 
 
 class MetricResult(BaseModel):

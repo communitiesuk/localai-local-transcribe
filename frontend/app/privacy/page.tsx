@@ -1,78 +1,78 @@
-import React from 'react'
-import { Separator } from '@/components/ui/separator'
-
 export default function PrivacyPage() {
   return (
-    <div className="container max-w-4xl py-6 md:py-10">
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold tracking-tight">Privacy Notice</h1>
-        <Separator />
-
-        <p className="text-muted-foreground leading-7">
+    <div className="govuk-grid-row">
+      <div className="govuk-grid-column-full">
+        <h1 className="govuk-heading-l">Privacy Notice</h1>
+        <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
+        <p className="govuk-body govuk-hint">
           This notice sets out how we will use your personal data, and your
           rights. It is made under Articles 13 and/or 14 of the UK General Data
           Protection Regulation (UK GDPR).
         </p>
 
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">YOUR DATA</h2>
+        <section>
+          <h2 className="govuk-heading-m">YOUR DATA</h2>
 
-          <h3 className="text-xl font-semibold">Purpose</h3>
-          <p className="text-muted-foreground leading-7">
+          <h3 className="govuk-heading-s govuk-!-margin-top-6">Purpose</h3>
+          <p className="govuk-body govuk-hint">
             Overall the purpose is to provide AI support for the minute-takers.
             To do this we will process personal data as access credentials to
             the AI Tool, to ensure secure access and auditability.
           </p>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             The AI minuting tool creates the following three outputs:
-            <ul className="list-inside list-disc pl-4">
-              <li>an audio recording of a meeting, which is used to create:</li>
-              <li>a granular transcript of a meeting</li>
-              <li>
-                a high-level draft minute in the style of a Cabinet minute.
-              </li>
-            </ul>
+          </p>
+          <ul className="govuk-list govuk-list--bullet govuk-hint">
+            <li>an audio recording of a meeting, which is used to create:</li>
+            <li>a granular transcript of a meeting</li>
+            <li>a high-level draft minute in the style of a Cabinet minute.</li>
+          </ul>
+          <p className="govuk-body govuk-hint">
             These outputs will contain the personal data of attendees and
             individuals that form part of the meeting.
           </p>
 
-          <h3 className="pt-4 text-xl font-semibold">The data</h3>
-          <p className="text-muted-foreground leading-7">
+          <h3 className="govuk-heading-s govuk-!-margin-top-6">The data</h3>
+          <p className="govuk-body govuk-hint">
             We will process the following personal data:
           </p>
-          <p className="font-semibold">Users of the AI Tool</p>
-          <ul className="text-muted-foreground list-inside list-disc pl-4">
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-2">
+            Users of the AI Tool
+          </p>
+          <ul className="govuk-list govuk-list--bullet govuk-hint">
             <li>Name</li>
             <li>Organisational Email</li>
           </ul>
-          <p className="pt-2 font-semibold">Minutes Process</p>
-          <ul className="text-muted-foreground list-inside list-disc pl-4">
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-2 govuk-!-margin-top-2">
+            Minutes Process
+          </p>
+          <ul className="govuk-list govuk-list--bullet govuk-hint">
             <li>Audio Recording of the meeting</li>
             <li>Transcript of meetings</li>
             <li>Draft minutes of the meetings</li>
           </ul>
 
-          <h3 className="pt-4 text-xl font-semibold">
+          <h3 className="govuk-heading-s govuk-!-margin-top-6">
             Legal basis of processing
           </h3>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             The legal basis for processing your personal data is:
           </p>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             It is necessary for the purposes of the legitimate interests pursued
             by the controller or by a third party. In this case those are,
             providing secure access to Cabinet Office platforms and
             applications.
           </p>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             Regarding the recording of the meeting the legal basis will be the
             data subject consents.
           </p>
 
-          <h3 className="pt-4 text-xl font-semibold">
+          <h3 className="govuk-heading-s govuk-!-margin-top-6">
             Sensitive personal data
           </h3>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             Sensitive personal data is personal data revealing racial or ethnic
             origin, political opinions, religious or philosophical beliefs, or
             trade union membership, and the processing of genetic data,
@@ -80,10 +80,10 @@ export default function PrivacyPage() {
             person, data concerning health or data concerning a natural
             person&apos;s sex life or sexual orientation.
           </p>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             The legal basis for processing your sensitive personal data is:
           </p>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             Processing is necessary for reasons of substantial public interest
             for the exercise of a function of the Crown, a Minister of the
             Crown, or a government department; the exercise of a function
@@ -92,11 +92,11 @@ export default function PrivacyPage() {
             minutes of Ministerial meetings.
           </p>
 
-          <h3 className="pt-4 text-xl font-semibold">Recipients</h3>
-          <p className="text-muted-foreground leading-7">
+          <h3 className="govuk-heading-s govuk-!-margin-top-6">Recipients</h3>
+          <p className="govuk-body govuk-hint">
             Your personal data will be shared by us with:
           </p>
-          <ul className="text-muted-foreground list-inside list-disc pl-4">
+          <ul className="govuk-list govuk-list--bullet govuk-hint">
             <li>
               Data processors that provide our corporate IT infrastructure,
               including email, document management and storage services. Applies
@@ -108,8 +108,9 @@ export default function PrivacyPage() {
               Minute Tool.
             </li>
           </ul>
+        </section>
 
-          {/* <h3 className="pt-4 text-xl font-semibold">Retention</h3>
+        {/* <h3 className="pt-4 text-xl font-semibold">Retention</h3>
           <p className="leading-7 text-muted-foreground">
             Your personal data will be kept by us for:
           </p>
@@ -134,11 +135,11 @@ export default function PrivacyPage() {
               official minutes have been approved.
             </li>
           </ul> */}
-        </section>
+        {/* </section> */}
 
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">YOUR RIGHTS</h2>
-          <ul className="text-muted-foreground list-inside list-disc pl-4">
+        <section className="govuk-!-margin-top-6">
+          <h2 className="govuk-heading-m">YOUR RIGHTS</h2>
+          <ul className="govuk-list govuk-list--bullet govuk-hint">
             <li>
               You have the right to request information about how your personal
               data are processed, and to request a copy of that personal data.
@@ -180,9 +181,9 @@ export default function PrivacyPage() {
           </ul>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">INTERNATIONAL TRANSFERS</h2>
-          <p className="text-muted-foreground leading-7">
+        <section className="govuk-!-margin-top-6">
+          <h2 className="govuk-heading-m">INTERNATIONAL TRANSFERS</h2>
+          <p className="govuk-body govuk-hint">
             As your personal data is stored on our Corporate IT infrastructure,
             and shared with our data processors, it may be transferred and
             stored securely outside the UK. Where that is the case it will be
@@ -190,7 +191,7 @@ export default function PrivacyPage() {
             reliance on Standard Contractual Clauses, or reliance on a UK
             International Data Transfer Agreement.
           </p>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             As your data will be shared with AWS and Microsoft who provides
             hosting and the provision of the Azure LLM services to us, it may be
             stored securely outside the UK. Where that is the case it will be
@@ -199,9 +200,9 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">COMPLAINTS</h2>
-          <p className="text-muted-foreground leading-7">
+        <section className="govuk-!-margin-top-6">
+          <h2 className="govuk-heading-m">COMPLAINTS</h2>
+          <p className="govuk-body govuk-hint">
             If you consider that your personal data has been misused or
             mishandled, you may make a complaint to the Information
             Commissioner, who is an independent regulator. The Information
@@ -213,19 +214,19 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">CONTACT DETAILS</h2>
-          <p className="text-muted-foreground leading-7">
+        <section className="govuk-!-margin-top-6">
+          <h2 className="govuk-heading-m">CONTACT DETAILS</h2>
+          <p className="govuk-body govuk-hint">
             The data controller for your personal data is the Cabinet Office.
             The contact details for the data controller are: Cabinet Office, 70
             Whitehall, London, SW1A 2AS, or 0207 276 1234, or you can use this
             webform.
           </p>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             The contact details for the data controller&apos;s Data Protection
             Officer are: dpo@cabinetoffice.gov.uk.
           </p>
-          <p className="text-muted-foreground leading-7">
+          <p className="govuk-body govuk-hint">
             The Data Protection Officer provides independent advice and
             monitoring of Cabinet Office&apos;s use of personal information.
           </p>

@@ -1,7 +1,9 @@
 import logging
 from datetime import UTC, datetime
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
+from pydantic import EmailStr
 
 from backend.api.dependencies import (
     OrganisationAdminDep,
@@ -19,6 +21,7 @@ from common.types import (
     GetUserResponse,
     PaginatedUsersResponse,
     UserCreate,
+    UserExistsResponse,
     UserUpdateRoles,
 )
 
@@ -197,3 +200,22 @@ async def delete_user(session: SQLSessionDep, user: UserDep, target_user: Target
 
     await session.delete(target_user)
     await session.commit()
+
+
+@users_router.get("/user/exists", response_model=UserExistsResponse)
+async def user_exists(
+    email: EmailStr,
+    organisation_id: UUID,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> UserExistsResponse:
+    organisation = await session.get(Organisation, organisation_id)
+    if not organisation:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, organisation):
+        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
+
+    existing_user = await get_user_by_email(session, email)
+
+    return UserExistsResponse(exists=existing_user is not None)

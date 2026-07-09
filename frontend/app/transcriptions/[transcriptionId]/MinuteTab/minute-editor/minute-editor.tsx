@@ -12,7 +12,7 @@ import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
   MinuteListItem,
   MinuteVersionResponse,
-  Transcription,
+  TranscriptionGetResponse,
 } from '@/lib/client'
 import {
   createMinuteVersionMinutesMinuteIdVersionsPostMutation,
@@ -46,7 +46,7 @@ export function MinuteEditor({
   transcription,
   minute,
 }: {
-  transcription: Transcription
+  transcription: TranscriptionGetResponse
   minute: MinuteListItem
 }) {
   const [version, setVersion] = useState(0)

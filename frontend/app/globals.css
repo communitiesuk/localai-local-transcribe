@@ -117,6 +117,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -128,6 +129,7 @@
   grid-template-areas:
     'alpha'
     'nav';
+
   @media (width > 72rem) {
     grid-template-areas: 'nav alpha';
     grid-template-columns: 1fr max-content 1fr;
@@ -257,12 +259,14 @@
   color: white;
   width: 100%;
 }
+
 .editor-content pre {
   width: 100%;
   background-color: #444;
   padding: 0.5rem;
   border-radius: 0.5rem;
 }
+
 .editor-content code:not(pre code) {
   color: red;
 }
@@ -294,10 +298,63 @@
 .govuk-service-navigation__link {
   white-space: nowrap;
 }
+
 .govuk-service-navigation__item {
   /* Reset tablet-era vertical margins so open menu spacing
        matches the native mobile collapsed-menu appearance */
   margin-top: 6px !important;
   padding: 6px !important;
   line-height: inherit !important;
+}
+
+.app-panel {
+  box-sizing: border-box;
+}
+
+.app-panel--border {
+  border: 1px solid var(--border);
+}
+
+.app-panel--padding-0 {
+  padding: 0;
+}
+
+.app-panel--padding-2 {
+  padding: 10px;
+}
+
+@media (min-width: 40.0625em) {
+  .app-panel--padding-2 {
+    padding: 10px;
+  }
+}
+
+.app-panel--padding-4 {
+  padding: 15px;
+}
+
+@media (min-width: 40.0625em) {
+  .app-panel--padding-4 {
+    padding: 20px;
+  }
+}
+
+.app-panel--padding-6 {
+  padding: 25px;
+}
+
+@media (min-width: 40.0625em) {
+  .app-panel--padding-6 {
+    padding: 30px;
+  }
+}
+
+.app-panel--padding-8 {
+  padding: 40px;
+}
+
+@media (min-width: 40.0625em) {
+  .app-panel--padding-8 {
+    padding: 50px;
+  }
 }
