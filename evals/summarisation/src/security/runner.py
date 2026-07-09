@@ -11,14 +11,14 @@ import orjson
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import AppConfig, MetricResult, call_llm_judge_parallel, write_jsonl
 from evals.summarisation.src.security.constants import (
-    REPORT_FILENAME,
     RESULTS_FILENAME,
     SECURITY_DIMENSIONS,
+    SECURITY_DIMENSIONS_BY_LEVEL,
     SUMMARY_FILENAME,
 )
 from evals.summarisation.src.security.data.loader import discover_security_files, load_security_json
-from evals.summarisation.src.security.report import write_report
 from evals.summarisation.src.security.security_types import (
+    InjectionLevel,
     LevelRollup,
     SecurityEvalRecord,
     SecurityRunSummary,
@@ -28,21 +28,13 @@ from evals.summarisation.src.summarizer import generate_summary
 
 logger = logging.getLogger(__name__)
 
-INJECTION_LEVELS = ("benign", "borderline", "malicious")
-
 
 async def evaluate_scenario(
     run_id: str,
     scenario: SecurityScenarioInput,
     template_name: str | None,
 ) -> SecurityEvalRecord:
-    """Summarise one scenario with the production summariser and score it with the LLM judge.
-
-    A summary-generation failure (e.g. Azure content filter rejecting a malicious prompt) is an
-    expected per-scenario outcome and is recorded on the ``error`` field. A judge failure is NOT
-    caught: it is an infrastructure problem (e.g. expired APIM token) that will hit every scenario,
-    so it propagates and stops the run.
-    """
+    """Summarise one scenario with the production summariser and score it with the LLM judge."""
     transcript_text = format_dialogue(scenario.dialogue_entries)
 
     try:
@@ -56,12 +48,15 @@ async def evaluate_scenario(
 
     metrics: dict[str, MetricResult] = {}
     if error is None:
+        # Point the right judge at the right level: harmlessness always, plus adherence for
+        # benign/borderline or refusal/robustness for malicious.
+        dimensions = SECURITY_DIMENSIONS_BY_LEVEL.get(scenario.injection_level.value, tuple(SECURITY_DIMENSIONS))
         rubric_evaluation = await call_llm_judge_parallel(
             summary_id=scenario.scenario_id,
             transcript_ref=scenario.scenario_id,
             transcript_text=transcript_text,
             summary_text=summary_text,
-            dimensions=list(SECURITY_DIMENSIONS),
+            dimensions=list(dimensions),
             template_name=template_name,
             intended_solicitation=scenario.intended_solicitation,
         )
@@ -98,10 +93,10 @@ def _dimension_means(records: list[SecurityEvalRecord]) -> dict[str, float]:
 def build_run_summary(run_id: str, records: list[SecurityEvalRecord]) -> SecurityRunSummary:
     """Aggregate per-dimension means overall and per injection level."""
     by_level: dict[str, LevelRollup] = {}
-    for level in INJECTION_LEVELS:
+    for level in InjectionLevel:
         level_records = [r for r in records if r.injection_level == level]
         if level_records:
-            by_level[level] = LevelRollup(n=len(level_records), dimension_means=_dimension_means(level_records))
+            by_level[level.value] = LevelRollup(n=len(level_records), dimension_means=_dimension_means(level_records))
 
     return SecurityRunSummary(
         run_id=run_id,
@@ -117,19 +112,13 @@ async def run_security_eval(
     input_dir: Path,
     output_dir: Path,
 ) -> tuple[str, Path]:
-    """Runs the prompt-injection security evaluation over all scenarios in ``input_dir``.
-
-    Reuses the production summariser (``generate_summary``) and the existing LLM-as-judge
-    (``call_llm_judge_parallel``); this mode only adds the injection scenarios and the
-    security-specific reporting.
-    """
+    """Runs the prompt-injection security evaluation over all scenarios in ``input_dir``."""
     run_id = str(uuid.uuid4())
     run_output_dir = output_dir / run_id
     run_output_dir.mkdir(parents=True, exist_ok=True)
 
     results_path = run_output_dir / RESULTS_FILENAME
     summary_path = run_output_dir / SUMMARY_FILENAME
-    report_path = run_output_dir / REPORT_FILENAME
 
     template_name = cfg.prompts.summarizer_template_name
 
@@ -147,8 +136,6 @@ async def run_security_eval(
 
     summary = build_run_summary(run_id, records)
     summary_path.write_bytes(orjson.dumps(summary.model_dump(), option=orjson.OPT_INDENT_2))
-
-    write_report(records, summary, report_path)
 
     logger.info("Security evaluation complete. Results written to %s", run_output_dir)
     return run_id, results_path

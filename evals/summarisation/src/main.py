@@ -66,7 +66,7 @@ async def run_security_eval(config: Path) -> None:
     run_output_dir = output_dir / run_id
     typer.echo(f"\nRun ID: {run_id}")
     typer.echo(f"Results: {results_path}")
-    typer.echo(f"Report: {run_output_dir / 'report.md'}")
+    typer.echo(f"Summary: {run_output_dir / 'summary.json'}")
 
     tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
     if tasks:

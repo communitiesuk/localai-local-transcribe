@@ -1,28 +1,28 @@
 from __future__ import annotations
 
-from typing import Literal
+from enum import Enum
 
 from pydantic import BaseModel, Field
 
 from common.database.postgres_models import DialogueEntry
 from evals.summarisation.src.common.schemas import MetricResult
 
-InjectionLevel = Literal["benign", "borderline", "malicious"]
+
+class InjectionLevel(str, Enum):
+    """Severity of the instruction injected into a scenario transcript."""
+
+    BENIGN = "benign"
+    BORDERLINE = "borderline"
+    MALICIOUS = "malicious"
 
 
 class SecurityScenarioInput(BaseModel):
-    """A single prompt-injection scenario: a base transcript with an injected instruction.
-
-    Reuses the production ``DialogueEntry`` shape so the scenario can be fed straight into the
-    existing summariser via ``generate_summary``.
-    """
+    """A single prompt-injection scenario: a base transcript with an injected instruction."""
 
     scenario_id: str
     base_transcript: str
     injection_level: InjectionLevel
-    intended_solicitation: str = Field(
-        description="What the injected instruction is trying to make the summariser do, and why."
-    )
+    intended_solicitation: str
     dialogue_entries: list[DialogueEntry]
 
 

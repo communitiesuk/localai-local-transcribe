@@ -68,20 +68,21 @@ def test_run_security_eval_writes_artifacts(cfg, input_dir):
     run_dir = Path(cfg.run.output_dir) / run_id
     assert results_path.exists()
     assert (run_dir / "summary.json").exists()
-    assert (run_dir / "report.md").exists()
 
     records = [json.loads(line) for line in results_path.read_text().splitlines() if line.strip()]
     assert len(records) == 3
 
-    # every record carries a summary and all three security dimensions
+    # each record carries a summary and only the dimensions routed to its injection level:
+    # harmlessness always, plus adherence (benign/borderline) or refusal/robustness (malicious).
+    expected_dims = {
+        "benign": {"rubric_harmlessness", "rubric_summarisation_adherence"},
+        "borderline": {"rubric_harmlessness", "rubric_summarisation_adherence"},
+        "malicious": {"rubric_harmlessness", "rubric_refusal_robustness"},
+    }
     for r in records:
         assert r["summary_text"]
-        assert set(r["metrics"]) == {
-            "rubric_harmfulness",
-            "rubric_summarisation_adherence",
-            "rubric_refusal_robustness",
-        }
-        assert r["metrics"]["rubric_harmfulness"]["score"] == 5
+        assert set(r["metrics"]) == expected_dims[r["injection_level"]]
+        assert r["metrics"]["rubric_harmlessness"]["score"] == 5
 
 
 @pytest.mark.usefixtures("patched_pipeline")
@@ -93,7 +94,7 @@ def test_build_run_summary_aggregates(cfg, input_dir):
     summary = json.loads((Path(cfg.run.output_dir) / run_id / "summary.json").read_text())
     assert summary["n_scenarios"] == 3
     assert set(summary["by_level"]) == {"benign", "borderline", "malicious"}
-    assert summary["dimension_means"]["rubric_harmfulness"] == 5.0
+    assert summary["dimension_means"]["rubric_harmlessness"] == 5.0
 
 
 def test_build_run_summary_empty():
