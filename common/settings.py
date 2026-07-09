@@ -149,8 +149,15 @@ class Settings(BaseSettings):
     # if using azure-service-bus
     AZURE_SB_CONNECTION_STRING: str | None = Field(description="Azure service bus connection string", default=None)
 
-    GOVNOTIFY_API_KEY: str = Field()
-    GOVNOTIFY_INVITE_TEMPLATE_ID: str = Field()
+    EMAIL_SERVICE: str = Field(
+        description="An emailing service provider. Supports either 'local' or 'gov_notify'.", default="local"
+    )
+
+    # if using gov notify
+    GOVNOTIFY_API_KEY: str = Field(description="Generate a key for this project on the GovNotify website.")
+    GOVNOTIFY_INVITE_TEMPLATE_ID: str = Field(
+        description="Use the GovNotify website to create an email template and copy in the template ID."
+    )
 
     # if running the worker inside a docker container (use "0.0.0.0" )
     RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")

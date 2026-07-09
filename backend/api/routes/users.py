@@ -11,7 +11,7 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
-from backend.services.notifications.client import Notification
+from backend.services.notifications.registry import get_email_notifification
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email
@@ -29,7 +29,7 @@ from common.types import (
 
 settings = get_settings()
 
-notification = Notification()
+notification = get_email_notifification()
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
 

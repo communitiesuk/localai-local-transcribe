@@ -8,16 +8,16 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
-class Notification:
-    def __init__(self):
+class GovNotifyNotification:
+    def __init__(self) -> None:
         self.client: NotificationsAPIClient = NotificationsAPIClient(settings.GOVNOTIFY_API_KEY)
-        self.invite_template_id = settings.GOVNOTIFY_INVITE_TEMPLATE_ID
+        self.invite_template = settings.GOVNOTIFY_INVITE_TEMPLATE_ID
 
-    def send_email(self, email: str):
+    def send_email(self, email: str) -> None:
         try:
             self.client.send_email_notification(
                 email,
-                self.invite_template_id,
+                self.invite_template,
             )
         except Exception:
-            logger.exception("Failed to send invite email to %m", email)
+            logger.exception("Failed to send invite email to %s", email)
