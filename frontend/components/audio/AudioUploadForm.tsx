@@ -13,7 +13,6 @@ export const AudioUploadForm = () => {
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-        <p className="govuk-hint">Maximum file size: 5GB</p>
         <Controller
           control={form.control}
           name="file"
