@@ -173,13 +173,15 @@ export function TranscriptionTab({
         return
       }
 
+      const originalSpeaker = entry.speaker
+
       await applySpeakerNameChange({
         indices: [index],
         newSpeaker,
         persist: () =>
           updateDialogueEntrySpeaker(index, {
             new_speaker: newSpeaker,
-            expected_speaker: entry.speaker,
+            expected_speaker: originalSpeaker,
             expected_start_time: entry.start_time,
             expected_end_time: entry.end_time,
           }),
