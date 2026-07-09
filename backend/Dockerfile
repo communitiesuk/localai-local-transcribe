@@ -9,7 +9,7 @@ RUN apt-get update && \
 
 RUN pip install --no-cache-dir poetry==2.4.1 poetry-plugin-export==1.9.0
 WORKDIR /app
-COPY pyproject.toml poetry.lock README.md ./
+COPY pyproject.toml README.md ./
 
 # Install packages, strip debug symbols, and clean up pip/setuptools directly in Stage 1
 RUN poetry export -f requirements.txt --output requirements.txt --with backend --without dev --without-hashes && \
