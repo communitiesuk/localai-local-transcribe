@@ -65,7 +65,8 @@ RUN groupadd -g 1000 appuser && \
 WORKDIR /app
 
 # Create writable directories
-RUN mkdir -p /app/config /app/logs && \
+# (no /app/logs - logs go to CloudWatch, nothing writes locally, same as backend)
+RUN mkdir -p /app/config && \
     chown -R appuser:appuser /app
 
 # Copy built site-packages from builder (already pre-cleaned & stripped)

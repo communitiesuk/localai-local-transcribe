@@ -27,16 +27,22 @@ RUN poetry export -f requirements.txt --output requirements.txt --with backend -
 # ==========================================
 FROM python:3.12-slim
 
+# curl is required by the ECS healthcheck (see task_definition.tf:264)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
+
 # Create non-root user
 RUN groupadd -g 1000 appuser && useradd -u 1000 -g appuser -m -s /bin/bash appuser
 
 WORKDIR /app
 
 # Create necessary directories and ensure appuser ownership
-RUN mkdir -p /app/config /app/logs && \
+# (no /app/logs - logs go to CloudWatch via the ECS log driver, nothing writes locally)
+RUN mkdir -p /app/config && \
     chown -R appuser:appuser /app
 
-# Copy ONLY the optimized third-party site-packages from builder
+# Copy only the site-packages from the builder stage to the runner stage
 COPY --from=builder /app/site-packages /usr/local/lib/python3.12/site-packages
 
 # Copy only what the backend needs to run directly to /app
@@ -49,9 +55,12 @@ COPY --chown=appuser:appuser backend/entrypoint.sh .
 # Ensure entrypoint is executable
 RUN chmod +x backend/entrypoint.sh
 
-# Set PATH so executables in site-packages/bin (like alembic, uvicorn) are found
+# Set PATH so executables in site-packages/bin (like alembic, uvicorn) are found.
+# site-packages now lives at the default interpreter path
+# (/usr/local/lib/python3.12/site-packages), so PYTHONPATH no longer needs to
+# point there - Python finds it automatically. PYTHONPATH=/app is what makes
+# our own backend/common/alembic source importable.
 ENV PATH="/usr/local/lib/python3.12/site-packages/bin:${PATH}" \
-    # Point PYTHONPATH to /app so Python cleanly resolves your source imports
     PYTHONPATH=/app
 
 USER appuser
