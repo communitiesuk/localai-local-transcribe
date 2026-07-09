@@ -31,7 +31,7 @@ def test_counterfactual_metric_result_score_bounds():
 def test_iteration_metrics_valid():
     metrics = IterationMetrics(
         metrics={
-            "faithfulness": CounterfactualMetricResult(score=0.8, reason="Good"),
+            "accuracy": CounterfactualMetricResult(score=0.8, reason="Good"),
             "coverage": CounterfactualMetricResult(score=0.7, reason="OK"),
         },
         sentiment_score=0.5,
@@ -43,13 +43,13 @@ def test_iteration_metrics_valid():
 def test_iteration_metrics_sentiment_bounds():
     with pytest.raises(ValidationError):
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
             sentiment_score=1.5,
         )
 
     with pytest.raises(ValidationError):
         IterationMetrics(
-            metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+            metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
             sentiment_score=-1.5,
         )
 
@@ -122,18 +122,18 @@ def test_counterfactual_eval_record_valid():
         axis_of_change="male_to_female",
         iterations_original=[
             IterationMetrics(
-                metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+                metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
                 sentiment_score=0.5,
             )
         ],
         iterations_counterfactual=[
             IterationMetrics(
-                metrics={"faithfulness": CounterfactualMetricResult(score=0.7, reason="OK")},
+                metrics={"accuracy": CounterfactualMetricResult(score=0.7, reason="OK")},
                 sentiment_score=0.4,
             )
         ],
-        metrics_original_stats={"faithfulness": MetricStatistics(mean=0.8, std=0.0, values=[0.8])},
-        metrics_counterfactual_stats={"faithfulness": MetricStatistics(mean=0.7, std=0.0, values=[0.7])},
+        metrics_original_stats={"accuracy": MetricStatistics(mean=0.8, std=0.0, values=[0.8])},
+        metrics_counterfactual_stats={"accuracy": MetricStatistics(mean=0.7, std=0.0, values=[0.7])},
         sentiment_delta_stats=MetricStatistics(mean=-0.1, std=0.0, values=[-0.1]),
         latency_ms={"summarize_original": 100},
     )
@@ -158,18 +158,18 @@ def test_counterfactual_eval_record_with_error():
         axis_of_change="male_to_female",
         iterations_original=[
             IterationMetrics(
-                metrics={"faithfulness": CounterfactualMetricResult(score=0.8, reason="Good")},
+                metrics={"accuracy": CounterfactualMetricResult(score=0.8, reason="Good")},
                 sentiment_score=0.5,
             )
         ],
         iterations_counterfactual=[
             IterationMetrics(
-                metrics={"faithfulness": CounterfactualMetricResult(score=0.7, reason="OK")},
+                metrics={"accuracy": CounterfactualMetricResult(score=0.7, reason="OK")},
                 sentiment_score=0.4,
             )
         ],
-        metrics_original_stats={"faithfulness": MetricStatistics(mean=0.8, std=0.0, values=[0.8])},
-        metrics_counterfactual_stats={"faithfulness": MetricStatistics(mean=0.7, std=0.0, values=[0.7])},
+        metrics_original_stats={"accuracy": MetricStatistics(mean=0.8, std=0.0, values=[0.8])},
+        metrics_counterfactual_stats={"accuracy": MetricStatistics(mean=0.7, std=0.0, values=[0.7])},
         sentiment_delta_stats=MetricStatistics(mean=-0.1, std=0.0, values=[-0.1]),
         latency_ms={"summarize_original": 100},
         error={"type": "ValueError", "message": "Test error"},

@@ -25,3 +25,28 @@ export function hasAnyRole(
 
   return userRolesList.some((role) => allowedRoles.includes(role))
 }
+
+export function parseDomains(value: string): string[] {
+  return value
+    .split('\n')
+    .map((domain) => domain.trim())
+    .filter(Boolean)
+}
+
+export function formatCurrentDateTime() {
+  const now = new Date()
+
+  const time = now.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+
+  const date = now.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  return `${time} on ${date}`
+}

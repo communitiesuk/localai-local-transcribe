@@ -5,14 +5,20 @@ import { Control, Controller } from 'react-hook-form'
 export const TranscriptionTextArea = ({
   index,
   control,
+  onSaveText,
 }: {
   index: number
   control: Control<DialogueEntryForm>
+  onSaveText: (
+    index: number,
+    newText: string,
+    previousText: string
+  ) => Promise<void>
 }) => {
   return (
     <div className="flex-1">
       <Controller
-        render={({ field: { onChange, ...field } }) => (
+        render={({ field }) => (
           <p
             className="flex-1 cursor-text rounded px-2 transition-all hover:bg-gray-100 hover:shadow-sm"
             onClick={(e) => {
@@ -28,7 +34,8 @@ export const TranscriptionTextArea = ({
               const newText = target.innerText.trim()
 
               if (newText !== field.value) {
-                onChange(newText)
+                // Rollback is handled in the parent callback; prevent unhandled rejections from blur events.
+                void onSaveText(index, newText, field.value).catch(() => {})
 
                 posthog.capture('transcript_text_edited', {
                   entry_index: index,

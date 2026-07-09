@@ -9,34 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
 from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
-from evals.summarisation.src.constants import CONCURRENCY
+from evals.summarisation.src.constants import CONCURRENCY, normalise_judge_score
 from evals.summarisation.src.judge import build_system_prompt, build_user_message
-
-
-def load_system_prompt(dimension: str | None = None) -> str:
-    """Return the rendered system prompt for a given rubric dimension.
-
-    Uses the existing Jinja template via ``build_system_prompt``.
-    """
-    return build_system_prompt(dimension)
-
-
-def make_dynamic_signature(metric_name: str, rubric: str) -> type[dspy.Signature]:
-    """Create a DSPy ``Signature`` subclass for a specific evaluation metric.
-
-    The generated class contains the fields expected by the judge LLM and embeds
-    the provided *rubric* text in its docstring.
-    """
-    class_name = f"{metric_name.title().replace('_', '')}Signature"
-    docstring = f"Rubric for {metric_name}: {rubric}"
-    attrs = {
-        "__doc__": docstring,
-        "dialogue": dspy.InputField(desc="Dialogue text"),
-        "reference_summary": dspy.InputField(desc="Gold summary from dataset"),
-        "candidate_summary": dspy.InputField(desc="Model-generated summary"),
-        "evaluation_result": dspy.OutputField(desc="JSON with rating and reason"),
-    }
-    return type(class_name, (dspy.Signature,), attrs)
 
 
 class DimensionEvaluation(BaseModel):
@@ -113,20 +87,9 @@ class DialogSummaryMetric:
     criterion: str
     pass_threshold: int
 
-    def evaluate(
-        self,
-        *,
-        example: DialogExample,
-        prediction: dspy.Prediction,
-    ) -> MetricResult:
-        """Evaluates prediction against example using rubric judge LLM for specific criterion."""
-        rubric_dim = self.criterion
-        # Map configured metric names to rubric dimension names
-        if rubric_dim == "faithfulness":
-            rubric_dim = "accuracy"
-        elif rubric_dim in ("conciseness", "coherence"):
-            rubric_dim = "readability"
-
+    def _build_judge_messages(
+        self, rubric_dim: str, example: DialogExample, prediction: dspy.Prediction
+    ) -> tuple[str, str]:
         sys_prompt = build_system_prompt(rubric_dim)
         user_msg = build_user_message(
             summary_id=example.example_id,
@@ -134,9 +97,9 @@ class DialogSummaryMetric:
             transcript_text=example.dialogue,
             summary_text=prediction.summary,
         )
+        return sys_prompt, user_msg
 
-        rubric_evaluation = asyncio.run(call_llm_judge(sys_prompt, user_msg))
-
+    def _build_result(self, rubric_dim: str, rubric_evaluation: dict) -> MetricResult:
         dim_eval = rubric_evaluation["dimensions"].get(rubric_dim)
         if dim_eval is None and rubric_evaluation["dimensions"]:
             first_key = next(iter(rubric_evaluation["dimensions"]))
@@ -149,12 +112,36 @@ class DialogSummaryMetric:
             )
 
         score = int(dim_eval["score"])
-        scaled_score = (score - 1) / 4.0
+        scaled_score = normalise_judge_score(score)
 
         return MetricResult(
             score=scaled_score,
             reason=f"rubric_{rubric_dim}_score={score} :: {dim_eval['rationale']}",
         )
+
+    async def evaluate_async(
+        self,
+        *,
+        example: DialogExample,
+        prediction: dspy.Prediction,
+    ) -> MetricResult:
+        """Evaluate prediction using the rubric judge LLM, awaiting the judge call directly.
+
+        Use this from within a running event loop (e.g. the bias pipeline).
+        """
+        rubric_dim = self.criterion
+        sys_prompt, user_msg = self._build_judge_messages(rubric_dim, example, prediction)
+        rubric_evaluation = await call_llm_judge(sys_prompt, user_msg)
+        return self._build_result(rubric_dim, rubric_evaluation)
+
+    def evaluate(
+        self,
+        *,
+        example: DialogExample,
+        prediction: dspy.Prediction,
+    ) -> MetricResult:
+        """Synchronous wrapper around :meth:`evaluate_async` for non-async callers."""
+        return asyncio.run(self.evaluate_async(example=example, prediction=prediction))
 
 
 def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:

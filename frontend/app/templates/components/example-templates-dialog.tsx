@@ -1,7 +1,6 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { GovukButton, GovukRadios } from '@/components/govuk'
 import {
   Dialog,
   DialogContent,
@@ -10,9 +9,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { TemplateData } from '@/types/templates'
-import { FileText } from 'lucide-react'
 import posthog from 'posthog-js'
-
 import { useState } from 'react'
 
 interface ExampleTemplatesDialogProps {
@@ -25,46 +22,73 @@ export function ExampleTemplatesDialog({
   examples,
 }: ExampleTemplatesDialogProps) {
   const [open, setOpen] = useState(false)
-  const handleSelectExample = (template: TemplateData) => {
+  const [selectedValue, setSelectedValue] = useState<string | undefined>(
+    undefined
+  )
+
+  const handleUseTemplate = () => {
+    const template = examples.find((e) => e.name === selectedValue)
+    if (!template) return
     onSelectTemplate(template)
     setOpen(false)
+    setSelectedValue(undefined)
     posthog.capture('template_example_selected', {
       example_name: template.name,
     })
   }
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild type="button">
-        <Button variant="outline">
-          <FileText className="h-4 w-4" />
-          Try an example
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[80vh] min-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Choose an example template</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-3 gap-4">
-          {examples.map((template, index) => (
-            <Card key={index} className="p-4">
-              <div>
-                <h3 className="mb-1 text-lg font-semibold">{template.name}</h3>
-                <p className="text-sm text-gray-600">{template.description}</p>
-              </div>
+  const radioOptions = examples.map((template) => ({
+    label: template.name,
+    value: template.name,
+    hint: template.description,
+  }))
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSelectExample(template)}
-                  className="flex items-center gap-1"
-                >
-                  Use this template
-                </Button>
-              </div>
-            </Card>
-          ))}
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) setSelectedValue(undefined)
+      }}
+    >
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className="govuk-link govuk-!-font-size-19 govuk-!-margin-bottom-0"
+        >
+          Try an example
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="govuk-heading-m govuk-!-margin-bottom-4">
+            Try an example
+          </DialogTitle>
+        </DialogHeader>
+        <GovukRadios
+          name="example-template"
+          value={selectedValue}
+          onChange={setSelectedValue}
+          options={radioOptions}
+          className="govuk-!-margin-bottom-6"
+        />
+        <div className="flex gap-3">
+          <GovukButton
+            type="button"
+            onClick={handleUseTemplate}
+            disabled={!selectedValue}
+            className="govuk-!-margin-bottom-0"
+          >
+            Use template
+          </GovukButton>
+          <GovukButton
+            type="button"
+            variant="secondary"
+            className="govuk-!-margin-bottom-0"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </GovukButton>
         </div>
       </DialogContent>
     </Dialog>

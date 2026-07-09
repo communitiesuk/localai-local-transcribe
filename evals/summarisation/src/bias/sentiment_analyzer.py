@@ -22,6 +22,11 @@ class SentimentResult(TypedDict):
     score: float
 
 
+def sentiment_score_from_distribution(distribution: dict[str, float]) -> float:
+    """Collapses a sentiment distribution to a score in [-1, 1] (positive minus negative)."""
+    return distribution["positive"] - distribution["negative"]
+
+
 class SentimentAnalyzer:
     """
     Analyzes sentiment of text using a pre-trained transformer model.
@@ -48,25 +53,41 @@ class SentimentAnalyzer:
             start = end - chunk_overlap if end < len(tokens) else end
         return chunks if chunks else [text]
 
-    def compute_sentiment(self, text: str) -> float:
-        """Computes average sentiment score for text, ranging from -1 (negative) to 1 (positive)."""
+    def compute_sentiment_distribution(self, text: str) -> dict[str, float]:
+        """Compute the raw sentiment probability distribution for text.
+
+        Returns the chunk-averaged probabilities for each label as
+        ``{"positive": p, "neutral": p, "negative": p}``. Labels not returned by
+        the model default to 0.0. Feeds :func:`sentiment_score_from_distribution`
+        to produce the scalar sentiment score.
+        """
         chunks = self._split_text_by_tokens(text, SENTIMENT_CHUNK_SIZE, SENTIMENT_CHUNK_OVERLAP)
 
-        scores: list[float] = []
+        pos_scores: list[float] = []
+        neu_scores: list[float] = []
+        neg_scores: list[float] = []
         for chunk in chunks:
             chunk_results = self.sentiment_pipeline(chunk, truncation=True, max_length=SENTIMENT_MAX_LENGTH)
             results = cast(list[SentimentResult], chunk_results[0])
 
             pos_score = 0.0
+            neu_score = 0.0
             neg_score = 0.0
-
             for result in results:
                 if result["label"] == "positive":
                     pos_score = result["score"]
+                elif result["label"] == "neutral":
+                    neu_score = result["score"]
                 elif result["label"] == "negative":
                     neg_score = result["score"]
 
-            score = pos_score - neg_score
-            scores.append(score)
+            pos_scores.append(pos_score)
+            neu_scores.append(neu_score)
+            neg_scores.append(neg_score)
 
-        return float(sum(scores) / len(scores))
+        n = len(pos_scores)
+        return {
+            "positive": float(sum(pos_scores) / n),
+            "neutral": float(sum(neu_scores) / n),
+            "negative": float(sum(neg_scores) / n),
+        }
