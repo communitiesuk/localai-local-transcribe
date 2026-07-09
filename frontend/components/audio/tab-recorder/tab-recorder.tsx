@@ -308,8 +308,13 @@ function TabRecorder({
               <div className="govuk-inset-text govuk-!-margin-top-0">
                 <p className="govuk-body">
                   Open your virtual meeting in another tab, then start recording
-                  below. When prompted, share that tab and switch on &quot;Share
+                  below. When prompted to share, turn on &quot;Share
                   audio&quot;.
+                </p>
+                <p className="govuk-body">
+                  On Windows, share your entire screen, as sharing a single
+                  tab&apos;s audio is not supported. On Mac, you can share just
+                  the meeting tab.
                 </p>
                 <GovukButton
                   type="button"

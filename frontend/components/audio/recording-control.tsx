@@ -2,7 +2,6 @@
 
 import { GovukButton } from '@/components/govuk'
 import React, { useEffect, useRef, useState } from 'react'
-import { Pause, Play, Square } from 'lucide-react'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -313,24 +312,13 @@ export default function RecordingControl({
       {isRecording && !showStopConfirm && (
         <div className="flex justify-between gap-2">
           <GovukButton type="button" onClick={togglePause} variant="secondary">
-            {isPaused ? (
-              <>
-                <Play className="mr-2 size-4" aria-hidden="true" />
-                Resume Recording
-              </>
-            ) : (
-              <>
-                <Pause className="mr-2 size-4" aria-hidden="true" />
-                Pause Recording
-              </>
-            )}
+            {isPaused ? 'Resume Recording' : 'Pause Recording'}
           </GovukButton>
           <GovukButton
             type="button"
             onClick={handleStopRecording}
             variant="warning"
           >
-            <Square className="mr-2 size-4" aria-hidden="true" />
             Stop Recording
           </GovukButton>
         </div>
