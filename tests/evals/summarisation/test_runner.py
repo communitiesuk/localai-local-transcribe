@@ -164,7 +164,7 @@ def test_dialogue_to_entries_has_timestamps():
 
 def test_run_eval_contract_returns_valid_paths(tmp_path):
     """CONTRACT TEST: run_eval returns valid run_id and Path objects for results."""
-    cfg = _cfg(tmp_path, metrics=["faithfulness"])
+    cfg = _cfg(tmp_path, metrics=["accuracy"])
 
     mock_rows = [{"id": "1", "dialogue": "#A#: Hello.", "summary": "Greeting"}]
     mock_split = Mock()
@@ -179,8 +179,8 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
 
     mock_judge_response = {
         "dimensions": {
-            "coherence": {"score": "5", "rationale": "Good"},
-            "faithfulness": {"score": "5", "rationale": "Accurate"},
+            "readability": {"score": "5", "rationale": "Good"},
+            "accuracy": {"score": "5", "rationale": "Accurate"},
         }
     }
 
