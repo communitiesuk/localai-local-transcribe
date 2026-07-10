@@ -4,7 +4,8 @@ type LoadingSkeletonProps = {
 }
 
 /**
- * Shared loading placeholder used by the route-level `loading.tsx` files.
+ * Shared loading placeholder used by the root `loading.tsx`, which covers all
+ * nested routes that do not define their own.
  * Renders a heading bar and a set of content lines inside the canonical
  * GOV.UK grid so the skeleton matches the layout shell and there is no
  * visual jump when the real content resolves.
@@ -19,13 +20,13 @@ export function LoadingSkeleton({ rows = 4 }: LoadingSkeletonProps) {
         <span className="govuk-visually-hidden">Loading</span>
         <div
           aria-hidden="true"
-          className="govuk-!-margin-bottom-6 h-9 w-2/3 animate-pulse rounded bg-[#f3f2f1]"
+          className="govuk-!-margin-bottom-6 govuk-!-width-two-thirds h-9 animate-pulse rounded bg-[var(--govuk-border-colour)]"
         />
         <div aria-hidden="true" className="flex flex-col gap-4">
           {Array.from({ length: rows }).map((_, index) => (
             <div
               key={index}
-              className="h-5 w-full animate-pulse rounded bg-[#f3f2f1]"
+              className="govuk-!-width-full h-5 animate-pulse rounded bg-[var(--govuk-border-colour)]"
             />
           ))}
         </div>
