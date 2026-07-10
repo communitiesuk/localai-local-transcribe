@@ -10,9 +10,10 @@ ARG SENTRY_AUTH_TOKEN
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 ENV NEXT_PUBLIC_POSTHOG_API_KEY=$NEXT_PUBLIC_POSTHOG_API_KEY
 ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+RUN npm run openapi-ts
 RUN npm run build
 
-# Stage 2: Runner (Production)
+# Stage 2: Runit'sner (Production)
 FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
