@@ -14,7 +14,11 @@ vi.mock('react', async (importOriginal) => {
   return {
     ...actual,
     use: (promise: any) => {
-      if (promise && typeof promise.then === 'function' && '_value' in promise) {
+      if (
+        promise &&
+        typeof promise.then === 'function' &&
+        '_value' in promise
+      ) {
         return promise._value
       }
       return actual.use(promise)
