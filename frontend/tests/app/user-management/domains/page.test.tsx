@@ -2,7 +2,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import EditApprovedDomainsPage from '@/app/user-management/organisations/domains/page'
+import EditApprovedDomainsPage from '@/app/user-management/organisations/[organisationId]/domains/page'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
