@@ -27,6 +27,7 @@ async def get_current_user(
     Returns:
         User: The user matching the username in the token
     """
+
     authorization: str | None = x_amzn_oidc_data
 
     try:

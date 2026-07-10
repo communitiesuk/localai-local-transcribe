@@ -30,7 +30,7 @@ export const TemplateEditorToolbar = ({
   }
 
   return (
-    <Card className="rounded-b-none border-b-0 p-2">
+    <Card className="rounded-none border-x-0 border-t-0 border-b p-2 shadow-none">
       <div className="flex flex-wrap gap-1">
         <Button
           type="button"
