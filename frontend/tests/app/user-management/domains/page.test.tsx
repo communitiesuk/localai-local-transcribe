@@ -11,11 +11,14 @@ import { Suspense } from 'react'
 
 const mockBack = vi.fn()
 const mockPush = vi.fn()
+const mockParams = vi.fn(() => ({ organisationId: 'org-1' }))
+
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     back: mockBack,
     push: mockPush,
   }),
+  useParams: () => mockParams(),
 }))
 
 vi.mock('sonner', () => ({
@@ -63,8 +66,9 @@ describe('<EditApprovedDomainsPage />', () => {
     } as any)
 
     vi.mocked(useOrganisation).mockImplementation(((param?: any) => {
-      const organisationId =
-        typeof param === 'string' ? param : param?.organisationId || 'org-1'
+      const organisationId = typeof param === 'string'
+        ? param
+        : param?.organisationId || 'org-1'
 
       return {
         data: {
@@ -90,6 +94,7 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   const renderPage = async (params = { organisationId: 'org-1' }) => {
+    mockParams.mockReturnValue(params)
     await act(async () => {
       render(
         <Suspense fallback={<div>Loading...</div>}>
@@ -207,6 +212,17 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', async () => {
+    vi.mocked(useAuthorisedUser).mockReturnValue({
+      currentUser: {
+        id: 'user-1',
+        organisation_id: 'org-1',
+        roles: ['LOCAL_AUTHORITY_ADMIN'],
+      },
+      isAllowed: false,
+      isLoading: false,
+      isError: false,
+    } as any)
+
     await renderPage({ organisationId: 'different-org' })
     expect(
       await screen.findByText(
