@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { getOrganisationOrganisationsOrganisationIdGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
+import { Suspense } from 'react'
 
 const mockBack = vi.fn()
 const mockPush = vi.fn()
@@ -84,9 +85,12 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   const renderPage = (params = { organisationId: 'org-1' }) => {
-    return render(<EditApprovedDomainsPage params={Promise.resolve(params)} />)
-  }
-
+  return render(
+    <Suspense fallback={<div>Loading...</div>}>
+      <EditApprovedDomainsPage params={Promise.resolve(params)} />
+    </Suspense>
+  )
+}
   it('renders a loading state while the user or organisation is loading', () => {
     vi.mocked(useOrganisation).mockReturnValue({
       data: undefined,
