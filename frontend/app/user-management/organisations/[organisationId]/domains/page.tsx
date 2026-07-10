@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { use, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -14,7 +14,6 @@ import {
 
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
-import { useInviteUserStore } from '@/stores/use-invite-user-store'
 
 import { UserRole, parseDomains } from '@/lib/utils'
 import {
@@ -22,24 +21,25 @@ import {
   updateOrganisationOrganisationsOrganisationIdPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 
-export default function EditApprovedDomainsPage() {
+export default function EditApprovedDomainsPage(props: {
+  params: Promise<{ organisationId: string }>
+}) {
   const router = useRouter()
   const queryClient = useQueryClient()
 
+  const { organisationId } = use(props.params)
+
   const { currentUser, isLoading: userLoading } = useAuthorisedUser([
     UserRole.MHCLG_SUPPORT_ADMIN,
+    UserRole.LOCAL_AUTHORITY_ADMIN,
   ])
 
-  const { organisationId: selectedOrganisationId } = useInviteUserStore()
-
   const { data: organisation, isLoading: organisationLoading } =
-    useOrganisation(
-      selectedOrganisationId || currentUser?.organisation_id || ''
-    )
-
+    useOrganisation(organisationId)
+    
   const { mutateAsync, isPending } = useMutation({
-    ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
-  })
+      ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
+    })
 
   const onSubmit = useCallback(
     async (data: EditDomainsFormData) => {
@@ -75,6 +75,18 @@ export default function EditApprovedDomainsPage() {
       <div className="govuk-body flex items-center gap-2">
         <Loader2 className="animate-spin" />
         Loading...
+      </div>
+    )
+  }
+
+  if (
+    currentUser?.roles?.includes(UserRole.LOCAL_AUTHORITY_ADMIN) &&
+    currentUser.organisation_id?.toLowerCase() !== organisationId.toLowerCase()
+  ) {
+    return (
+      <div className="govuk-body flex items-center gap-2">
+        <Loader2 className="animate-spin" />
+        You are not authorised to edit domains for this organisation.
       </div>
     )
   }

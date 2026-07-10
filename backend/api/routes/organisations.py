@@ -97,13 +97,13 @@ async def update_organisation(
     session: SQLSessionDep,
     user: UserDep,
 ) -> OrganisationResponse:
-    """Update an organisation's allowed email domains. Only accessible to system admins."""
-    if not is_system_admin(user):
-        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
-
+    """Update an organisation's allowed email domains. Accessible to system admins or the organisation's own admin."""
     org = await session.get(Organisation, organisation_id)
     if not org:
         raise HTTPException(status_code=404, detail="Organisation not found")
+
+    if not is_admin_for_org(user, org):
+        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
     org.allowed_domains = request.allowed_domains
     await session.commit()
@@ -126,7 +126,7 @@ async def list_organisations_users(
     session: SQLSessionDep,
     user: UserDep,
     page: int = Query(DEFAULT_PAGE, ge=DEFAULT_PAGE),
-    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, le=MAX_PAGE_SIZE),
 ) -> PaginatedUsersResponse:
     if not is_system_admin(user):
         raise HTTPException(status_code=403, detail="Not authorized to access this resource")
@@ -135,4 +135,4 @@ async def list_organisations_users(
     if organisation is None:
         raise HTTPException(status_code=404, detail="Organisation not found")
 
-    return await get_paginated_users(session, organisation, page, page_size)
+    return await get_paginated_users(session, organisation, user, page, page_size)
