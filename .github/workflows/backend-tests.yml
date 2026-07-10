@@ -2,17 +2,19 @@ name: Backend Tests
 
 on:
   workflow_call:
-    inputs: 
-      python_version: 
+    inputs:
+      python_version:
         required: true
         type: string
-      poetry_version: 
+      poetry_version:
         required: true
         type: string
 
 env:
   ENVIRONMENT: test
   USE_ELASTICMQ: true
+  GOVNOTIFY_API_KEY: test-key
+  GOVNOTIFY_INVITE_TEMPLATE_ID: test-template
 
 permissions:
   contents: read
@@ -23,7 +25,6 @@ jobs:
     environment: release
 
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -40,17 +41,17 @@ jobs:
       - name: Configure Poetry to create .venv in project
         run: poetry config virtualenvs.in-project true
 
-      - name: Cache virtualenv 
-        uses: actions/cache@v4 
-        with: 
-          path: .venv 
+      - name: Cache virtualenv
+        uses: actions/cache@v4
+        with:
+          path: .venv
           key: venv-${{ runner.os }}-${{ inputs.python_version }}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
             venv-${{ runner.os }}-${{ inputs.python_version }}-
             venv-${{ runner.os }}-
 
       - name: Install dependencies
-        run: poetry sync --no-root --no-ansi --with dev 
+        run: poetry sync --no-root --no-ansi --with dev
 
       - name: Copy env file
         run: cp .env.example .env
@@ -67,7 +68,7 @@ jobs:
       - name: Run tests with coverage
         run: make test-cov
 
-      - name: Upload backend coverage HTML 
+      - name: Upload backend coverage HTML
         uses: actions/upload-artifact@v4
         if: always()
         with:
