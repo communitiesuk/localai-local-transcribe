@@ -85,12 +85,12 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   const renderPage = (params = { organisationId: 'org-1' }) => {
-  return render(
-    <Suspense fallback={<div>Loading...</div>}>
-      <EditApprovedDomainsPage params={Promise.resolve(params)} />
-    </Suspense>
-  )
-}
+    return render(
+      <Suspense fallback={<div>Loading...</div>}>
+        <EditApprovedDomainsPage params={Promise.resolve(params)} />
+      </Suspense>
+    )
+  }
   it('renders a loading state while the user or organisation is loading', () => {
     vi.mocked(useOrganisation).mockReturnValue({
       data: undefined,
@@ -192,15 +192,18 @@ describe('<EditApprovedDomainsPage />', () => {
 
   it('renders a Cancel link back to user management', async () => {
     renderPage()
-    expect(
-      await screen.findByRole('link', { name: 'Cancel' })
-    ).toHaveAttribute('href', '/user-management')
+    expect(await screen.findByRole('link', { name: 'Cancel' })).toHaveAttribute(
+      'href',
+      '/user-management'
+    )
   })
 
   it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', async () => {
     renderPage({ organisationId: 'different-org' })
     expect(
-      await screen.findByText(/You are not authorised to edit domains for this organisation/i)
+      await screen.findByText(
+        /You are not authorised to edit domains for this organisation/i
+      )
     ).toBeInTheDocument()
   })
 })
