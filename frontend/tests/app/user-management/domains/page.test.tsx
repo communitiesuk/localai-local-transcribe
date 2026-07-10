@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import EditApprovedDomainsPage from '@/app/user-management/organisations/[organisationId]/domains/page'
@@ -84,25 +84,28 @@ describe('<EditApprovedDomainsPage />', () => {
     } as any)
   })
 
-  const renderPage = (params = { organisationId: 'org-1' }) => {
-    return render(
-      <Suspense fallback={<div>Loading...</div>}>
-        <EditApprovedDomainsPage params={Promise.resolve(params)} />
-      </Suspense>
-    )
+  const renderPage = async (params = { organisationId: 'org-1' }) => {
+    await act(async () => {
+      render(
+        <Suspense fallback={<div>Loading...</div>}>
+          <EditApprovedDomainsPage params={Promise.resolve(params)} />
+        </Suspense>
+      )
+    })
   }
-  it('renders a loading state while the user or organisation is loading', () => {
+
+  it('renders a loading state while the user or organisation is loading', async () => {
     vi.mocked(useOrganisation).mockReturnValue({
       data: undefined,
       isLoading: true,
     } as any)
 
-    renderPage()
+    await renderPage()
     expect(screen.getByText('Loading...')).toBeInTheDocument()
   })
 
   it('renders the heading, back link, and prepopulates the textarea with the approved domains', async () => {
-    renderPage()
+    await renderPage()
 
     expect(
       await screen.findByRole('heading', { name: 'Edit approved domains' })
@@ -116,7 +119,7 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('renders the hint text and the expandable help section', async () => {
-    renderPage()
+    await renderPage()
 
     expect(
       await screen.findByText(/Please list any approved domains/i)
@@ -126,7 +129,7 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('triggers router.back on back link click', async () => {
-    renderPage()
+    await renderPage()
     await screen.findByRole('link', { name: 'Back' })
     await userEvent.click(screen.getByRole('link', { name: 'Back' }))
     expect(mockBack).toHaveBeenCalledTimes(1)
@@ -134,7 +137,7 @@ describe('<EditApprovedDomainsPage />', () => {
 
   it('submits the parsed domains list, updates the query cache, and navigates back on success', async () => {
     mockMutateAsync.mockResolvedValueOnce({})
-    renderPage()
+    await renderPage()
 
     const textarea = await screen.findByLabelText('Approved domains', {
       exact: false,
@@ -175,7 +178,7 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('shows a validation error and does not submit when all domains are removed', async () => {
-    renderPage()
+    await renderPage()
 
     const textarea = await screen.findByLabelText('Approved domains', {
       exact: false,
@@ -191,7 +194,7 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('renders a Cancel link back to user management', async () => {
-    renderPage()
+    await renderPage()
     expect(await screen.findByRole('link', { name: 'Cancel' })).toHaveAttribute(
       'href',
       '/user-management'
@@ -199,7 +202,7 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', async () => {
-    renderPage({ organisationId: 'different-org' })
+    await renderPage({ organisationId: 'different-org' })
     expect(
       await screen.findByText(
         /You are not authorised to edit domains for this organisation/i
