@@ -54,11 +54,12 @@ describe('<EditApprovedDomainsPage />', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    vi.mocked(useAuthorisedUser).mockImplementation(() => {
+    vi.mocked(useAuthorisedUser).mockImplementation(((options?: any) => {
       const currentParams = mockParams() as any
-      const isAllowed =
-        !currentParams?.organisationId ||
-        currentParams.organisationId === 'org-1'
+      const organisationId =
+        options?.organisationId || currentParams?.organisationId || 'org-1'
+      const isAllowed = organisationId === 'org-1'
+
       return {
         currentUser: {
           id: 'user-1',
@@ -69,7 +70,7 @@ describe('<EditApprovedDomainsPage />', () => {
         isLoading: false,
         isError: false,
       } as any
-    })
+    }) as any)
 
     vi.mocked(useOrganisation).mockImplementation(((param?: any) => {
       const currentParams = mockParams() as any
