@@ -24,7 +24,7 @@ judge:
   pass_threshold: 4
 
 metrics:
-  - faithfulness
+  - accuracy
 
 prompts:
   summarizer_template_name: "General"
