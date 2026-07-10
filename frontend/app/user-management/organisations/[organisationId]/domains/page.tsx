@@ -36,10 +36,10 @@ export default function EditApprovedDomainsPage(props: {
 
   const { data: organisation, isLoading: organisationLoading } =
     useOrganisation(organisationId)
-
+    
   const { mutateAsync, isPending } = useMutation({
-    ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
-  })
+      ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
+    })
 
   const onSubmit = useCallback(
     async (data: EditDomainsFormData) => {

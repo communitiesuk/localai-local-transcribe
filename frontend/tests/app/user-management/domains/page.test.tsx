@@ -54,6 +54,7 @@ describe('<EditApprovedDomainsPage />', () => {
       currentUser: {
         id: 'user-1',
         organisation_id: 'org-1',
+        roles: ['LOCAL_AUTHORITY_ADMIN'],
       },
       isAllowed: true,
       isLoading: false,
@@ -82,18 +83,22 @@ describe('<EditApprovedDomainsPage />', () => {
     } as any)
   })
 
+  const renderPage = (params = { organisationId: 'org-1' }) => {
+    return render(<EditApprovedDomainsPage params={Promise.resolve(params)} />)
+  }
+
   it('renders a loading state while the user or organisation is loading', () => {
     vi.mocked(useOrganisation).mockReturnValue({
       data: undefined,
       isLoading: true,
     } as any)
 
-    render(<EditApprovedDomainsPage />)
+    renderPage()
     expect(screen.getByText('Loading...')).toBeInTheDocument()
   })
 
   it('renders the heading, back link, and prepopulates the textarea with the approved domains', () => {
-    render(<EditApprovedDomainsPage />)
+    renderPage()
 
     expect(
       screen.getByRole('heading', { name: 'Edit approved domains' })
@@ -107,24 +112,24 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('renders the hint text and the expandable help section', () => {
-    render(<EditApprovedDomainsPage />)
+    renderPage()
 
     expect(
       screen.getByText(/Please list any approved domains/i)
-    ).toBeInTheDocument()
+ la).toBeInTheDocument()
     expect(screen.getByText('More about approved domains')).toBeInTheDocument()
     expect(screen.getByText(/able to be invited to a/i)).toBeInTheDocument()
   })
 
   it('triggers router.back on back link click', async () => {
-    render(<EditApprovedDomainsPage />)
+    renderPage()
     await userEvent.click(screen.getByRole('link', { name: 'Back' }))
     expect(mockBack).toHaveBeenCalledTimes(1)
   })
 
   it('submits the parsed domains list, updates the query cache, and navigates back on success', async () => {
     mockMutateAsync.mockResolvedValueOnce({})
-    render(<EditApprovedDomainsPage />)
+    renderPage()
 
     const textarea = screen.getByLabelText('Approved domains', {
       exact: false,
@@ -165,7 +170,7 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('shows a validation error and does not submit when all domains are removed', async () => {
-    render(<EditApprovedDomainsPage />)
+    renderPage()
 
     const textarea = screen.getByLabelText('Approved domains', {
       exact: false,
@@ -181,10 +186,15 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('renders a Cancel link back to user management', () => {
-    render(<EditApprovedDomainsPage />)
+    renderPage()
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
       'href',
       '/user-management'
     )
+  })
+
+  it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', () => {
+    renderPage({ organisationId: 'different-org' })
+    expect(screen.getByText(/You are not authorised to edit domains for this organisation/i)).toBeInTheDocument()
   })
 })
