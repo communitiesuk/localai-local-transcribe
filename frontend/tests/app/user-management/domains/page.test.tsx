@@ -97,11 +97,11 @@ describe('<EditApprovedDomainsPage />', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument()
   })
 
-  it('renders the heading, back link, and prepopulates the textarea with the approved domains', () => {
+  it('renders the heading, back link, and prepopulates the textarea with the approved domains', async () => {
     renderPage()
 
     expect(
-      screen.getByRole('heading', { name: 'Edit approved domains' })
+      await screen.findByRole('heading', { name: 'Edit approved domains' })
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
 
@@ -111,11 +111,11 @@ describe('<EditApprovedDomainsPage />', () => {
     expect(textarea.value).toBe('maidstone.gov.uk\ncommunities.gov.uk')
   })
 
-  it('renders the hint text and the expandable help section', () => {
+  it('renders the hint text and the expandable help section', async () => {
     renderPage()
 
     expect(
-      screen.getByText(/Please list any approved domains/i)
+      await screen.findByText(/Please list any approved domains/i)
     ).toBeInTheDocument()
     expect(screen.getByText('More about approved domains')).toBeInTheDocument()
     expect(screen.getByText(/able to be invited to a/i)).toBeInTheDocument()
@@ -123,6 +123,7 @@ describe('<EditApprovedDomainsPage />', () => {
 
   it('triggers router.back on back link click', async () => {
     renderPage()
+    await screen.findByRole('link', { name: 'Back' })
     await userEvent.click(screen.getByRole('link', { name: 'Back' }))
     expect(mockBack).toHaveBeenCalledTimes(1)
   })
@@ -131,7 +132,7 @@ describe('<EditApprovedDomainsPage />', () => {
     mockMutateAsync.mockResolvedValueOnce({})
     renderPage()
 
-    const textarea = screen.getByLabelText('Approved domains', {
+    const textarea = await screen.findByLabelText('Approved domains', {
       exact: false,
     })
     await userEvent.clear(textarea)
@@ -172,7 +173,7 @@ describe('<EditApprovedDomainsPage />', () => {
   it('shows a validation error and does not submit when all domains are removed', async () => {
     renderPage()
 
-    const textarea = screen.getByLabelText('Approved domains', {
+    const textarea = await screen.findByLabelText('Approved domains', {
       exact: false,
     })
     await userEvent.clear(textarea)
@@ -185,20 +186,17 @@ describe('<EditApprovedDomainsPage />', () => {
     expect(mockMutateAsync).not.toHaveBeenCalled()
   })
 
-  it('renders a Cancel link back to user management', () => {
+  it('renders a Cancel link back to user management', async () => {
     renderPage()
-    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
-      'href',
-      '/user-management'
-    )
+    expect(
+      await screen.findByRole('link', { name: 'Cancel' })
+    ).toHaveAttribute('href', '/user-management')
   })
 
-  it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', () => {
+  it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', async () => {
     renderPage({ organisationId: 'different-org' })
     expect(
-      screen.getByText(
-        /You are not authorised to edit domains for this organisation/i
-      )
+      await screen.findByText(/You are not authorised to edit domains for this organisation/i)
     ).toBeInTheDocument()
   })
 })
