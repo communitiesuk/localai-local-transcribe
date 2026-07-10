@@ -63,7 +63,7 @@ describe('<EditApprovedDomainsPage />', () => {
         currentUser: {
           id: 'user-1',
           organisation_id: 'org-1',
-          roles: ['local_authority_admin'],
+          roles: ['LOCAL_AUTHORITY_ADMIN'], // Updated to uppercase to match the UserRole enum
         },
         isAllowed: organisationId === 'org-1',
         isLoading: false,
