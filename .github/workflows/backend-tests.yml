@@ -13,8 +13,6 @@ on:
 env:
   ENVIRONMENT: test
   USE_ELASTICMQ: true
-  GOVNOTIFY_API_KEY: test-key
-  GOVNOTIFY_INVITE_TEMPLATE_ID: test-template
 
 permissions:
   contents: read
