@@ -195,6 +195,10 @@ describe('<EditApprovedDomainsPage />', () => {
 
   it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', () => {
     renderPage({ organisationId: 'different-org' })
-    expect(screen.getByText(/You are not authorised to edit domains for this organisation/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /You are not authorised to edit domains for this organisation/i
+      )
+    ).toBeInTheDocument()
   })
 })
