@@ -135,4 +135,4 @@ async def list_organisations_users(
     if organisation is None:
         raise HTTPException(status_code=404, detail="Organisation not found")
 
-    return await get_paginated_users(session, organisation, user, page, page_size)
+    return await get_paginated_users(session, organisation, page, page_size)
