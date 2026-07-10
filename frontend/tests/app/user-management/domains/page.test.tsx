@@ -63,7 +63,7 @@ describe('<EditApprovedDomainsPage />', () => {
         currentUser: {
           id: 'user-1',
           organisation_id: 'org-1',
-          roles: ['LOCAL_AUTHORITY_ADMIN'],
+          roles: ['local_authority_admin'],
         },
         isAllowed: organisationId === 'org-1',
         isLoading: false,
