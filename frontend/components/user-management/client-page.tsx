@@ -61,7 +61,9 @@ export default function UserManagementClient() {
   }
 
   const handleEditDomains = () => {
-    const orgId = isSystemAdmin ? selectedOrganisation : (organisation?.id ?? '')
+    const orgId = isSystemAdmin
+      ? selectedOrganisation
+      : (organisation?.id ?? '')
     if (orgId) {
       router.push(`/user-management/organisations/${orgId}/domains`)
     }
