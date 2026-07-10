@@ -54,25 +54,37 @@ describe('<EditApprovedDomainsPage />', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    vi.mocked(useAuthorisedUser).mockReturnValue({
-      currentUser: {
-        id: 'user-1',
-        organisation_id: 'org-1',
-        roles: ['LOCAL_AUTHORITY_ADMIN'],
-      },
-      isAllowed: true,
-      isLoading: false,
-      isError: false,
-    } as any)
+    vi.mocked(useAuthorisedUser).mockImplementation(() => {
+      const currentParams = mockParams() as any
+      const isAllowed =
+        !currentParams?.organisationId ||
+        currentParams.organisationId === 'org-1'
+      return {
+        currentUser: {
+          id: 'user-1',
+          organisation_id: 'org-1',
+          roles: ['LOCAL_AUTHORITY_ADMIN'],
+        },
+        isAllowed,
+        isLoading: false,
+        isError: false,
+      } as any
+    })
 
     vi.mocked(useOrganisation).mockImplementation(((param?: any) => {
+      const currentParams = mockParams() as any
       const organisationId =
-        typeof param === 'string' ? param : param?.organisationId || 'org-1'
+        typeof param === 'string'
+          ? param
+          : param?.organisationId || currentParams?.organisationId || 'org-1'
 
       return {
         data: {
           id: organisationId,
-          name: 'Maidstone Borough Council',
+          name:
+            organisationId === 'org-1'
+              ? 'Maidstone Borough Council'
+              : 'Different Council',
           allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
           created_datetime: '2025-01-01T00:00:00Z',
           updated_datetime: '2025-01-01T00:00:00Z',
@@ -211,17 +223,6 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', async () => {
-    vi.mocked(useAuthorisedUser).mockReturnValue({
-      currentUser: {
-        id: 'user-1',
-        organisation_id: 'org-1',
-        roles: ['LOCAL_AUTHORITY_ADMIN'],
-      },
-      isAllowed: false,
-      isLoading: false,
-      isError: false,
-    } as any)
-
     await renderPage({ organisationId: 'different-org' })
     expect(
       await screen.findByText(
