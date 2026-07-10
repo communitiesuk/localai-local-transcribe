@@ -154,9 +154,11 @@ class Settings(BaseSettings):
     )
 
     # if using gov notify
-    GOVNOTIFY_API_KEY: str = Field(description="Generate a key for this project on the GovNotify website.")
-    GOVNOTIFY_INVITE_TEMPLATE_ID: str = Field(
-        description="Use the GovNotify website to create an email template and copy in the template ID."
+    GOVNOTIFY_API_KEY: str | None = Field(
+        description="Generate a key for this project on the GovNotify website.", default=None
+    )
+    GOVNOTIFY_INVITE_TEMPLATE_ID: str | None = Field(
+        description="Use the GovNotify website to create an email template and copy in the template ID.", default=None
     )
 
     # if running the worker inside a docker container (use "0.0.0.0" )
