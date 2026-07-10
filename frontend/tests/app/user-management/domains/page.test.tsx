@@ -62,16 +62,21 @@ describe('<EditApprovedDomainsPage />', () => {
       isError: false,
     } as any)
 
-    vi.mocked(useOrganisation).mockReturnValue({
-      data: {
-        id: 'org-1',
-        name: 'Maidstone Borough Council',
-        allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
-        created_datetime: '2025-01-01T00:00:00Z',
-        updated_datetime: '2025-01-01T00:00:00Z',
-      },
-      isLoading: false,
-    } as any)
+    vi.mocked(useOrganisation).mockImplementation(((param?: any) => {
+      const organisationId =
+        typeof param === 'string' ? param : param?.organisationId || 'org-1'
+
+      return {
+        data: {
+          id: organisationId,
+          name: 'Maidstone Borough Council',
+          allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
+          created_datetime: '2025-01-01T00:00:00Z',
+          updated_datetime: '2025-01-01T00:00:00Z',
+        },
+        isLoading: false,
+      } as any
+    }) as any)
 
     vi.mocked(useMutation).mockReturnValue({
       mutateAsync: mockMutateAsync,
