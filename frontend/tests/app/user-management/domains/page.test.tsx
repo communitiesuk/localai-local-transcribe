@@ -50,15 +50,14 @@ describe('<EditApprovedDomainsPage />', () => {
   const mockMutateAsync = vi.fn()
   const mockInvalidateQueries = vi.fn()
   const mockSetQueryData = vi.fn()
+  let currentOrganisationId = 'org-1'
 
   beforeEach(() => {
     vi.clearAllMocks()
+    currentOrganisationId = 'org-1'
 
     vi.mocked(useAuthorisedUser).mockImplementation(((options?: any) => {
-      const currentParams = mockParams() as any
-      const organisationId =
-        options?.organisationId || currentParams?.organisationId || 'org-1'
-      const isAllowed = organisationId === 'org-1'
+      const organisationId = options?.organisationId || currentOrganisationId
 
       return {
         currentUser: {
@@ -66,18 +65,17 @@ describe('<EditApprovedDomainsPage />', () => {
           organisation_id: 'org-1',
           roles: ['LOCAL_AUTHORITY_ADMIN'],
         },
-        isAllowed,
+        isAllowed: organisationId === 'org-1',
         isLoading: false,
         isError: false,
       } as any
     }) as any)
 
     vi.mocked(useOrganisation).mockImplementation(((param?: any) => {
-      const currentParams = mockParams() as any
       const organisationId =
         typeof param === 'string'
           ? param
-          : param?.organisationId || currentParams?.organisationId || 'org-1'
+          : param?.organisationId || currentOrganisationId
 
       return {
         data: {
@@ -106,6 +104,7 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   const renderPage = async (params = { organisationId: 'org-1' }) => {
+    currentOrganisationId = params.organisationId
     mockParams.mockReturnValue(params)
     await act(async () => {
       render(
