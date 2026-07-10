@@ -66,9 +66,8 @@ describe('<EditApprovedDomainsPage />', () => {
     } as any)
 
     vi.mocked(useOrganisation).mockImplementation(((param?: any) => {
-      const organisationId = typeof param === 'string'
-        ? param
-        : param?.organisationId || 'org-1'
+      const organisationId =
+        typeof param === 'string' ? param : param?.organisationId || 'org-1'
 
       return {
         data: {
