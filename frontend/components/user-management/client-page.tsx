@@ -61,7 +61,10 @@ export default function UserManagementClient() {
   }
 
   const handleEditDomains = () => {
-    router.push('/user-management/organisations/domains')
+    const orgId = isSystemAdmin ? selectedOrganisation : (organisation?.id ?? '')
+    if (orgId) {
+      router.push(`/user-management/organisations/${orgId}/domains`)
+    }
   }
 
   if (userLoading) return <Loader2 className="animate-spin" />
@@ -131,19 +134,18 @@ export default function UserManagementClient() {
         )}
       </div>
 
-      {isSystemAdmin && (
-        <>
-          <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
+      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
-          <GovukButton
-            onClick={handleEditDomains}
-            variant="secondary"
-            disabled={isSystemAdmin && !selectedOrganisation}
-          >
-            Edit approved domains
-          </GovukButton>
-        </>
-      )}
+      <GovukButton
+        onClick={handleEditDomains}
+        variant="secondary"
+        disabled={
+          (isSystemAdmin && !selectedOrganisation) ||
+          (!isSystemAdmin && !organisation)
+        }
+      >
+        Edit approved domains
+      </GovukButton>
 
       <Suspense fallback={null}>
         <PaginatedUsers
