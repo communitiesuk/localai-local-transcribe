@@ -13,7 +13,6 @@ const verifier =
 const PUBLIC_PATHS = [
   '/unauthorised',
   '/health',
-  '/generic-error',
   '/monitoring',
   '/privacy',
   '/support',
@@ -85,19 +84,13 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   } catch (error) {
     console.error('Error authorising token:', error)
-    return redirectToGenericError(req)
+    return redirectToUnauthorised(req)
   }
 }
 
 function redirectToUnauthorised(req: NextRequest) {
   const url = req.nextUrl.clone()
   url.pathname = '/unauthorised'
-  return NextResponse.redirect(url)
-}
-
-function redirectToGenericError(req: NextRequest) {
-  const url = req.nextUrl.clone()
-  url.pathname = '/generic-error'
   return NextResponse.redirect(url)
 }
 

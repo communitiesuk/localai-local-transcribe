@@ -104,7 +104,7 @@ describe('proxy auth pathways', () => {
     expect(res.headers.get('location')).toBe('https://example.com/unauthorised')
   })
 
-  it('redirects to /generic-error when parseAuthToken throws', async () => {
+  it('redirects to /unauthorised when parseAuthToken throws', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
     vi.stubGlobal(
@@ -116,9 +116,7 @@ describe('proxy auth pathways', () => {
     const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
 
     expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toBe(
-      'https://example.com/generic-error'
-    )
+    expect(res.headers.get('location')).toBe('https://example.com/unauthorised')
   })
 
   it('redirects to /unauthorised when the backend returns 401', async () => {

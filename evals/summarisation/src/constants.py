@@ -1,5 +1,21 @@
 from typing import NamedTuple
 
+# Judge rubric scores are stored normalised to [0, 1] from the raw 1-5 rubric scale.
+JUDGE_RAW_MIN = 1.0
+JUDGE_RAW_MAX = 5.0
+
+# Floor on the raw 1-5 judge scale at or above which a single judge score is acceptable.
+# TODO(AIILG-678): 4.0 is a placeholder floor — set it concretely once we have calibration data.
+# https://mhclgdigital.atlassian.net/browse/AIILG-678
+JUDGE_ACCEPTABLE_RAW_MIN = 4.0
+
+
+def normalise_judge_score(raw: float) -> float:
+    """Map a raw judge score on the 1-5 rubric scale to [0, 1] (out-of-range inputs are clamped)."""
+    clamped = min(max(raw, JUDGE_RAW_MIN), JUDGE_RAW_MAX)
+    return (clamped - JUDGE_RAW_MIN) / (JUDGE_RAW_MAX - JUDGE_RAW_MIN)
+
+
 DIMENSIONS_LABELS: dict[str, str] = {
     "accuracy": "Factual Accuracy",
     "numerical_accuracy": "Numeric Fidelity",
@@ -88,3 +104,49 @@ DIMENSION_SCORE_BANDS: dict[str, ScoreBand] = {
     "readability": STANDARD_BAND,  # formatting and render-safety only. low harm and visible on the page
     "professional_tone": STANDARD_BAND,
 }
+
+
+class CitationRateBand(NamedTuple):
+    """Pass and review boundaries for the claim citation rate, as proportions in the range 0 to 1.
+
+    The claim citation rate is the proportion of a summary's extracted claims that were matched
+    to at least one transcript entry, that is n_supported divided by total_claims. It runs from
+    0.0 (no claim could be cited) to 1.0 (every claim could be cited). A band turns that rate
+    into one of three actions for the offline evaluation pipeline:
+
+    pass_minimum: the lowest citation rate that passes with no action required.
+    review_minimum: the lowest citation rate that still falls in the review band. A rate below
+        this value is a fail.
+
+    The two boundaries cover the whole range with no gaps. For the placeholder band
+    (0.95, 0.85) a rate of 0.95 or above passes, a rate from 0.85 up to but not including 0.95
+    is reviewed, and a rate below 0.85 fails.
+    """
+
+    pass_minimum: float
+    review_minimum: float
+
+
+# The claim citation rate thresholds are calibration placeholders, mirroring the judge-score
+# flag above. We do not yet have human-labelled transcript-support data to calibrate against,
+# so these are risk-based defaults rather than values derived from data. Full rationale:
+# documentation/eval_thresholds/claim-citation-rate-thresholds.md (AIILG-679).
+CITATION_RATE_THRESHOLDS_ARE_CALIBRATION_PLACEHOLDERS = True
+
+# Placeholder pass and review boundaries for the per-summary claim citation rate.
+# TODO(AIILG-679): 0.95 pass and 0.85 review are placeholders. Replace them once the metric has
+# been calibrated against human judgements of whether each extracted claim is supported.
+# https://mhclgdigital.atlassian.net/browse/AIILG-679
+# The pass bar is set higher than the ticket's suggested 90/80 rate because an uncited
+# claim is a strong signal that something is off. ie the citation step is instructed to cite anything
+# with even partial support, and the summaries feed high-consequence statutory workflows.
+# The review band is kept wide because the rate is itself produced by two LLM steps (claim extraction and
+# citation) whose error is not yet measured. A decision should be taken from the raw counts
+# (n_supported over total_claims), not from the rate after it has been rounded for display, so
+# that a value on a boundary is not moved by rounding. This is why the review band is wider than the pass band.
+CITATION_RATE_BAND = CitationRateBand(pass_minimum=0.95, review_minimum=0.85)
+
+# How to treat a summary from which no claims were extracted (total_claims == 0). The citation
+# rate is undefined in that case (a division of zero by zero), so such a summary must never
+# count as a pass by default. It is routed to the review band for human inspection instead.
+CITATION_RATE_ZERO_CLAIMS_POLICY = "review"
