@@ -3478,14 +3478,14 @@ files = [
 
 [[package]]
 name = "mistune"
-version = "3.2.1"
+version = "3.3.0"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "mistune-3.2.1-py3-none-any.whl", hash = "sha256:78cdb0ba5e938053ccf63651b352508d2efa9411dc8810bfb05f2dc5140c0048"},
-    {file = "mistune-3.2.1.tar.gz", hash = "sha256:7c8e5501d38bac1582e067e46c8343f17d57ea1aaa735823f3aba1fd59c88a28"},
+    {file = "mistune-3.3.0-py3-none-any.whl", hash = "sha256:a758e578acda49d8195f9a860b132dae2cf7bf409381393b1c4e6e489a65397b"},
+    {file = "mistune-3.3.0.tar.gz", hash = "sha256:3074ec4c61b384abe725128e4dcbb483f5a09cc4632012505cdee655d3a113b9"},
 ]
 
 [[package]]
@@ -10163,4 +10163,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "ffa366a634d8ddbb0d02f3c175bd7218dbc05195c6d6b32e2e4ad145648ccd67"
+content-hash = "db87473ed119de5a1357657c2a74a5a7c83b7eea3ec4caa80738209d152a1e03"
