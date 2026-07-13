@@ -133,6 +133,4 @@ evals/**/output/
 frontend/public/assets/govuk.coverage
 
 #openapi auto-generated files
-frontend/lib/client/@tanstack/
-frontend/lib/client/client/
-frontend/lib/client/core/
+frontend/lib/client/
