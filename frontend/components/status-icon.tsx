@@ -1,7 +1,10 @@
-import { Badge } from '@/components/ui/badge'
+import { GovukTag } from '@/components/govuk'
 import { JobStatus } from '@/lib/client'
-import { CircleCheckBig, CircleX, Loader2 } from 'lucide-react'
 
+// Status to GovukTag colour mapping (canonical GOV.UK tag colours):
+//   Processing (awaiting_start, in_progress) -> blue
+//   Completed                                -> green
+//   Failed                                   -> red
 export const StatusBadge = ({
   status,
   className,
@@ -11,27 +14,25 @@ export const StatusBadge = ({
 }) => {
   if (['awaiting_start', 'in_progress'].includes(status)) {
     return (
-      <Badge variant="outline" className={className}>
-        <Loader2 className="animate-spin" />
-        <p>Processing</p>
-      </Badge>
+      <GovukTag colour="blue" className={className}>
+        Processing
+      </GovukTag>
     )
   }
 
-  if (status == 'completed') {
+  if (status === 'completed') {
     return (
-      <Badge variant="outline" className={className}>
-        <CircleCheckBig />
-        <p>Completed</p>
-      </Badge>
+      <GovukTag colour="green" className={className}>
+        Completed
+      </GovukTag>
     )
   }
-  if (status == 'failed') {
+
+  if (status === 'failed') {
     return (
-      <Badge variant="outline" className={className}>
-        <CircleX />
-        <p>Failed</p>
-      </Badge>
+      <GovukTag colour="red" className={className}>
+        Failed
+      </GovukTag>
     )
   }
 }

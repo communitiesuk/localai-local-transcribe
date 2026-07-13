@@ -3,9 +3,8 @@
 import { DeleteDialog } from '@/components/recent-meetings/delete-transcription-dialog'
 import { RenameDialog } from '@/components/recent-meetings/rename-dialog'
 import { TranscriptionCard } from '@/components/recent-meetings/transcription-card'
-import { Button } from '@/components/ui/button'
+import { GovukButton } from '@/components/govuk'
 import { TranscriptionMetadata } from '@/lib/client'
-import { Edit2, Trash } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
@@ -17,35 +16,35 @@ export const TranscriptionListItem = ({
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
   return (
-    <>
+    <li>
       <Link
         href={`/transcriptions/${transcription.id}`}
-        className="justify-between rounded-md border p-3 text-sm transition-colors hover:bg-slate-100 sm:flex"
+        className="justify-between rounded-md border border-[var(--govuk-border-colour)] p-3 transition-colors hover:bg-[var(--govuk-hover-colour)] sm:flex"
       >
         <TranscriptionCard transcription={transcription} />
-        <div className="mt-2 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+        <div className="govuk-!-margin-top-2 flex items-start gap-2">
+          <GovukButton
+            type="button"
+            variant="secondary"
+            className="govuk-!-margin-bottom-0"
             onClick={(e) => {
               e.preventDefault()
               setRenameOpen(true)
             }}
-            className="text-xs hover:bg-slate-200"
           >
-            <Edit2 /> Rename
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
+            Rename
+          </GovukButton>
+          <GovukButton
+            type="button"
+            variant="warning"
+            className="govuk-!-margin-bottom-0"
             onClick={(e) => {
               e.preventDefault()
               setDeleteOpen(true)
             }}
-            className="text-xs text-red-600 hover:bg-red-100"
           >
-            <Trash color="red" /> Delete
-          </Button>
+            Delete
+          </GovukButton>
         </div>
       </Link>
       <DeleteDialog
@@ -58,6 +57,6 @@ export const TranscriptionListItem = ({
         setOpen={setRenameOpen}
         transcription={transcription}
       />
-    </>
+    </li>
   )
 }

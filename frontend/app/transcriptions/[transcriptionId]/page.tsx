@@ -4,16 +4,18 @@ import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import { DownloadButton } from '@/components/download-button'
-import { AudioWav } from '@/components/icons/AudioWav'
+import { GovukHeading, GovukNotificationBanner } from '@/components/govuk'
+import { StatusBadge } from '@/components/status-icon'
 import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TranscriptionGetResponse } from '@/lib/client'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
-import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
+import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { redirect } from 'next/navigation'
 
@@ -44,16 +46,20 @@ export default function TranscriptionPage(props: {
   if (isLoading) {
     return (
       <div className="flex h-72 flex-col items-center justify-center">
-        <LoaderCircle size={80} className="animate-spin" />
+        <LoaderCircle size={80} className="animate-spin" aria-hidden="true" />
       </div>
     )
   }
 
   if (!transcription) {
     return (
-      <div className="flex flex-col items-center justify-center">
-        <SearchX size={100} />
-        <p>404 - Transcription not found</p>
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <GovukHeading>Transcription not found</GovukHeading>
+          <p className="govuk-body">
+            We could not find that transcription. It may have been deleted.
+          </p>
+        </div>
       </div>
     )
   }
@@ -67,22 +73,17 @@ export default function TranscriptionPage(props: {
   ) {
     return (
       <div>
-        <TranscriptionTitleEditor
-          title={transcription.title}
-          transcriptionId={transcription.id}
-          status={transcription.status}
+        <TranscriptionHeader
+          transcription={transcription}
+          dateLabel={dateLabel}
         />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock size="0.8rem" />
-          {dateLabel}
-        </div>
-        <div className="flex flex-col items-center justify-center">
-          <AudioWav />
-          <p className="mb-4">
-            Transcription being processed, you can close the tab.
+        <GovukNotificationBanner title="Processing">
+          <p className="govuk-notification-banner__heading">
+            Your transcription is being processed. You can close the tab and
+            come back later.
           </p>
-          <AudioPlayer transcriptionId={transcription.id} />
-        </div>
+        </GovukNotificationBanner>
+        <AudioPlayer transcriptionId={transcription.id} />
       </div>
     )
   }
@@ -90,37 +91,26 @@ export default function TranscriptionPage(props: {
   if (transcription.status == 'failed') {
     return (
       <div>
-        <TranscriptionTitleEditor
-          title={transcription.title}
-          transcriptionId={transcription.id}
-          status={transcription.status}
+        <TranscriptionHeader
+          transcription={transcription}
+          dateLabel={dateLabel}
         />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock size="0.8rem" />
-          {dateLabel}
-        </div>
-        <div className="flex flex-col items-center justify-center gap-2">
-          <Frown size={100} />
-          <p>
+        <GovukNotificationBanner title="Transcription failed">
+          <p className="govuk-notification-banner__heading">
             Something went wrong with your transcription. You may need to try
             again.
           </p>
-          <AudioPlayer transcriptionId={transcription.id} />
-        </div>
+        </GovukNotificationBanner>
+        <AudioPlayer transcriptionId={transcription.id} />
       </div>
     )
   }
   return (
     <div className="flex w-full flex-col">
-      <TranscriptionTitleEditor
-        title={transcription.title}
-        transcriptionId={transcription.id}
-        status={transcription.status}
+      <TranscriptionHeader
+        transcription={transcription}
+        dateLabel={dateLabel}
       />
-      <div className="mb-4 flex items-center gap-1 text-xs text-slate-500">
-        <Clock size="0.8rem" />
-        {dateLabel}
-      </div>
       <Tabs defaultValue="summary" className="w-full">
         <TabsList className="h-12 w-full">
           <TabsTrigger
@@ -156,6 +146,26 @@ export default function TranscriptionPage(props: {
     </div>
   )
 }
+
+const TranscriptionHeader = ({
+  transcription,
+  dateLabel,
+}: {
+  transcription: TranscriptionGetResponse
+  dateLabel: string
+}) => (
+  <>
+    <TranscriptionTitleEditor
+      title={transcription.title}
+      transcriptionId={transcription.id}
+      status={transcription.status}
+    />
+    <div className="govuk-!-margin-bottom-4 flex items-center gap-2">
+      <StatusBadge status={transcription.status} />
+      <span className="govuk-body-s govuk-!-margin-bottom-0">{dateLabel}</span>
+    </div>
+  </>
+)
 
 const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
   const { data: recordings } = useQuery({

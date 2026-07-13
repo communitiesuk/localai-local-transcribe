@@ -20,14 +20,14 @@ export const TranscriptionCard = ({
             ? 'Generating title'
             : 'No title')}
       </div>
-      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+      <div className="govuk-body-s govuk-!-margin-bottom-0 flex items-center gap-2">
         <div className="line-clamp-1 flex items-center gap-1">
           <Clock className="size-3.5" />
           <span className="line-clamp-1">
             {date.toDateString()} at {date.toLocaleTimeString()}
           </span>
         </div>
-        <StatusBadge status={transcription.status} className="text-inherit" />
+        <StatusBadge status={transcription.status} />
       </div>
     </div>
   )
