@@ -3,9 +3,11 @@ from enum import Enum, auto
 from google.genai.types import (
     GenerateContentConfig,
 )
+from openai import BadRequestError
 from pydantic import BaseModel
 from tenacity import (
     retry,
+    retry_if_not_exception_type,
     stop_after_attempt,
     wait_random_exponential,
 )
@@ -39,14 +41,22 @@ class ChatBot:
     def clear_history(self) -> None:
         self.messages = []
 
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    @retry(
+        wait=wait_random_exponential(min=1, max=60),
+        stop=stop_after_attempt(6),
+        retry=retry_if_not_exception_type(BadRequestError),
+    )
     async def chat(self, messages: list[dict[str, str]]) -> str:
         response = await self.adapter.chat(messages=self.messages + messages)
         self.messages.extend(messages)
         self.messages.append({"role": "assistant", "content": response})
         return response
 
-    @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+    @retry(
+        wait=wait_random_exponential(min=1, max=60),
+        stop=stop_after_attempt(6),
+        retry=retry_if_not_exception_type(BadRequestError),
+    )
     async def structured_chat[T: BaseModel](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         response = await self.adapter.structured_chat(messages=messages, response_format=response_format)
         self.messages.extend(messages)
