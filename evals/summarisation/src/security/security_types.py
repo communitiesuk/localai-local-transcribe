@@ -35,6 +35,7 @@ class SecurityEvalRecord(BaseModel):
     summary_text: str
     metrics: dict[str, MetricResult] = Field(default_factory=dict)
     error: str | None = None
+    content_safety_blocked: bool = False
 
 
 class LevelRollup(BaseModel):
@@ -55,4 +56,5 @@ class SecurityRunSummary(BaseModel):
     run_id: str
     timestamp: str
     n_scenarios: int
+    n_failed: int = 0
     by_level: dict[str, LevelRollup] = Field(default_factory=dict)
