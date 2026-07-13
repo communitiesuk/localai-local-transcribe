@@ -1,10 +1,9 @@
 'use client'
 
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
-import { Button } from '@/components/ui/button'
+import { GovukButton } from '@/components/govuk'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { cn } from '@/lib/utils'
-import { CheckCircle, CloudUpload, FileX, Info } from 'lucide-react'
 import Dropzone from 'react-dropzone'
 import { Controller, FormProvider } from 'react-hook-form'
 
@@ -13,14 +12,7 @@ export const AudioUploadForm = () => {
   const file = form.watch('file')
   return (
     <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="mt-6 flex flex-col gap-4"
-      >
-        <div className="flex items-center gap-2 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
-          <Info className="size-4 shrink-0" />
-          <p>Maximum file size: 5GB</p>
-        </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <Controller
           control={form.control}
           name="file"
@@ -35,77 +27,44 @@ export const AudioUploadForm = () => {
               }}
               multiple={false}
             >
-              {({
-                getRootProps,
-                getInputProps,
-                isDragActive,
-                isDragReject,
-              }) => (
-                <section>
+              {({ getRootProps, getInputProps }) => (
+                <div
+                  {...getRootProps()}
+                  className={cn(
+                    'govuk-!-margin-bottom-4 cursor-pointer border-2 border-[var(--govuk-border-colour)] p-6',
+                    file instanceof File
+                      ? 'border-solid bg-[#f3f2f1]'
+                      : 'border-dashed'
+                  )}
+                >
                   <div
-                    {...getRootProps()}
                     className={cn(
-                      'flex h-36 items-center justify-center rounded-xl border border-dashed border-slate-300 p-4',
-                      isDragActive &&
-                        !isDragReject &&
-                        'border-blue-400 bg-blue-200',
-                      isDragActive &&
-                        isDragReject &&
-                        'border-red-400 bg-red-50/50',
-                      !isDragActive && 'border-slate-300 bg-white'
+                      'govuk-body govuk-!-margin-bottom-3 px-4 py-3',
+                      file instanceof File ? 'bg-white' : 'bg-[#bbd4ea]'
                     )}
                   >
-                    {!file ? (
-                      <div className="flex flex-col items-center gap-2 text-slate-500">
-                        <div
-                          className={`flex items-center gap-2 ${
-                            isDragActive
-                              ? isDragReject
-                                ? 'text-red-500'
-                                : 'text-blue-500'
-                              : ''
-                          }`}
-                        >
-                          {isDragActive && isDragReject ? (
-                            <FileX size={25} />
-                          ) : (
-                            <CloudUpload size={25} />
-                          )}
-                          {isDragActive
-                            ? isDragReject
-                              ? 'Invalid file type'
-                              : 'Drop file to upload'
-                            : 'Drag and drop your files here'}
-                        </div>
-                        {!isDragActive && (
-                          <>
-                            <div className="text-xs">or</div>
-                            <Button className="rounded-l-full rounded-r-full bg-blue-50 text-blue-700 hover:bg-blue-100">
-                              Choose a file
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-6">
-                        <div className="flex items-center gap-2 rounded border p-4 text-sm shadow">
-                          <div className="flex h-5 w-5 items-center justify-center text-green-500">
-                            <CheckCircle />
-                          </div>
-                          <div className="text-sm text-slate-500">
-                            {file instanceof File ? file.name : 'recording'}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <input {...getInputProps()} />
+                    {file instanceof File ? file.name : 'No file chosen'}
                   </div>
-                </section>
+                  <div className="flex items-center gap-3">
+                    <span className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
+                      Choose file
+                    </span>
+                    <span className="govuk-body govuk-!-margin-bottom-0">
+                      or drop file
+                    </span>
+                  </div>
+                  <input {...getInputProps()} />
+                </div>
               )}
             </Dropzone>
           )}
         />
         <StartTranscriptionSection isShowing={!!file} isPending={isPending} />
+        {!file && (
+          <GovukButton type="submit" disabled>
+            Continue
+          </GovukButton>
+        )}
       </form>
     </FormProvider>
   )

@@ -26,7 +26,6 @@ from common.types import (
     Question,
     RecordingCreateRequest,
     TranscriptionCreateRequest,
-    TranscriptionPatchRequest,
 )
 
 mock_email = "test@local-transcribe.com"
@@ -207,17 +206,6 @@ def transcription_request():
         template_name="default",
         template_id=None,
         agenda=None,
-    )
-
-
-@pytest.fixture
-def transcription_patch_request():
-    return TranscriptionPatchRequest(
-        title="Mocked Transcription Title",
-        dialogue_entries=[
-            {"speaker": "Alice", "text": "Updated dialogue 1", "start_time": 0.0, "end_time": 5.5},
-            {"speaker": "Bob", "text": "Updated dialogue 2", "start_time": 5.5, "end_time": 12.3},
-        ],
     )
 
 

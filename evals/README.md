@@ -64,10 +64,6 @@ poetry install --with evals-summarisation
 ```bash
 # Run bias evaluation using unified entry point
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/counterfactual.yaml
-
-# Generate visualizations from results
-poetry run python evals/summarisation/src/bias/visualize.py \
-  evals/summarisation/output/counterfactual/<run_id>/results.jsonl
 ```
 
 **Note:** The unified entry point (`src/main.py`) automatically determines whether to run standard or bias evaluation based on the `eval_type` field in the config.
@@ -79,20 +75,15 @@ poetry run python evals/summarisation/src/bias/visualize.py \
 **Key parameters:**
 - `num_iterations`: Number of times to run each transcript through summarization (default: 5)
 - `input_dir`: Directory containing counterfactual JSON files (default: `evals/dataset_generation/counterfactual_generation/output`)
-- `metrics`: Judge metrics to evaluate (faithfulness, coverage, conciseness, coherence)
+- `metrics`: Judge metrics to evaluate (accuracy, numerical_accuracy, template_fit, coverage, action_clarity, professional_tone, readability, auditability)
 - `prompt_version`: Prompt version to use (e.g., `dev`, `prod`)
+- `emit_spc_baseline`: When `true`, derive an SPC baseline from this run's factual-vs-counterfactual deltas and write `spc_baseline.yaml` to the run output dir, instead of loading a baseline and applying threshold checks. Copy the emitted file into `input_dir` to drive control-chart checks on subsequent runs.
 
 ### Output
 
-Results written to `evals/summarisation/output/counterfactual/<run_id>/`:
+Results written to `evals/summarisation/output/bias/<run_id>/`:
 - `results.jsonl` - Detailed per-example results with all iterations
 - `summary.json` - Aggregated statistics across all examples
-- `visualizations/` - Generated plots showing bias analysis (created by `visualize.py`)
-
-**Visualizations include:**
-- Per-metric comparison plots showing distribution shifts between original and counterfactual groups
-- Statistical measures: mean, std, min/max across iterations
-- Semantic similarity and sentiment comparison between groups
 
 # Transcription Evaluation
 

@@ -16,10 +16,9 @@ judge:
   pass_threshold: 4
 
 metrics:
-  - faithfulness
+  - accuracy
   - coverage
-  - conciseness
-  - coherence
+  - readability
 
 prompts:
   judge_template_path: evals/summarisation/prompts/judge.j2

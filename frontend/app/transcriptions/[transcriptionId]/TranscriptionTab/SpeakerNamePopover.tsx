@@ -8,45 +8,55 @@ import {
 } from '@/components/ui/popover'
 import { PenIcon } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useCallback, useState } from 'react'
-import { useFormContext } from 'react-hook-form'
+import { useCallback, useEffect, useState } from 'react'
 
 export const SpeakerNamePopover = ({
   entry,
   index,
-  update,
+  onUpdateAll,
+  onUpdateSingle,
 }: {
   entry: DialogueEntryForm['entries'][0]
   index: number
-  update: (index: number, etnry: DialogueEntryForm['entries'][0]) => void
+  onUpdateAll: (originalSpeaker: string, newName: string) => Promise<void>
+  onUpdateSingle: (index: number, newName: string) => Promise<void>
 }) => {
   const [open, setOpen] = useState(false)
-  const { getValues } = useFormContext<DialogueEntryForm>()
   const [newName, setNewName] = useState(entry.speaker)
-  const handleUpdateAll = useCallback(() => {
-    getValues('entries')
-      .map((e, i) => ({
-        ...e,
-        i,
-      }))
-      .filter((e) => e.speaker === entry.speaker)
-      .forEach(({ i, ...entry }) => {
-        update(i, { ...entry, speaker: newName })
-      })
-    posthog.capture('speaker_name_edited_in_transcript', {
-      update_type: 'all_occurances',
-    })
-  }, [entry.speaker, getValues, newName, update])
-  const handleUpdateSingle = useCallback(
-    (index: number) => () => {
-      update(index, { ...entry, speaker: newName })
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    setNewName(entry.speaker)
+  }, [entry.speaker])
+
+  const handleUpdateAll = useCallback(async () => {
+    setIsSaving(true)
+    try {
+      await onUpdateAll(entry.speaker, newName)
       setOpen(false)
       posthog.capture('speaker_name_edited_in_transcript', {
-        update_type: 'single_occurrence',
-        entry_index: index,
+        update_type: 'all_occurances',
       })
+    } finally {
+      setIsSaving(false)
+    }
+  }, [entry.speaker, newName, onUpdateAll])
+
+  const handleUpdateSingle = useCallback(
+    (index: number) => async () => {
+      setIsSaving(true)
+      try {
+        await onUpdateSingle(index, newName)
+        setOpen(false)
+        posthog.capture('speaker_name_edited_in_transcript', {
+          update_type: 'single_occurrence',
+          entry_index: index,
+        })
+      } finally {
+        setIsSaving(false)
+      }
     },
-    [entry, newName, update]
+    [newName, onUpdateSingle]
   )
   return (
     <Popover open={open} onOpenChange={(open) => setOpen(open)}>
@@ -77,10 +87,20 @@ export const SpeakerNamePopover = ({
               className="col-span-3"
             />
             <div className="">
-              <Button onClick={handleUpdateSingle(index)} variant="outline">
+              <Button
+                type="button"
+                onClick={handleUpdateSingle(index)}
+                variant="outline"
+                disabled={isSaving}
+              >
                 Update this occurrence
               </Button>
-              <Button className="mt-2" onClick={handleUpdateAll}>
+              <Button
+                type="button"
+                className="mt-2"
+                onClick={handleUpdateAll}
+                disabled={isSaving}
+              >
                 Update all occurrences
               </Button>
             </div>

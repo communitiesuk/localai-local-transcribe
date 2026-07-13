@@ -90,6 +90,7 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 | `GovukHint`               | Hint                             | No      |
 | `GovukLabel`              | Label                            | No      |
 | `GovukLegend`             | Legend                           | No      |
+| `GovukList`               | List                             | No      |
 | `GovukNotificationBanner` | Notification banner              | Yes     |
 | `GovukRadios`             | Radios                           | Yes     |
 | `GovukTag`                | Tag                              | No      |
