@@ -42,3 +42,9 @@ variable "object_lock_enabled" {
   type        = bool
   default     = false
 }
+
+variable "abort_incomplete_multipart_upload_days" {
+  type        = number
+  description = "Days after initiation to abort incomplete multipart uploads."
+  default     = 7
+}

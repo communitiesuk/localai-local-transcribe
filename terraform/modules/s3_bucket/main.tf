@@ -101,7 +101,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
     filter {}
 
     abort_incomplete_multipart_upload {
-      days_after_initiation = 7
+      days_after_initiation = var.abort_incomplete_multipart_upload_days
     }
 
     noncurrent_version_expiration {
@@ -158,7 +158,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "log_bucket" {
     }
 
     abort_incomplete_multipart_upload {
-      days_after_initiation = 7
+      days_after_initiation = var.abort_incomplete_multipart_upload_days
     }
 
     status = "Enabled"
