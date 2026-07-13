@@ -57,13 +57,6 @@ export const StartTranscriptionSection = ({
               required: selectedTemplate?.agenda_usage == 'required',
             })}
           />
-          {/*
-            Character limit hint commented out, the 500 was not enforced
-            anywhere. Restore once the real agenda limit is decided and enforced.
-            <GovukHint className="govuk-!-margin-top-1">
-              You can enter up to 500 characters
-            </GovukHint>
-          */}
         </GovukFormGroup>
       )}
       <GovukButton
