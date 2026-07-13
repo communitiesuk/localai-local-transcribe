@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import React from 'react'
+import { useEffect, useRef } from 'react'
 
 type AccordionProps = {
   id: string
@@ -64,6 +65,24 @@ function GovukAccordionBase({
   children,
   ...rest
 }: AccordionProps) {
+  const wrappedRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    import('govuk-frontend')
+      .then(({ initAll }) => {
+        if (!cancelled && wrappedRef.current) {
+          initAll(wrappedRef.current)
+        }
+      })
+      .catch((error) => {
+        console.error('Error loading govuk-frontend:', error)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const injected = React.Children.map(children, (child, index) =>
     React.isValidElement(child)
       ? React.cloneElement(child as React.ReactElement<SectionProps>, {
@@ -74,13 +93,15 @@ function GovukAccordionBase({
   )
 
   return (
-    <div
-      {...rest}
-      id={id}
-      className={cn('govuk-accordion', className)}
-      data-module="govuk-accordion"
-    >
-      {injected}
+    <div ref={wrappedRef}>
+      <div
+        {...rest}
+        id={id}
+        className={cn('govuk-accordion', className)}
+        data-module="govuk-accordion"
+      >
+        {injected}
+      </div>
     </div>
   )
 }

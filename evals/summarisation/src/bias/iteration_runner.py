@@ -8,6 +8,7 @@ import dspy
 
 from common.database.postgres_models import DialogueEntry
 from evals.summarisation.src.bias.bias_types import CounterfactualMetricResult, IterationMetrics
+from evals.summarisation.src.bias.sentiment_analyzer import sentiment_score_from_distribution
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import DialogExample
 from evals.summarisation.src.summarizer import generate_summary
@@ -15,7 +16,7 @@ from evals.summarisation.src.summarizer import generate_summary
 logger = logging.getLogger(__name__)
 
 
-def evaluate_with_judge_detailed(
+async def evaluate_with_judge_detailed(
     metrics: list, example: DialogExample, prediction: dspy.Prediction
 ) -> dict[str, CounterfactualMetricResult]:
     """
@@ -23,7 +24,7 @@ def evaluate_with_judge_detailed(
     """
     results = {}
     for metric in metrics:
-        result = metric.evaluate(example=example, prediction=prediction)
+        result = await metric.evaluate_async(example=example, prediction=prediction)
         results[metric.name] = CounterfactualMetricResult(score=result.score, reason=result.reason)
     return results
 
@@ -53,11 +54,12 @@ async def run_single_iteration(
     pred = dspy.Prediction(summary=summary, candidate=None)
 
     t0_judge = time.perf_counter()
-    judge_results = evaluate_with_judge_detailed(metrics, example, pred)
+    judge_results = await evaluate_with_judge_detailed(metrics, example, pred)
     t1_judge = time.perf_counter()
     judge_ms = int((t1_judge - t0_judge) * 1000)
 
-    sentiment_score = sentiment_analyzer.compute_sentiment(summary)
+    sentiment_distribution = sentiment_analyzer.compute_sentiment_distribution(summary)
+    sentiment_score = sentiment_score_from_distribution(sentiment_distribution)
     regard_scores = None
     if regard_scorer:
         regard_result = regard_scorer.score_summary(summary)
@@ -73,6 +75,7 @@ async def run_single_iteration(
     iteration_metrics = IterationMetrics(
         metrics=judge_results,
         sentiment_score=sentiment_score,
+        sentiment_distribution=sentiment_distribution,
         regard_scores=regard_scores,
     )
 

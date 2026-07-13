@@ -1,47 +1,46 @@
 'use client'
 
-import {
-  GovukBackLink,
-  GovukButton,
-  GovukDetails,
-  GovukErrorSummary,
-  GovukFormGroup,
-  GovukHint,
-  GovukLabel,
-  GovukTextarea,
-} from '@/components/govuk'
+import { updateOrganisationOrganisationsOrganisationIdPatchMutation } from '@/lib/client/@tanstack/react-query.gen'
+import { EditDomainsForm } from '@/components/organisations/domains-form'
+import DomainsDetails from '@/components/organisations/domains-details'
+import { parseDomains } from '@/lib/utils'
+import type { EditDomainsFormData } from '@/components/organisations/domains-form'
+import { useRouter } from 'next/navigation'
+import { useMutation } from '@tanstack/react-query'
+import { GovukBackLink } from '@/components/govuk'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
-import { OrganisationResponse } from '@/lib/client'
-import {
-  getOrganisationOrganisationsOrganisationIdGetQueryKey,
-  updateOrganisationOrganisationsOrganisationIdPatchMutation,
-} from '@/lib/client/@tanstack/react-query.gen'
 import { UserRole } from '@/lib/utils'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useCallback } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-
-function parseDomains(value: string): string[] {
-  return value
-    .split('\n')
-    .map((domain) => domain.trim())
-    .filter(Boolean)
-}
-
-type EditDomainsForm = { domains: string }
 
 export default function EditApprovedDomainsPage() {
+  const router = useRouter()
+
   const { currentUser, isLoading: userLoading } = useAuthorisedUser([
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
+  // BUG-714: replace with id from dropdown once implemented (688)
   const { data: organisation, isLoading: organisationLoading } =
     useOrganisation(currentUser?.organisation_id ?? '')
+
+  const { mutate: editOrganisationDomains } = useMutation({
+    ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
+    onSuccess() {
+      router.replace(`/user-management`)
+    },
+    onError() {
+      router.replace('/generic-error')
+    },
+  })
+
+  // non-null assertion - onSubmit only called once organisation has loaded
+  const onSubmit = (data: EditDomainsFormData) => {
+    editOrganisationDomains({
+      path: { organisation_id: organisation!.id },
+      body: { allowed_domains: parseDomains(data.domains) },
+    })
+  }
 
   if (userLoading || organisationLoading || !organisation) {
     return (
@@ -56,123 +55,14 @@ export default function EditApprovedDomainsPage() {
     <>
       <GovukBackLink />
       <h1 className="govuk-heading-l">Edit approved domains</h1>
-      <EditDomainsForm organisation={organisation} />
-    </>
-  )
-}
-
-function EditDomainsForm({
-  organisation,
-}: {
-  organisation: OrganisationResponse
-}) {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-
-  const form = useForm<EditDomainsForm>({
-    defaultValues: {
-      domains: organisation.allowed_domains.join('\n'),
-    },
-  })
-
-  const { mutateAsync, isPending } = useMutation({
-    ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
-  })
-
-  const onSubmit = useCallback(
-    async (data: EditDomainsForm) => {
-      await mutateAsync(
-        {
-          path: { organisation_id: organisation.id },
-          body: { allowed_domains: parseDomains(data.domains) },
-        },
-        {
-          onSuccess() {
-            queryClient.invalidateQueries({
-              queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
-                path: { organisation_id: organisation.id },
-              }),
-            })
-            toast.success('Approved domains updated')
-            router.push('/user-management')
-          },
-          onError() {
-            toast.error('Failed to update approved domains')
-          },
-        }
-      )
-    },
-    [mutateAsync, organisation.id, queryClient, router]
-  )
-
-  const domainsError = form.formState.errors.domains
-
-  return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
-      {domainsError && (
-        <GovukErrorSummary
-          errorList={[{ href: '#domains', text: domainsError.message ?? '' }]}
-        />
-      )}
-
-      <GovukFormGroup hasError={!!domainsError}>
-        <GovukLabel htmlFor="domains">Approved domains</GovukLabel>
-        <GovukHint id="domains-hint">
-          Please list any approved domains on individual lines and without the
-          &apos;@&apos; symbol (e.g. &apos;communities.gov.uk&apos;).
-        </GovukHint>
-        {domainsError && (
-          <p id="domains-error" className="govuk-error-message">
-            <span className="govuk-visually-hidden">Error:</span>{' '}
-            {domainsError.message}
-          </p>
-        )}
-        <Controller
-          control={form.control}
-          name="domains"
-          rules={{
-            validate: (value) =>
-              parseDomains(value).length > 0 ||
-              'Enter at least one approved domain',
-          }}
-          render={({ field: { value, onChange, ref, disabled } }) => (
-            <GovukTextarea
-              id="domains"
-              name="domains"
-              rows={8}
-              aria-describedby={
-                domainsError ? 'domains-error domains-hint' : 'domains-hint'
-              }
-              value={value}
-              onChange={onChange}
-              disabled={disabled}
-              ref={ref}
-            />
-          )}
-        />
-      </GovukFormGroup>
-
-      <div className="govuk-button-group">
-        <GovukButton type="submit" disabled={isPending}>
-          Save
-        </GovukButton>
-        <Link href="/user-management" className="govuk-link">
-          Cancel
-        </Link>
-      </div>
+      <EditDomainsForm
+        defaultValues={organisation.allowed_domains}
+        onSubmit={onSubmit}
+      />
 
       <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
 
-      <GovukDetails summary="More about approved domains">
-        <p className="govuk-body">
-          These are the email address domains that are able to be invited to a
-          given organisation using Internal Access authentication.
-        </p>
-        <p className="govuk-body">
-          Email addresses without an associated approved domain will not be able
-          to be invited.
-        </p>
-      </GovukDetails>
-    </form>
+      <DomainsDetails />
+    </>
   )
 }

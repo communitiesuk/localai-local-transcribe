@@ -1,4 +1,8 @@
-import { GovukButton, GovukButtonLink } from '@/components/govuk/button'
+import {
+  GovukButton,
+  GovukButtonGroup,
+  GovukButtonLink,
+} from '@/components/govuk/button'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -94,5 +98,49 @@ describe('<GovukButton />', () => {
     const button = screen.getByRole('button', { name: 'Save' })
     expect(button).toHaveAttribute('data-module', 'govuk-button')
     expect(button).toHaveClass('govuk-button')
+  })
+})
+
+describe('<GovukButtonGroup />', () => {
+  it('renders a div with the canonical govuk-button-group class', () => {
+    const { container } = render(
+      <GovukButtonGroup>
+        <GovukButton>Save</GovukButton>
+      </GovukButtonGroup>
+    )
+    const root = container.firstElementChild as HTMLElement
+    expect(root.tagName).toBe('DIV')
+    expect(root).toHaveClass('govuk-button-group')
+  })
+
+  it('composes a caller-supplied className without clobbering the canonical class', () => {
+    const { container } = render(
+      <GovukButtonGroup className="mt-4">
+        <GovukButton>Save</GovukButton>
+      </GovukButtonGroup>
+    )
+    const root = container.firstElementChild as HTMLElement
+    expect(root).toHaveClass('govuk-button-group', 'mt-4')
+  })
+
+  it('forwards arbitrary HTML attributes via spread', () => {
+    const { getByTestId } = render(
+      <GovukButtonGroup data-testid="bg" aria-label="button group">
+        <GovukButton>Save</GovukButton>
+      </GovukButtonGroup>
+    )
+    const root = getByTestId('bg')
+    expect(root).toHaveAttribute('aria-label', 'button group')
+  })
+
+  it('renders children inside the group', () => {
+    render(
+      <GovukButtonGroup>
+        <GovukButton>Save</GovukButton>
+        <GovukButtonLink href="/cancel">Cancel</GovukButtonLink>
+      </GovukButtonGroup>
+    )
+    expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
   })
 })
