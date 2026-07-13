@@ -1,7 +1,7 @@
 <html lang="en" class="govuk-template">
   <head>
     <meta charset="utf-8" />
-    <title>Service unavailable pages – Example – GOV.UK Design System</title>
+    <title>Local Transcribe unavailable</title>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -30,8 +30,21 @@
       property="og:image"
       content="https://design-system.service.gov.uk/assets/images/govuk-opengraph-image.png"
     />
+
+    <style>
+      /* Custom 'app-page' CSS to stick footer to bottom */
+      .app-page {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .app-page__content {
+        flex: 1;
+      }
+    </style>
   </head>
-  <body class="govuk-template__body govuk-frontend-supported">
+  <body class="govuk-template__body govuk-frontend-supported app-page">
     <a
       href="#main-content"
       class="govuk-skip-link"
@@ -85,7 +98,7 @@
         </div>
       </div>
     </header>
-    <div class="govuk-width-container">
+    <div class="govuk-width-container app-page__content">
       <main
         class="govuk-main-wrapper govuk-main-wrapper--l"
         id="main-content"

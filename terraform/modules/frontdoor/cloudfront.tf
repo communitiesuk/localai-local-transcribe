@@ -9,12 +9,11 @@ resource "aws_cloudfront_origin_access_identity" "maintenance_oai" {
 
 #tfsec:ignore:aws-cloudfront-enable-logging: TODO we will be implementing logging later
 resource "aws_cloudfront_distribution" "main" {
-  aliases             = var.ssl_certs_created ? var.cloudfront_domain_names : []
-  enabled             = true
-  http_version        = "http2and3"
-  is_ipv6_enabled     = true
-  price_class         = "PriceClass_100" # Extra latency outside of UK/Europe, but cheaper
-  default_root_object = "maintenance"
+  aliases         = var.ssl_certs_created ? var.cloudfront_domain_names : []
+  enabled         = true
+  http_version    = "http2and3"
+  is_ipv6_enabled = true
+  price_class     = "PriceClass_100" # Extra latency outside of UK/Europe, but cheaper
 
   web_acl_id = aws_wafv2_web_acl.main.arn
 
@@ -59,7 +58,7 @@ resource "aws_cloudfront_distribution" "main" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     cache_policy_id        = aws_cloudfront_cache_policy.main.id
-    path_pattern           = "/govuk-frontend-5.11.2.min.css"
+    path_pattern           = "/govuk-frontend-6.3.0.min.css"
     target_origin_id       = local.maintenance_origin_id
     viewer_protocol_policy = "redirect-to-https"
   }
