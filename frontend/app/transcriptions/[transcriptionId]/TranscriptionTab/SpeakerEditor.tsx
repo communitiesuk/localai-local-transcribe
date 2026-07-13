@@ -13,53 +13,41 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { useSaveTranscription } from '@/hooks/use-save-transcription'
-import { DialogueEntry, Transcription } from '@/lib/client'
+import { DialogueEntry } from '@/lib/client'
 import { Edit2, Pause, Play } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FormProvider, useFieldArray, useFormContext } from 'react-hook-form'
+import { FormProvider, useFormContext, useWatch } from 'react-hook-form'
 
 export const SpeakerEditor = ({
-  transcription,
   src,
+  onSaveSpeaker,
 }: {
-  transcription: Transcription
   src?: string
+  onSaveSpeaker: (originalSpeaker: string, newSpeaker: string) => Promise<void>
 }) => {
-  const { saveTranscription } = useSaveTranscription(transcription.id!)
+  const form = useFormContext<DialogueEntryForm>()
+  const entries = useWatch({ control: form.control, name: 'entries' })
 
   const speakers = useMemo(() => {
     const speakerMap: Map<string, DialogueEntry[]> = new Map<
       string,
       DialogueEntry[]
     >()
-    transcription.dialogue_entries?.forEach((entry) => {
+    entries?.forEach((entry) => {
       speakerMap.set(entry.speaker, [
         ...(speakerMap.get(entry.speaker) || []),
         entry,
       ])
     })
     return speakerMap
-  }, [transcription.dialogue_entries])
+  }, [entries])
 
-  const form = useFormContext<DialogueEntryForm>()
-  const fieldArray = useFieldArray({ control: form.control, name: 'entries' })
   const [selected, setSelected] = useState<string | undefined>()
   const onSave = useCallback(
-    (originalSpeaker: string) => (newSpeaker: string) => {
-      form
-        .getValues('entries')
-        .map((e, i) => ({
-          ...e,
-          i,
-        }))
-        .filter((e) => e.speaker === originalSpeaker)
-        .forEach(({ i, ...entry }) => {
-          fieldArray.update(i, { ...entry, speaker: newSpeaker })
-        })
-      form.handleSubmit(saveTranscription)()
+    (originalSpeaker: string) => async (newSpeaker: string) => {
+      await onSaveSpeaker(originalSpeaker, newSpeaker)
     },
-    [fieldArray, form, saveTranscription]
+    [onSaveSpeaker]
   )
 
   return (
@@ -122,18 +110,23 @@ const SpeakerNameEditor = ({
   setSelected,
 }: {
   speaker: string
-  onSave: (name: string) => void
+  onSave: (name: string) => Promise<void>
   selected: boolean
   setSelected: (n: string | undefined) => void
 }) => {
   const [value, setValue] = useState(speaker)
   const inputRef = useRef<HTMLInputElement | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     if (selected && inputRef.current) {
       inputRef.current.focus()
     }
   }, [selected])
+
+  useEffect(() => {
+    setValue(speaker)
+  }, [speaker])
 
   if (!selected) {
     return (
@@ -159,6 +152,7 @@ const SpeakerNameEditor = ({
       <Button
         type="button"
         variant="secondary"
+        disabled={isSaving}
         onClick={() => {
           setValue(speaker)
           setSelected(undefined)
@@ -168,9 +162,15 @@ const SpeakerNameEditor = ({
       </Button>
       <Button
         type="button"
-        onClick={() => {
-          onSave(value)
-          setSelected(undefined)
+        disabled={isSaving}
+        onClick={async () => {
+          setIsSaving(true)
+          try {
+            await onSave(value)
+            setSelected(undefined)
+          } finally {
+            setIsSaving(false)
+          }
         }}
       >
         Save

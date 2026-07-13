@@ -7,8 +7,6 @@ from pathlib import Path
 import orjson
 import typer
 
-from evals.summarisation.src.bias.bias_types import PlottingOutput
-from evals.summarisation.src.bias.visualization.reporter import generate_visualizations
 from evals.summarisation.src.common import load_config
 from evals.summarisation.src.hallucination.types import HallucinationInput
 
@@ -22,6 +20,8 @@ config_path_arg = typer.Option(DEFAULT_CONFIG, "--config", exists=True, dir_okay
 
 async def run_bias_eval(config: Path) -> None:
     from evals.summarisation.src.bias import run_counterfactual_eval
+    from evals.summarisation.src.bias.bias_types import BiasEvalResults
+    from evals.summarisation.src.bias.thresholds import has_threshold_failures
 
     cfg = load_config(config)
 
@@ -34,19 +34,19 @@ async def run_bias_eval(config: Path) -> None:
 
     run_id, results_path = await run_counterfactual_eval(cfg, input_dir, output_dir)
 
-    with results_path.open("rb") as f:
-        plotting_output = PlottingOutput.model_validate(orjson.loads(f.read()))
-
-    run_output_dir = output_dir / run_id
-    generate_visualizations(plotting_output.comparisons, run_output_dir)
-
     typer.echo(f"\nRun ID: {run_id}")
     typer.echo(f"Results: {results_path}")
-    typer.echo(f"Visualizations: {run_output_dir / 'visualizations'}")
 
     tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
     if tasks:
         await asyncio.gather(*tasks, return_exceptions=True)
+
+    with results_path.open("rb") as f:
+        results = BiasEvalResults.model_validate(orjson.loads(f.read()))
+
+    if has_threshold_failures(results):
+        typer.echo("Bias thresholds breached: at least one SPC or 4/5 check failed.", err=True)
+        raise typer.Exit(code=1)
 
 
 def run_standard_eval(config: Path) -> list[HallucinationInput]:

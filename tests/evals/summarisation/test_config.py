@@ -29,7 +29,7 @@ judge:
   pass_threshold: 4
 
 metrics:
-  - faithfulness
+  - accuracy
   - coverage
 
 prompts:
@@ -49,7 +49,7 @@ def test_load_config_parses_yaml_additional_fields(tmp_path):
     limit = 10
     dataset_name = "knkarthick/dialogsum"
     pass_threshold = 4
-    metrics = ["faithfulness", "coverage"]
+    metrics = ["accuracy", "coverage"]
 
     config_path = tmp_path / "config.yaml"
     config_content = f"""
@@ -118,7 +118,7 @@ prompts:
 def test_load_config_uses_defaults_dataset_fields(tmp_path):
     default_dialogue_field = "dialogue"
     default_summary_field = "summary"
-    default_metrics_count = 4
+    default_metrics_count = 8
 
     config_path = tmp_path / "config.yaml"
     config_content = """
