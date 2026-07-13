@@ -199,17 +199,15 @@ module "ecs" {
   database_user                = local.database_username
   database_password_secret_arn = module.secrets.database_password_secret_arn
 
-  lb_target_group_arn             = module.frontdoor.load_balancer.target_group_arn
-  lb_security_group_id            = module.frontdoor.load_balancer.security_group_id
-  db_security_group_id            = module.database.rds_security_group_id
-  bastion_sg_id                   = module.bastion.security_group_id
-  environment                     = "local" # TODO AIILG-653 revert to "staging" after pen testing is complete
-  data_s3_bucket_name             = module.uploads_bucket.bucket_name
-  private_subnet_ids              = module.networking.private_subnets[*].id
-  vpc_id                          = module.networking.vpc.id
-  app_url                         = local.app_host
-  apim_allowed_cidrs              = ["172.166.171.45/32"]
-  vpc_endpoints_security_group_id = module.networking.vpc_endpoints_security_group_id
+  lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
+  lb_security_group_id = module.frontdoor.load_balancer.security_group_id
+  db_security_group_id = module.database.rds_security_group_id
+  bastion_sg_id        = module.bastion.security_group_id
+  environment          = "local" # TODO AIILG-653 revert to "staging" after pen testing is complete
+  data_s3_bucket_name  = module.uploads_bucket.bucket_name
+  private_subnet_ids   = module.networking.private_subnets[*].id
+  vpc_id               = module.networking.vpc.id
+  app_url              = local.app_host
 
   frontend_image_name = "${module.ecr.ecr_frontend_repository_url}:${var.image_tag}"
   backend_image_name  = "${module.ecr.ecr_backend_repository_url}:${var.image_tag}"

@@ -32,7 +32,4 @@ output "redis_subnet_group_name" {
   value       = aws_elasticache_subnet_group.main.name
   description = "Name of the redis subnet group"
 }
-output "vpc_endpoints_security_group_id" {
-  description = "Security group ID for AWS service VPC endpoints"
-  value       = aws_security_group.aws_service_vpc_endpoints.id
-}
+

@@ -109,56 +109,56 @@ resource "aws_vpc_security_group_ingress_rule" "worker_to_db_ingress" {
   security_group_id            = var.db_security_group_id
 }
 
+resource "aws_vpc_security_group_egress_rule" "frontend_http_egress" {
+  description       = "Allow frontend http egress to any public internet IP address"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
+  security_group_id = aws_security_group.frontend.id
+}
+
 resource "aws_vpc_security_group_egress_rule" "frontend_https_egress" {
-  for_each          = toset(var.sentry_allowed_cidrs)
-  description       = "Allow frontend https egress to Sentry"
-  cidr_ipv4         = each.value
+  description       = "Allow frontend https egress to any public internet IP address"
+  cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
   security_group_id = aws_security_group.frontend.id
 }
 
+resource "aws_vpc_security_group_egress_rule" "backend_http_egress" {
+  description       = "Allow backend http egress to any public internet IP address"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
+  security_group_id = aws_security_group.backend.id
+}
+
 resource "aws_vpc_security_group_egress_rule" "backend_https_egress" {
-  for_each          = toset(var.sentry_allowed_cidrs)
-  description       = "Allow backend https egress to Sentry"
-  cidr_ipv4         = each.value
+  description       = "Allow backend https egress to any public internet IP address"
+  cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
   security_group_id = aws_security_group.backend.id
 }
 
+resource "aws_vpc_security_group_egress_rule" "worker_http_egress" {
+  description       = "Allow worker http egress to any public internet IP address"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = 80
+  to_port           = 80
+  security_group_id = aws_security_group.worker.id
+}
+
 resource "aws_vpc_security_group_egress_rule" "worker_https_egress" {
-  for_each          = toset(concat(var.apim_allowed_cidrs, var.sentry_allowed_cidrs))
-  description       = "Allow worker https egress to APIM and Sentry"
-  cidr_ipv4         = each.value
+  description       = "Allow worker https egress to any public internet IP address"
+  cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
   security_group_id = aws_security_group.worker.id
-}
-resource "aws_vpc_security_group_egress_rule" "frontend_egress_to_vpc_endpoints" {
-  description                  = "Allow frontend https egress to AWS service VPC endpoints"
-  ip_protocol                  = "tcp"
-  from_port                    = 443
-  to_port                      = 443
-  referenced_security_group_id = var.vpc_endpoints_security_group_id
-  security_group_id            = aws_security_group.frontend.id
-}
-resource "aws_vpc_security_group_egress_rule" "backend_egress_to_vpc_endpoints" {
-  description                  = "Allow backend https egress to AWS service VPC endpoints"
-  ip_protocol                  = "tcp"
-  from_port                    = 443
-  to_port                      = 443
-  referenced_security_group_id = var.vpc_endpoints_security_group_id
-  security_group_id            = aws_security_group.backend.id
-}
-resource "aws_vpc_security_group_egress_rule" "worker_egress_to_vpc_endpoints" {
-  description                  = "Allow worker https egress to AWS service VPC endpoints"
-  ip_protocol                  = "tcp"
-  from_port                    = 443
-  to_port                      = 443
-  referenced_security_group_id = var.vpc_endpoints_security_group_id
-  security_group_id            = aws_security_group.worker.id
 }
