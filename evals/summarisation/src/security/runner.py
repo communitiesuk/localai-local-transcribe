@@ -8,6 +8,7 @@ from pathlib import Path
 from statistics import mean
 
 import orjson
+from openai import BadRequestError
 
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import AppConfig, MetricResult, call_llm_judge_parallel, write_jsonl
@@ -28,22 +29,16 @@ from evals.summarisation.src.summarizer import generate_summary
 
 logger = logging.getLogger(__name__)
 
-# Substrings Azure's own content-safety / responsible-AI filter raises when it blocks a request
-# outright, before any summary is produced (see common/audio/generate_speaker_predictions.py for
-# the same pattern used elsewhere in the codebase).
-_CONTENT_SAFETY_MARKERS = (
-    "content_filter",
-    "content filter",
-    "content management policy",
-    "filtered",
-    "policy violation",
-)
-
 
 def _is_content_safety_error(exc: Exception) -> bool:
-    """Whether ``exc`` looks like an Azure content-safety filter block rather than a pipeline failure."""
-    message = str(exc).lower()
-    return any(marker in message for marker in _CONTENT_SAFETY_MARKERS)
+    """Whether ``exc`` is Azure's content-safety filter rejecting the request.
+
+    Azure sets ``code: "content_filter"`` on the ``BadRequestError`` body, and (since
+    ``common/llm/client.py`` and ``common/llm/adapters/azure_apim.py`` don't retry
+    ``BadRequestError``) it always reaches us directly and unwrapped — no retry-wrapper gymnastics
+    needed to find it.
+    """
+    return isinstance(exc, BadRequestError) and exc.code == "content_filter"
 
 
 def _make_record(

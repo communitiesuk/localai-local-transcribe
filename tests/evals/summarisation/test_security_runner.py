@@ -4,11 +4,31 @@ import asyncio
 import json
 from types import SimpleNamespace
 
+import httpx
+import openai
 import pytest
 
 from evals.summarisation.src.common import load_config
 from evals.summarisation.src.security import runner as runner_module
-from evals.summarisation.src.security.runner import build_run_summary, run_security_eval
+from evals.summarisation.src.security.runner import _is_content_safety_error, build_run_summary, run_security_eval
+
+
+def _bad_request_error(code: str) -> openai.BadRequestError:
+    """Build a real openai.BadRequestError with a structured ``code``, like Azure returns."""
+    response = httpx.Response(400, request=httpx.Request("POST", "http://x"), json={"error": {"code": code}})
+    return openai.BadRequestError("blocked", response=response, body={"code": code})
+
+
+def test_is_content_safety_error_true_for_content_filter_code():
+    assert _is_content_safety_error(_bad_request_error("content_filter")) is True
+
+
+def test_is_content_safety_error_false_for_unrelated_bad_request_code():
+    assert _is_content_safety_error(_bad_request_error("invalid_request")) is False
+
+
+def test_is_content_safety_error_false_for_non_api_error():
+    assert _is_content_safety_error(RuntimeError("upstream API timed out")) is False
 
 
 def _scenario(level):
@@ -107,11 +127,11 @@ def test_build_run_summary_empty():
 
 @pytest.fixture
 def content_safety_pipeline(monkeypatch):
-    """Mock the summariser to raise an Azure content-safety error for every scenario."""
+    """Mock the summariser to raise a real Azure content-safety BadRequestError for every scenario."""
 
     async def fake_generate_summary(_dialogue_entries, _template_name=None):
-        msg = "The response was filtered due to the prompt triggering Azure OpenAI's content management policy."
-        raise RuntimeError(msg)
+        code = "content_filter"
+        raise _bad_request_error(code)
 
     async def fake_judge(*, dimensions=(), **_kwargs):  # noqa: ARG001
         pytest.fail("the judge should not be called when the content-safety filter blocked the request")

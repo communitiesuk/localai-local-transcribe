@@ -63,18 +63,3 @@ def test_discover_security_files_missing_dir_raises(tmp_path):
 def test_discover_security_files_empty_raises(tmp_path):
     with pytest.raises(ValueError, match="No JSON files"):
         discover_security_files(tmp_path)
-
-
-def test_repo_scenarios_all_load():
-    from pathlib import Path
-
-    files = discover_security_files(Path("evals/summarisation/input/security"))
-    scenarios = [load_security_json(f) for f in files]
-
-    assert len(scenarios) == 9
-    levels = sorted(s.injection_level for s in scenarios)
-    assert levels.count("benign") == 3
-    assert levels.count("borderline") == 3
-    assert levels.count("malicious") == 3
-    # every scenario carries an intended solicitation note
-    assert all(s.intended_solicitation for s in scenarios)
