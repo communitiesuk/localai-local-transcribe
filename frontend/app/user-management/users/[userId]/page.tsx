@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useCallback, useEffect } from 'react'
+import { use, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
@@ -40,8 +40,6 @@ import { formatCurrentDateTime } from '@/lib/utils'
 export default function UserPage(props: {
   params: Promise<{ userId: string }>
 }) {
-  const router = useRouter()
-
   const { userId } = use(props.params)
 
   const {
@@ -56,17 +54,15 @@ export default function UserPage(props: {
     }),
   })
 
-  useEffect(() => {
-    if (targetUserError) {
-      router.replace('/generic-error')
-    }
-  }, [targetUserError, router])
-
   if (targetUserLoading) {
     return <Loader2 className="animate-spin" />
   }
 
-  if (targetUserError) return null
+  // Surface the failure to the nearest error boundary (app/error.tsx),
+  // which renders the canonical GOV.UK "there is a problem" page.
+  if (targetUserError) {
+    throw new Error('Unable to load user')
+  }
 
   return (
     <>
