@@ -34,6 +34,7 @@ jobs:
         id: test
         working-directory: frontend
         run: |
+          set -o pipefail
           npm run test:cov 2>&1 | tee test-output.txt
 
       - name: Upload frontend coverage HTML

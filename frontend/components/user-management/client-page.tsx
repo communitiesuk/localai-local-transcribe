@@ -60,6 +60,15 @@ export default function UserManagementClient() {
     router.push('/invite-user')
   }
 
+  const handleEditDomains = () => {
+    const orgId = isSystemAdmin
+      ? selectedOrganisation
+      : (organisation?.id ?? '')
+    if (orgId) {
+      router.push(`/user-management/organisations/${orgId}/domains`)
+    }
+  }
+
   if (userLoading) return <Loader2 className="animate-spin" />
 
   if (userError) return <p>Error: Failed to load users.</p>
@@ -127,18 +136,18 @@ export default function UserManagementClient() {
         )}
       </div>
 
-      {isSystemAdmin && (
-        <>
-          <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
+      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
-          <GovukButtonLink
-            href="/user-management/organisations/domains"
-            variant="secondary"
-          >
-            Edit approved domains
-          </GovukButtonLink>
-        </>
-      )}
+      <GovukButton
+        onClick={handleEditDomains}
+        variant="secondary"
+        disabled={
+          (isSystemAdmin && !selectedOrganisation) ||
+          (!isSystemAdmin && !organisation)
+        }
+      >
+        Edit approved domains
+      </GovukButton>
 
       <Suspense fallback={null}>
         <PaginatedUsers
