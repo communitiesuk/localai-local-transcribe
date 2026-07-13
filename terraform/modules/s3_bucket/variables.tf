@@ -28,7 +28,7 @@ variable "noncurrent_version_expiration_days" {
 
 variable "access_s3_log_expiration_days" {
   type        = number
-  description = "Set to null to skip creating a bucket lifecycle configuration"
+  description = "The number of days to retain s3 access logs"
   default     = 365
 }
 

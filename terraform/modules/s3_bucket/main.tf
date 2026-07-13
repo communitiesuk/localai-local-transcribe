@@ -94,14 +94,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
   depends_on = [aws_s3_bucket_versioning.main]
   bucket     = aws_s3_bucket.main.id
 
-  rule {
-    id = "expire-old-logs"
-    filter {}
-    expiration {
-      days = var.access_s3_log_expiration_days
-    }
-    status = "Enabled"
-  }
 
   rule {
     id = "expire-old-versions"
