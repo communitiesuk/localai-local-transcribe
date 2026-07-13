@@ -136,8 +136,7 @@ class PaginatedUsersResponse(BaseModel):
 
 
 class DataRetentionUpdateResponse(BaseModel):
-    data_retention_days: int | None
-
+    data_retention_days: int 
 
 class TranscriptionGetResponse(BaseModel):
     id: uuid.UUID
