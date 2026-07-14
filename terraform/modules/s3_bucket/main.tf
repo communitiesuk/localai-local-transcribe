@@ -117,10 +117,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
 }
 
 # Access logs bucket
-# tfsec:ignore:aws-s3-enable-bucket-logging tfsec:ignore:aws-s3-enable-versioning
 resource "aws_s3_bucket" "log_bucket" {
   bucket        = var.access_log_bucket_name
   force_destroy = var.force_destroy
+}
+
+resource "aws_s3_bucket_versioning" "log_bucket" {
+  bucket = aws_s3_bucket.log_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_s3_bucket_logging" "main" {

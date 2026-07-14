@@ -244,7 +244,7 @@ module "monitoring" {
   }
 
   environment_name                    = local.environment_name
-  cloudwatch_log_expiration_days      = local.access_s3_log_expiration_days
+  cloudwatch_log_expiration_days      = local.cloudwatch_log_expiration_days
   alarm_email_address                 = var.alarm_email_address
   alb_name                            = module.frontdoor.load_balancer.name
   alb_arn_suffix                      = module.frontdoor.load_balancer.arn_suffix
