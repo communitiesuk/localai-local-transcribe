@@ -24,7 +24,9 @@ jobs:
       
       - name: Log Prettier node-version
         working-directory: frontend
-        run:  npx prettier --version
+        run:  |
+          npx prettier --version
+          npm ls prettier
 
       - name: Lint
         working-directory: frontend
