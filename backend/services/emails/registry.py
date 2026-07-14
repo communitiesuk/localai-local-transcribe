@@ -10,5 +10,8 @@ def get_email_sender() -> EmailSender:
     match settings.EMAIL_SERVICE:
         case "gov_notify":
             return GovNotifyEmailSender()
-        case _:
+        case "local":
             return LocalEmailSender()
+        case _:
+            error_text = f"Unknown email service: {settings.EMAIL_SERVICE}"
+            raise ValueError(error_text)
