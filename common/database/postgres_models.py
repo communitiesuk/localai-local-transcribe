@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
@@ -122,7 +122,7 @@ class User(BaseTableMixin, table=True):
     )
     name: str | None = Field(default=None, nullable=True)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
-    data_retention_days: int | None = Field(default=30)
+    data_retention_days: int = Field(default=30)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
     roles: list[UserRole] = Field(
         default_factory=lambda: [UserRole.STANDARD_USER],
@@ -146,6 +146,12 @@ class Recording(BaseTableMixin, table=True):
     s3_file_key: str
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
     transcription: "Transcription" = Relationship(back_populates="recordings")
+    # metadata fields:
+    date_of_recording: date | None = Field(default=None)
+    client_date_of_birth: date | None = Field(default=None)
+    client_name: str | None = Field(default=None)
+    case_id: str | None = Field(default=None)
+    subject: str | None = Field(default=None)
 
 
 class Chat(BaseTableMixin, table=True):

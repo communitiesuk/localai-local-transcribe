@@ -1,0 +1,7 @@
+Policy: https://www.gov.uk/guidance/vulnerability-disclosure-policy-mhclg
+
+Contact: https://hackerone.com/2a42b991-30b3-419b-853a-2b9895da2a1e/embedded_submissions/new
+
+Last-Updated: 2026-07-13T00:00:00+00:00
+
+Expires: 2027-01-13T00:00:00+00:00

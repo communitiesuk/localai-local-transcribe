@@ -11,6 +11,7 @@ from openai import (
     APITimeoutError,
     AsyncOpenAI,
     AuthenticationError,
+    BadRequestError,
     RateLimitError,
 )
 from openai.types.chat import ChatCompletion, ParsedChatCompletion
@@ -215,6 +216,13 @@ class AzureAPIMModelAdapter(ModelAdapter):
                         method_name,
                     )
                     raise
+
+            except BadRequestError:
+                # A 400 (e.g. Azure's content-safety filter rejecting the request) is a definitive,
+                # deterministic rejection of this exact request — retrying it identically would
+                # only waste time on a call that will fail the same way every time.
+                logger.warning("APIM FAILURE: %s - BadRequestError is not retryable", method_name)
+                raise
 
             except (APIConnectionError, APIError, APITimeoutError) as error:
                 logger.warning(
