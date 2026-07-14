@@ -38,6 +38,7 @@ move from private beta to public beta, there is currently some uncertainty about
 * Good, because it is flexible enough to cope with either Microsoft (the dominant provider) or Google (which some councils
   may use)
 * Good, because operational burdens and dependencies are low
+* Good, because user onboarding can be entirely self-serve
 * Bad, because its future is uncertain - it's not clear what level of support / maintenance it will receive, if any
 
 ### MHCLG Entra
@@ -52,6 +53,8 @@ process necessary to set up that configuration is currently unclear.
 * Neutral, because it requires councils to be using Entra, but we believe this to be very commonplace
 * Bad, because it places an operational dependency on another team within MHCLG
 * Bad, because it places an operational burden on the Local Transcribe team to ensure secrets are regularly rotated
+* Bad, because user onboarding requires manual intervention - i.e. it is no longer self-serve, or instant
+* Bad, because user onboarding requires two phases: onboarding to MHCLG Entra as a guest, then onboarding to Local Transcribe
 
 ### One Login + email verification
 
@@ -63,6 +66,7 @@ would need to send a verification email.
 * Good, because it is a proven, mature service (used both within MHCLG and across government, including by much larger
   services, and including services planning an additional email verification)
 * Good, because operational burdens and dependencies are low
+* Neutral, because user onboarding can be entirely self-serve but may require registering for a One Login account
 * Neutral, because we can establish the user has an active local council account via email verification, but this requires
   extra work and is a frustrating UX
 * Bad, because users have to use a non-work account, which may be confusing or unwanted
