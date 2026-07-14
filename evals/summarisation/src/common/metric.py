@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import secrets
 from dataclasses import dataclass
 
 import dspy
@@ -9,34 +10,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
 from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
-from evals.summarisation.src.constants import CONCURRENCY
+from evals.summarisation.src.constants import CONCURRENCY, normalise_judge_score
 from evals.summarisation.src.judge import build_system_prompt, build_user_message
-
-
-def load_system_prompt(dimension: str | None = None) -> str:
-    """Return the rendered system prompt for a given rubric dimension.
-
-    Uses the existing Jinja template via ``build_system_prompt``.
-    """
-    return build_system_prompt(dimension)
-
-
-def make_dynamic_signature(metric_name: str, rubric: str) -> type[dspy.Signature]:
-    """Create a DSPy ``Signature`` subclass for a specific evaluation metric.
-
-    The generated class contains the fields expected by the judge LLM and embeds
-    the provided *rubric* text in its docstring.
-    """
-    class_name = f"{metric_name.title().replace('_', '')}Signature"
-    docstring = f"Rubric for {metric_name}: {rubric}"
-    attrs = {
-        "__doc__": docstring,
-        "dialogue": dspy.InputField(desc="Dialogue text"),
-        "reference_summary": dspy.InputField(desc="Gold summary from dataset"),
-        "candidate_summary": dspy.InputField(desc="Model-generated summary"),
-        "evaluation_result": dspy.OutputField(desc="JSON with rating and reason"),
-    }
-    return type(class_name, (dspy.Signature,), attrs)
 
 
 class DimensionEvaluation(BaseModel):
@@ -76,18 +51,26 @@ async def call_llm_judge_parallel(
     transcript_text: str,
     summary_text: str,
     dimensions: list[str],
+    template_name: str | None = None,
+    intended_solicitation: str | None = None,
 ) -> dict:
     """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
     semaphore = asyncio.Semaphore(CONCURRENCY)  # Limit concurrency to prevent rate limits
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
         async with semaphore:
-            sys_prompt = build_system_prompt(dim)
+            # Freshly generated per call so the judge can distinguish genuine boundary markers from
+            # any lookalike text injected into the transcript or summary.
+            marker_hash = secrets.token_hex(4)
+            sys_prompt = build_system_prompt(dim, intended_solicitation, marker_hash=marker_hash)
             user_msg = build_user_message(
                 summary_id=summary_id,
                 transcript_ref=transcript_ref,
                 transcript_text=transcript_text,
                 summary_text=summary_text,
+                template_name=template_name,
+                intended_solicitation=intended_solicitation,
+                marker_hash=marker_hash,
             )
             res = await call_llm_judge(sys_prompt, user_msg)
             dim_data = res["dimensions"].get(dim)
@@ -113,30 +96,21 @@ class DialogSummaryMetric:
     criterion: str
     pass_threshold: int
 
-    def evaluate(
-        self,
-        *,
-        example: DialogExample,
-        prediction: dspy.Prediction,
-    ) -> MetricResult:
-        """Evaluates prediction against example using rubric judge LLM for specific criterion."""
-        rubric_dim = self.criterion
-        # Map configured metric names to rubric dimension names
-        if rubric_dim == "faithfulness":
-            rubric_dim = "accuracy"
-        elif rubric_dim in ("conciseness", "coherence"):
-            rubric_dim = "readability"
-
-        sys_prompt = build_system_prompt(rubric_dim)
+    def _build_judge_messages(
+        self, rubric_dim: str, example: DialogExample, prediction: dspy.Prediction
+    ) -> tuple[str, str]:
+        marker_hash = secrets.token_hex(4)
+        sys_prompt = build_system_prompt(rubric_dim, marker_hash=marker_hash)
         user_msg = build_user_message(
             summary_id=example.example_id,
             transcript_ref=str(example.example_id),
             transcript_text=example.dialogue,
             summary_text=prediction.summary,
+            marker_hash=marker_hash,
         )
+        return sys_prompt, user_msg
 
-        rubric_evaluation = asyncio.run(call_llm_judge(sys_prompt, user_msg))
-
+    def _build_result(self, rubric_dim: str, rubric_evaluation: dict) -> MetricResult:
         dim_eval = rubric_evaluation["dimensions"].get(rubric_dim)
         if dim_eval is None and rubric_evaluation["dimensions"]:
             first_key = next(iter(rubric_evaluation["dimensions"]))
@@ -149,12 +123,36 @@ class DialogSummaryMetric:
             )
 
         score = int(dim_eval["score"])
-        scaled_score = (score - 1) / 4.0
+        scaled_score = normalise_judge_score(score)
 
         return MetricResult(
             score=scaled_score,
             reason=f"rubric_{rubric_dim}_score={score} :: {dim_eval['rationale']}",
         )
+
+    async def evaluate_async(
+        self,
+        *,
+        example: DialogExample,
+        prediction: dspy.Prediction,
+    ) -> MetricResult:
+        """Evaluate prediction using the rubric judge LLM, awaiting the judge call directly.
+
+        Use this from within a running event loop (e.g. the bias pipeline).
+        """
+        rubric_dim = self.criterion
+        sys_prompt, user_msg = self._build_judge_messages(rubric_dim, example, prediction)
+        rubric_evaluation = await call_llm_judge(sys_prompt, user_msg)
+        return self._build_result(rubric_dim, rubric_evaluation)
+
+    def evaluate(
+        self,
+        *,
+        example: DialogExample,
+        prediction: dspy.Prediction,
+    ) -> MetricResult:
+        """Synchronous wrapper around :meth:`evaluate_async` for non-async callers."""
+        return asyncio.run(self.evaluate_async(example=example, prediction=prediction))
 
 
 def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:

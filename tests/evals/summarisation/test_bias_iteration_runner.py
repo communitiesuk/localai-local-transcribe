@@ -18,12 +18,12 @@ from evals.summarisation.src.common import DialogExample
 @pytest.fixture
 def mock_metrics():
     metric1 = MagicMock()
-    metric1.name = "faithfulness"
-    metric1.evaluate.return_value = MagicMock(score=0.8, reason="Good")
+    metric1.name = "accuracy"
+    metric1.evaluate_async = AsyncMock(return_value=MagicMock(score=0.8, reason="Good"))
 
     metric2 = MagicMock()
     metric2.name = "coverage"
-    metric2.evaluate.return_value = MagicMock(score=0.7, reason="OK")
+    metric2.evaluate_async = AsyncMock(return_value=MagicMock(score=0.7, reason="OK"))
 
     return [metric1, metric2]
 
@@ -31,43 +31,46 @@ def mock_metrics():
 @pytest.fixture
 def mock_sentiment_analyzer():
     analyzer = MagicMock()
-    analyzer.compute_sentiment.return_value = 0.5
+    # sentiment_score is derived as positive - negative = 0.75 - 0.25 = 0.5 (exact in float)
+    analyzer.compute_sentiment_distribution.return_value = {"positive": 0.75, "neutral": 0.0, "negative": 0.25}
     return analyzer
 
 
-def test_evaluate_with_judge_detailed_single_metric():
+@pytest.mark.asyncio
+async def test_evaluate_with_judge_detailed_single_metric():
     metric = MagicMock()
-    metric.name = "faithfulness"
-    metric.evaluate.return_value = MagicMock(score=0.9, reason="Excellent")
+    metric.name = "accuracy"
+    metric.evaluate_async = AsyncMock(return_value=MagicMock(score=0.9, reason="Excellent"))
 
     example = DialogExample(example_id="1", dialogue="Test", reference_summary=None)
     prediction = dspy.Prediction(summary="Summary", candidate=None)
 
-    results = evaluate_with_judge_detailed([metric], example, prediction)
+    results = await evaluate_with_judge_detailed([metric], example, prediction)
 
     assert len(results) == 1
-    assert "faithfulness" in results
-    assert isinstance(results["faithfulness"], CounterfactualMetricResult)
-    assert results["faithfulness"].score == 0.9
-    assert results["faithfulness"].reason == "Excellent"
-    metric.evaluate.assert_called_once_with(example=example, prediction=prediction)
+    assert "accuracy" in results
+    assert isinstance(results["accuracy"], CounterfactualMetricResult)
+    assert results["accuracy"].score == 0.9
+    assert results["accuracy"].reason == "Excellent"
+    metric.evaluate_async.assert_called_once_with(example=example, prediction=prediction)
 
 
-def test_evaluate_with_judge_detailed_multiple_metrics(mock_metrics):
+@pytest.mark.asyncio
+async def test_evaluate_with_judge_detailed_multiple_metrics(mock_metrics):
     example = DialogExample(example_id="1", dialogue="Test", reference_summary=None)
     prediction = dspy.Prediction(summary="Summary", candidate=None)
 
-    results = evaluate_with_judge_detailed(mock_metrics, example, prediction)
+    results = await evaluate_with_judge_detailed(mock_metrics, example, prediction)
 
     assert len(results) == 2
-    assert "faithfulness" in results
+    assert "accuracy" in results
     assert "coverage" in results
-    assert results["faithfulness"].score == 0.8
-    assert results["faithfulness"].reason == "Good"
+    assert results["accuracy"].score == 0.8
+    assert results["accuracy"].reason == "Good"
     assert results["coverage"].score == 0.7
     assert results["coverage"].reason == "OK"
     for metric in mock_metrics:
-        metric.evaluate.assert_called_once()
+        metric.evaluate_async.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -89,16 +92,17 @@ async def test_run_single_iteration_basic(mock_metrics, mock_sentiment_analyzer)
         assert summary == "Generated summary"
         assert metrics.sentiment_score == 0.5
         assert len(metrics.metrics) == 2
-        assert "faithfulness" in metrics.metrics
+        assert "accuracy" in metrics.metrics
         assert "coverage" in metrics.metrics
-        assert metrics.metrics["faithfulness"].score == 0.8
+        assert metrics.metrics["accuracy"].score == 0.8
         assert metrics.metrics["coverage"].score == 0.7
         assert isinstance(summarize_ms, int)
         assert isinstance(judge_ms, int)
         assert summarize_ms >= 0
         assert judge_ms >= 0
+        assert metrics.sentiment_distribution == {"positive": 0.75, "neutral": 0.0, "negative": 0.25}
         mock_generate.assert_called_once_with(dialogue_entries, None)
-        mock_sentiment_analyzer.compute_sentiment.assert_called_once_with("Generated summary")
+        mock_sentiment_analyzer.compute_sentiment_distribution.assert_called_once_with("Generated summary")
 
 
 @pytest.mark.asyncio
@@ -122,7 +126,7 @@ async def test_run_single_iteration_with_template(mock_metrics, mock_sentiment_a
         assert metrics.sentiment_score == 0.5
         assert len(metrics.metrics) == 2
         mock_generate.assert_called_once_with(dialogue_entries, template_name)
-        mock_sentiment_analyzer.compute_sentiment.assert_called_once_with("Template summary")
+        mock_sentiment_analyzer.compute_sentiment_distribution.assert_called_once_with("Template summary")
 
 
 @pytest.mark.asyncio
@@ -152,7 +156,7 @@ async def test_run_multiple_iterations_basic(mock_metrics, mock_sentiment_analyz
         assert total_summarize_ms >= 0
         assert total_judge_ms >= 0
         assert mock_generate.call_count == num_iterations
-        assert mock_sentiment_analyzer.compute_sentiment.call_count == num_iterations
+        assert mock_sentiment_analyzer.compute_sentiment_distribution.call_count == num_iterations
 
 
 @pytest.mark.asyncio

@@ -7,22 +7,35 @@ import yaml
 from pydantic import BaseModel, Field
 
 type MetricName = Literal[
-    "faithfulness",
+    "accuracy",
+    "numerical_accuracy",
+    "template_fit",
     "coverage",
-    "conciseness",
-    "coherence",
+    "action_clarity",
+    "professional_tone",
+    "readability",
+    "auditability",
 ]
 
 
 def default_criteria() -> list[MetricName]:
     """Returns default list of evaluation criteria."""
-    return ["faithfulness", "coverage", "conciseness", "coherence"]
+    return [
+        "accuracy",
+        "numerical_accuracy",
+        "template_fit",
+        "coverage",
+        "action_clarity",
+        "professional_tone",
+        "readability",
+        "auditability",
+    ]
 
 
 class RunConfig(BaseModel):
     """Configuration for evaluation run parameters."""
 
-    eval_type: Literal["standard", "bias"] = "standard"
+    eval_type: Literal["standard", "bias", "security"] = "standard"
     output_dir: str = "runs"
     input_dir: str | None = None
     seed: int = 0
@@ -31,6 +44,9 @@ class RunConfig(BaseModel):
     prompt_version: str = "dev"
     num_iterations: int | None = None
     dataset_version: str = "unspecified"
+    # When true (bias eval only), derive an SPC baseline from this run's deltas and write it
+    # instead of loading an existing baseline and applying threshold checks.
+    emit_spc_baseline: bool = False
 
 
 class DatasetConfig(BaseModel):
