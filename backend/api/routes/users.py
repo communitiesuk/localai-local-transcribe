@@ -47,12 +47,6 @@ async def update_data_retention(
         data: Request body containing data_retention_days
         current_user: The current authenticated user
     """
-    if data.data_retention_days is not None and data.data_retention_days < 1:
-        raise HTTPException(
-            status_code=400,
-            detail="Data retention period must be at least 1 day or None for indefinite retention",
-        )
-
     user.data_retention_days = data.data_retention_days
     user.updated_datetime = datetime.now(tz=UTC)
 
