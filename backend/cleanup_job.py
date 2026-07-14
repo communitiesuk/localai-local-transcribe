@@ -56,7 +56,7 @@ async def cleanup_old_records() -> None:
             .join(User)
             .where(
                 col(User.data_retention_days).is_not(null()),
-                Transcription.created_datetime < func.now() - User.data_retention_days * timedelta(days=1),  
+                Transcription.created_datetime < func.now() - User.data_retention_days * timedelta(days=1),
             )
         )
         transcriptions = (await session.exec(statement)).all()
