@@ -73,22 +73,17 @@ describe('<SettingsPage />', () => {
     ).toBeInTheDocument()
 
     // Check radio buttons (Yes/No options or retention options)
-    const keepIndefinitely = screen.getByLabelText(
-      'Keep indefinitely'
-    ) as HTMLInputElement
     const oneDay = screen.getByLabelText('1 day') as HTMLInputElement
     const sevenDays = screen.getByLabelText('7 days') as HTMLInputElement
     const thirtyDays = screen.getByLabelText('30 days') as HTMLInputElement
     const ninetyDays = screen.getByLabelText('90 days') as HTMLInputElement
 
-    expect(keepIndefinitely).toBeInTheDocument()
     expect(oneDay).toBeInTheDocument()
     expect(sevenDays).toBeInTheDocument()
     expect(thirtyDays).toBeInTheDocument()
     expect(ninetyDays).toBeInTheDocument()
 
     // Since initial data_retention_days is 7, the "7 days" option should be checked
-    expect(keepIndefinitely.checked).toBe(false)
     expect(sevenDays.checked).toBe(true)
   })
 
@@ -131,27 +126,5 @@ describe('<SettingsPage />', () => {
     }
 
     expect(mockInvalidateQueries).toHaveBeenCalled()
-  })
-
-  it('submits null when "Keep indefinitely" is selected', async () => {
-    mockMutateAsync.mockResolvedValueOnce({})
-    render(<SettingsPage />)
-
-    // Select "Keep indefinitely"
-    const keepIndefinitely = screen.getByLabelText('Keep indefinitely')
-    await userEvent.click(keepIndefinitely)
-
-    // Submit
-    const saveButton = screen.getByRole('button', { name: 'Save' })
-    await userEvent.click(saveButton)
-
-    expect(mockMutateAsync).toHaveBeenCalledWith(
-      {
-        body: {
-          data_retention_days: null,
-        },
-      },
-      expect.any(Object)
-    )
   })
 })

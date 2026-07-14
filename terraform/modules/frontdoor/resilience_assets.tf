@@ -24,30 +24,31 @@ resource "aws_s3_object" "maintenance_page_index_file" {
 
 resource "aws_s3_object" "maintenance_page_style_file" {
   bucket       = module.resilience_assets_bucket.bucket
-  key          = "govuk-frontend-5.11.2.min.css"
-  source       = "../modules/frontdoor/maintenance_page/govuk-frontend-5.11.2.min.css"
+  key          = "govuk-frontend-6.3.0.min.css"
+  source       = "../modules/frontdoor/maintenance_page/govuk-frontend-6.3.0.min.css"
   content_type = "text/css"
 }
 
-resource "aws_s3_object" "govuk_crest_svg" {
-  bucket       = module.resilience_assets_bucket.bucket
-  key          = "/assets/images/govuk-crest.svg"
-  source       = "../modules/frontdoor/maintenance_page/assets/images/govuk-crest.svg"
-  content_type = "image/svg+xml"
-}
+resource "aws_s3_object" "assets" {
+  for_each = fileset("${path.module}/maintenance_page/assets", "**")
 
-resource "aws_s3_object" "gds_font_bold" {
-  bucket       = module.resilience_assets_bucket.bucket
-  key          = "/assets/fonts/bold-b542beb274-v2.woff2"
-  source       = "../modules/frontdoor/maintenance_page/assets/fonts/bold-b542beb274-v2.woff2"
-  content_type = "font/woff2"
-}
+  bucket = module.resilience_assets_bucket.bucket
+  key    = "assets/${each.value}"
+  source = "${path.module}/maintenance_page/assets/${each.value}"
 
-resource "aws_s3_object" "gds_font_light" {
-  bucket       = module.resilience_assets_bucket.bucket
-  key          = "/assets/fonts/light-94a07e06a1-v2.woff2"
-  source       = "../modules/frontdoor/maintenance_page/assets/fonts/light-94a07e06a1-v2.woff2"
-  content_type = "font/woff2"
+  content_type = lookup(
+    {
+      css   = "text/css"
+      svg   = "image/svg+xml"
+      png   = "image/png"
+      ico   = "image/x-icon"
+      json  = "application/json"
+      woff  = "font/woff"
+      woff2 = "font/woff2"
+    },
+    regex("[^.]+$", each.value),
+    "application/octet-stream"
+  )
 }
 
 data "aws_iam_policy_document" "resilience_assets" {
