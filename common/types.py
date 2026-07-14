@@ -123,7 +123,7 @@ class GetUserResponse(BaseModel):
     is_active: bool
     name: str | None
     email: str
-    data_retention_days: int | None
+    data_retention_days: int
     roles: list[UserRole]
     organisation_id: uuid.UUID | None
 
