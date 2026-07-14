@@ -126,14 +126,13 @@ export type CreateUserTemplateRequest = {
   questions?: Array<CreateQuestion> | null
 }
 
+export type DataRetentionOptions = 1 | 7 | 30 | 90
+
 /**
  * DataRetentionUpdateResponse
  */
 export type DataRetentionUpdateResponse = {
-  /**
-   * Data Retention Days
-   */
-  data_retention_days: number | null
+  data_retention_days: DataRetentionOptions
 }
 
 /**
@@ -193,7 +192,7 @@ export type GetUserResponse = {
   /**
    * Data Retention Days
    */
-  data_retention_days: number | null
+  data_retention_days: number
   /**
    * Roles
    */
@@ -244,10 +243,7 @@ export type HttpValidationError = {
  * JobStatus
  */
 export type JobStatus =
-  | 'awaiting_start'
-  | 'in_progress'
-  | 'completed'
-  | 'failed'
+  'awaiting_start' | 'in_progress' | 'completed' | 'failed'
 
 /**
  * Minute
@@ -863,9 +859,7 @@ export type UserExistsResponse = {
  * UserRole
  */
 export type UserRole =
-  | 'standard_user'
-  | 'local_authority_admin'
-  | 'mhclg_support_admin'
+  'standard_user' | 'local_authority_admin' | 'mhclg_support_admin'
 
 /**
  * UserUpdateRoles
