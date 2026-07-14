@@ -89,3 +89,9 @@ variable "backend_log_group_name" {
 
   type = string
 }
+
+variable "abort_incomplete_multipart_upload_days" {
+  type        = number
+  description = "Days after initiation to abort incomplete multipart uploads."
+  default     = 7
+}
