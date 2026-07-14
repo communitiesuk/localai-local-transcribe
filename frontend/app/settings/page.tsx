@@ -67,7 +67,9 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
       await mutateAsync(
         {
           body: {
-            data_retention_days: Number(data.dataRetention) as DataRetentionOptions,
+            data_retention_days: Number(
+              data.dataRetention
+            ) as DataRetentionOptions,
           },
         },
         {
