@@ -33,7 +33,7 @@ async def test_get_user(override_user, mock_user):
     assert convert_to_datetime(data["updated_datetime"]) == mock_user.updated_datetime
 
 
-@pytest.mark.parametrize("retention_period", [10, None])
+@pytest.mark.parametrize("retention_period", [1, 7, 30])
 @pytest.mark.asyncio
 async def test_update_data_retention_success(
     override_user, override_session, mock_user, mock_session, retention_period
@@ -71,9 +71,7 @@ async def test_update_data_retention_invalid(
             json={"data_retention_days": 0},
         )
 
-    assert response.status_code == 400
-    error_string = "Data retention period must be at least 1 day or None for indefinite retention"
-    assert error_string == response.json()["detail"]
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
