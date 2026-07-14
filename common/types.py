@@ -2,6 +2,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -135,8 +136,12 @@ class PaginatedUsersResponse(BaseModel):
     total_pages: int
 
 
+type DataRetentionOptions = Literal[1, 7, 30, 90]
+
+
 class DataRetentionUpdateResponse(BaseModel):
-    data_retention_days: int 
+    data_retention_days: DataRetentionOptions
+
 
 class TranscriptionGetResponse(BaseModel):
     id: uuid.UUID
