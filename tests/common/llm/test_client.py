@@ -1,6 +1,8 @@
 from unittest.mock import AsyncMock, MagicMock
 
+import httpx
 import pytest
+from openai import BadRequestError
 from pydantic import BaseModel
 
 from common.llm.client import ChatBot, create_chatbot
@@ -104,6 +106,36 @@ async def test_message_history_structure(mock_adapter):
         {"role": "assistant", "content": "Response 3"},
     ]
     assert chatbot.messages == expected
+
+
+def _bad_request_error() -> BadRequestError:
+    body = {"code": "content_filter"}
+    response = httpx.Response(400, request=httpx.Request("POST", "http://x"), json={"error": body})
+    return BadRequestError("content filtered", response=response, body=body)
+
+
+@pytest.mark.asyncio
+async def test_chat_does_not_retry_bad_request_error(mock_adapter):
+    """A content-filter (or any other) BadRequestError is a deterministic rejection — retrying the
+    identical request would just waste time on a call that will fail the same way every time."""
+    mock_adapter.chat = AsyncMock(side_effect=_bad_request_error())
+    chatbot = ChatBot(adapter=mock_adapter)
+
+    with pytest.raises(BadRequestError):
+        await chatbot.chat(messages=[{"role": "user", "content": "Hi"}])
+
+    assert mock_adapter.chat.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_structured_chat_does_not_retry_bad_request_error(mock_adapter):
+    mock_adapter.structured_chat = AsyncMock(side_effect=_bad_request_error())
+    chatbot = ChatBot(adapter=mock_adapter)
+
+    with pytest.raises(BadRequestError):
+        await chatbot.structured_chat(messages=[{"role": "user", "content": "Hi"}], response_format=House)
+
+    assert mock_adapter.structured_chat.call_count == 1
 
 
 @pytest.mark.asyncio

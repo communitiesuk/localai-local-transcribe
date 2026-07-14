@@ -35,7 +35,7 @@ def default_criteria() -> list[MetricName]:
 class RunConfig(BaseModel):
     """Configuration for evaluation run parameters."""
 
-    eval_type: Literal["standard", "bias"] = "standard"
+    eval_type: Literal["standard", "bias", "security"] = "standard"
     output_dir: str = "runs"
     input_dir: str | None = None
     seed: int = 0

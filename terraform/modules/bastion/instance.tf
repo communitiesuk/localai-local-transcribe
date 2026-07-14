@@ -1,16 +1,16 @@
-data "aws_ami" "amazon_linux_2" {
+data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-kernel-*-hvm-*-x86_64-gp2"]
+    values = ["al2023-ami-2023.*-kernel-*-x86_64"]
   }
 }
 
 resource "aws_instance" "bastion" {
   count                  = length(var.bastion_subnet_ids)
-  ami                    = data.aws_ami.amazon_linux_2.id
+  ami                    = data.aws_ami.amazon_linux_2023.id
   instance_type          = "t2.micro"
   subnet_id              = var.bastion_subnet_ids[count.index]
   vpc_security_group_ids = [aws_security_group.bastion.id]
