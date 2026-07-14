@@ -5,6 +5,6 @@ export default defineConfig({
     path: './openapi.json',
     filters: { tags: { exclude: ['Healthcheck'] } },
   },
-  output: { path: 'lib/client', format: 'prettier' },
+  output: { path: 'lib/client', postProcess: ['prettier'] },
   plugins: ['@hey-api/client-next', '@tanstack/react-query'],
 })
