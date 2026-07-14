@@ -1,6 +1,7 @@
 locals {
-  origin_id             = "origin-${var.environment_name}"
-  maintenance_origin_id = "maintenance-origin-${var.environment_name}"
+  origin_id               = "origin-${var.environment_name}"
+  maintenance_origin_id   = "maintenance-origin-${var.environment_name}"
+  maintenance_error_codes = [500, 501, 502, 503, 504]
 }
 
 resource "aws_cloudfront_origin_access_identity" "maintenance_oai" {
@@ -58,7 +59,7 @@ resource "aws_cloudfront_distribution" "main" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     cache_policy_id        = aws_cloudfront_cache_policy.main.id
-    path_pattern           = "/govuk-frontend-5.11.2.min.css"
+    path_pattern           = "/govuk-frontend-6.3.0.min.css"
     target_origin_id       = local.maintenance_origin_id
     viewer_protocol_policy = "redirect-to-https"
   }
@@ -72,28 +73,14 @@ resource "aws_cloudfront_distribution" "main" {
     viewer_protocol_policy = "redirect-to-https"
   }
 
-  custom_error_response {
-    error_code         = 501
-    response_code      = 501
-    response_page_path = "/maintenance"
-  }
+  dynamic "custom_error_response" {
+    for_each = local.maintenance_error_codes
 
-  custom_error_response {
-    error_code         = 502
-    response_code      = 502
-    response_page_path = "/maintenance"
-  }
-
-  custom_error_response {
-    error_code         = 503
-    response_code      = 503
-    response_page_path = "/maintenance"
-  }
-
-  custom_error_response {
-    error_code         = 504
-    response_code      = 504
-    response_page_path = "/maintenance"
+    content {
+      error_code         = custom_error_response.value
+      response_code      = custom_error_response.value
+      response_page_path = "/maintenance"
+    }
   }
 
   dynamic "custom_error_response" {
