@@ -1,8 +1,9 @@
+'use client'
+
 // frontend/components/audio/microphone-permission.tsx
-import React, { useCallback, useEffect, useState } from 'react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
+import { GovukButton } from '@/components/govuk'
 import { Loader2 } from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 interface MicrophonePermissionProps {
   onPermissionGranted: (devices: AudioDevice[]) => void
@@ -71,26 +72,33 @@ export function MicrophonePermission({
   return (
     <div>
       {permissionDenied ? (
-        <Alert variant="destructive">
-          <AlertDescription>
-            Microphone permission denied. Please enable it in your browser
-            settings.
-          </AlertDescription>
-        </Alert>
+        <p className="govuk-error-message" role="alert">
+          <span className="govuk-visually-hidden">Error:</span> Microphone
+          permission denied. Please enable it in your browser settings.
+        </p>
       ) : (
-        <Alert>
-          <AlertDescription className="flex items-center">
-            {isRequesting && <Loader2 className="mr-2 size-4 animate-spin" />}
+        <div className="govuk-inset-text">
+          <p className="govuk-body flex items-center gap-2">
+            {isRequesting && (
+              <Loader2
+                className="mr-2 size-4 animate-spin"
+                aria-hidden="true"
+              />
+            )}
             {isRequesting
               ? 'Requesting microphone access...'
               : 'Microphone permission is required to use this feature.'}
-          </AlertDescription>
-        </Alert>
+          </p>
+        </div>
       )}
       {permissionDenied && (
-        <Button onClick={requestMicrophonePermission} className="mt-2">
+        <GovukButton
+          type="button"
+          onClick={requestMicrophonePermission}
+          className="govuk-!-margin-top-2"
+        >
           Request Microphone Permission
-        </Button>
+        </GovukButton>
       )}
     </div>
   )

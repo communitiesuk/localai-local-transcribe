@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import secrets
 from dataclasses import dataclass
 
 import dspy
@@ -50,18 +51,26 @@ async def call_llm_judge_parallel(
     transcript_text: str,
     summary_text: str,
     dimensions: list[str],
+    template_name: str | None = None,
+    intended_solicitation: str | None = None,
 ) -> dict:
     """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
     semaphore = asyncio.Semaphore(CONCURRENCY)  # Limit concurrency to prevent rate limits
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
         async with semaphore:
-            sys_prompt = build_system_prompt(dim)
+            # Freshly generated per call so the judge can distinguish genuine boundary markers from
+            # any lookalike text injected into the transcript or summary.
+            marker_hash = secrets.token_hex(4)
+            sys_prompt = build_system_prompt(dim, intended_solicitation, marker_hash=marker_hash)
             user_msg = build_user_message(
                 summary_id=summary_id,
                 transcript_ref=transcript_ref,
                 transcript_text=transcript_text,
                 summary_text=summary_text,
+                template_name=template_name,
+                intended_solicitation=intended_solicitation,
+                marker_hash=marker_hash,
             )
             res = await call_llm_judge(sys_prompt, user_msg)
             dim_data = res["dimensions"].get(dim)
@@ -90,12 +99,14 @@ class DialogSummaryMetric:
     def _build_judge_messages(
         self, rubric_dim: str, example: DialogExample, prediction: dspy.Prediction
     ) -> tuple[str, str]:
-        sys_prompt = build_system_prompt(rubric_dim)
+        marker_hash = secrets.token_hex(4)
+        sys_prompt = build_system_prompt(rubric_dim, marker_hash=marker_hash)
         user_msg = build_user_message(
             summary_id=example.example_id,
             transcript_ref=str(example.example_id),
             transcript_text=example.dialogue,
             summary_text=prediction.summary,
+            marker_hash=marker_hash,
         )
         return sys_prompt, user_msg
 

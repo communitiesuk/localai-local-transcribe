@@ -1,34 +1,21 @@
-import React from 'react'
-import {
-  GovukPanel,
-  GovukPanelHeader,
-  GovukPanelTitle,
-  GovukPanelContent,
-} from '@/components/govuk/panel'
-
-function Unauthorised(): React.JSX.Element {
+export default function Unauthorised() {
   return (
-    <div className="govuk-!-padding-top-9">
-      <div className="govuk-grid-row flex justify-center">
-        <div className="govuk-grid-column-two-thirds">
-          <GovukPanel padding={6} border>
-            <GovukPanelHeader>
-              <GovukPanelTitle className="govuk-heading-m govuk-!-text-align-centre">
-                Unauthorised Access
-              </GovukPanelTitle>
-            </GovukPanelHeader>
-            <GovukPanelContent>
-              <p className="govuk-body govuk-!-text-align-centre">
-                Sorry, you don&apos;t have permission to access this page.
-                Please contact your administrator if you believe this is an
-                error.
-              </p>
-            </GovukPanelContent>
-          </GovukPanel>
-        </div>
+    <div className="govuk-grid-row">
+      <div className="govuk-grid-column-two-thirds">
+        <h1 className="govuk-heading-l">You cannot access this page</h1>
+
+        <p className="govuk-body">
+          You do not have permission to access this page.
+        </p>
+
+        <p className="govuk-body">
+          If you think this is a mistake,{' '}
+          <a className="govuk-link" href="/support">
+            contact the Local Transcribe team
+          </a>
+          .
+        </p>
       </div>
     </div>
   )
 }
-
-export default Unauthorised

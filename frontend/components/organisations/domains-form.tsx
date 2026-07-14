@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Controller, useForm } from 'react-hook-form'
 import {
   GovukButton,
+  GovukButtonGroup,
+  GovukDetails,
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
@@ -20,12 +22,14 @@ export function EditDomainsForm({
   isPending = false,
   buttonText = 'Save',
   buttonPendingText = 'Saving',
+  cancelHref = '/user-management',
 }: {
   defaultValues: string[]
   onSubmit: (data: EditDomainsFormData) => void
   isPending?: boolean
   buttonText?: string
   buttonPendingText?: string
+  cancelHref?: string
 }) {
   const form = useForm<EditDomainsFormData>({
     defaultValues: {
@@ -80,14 +84,27 @@ export function EditDomainsForm({
         />
       </GovukFormGroup>
 
-      <div className="govuk-button-group">
+      <GovukButtonGroup>
         <GovukButton type="submit" disabled={isPending}>
           {isPending ? buttonPendingText : buttonText}
         </GovukButton>
-        <Link href="/user-management" className="govuk-link">
+        <Link href={cancelHref} className="govuk-link">
           Cancel
         </Link>
-      </div>
+      </GovukButtonGroup>
+
+      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
+
+      <GovukDetails summary="More about approved domains">
+        <p className="govuk-body">
+          These are the email address domains that are able to be invited to a
+          given organisation using Internal Access authentication.
+        </p>
+        <p className="govuk-body">
+          Email addresses without an associated approved domain will not be able
+          to be invited.
+        </p>
+      </GovukDetails>
     </form>
   )
 }
