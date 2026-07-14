@@ -34,7 +34,7 @@ export default defineConfig([
   {
     files: [
       'components/ui/**',
-      'components/audio/**',
+      'components/audio/discard-dialog.tsx',
       'components/recent-meetings/**',
       'components/template-select/**',
       'components/layout/**',
@@ -42,7 +42,6 @@ export default defineConfig([
       'app/templates/components/editor/editor-toolbar.tsx',
       'app/templates/components/example-templates-dialog.tsx',
       'app/templates/components/user-templates-list.tsx',
-      'app/new/**',
       'components/transcription-title-editor.tsx',
       'components/status-icon.tsx',
       'components/download-button.tsx',
