@@ -1,1 +1,1 @@
-/.well-known/security.txt
+See our /.well-known/security.txt route.
