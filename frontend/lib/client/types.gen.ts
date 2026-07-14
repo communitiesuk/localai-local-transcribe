@@ -126,14 +126,13 @@ export type CreateUserTemplateRequest = {
   questions?: Array<CreateQuestion> | null
 }
 
+export type DataRetentionOptions = 1 | 7 | 30 | 90
+
 /**
  * DataRetentionUpdateResponse
  */
 export type DataRetentionUpdateResponse = {
-  /**
-   * Data Retention Days
-   */
-  data_retention_days: number | null
+  data_retention_days: DataRetentionOptions
 }
 
 /**
@@ -193,7 +192,7 @@ export type GetUserResponse = {
   /**
    * Data Retention Days
    */
-  data_retention_days: number | null
+  data_retention_days: number
   /**
    * Roles
    */

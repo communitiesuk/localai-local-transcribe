@@ -97,6 +97,7 @@ export type {
   CreateUserUsersPostErrors,
   CreateUserUsersPostResponse,
   CreateUserUsersPostResponses,
+  DataRetentionOptions,
   DataRetentionUpdateResponse,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteData,
   DeleteChatsTranscriptionsTranscriptionIdChatDeleteError,
