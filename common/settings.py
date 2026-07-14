@@ -149,7 +149,7 @@ class Settings(BaseSettings):
     # if using azure-service-bus
     AZURE_SB_CONNECTION_STRING: str | None = Field(description="Azure service bus connection string", default=None)
 
-    EMAIL_SERVICE: str = Field(
+    EMAIL_SERVICE: Literal["local", "gov_notify"] = Field(
         description="An emailing service provider. Supports either 'local' or 'gov_notify'.", default="local"
     )
 
