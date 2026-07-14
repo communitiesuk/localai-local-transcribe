@@ -13,7 +13,7 @@ ENV SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
 RUN npm run generate-client
 RUN npm run build
 
-# Stage 2: Runit'sner (Production)
+# Stage 2: Runner (Production)
 FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
