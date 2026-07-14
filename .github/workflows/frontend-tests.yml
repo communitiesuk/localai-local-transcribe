@@ -21,12 +21,6 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
-      
-      - name: Log Prettier node-version
-        working-directory: frontend
-        run:  |
-          npx prettier --version
-          npm ls prettier
 
       - name: Lint
         working-directory: frontend
