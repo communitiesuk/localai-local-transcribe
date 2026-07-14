@@ -33,11 +33,13 @@ module "alb_logs" {
   access_log_bucket_name             = "local-transcribe-alb-logs-access-logs-${var.environment_name}"
   force_destroy                      = false
   object_lock_enabled                = false
-  noncurrent_version_expiration_days = 700
+  noncurrent_version_expiration_days = 365
   access_s3_log_expiration_days      = 365
   policy                             = data.aws_iam_policy_document.alb_logs_bucket_policy.json
   kms_key_arn                        = null
+
 }
+
 
 data "aws_iam_policy_document" "alb_logs_bucket_policy" {
   statement {
