@@ -92,8 +92,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
   count = var.noncurrent_version_expiration_days == null ? 0 : 1
 
   depends_on = [aws_s3_bucket_versioning.main]
+  bucket     = aws_s3_bucket.main.id
 
-  bucket = aws_s3_bucket.main.id
 
   rule {
     id = "expire-old-versions"
@@ -117,10 +117,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
 }
 
 # Access logs bucket
-# tfsec:ignore:aws-s3-enable-bucket-logging tfsec:ignore:aws-s3-enable-versioning
 resource "aws_s3_bucket" "log_bucket" {
   bucket        = var.access_log_bucket_name
   force_destroy = var.force_destroy
+}
+
+resource "aws_s3_bucket_versioning" "log_bucket" {
+  bucket = aws_s3_bucket.log_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
 }
 
 resource "aws_s3_bucket_logging" "main" {
@@ -146,6 +152,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "log_bucket" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "log_bucket" {
+  count  = var.noncurrent_version_expiration_days == null ? 0 : 1
   bucket = aws_s3_bucket.log_bucket.id
 
   rule {
@@ -155,6 +162,26 @@ resource "aws_s3_bucket_lifecycle_configuration" "log_bucket" {
 
     expiration {
       days = var.access_s3_log_expiration_days
+    }
+
+    status = "Enabled"
+  }
+
+  rule {
+    id = "expire-old-versions"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 14
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.noncurrent_version_expiration_days
+    }
+
+    expiration {
+      expired_object_delete_marker = true
     }
 
     status = "Enabled"

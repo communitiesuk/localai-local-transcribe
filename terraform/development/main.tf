@@ -34,7 +34,7 @@ locals {
   load_balancer_domain_name = "lb.development.local-transcribe.test.communities.gov.uk"
 
   cloudwatch_log_expiration_days = 90
-  access_s3_log_expiration_days  = 90
+  access_s3_log_expiration_days  = 365
   database_allocated_storage     = 50
 }
 
