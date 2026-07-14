@@ -11,7 +11,8 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
-from backend.services.notifications.registry import get_email_notifification
+from backend.services.emails.base import EmailTemplate
+from backend.services.emails.registry import get_email_sender
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email
@@ -29,7 +30,7 @@ from common.types import (
 
 settings = get_settings()
 
-notification = get_email_notifification()
+email_sender = get_email_sender()
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -104,7 +105,7 @@ async def create_user(
     session.add(new_user)
     await session.commit()
     await session.refresh(new_user)
-    background_tasks.add_task(notification.send_email, data.email)
+    background_tasks.add_task(email_sender.send_email, data.email, EmailTemplate.INVITE)
 
     return to_user_response(new_user)
 
