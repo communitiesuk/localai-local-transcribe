@@ -1,4 +1,4 @@
-# ADR-004: Optimisation Strategy for Minute Summarisation and Evaluation Prompts
+# ADR-004: Optimisation Strategy for Local Transcribe Summarisation and Evaluation Prompts
 
 ## Status
 
@@ -8,11 +8,11 @@ Date of decision: 2026-01-15
 
 ## Context and Problem Statement
 
-Minute generates summaries from meeting transcripts, and we also maintain an LLM-as-judge evaluation pipeline to score summaries (e.g., faithfulness, coverage, conciseness, coherence).
+Local Transcribe generates summaries from meeting transcripts, and we also maintain an LLM-as-judge evaluation pipeline to score summaries (e.g., faithfulness, coverage, conciseness, coherence).
 
 We need an optimisation approach that can:
 
-* Improve the quality and consistency of Minute’s summarisation prompts.
+* Improve the quality and consistency of Local Transcribe’s summarisation prompts.
 * Improve the quality and consistency of the judge prompt and scoring behavior.
 * Be reproducible, versioned, and measurable, with clear validation to avoid overfitting.
 
@@ -28,6 +28,15 @@ Manual prompt iteration is slow, difficult to reproduce, and tends to drift with
 ## Decision Outcome
 
 Prompt optimisation using DSPy optimizers, because it is an automated and systematic approach. Other options are more expensive, or time consuming. We think the manual approach is unlikely to achieve the same results.
+
+### Implementation deferred to a later project stage
+
+While DSPy is the agreed optimisation strategy, implementing prompt optimisation has been pushed to a later stage of the project. Two factors drive this:
+
+* User feedback so far has not exposed any significant issues with the templated prompts currently in use, so there is no pressing quality problem to solve.
+* Our evaluation is not yet fully in place, so we cannot reliably identify prompt inefficiencies ourselves.
+
+Running DSPy optimisation now — before we can measure what it improves — would be somewhat wasteful. We will revisit this once the evaluation pipeline is mature enough to detect inefficiencies and once user feedback (or our own evaluation) surfaces a concrete need.
 
 ## Pros and Cons of the Options
 
@@ -52,7 +61,7 @@ Per DSPy documentation, MiPROv2 works at a high level by:
 
 This enables optimising:
 
-* The summariser prompt(s) used by Minute.
+* The summariser prompt(s) used by Local Transcribe.
 * The judge prompt used to score outputs.
 
 Key requirements for this approach:
