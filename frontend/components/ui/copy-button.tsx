@@ -1,5 +1,4 @@
-import { Button } from '@/components/ui/button'
-import { Copy as CopyIcon } from 'lucide-react'
+import { GovukButton } from '@/components/govuk'
 import posthog from 'posthog-js'
 import { useState } from 'react'
 
@@ -42,20 +41,14 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
   }
 
   return (
-    <Button
-      className="bg-emerald-500"
-      onClick={handleCopy}
-      title="Copy content"
+    <GovukButton
       type="button"
+      variant="secondary"
+      onClick={handleCopy}
+      className="govuk-!-margin-bottom-0"
     >
-      <CopyIcon />
-      {!showCopied && <span>Copy</span>}
-      {showCopied && (
-        <span className="animate-fade-in text-xs font-medium text-white">
-          Copied!
-        </span>
-      )}
-    </Button>
+      {showCopied ? 'Copied!' : 'Copy'}
+    </GovukButton>
   )
 }
 

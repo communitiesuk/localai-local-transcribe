@@ -2,7 +2,6 @@ import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/Transcript
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { DownloadButton } from '@/components/download-button'
-import { Button } from '@/components/ui/button'
 import CopyButton from '@/components/ui/copy-button'
 import {
   useUpdateTranscription,
@@ -12,7 +11,7 @@ import { DialogueEntry, TranscriptionGetResponse } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowDown, Play } from 'lucide-react'
+import { Play } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
 
@@ -242,9 +241,13 @@ export function TranscriptionTab({
               />
               <div className="flex justify-between">
                 <div>
-                  <Button onClick={scrollToPlaying} variant="link">
-                    <ArrowDown /> Scroll to playing
-                  </Button>
+                  <button
+                    type="button"
+                    onClick={scrollToPlaying}
+                    className="govuk-link govuk-body-s"
+                  >
+                    Scroll to playing
+                  </button>
                 </div>
                 <DownloadButton recordings={recordings} />
               </div>
@@ -261,14 +264,15 @@ export function TranscriptionTab({
               return (
                 <div
                   className={cn('flex items-start gap-2 rounded', {
-                    'bg-blue-100': isPlaying,
+                    'bg-[var(--govuk-surface-background-colour)]': isPlaying,
                   })}
                   key={field.id}
                   ref={isPlaying ? playingRef : null}
                 >
                   {hasRecordings && (
-                    <Button
+                    <button
                       type="button"
+                      aria-label="Play from here"
                       onClick={() => {
                         if (audioRef.current) {
                           audioRef.current.currentTime = entry.start_time
@@ -277,12 +281,10 @@ export function TranscriptionTab({
                           }
                         }
                       }}
-                      variant="ghost"
-                      className="size-6 rounded-full bg-blue-500 text-xs text-white hover:bg-blue-800 hover:text-white"
-                      size="icon"
+                      className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--govuk-link-colour)] text-white hover:bg-[var(--govuk-link-hover-colour)]"
                     >
-                      <Play />
-                    </Button>
+                      <Play size={14} aria-hidden="true" />
+                    </button>
                   )}
                   <SpeakerNamePopover
                     entry={entry}
