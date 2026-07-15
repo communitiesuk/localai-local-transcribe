@@ -52,7 +52,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # Use Debian ffmpeg for now (caf-friendly version)
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ffmpeg=7:7.1.3-0+deb13u1 && \
+    apt-get install -y --no-install-recommends ffmpeg=7:7.1.5-0+deb13u1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

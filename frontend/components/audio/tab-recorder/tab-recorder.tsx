@@ -1,10 +1,8 @@
 'use client'
 
-import { Mic } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
+import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import {
@@ -13,15 +11,7 @@ import {
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
-import { InstructionsTabs } from '@/components/audio/tab-recorder/instructions'
 import { TranscriptionForm } from '@/components/audio/types'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
@@ -108,32 +98,26 @@ function TabRecorder({
     releaseWakeLock()
   }, [releaseWakeLock])
 
-  // Define wakelock changed  before it's used in useEffect
   const stopRecording = useCallback(() => {
-    // Prevent multiple calls to stopRecording
     if (!mediaRecorderRef.current || !isRecording) {
       return
     }
     try {
-      // Only call stop() if the state is not 'inactive'
       if (mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop()
       } else {
         stopAllTracks()
       }
     } catch {
-      // Clean up streams even if stop fails
       stopAllTracks()
     }
   }, [isRecording, stopAllTracks])
 
-  // stop recording on page unmount
   useEffect(() => {
     return () => {
       stopRecording()
     }
   }, [stopRecording])
-  // Clean up audio context on page unmount
   useEffect(() => {
     return () => {
       if (audioContext.current) {
@@ -142,7 +126,6 @@ function TabRecorder({
     }
   }, [])
 
-  // Handle pause state changes
   const handlePauseStateChange = useCallback((paused: boolean) => {
     if (!mediaRecorderRef.current) {
       return
@@ -165,15 +148,12 @@ function TabRecorder({
         )
       }
 
-      // First get the display media stream (tab capture)
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true, // Request video without specific constraints
-        audio: true, // Request audio
+        video: true,
+        audio: true,
       })
 
-      // Check if we have an audio track from the tab
       if (!screenStream.getAudioTracks().length) {
-        // Clean up the stream if no audio tracks
         screenStream.getTracks().forEach((track) => track.stop())
         throw new Error(
           "No audio track available from the tab. When sharing, please switch on 'Share audio' in the dialog."
@@ -182,35 +162,28 @@ function TabRecorder({
       screenStreamRef.current = screenStream
       setStream(screenStream)
 
-      // Create a new audio context for processing audio and for pausing
       const newAudioContext = new AudioContext()
       const destination = newAudioContext.createMediaStreamDestination()
       audioContext.current = newAudioContext
 
-      // Create a gain node for pause/resume functionality
       const gainNode = newAudioContext.createGain()
-      gainNode.gain.value = 1.0 // Start with full volume
+      gainNode.gain.value = 1.0
       recordingGain.current = gainNode
 
-      // Add screen audio to the composed stream
       const screenSource = newAudioContext.createMediaStreamSource(screenStream)
       const screenGain = newAudioContext.createGain()
       screenGain.gain.value = 1.0
       screenSource.connect(screenGain).connect(gainNode).connect(destination)
 
-      // Merge both audio streams with gain control
       try {
         const micStream = await navigator.mediaDevices.getUserMedia({
           audio: { deviceId: selectedDeviceId },
         })
         micStreamRef.current = micStream
-        // Add mic audio to the composed stream
         const micSource = newAudioContext.createMediaStreamSource(micStream)
         const micGain = newAudioContext.createGain()
         micGain.gain.value = 1.0
         micSource.connect(micGain).connect(gainNode).connect(destination)
-
-        // Add the merged audio track
       } catch (micError) {
         console.warn(
           'Could not access microphone. Recording only tab audio.',
@@ -224,7 +197,6 @@ function TabRecorder({
       })
       streamRef.current = composedStream
 
-      // Create a media recorder from the composed stream
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(composedStream, options)
       mediaRecorderRef.current = mediaRecorder
@@ -249,8 +221,6 @@ function TabRecorder({
 
       mediaRecorder.onerror = () => {
         setError('Recording error occurred. Please try again.')
-        // Don't call stopRecording here as it might cause a loop
-        // Just clean up manually if needed
         stopAllTracks()
       }
 
@@ -272,9 +242,8 @@ function TabRecorder({
         stopAllTracks()
       }
 
-      // Start recording
       await requestWakeLock()
-      mediaRecorder.start(1000) // Collect data every second
+      mediaRecorder.start(1000)
       setIsRecording(true)
     } catch (error) {
       setError(
@@ -304,49 +273,60 @@ function TabRecorder({
   return (
     <div className="space-y-4">
       {recordedAudio ? (
-        <div className="mt-4 space-y-3">
+        <div className="govuk-!-margin-top-4 space-y-3">
           <AudioPlayerComponent audioBlob={recordedAudio} />
           <div className="flex justify-end">
-            <Button
+            <GovukButton
               type="button"
               onClick={() => setDiscardDialogOpen(true)}
-              variant="outline"
-              size="sm"
+              variant="secondary"
             >
               Discard Recording
-            </Button>
+            </GovukButton>
           </div>
         </div>
       ) : (
         <div className="flex flex-col space-y-4">
           {!isRecording ? (
             <>
-              <div className="space-y-4 py-2">
-                <InstructionsTabs />
-              </div>
-              <span className="mb-2 text-sm font-medium">
-                Choose your microphone:
-              </span>
-              <Select
-                onValueChange={setSelectedDeviceId}
-                disabled={isRecording}
-                value={selectedDeviceId}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select microphone" />
-                </SelectTrigger>
-                <SelectContent>
+              <GovukFormGroup>
+                <GovukLabel htmlFor="virtual-microphone-select">
+                  Choose microphone
+                </GovukLabel>
+                <select
+                  className="govuk-select w-full"
+                  id="virtual-microphone-select"
+                  value={selectedDeviceId}
+                  onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  disabled={isRecording}
+                >
                   {audioDevices.map((device) => (
-                    <SelectItem key={device.deviceId} value={device.deviceId}>
+                    <option key={device.deviceId} value={device.deviceId}>
                       {device.label}
-                    </SelectItem>
+                    </option>
                   ))}
-                </SelectContent>
-              </Select>
-              <Button type="button" onClick={startRecording}>
-                <Mic className="mr-2 size-4" />
-                Start Recording Virtual Meeting
-              </Button>
+                </select>
+              </GovukFormGroup>
+
+              <div className="govuk-inset-text govuk-!-margin-top-0">
+                <p className="govuk-body">
+                  Open your virtual meeting in another tab, then start recording
+                  below. When prompted to share, turn on &quot;Share
+                  audio&quot;.
+                </p>
+                <p className="govuk-body">
+                  On Windows, share your entire screen, as sharing a single
+                  tab&apos;s audio is not supported. On Mac, you can share just
+                  the meeting tab.
+                </p>
+                <GovukButton
+                  type="button"
+                  onClick={startRecording}
+                  className="govuk-!-margin-bottom-0"
+                >
+                  Start recording
+                </GovukButton>
+              </div>
             </>
           ) : (
             <div className="space-y-4">
@@ -362,9 +342,9 @@ function TabRecorder({
       )}
 
       {err && (
-        <Alert variant="destructive">
-          <AlertDescription>{err}</AlertDescription>
-        </Alert>
+        <p className="govuk-error-message" role="alert">
+          <span className="govuk-visually-hidden">Error:</span> {err}
+        </p>
       )}
       <DiscardConfirmDialog
         open={discardDialogOpen}

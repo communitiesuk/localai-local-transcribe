@@ -5,18 +5,31 @@ resource "aws_ssm_maintenance_window" "bastion_patch" {
   cutoff   = 1
 }
 
-resource "aws_ssm_maintenance_window_task" "bastion_patch" {
-  window_id       = aws_ssm_maintenance_window.bastion_patch.id
-  max_errors      = 1
-  max_concurrency = 1
-  task_type       = "RUN_COMMAND"
-  task_arn        = "AWS-RunPatchBaseline"
-  priority        = 1
+resource "aws_ssm_maintenance_window_target" "bastion_patch" {
+  window_id     = aws_ssm_maintenance_window.bastion_patch.id
+  name          = "${var.environment_name}-bastion-patch-target"
+  resource_type = "INSTANCE"
 
   targets {
     key    = "InstanceIds"
     values = aws_instance.bastion[*].id
   }
+}
+
+resource "aws_ssm_maintenance_window_task" "bastion_patch" {
+  window_id        = aws_ssm_maintenance_window.bastion_patch.id
+  max_errors       = 1
+  max_concurrency  = 1
+  task_type        = "RUN_COMMAND"
+  task_arn         = "AWS-RunPatchBaseline"
+  service_role_arn = aws_iam_role.ssm_maintenance_window.arn
+  priority         = 1
+
+  targets {
+    key    = "WindowTargetIds"
+    values = [aws_ssm_maintenance_window_target.bastion_patch.id]
+  }
+
 
   task_invocation_parameters {
     run_command_parameters {
