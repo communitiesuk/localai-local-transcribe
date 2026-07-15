@@ -3,7 +3,7 @@
 
 ## Status
 
-{Draft | Proposed | Accepted | Rejected | Superseded}
+Proposed
 
 Date of decision: {yyyy-MM-dd}
 
@@ -20,7 +20,9 @@ What mechanism should we use to authenticate them?
 
 ## Decision Outcome
 
-{Title of Option X}, because {summary justification / rationale}.
+Internal Acccess, because it offers the best user experience and we believe the delivery risks are manageable. In particular
+we are happy, for the purposes of private beta, to accept risks to e.g. availability, and that we could migrate to another
+solution in a reasonable time frame if Internal Access proved inappropriate or was announced to be shutting down.
 
 ## Pros and Cons of the Options
 
