@@ -93,6 +93,7 @@ function TabRecorder({
     streamRef.current = null
     micStreamRef.current = null
     mediaRecorderRef.current = null
+    setStream(null)
 
     setIsRecording(false)
     releaseWakeLock()
@@ -196,6 +197,7 @@ function TabRecorder({
         composedStream.addTrack(track)
       })
       streamRef.current = composedStream
+      setStream(composedStream)
 
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(composedStream, options)
