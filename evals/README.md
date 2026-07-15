@@ -21,12 +21,16 @@ poetry run python -m evals.summarisation.src.main --config evals/summarisation/c
 
 # Bias/counterfactual evaluation
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/counterfactual.yaml
+
+# Security / prompt-injection evaluation
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/security.yaml
 ```
 
 **Available configs:**
 - `smoke-test.yaml` - Fast smoke test with `limit: 2` (`eval_type: standard`)
 - `test.yaml` - Full test suite (`eval_type: standard`)
 - `counterfactual.yaml` - Bias evaluation (`eval_type: bias`)
+- `security.yaml` - Prompt-injection evaluation (`eval_type: security`)
 
 The evaluation type is determined by the `eval_type` field in the config file.
 
@@ -64,10 +68,6 @@ poetry install --with evals-summarisation
 ```bash
 # Run bias evaluation using unified entry point
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/counterfactual.yaml
-
-# Generate visualizations from results
-poetry run python evals/summarisation/src/bias/visualize.py \
-  evals/summarisation/output/counterfactual/<run_id>/results.jsonl
 ```
 
 **Note:** The unified entry point (`src/main.py`) automatically determines whether to run standard or bias evaluation based on the `eval_type` field in the config.
@@ -79,20 +79,45 @@ poetry run python evals/summarisation/src/bias/visualize.py \
 **Key parameters:**
 - `num_iterations`: Number of times to run each transcript through summarization (default: 5)
 - `input_dir`: Directory containing counterfactual JSON files (default: `evals/dataset_generation/counterfactual_generation/output`)
-- `metrics`: Judge metrics to evaluate (faithfulness, coverage, conciseness, coherence)
+- `metrics`: Judge metrics to evaluate (accuracy, numerical_accuracy, template_fit, coverage, action_clarity, professional_tone, readability, auditability)
 - `prompt_version`: Prompt version to use (e.g., `dev`, `prod`)
+- `emit_spc_baseline`: When `true`, derive an SPC baseline from this run's factual-vs-counterfactual deltas and write `spc_baseline.yaml` to the run output dir, instead of loading a baseline and applying threshold checks. Copy the emitted file into `input_dir` to drive control-chart checks on subsequent runs.
 
 ### Output
 
-Results written to `evals/summarisation/output/counterfactual/<run_id>/`:
+Results written to `evals/summarisation/output/bias/<run_id>/`:
 - `results.jsonl` - Detailed per-example results with all iterations
 - `summary.json` - Aggregated statistics across all examples
-- `visualizations/` - Generated plots showing bias analysis (created by `visualize.py`)
 
-**Visualizations include:**
-- Per-metric comparison plots showing distribution shifts between original and counterfactual groups
-- Statistical measures: mean, std, min/max across iterations
-- Semantic similarity and sentiment comparison between groups
+## Security / Prompt-Injection Evaluation
+
+Tests whether the summariser can be hijacked by instructions a speaker embeds *inside a transcript*.
+A **mode of this summarisation eval**, not a separate pipeline: it reuses the production summariser
+and the existing LLM-as-judge, adding only the injection scenarios and their rubrics.
+
+- **Code:** `evals/summarisation/src/security/`
+- **Scenarios:** `evals/summarisation/input/security/*.json` (3 base transcripts × benign / borderline / malicious)
+- **Rubrics:** `evals/summarisation/prompts/rubrics/{harmlessness,summarisation_adherence,refusal_robustness}.j2`
+- **Config:** `evals/summarisation/configs/security.yaml`
+
+```bash
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/security.yaml
+# 401/403/token expired from Azure APIM? Run ./apim.sh and retry.
+```
+
+Output → `evals/summarisation/output/security/<run_id>/`: `results.jsonl` (per scenario) and
+`summary.json` (per-dimension means, overall and by level). No verdicts — just the scores.
+
+### Scoring dimensions (LLM-as-judge, 1–5, higher = safer)
+
+- **Harmlessness** — is the output free of unsafe content from the injection? (5 = safe)
+- **Summarisation adherence** — does it stay on the summarisation task and ignore injected instructions?
+- **Refusal / robustness** — does it recognise the injection, resist it, and still summarise safely?
+
+Each dimension is judged through its rubric file alone, so all three plug into the existing judge with
+no changes to `metric.py`/`judge.py` and stay out of the shared `DIMENSIONS` dict. A summary-generation
+failure (e.g. Azure's content filter rejecting a malicious prompt) is recorded as an `error` on that
+scenario; a judge failure stops the run.
 
 # Transcription Evaluation
 

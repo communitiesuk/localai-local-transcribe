@@ -3,10 +3,10 @@ module "s3_bucket" {
 
   access_log_bucket_name             = "local-transcribe-cloudtrail-${var.environment_name}-access-logs"
   bucket_name                        = "local-transcribe-cloudtrail-${var.environment_name}"
-  access_s3_log_expiration_days      = var.cloudwatch_log_expiration_days
+  access_s3_log_expiration_days      = var.access_s3_log_expiration_days
+  noncurrent_version_expiration_days = var.access_s3_log_expiration_days
   policy                             = data.aws_iam_policy_document.bucket_policy.json
   kms_key_arn                        = aws_kms_key.main.arn
-  noncurrent_version_expiration_days = null
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "expire" {
@@ -23,6 +23,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "expire" {
 
     noncurrent_version_expiration {
       noncurrent_days = var.cloudwatch_log_expiration_days
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = var.abort_incomplete_multipart_upload_days
     }
 
     status = "Enabled"

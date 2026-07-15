@@ -58,7 +58,7 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
       disabled={disabled}
       ref={ref}
       options={[
-        { label: 'Keep indefinitely', value: 'none' },
+        { label: '1 day', value: '1' },
         { label: '7 days', value: '7' },
       ]}
     />
@@ -90,6 +90,7 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 | `GovukHint`               | Hint                             | No      |
 | `GovukLabel`              | Label                            | No      |
 | `GovukLegend`             | Legend                           | No      |
+| `GovukList`               | List                             | No      |
 | `GovukNotificationBanner` | Notification banner              | Yes     |
 | `GovukRadios`             | Radios                           | Yes     |
 | `GovukTag`                | Tag                              | No      |

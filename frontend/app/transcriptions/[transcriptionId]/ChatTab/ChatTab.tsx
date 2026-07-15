@@ -15,9 +15,8 @@ import { Button } from '@/components/ui/button'
 import { CitationPopoverWrapper } from '@/components/ui/citation-popover-wrapper'
 import { Textarea } from '@/components/ui/textarea'
 import { useCitationPopover } from '@/hooks/use-citation-popover'
-import type { ChatGetResponse } from '@/lib/client'
+import type { ChatGetResponse, TranscriptionGetResponse } from '@/lib/client'
 import * as api from '@/lib/client' // Import the API client for direct calls
-import { Transcription } from '@/lib/client'
 import {
   createChatTranscriptionsTranscriptionIdChatPostMutation,
   deleteChatsTranscriptionsTranscriptionIdChatDeleteMutation,
@@ -31,7 +30,11 @@ import { Loader2, MessageCircle, SendHorizontal, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 
-export function ChatTab({ transcription }: { transcription: Transcription }) {
+export function ChatTab({
+  transcription,
+}: {
+  transcription: TranscriptionGetResponse
+}) {
   const transcriptionId = transcription.id!
   const queryClient = useQueryClient()
   const [input, setInput] = useState('')

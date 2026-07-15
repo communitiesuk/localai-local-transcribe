@@ -1,202 +1,128 @@
 from __future__ import annotations
 
+import logging
 import statistics
 from datetime import UTC, datetime
 
 from common.settings import get_settings
 from evals.summarisation.src.bias.bias_types import (
     AggregatedResultsMap,
+    BiasEvalResults,
     CharacteristicAxisMap,
     ComparisonMetrics,
+    ComparisonResult,
     CounterfactualEvalRecord,
     CounterfactualRunSummary,
-    PlottingOutput,
-    PlottingRecord,
+    IterationMetrics,
 )
-from evals.summarisation.src.bias.regard_scorer import REGARDScorer
-from evals.summarisation.src.bias.sentiment_analyzer import SentimentAnalyzer
 from evals.summarisation.src.bias.utils import parse_group_names
 from evals.summarisation.src.common import AppConfig
 
 settings = get_settings()
 
+logger = logging.getLogger(__name__)
 
-def create_plotting_output(
+
+def _collect_sentiment_distributions(iterations: list[IterationMetrics]) -> list[dict[str, float]]:
+    """Gather the per-iteration raw sentiment distributions (debug signal); empty if absent."""
+    return [it.sentiment_distribution for it in iterations if it.sentiment_distribution is not None]
+
+
+def _stats_metric(name: str, original: list[float], counterfactual: list[float]) -> ComparisonMetrics:
+    """Builds a comparison metric from raw original/counterfactual value lists."""
+    return ComparisonMetrics(
+        metric_name=name,
+        original_mean=statistics.mean(original),
+        original_std=statistics.stdev(original) if len(original) > 1 else 0.0,
+        counterfactual_mean=statistics.mean(counterfactual),
+        counterfactual_std=statistics.stdev(counterfactual) if len(counterfactual) > 1 else 0.0,
+        delta=statistics.mean(counterfactual) - statistics.mean(original),
+        original_values=original,
+        counterfactual_values=counterfactual,
+    )
+
+
+def _comparison_metrics(
+    record: CounterfactualEvalRecord,
+    orig_sentiment: list[float],
+    cf_sentiment: list[float],
+    orig_regard: list[float],
+    cf_regard: list[float],
+) -> list[ComparisonMetrics]:
+    """Assembles judge, sentiment and (when present) regard metrics for one comparison."""
+    metrics = [
+        _stats_metric(
+            name,
+            record.metrics_original_stats[name].values,
+            record.metrics_counterfactual_stats[name].values,
+        )
+        for name in record.metrics_original_stats
+    ]
+    metrics.append(_stats_metric("sentiment", orig_sentiment, cf_sentiment))
+    if orig_regard and cf_regard:
+        metrics.append(_stats_metric("regard (negative)", orig_regard, cf_regard))
+    return metrics
+
+
+def _comparison_result(
+    record: CounterfactualEvalRecord,
+    comparison_id: str,
+    metrics: list[ComparisonMetrics],
+    num_iterations: int,
+) -> ComparisonResult:
+    """Wraps a record's metrics into a serialisable comparison result."""
+    group_a_name, group_b_name = parse_group_names(record.axis_of_change)
+    return ComparisonResult(
+        comparison_id=comparison_id,
+        protected_characteristic=record.protected_characteristic,
+        axis_of_change=record.axis_of_change,
+        group_a_name=group_a_name,
+        group_b_name=group_b_name,
+        metrics=metrics,
+        sentiment_delta=record.sentiment_delta_stats,
+        regard_delta=record.regard_delta_stats,
+        sentiment_distribution_original=_collect_sentiment_distributions(record.iterations_original),
+        sentiment_distribution_counterfactual=_collect_sentiment_distributions(record.iterations_counterfactual),
+        num_iterations=num_iterations,
+        hypothesis_model=record.hypothesis_model,
+        prompt_version=record.prompt_version,
+    )
+
+
+def build_results(
     records: list[CounterfactualEvalRecord],
-    supplementary_records: list[CounterfactualEvalRecord],
     run_id: str,
     cfg: AppConfig,
     num_iterations: int,
-) -> PlottingOutput:
+) -> BiasEvalResults:
     """
-    Creates plotting output from evaluation records for visualization.
+    Builds the per-comparison output from evaluation records.
+
+    Threshold verdicts (SPC and 4/5) are attached afterwards by
+    ``thresholds.apply_thresholds``; this function is concerned only with the
+    per-comparison metrics.
     """
-    plotting_records = []
+    comparison_results = []
 
     for idx, record in enumerate(records):
-        group_a_name, group_b_name = parse_group_names(record.axis_of_change)
-
-        comparison_metrics = []
-        for metric_name in record.metrics_original_stats:
-            orig_stats = record.metrics_original_stats[metric_name]
-            cf_stats = record.metrics_counterfactual_stats[metric_name]
-
-            comparison_metrics.append(
-                ComparisonMetrics(
-                    metric_name=metric_name,
-                    original_mean=orig_stats.mean,
-                    original_std=orig_stats.std,
-                    counterfactual_mean=cf_stats.mean,
-                    counterfactual_std=cf_stats.std,
-                    delta=cf_stats.mean - orig_stats.mean,
-                    original_values=orig_stats.values,
-                    counterfactual_values=cf_stats.values,
-                )
-            )
-
-        orig_sentiment_values = [iter_orig.sentiment_score for iter_orig in record.iterations_original]
-        cf_sentiment_values = [iter_cf.sentiment_score for iter_cf in record.iterations_counterfactual]
-
-        comparison_metrics.append(
-            ComparisonMetrics(
-                metric_name="sentiment",
-                original_mean=statistics.mean(orig_sentiment_values),
-                original_std=statistics.stdev(orig_sentiment_values) if len(orig_sentiment_values) > 1 else 0.0,
-                counterfactual_mean=statistics.mean(cf_sentiment_values),
-                counterfactual_std=statistics.stdev(cf_sentiment_values) if len(cf_sentiment_values) > 1 else 0.0,
-                delta=statistics.mean(cf_sentiment_values) - statistics.mean(orig_sentiment_values),
-                original_values=orig_sentiment_values,
-                counterfactual_values=cf_sentiment_values,
-            )
+        metrics = _comparison_metrics(
+            record,
+            [it.sentiment_score for it in record.iterations_original],
+            [it.sentiment_score for it in record.iterations_counterfactual],
+            [it.regard_scores["negative"] for it in record.iterations_original if it.regard_scores],
+            [it.regard_scores["negative"] for it in record.iterations_counterfactual if it.regard_scores],
         )
+        comparison_id = f"{record.protected_characteristic}_{record.axis_of_change}_{idx}"
+        comparison_results.append(_comparison_result(record, comparison_id, metrics, num_iterations))
 
-        orig_regard_values = [
-            iter_orig.regard_scores["negative"] for iter_orig in record.iterations_original if iter_orig.regard_scores
-        ]
-        cf_regard_values = [
-            iter_cf.regard_scores["negative"] for iter_cf in record.iterations_counterfactual if iter_cf.regard_scores
-        ]
-
-        if orig_regard_values and cf_regard_values:
-            comparison_metrics.append(
-                ComparisonMetrics(
-                    metric_name="regard (negative)",
-                    original_mean=statistics.mean(orig_regard_values),
-                    original_std=statistics.stdev(orig_regard_values) if len(orig_regard_values) > 1 else 0.0,
-                    counterfactual_mean=statistics.mean(cf_regard_values),
-                    counterfactual_std=statistics.stdev(cf_regard_values) if len(cf_regard_values) > 1 else 0.0,
-                    delta=statistics.mean(cf_regard_values) - statistics.mean(orig_regard_values),
-                    original_values=orig_regard_values,
-                    counterfactual_values=cf_regard_values,
-                )
-            )
-
-        plotting_records.append(
-            PlottingRecord(
-                comparison_id=f"{record.protected_characteristic}_{record.axis_of_change}_{idx}",
-                protected_characteristic=record.protected_characteristic,
-                axis_of_change=record.axis_of_change,
-                group_a_name=group_a_name,
-                group_b_name=group_b_name,
-                is_supplementary=False,
-                metrics=comparison_metrics,
-                sentiment_delta=record.sentiment_delta_stats,
-                regard_delta=record.regard_delta_stats,
-                num_iterations=num_iterations,
-                hypothesis_model=record.hypothesis_model,
-                prompt_version=record.prompt_version,
-            )
-        )
-
-    sentiment_analyzer = SentimentAnalyzer()
-    regard_scorer = REGARDScorer()
-
-    for idx, record in enumerate(supplementary_records):
-        group_a_name, group_b_name = parse_group_names(record.axis_of_change)
-
-        comparison_metrics = []
-        for metric_name in record.metrics_original_stats:
-            orig_stats = record.metrics_original_stats[metric_name]
-            cf_stats = record.metrics_counterfactual_stats[metric_name]
-
-            comparison_metrics.append(
-                ComparisonMetrics(
-                    metric_name=metric_name,
-                    original_mean=orig_stats.mean,
-                    original_std=orig_stats.std,
-                    counterfactual_mean=cf_stats.mean,
-                    counterfactual_std=cf_stats.std,
-                    delta=cf_stats.mean - orig_stats.mean,
-                    original_values=orig_stats.values,
-                    counterfactual_values=cf_stats.values,
-                )
-            )
-
-        orig_sentiment_values = [
-            sentiment_analyzer.compute_sentiment(summary) for summary in record.hypothesis_summaries_original
-        ]
-        cf_sentiment_values = [
-            sentiment_analyzer.compute_sentiment(summary) for summary in record.hypothesis_summaries_counterfactual
-        ]
-
-        comparison_metrics.append(
-            ComparisonMetrics(
-                metric_name="sentiment",
-                original_mean=statistics.mean(orig_sentiment_values),
-                original_std=statistics.stdev(orig_sentiment_values) if len(orig_sentiment_values) > 1 else 0.0,
-                counterfactual_mean=statistics.mean(cf_sentiment_values),
-                counterfactual_std=statistics.stdev(cf_sentiment_values) if len(cf_sentiment_values) > 1 else 0.0,
-                delta=statistics.mean(cf_sentiment_values) - statistics.mean(orig_sentiment_values),
-                original_values=orig_sentiment_values,
-                counterfactual_values=cf_sentiment_values,
-            )
-        )
-
-        orig_regard_values = [
-            regard_scorer.score_summary(summary).negative for summary in record.hypothesis_summaries_original
-        ]
-        cf_regard_values = [
-            regard_scorer.score_summary(summary).negative for summary in record.hypothesis_summaries_counterfactual
-        ]
-
-        comparison_metrics.append(
-            ComparisonMetrics(
-                metric_name="regard (negative)",
-                original_mean=statistics.mean(orig_regard_values),
-                original_std=statistics.stdev(orig_regard_values) if len(orig_regard_values) > 1 else 0.0,
-                counterfactual_mean=statistics.mean(cf_regard_values),
-                counterfactual_std=statistics.stdev(cf_regard_values) if len(cf_regard_values) > 1 else 0.0,
-                delta=statistics.mean(cf_regard_values) - statistics.mean(orig_regard_values),
-                original_values=orig_regard_values,
-                counterfactual_values=cf_regard_values,
-            )
-        )
-
-        plotting_records.append(
-            PlottingRecord(
-                comparison_id=f"{record.protected_characteristic}_{record.axis_of_change}_supplementary_{idx}",
-                protected_characteristic=record.protected_characteristic,
-                axis_of_change=record.axis_of_change,
-                group_a_name=group_a_name,
-                group_b_name=group_b_name,
-                is_supplementary=True,
-                metrics=comparison_metrics,
-                sentiment_delta=record.sentiment_delta_stats,
-                regard_delta=record.regard_delta_stats,
-                num_iterations=num_iterations,
-                hypothesis_model=record.hypothesis_model,
-                prompt_version=record.prompt_version,
-            )
-        )
-
-    return PlottingOutput(
+    return BiasEvalResults(
         run_id=run_id,
         timestamp=datetime.now(UTC).isoformat(),
         dataset_version=cfg.run.dataset_version,
         engine_version=settings.BEST_LLM_MODEL_NAME,
         prompt_version=cfg.run.prompt_version,
         num_iterations=num_iterations,
-        comparisons=plotting_records,
+        comparisons=comparison_results,
     )
 
 

@@ -2,6 +2,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -59,9 +60,28 @@ class TranscriptionConfirmResponse(BaseModel):
     id: uuid.UUID
 
 
-class TranscriptionPatchRequest(BaseModel):
+class UpdateTranscriptionTitleRequest(BaseModel):
     title: str | None = None
-    dialogue_entries: list[DialogueEntry] | None = None
+
+
+class RenameSpeakerRequest(BaseModel):
+    original_speaker: str
+    new_speaker: str
+
+
+class UpdateDialogueEntrySpeakerRequest(BaseModel):
+    new_speaker: str
+    expected_speaker: str | None = None
+    expected_start_time: float | None = None
+    expected_end_time: float | None = None
+
+
+class UpdateDialogueEntryTextRequest(BaseModel):
+    new_text: str
+    expected_text: str | None = None
+    expected_speaker: str | None = None
+    expected_start_time: float | None = None
+    expected_end_time: float | None = None
 
 
 class ChatCreateRequest(BaseModel):
@@ -103,7 +123,7 @@ class GetUserResponse(BaseModel):
     is_active: bool
     name: str | None
     email: str
-    data_retention_days: int | None
+    data_retention_days: int
     roles: list[UserRole]
     organisation_id: uuid.UUID | None
 
@@ -116,8 +136,11 @@ class PaginatedUsersResponse(BaseModel):
     total_pages: int
 
 
+type DataRetentionOptions = Literal[1, 7, 30, 90]
+
+
 class DataRetentionUpdateResponse(BaseModel):
-    data_retention_days: int | None
+    data_retention_days: DataRetentionOptions
 
 
 class TranscriptionGetResponse(BaseModel):
@@ -321,3 +344,7 @@ class OrganisationCreateRequest(BaseModel):
 
 class OrganisationPatchRequest(BaseModel):
     allowed_domains: list[str]
+
+
+class UserExistsResponse(BaseModel):
+    exists: bool

@@ -33,7 +33,7 @@ async def test_get_user(override_user, mock_user):
     assert convert_to_datetime(data["updated_datetime"]) == mock_user.updated_datetime
 
 
-@pytest.mark.parametrize("retention_period", [10, None])
+@pytest.mark.parametrize("retention_period", [1, 7, 30])
 @pytest.mark.asyncio
 async def test_update_data_retention_success(
     override_user, override_session, mock_user, mock_session, retention_period
@@ -71,9 +71,7 @@ async def test_update_data_retention_invalid(
             json={"data_retention_days": 0},
         )
 
-    assert response.status_code == 400
-    error_string = "Data retention period must be at least 1 day or None for indefinite retention"
-    assert error_string == response.json()["detail"]
+    assert response.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -173,3 +171,80 @@ async def test_create_user_returns_409_when_email_already_exists(
 
     assert response.json()["detail"] == f"A user with email '{existing_user.email}' already exists"
     assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_user_exists_returns_true_when_user_exists(
+    override_session, override_support_admin_user, make_user, make_organisation
+):
+    existing_user = make_user()
+    organisation = make_organisation()
+
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=existing_user),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.get(f"/users/user/exists?email={existing_user.email}&organisation_id={organisation.id}")
+
+    assert response.status_code == 200
+    assert response.json() == {"exists": True}
+
+
+@pytest.mark.asyncio
+async def test_user_exists_returns_false_when_user_not_found(
+    override_session, override_support_admin_user, make_organisation
+):
+    organisation = make_organisation()
+
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.get(f"/users/user/exists?email=notfound@example.com&organisation_id={organisation.id}")
+
+    assert response.status_code == 200
+    assert response.json() == {"exists": False}
+
+
+@pytest.mark.asyncio
+async def test_user_exists_forbidden_for_non_admin(override_session, override_user, make_organisation):
+    organisation = make_organisation()
+
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+    error_message = "Not authorized to access this resource"
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.get(f"/users/user/exists?email=someone@example.com&organisation_id={organisation.id}")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == error_message
+
+
+@pytest.mark.asyncio
+async def test_user_exists_organisation_not_found(override_session, override_support_admin_user):
+    mock_session = override_session
+    mock_session.get.return_value = None
+    error_message = "Organisation not found"
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.get(f"/users/user/exists?email=someone@example.com&organisation_id={uuid4()}")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == error_message

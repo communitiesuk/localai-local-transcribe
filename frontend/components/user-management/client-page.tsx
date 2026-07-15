@@ -2,21 +2,28 @@
 
 import { Suspense, useState, ChangeEvent } from 'react'
 import { Loader2 } from 'lucide-react'
-import Link from 'next/link'
 import { UserRole, hasAnyRole } from '@/lib/utils'
 import PaginatedUsers from '@/components/users/paginated-users'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
-import { GovukBackLink } from '@/components/govuk'
+import {
+  GovukBackLink,
+  GovukButton,
+  GovukButtonLink,
+  GovukTag,
+  GovukHeading,
+} from '@/components/govuk'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BannerNotification } from '@/components/banner-notification'
+import { useInviteUserStore } from '@/stores/use-invite-user-store'
 
 export default function UserManagementClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
   const [selectedOrganisation, setSelectedOrganisation] = useState('')
+  const { setInviteDetails } = useInviteUserStore()
 
   function getHref(page: number): string {
     const params = new URLSearchParams(searchParams.toString())
@@ -45,7 +52,21 @@ export default function UserManagementClient() {
   const handleOrganisationChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value
     setSelectedOrganisation(value)
+    setInviteDetails('', '', value)
     router.replace(getHref(1))
+  }
+
+  const handleInviteUser = () => {
+    router.push('/invite-user')
+  }
+
+  const handleEditDomains = () => {
+    const orgId = isSystemAdmin
+      ? selectedOrganisation
+      : (organisation?.id ?? '')
+    if (orgId) {
+      router.push(`/user-management/organisations/${orgId}/domains`)
+    }
   }
 
   if (userLoading) return <Loader2 className="animate-spin" />
@@ -57,15 +78,13 @@ export default function UserManagementClient() {
       <GovukBackLink />
       <BannerNotification />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
-          User Management
-        </h1>
-
-        {isSystemAdmin && (
-          <strong className="govuk-tag govuk-tag--grey">System Admin</strong>
-        )}
+      <div className="flex items-baseline gap-4">
+        <GovukHeading>User Management</GovukHeading>
+        <GovukTag className="relative -top-px" colour="grey">
+          System Admin
+        </GovukTag>
       </div>
+
       {isSystemAdmin && (
         <>
           <div className="govuk-form-group govuk-!-padding-top-1">
@@ -99,23 +118,36 @@ export default function UserManagementClient() {
         <h2 className="govuk-heading-s">{organisation.name}</h2>
       )}
 
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
+      <div className="govuk-button-group">
+        <GovukButton
           className="govuk-button"
-          data-module="govuk-button"
+          onClick={handleInviteUser}
+          disabled={isSystemAdmin && !selectedOrganisation}
         >
           Invite new user
-        </button>
-        {isSystemAdmin && (
-          <Link
-            href="/user-management/domains"
-            className="govuk-link govuk-link--no-visited-state"
+        </GovukButton>
+        {hasAnyRole(currentUser?.roles, [UserRole.MHCLG_SUPPORT_ADMIN]) && (
+          <GovukButtonLink
+            href="/user-management/organisations/new"
+            variant="secondary"
           >
-            Edit approved domains
-          </Link>
+            Create new organisation
+          </GovukButtonLink>
         )}
       </div>
+
+      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
+
+      <GovukButton
+        onClick={handleEditDomains}
+        variant="secondary"
+        disabled={
+          (isSystemAdmin && !selectedOrganisation) ||
+          (!isSystemAdmin && !organisation)
+        }
+      >
+        Edit approved domains
+      </GovukButton>
 
       <Suspense fallback={null}>
         <PaginatedUsers

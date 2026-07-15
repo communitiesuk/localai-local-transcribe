@@ -34,7 +34,7 @@ locals {
   load_balancer_domain_name = "lb.development.local-transcribe.test.communities.gov.uk"
 
   cloudwatch_log_expiration_days = 90
-  access_s3_log_expiration_days  = 90
+  access_s3_log_expiration_days  = 365
   database_allocated_storage     = 50
 }
 
@@ -77,7 +77,7 @@ module "frontdoor" {
   load_balancer_certificate_arn  = module.certificates.load_balancer_certificate_arn
   cloudwatch_log_expiration_days = local.cloudwatch_log_expiration_days
 
-  use_aws_shield_advanced = false
+  use_aws_shield_advanced = true
   maintenance_mode_on     = var.maintenance_mode_on
   enable_oidc_auth        = true
   ip_allowlist = [

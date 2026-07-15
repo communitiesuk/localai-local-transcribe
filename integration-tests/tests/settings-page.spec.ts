@@ -14,7 +14,6 @@ test.describe('Settings page', () => {
 
     await expect(settingsPage.dataRetentionHeading()).toBeVisible()
     for (const rententionPeriod of [
-      'Keep indefinitely',
       '1 day',
       '7 days',
       '30 days',

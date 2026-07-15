@@ -47,11 +47,15 @@ import {
   listTranscriptionsTranscriptionsGet,
   listUsersUsersGet,
   type Options,
-  saveTranscriptionTranscriptionsTranscriptionIdPatch,
+  renameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatch,
   signOutSignoutGet,
   updateDataRetentionUsersDataRetentionPatch,
+  updateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatch,
+  updateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatch,
   updateOrganisationOrganisationsOrganisationIdPatch,
+  updateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatch,
   updateUserRolesUsersUserIdRolesPatch,
+  userExistsUsersUserExistsGet,
 } from '../sdk.gen'
 import type {
   CreateChatTranscriptionsTranscriptionIdChatPostData,
@@ -154,19 +158,31 @@ import type {
   ListUsersUsersGetData,
   ListUsersUsersGetError,
   ListUsersUsersGetResponse,
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchData,
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse,
+  RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchData,
+  RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchError,
+  RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponse,
   SignOutSignoutGetData,
   UpdateDataRetentionUsersDataRetentionPatchData,
   UpdateDataRetentionUsersDataRetentionPatchError,
   UpdateDataRetentionUsersDataRetentionPatchResponse,
+  UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchData,
+  UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchError,
+  UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponse,
+  UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchData,
+  UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchError,
+  UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponse,
   UpdateOrganisationOrganisationsOrganisationIdPatchData,
   UpdateOrganisationOrganisationsOrganisationIdPatchError,
   UpdateOrganisationOrganisationsOrganisationIdPatchResponse,
+  UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchData,
+  UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchError,
+  UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponse,
   UpdateUserRolesUsersUserIdRolesPatchData,
   UpdateUserRolesUsersUserIdRolesPatchError,
   UpdateUserRolesUsersUserIdRolesPatchResponse,
+  UserExistsUsersUserExistsGetData,
+  UserExistsUsersUserExistsGetError,
+  UserExistsUsersUserExistsGetResponse,
 } from '../types.gen'
 
 export type QueryKey<TOptions extends Options> = [
@@ -313,8 +329,8 @@ export const listTranscriptionsTranscriptionsGetInfiniteQueryKey = (
  */
 export const listTranscriptionsTranscriptionsGetInfiniteOptions = (
   options?: Options<ListTranscriptionsTranscriptionsGetData>
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListTranscriptionsTranscriptionsGetResponse,
     ListTranscriptionsTranscriptionsGetError,
     InfiniteData<ListTranscriptionsTranscriptionsGetResponse>,
@@ -352,6 +368,8 @@ export const listTranscriptionsTranscriptionsGetInfiniteOptions = (
       queryKey: listTranscriptionsTranscriptionsGetInfiniteQueryKey(options),
     }
   )
+  return opts as Omit<typeof opts, 'initialData'>
+}
 
 /**
  * Create Transcription
@@ -471,38 +489,6 @@ export const getTranscriptionTranscriptionsTranscriptionIdGetOptions = (
     queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey(options),
   })
 
-/**
- * Save Transcription
- *
- * Save or update a transcription.
- */
-export const saveTranscriptionTranscriptionsTranscriptionIdPatchMutation = (
-  options?: Partial<
-    Options<SaveTranscriptionTranscriptionsTranscriptionIdPatchData>
-  >
-): UseMutationOptions<
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse,
-  SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
-  Options<SaveTranscriptionTranscriptionsTranscriptionIdPatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    SaveTranscriptionTranscriptionsTranscriptionIdPatchResponse,
-    SaveTranscriptionTranscriptionsTranscriptionIdPatchError,
-    Options<SaveTranscriptionTranscriptionsTranscriptionIdPatchData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } =
-        await saveTranscriptionTranscriptionsTranscriptionIdPatch({
-          ...options,
-          ...fnOptions,
-          throwOnError: true,
-        })
-      return data
-    },
-  }
-  return mutationOptions
-}
-
 export const getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetQueryKey =
   (
     options: Options<GetRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetData>
@@ -544,6 +530,140 @@ export const getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecording
           options
         ),
     })
+
+/**
+ * Update Transcription Title
+ *
+ * Update a transcription title.
+ */
+export const updateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchMutation =
+  (
+    options?: Partial<
+      Options<UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchData>
+    >
+  ): UseMutationOptions<
+    UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponse,
+    UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchError,
+    Options<UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchResponse,
+      UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchError,
+      Options<UpdateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatchData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await updateTranscriptionTitleTranscriptionsTranscriptionIdTitlePatch(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            }
+          )
+        return data
+      },
+    }
+    return mutationOptions
+  }
+
+/**
+ * Rename Speaker Everywhere
+ */
+export const renameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchMutation =
+  (
+    options?: Partial<
+      Options<RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchData>
+    >
+  ): UseMutationOptions<
+    RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponse,
+    RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchError,
+    Options<RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchResponse,
+      RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchError,
+      Options<RenameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatchData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await renameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatch(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            }
+          )
+        return data
+      },
+    }
+    return mutationOptions
+  }
+
+/**
+ * Update Dialogue Entry Speaker
+ */
+export const updateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchMutation =
+  (
+    options?: Partial<
+      Options<UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchData>
+    >
+  ): UseMutationOptions<
+    UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponse,
+    UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchError,
+    Options<UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchResponse,
+      UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchError,
+      Options<UpdateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatchData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await updateDialogueEntrySpeakerTranscriptionsTranscriptionIdDialogueEntriesEntryIndexSpeakerPatch(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            }
+          )
+        return data
+      },
+    }
+    return mutationOptions
+  }
+
+/**
+ * Update Dialogue Entry Text
+ */
+export const updateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchMutation =
+  (
+    options?: Partial<
+      Options<UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchData>
+    >
+  ): UseMutationOptions<
+    UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponse,
+    UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchError,
+    Options<UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchData>
+  > => {
+    const mutationOptions: UseMutationOptions<
+      UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchResponse,
+      UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchError,
+      Options<UpdateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatchData>
+    > = {
+      mutationFn: async (fnOptions) => {
+        const { data } =
+          await updateDialogueEntryTextTranscriptionsTranscriptionIdDialogueEntriesEntryIndexTextPatch(
+            {
+              ...options,
+              ...fnOptions,
+              throwOnError: true,
+            }
+          )
+        return data
+      },
+    }
+    return mutationOptions
+  }
 
 export const getUserUsersMeGetQueryKey = (
   options?: Options<GetUserUsersMeGetData>
@@ -644,8 +764,8 @@ export const listUsersUsersGetInfiniteQueryKey = (
  */
 export const listUsersUsersGetInfiniteOptions = (
   options?: Options<ListUsersUsersGetData>
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListUsersUsersGetResponse,
     ListUsersUsersGetError,
     InfiniteData<ListUsersUsersGetResponse>,
@@ -683,6 +803,8 @@ export const listUsersUsersGetInfiniteOptions = (
       queryKey: listUsersUsersGetInfiniteQueryKey(options),
     }
   )
+  return opts as Omit<typeof opts, 'initialData'>
+}
 
 /**
  * Create User
@@ -792,6 +914,34 @@ export const updateUserRolesUsersUserIdRolesPatchMutation = (
   }
   return mutationOptions
 }
+
+export const userExistsUsersUserExistsGetQueryKey = (
+  options: Options<UserExistsUsersUserExistsGetData>
+) => createQueryKey('userExistsUsersUserExistsGet', options)
+
+/**
+ * User Exists
+ */
+export const userExistsUsersUserExistsGetOptions = (
+  options: Options<UserExistsUsersUserExistsGetData>
+) =>
+  queryOptions<
+    UserExistsUsersUserExistsGetResponse,
+    UserExistsUsersUserExistsGetError,
+    UserExistsUsersUserExistsGetResponse,
+    ReturnType<typeof userExistsUsersUserExistsGetQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await userExistsUsersUserExistsGet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      })
+      return data
+    },
+    queryKey: userExistsUsersUserExistsGetQueryKey(options),
+  })
 
 export const listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey =
   (
@@ -1480,7 +1630,7 @@ export const getOrganisationOrganisationsOrganisationIdGetOptions = (
 /**
  * Update Organisation
  *
- * Update an organisation's allowed email domains. Only accessible to system admins.
+ * Update an organisation's allowed email domains. Accessible to system admins or the organisation's own admin.
  */
 export const updateOrganisationOrganisationsOrganisationIdPatchMutation = (
   options?: Partial<
@@ -1568,8 +1718,8 @@ export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteQu
 export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteOptions =
   (
     options: Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
-  ) =>
-    infiniteQueryOptions<
+  ) => {
+    const opts = infiniteQueryOptions<
       ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse,
       ListOrganisationsUsersOrganisationsOrganisationIdUsersGetError,
       InfiniteData<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse>,
@@ -1617,6 +1767,8 @@ export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteOp
           ),
       }
     )
+    return opts as Omit<typeof opts, 'initialData'>
+  }
 
 export const signOutSignoutGetQueryKey = (
   options?: Options<SignOutSignoutGetData>

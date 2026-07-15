@@ -4,14 +4,17 @@ import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/Tr
 import { DownloadButton } from '@/components/download-button'
 import { Button } from '@/components/ui/button'
 import CopyButton from '@/components/ui/copy-button'
-import { useSaveTranscription } from '@/hooks/use-save-transcription'
-import { DialogueEntry, Transcription } from '@/lib/client'
+import {
+  useUpdateTranscription,
+  useUpdateTranscriptionSpeakers,
+} from '@/hooks/use-update-transcription-speakers'
+import { DialogueEntry, TranscriptionGetResponse } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowDown, Play } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
 
 export type DialogueEntryForm = {
   entries: DialogueEntry[]
@@ -40,39 +43,154 @@ export function buildTranscriptionHtml(
 export function TranscriptionTab({
   transcription,
 }: {
-  transcription: Transcription
+  transcription: TranscriptionGetResponse
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
     mode: 'onBlur',
   })
-  const {
-    control,
-    handleSubmit,
-    formState: { isDirty },
-    reset,
-    setValue,
-    getValues,
-  } = methods
+  const { control, reset, resetField, setValue, getValues } = methods
+  const watchedEntries = useWatch({ control, name: 'entries' })
 
   const transcriptionString = useMemo(
-    () => buildTranscriptionHtml(transcription.dialogue_entries),
-    [transcription.dialogue_entries]
+    () => buildTranscriptionHtml(watchedEntries),
+    [watchedEntries]
   )
 
   useEffect(() => {
-    setValue('entries', transcription.dialogue_entries || [])
-  }, [setValue, transcription.dialogue_entries])
+    reset({ entries: transcription.dialogue_entries || [] })
+  }, [reset, transcription.dialogue_entries])
 
-  const { saveTranscription } = useSaveTranscription(transcription.id!)
-  useEffect(() => {
-    if (isDirty) {
-      handleSubmit(saveTranscription)()
-      reset(getValues())
-    }
-  }, [handleSubmit, isDirty, saveTranscription, reset, getValues])
+  const { updateDialogueEntryText } = useUpdateTranscription(transcription.id!)
+  const { renameSpeakerEverywhere, updateDialogueEntrySpeaker } =
+    useUpdateTranscriptionSpeakers(transcription.id!)
 
-  const { fields, update } = useFieldArray({ control, name: 'entries' })
+  const { fields } = useFieldArray({ control, name: 'entries' })
+
+  const applySpeakerNameChange = useCallback(
+    async ({
+      indices,
+      newSpeaker,
+      persist,
+    }: {
+      indices: number[]
+      newSpeaker: string
+      persist: () => Promise<void>
+    }) => {
+      const previousSpeakers = indices.map((index) => ({
+        index,
+        speaker: getValues(`entries.${index}.speaker` as const),
+      }))
+
+      indices.forEach((index) => {
+        setValue(`entries.${index}.speaker` as const, newSpeaker, {
+          shouldDirty: true,
+        })
+      })
+
+      try {
+        await persist()
+        indices.forEach((index) => {
+          resetField(`entries.${index}.speaker` as const, {
+            defaultValue: newSpeaker,
+          })
+        })
+      } catch (error) {
+        previousSpeakers.forEach(({ index, speaker }) => {
+          setValue(`entries.${index}.speaker` as const, speaker, {
+            shouldDirty: false,
+          })
+        })
+        throw error
+      }
+    },
+    [getValues, resetField, setValue]
+  )
+
+  const handleUpdateEntryText = useCallback(
+    async (index: number, newText: string, previousText: string) => {
+      const entry = getValues(`entries.${index}` as const)
+      if (!entry || previousText === newText) {
+        return
+      }
+
+      setValue(`entries.${index}.text` as const, newText, {
+        shouldDirty: true,
+      })
+
+      try {
+        await updateDialogueEntryText(index, {
+          new_text: newText,
+          expected_text: previousText,
+          expected_speaker: entry.speaker,
+          expected_start_time: entry.start_time,
+          expected_end_time: entry.end_time,
+        })
+        resetField(`entries.${index}.text` as const, {
+          defaultValue: newText,
+        })
+      } catch (error) {
+        setValue(`entries.${index}.text` as const, previousText, {
+          shouldDirty: false,
+        })
+        throw error
+      }
+    },
+    [getValues, resetField, setValue, updateDialogueEntryText]
+  )
+
+  const handleRenameSpeakerEverywhere = useCallback(
+    async (originalSpeaker: string, newSpeaker: string) => {
+      if (originalSpeaker === newSpeaker) {
+        return
+      }
+
+      const indices = getValues('entries')
+        .map((entry, index) => (entry.speaker === originalSpeaker ? index : -1))
+        .filter((index) => index >= 0)
+
+      if (!indices.length) {
+        return
+      }
+
+      await applySpeakerNameChange({
+        indices,
+        newSpeaker,
+        persist: () =>
+          renameSpeakerEverywhere({
+            original_speaker: originalSpeaker,
+            new_speaker: newSpeaker,
+          }),
+      })
+    },
+    [applySpeakerNameChange, getValues, renameSpeakerEverywhere]
+  )
+
+  const handleRenameSingleSpeaker = useCallback(
+    async (index: number, newSpeaker: string) => {
+      const entry = getValues(`entries.${index}` as const)
+      if (!entry || entry.speaker === newSpeaker) {
+        return
+      }
+
+      // Capture the original speaker before making any changes, so we can use it in the persist function
+      // (entry is captured by the closure, but the speaker property might change before the persist function is called)
+      const originalSpeaker = entry.speaker
+
+      await applySpeakerNameChange({
+        indices: [index],
+        newSpeaker,
+        persist: () =>
+          updateDialogueEntrySpeaker(index, {
+            new_speaker: newSpeaker,
+            expected_speaker: originalSpeaker,
+            expected_start_time: entry.start_time,
+            expected_end_time: entry.end_time,
+          }),
+      })
+    },
+    [applySpeakerNameChange, getValues, updateDialogueEntrySpeaker]
+  )
 
   const { data: recordings } = useQuery({
     ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
@@ -101,11 +219,11 @@ export function TranscriptionTab({
   return (
     <div>
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(saveTranscription)}>
+        <form>
           <div className="flex justify-between">
             <SpeakerEditor
-              transcription={transcription}
               src={hasRecordings ? recordings[0].url : undefined}
+              onSaveSpeaker={handleRenameSpeakerEverywhere}
             />
             <CopyButton
               textToCopy={transcriptionString}
@@ -137,18 +255,19 @@ export function TranscriptionTab({
             </div>
           )}
           <div className="flex flex-col gap-6">
-            {fields.map((entry, index, array) => {
+            {fields.map((field, index) => {
+              const entry = watchedEntries?.[index] ?? field
               const isPlaying = isEntryPlaying(
                 time,
                 entry.start_time,
-                array[index + 1]?.start_time
+                watchedEntries?.[index + 1]?.start_time
               )
               return (
                 <div
                   className={cn('flex items-start gap-2 rounded', {
                     'bg-blue-100': isPlaying,
                   })}
-                  key={entry.id}
+                  key={field.id}
                   ref={isPlaying ? playingRef : null}
                 >
                   {hasRecordings && (
@@ -172,9 +291,14 @@ export function TranscriptionTab({
                   <SpeakerNamePopover
                     entry={entry}
                     index={index}
-                    update={update}
+                    onUpdateAll={handleRenameSpeakerEverywhere}
+                    onUpdateSingle={handleRenameSingleSpeaker}
                   />
-                  <TranscriptionTextArea control={control} index={index} />
+                  <TranscriptionTextArea
+                    control={control}
+                    index={index}
+                    onSaveText={handleUpdateEntryText}
+                  />
                 </div>
               )
             })}

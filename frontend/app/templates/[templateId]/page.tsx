@@ -24,7 +24,6 @@ export default function EditTemplatePage(props: {
   params: Promise<{ templateId: string }>
 }) {
   const params = use(props.params)
-
   const { templateId } = params
 
   const { data: template } = useQuery({
@@ -37,17 +36,25 @@ export default function EditTemplatePage(props: {
   if (!template) {
     return (
       <>
-        <header className="mb-6">
-          <h1 className="text-3xl font-bold">Edit template</h1>
+        <header className="govuk-!-margin-bottom-6">
+          <h1 className="govuk-heading-xl govuk-!-margin-bottom-0">
+            Edit template
+          </h1>
         </header>
-        <Loader2 className="animate-spin" />
+        <div className="govuk-body flex items-center gap-2">
+          <Loader2 className="animate-spin" aria-hidden="true" />
+          Loading template…
+        </div>
       </>
     )
   }
+
   return (
     <>
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold">Edit template</h1>
+      <header className="govuk-!-margin-bottom-6">
+        <h1 className="govuk-heading-xl govuk-!-margin-bottom-0">
+          Edit template
+        </h1>
       </header>
       <TemplateEditorForm
         templateId={templateId}
@@ -91,6 +98,7 @@ const TemplateEditorForm = ({
       posthog.capture('template_edited')
     },
   })
+
   if (defaultValues.type === 'document') {
     return (
       <FormProvider {...form}>
@@ -105,6 +113,7 @@ const TemplateEditorForm = ({
       </FormProvider>
     )
   }
+
   if (defaultValues.type === 'form') {
     return (
       <FormProvider {...form}>
