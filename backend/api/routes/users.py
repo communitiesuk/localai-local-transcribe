@@ -2,7 +2,8 @@ import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+import sentry_sdk
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import EmailStr
 
 from backend.api.dependencies import (
@@ -11,7 +12,7 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
-from backend.services.emails.base import EmailTemplate
+from backend.services.emails.base import EmailSendError, EmailTemplate
 from backend.services.emails.registry import get_email_sender
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
@@ -20,6 +21,7 @@ from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
 from common.settings import get_settings
 from common.types import (
+    CreateUserResponse,
     DataRetentionUpdateResponse,
     GetUserResponse,
     PaginatedUsersResponse,
@@ -74,8 +76,7 @@ async def create_user(
     data: UserCreate,
     session: SQLSessionDep,
     user: UserDep,
-    background_tasks: BackgroundTasks,
-) -> GetUserResponse:
+) -> CreateUserResponse:
     organisation = await session.get(Organisation, data.organisation_id)
     if not organisation:
         raise HTTPException(status_code=404, detail="Organisation not found")
@@ -99,9 +100,18 @@ async def create_user(
     session.add(new_user)
     await session.commit()
     await session.refresh(new_user)
-    background_tasks.add_task(email_sender.send_email, data.email, EmailTemplate.INVITE)
 
-    return to_user_response(new_user)
+    email_sent = False
+    try:
+        email_sender.send_email(data.email, EmailTemplate.INVITE)
+        email_sent = True
+    except EmailSendError:
+        sentry_sdk.capture_exception()
+
+    return CreateUserResponse(
+        **to_user_response(new_user).model_dump(),
+        email_sent=email_sent,
+    )
 
 
 @users_router.get("")

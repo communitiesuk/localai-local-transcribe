@@ -2,6 +2,10 @@ from enum import StrEnum
 from typing import Protocol
 
 
+class EmailSendError(Exception):
+    pass
+
+
 class EmailTemplate(StrEnum):
     INVITE = "invite"
 
