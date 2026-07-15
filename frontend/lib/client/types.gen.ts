@@ -243,10 +243,7 @@ export type HttpValidationError = {
  * JobStatus
  */
 export type JobStatus =
-  | 'awaiting_start'
-  | 'in_progress'
-  | 'completed'
-  | 'failed'
+  'awaiting_start' | 'in_progress' | 'completed' | 'failed'
 
 /**
  * Minute
@@ -862,9 +859,7 @@ export type UserExistsResponse = {
  * UserRole
  */
 export type UserRole =
-  | 'standard_user'
-  | 'local_authority_admin'
-  | 'mhclg_support_admin'
+  'standard_user' | 'local_authority_admin' | 'mhclg_support_admin'
 
 /**
  * UserUpdateRoles
