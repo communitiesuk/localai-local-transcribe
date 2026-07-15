@@ -95,6 +95,7 @@ services:
       args:
         - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
         - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
+        - NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
     ports:
       - "3000:8081"
     env_file:
@@ -106,6 +107,7 @@ services:
       - BACKEND_HOST=http://backend:8080
       - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
       - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
+      - NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
     volumes:
       - next_data:/app/.next
     develop:
