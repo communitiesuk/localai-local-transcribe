@@ -53,6 +53,8 @@ jobs:
           build-args: |
             NEXT_PUBLIC_SENTRY_DSN=${{ secrets.sentry-dsn }}
             SENTRY_AUTH_TOKEN=${{ secrets.sentry-auth-token }}
+            NEXT_PUBLIC_ENVIRONMENT=${{ inputs.environment }}
+            
       
       - name: Notify Slack on build failure
         env:
