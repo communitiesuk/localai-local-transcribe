@@ -1,4 +1,4 @@
-# ADR-006: Human Data Annotation for Minute Summaries (Rubric-Aligned)
+# ADR-006: Human Data Annotation for Local Transcribe Summaries (Rubric-Aligned)
 
 ## Status
 
@@ -8,7 +8,7 @@ Date of decision: 2026-05-15
 
 ## Context and Problem Statement
 
-Minute generates summaries from meeting transcripts, evaluated using an LLM-as-judge rubric. To trust and improve LLM-as-judge scoring and prompt optimisation, we need a human annotation process that:
+Local Transcribe generates summaries from meeting transcripts, evaluated using an LLM-as-judge rubric. To trust and improve LLM-as-judge scoring and prompt optimisation, we need a human annotation process that:
 
 * Collects human scores aligned to the same rubric dimensions.
 * Enables comparison of human vs. machine scores to measure correlation and calibration.

@@ -10,7 +10,7 @@ Date of decision: 2026-03-05
 
 ### Codec
 
-Minute uses FFmpeg to process audio files. What is the optimal codec (and codec parameters) that minimise CPU time, file size, and maximises transcription quality?
+Local Transcribe uses FFmpeg to process audio files. What is the optimal codec (and codec parameters) that minimise CPU time, file size, and maximises transcription quality?
 
 ### Speed
 
