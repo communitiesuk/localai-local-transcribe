@@ -9,7 +9,7 @@ import {
   GovukLegend,
   GovukRadios,
 } from '@/components/govuk'
-import { GetUserResponse } from '@/lib/client'
+import { GetUserResponse, DataRetentionOptions } from '@/lib/client'
 import {
   getUserUsersMeGetOptions,
   getUserUsersMeGetQueryKey,
@@ -67,7 +67,9 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
       await mutateAsync(
         {
           body: {
-            data_retention_days: Number(data.dataRetention),
+            data_retention_days: Number(
+              data.dataRetention
+            ) as DataRetentionOptions,
           },
         },
         {
