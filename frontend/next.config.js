@@ -47,7 +47,7 @@ const sentryConfig = {
   // Automatically tree-shake Sentry logger statements to reduce bundle size
   disableLogger: true,
 
-  // Enables automatic instrumentation of Vercel Cron Monitors. 
+  // Enables automatic instrumentation of Vercel Cron Monitors.
   automaticVercelMonitors: true,
 }
 nextConfig = withSentryConfig(nextConfig, sentryConfig)
