@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import secrets
 from dataclasses import dataclass
 
 import dspy
@@ -59,10 +58,7 @@ async def call_llm_judge_parallel(
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
         async with semaphore:
-            # Freshly generated per call so the judge can distinguish genuine boundary markers from
-            # any lookalike text injected into the transcript or summary.
-            marker_hash = secrets.token_hex(4)
-            sys_prompt = build_system_prompt(dim, intended_solicitation, marker_hash=marker_hash)
+            sys_prompt = build_system_prompt(dim, intended_solicitation)
             user_msg = build_user_message(
                 summary_id=summary_id,
                 transcript_ref=transcript_ref,
@@ -70,7 +66,6 @@ async def call_llm_judge_parallel(
                 summary_text=summary_text,
                 template_name=template_name,
                 intended_solicitation=intended_solicitation,
-                marker_hash=marker_hash,
             )
             res = await call_llm_judge(sys_prompt, user_msg)
             dim_data = res["dimensions"].get(dim)
@@ -99,14 +94,12 @@ class DialogSummaryMetric:
     def _build_judge_messages(
         self, rubric_dim: str, example: DialogExample, prediction: dspy.Prediction
     ) -> tuple[str, str]:
-        marker_hash = secrets.token_hex(4)
-        sys_prompt = build_system_prompt(rubric_dim, marker_hash=marker_hash)
+        sys_prompt = build_system_prompt(rubric_dim)
         user_msg = build_user_message(
             summary_id=example.example_id,
             transcript_ref=str(example.example_id),
             transcript_text=example.dialogue,
             summary_text=prediction.summary,
-            marker_hash=marker_hash,
         )
         return sys_prompt, user_msg
 
