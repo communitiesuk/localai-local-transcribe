@@ -2,11 +2,14 @@ import { TranscriptionForm } from '@/components/audio/types'
 import { TemplateSelect } from '@/components/template-select/template-select'
 import {
   GovukButton,
+  GovukCharacterCount,
   GovukFormGroup,
   GovukHint,
   GovukLabel,
   GovukTextarea,
 } from '@/components/govuk'
+import { MAX_AGENDA_LENGTH } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 import { Controller, useFormContext } from 'react-hook-form'
 
@@ -19,6 +22,7 @@ export const StartTranscriptionSection = ({
 }) => {
   const form = useFormContext<TranscriptionForm>()
   const selectedTemplate = form.watch('template')
+  const agendaError = form.formState.errors.agenda
 
   if (!isShowing) {
     return null
@@ -37,27 +41,48 @@ export const StartTranscriptionSection = ({
         )}
       />
       {selectedTemplate?.agenda_usage != 'not_used' && (
-        <GovukFormGroup className="govuk-!-margin-top-4">
-          <GovukLabel htmlFor="agenda">
-            Agenda (
-            {selectedTemplate?.agenda_usage == 'optional'
-              ? 'optional'
-              : 'required'}
-            )
-          </GovukLabel>
-          <GovukHint id="agenda-hint">
-            Add discussion points from the meeting that should be included in
-            the summary.
-          </GovukHint>
-          <GovukTextarea
-            id="agenda"
-            aria-describedby="agenda-hint"
-            rows={5}
-            {...form.register('agenda', {
-              required: selectedTemplate?.agenda_usage == 'required',
-            })}
-          />
-        </GovukFormGroup>
+        <GovukCharacterCount
+          id="agenda"
+          maxLength={MAX_AGENDA_LENGTH}
+          className="govuk-!-margin-top-4"
+        >
+          <GovukFormGroup hasError={!!agendaError}>
+            <GovukLabel htmlFor="agenda">
+              Agenda (
+              {selectedTemplate?.agenda_usage == 'optional'
+                ? 'optional'
+                : 'required'}
+              )
+            </GovukLabel>
+            <GovukHint id="agenda-hint">
+              Add discussion points from the meeting that should be included in
+              the summary.
+            </GovukHint>
+            {agendaError && (
+              <p id="agenda-error" className="govuk-error-message">
+                <span className="govuk-visually-hidden">Error:</span>{' '}
+                {agendaError.message}
+              </p>
+            )}
+            <GovukTextarea
+              id="agenda"
+              className="govuk-js-character-count"
+              rows={5}
+              aria-invalid={!!agendaError}
+              aria-describedby={cn(
+                'agenda-info agenda-hint',
+                agendaError && 'agenda-error'
+              )}
+              {...form.register('agenda', {
+                required: selectedTemplate?.agenda_usage == 'required',
+                maxLength: {
+                  value: MAX_AGENDA_LENGTH,
+                  message: `Agenda must be ${MAX_AGENDA_LENGTH} characters or less`,
+                },
+              })}
+            />
+          </GovukFormGroup>
+        </GovukCharacterCount>
       )}
       <GovukButton
         type="submit"
