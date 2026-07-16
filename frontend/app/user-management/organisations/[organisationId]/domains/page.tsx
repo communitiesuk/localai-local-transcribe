@@ -1,12 +1,12 @@
 'use client'
 
-import { use, useCallback } from 'react'
+import { use, useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
-import { GovukBackLink } from '@/components/govuk'
+import { GovukBackLink, GovukNotificationBanner } from '@/components/govuk'
 import {
   EditDomainsForm,
   EditDomainsFormData,
@@ -15,17 +15,22 @@ import {
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 
-import { UserRole, parseDomains } from '@/lib/utils'
-import {
-  getOrganisationOrganisationsOrganisationIdGetQueryKey,
-  updateOrganisationOrganisationsOrganisationIdPatchMutation,
-} from '@/lib/client/@tanstack/react-query.gen'
+import { UserRole, parseDomains, formatCurrentDateTime } from '@/lib/utils'
+import { updateOrganisationOrganisationsOrganisationIdPatch } from '@/lib/client'
+import { getOrganisationOrganisationsOrganisationIdGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
+import { useBannerStore } from '@/stores/use-banner-store'
+
+const CONFLICT_STATUS = 409
+
+export class DomainsUpdateConflictError extends Error {}
 
 export default function EditApprovedDomainsPage(props: {
   params: Promise<{ organisationId: string }>
 }) {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const setBanner = useBannerStore((store) => store.setBanner)
+  const [hasConflict, setHasConflict] = useState(false)
 
   const { organisationId } = use(props.params)
 
@@ -38,17 +43,44 @@ export default function EditApprovedDomainsPage(props: {
     useOrganisation(organisationId)
 
   const { mutateAsync, isPending } = useMutation({
-    ...updateOrganisationOrganisationsOrganisationIdPatchMutation(),
+    mutationFn: async (variables: {
+      organisationId: string
+      allowedDomains: string[]
+      updatedDatetime: string
+    }) => {
+      const { data, response } =
+        await updateOrganisationOrganisationsOrganisationIdPatch({
+          path: { organisation_id: variables.organisationId },
+          body: {
+            allowed_domains: variables.allowedDomains,
+            updated_datetime: variables.updatedDatetime,
+          },
+          throwOnError: false,
+        })
+
+      if (response?.status === CONFLICT_STATUS) {
+        throw new DomainsUpdateConflictError()
+      }
+
+      if (!data) {
+        throw new Error('Failed to update approved domains')
+      }
+
+      return data
+    },
   })
 
   const onSubmit = useCallback(
     async (data: EditDomainsFormData) => {
       if (!organisation) return
 
+      setHasConflict(false)
+
       await mutateAsync(
         {
-          path: { organisation_id: organisation.id },
-          body: { allowed_domains: parseDomains(data.domains) },
+          organisationId: organisation.id,
+          allowedDomains: parseDomains(data.domains),
+          updatedDatetime: organisation.updated_datetime,
         },
         {
           onSuccess(updatedOrganisation) {
@@ -58,16 +90,32 @@ export default function EditApprovedDomainsPage(props: {
               }),
               updatedOrganisation
             )
-            toast.success('Approved domains updated')
+            setBanner({
+              variant: 'success',
+              title: 'Approved domains updated',
+              message: `Successfully updated approved domains for '${organisation.name}' at ${formatCurrentDateTime()}`,
+            })
             router.push('/user-management')
           },
-          onError() {
+          onError(error) {
+            if (error instanceof DomainsUpdateConflictError) {
+              // Someone else changed the domains after we loaded this page, so
+              // our copy is stale. Refetch the real data instead of letting
+              // the user save over it, then let them review and resubmit.
+              setHasConflict(true)
+              queryClient.invalidateQueries({
+                queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey(
+                  { path: { organisation_id: organisation.id } }
+                ),
+              })
+              return
+            }
             toast.error('Failed to update approved domains')
           },
         }
       )
     },
-    [mutateAsync, organisation, queryClient, router]
+    [mutateAsync, organisation, queryClient, router, setBanner]
   )
 
   if (userLoading || organisationLoading || !organisation) {
@@ -98,7 +146,16 @@ export default function EditApprovedDomainsPage(props: {
       <h2 className="govuk-heading-s govuk-!-margin-bottom-2">
         {organisation.name}
       </h2>
+      {hasConflict && (
+        <GovukNotificationBanner variant="important" title="Important">
+          Someone else updated the approved domains for this organisation
+          after this page was loaded, so your changes were not saved. The
+          list below has been refreshed with the latest domains - please
+          check it and try again.
+        </GovukNotificationBanner>
+      )}
       <EditDomainsForm
+        key={organisation.updated_datetime}
         defaultValues={organisation.allowed_domains}
         onSubmit={onSubmit}
         isPending={isPending}

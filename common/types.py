@@ -344,6 +344,7 @@ class OrganisationCreateRequest(BaseModel):
 
 class OrganisationPatchRequest(BaseModel):
     allowed_domains: list[str]
+    updated_datetime: datetime
 
 
 class UserExistsResponse(BaseModel):

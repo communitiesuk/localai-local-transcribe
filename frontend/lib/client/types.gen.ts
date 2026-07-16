@@ -451,6 +451,10 @@ export type OrganisationPatchRequest = {
    * Allowed Domains
    */
   allowed_domains: Array<string>
+  /**
+   * Updated Datetime
+   */
+  updated_datetime: string
 }
 
 /**

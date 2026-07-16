@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import select
@@ -105,7 +106,14 @@ async def update_organisation(
     if not is_admin_for_org(user, org):
         raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
+    if org.updated_datetime != request.updated_datetime:
+        raise HTTPException(
+            status_code=409,
+            detail="This organisation was updated by someone else. Please reload and try again.",
+        )
+
     org.allowed_domains = request.allowed_domains
+    org.updated_datetime = datetime.now(tz=UTC)
     await session.commit()
     await session.refresh(org)
     logger.info(

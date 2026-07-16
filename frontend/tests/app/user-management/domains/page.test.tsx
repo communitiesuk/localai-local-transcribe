@@ -2,11 +2,14 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import EditApprovedDomainsPage from '@/app/user-management/organisations/[organisationId]/domains/page'
+import EditApprovedDomainsPage, {
+  DomainsUpdateConflictError,
+} from '@/app/user-management/organisations/[organisationId]/domains/page'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { getOrganisationOrganisationsOrganisationIdGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
+import { useBannerStore } from '@/stores/use-banner-store'
 
 // Overrides React's `use` hook to synchronously unwrap dynamic promises during tests
 vi.mock('react', async (importOriginal) => {
@@ -71,6 +74,7 @@ describe('<EditApprovedDomainsPage />', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    useBannerStore.getState().clearBanner()
     currentOrganisationId = 'org-1'
 
     vi.mocked(useAuthorisedUser).mockImplementation(((options?: any) => {
@@ -188,8 +192,9 @@ describe('<EditApprovedDomainsPage />', () => {
 
     expect(mockMutateAsync).toHaveBeenCalledWith(
       {
-        path: { organisation_id: 'org-1' },
-        body: { allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'] },
+        organisationId: 'org-1',
+        allowedDomains: ['maidstone.gov.uk', 'communities.gov.uk'],
+        updatedDatetime: '2025-01-01T00:00:00Z',
       },
       expect.any(Object)
     )
@@ -210,6 +215,12 @@ describe('<EditApprovedDomainsPage />', () => {
       }),
       mockUpdatedOrganisation
     )
+    expect(useBannerStore.getState().banner).toEqual(
+      expect.objectContaining({
+        variant: 'success',
+        title: 'Approved domains updated',
+      })
+    )
     expect(mockPush).toHaveBeenCalledWith('/user-management')
   })
 
@@ -227,6 +238,26 @@ describe('<EditApprovedDomainsPage />', () => {
       screen.getAllByText('Enter at least one approved domain')
     ).not.toHaveLength(0)
     expect(mockMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('shows a conflict banner and refetches instead of navigating away when the domains were changed elsewhere', async () => {
+    mockMutateAsync.mockImplementationOnce(async (_variables, { onError }) => {
+      onError?.(new DomainsUpdateConflictError())
+    })
+    renderPage()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText(/your changes were not saved/i)
+    ).toBeInTheDocument()
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
+        path: { organisation_id: 'org-1' },
+      }),
+    })
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(useBannerStore.getState().banner).toBeNull()
   })
 
   it('renders a Cancel link back to user management', () => {
