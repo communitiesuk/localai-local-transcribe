@@ -6,7 +6,10 @@ bootstrap, artefact payload). The runnable entrypoint that writes the JSON artef
 
 Meetings are the resampling unit. Aggregate (corpus) WER is total edit errors
 divided by total reference words across the selected meetings. This estimates
-uncertainty in the frozen-recipe aggregate, not Azure run-to-run randomness.
+uncertainty in the aggregate for the baseline transcription eval config
+(``evals/transcription/configs/larger_cloud_test.yaml``: 10 full audio recordings of the
+Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text), not Azure
+run-to-run randomness.
 """
 
 from __future__ import annotations
@@ -152,7 +155,9 @@ def build_wer_bootstrap_artefact(
         "metric": "corpus_wer",
         "resampling_unit": "meeting",
         "description": (
-            "Meeting-block bootstrap of corpus WER on a frozen AMI-proxy recipe. "
+            "Meeting-block bootstrap of corpus WER on the baseline transcription eval config "
+            "(evals/transcription/configs/larger_cloud_test.yaml: 10 full audio recordings of the "
+            "Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text). "
             "Estimates uncertainty in the aggregate metric, not provider run-to-run randomness. "
             "Paired candidate-minus-baseline bootstrap is further work, not included here."
         ),

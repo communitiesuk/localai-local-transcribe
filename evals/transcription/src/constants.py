@@ -1,4 +1,9 @@
-"""Shared paths and AMI-proxy drift threshold constants for transcription evals (AIILG-680)."""
+"""Shared paths and AMI-proxy drift threshold constants for transcription evals (AIILG-680).
+
+Thresholds are calibrated against the baseline transcription eval config
+(``evals/transcription/configs/larger_cloud_test.yaml``: 10 full audio recordings of the
+Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text).
+"""
 
 from pathlib import Path
 from typing import NamedTuple
@@ -13,13 +18,12 @@ WER_BOOTSTRAP_ARTEFACT_PATH = WORKDIR / "baseline" / "wer_bootstrap_ami_proxy.js
 
 AGGREGATABLE_METRIC_KEYS = ["wer", "wder", "speaker_count_accuracy", "processing_speed_ratio"]
 
-# Frozen recipe for the AMI-proxy baseline: evals/transcription/configs/larger_cloud_test.yaml
-# (10 full meetings, Azure STT). Thresholds below are provisional for that proxy only.
+# Thresholds below are provisional for the baseline transcription eval config only.
 DRIFT_THRESHOLDS_ARE_AMI_PROXY_PLACEHOLDERS = True
 
 
 class WerDriftThresholds(NamedTuple):
-    """Relative and absolute gates for corpus WER on the frozen AMI recipe.
+    """Relative and absolute gates for corpus WER on the baseline transcription eval config.
 
     Corpus WER is total edit errors divided by total reference words across meetings.
     Relative increases are (candidate - baseline) / baseline. Higher WER is worse.
@@ -38,11 +42,11 @@ class WerDriftThresholds(NamedTuple):
 
 
 class SpeakerCountDriftThresholds(NamedTuple):
-    """Count-based gates for speaker-count accuracy on the frozen AMI recipe.
+    """Count-based gates for speaker-count accuracy on the baseline transcription eval config.
 
     Scores are correct-meeting counts out of n_meetings (for example 7/10), not fine-grained
     proportions, because one meeting moves the rate by 0.10. Higher correct counts are better.
-    n_meetings must match num_samples in larger_cloud_test.yaml; see require_speaker_count_recipe_size.
+    n_meetings must match num_samples in larger_cloud_test.yaml; see require_meeting_count_matches_eval_config.
 
     review_correct_count: exactly this many correct meetings triggers review.
     fail_at_or_below_correct_count: this many or fewer correct meetings fails.
@@ -73,7 +77,7 @@ class ProcessingSpeedDriftThresholds(NamedTuple):
     hard_floor: float
 
 
-# TODO(AIILG-680): replace when the frozen recipe or real audio baseline is recomputed.
+# TODO(AIILG-680): replace when the baseline transcription eval config or real audio baseline is recomputed.
 # https://mhclgdigital.atlassian.net/browse/AIILG-680
 # Baseline and review band follow evals/transcription/baseline/wer_bootstrap_ami_proxy.json
 # (corpus WER and bootstrap p95 relative increase ≈ 0.10). Fail +25% sits clearly above
@@ -87,8 +91,9 @@ WER_DRIFT_THRESHOLDS = WerDriftThresholds(
 
 # Speaker-count bands are absolute correct counts out of n_meetings (readable as 7/10, 6/10, ...).
 # n_meetings must stay equal to num_samples in evals/transcription/configs/larger_cloud_test.yaml.
-# Change the recipe size and these counts together, then recompute the baseline. Enforcement must
-# call require_speaker_count_recipe_size so a mismatched run fails fast instead of mis-scoring.
+# Change the meeting count in the baseline transcription eval config and these counts together, then
+# recompute the baseline. Enforcement must call require_meeting_count_matches_eval_config so a
+# mismatched run fails fast instead of mis-scoring.
 SPEAKER_COUNT_DRIFT_THRESHOLDS = SpeakerCountDriftThresholds(
     n_meetings=10,
     baseline_correct_count=7,
