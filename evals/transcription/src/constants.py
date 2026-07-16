@@ -38,10 +38,11 @@ class WerDriftThresholds(NamedTuple):
 
 
 class SpeakerCountDriftThresholds(NamedTuple):
-    """Count-based gates for speaker-count accuracy on the frozen 10-meeting AMI recipe.
+    """Count-based gates for speaker-count accuracy on the frozen AMI recipe.
 
-    Scores are correct-meeting counts out of n_meetings (not fine-grained proportions), because
-    one meeting moves the rate by 0.10. Higher correct counts are better.
+    Scores are correct-meeting counts out of n_meetings (for example 7/10), not fine-grained
+    proportions, because one meeting moves the rate by 0.10. Higher correct counts are better.
+    n_meetings must match num_samples in larger_cloud_test.yaml; see require_speaker_count_recipe_size.
 
     review_correct_count: exactly this many correct meetings triggers review.
     fail_at_or_below_correct_count: this many or fewer correct meetings fails.
@@ -84,7 +85,10 @@ WER_DRIFT_THRESHOLDS = WerDriftThresholds(
     absolute_floor=0.50,
 )
 
-# Baseline was 7/10 correct on the frozen recipe. Count thresholds avoid false precision.
+# Speaker-count bands are absolute correct counts out of n_meetings (readable as 7/10, 6/10, ...).
+# n_meetings must stay equal to num_samples in evals/transcription/configs/larger_cloud_test.yaml.
+# Change the recipe size and these counts together, then recompute the baseline. Enforcement must
+# call require_speaker_count_recipe_size so a mismatched run fails fast instead of mis-scoring.
 SPEAKER_COUNT_DRIFT_THRESHOLDS = SpeakerCountDriftThresholds(
     n_meetings=10,
     baseline_correct_count=7,
