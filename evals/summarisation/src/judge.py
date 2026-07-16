@@ -20,11 +20,14 @@ _env = Environment(
 def build_system_prompt(
     target_dimension: str | None = None,
     intended_solicitation: str | None = None,
+    marker_hash: str = "",
 ) -> str:
     """Render and return the SYSTEM turn for a single specific dimension.
 
     ``intended_solicitation`` is supplied only by the security (prompt-injection) eval; when set,
     the template adds anti-injection hardening instructions that don't apply to ordinary judging.
+    ``marker_hash`` must match the hash passed to the corresponding ``build_user_message`` call so
+    the judge can tell genuine transcript/summary boundary markers from injected fakes.
     """
     template = _env.get_template("system_prompt.j2")
     return template.render(
@@ -32,6 +35,7 @@ def build_system_prompt(
         dimensions=DIMENSIONS,
         critical_dimensions=sorted(CRITICAL_DIMENSIONS),
         intended_solicitation=intended_solicitation,
+        marker_hash=marker_hash,
     )
 
 
@@ -43,11 +47,15 @@ def build_user_message(
     summary_text: str,
     template_name: str | None = None,
     intended_solicitation: str | None = None,
+    marker_hash: str,
 ) -> str:
     """Render and return the USER turn for the LLM judge.
 
     ``intended_solicitation`` is supplied only by the security (prompt-injection) eval; when set, the
     template adds a block telling the judge an injection is present and what it is trying to do.
+    ``marker_hash`` is a short random hash generated fresh for this evaluation; it tags the
+    transcript/summary boundary markers so the judge can't be fooled by text in the transcript or
+    summary that mimics a marker (it won't know the hash in advance).
     """
     template = _env.get_template("user_message.j2")
     return template.render(
@@ -57,4 +65,5 @@ def build_user_message(
         summary_text=summary_text,
         template_name=template_name,
         intended_solicitation=intended_solicitation,
+        marker_hash=marker_hash,
     )
