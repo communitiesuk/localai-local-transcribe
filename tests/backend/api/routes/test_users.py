@@ -1,7 +1,7 @@
 # ruff: noqa: ARG001
 # needed for pytest fixtures
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -10,12 +10,20 @@ import pytest
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_target_user import get_target_user
 from backend.main import app
+from backend.services.emails.base import EmailSendError, EmailTemplate
 from common.database.postgres_models import UserRole
 from tests.utils import get_test_client
 
 
 def convert_to_datetime(json_datetime: str) -> datetime:
     return datetime.fromisoformat(json_datetime.replace("Z", "+00:00"))
+
+
+async def user_create_refresh(user):
+    user.id = uuid4()
+    user.created_datetime = datetime.now(UTC)
+    user.updated_datetime = datetime.now(UTC)
+    user.last_login = datetime.now(UTC)
 
 
 @pytest.mark.asyncio
@@ -144,6 +152,65 @@ async def test_delete_user(
         response = await ac.delete(f"/users/{target_user.id}")
 
     assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("send_email_side_effect", "email_sent", "sentry_called"),
+    [
+        (None, True, False),
+        (EmailSendError("Failed to send email"), False, True),
+    ],
+)
+async def test_create_user_email_handling(
+    override_session,
+    override_support_admin_user,
+    make_organisation,
+    mock_email_sender,
+    mocker,
+    send_email_side_effect,
+    email_sent,
+    sentry_called,
+):
+    organisation = make_organisation(allowed_domains=["example.com"])
+
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+
+    mock_session.refresh.side_effect = user_create_refresh
+
+    mocker.patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    )
+
+    mock_email_sender.send_email.side_effect = send_email_side_effect
+
+    capture_exception = mocker.patch("backend.api.routes.users.sentry_sdk.capture_exception")
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            "/users",
+            json={
+                "name": "Test User",
+                "email": "test@example.com",
+                "roles": [],
+                "organisation_id": str(organisation.id),
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["email_sent"] is email_sent
+
+    mock_email_sender.send_email.assert_called_once_with(
+        "test@example.com",
+        EmailTemplate.INVITE,
+    )
+
+    if sentry_called:
+        capture_exception.assert_called_once()
+    else:
+        capture_exception.assert_not_called()
 
 
 @pytest.mark.asyncio
