@@ -1,12 +1,14 @@
 # Transcription metric drift thresholds. Pass, review, fail, and absolute floors
 
-Jira ticket. [AIILG-680](https://mhclgdigital.atlassian.net/browse/AIILG-680)
+> **Disclaimer.** These thresholds are provisional placeholders from an AMI research proxy, not real UK council meeting audio. They are not product quality or readiness claims. Real data from councils is expected in the near future, and the numbers will be recalculated then.
 
-**All threshold values are placeholders based on a proxy dataset. They must be recalculated on real council meeting audio with human-annotated ground truth before they can be trusted.**
+---
 
-Constants live in [`evals/transcription/src/constants.py`](../../evals/transcription/src/constants.py).
+Jira ticket: [AIILG-680](https://mhclgdigital.atlassian.net/browse/AIILG-680)
 
-Enforcement lives in [`evals/transcription/src/drift.py`](../../evals/transcription/src/drift.py) and is switched on by setting `check_drift_thresholds: true` in the baseline transcription eval config.
+Constants live in [evals/transcription/src/constants.py](../../evals/transcription/src/constants.py).
+
+Enforcement lives in [evals/transcription/src/drift.py](../../evals/transcription/src/drift.py) and is switched on by setting `check_drift_thresholds: true` in the baseline transcription eval config.
 
 ---
 
@@ -24,7 +26,7 @@ The three metrics are.
 
 Each is defined in full in section 2.
 
-Judge scores and hallucination / claim-citation drift are out of scope here. Those are documented separately in [`llm-judge-score-thresholds.md`](./llm-judge-score-thresholds.md) and [`claim-citation-rate-thresholds.md`](./claim-citation-rate-thresholds.md).
+Judge scores and hallucination / claim-citation drift are out of scope here. Those are documented separately in [llm-judge-score-thresholds.md](./llm-judge-score-thresholds.md) and [claim-citation-rate-thresholds.md](./claim-citation-rate-thresholds.md).
 
 ### 1.1 Why gate transcription quality at all
 
@@ -37,9 +39,11 @@ The gates below are two-tier.
 
 ### 1.2 The baseline dataset and transcription service
 
-There is **no real council audio in the current calibration**. The numbers were produced from a stand-in (a proxy) called the **baseline transcription eval config** ([`evals/transcription/configs/larger_cloud_test.yaml`](../../evals/transcription/configs/larger_cloud_test.yaml)).
+There is **no real council audio in the current calibration**. The numbers were produced from a stand-in (a proxy) called the **baseline transcription eval config** ([evals/transcription/configs/larger_cloud_test.yaml](../../evals/transcription/configs/larger_cloud_test.yaml)). 
 
-That config runs 10 full audio recordings from the **AMI Meeting Corpus**, a publicly available research dataset of 100 hours of hand-transcribed meeting recordings created for meeting-analysis research [1]. The recordings and reference transcripts are pulled from the `edinburghcstr/ami` dataset on Hugging Face [2], and the transcription eval auto-downloads them (see the transcription section of [`evals/README.md`](../../evals/README.md)). AMI is a reasonable proxy because it is real multi-speaker meeting speech, but it is not local-government audio, so treat every number here as provisional.
+> **Note:** Real audio data from councils is expected in the near future, and the numbers will be recalculated then.
+
+That config runs 10 full audio recordings from the **AMI Meeting Corpus**, a publicly available research dataset of 100 hours of hand-transcribed meeting recordings created for meeting-analysis research [1]. The recordings and reference transcripts are pulled from the `edinburghcstr/ami` dataset on Hugging Face [2], and the transcription eval auto-downloads them (see the transcription section of [evals/README.md](../../evals/README.md)). AMI is a reasonable proxy because it is real multi-speaker meeting speech, but it is not local-government audio, so treat every number here as provisional.
 
 The transcription service under test is the **Azure AI Speech fast transcription API** (the synchronous `speechtotext/transcriptions:transcribe` endpoint), called at REST API version `2024-11-15` [7]. The request is configured for locale `en-GB`, with speaker diarisation enabled and the profanity filter turned off. In the code this adapter is registered as `azure_stt_synchronous`.
 
@@ -116,9 +120,11 @@ We only have 10 meetings in the baseline set. If we had happened to pick 10 slig
 
 The bootstrap estimates the uncertainty of a statistic by resampling the data we already have, with replacement, many times over [4][5]. Specifically, for corpus WER.
 
-1. Start with the 10 real meetings and their error and reference-word counts.
+Importantly, this does **not** re-run speech-to-text. The meetings are transcribed once. The bootstrap then reuses only the saved per-meeting error and reference-word counts from that single eval run. The 10,000 resamples are simple calculations on those stored numbers - no additional transcription is required.
+
+1. Start with the 10 meetings and their already-computed error and reference-word counts from that one eval run.
 2. Draw a new set of 10 meetings by picking from those 10 at random, with replacement, so some meetings appear more than once and others not at all. This is one "resample".
-3. Recompute corpus WER on that resample.
+3. Recompute corpus WER on that resample (again using only the stored counts).
 4. Repeat many times (the artefact uses 10,000 resamples) to build up a distribution of plausible corpus WER values.
 5. Read a high percentile of that distribution (for example the 95th percentile) to see how far up the corpus WER realistically drifts from sampling alone. That distance sets the review band.
 
@@ -134,7 +140,7 @@ This bootstrap is used only during calibration, to choose the width of the revie
 
 ## 4. Proposed thresholds
 
-Source of truth for these values. `WER_DRIFT_THRESHOLDS`, `SPEAKER_COUNT_DRIFT_THRESHOLDS`, and `PROCESSING_SPEED_DRIFT_THRESHOLDS` in [`evals/transcription/src/constants.py`](../../evals/transcription/src/constants.py).
+Source of truth for these values. `WER_DRIFT_THRESHOLDS`, `SPEAKER_COUNT_DRIFT_THRESHOLDS`, and `PROCESSING_SPEED_DRIFT_THRESHOLDS` in [evals/transcription/src/constants.py](../../evals/transcription/src/constants.py).
 
 The flag `DRIFT_THRESHOLDS_ARE_AMI_PROXY_PLACEHOLDERS` is `True` while these remain proxy values.
 
@@ -142,12 +148,14 @@ The overall approach to picking the bands follows the team's threshold-setting m
 
 ### 4.1 Corpus WER
 
+
 | Outcome | Rule                                                                      | Current proxy value                   |
 | ------- | ------------------------------------------------------------------------- | ------------------------------------- |
 | Pass    | relative increase is below the review band                                | below +10% versus baseline (0.289275) |
 | Review  | relative increase is at or above the review band, and below the fail band | at or above +10%                      |
 | Fail    | relative increase is at or above the fail band                            | at or above +25%                      |
 | Floor   | absolute corpus WER is at or above the floor                              | at or above 0.50                      |
+
 
 Baseline corpus WER **0.289275** comes from the committed bootstrap artefact built from the baseline eval results.
 
@@ -159,6 +167,7 @@ Absolute floor **0.50** is a loose disaster line for this proxy only. It is not 
 
 ### 4.2 Speaker-count accuracy
 
+
 | Outcome | Rule                                 | Current proxy value (out of 10) |
 | ------- | ------------------------------------ | ------------------------------- |
 | Pass    | correct count above the review count | 7, 8, 9, or 10 correct          |
@@ -166,9 +175,11 @@ Absolute floor **0.50** is a loose disaster line for this proxy only. It is not 
 | Fail    | at or below the fail count           | 5 or fewer correct              |
 | Floor   | at or below the floor count          | 4 or fewer correct              |
 
+
 The baseline on the proxy set was **7 out of 10** correct. These counts must be recomputed together with any change to the number of meetings (see section 6.3).
 
 ### 4.3 Processing speed ratio
+
 
 | Outcome    | Rule                                                                      | Current proxy value                                     |
 | ---------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
@@ -177,6 +188,7 @@ The baseline on the proxy set was **7 out of 10** correct. These counts must be 
 | Fail       | relative increase is at or above the fail band                            | at or above +25%                                        |
 | Floor      | absolute ratio is at or above the absolute floor                          | at or above 0.10                                        |
 | Hard floor | absolute ratio is at or above 1.0                                         | at or above 1.0 (as slow as, or slower than, real time) |
+
 
 Baseline **0.0441** is the mean processing speed ratio across three repeated Azure runs on the baseline config.
 
@@ -304,9 +316,10 @@ As explained in section 2.2, one meeting moves a 10-meeting set by 10 percentage
 
 ### Repository references
 
-1. Constants and placeholder flag. [`evals/transcription/src/constants.py`](../../evals/transcription/src/constants.py)
-2. Drift classification and exit behaviour. [`evals/transcription/src/drift.py`](../../evals/transcription/src/drift.py)
-3. WER bootstrap helpers and artefact builder. [`evals/transcription/src/baseline/`](../../evals/transcription/src/baseline/)
-4. Committed bootstrap artefact. [`evals/transcription/baseline/wer_bootstrap_ami_proxy.json`](../../evals/transcription/baseline/wer_bootstrap_ami_proxy.json)
-5. Baseline transcription eval config. [`evals/transcription/configs/larger_cloud_test.yaml`](../../evals/transcription/configs/larger_cloud_test.yaml)
-6. Related summarisation threshold documents. [`llm-judge-score-thresholds.md`](./llm-judge-score-thresholds.md) (AIILG-678), [`claim-citation-rate-thresholds.md`](./claim-citation-rate-thresholds.md) (AIILG-679)
+1. Constants and placeholder flag. [evals/transcription/src/constants.py](../../evals/transcription/src/constants.py)
+2. Drift classification and exit behaviour. [evals/transcription/src/drift.py](../../evals/transcription/src/drift.py)
+3. WER bootstrap helpers and artefact builder. [evals/transcription/src/baseline/](../../evals/transcription/src/baseline/)
+4. Committed bootstrap artefact. [evals/transcription/baseline/wer_bootstrap_ami_proxy.json](../../evals/transcription/baseline/wer_bootstrap_ami_proxy.json)
+5. Baseline transcription eval config. [evals/transcription/configs/larger_cloud_test.yaml](../../evals/transcription/configs/larger_cloud_test.yaml)
+6. Related summarisation threshold documents. [llm-judge-score-thresholds.md](./llm-judge-score-thresholds.md) (AIILG-678), [claim-citation-rate-thresholds.md](./claim-citation-rate-thresholds.md) (AIILG-679)
+
