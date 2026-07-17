@@ -19,7 +19,7 @@ export const TranscriptionListItem = ({
     <li>
       <Link
         href={`/transcriptions/${transcription.id}`}
-        className="justify-between rounded-md border border-[var(--govuk-border-colour)] p-3 transition-colors hover:bg-[var(--govuk-hover-colour)] sm:flex"
+        className="justify-between rounded-md border border-[var(--govuk-border-colour)] p-3 transition-colors hover:bg-[var(--govuk-surface-background-colour)] sm:flex"
       >
         <TranscriptionCard transcription={transcription} />
         <div className="govuk-!-margin-top-2 flex items-start gap-2">
