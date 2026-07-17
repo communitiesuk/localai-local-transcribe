@@ -17,13 +17,23 @@ class InjectionLevel(str, Enum):
 
 
 class SecurityScenarioInput(BaseModel):
-    """A single prompt-injection scenario: a base transcript with an injected instruction."""
+    """A single prompt-injection scenario.
+
+    Two attack vectors share this shape, distinguished by ``template_content``:
+
+    - **Transcript vector** (``template_content`` unset): the injection lives inside
+      ``dialogue_entries`` and the scenario is summarised with the configured registered template.
+    - **Custom-template vector** (``template_content`` set): the injection lives in a user-supplied
+      custom template; ``dialogue_entries`` hold a clean meeting and the summariser is driven through
+      the user-template path with ``template_content`` embedded verbatim.
+    """
 
     scenario_id: str
     base_transcript: str
     injection_level: InjectionLevel
     intended_solicitation: str
     dialogue_entries: list[DialogueEntry]
+    template_content: str | None = None
 
 
 class SecurityEvalRecord(BaseModel):

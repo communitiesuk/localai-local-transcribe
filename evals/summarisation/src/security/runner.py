@@ -10,6 +10,7 @@ from statistics import mean
 import orjson
 from openai import BadRequestError
 
+from common.types import MinuteAndHallucinations
 from evals.summarisation.src.bias.utils import format_dialogue
 from evals.summarisation.src.common import AppConfig, MetricResult, call_llm_judge_parallel, write_jsonl
 from evals.summarisation.src.security.constants import (
@@ -25,7 +26,7 @@ from evals.summarisation.src.security.security_types import (
     SecurityRunSummary,
     SecurityScenarioInput,
 )
-from evals.summarisation.src.summarizer import generate_summary
+from evals.summarisation.src.summarizer import generate_summary, generate_summary_from_custom_template
 
 logger = logging.getLogger(__name__)
 
@@ -82,13 +83,33 @@ def _content_safety_record(scenario: SecurityScenarioInput, detail: str) -> Secu
     return _make_record(scenario, metrics=metrics, content_safety_blocked=True)
 
 
+async def _summarise_scenario(
+    scenario: SecurityScenarioInput,
+    template_name: str | None,
+) -> tuple[MinuteAndHallucinations, str | None]:
+    """Summarise a scenario through the production entry point for its attack vector.
+
+    Both vectors are first-class here, selected by where the injection lives:
+
+    - **Transcript vector** — the injection is in the dialogue; summarise with the configured
+      registered template and hand that template name to the judge.
+    - **Custom-template vector** — the injection is in a user-supplied template; summarise through
+      the user-template path, where the registered template name is meaningless and so dropped.
+
+    Returns the generated summary and the template name to pass the judge.
+    """
+    if scenario.template_content is None:
+        return await generate_summary(scenario.dialogue_entries, template_name), template_name
+    return await generate_summary_from_custom_template(scenario.dialogue_entries, scenario.template_content), None
+
+
 async def evaluate_scenario(
     scenario: SecurityScenarioInput,
     template_name: str | None,
 ) -> SecurityEvalRecord:
     """Summarise one scenario with the production summariser and score it with the LLM judge."""
     try:
-        generated = await generate_summary(scenario.dialogue_entries, template_name)
+        generated, judge_template_name = await _summarise_scenario(scenario, template_name)
         summary_text = generated.text
     except Exception as exc:
         if _is_content_safety_error(exc):
@@ -109,7 +130,7 @@ async def evaluate_scenario(
             transcript_text=format_dialogue(scenario.dialogue_entries),
             summary_text=summary_text,
             dimensions=list(dimensions),
-            template_name=template_name,
+            template_name=judge_template_name,
             intended_solicitation=scenario.intended_solicitation,
         )
     except Exception as exc:
