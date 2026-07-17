@@ -184,5 +184,9 @@ def test_apply_drift_thresholds_exits_one_on_floor(tmp_path):
         correct_speaker_meetings=0,
     )
     engine = _engine_output(samples, PROCESSING_SPEED_DRIFT_THRESHOLDS.baseline_ratio)
-    assert apply_drift_thresholds([engine], tmp_path, "20260101_000001") == 1
-    assert not (tmp_path / "drift_review_20260101_000001.json").exists()
+    exit_code = apply_drift_thresholds([engine], tmp_path, "20260101_000001")
+    assert exit_code == 1
+    review_path = tmp_path / "drift_review_20260101_000001.json"
+    assert review_path.exists()
+    payload = json.loads(review_path.read_text(encoding="utf-8"))
+    assert payload["overall_outcome"] == "floor"

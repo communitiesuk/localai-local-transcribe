@@ -283,8 +283,9 @@ def apply_drift_thresholds(
     so ``results`` normally has one item. The list form remains so multi-adapter runs can be
     checked the same way.
 
-    Exit 1 for fail or floor on any metric. Exit 0 for pass or review. Review-band results also
-    write ``drift_review_{timestamp}.json`` under ``output_dir``.
+    Exit 1 for fail or floor on any metric. Exit 0 for pass or review. Any non-pass outcome
+    (review, fail, or floor) writes ``drift_review_{timestamp}.json`` under ``output_dir`` with
+    the per-metric detail, so a failing run leaves the same inspectable record as a review run.
     """
     all_verdicts: list[dict] = []
     outcomes: list[DriftOutcome] = []
@@ -312,7 +313,9 @@ def apply_drift_thresholds(
     overall = worst_outcome(outcomes)
     logger.info("Overall drift outcome: %s", overall)
 
-    if overall == "review":
+    # Write the per-metric breakdown for any non-pass outcome so review, fail, and floor runs
+    # all leave an inspectable record on disk, not only a log line.
+    if overall != "pass":
         review_path = output_dir / f"drift_review_{timestamp}.json"
         review_path.write_text(
             json.dumps({"overall_outcome": overall, "checks": all_verdicts}, indent=2) + "\n",

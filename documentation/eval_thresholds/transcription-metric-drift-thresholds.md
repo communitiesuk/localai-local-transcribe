@@ -192,7 +192,7 @@ The relative bands match the WER shape, but they are set conservatively rather t
 4. The process exit code is.
   - **0** for pass or review.
   - **1** for fail or floor.
-5. When the overall outcome is **review**, the eval writes `evals/transcription/output/drift_review_{timestamp}.json` with the per-metric detail so a person can inspect it.
+5. When the overall outcome is not a pass (that is review, fail, or floor), the eval writes `evals/transcription/output/drift_review_{timestamp}.json` with the per-metric detail so a person can inspect it.
 
 The live comparison is always **the observed metric versus the committed constants**. The bootstrap is only used beforehand, during calibration, to set the width of the WER review band.
 
