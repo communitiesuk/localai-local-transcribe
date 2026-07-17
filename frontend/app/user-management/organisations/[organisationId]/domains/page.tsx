@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useCallback, useState } from 'react'
+import { use, useCallback, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -32,7 +32,7 @@ export default function EditApprovedDomainsPage(props: {
   const setBanner = useBannerStore((store) => store.setBanner)
   const [hasConflict, setHasConflict] = useState(false)
 
-  const { organisationId } = use(props.params)
+  const { organisationId } = use(props.params); console.log("DIAGNOSTIC: organisationId from params:", organisationId)
 
   const { currentUser, isLoading: userLoading } = useAuthorisedUser([
     UserRole.MHCLG_SUPPORT_ADMIN,
@@ -42,7 +42,11 @@ export default function EditApprovedDomainsPage(props: {
   const { data: organisation, isLoading: organisationLoading } =
     useOrganisation(organisationId)
 
-  const { mutateAsync, isPending } = useMutation({
+  useEffect(() => {
+    console.log('DIAGNOSTIC organisation changed:', organisation);
+  }, [organisation]);
+
+  const { mutate, isPending } = useMutation({
     mutationFn: async (variables: {
       organisationId: string
       allowedDomains: string[]
@@ -68,6 +72,35 @@ export default function EditApprovedDomainsPage(props: {
 
       return data
     },
+    onSuccess: (updatedOrganisation) => {
+      queryClient.setQueryData(
+        getOrganisationOrganisationsOrganisationIdGetQueryKey({
+          path: { organisation_id: updatedOrganisation.id },
+        }),
+        updatedOrganisation
+      )
+      setBanner({
+        variant: 'success',
+        title: 'Approved domains updated',
+        message: `Successfully updated approved domains for '${updatedOrganisation.name}' at ${formatCurrentDateTime()}`,
+      })
+      router.push('/user-management')
+    },
+    onError: (error) => {
+      if (error instanceof DomainsUpdateConflictError) {
+        setHasConflict(true)
+        if (organisation?.id) {
+          queryClient.invalidateQueries({
+            queryKey:
+              getOrganisationOrganisationsOrganisationIdGetQueryKey({
+                path: { organisation_id: organisation.id },
+              }),
+          })
+        }
+      } else {
+        toast.error('Failed to update approved domains')
+      }
+    },
   })
 
   const onSubmit = useCallback(
@@ -76,46 +109,13 @@ export default function EditApprovedDomainsPage(props: {
 
       setHasConflict(false)
 
-      await mutateAsync(
-        {
-          organisationId: organisation.id,
-          allowedDomains: parseDomains(data.domains),
-          updatedDatetime: organisation.updated_datetime,
-        },
-        {
-          onSuccess(updatedOrganisation) {
-            queryClient.setQueryData(
-              getOrganisationOrganisationsOrganisationIdGetQueryKey({
-                path: { organisation_id: organisation.id },
-              }),
-              updatedOrganisation
-            )
-            setBanner({
-              variant: 'success',
-              title: 'Approved domains updated',
-              message: `Successfully updated approved domains for '${organisation.name}' at ${formatCurrentDateTime()}`,
-            })
-            router.push('/user-management')
-          },
-          onError(error) {
-            if (error instanceof DomainsUpdateConflictError) {
-              // Someone else changed the domains after we loaded this page, so
-              // our copy is stale. Refetch the real data instead of letting
-              // the user save over it, then let them review and resubmit.
-              setHasConflict(true)
-              queryClient.invalidateQueries({
-                queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey(
-                  { path: { organisation_id: organisation.id } }
-                ),
-              })
-              return
-            }
-            toast.error('Failed to update approved domains')
-          },
-        }
-      )
+      mutate({
+        organisationId: organisation.id,
+        allowedDomains: parseDomains(data.domains),
+        updatedDatetime: organisation.updated_datetime,
+      })
     },
-    [mutateAsync, organisation, queryClient, router, setBanner]
+    [mutate, organisation]
   )
 
   if (userLoading || organisationLoading || !organisation) {
