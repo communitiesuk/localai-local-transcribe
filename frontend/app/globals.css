@@ -197,15 +197,10 @@
 
 .editor-content ol {
   list-style-type: none;
-  counter-reset: list-counter;
-}
-
-.editor-content ol > li {
-  counter-increment: list-counter;
 }
 
 .editor-content ol > li::before {
-  content: counter(list-counter) '.';
+  content: counter(list-item) '.';
 }
 
 .editor-content h1 {
@@ -250,11 +245,11 @@
   margin-bottom: 2.33em;
 }
 
-.editor-content p + p {
+.editor-content p+p {
   margin-top: 1em;
 }
 
-.editor-content pre > code {
+.editor-content pre>code {
   background-color: #444;
   color: white;
   width: 100%;
