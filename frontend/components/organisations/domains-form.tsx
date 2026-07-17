@@ -12,7 +12,7 @@ import {
   GovukLabel,
   GovukTextarea,
 } from '@/components/govuk'
-import { parseDomains } from '@/lib/utils'
+import { parseDomains, isValidFQDN } from '@/lib/utils'
 
 export type EditDomainsFormData = { domains: string }
 
@@ -50,31 +50,40 @@ export function EditDomainsForm({
       <GovukFormGroup hasError={!!domainsError}>
         <GovukLabel htmlFor="domains">Approved domains</GovukLabel>
         <GovukHint id="domains-hint">
-          Please list any approved domains on individual lines and without the
+          List any approved domains on individual lines and without the
           &apos;@&apos; symbol (e.g. &apos;communities.gov.uk&apos;).
         </GovukHint>
-        {domainsError && (
-          <p id="domains-error" className="govuk-error-message">
-            <span className="govuk-visually-hidden">Error:</span>{' '}
-            {domainsError.message}
-          </p>
-        )}
         <Controller
           control={form.control}
           name="domains"
           rules={{
-            validate: (value) =>
-              parseDomains(value).length > 0 ||
-              'Enter at least one approved domain',
+            validate: (value) => {
+              const domains = parseDomains(value)
+              if (domains.length === 0) {
+                return 'Enter at least one approved domain'
+              }
+              
+              const invalidDomains = domains.filter((domain) => !isValidFQDN(domain))
+              
+              if (invalidDomains.length > 0) {
+                const hasMultipleOnLine = invalidDomains.some(d => d.includes(' ') || d.includes(','))
+                
+                if (hasMultipleOnLine) {
+                  return 'One or more lines contain multiple domains. Enter only one domain per line.'
+                }
+
+                const domainList = invalidDomains.join(', ')
+                return `The following domains are in the wrong format: ${domainList}. Enter them in the correct format, like 'communities.gov.uk'.`
+              }
+              return true
+            },
           }}
           render={({ field: { value, onChange, ref, disabled } }) => (
             <GovukTextarea
               id="domains"
               name="domains"
               rows={8}
-              aria-describedby={
-                domainsError ? 'domains-error domains-hint' : 'domains-hint'
-              }
+              aria-describedby="domains-hint"
               value={value}
               onChange={onChange}
               disabled={disabled}

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import validator from 'validator'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -31,6 +32,10 @@ export function parseDomains(value: string): string[] {
     .split('\n')
     .map((domain) => domain.trim())
     .filter(Boolean)
+}
+
+export function isValidFQDN(domain: string): boolean {
+  return validator.isFQDN(domain)
 }
 
 export function formatCurrentDateTime() {

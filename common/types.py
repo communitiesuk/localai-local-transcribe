@@ -1,10 +1,11 @@
 import uuid
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from common.database.postgres_models import (
     ContentSource,
@@ -13,6 +14,19 @@ from common.database.postgres_models import (
     TemplateType,
     UserRole,
 )
+
+
+# Simple FQDN regex: requires at least one dot, labels 1-63 chars, no leading/trailing hyphens
+DOMAIN_REGEX = re.compile(
+    r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$",
+    re.IGNORECASE,
+)
+
+def validate_fqdn_list(domains: list[str]) -> list[str]:
+    for domain in domains:
+        if not DOMAIN_REGEX.match(domain):
+            raise ValueError(f"Domain '{domain}' is not a valid fully qualified domain name (FQDN)")
+    return domains
 
 
 class TranscriptionMetadata(BaseModel):
@@ -70,7 +84,8 @@ class RenameSpeakerRequest(BaseModel):
 
 
 class UpdateDialogueEntrySpeakerRequest(BaseModel):
-    new_speaker: str
+    new_text: str
+    expected_text: str | None = None
     expected_speaker: str | None = None
     expected_start_time: float | None = None
     expected_end_time: float | None = None
@@ -341,10 +356,20 @@ class OrganisationCreateRequest(BaseModel):
     name: str
     allowed_domains: list[str]
 
+    @field_validator("allowed_domains")
+    @classmethod
+    def validate_domains(cls, v):
+        return validate_fqdn_list(v)
+
 
 class OrganisationPatchRequest(BaseModel):
-       allowed_domains: list[str]
-       updated_datetime: datetime
+    allowed_domains: list[str]
+    updated_datetime: datetime
+
+    @field_validator("allowed_domains")
+    @classmethod
+    def validate_domains(cls, v):
+        return validate_fqdn_list(v)
 
 
 class UserExistsResponse(BaseModel):
