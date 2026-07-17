@@ -240,6 +240,9 @@ def classify_processing_speed_drift(
 
 def worst_outcome(outcomes: list[DriftOutcome]) -> DriftOutcome:
     """Return the most severe outcome in ``outcomes``."""
+    if not outcomes:
+        msg = "worst_outcome requires at least one drift outcome"
+        raise ValueError(msg)
     return max(outcomes, key=lambda outcome: _OUTCOME_RANK[outcome])
 
 

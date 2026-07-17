@@ -84,6 +84,11 @@ def test_worst_outcome_orders_severity():
     assert worst_outcome(["fail", "floor"]) == "floor"
 
 
+def test_worst_outcome_rejects_empty_list():
+    with pytest.raises(ValueError, match="worst_outcome requires at least one drift outcome"):
+        worst_outcome([])
+
+
 def _sample_row(
     example_id: str,
     *,
