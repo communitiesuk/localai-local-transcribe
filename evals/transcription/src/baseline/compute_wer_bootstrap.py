@@ -46,6 +46,9 @@ def main() -> None:
         results_path = Path(sys.argv[1])
     else:
         results_files = sorted(output_dir.glob("evaluation_results_*.json"))
+        if not results_files:
+            msg = f"No evaluation_results_*.json found in {output_dir}. Run the eval first, or pass a path."
+            raise SystemExit(msg)
         results_path = results_files[-1]
 
     artefact = build_wer_bootstrap_artefact(results_path)
