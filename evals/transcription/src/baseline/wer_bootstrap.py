@@ -20,11 +20,11 @@ from typing import NamedTuple, cast
 
 import numpy as np
 
-# Default bootstrap settings stored with artefacts so recomputation is reproducible.
-# 10_000 resamples is a common default for stable percentile estimates.
-DEFAULT_BOOTSTRAP_RESAMPLES = 10_000
-DEFAULT_RANDOM_SEED = 42
-DEFAULT_QUANTILES = (0.5, 0.9, 0.95, 0.99)
+from evals.transcription.src.constants import (
+    DEFAULT_BOOTSTRAP_RESAMPLES,
+    DEFAULT_QUANTILES,
+    DEFAULT_RANDOM_SEED,
+)
 
 
 class MeetingWerComponents(NamedTuple):

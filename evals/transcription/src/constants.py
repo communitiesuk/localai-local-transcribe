@@ -16,6 +16,12 @@ AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 # Committed WER bootstrap artefact used to set relative corpus-WER bands below.
 WER_BOOTSTRAP_ARTEFACT_PATH = WORKDIR / "baseline" / "wer_bootstrap_ami_proxy.json"
 
+# Default bootstrap settings stored with artefacts so recomputation is reproducible.
+# 10_000 resamples is a common default for stable percentile estimates.
+DEFAULT_BOOTSTRAP_RESAMPLES = 10_000
+DEFAULT_RANDOM_SEED = 42
+DEFAULT_QUANTILES = (0.5, 0.9, 0.95, 0.99)
+
 AGGREGATABLE_METRIC_KEYS = ["wer", "wder", "speaker_count_accuracy", "processing_speed_ratio"]
 
 # Thresholds below are provisional for the baseline transcription eval config only.
