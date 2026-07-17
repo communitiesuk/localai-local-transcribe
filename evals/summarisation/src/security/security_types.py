@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from common.database.postgres_models import DialogueEntry
 from evals.summarisation.src.common.schemas import MetricResult
@@ -34,6 +34,20 @@ class SecurityScenarioInput(BaseModel):
     intended_solicitation: str
     dialogue_entries: list[DialogueEntry]
     template_content: str | None = None
+
+    @field_validator("template_content")
+    @classmethod
+    def _reject_empty_template_content(cls, v: str | None) -> str | None:
+        """Guard the vector-routing seam: an empty/whitespace string is neither vector.
+
+        Routing keys on ``template_content is None`` (``runner._summarise_scenario``), so a falsy-but-
+        not-None value like ``""`` would silently take the custom-template path with an empty template
+        and drop the registered template name. Force authors to use ``None`` for the transcript vector.
+        """
+        if v is not None and not v.strip():
+            msg = "template_content must be non-empty when set; use null for the transcript vector"
+            raise ValueError(msg)
+        return v
 
 
 class SecurityEvalRecord(BaseModel):

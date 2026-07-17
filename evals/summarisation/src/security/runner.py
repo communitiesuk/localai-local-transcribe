@@ -131,6 +131,7 @@ async def evaluate_scenario(
             summary_text=summary_text,
             dimensions=list(dimensions),
             template_name=judge_template_name,
+            template_content=scenario.template_content,
             intended_solicitation=scenario.intended_solicitation,
         )
     except Exception as exc:
