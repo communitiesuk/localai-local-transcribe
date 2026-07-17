@@ -1,7 +1,7 @@
 """Shared paths and AMI-proxy drift threshold constants for transcription evals (AIILG-680).
 
 Thresholds are calibrated against the baseline transcription eval config
-(``evals/transcription/configs/larger_cloud_test.yaml``: 10 full audio recordings of the
+(``evals/transcription/configs/larger_cloud_test.yaml``. 10 full audio recordings of the
 Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text).
 """
 
@@ -28,9 +28,9 @@ class WerDriftThresholds(NamedTuple):
     Corpus WER is total edit errors divided by total reference words across meetings.
     Relative increases are (candidate - baseline) / baseline. Higher WER is worse.
 
-    review_relative_increase: candidate at or above this increase vs baseline goes to review.
-    fail_relative_increase: candidate at or above this increase vs baseline fails.
-    absolute_floor: corpus WER at or above this value always fails, regardless of baseline delta.
+    review_relative_increase. Candidate at or above this increase vs baseline goes to review.
+    fail_relative_increase. Candidate at or above this increase vs baseline fails.
+    absolute_floor. Corpus WER at or above this value always fails, regardless of baseline delta.
 
     Absolute floors are AMI-proxy disaster lines, not product-readiness bars for real meetings.
     """
@@ -46,11 +46,12 @@ class SpeakerCountDriftThresholds(NamedTuple):
 
     Scores are correct-meeting counts out of n_meetings (for example 7/10), not fine-grained
     proportions, because one meeting moves the rate by 0.10. Higher correct counts are better.
-    n_meetings must match num_samples in larger_cloud_test.yaml; see require_meeting_count_matches_eval_config.
+    n_meetings must match num_samples in larger_cloud_test.yaml. See
+    require_meeting_count_matches_eval_config.
 
-    review_correct_count: exactly this many correct meetings triggers review.
-    fail_at_or_below_correct_count: this many or fewer correct meetings fails.
-    absolute_floor_at_or_below_correct_count: this many or fewer always fails as a floor breach.
+    review_correct_count. Exactly this many correct meetings triggers review.
+    fail_at_or_below_correct_count. This many or fewer correct meetings fails.
+    absolute_floor_at_or_below_correct_count. This many or fewer always fails as a floor breach.
     """
 
     n_meetings: int
@@ -66,8 +67,8 @@ class ProcessingSpeedDriftThresholds(NamedTuple):
     Higher ratio means slower relative to audio length. Relative increases are
     (candidate - baseline) / baseline.
 
-    absolute_floor: ratio at or above this value fails as a disaster line.
-    hard_floor: ratio at or above 1.0 means slower than real time and always fails.
+    absolute_floor. Ratio at or above this value fails as a disaster line.
+    hard_floor. Ratio at or above 1.0 means slower than real time and always fails.
     """
 
     baseline_ratio: float
@@ -77,7 +78,7 @@ class ProcessingSpeedDriftThresholds(NamedTuple):
     hard_floor: float
 
 
-# TODO(AIILG-680): replace when the baseline transcription eval config or real audio baseline is recomputed.
+# TODO(AIILG-680): Replace when the baseline transcription eval config or real audio baseline is recomputed.
 # https://mhclgdigital.atlassian.net/browse/AIILG-680
 # Baseline and review band follow evals/transcription/baseline/wer_bootstrap_ami_proxy.json
 # (corpus WER and bootstrap p95 relative increase ≈ 0.10). Fail +25% sits clearly above
@@ -102,8 +103,8 @@ SPEAKER_COUNT_DRIFT_THRESHOLDS = SpeakerCountDriftThresholds(
     absolute_floor_at_or_below_correct_count=4,
 )
 
-# Three-run mean processing_speed_ratio ≈ 0.0441. Relative bands are deliberately loose;
-# three repeats are too thin for a tight cloud-performance estimate.
+# Three-run mean processing_speed_ratio ≈ 0.0441. Relative bands are deliberately loose.
+# Three repeats are too thin for a tight cloud-performance estimate.
 PROCESSING_SPEED_DRIFT_THRESHOLDS = ProcessingSpeedDriftThresholds(
     baseline_ratio=0.0441,
     review_relative_increase=0.10,

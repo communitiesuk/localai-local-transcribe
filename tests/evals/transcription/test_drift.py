@@ -25,7 +25,7 @@ def test_require_meeting_count_matches_eval_config_accepts_matching_count():
 
 
 def test_require_meeting_count_matches_eval_config_rejects_mismatch():
-    with pytest.raises(ValueError, match="meeting count does not match the baseline transcription eval config"):
+    with pytest.raises(ValueError, match="Meeting count does not match the baseline transcription eval config"):
         require_meeting_count_matches_eval_config(8)
 
 

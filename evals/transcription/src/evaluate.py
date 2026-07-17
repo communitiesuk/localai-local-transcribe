@@ -38,7 +38,7 @@ def run_evaluation(
     """
     Runs transcription evaluation on the specified dataset with configured adapters.
 
-    Returns a process exit code: 0 for success (and for drift review), 1 when drift fail or
+    Returns a process exit code. 0 for success (and for drift review). 1 when drift fail or
     floor checks breach. Drift checks run only when ``check_drift_thresholds`` is true.
     """
     output_dir = WORKDIR / "output"

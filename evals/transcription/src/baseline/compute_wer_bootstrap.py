@@ -1,6 +1,6 @@
 """Build the AMI-proxy WER bootstrap artefact for transcription drift thresholds (AIILG-680).
 
-This is the command-line entrypoint. Calculation logic lives in ``wer_bootstrap.py``; this
+This is the command-line entrypoint. Calculation logic lives in ``wer_bootstrap.py``. This
 script chooses the input results file, calls ``build_wer_bootstrap_artefact``, and writes
 ``evals/transcription/baseline/wer_bootstrap_ami_proxy.json``.
 
@@ -8,11 +8,11 @@ It reads a saved transcription evaluation_results JSON (per-meeting WER edit cou
 relative review/fail bands can be calibrated from uncertainty in the aggregate metric.
 
 Run from the repository root after you have evaluation results under
-``evals/transcription/output/``::
+``evals/transcription/output/``.
 
     poetry run python -m evals.transcription.src.baseline.compute_wer_bootstrap
 
-Optional: pass an explicit results file path as the first argument::
+Optional. Pass an explicit results file path as the first argument.
 
     poetry run python -m evals.transcription.src.baseline.compute_wer_bootstrap \\
         evals/transcription/output/evaluation_results_YYYYMMDD_HHMMSS.json

@@ -7,7 +7,7 @@ bootstrap, artefact payload). The runnable entrypoint that writes the JSON artef
 Meetings are the resampling unit. Aggregate (corpus) WER is total edit errors
 divided by total reference words across the selected meetings. This estimates
 uncertainty in the aggregate for the baseline transcription eval config
-(``evals/transcription/configs/larger_cloud_test.yaml``: 10 full audio recordings of the
+(``evals/transcription/configs/larger_cloud_test.yaml``. 10 full audio recordings of the
 Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text), not Azure
 run-to-run randomness.
 """
@@ -25,9 +25,6 @@ import numpy as np
 DEFAULT_BOOTSTRAP_RESAMPLES = 10_000
 DEFAULT_RANDOM_SEED = 42
 DEFAULT_QUANTILES = (0.5, 0.9, 0.95, 0.99)
-
-# Further work (not in this PR): paired bootstrap of candidate corpus WER minus baseline
-# corpus WER on the same meeting IDs, for tighter candidate-vs-baseline regression checks.
 
 
 class MeetingWerComponents(NamedTuple):
@@ -48,7 +45,7 @@ class MeetingWerComponents(NamedTuple):
 
 
 def corpus_wer(meetings: list[MeetingWerComponents]) -> float:
-    """Return corpus WER: sum(errors) / sum(reference_words) across meetings."""
+    """Return corpus WER as sum(errors) / sum(reference_words) across meetings."""
     total_errors = sum(meeting.errors for meeting in meetings)
     total_reference_words = sum(meeting.reference_words for meeting in meetings)
     return total_errors / total_reference_words
@@ -102,7 +99,7 @@ def bootstrap_corpus_wer(
     errors = np.array([meeting.errors for meeting in meetings], dtype=np.float64)
     reference_words = np.array([meeting.reference_words for meeting in meetings], dtype=np.float64)
     rng = np.random.default_rng(random_seed)
-    # Shape: (n_resamples, meeting_count) index matrix into the meeting arrays.
+    # Shape is (n_resamples, meeting_count). This is the index matrix into the meeting arrays.
     indices = rng.integers(0, meeting_count, size=(n_resamples, meeting_count))
     resampled_errors = errors[indices].sum(axis=1)
     resampled_reference_words = reference_words[indices].sum(axis=1)
@@ -156,10 +153,9 @@ def build_wer_bootstrap_artefact(
         "resampling_unit": "meeting",
         "description": (
             "Meeting-block bootstrap of corpus WER on the baseline transcription eval config "
-            "(evals/transcription/configs/larger_cloud_test.yaml: 10 full audio recordings of the "
+            "(evals/transcription/configs/larger_cloud_test.yaml. 10 full audio recordings of the "
             "Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text). "
-            "Estimates uncertainty in the aggregate metric, not provider run-to-run randomness. "
-            "Paired candidate-minus-baseline bootstrap is further work, not included here."
+            "Estimates uncertainty in the aggregate metric, not provider run-to-run randomness."
         ),
         "source_results_file": evaluation_results_path.name,
         "engine_version": resolved_engine,
@@ -173,5 +169,4 @@ def build_wer_bootstrap_artefact(
             **summary,
             "relative_increase_vs_baseline_corpus_wer": relative_to_baseline,
         },
-        "further_work": ["Paired bootstrap of candidate corpus WER minus baseline corpus WER on the same meeting IDs."],
     }

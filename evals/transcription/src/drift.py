@@ -2,7 +2,7 @@
 
 Classifies corpus WER, speaker-count accuracy, and processing speed against the AMI-proxy
 constants calibrated on the baseline transcription eval config
-(``evals/transcription/configs/larger_cloud_test.yaml``: 10 full audio recordings of the
+(``evals/transcription/configs/larger_cloud_test.yaml``. 10 full audio recordings of the
 Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text). Writes a
 review artefact when needed, and returns a process exit code.
 """
@@ -44,10 +44,10 @@ _OUTCOME_RANK: dict[DriftOutcome, int] = {
 class DriftVerdict(NamedTuple):
     """Outcome of one metric drift check.
 
-    metric: which metric was checked (for example corpus_wer).
-    outcome: pass, review, fail, or floor.
-    detail: plain-language reason for that outcome.
-    observed: the numeric value compared against the thresholds.
+    metric. Which metric was checked (for example corpus_wer).
+    outcome. Pass, review, fail, or floor.
+    detail. Plain-language reason for that outcome.
+    observed. The numeric value compared against the thresholds.
     """
 
     metric: str
@@ -67,11 +67,11 @@ def require_meeting_count_matches_eval_config(
     """
     if run_meeting_count != thresholds.n_meetings:
         msg = (
-            "Speaker-count drift check cannot run: meeting count does not match the "
+            "Speaker-count drift check cannot run. Meeting count does not match the "
             "baseline transcription eval config. "
             f"This evaluation run scored {run_meeting_count} meeting(s), but "
             f"SPEAKER_COUNT_DRIFT_THRESHOLDS is defined for {thresholds.n_meetings} meetings "
-            f"(7/10, 6/10, and so on; see larger_cloud_test.yaml num_samples). "
+            f"(7/10, 6/10, and so on. See larger_cloud_test.yaml num_samples). "
             "Using these thresholds on a different meeting count would mis-classify pass, review, "
             "and fail. Either re-run with the baseline transcription eval config (10 meetings), "
             "or update SPEAKER_COUNT_DRIFT_THRESHOLDS and recompute the speaker-count baseline "
@@ -261,7 +261,7 @@ def speaker_correct_count(samples: list[SampleRow]) -> int:
 
 def assess_engine_drift(engine_output: EngineOutput) -> list[DriftVerdict]:
     """Run WER, speaker-count, and speed drift checks for one engine output
-    (one speech-to-text (STT) provider's full eval result: a run summary plus one
+    (one speech-to-text (STT) provider's full eval result. A run summary plus one
     sample row per meeting, each holding that meeting's transcripts and metrics).
     """
     samples = engine_output.samples
@@ -280,10 +280,10 @@ def apply_drift_thresholds(
     """Assess drift for each engine output, write a review file if needed, and return the process exit code.
 
     The baseline transcription eval config currently runs one speech-to-text (STT) engine (Azure),
-    so ``results`` normally has one item; the list form remains so multi-adapter runs can be
+    so ``results`` normally has one item. The list form remains so multi-adapter runs can be
     checked the same way.
 
-    Exit 1 for fail or floor on any metric; exit 0 for pass or review. Review-band results also
+    Exit 1 for fail or floor on any metric. Exit 0 for pass or review. Review-band results also
     write ``drift_review_{timestamp}.json`` under ``output_dir``.
     """
     all_verdicts: list[dict] = []
