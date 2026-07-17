@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, cast
 
 import numpy as np
 
@@ -103,7 +103,8 @@ def bootstrap_corpus_wer(
     indices = rng.integers(0, meeting_count, size=(n_resamples, meeting_count))
     resampled_errors = errors[indices].sum(axis=1)
     resampled_reference_words = reference_words[indices].sum(axis=1)
-    return resampled_errors / resampled_reference_words
+    # Numpy stubs type array division as Any. Cast to match the declared return type.
+    return cast("np.ndarray", resampled_errors / resampled_reference_words)
 
 
 def bootstrap_summary(
