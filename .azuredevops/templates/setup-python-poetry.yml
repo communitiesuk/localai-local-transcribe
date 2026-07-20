@@ -10,6 +10,11 @@ parameters:
     default: '2.4.1'
 
 steps:
+  - script: |
+      sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"/CodeQL
+      df -h /
+    displayName: 'Free up disk space'
+
   - task: UsePythonVersion@0
     displayName: 'Set up Python ${{ parameters.pythonVersion }}'
     inputs:
