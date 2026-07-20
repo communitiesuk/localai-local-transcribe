@@ -248,9 +248,7 @@ describe('<EditApprovedDomainsPage />', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    expect(
-      screen.getByText(/your changes were not saved/i)
-    ).toBeInTheDocument()
+    expect(screen.getByText(/your changes were not saved/i)).toBeInTheDocument()
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
         path: { organisation_id: 'org-1' },

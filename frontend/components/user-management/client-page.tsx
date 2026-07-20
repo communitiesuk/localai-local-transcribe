@@ -49,7 +49,14 @@ export default function UserManagementClient() {
 
   const { data: allOrganisations } = useGetOrganisations(isSystemAdmin)
 
-  console.log('DIAGNOSTIC isSystemAdmin:', isSystemAdmin, 'currentUser:', currentUser, 'allOrganisations:', allOrganisations)
+  console.log(
+    'DIAGNOSTIC isSystemAdmin:',
+    isSystemAdmin,
+    'currentUser:',
+    currentUser,
+    'allOrganisations:',
+    allOrganisations
+  )
 
   const handleOrganisationChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value

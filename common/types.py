@@ -1,5 +1,5 @@
-import uuid
 import re
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
@@ -15,17 +15,18 @@ from common.database.postgres_models import (
     UserRole,
 )
 
-
 # Simple FQDN regex: requires at least one dot, labels 1-63 chars, no leading/trailing hyphens
 DOMAIN_REGEX = re.compile(
     r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$",
     re.IGNORECASE,
 )
 
+
 def validate_fqdn_list(domains: list[str]) -> list[str]:
     for domain in domains:
         if not DOMAIN_REGEX.match(domain):
-            raise ValueError(f"Domain '{domain}' is not a valid fully qualified domain name (FQDN)")
+            message = "Domain '{}' is not a valid fully qualified domain name (FQDN)".format(domain)
+            raise ValueError(message)
     return domains
 
 

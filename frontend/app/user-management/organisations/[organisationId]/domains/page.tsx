@@ -32,7 +32,8 @@ export default function EditApprovedDomainsPage(props: {
   const setBanner = useBannerStore((store) => store.setBanner)
   const [hasConflict, setHasConflict] = useState(false)
 
-  const { organisationId } = use(props.params); console.log("DIAGNOSTIC: organisationId from params:", organisationId)
+  const { organisationId } = use(props.params)
+  console.log('DIAGNOSTIC: organisationId from params:', organisationId)
 
   const { currentUser, isLoading: userLoading } = useAuthorisedUser([
     UserRole.MHCLG_SUPPORT_ADMIN,
@@ -43,8 +44,8 @@ export default function EditApprovedDomainsPage(props: {
     useOrganisation(organisationId)
 
   useEffect(() => {
-    console.log('DIAGNOSTIC organisation changed:', organisation);
-  }, [organisation]);
+    console.log('DIAGNOSTIC organisation changed:', organisation)
+  }, [organisation])
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (variables: {
@@ -91,10 +92,9 @@ export default function EditApprovedDomainsPage(props: {
         setHasConflict(true)
         if (organisation?.id) {
           queryClient.invalidateQueries({
-            queryKey:
-              getOrganisationOrganisationsOrganisationIdGetQueryKey({
-                path: { organisation_id: organisation.id },
-              }),
+            queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
+              path: { organisation_id: organisation.id },
+            }),
           })
         }
       } else {
@@ -148,10 +148,10 @@ export default function EditApprovedDomainsPage(props: {
       </h2>
       {hasConflict && (
         <GovukNotificationBanner variant="important" title="Important">
-          Someone else updated the approved domains for this organisation
-          after this page was loaded, so your changes were not saved. The
-          list below has been refreshed with the latest domains - please
-          check it and try again.
+          Someone else updated the approved domains for this organisation after
+          this page was loaded, so your changes were not saved. The list below
+          has been refreshed with the latest domains - please check it and try
+          again.
         </GovukNotificationBanner>
       )}
       <EditDomainsForm

@@ -62,12 +62,16 @@ export function EditDomainsForm({
               if (domains.length === 0) {
                 return 'Enter at least one approved domain'
               }
-              
-              const invalidDomains = domains.filter((domain) => !isValidFQDN(domain))
-              
+
+              const invalidDomains = domains.filter(
+                (domain) => !isValidFQDN(domain)
+              )
+
               if (invalidDomains.length > 0) {
-                const hasMultipleOnLine = invalidDomains.some(d => d.includes(' ') || d.includes(','))
-                
+                const hasMultipleOnLine = invalidDomains.some(
+                  (d) => d.includes(' ') || d.includes(',')
+                )
+
                 if (hasMultipleOnLine) {
                   return 'One or more lines contain multiple domains. Enter only one domain per line.'
                 }
