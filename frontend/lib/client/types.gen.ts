@@ -174,6 +174,10 @@ export type GetUserResponse = {
    */
   updated_datetime: string
   /**
+   * Accepted Tou
+   */
+  accepted_tou: boolean
+  /**
    * Last Login
    */
   last_login: string
@@ -1353,6 +1357,39 @@ export type GetUserUsersMeGetResponses = {
 
 export type GetUserUsersMeGetResponse =
   GetUserUsersMeGetResponses[keyof GetUserUsersMeGetResponses]
+
+export type AcceptTermsOfUseUsersTermsOfUsePostData = {
+  body?: never
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/users/terms-of-use'
+}
+
+export type AcceptTermsOfUseUsersTermsOfUsePostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type AcceptTermsOfUseUsersTermsOfUsePostError =
+  AcceptTermsOfUseUsersTermsOfUsePostErrors[keyof AcceptTermsOfUseUsersTermsOfUsePostErrors]
+
+export type AcceptTermsOfUseUsersTermsOfUsePostResponses = {
+  /**
+   * Successful Response
+   */
+  200: GetUserResponse
+}
+
+export type AcceptTermsOfUseUsersTermsOfUsePostResponse =
+  AcceptTermsOfUseUsersTermsOfUsePostResponses[keyof AcceptTermsOfUseUsersTermsOfUsePostResponses]
 
 export type UpdateDataRetentionUsersDataRetentionPatchData = {
   body: DataRetentionUpdateResponse

@@ -7,6 +7,7 @@ from pydantic import EmailStr
 
 from backend.api.dependencies import (
     OrganisationAdminDep,
+    PendingTouUserDep,
     SQLSessionDep,
     TargetUserDep,
     UserDep,
@@ -31,7 +32,20 @@ logger = logging.getLogger(__name__)
 
 
 @users_router.get("/me")
-def get_user(user: UserDep) -> GetUserResponse:
+def get_user(user: PendingTouUserDep) -> GetUserResponse:
+    return to_user_response(user)
+
+
+@users_router.post("/terms-of-use")
+async def accept_terms_of_use(
+    user: PendingTouUserDep,
+    session: SQLSessionDep,
+) -> GetUserResponse:
+    user.accepted_tou = True
+
+    await session.commit()
+    await session.refresh(user)
+
     return to_user_response(user)
 
 

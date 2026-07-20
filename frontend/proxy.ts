@@ -19,6 +19,8 @@ const PUBLIC_PATHS = [
   '/signout',
 ]
 
+const TOU_PATH = '/terms-of-use'
+
 export async function proxy(req: NextRequest) {
   try {
     const { pathname } = req.nextUrl
@@ -47,7 +49,7 @@ export async function proxy(req: NextRequest) {
         console.error(
           `No auth token found in headers when accessing ${pathname}`
         )
-        return redirectToUnauthorised(req)
+        return redirectTo(req, '/unauthorised')
       }
 
       if (verifier) {
@@ -55,7 +57,7 @@ export async function proxy(req: NextRequest) {
 
         if (authResult?.isAuthorised !== true) {
           console.error(`User is not authorised to access ${pathname}`)
-          return redirectToUnauthorised(req)
+          return redirectTo(req, '/unauthorised')
         }
 
         console.info(
@@ -78,19 +80,25 @@ export async function proxy(req: NextRequest) {
     }
 
     if (backendAuthResponse.status === 401) {
-      return redirectToUnauthorised(req)
+      return redirectTo(req, '/unauthorised')
+    }
+
+    const user = await backendAuthResponse.json()
+    // can only access TOU route until TOU accepted
+    if (!user.accepted_tou && !pathname.startsWith(TOU_PATH)) {
+      return redirectTo(req, TOU_PATH)
     }
 
     return NextResponse.next()
   } catch (error) {
     console.error('Error authorising token:', error)
-    return redirectToUnauthorised(req)
+    return redirectTo(req, '/unauthorised')
   }
 }
 
-function redirectToUnauthorised(req: NextRequest) {
+function redirectTo(req: NextRequest, page: string) {
   const url = req.nextUrl.clone()
-  url.pathname = '/unauthorised'
+  url.pathname = page
   return NextResponse.redirect(url)
 }
 

@@ -10,6 +10,7 @@ import {
 
 import { client } from '../client.gen'
 import {
+  acceptTermsOfUseUsersTermsOfUsePost,
   createChatTranscriptionsTranscriptionIdChatPost,
   createMinuteTranscriptionTranscriptionIdMinutesPost,
   createMinuteVersionMinutesMinuteIdVersionsPost,
@@ -58,6 +59,9 @@ import {
   userExistsUsersUserExistsGet,
 } from '../sdk.gen'
 import type {
+  AcceptTermsOfUseUsersTermsOfUsePostData,
+  AcceptTermsOfUseUsersTermsOfUsePostError,
+  AcceptTermsOfUseUsersTermsOfUsePostResponse,
   CreateChatTranscriptionsTranscriptionIdChatPostData,
   CreateChatTranscriptionsTranscriptionIdChatPostError,
   CreateChatTranscriptionsTranscriptionIdChatPostResponse,
@@ -329,8 +333,8 @@ export const listTranscriptionsTranscriptionsGetInfiniteQueryKey = (
  */
 export const listTranscriptionsTranscriptionsGetInfiniteOptions = (
   options?: Options<ListTranscriptionsTranscriptionsGetData>
-) => {
-  const opts = infiniteQueryOptions<
+) =>
+  infiniteQueryOptions<
     ListTranscriptionsTranscriptionsGetResponse,
     ListTranscriptionsTranscriptionsGetError,
     InfiniteData<ListTranscriptionsTranscriptionsGetResponse>,
@@ -368,8 +372,6 @@ export const listTranscriptionsTranscriptionsGetInfiniteOptions = (
       queryKey: listTranscriptionsTranscriptionsGetInfiniteQueryKey(options),
     }
   )
-  return opts as Omit<typeof opts, 'initialData'>
-}
 
 /**
  * Create Transcription
@@ -694,6 +696,33 @@ export const getUserUsersMeGetOptions = (
   })
 
 /**
+ * Accept Terms Of Use
+ */
+export const acceptTermsOfUseUsersTermsOfUsePostMutation = (
+  options?: Partial<Options<AcceptTermsOfUseUsersTermsOfUsePostData>>
+): UseMutationOptions<
+  AcceptTermsOfUseUsersTermsOfUsePostResponse,
+  AcceptTermsOfUseUsersTermsOfUsePostError,
+  Options<AcceptTermsOfUseUsersTermsOfUsePostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AcceptTermsOfUseUsersTermsOfUsePostResponse,
+    AcceptTermsOfUseUsersTermsOfUsePostError,
+    Options<AcceptTermsOfUseUsersTermsOfUsePostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await acceptTermsOfUseUsersTermsOfUsePost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
+}
+
+/**
  * Update Data Retention
  *
  * Update the data retention period for the current user.
@@ -764,8 +793,8 @@ export const listUsersUsersGetInfiniteQueryKey = (
  */
 export const listUsersUsersGetInfiniteOptions = (
   options?: Options<ListUsersUsersGetData>
-) => {
-  const opts = infiniteQueryOptions<
+) =>
+  infiniteQueryOptions<
     ListUsersUsersGetResponse,
     ListUsersUsersGetError,
     InfiniteData<ListUsersUsersGetResponse>,
@@ -803,8 +832,6 @@ export const listUsersUsersGetInfiniteOptions = (
       queryKey: listUsersUsersGetInfiniteQueryKey(options),
     }
   )
-  return opts as Omit<typeof opts, 'initialData'>
-}
 
 /**
  * Create User
@@ -1718,8 +1745,8 @@ export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteQu
 export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteOptions =
   (
     options: Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
-  ) => {
-    const opts = infiniteQueryOptions<
+  ) =>
+    infiniteQueryOptions<
       ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse,
       ListOrganisationsUsersOrganisationsOrganisationIdUsersGetError,
       InfiniteData<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse>,
@@ -1767,8 +1794,6 @@ export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteOp
           ),
       }
     )
-    return opts as Omit<typeof opts, 'initialData'>
-  }
 
 export const signOutSignoutGetQueryKey = (
   options?: Options<SignOutSignoutGetData>

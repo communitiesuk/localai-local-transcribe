@@ -90,4 +90,17 @@ async def get_current_user(
         ) from e
 
 
-UserDep = Annotated[User, Depends(get_current_user)]
+PendingTouUserDep = Annotated[User, Depends(get_current_user)]
+
+
+async def require_accepted_tou(user: PendingTouUserDep) -> User:
+    if not user.accepted_tou:
+        raise HTTPException(
+            status_code=403,
+            detail="Terms of use must be accepted",
+        )
+
+    return user
+
+
+UserDep = Annotated[User, Depends(require_accepted_tou)]
