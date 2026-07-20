@@ -9,13 +9,14 @@ import {
 } from '@/app/templates/data/example-templates'
 import { TemplateType } from '@/lib/client'
 import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
+import { formatCurrentDateTime } from '@/lib/utils'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Suspense } from 'react'
 import { FormProvider, useForm, useWatch } from 'react-hook-form'
-import { toast } from 'sonner'
 
 function NewTemplateContent() {
   const searchParams = useSearchParams()
@@ -41,10 +42,15 @@ function NewTemplateContent() {
         },
   })
   const navigation = useRouter()
+  const setBanner = useBannerStore((store) => store.setBanner)
   const { mutateAsync: saveTemplate } = useMutation({
     ...createUserTemplateUserTemplatesPostMutation(),
     onSuccess: () => {
-      toast.success('Saved template!')
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: `Template '${form.getValues('name')}' was successfully created at ${formatCurrentDateTime()}`,
+      })
       posthog.capture('template_created')
       navigation.push('/templates')
     },
