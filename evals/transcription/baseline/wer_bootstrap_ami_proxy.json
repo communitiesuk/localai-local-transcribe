@@ -1,7 +1,7 @@
 {
   "metric": "corpus_wer",
   "resampling_unit": "meeting",
-  "description": "Meeting-block bootstrap of corpus WER on the baseline transcription eval config (evals/transcription/configs/larger_cloud_test.yaml. 10 full audio recordings of the Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text). Estimates uncertainty in the aggregate metric.",
+  "description": "Meeting-block bootstrap of corpus WER on the baseline transcription eval config (evals/transcription/configs/larger_cloud_test.yaml. 10 full audio recordings of the Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text). Estimates uncertainty in the aggregate metric, not provider run-to-run randomness.",
   "source_results_file": "evaluation_results_20260715_180006.json",
   "engine_version": "azure_stt_synchronous",
   "n_meetings": 10,

@@ -7,12 +7,14 @@ import pytest
 from evals.transcription.src.constants import (
     PROCESSING_SPEED_DRIFT_THRESHOLDS,
     SPEAKER_COUNT_DRIFT_THRESHOLDS,
+    WDER_DRIFT_THRESHOLDS,
     WER_DRIFT_THRESHOLDS,
 )
 from evals.transcription.src.drift import (
     apply_drift_thresholds,
     classify_processing_speed_drift,
     classify_speaker_count_drift,
+    classify_wder_drift,
     classify_wer_drift,
     require_meeting_count_matches_eval_config,
     worst_outcome,
@@ -49,6 +51,29 @@ def test_classify_wer_fail_breach():
 
 def test_classify_wer_absolute_floor_breach():
     verdict = classify_wer_drift(WER_DRIFT_THRESHOLDS.absolute_floor)
+    assert verdict.outcome == "floor"
+
+
+def test_classify_wder_pass_within_bounds():
+    verdict = classify_wder_drift(WDER_DRIFT_THRESHOLDS.baseline_corpus_wder)
+    assert verdict.outcome == "pass"
+
+
+def test_classify_wder_review_breach():
+    observed = WDER_DRIFT_THRESHOLDS.baseline_corpus_wder * (1 + WDER_DRIFT_THRESHOLDS.review_relative_increase + 0.01)
+    verdict = classify_wder_drift(observed)
+    assert verdict.outcome == "review"
+
+
+def test_classify_wder_fail_breach():
+    # Sit clearly above the fail band so float rounding cannot land in review.
+    observed = WDER_DRIFT_THRESHOLDS.baseline_corpus_wder * (1 + WDER_DRIFT_THRESHOLDS.fail_relative_increase + 0.01)
+    verdict = classify_wder_drift(observed)
+    assert verdict.outcome == "fail"
+
+
+def test_classify_wder_absolute_floor_breach():
+    verdict = classify_wder_drift(WDER_DRIFT_THRESHOLDS.absolute_floor)
     assert verdict.outcome == "floor"
 
 
@@ -165,7 +190,7 @@ def _meetings_at_corpus_wer(target_corpus_wer: float, correct_speaker_meetings: 
 
 
 def test_apply_drift_thresholds_writes_review_file_and_exits_zero(tmp_path):
-    # Corpus WER just above the review band; speaker count and speed stay at pass.
+    # Corpus WER just above the review band; WDER, speaker count, and speed stay at pass.
     review_corpus_wer = WER_DRIFT_THRESHOLDS.baseline_corpus_wer * (
         1 + WER_DRIFT_THRESHOLDS.review_relative_increase + 0.01
     )

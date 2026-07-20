@@ -16,8 +16,12 @@ AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 # Committed WER bootstrap artefact used to set relative corpus-WER bands below.
 WER_BOOTSTRAP_ARTEFACT_PATH = WORKDIR / "baseline" / "wer_bootstrap_ami_proxy.json"
 
+# Committed WDER bootstrap artefact used to set relative corpus-WDER bands below.
+WDER_BOOTSTRAP_ARTEFACT_PATH = WORKDIR / "baseline" / "wder_bootstrap_ami_proxy.json"
+
 # Default bootstrap settings stored with artefacts so recomputation is reproducible.
 # 10_000 resamples is a common default for stable percentile estimates.
+# Used by baseline bootstrap modules to compute the WER and WDER artefacts.
 DEFAULT_BOOTSTRAP_RESAMPLES = 10_000
 DEFAULT_RANDOM_SEED = 42
 DEFAULT_QUANTILES = (0.5, 0.9, 0.95, 0.99)
@@ -42,6 +46,25 @@ class WerDriftThresholds(NamedTuple):
     """
 
     baseline_corpus_wer: float
+    review_relative_increase: float
+    fail_relative_increase: float
+    absolute_floor: float
+
+
+class WderDriftThresholds(NamedTuple):
+    """Relative and absolute gates for corpus WDER on the baseline transcription eval config.
+
+    Corpus WDER is total speaker-attribution errors divided by total reference words across meetings.
+    Relative increases are (candidate - baseline) / baseline. Higher WDER is worse.
+
+    review_relative_increase. Candidate at or above this increase vs baseline goes to review.
+    fail_relative_increase. Candidate at or above this increase vs baseline fails.
+    absolute_floor. Corpus WDER at or above this value always fails, regardless of baseline delta.
+
+    Absolute floors are AMI-proxy disaster lines, not product-readiness bars for real meetings.
+    """
+
+    baseline_corpus_wder: float
     review_relative_increase: float
     fail_relative_increase: float
     absolute_floor: float
@@ -94,6 +117,16 @@ WER_DRIFT_THRESHOLDS = WerDriftThresholds(
     review_relative_increase=0.10,
     fail_relative_increase=0.25,
     absolute_floor=0.50,
+)
+
+# Baseline and review band follow evals/transcription/baseline/wder_bootstrap_ami_proxy.json
+# (corpus WDER and bootstrap p95 relative increase ≈ 0.05). Fail +15% sits clearly above
+# sampling uncertainty. Absolute floor 0.15 is a loose AMI disaster line only.
+WDER_DRIFT_THRESHOLDS = WderDriftThresholds(
+    baseline_corpus_wder=0.049162,
+    review_relative_increase=0.05,
+    fail_relative_increase=0.15,
+    absolute_floor=0.15,
 )
 
 # Speaker-count bands are absolute correct counts out of n_meetings (readable as 7/10, 6/10, ...).

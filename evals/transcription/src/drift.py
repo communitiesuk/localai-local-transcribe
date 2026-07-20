@@ -1,7 +1,7 @@
 """Drift threshold checks for transcription eval metrics (AIILG-680).
 
-Classifies corpus WER, speaker-count accuracy, and processing speed against the AMI-proxy
-constants calibrated on the baseline transcription eval config
+Classifies corpus WER, corpus WDER, speaker-count accuracy, and processing speed against the
+AMI-proxy constants calibrated on the baseline transcription eval config
 (``evals/transcription/configs/larger_cloud_test.yaml``. 10 full audio recordings of the
 Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text). Writes a
 review artefact when needed, and returns a process exit code.
@@ -14,6 +14,11 @@ import logging
 from pathlib import Path
 from typing import Literal, NamedTuple
 
+from evals.transcription.src.baseline.bootstrap_common import relative_increase
+from evals.transcription.src.baseline.wder_bootstrap import (
+    corpus_wder,
+    meeting_wder_components_from_sample,
+)
 from evals.transcription.src.baseline.wer_bootstrap import (
     corpus_wer,
     meeting_components_from_sample,
@@ -21,9 +26,11 @@ from evals.transcription.src.baseline.wer_bootstrap import (
 from evals.transcription.src.constants import (
     PROCESSING_SPEED_DRIFT_THRESHOLDS,
     SPEAKER_COUNT_DRIFT_THRESHOLDS,
+    WDER_DRIFT_THRESHOLDS,
     WER_DRIFT_THRESHOLDS,
     ProcessingSpeedDriftThresholds,
     SpeakerCountDriftThresholds,
+    WderDriftThresholds,
     WerDriftThresholds,
 )
 from evals.transcription.src.models import EngineOutput, SampleRow
@@ -80,11 +87,6 @@ def require_meeting_count_matches_eval_config(
         raise ValueError(msg)
 
 
-def relative_increase(observed: float, baseline: float) -> float:
-    """Return (observed - baseline) / baseline."""
-    return (observed - baseline) / baseline
-
-
 def classify_wer_drift(
     observed_corpus_wer: float,
     thresholds: WerDriftThresholds = WER_DRIFT_THRESHOLDS,
@@ -129,6 +131,53 @@ def classify_wer_drift(
             f"{thresholds.baseline_corpus_wer:.6f}"
         ),
         observed=observed_corpus_wer,
+    )
+
+
+def classify_wder_drift(
+    observed_corpus_wder: float,
+    thresholds: WderDriftThresholds = WDER_DRIFT_THRESHOLDS,
+) -> DriftVerdict:
+    """Classify corpus WDER against relative bands and the absolute floor."""
+    if observed_corpus_wder >= thresholds.absolute_floor:
+        return DriftVerdict(
+            metric="corpus_wder",
+            outcome="floor",
+            detail=(
+                f"corpus WDER {observed_corpus_wder:.6f} is at or above absolute floor "
+                f"{thresholds.absolute_floor:.6f}"
+            ),
+            observed=observed_corpus_wder,
+        )
+    increase = relative_increase(observed_corpus_wder, thresholds.baseline_corpus_wder)
+    if increase >= thresholds.fail_relative_increase:
+        return DriftVerdict(
+            metric="corpus_wder",
+            outcome="fail",
+            detail=(
+                f"corpus WDER {observed_corpus_wder:.6f} is {increase:.2%} above baseline "
+                f"{thresholds.baseline_corpus_wder:.6f} (fail at {thresholds.fail_relative_increase:.0%})"
+            ),
+            observed=observed_corpus_wder,
+        )
+    if increase >= thresholds.review_relative_increase:
+        return DriftVerdict(
+            metric="corpus_wder",
+            outcome="review",
+            detail=(
+                f"corpus WDER {observed_corpus_wder:.6f} is {increase:.2%} above baseline "
+                f"{thresholds.baseline_corpus_wder:.6f} (review at {thresholds.review_relative_increase:.0%})"
+            ),
+            observed=observed_corpus_wder,
+        )
+    return DriftVerdict(
+        metric="corpus_wder",
+        outcome="pass",
+        detail=(
+            f"corpus WDER {observed_corpus_wder:.6f} within relative bands of baseline "
+            f"{thresholds.baseline_corpus_wder:.6f}"
+        ),
+        observed=observed_corpus_wder,
     )
 
 
@@ -257,19 +306,29 @@ def corpus_wer_from_samples(samples: list[SampleRow]) -> float:
     return corpus_wer(meetings)
 
 
+def corpus_wder_from_samples(samples: list[SampleRow]) -> float:
+    """Compute corpus WDER from per-meeting speaker-error and reference-word counts."""
+    meetings = [
+        meeting_wder_components_from_sample({"example_id": sample.example_id, "metrics": sample.metrics})
+        for sample in samples
+    ]
+    return corpus_wder(meetings)
+
+
 def speaker_correct_count(samples: list[SampleRow]) -> int:
     """Count meetings whose speaker_count_accuracy metric is at least 1.0."""
     return sum(1 for sample in samples if sample.metrics["speaker_count_accuracy"] >= 1.0)
 
 
 def assess_engine_drift(engine_output: EngineOutput) -> list[DriftVerdict]:
-    """Run WER, speaker-count, and speed drift checks for one engine output
+    """Run WER, WDER, speaker-count, and speed drift checks for one engine output
     (one speech-to-text (STT) provider's full eval result. A run summary plus one
     sample row per meeting, each holding that meeting's transcripts and metrics).
     """
     samples = engine_output.samples
     return [
         classify_wer_drift(corpus_wer_from_samples(samples)),
+        classify_wder_drift(corpus_wder_from_samples(samples)),
         classify_speaker_count_drift(speaker_correct_count(samples), len(samples)),
         classify_processing_speed_drift(engine_output.summary.processing_speed_ratio),
     ]

@@ -16,11 +16,12 @@ Enforcement lives in [evals/transcription/src/drift.py](../../evals/transcriptio
 
 LocalTranscribe turns meeting audio into a transcript, and then turns that transcript into draft minutes.
 
-This document covers **offline drift gates** for three transcription metrics. "Offline" here means these checks run as a separate evaluation step against a fixed, known test set of recordings, rather than "live" inside the production transcription service on real user audio. The checks compare each new evaluation run to a stored baseline and decide whether quality has drifted.
+This document covers **offline drift gates** for four transcription metrics. "Offline" here means these checks run as a separate evaluation step against a fixed, known test set of recordings, rather than "live" inside the production transcription service on real user audio. The checks compare each new evaluation run to a stored baseline and decide whether quality has drifted.
 
-The three metrics are.
+The four metrics are:
 
 - corpus word error rate (WER)
+- corpus word diarisation error rate (WDER)
 - speaker-count accuracy
 - processing speed ratio
 
@@ -32,7 +33,7 @@ Judge scores and hallucination / claim-citation drift are out of scope here. Tho
 
 The product context is high risk and high consequence. A user can adopt AI-generated content from LocalTranscribe into statutory documentation, for example a Personal Housing Plan under section 189A of the Housing Act 1996, or a care needs assessment under the Care Act 2014 [8]. A transcription error that survives human review can therefore feed into a statutory record.
 
-The gates below are two-tier.
+The gates below are two-tier:
 
 1. **Tier 1 (relative).** Compare the candidate (latest) run to a committed baseline. Send the run to review, or fail it, when the relative change is large enough.
 2. **Tier 2 (absolute floor).** Fail the run when the absolute value is past a fixed "disaster line", even if the change relative to the baseline looks small.
@@ -81,7 +82,26 @@ Higher corpus WER is worse. The change relative to the baseline is.
 relative increase = (candidate corpus WER - baseline corpus WER) / baseline corpus WER
 ```
 
-### 2.2 Speaker-count accuracy
+### 2.2 Corpus WDER
+
+Word diarisation error rate asks: of the words the machine transcribed correctly, what share were assigned to the wrong speaker ([ADR-018](../adr/018-transcription-evaluation-metrics.md))? Per meeting, the eval captures:
+
+- **speaker errors**: Correctly transcribed words attributed to the wrong speaker after optimal speaker-label matching.
+- **total words**: The reference word count used as the WDER denominator (the same reference length idea as for WER).
+
+**Corpus WDER** (the value the gate acts on) pools these totals across all meetings before dividing, using the same pooling idea as corpus WER:
+
+```
+corpus WDER = sum(speaker errors across meetings) / sum(total words across meetings)
+```
+
+This is **not** the plain average of each meeting's individual WDER. Pooling weights longer meetings more heavily, so a short meeting cannot dominate the aggregate.
+
+WDER is gated separately from WER so a transcription regression and a diarisation regression stay distinguishable. [ADR-018](../adr/018-transcription-evaluation-metrics.md) prefers WER plus WDER over a combined speaker-attributed WER (SA-WER), because SA-WER mixes both failure modes into one number. Speaker-count accuracy (section 2.3) remains as a coarse complement. It only checks whether the detected speaker *count* matches; WDER is the fine-grained word-level diarisation gate.
+
+Higher corpus WDER is worse. The change relative to the baseline uses the same relative-increase formula as for WER.
+
+### 2.3 Speaker-count accuracy
 
 For each meeting, the eval records whether the number of speakers the machine detected matches the number of speakers in the ground truth. This is stored as 1.0 when the count is correct and 0.0 when it is not.
 
@@ -96,7 +116,7 @@ We express the bands as whole counts (for example 7 out of 10), not as a fine-gr
 
 `n_meetings` must equal `num_samples` in the baseline transcription eval config. If a run's meeting count differs, drift checking raises an error rather than applying, for example, "7 out of 10" bands to a set of a different size, which would silently change what pass, review, and fail mean.
 
-### 2.3 Processing speed ratio
+### 2.4 Processing speed ratio
 
 ```
 processing speed ratio = processing time (seconds) / audio duration (seconds)
@@ -110,7 +130,7 @@ The change relative to the baseline uses the same formula as for WER.
 
 ## 3. What bootstrapping is and why we use it
 
-The WER review band is set with a technique called the **bootstrap**. This section explains what that is.
+The WER and WDER review bands are set with a technique called the **bootstrap**. This section explains what that is.
 
 ### 3.1 The problem it solves
 
@@ -118,19 +138,19 @@ We only have 10 meetings in the baseline set. If we had happened to pick 10 slig
 
 ### 3.2 How the bootstrap estimates that fluctuation
 
-The bootstrap estimates the uncertainty of a statistic by resampling the data we already have, with replacement, many times over [4][5]. Specifically, for corpus WER.
+The bootstrap estimates the uncertainty of a statistic by resampling the data we already have, with replacement, many times over [4][5]. The same procedure is used for corpus WER and corpus WDER; only the per-meeting counts differ.
 
-Importantly, this does **not** re-run speech-to-text. The meetings are transcribed once. The bootstrap then reuses only the saved per-meeting error and reference-word counts from that single eval run. The 10,000 resamples are simple calculations on those stored numbers - no additional transcription is required.
+Importantly, this does **not** re-run speech-to-text. The meetings are transcribed once. The bootstrap then reuses only the saved per-meeting counts from that single eval run (WER errors and reference words, or WDER speaker errors and total words). The 10,000 resamples are simple calculations on those stored numbers - no additional transcription is required.
 
-1. Start with the 10 meetings and their already-computed error and reference-word counts from that one eval run.
+1. Start with the 10 meetings and their already-computed counts from that one eval run.
 2. Draw a new set of 10 meetings by picking from those 10 at random, with replacement, so some meetings appear more than once and others not at all. This is one "resample".
-3. Recompute corpus WER on that resample (again using only the stored counts).
-4. Repeat many times (the artefact uses 10,000 resamples) to build up a distribution of plausible corpus WER values.
-5. Read a high percentile of that distribution (for example the 95th percentile) to see how far up the corpus WER realistically drifts from sampling alone. That distance sets the review band.
+3. Recompute corpus WER or corpus WDER on that resample (again using only the stored counts).
+4. Repeat many times (each artefact uses 10,000 resamples) to build up a distribution of plausible aggregate values.
+5. Read a high percentile of that distribution (for example the 95th percentile) to see how far up the metric realistically drifts from sampling alone. That distance sets the review band.
 
 ### 3.3 Why "meeting-block" bootstrap
 
-We resample **whole meetings**, not individual words. This is what "meeting-block" means. The meeting is the unit that gets drawn each time, keeping all of its words together.
+We resample **whole meetings**, rather than individual words. This is what "meeting-block" means. The meeting is the unit that gets drawn each time, keeping all of its words together.
 
 The reason is that errors within a single meeting are not independent of each other. One noisy recording, one strong accent, or one difficult acoustic setting makes many nearby words wrong together. Resampling individual words would ignore that correlation and understate the true uncertainty. Resampling whole meetings preserves it, which is the established approach for WER confidence estimation in speech recognition, where error events are known not to occur independently [4].
 
@@ -140,7 +160,7 @@ This bootstrap is used only during calibration, to choose the width of the revie
 
 ## 4. Proposed thresholds
 
-Source of truth for these values. `WER_DRIFT_THRESHOLDS`, `SPEAKER_COUNT_DRIFT_THRESHOLDS`, and `PROCESSING_SPEED_DRIFT_THRESHOLDS` in [evals/transcription/src/constants.py](../../evals/transcription/src/constants.py).
+Source of truth for these values. `WER_DRIFT_THRESHOLDS`, `WDER_DRIFT_THRESHOLDS`, `SPEAKER_COUNT_DRIFT_THRESHOLDS`, and `PROCESSING_SPEED_DRIFT_THRESHOLDS` in [evals/transcription/src/constants.py](../../evals/transcription/src/constants.py).
 
 The flag `DRIFT_THRESHOLDS_ARE_AMI_PROXY_PLACEHOLDERS` is `True` while these remain proxy values.
 
@@ -165,7 +185,22 @@ Fail **+25%** is placed clearly above that sampling band, so a failure reflects 
 
 Absolute floor **0.50** is a loose disaster line for this proxy only. It is not a product-readiness bar for real meetings.
 
-### 4.2 Speaker-count accuracy
+### 4.2 Corpus WDER
+
+
+| Outcome | Rule                                                                      | Current proxy value                  |
+| ------- | ------------------------------------------------------------------------- | ------------------------------------ |
+| Pass    | relative increase is below the review band                                | below +5% versus baseline (0.049162) |
+| Review  | relative increase is at or above the review band, and below the fail band | at or above +5%                      |
+| Fail    | relative increase is at or above the fail band                            | at or above +15%                     |
+| Floor   | absolute corpus WDER is at or above the floor                             | at or above 0.15                     |
+
+
+Baseline corpus WDER **0.049162** comes from the committed bootstrap artefact built from the same baseline eval results as WER.
+
+Review **+5%** follows the 95th-percentile relative increase from the meeting-block bootstrap (section 3). Fail **+15%** sits clearly above that sampling band. Absolute floor **0.15** is a loose AMI disaster line only.
+
+### 4.3 Speaker-count accuracy
 
 
 | Outcome | Rule                                 | Current proxy value (out of 10) |
@@ -178,7 +213,7 @@ Absolute floor **0.50** is a loose disaster line for this proxy only. It is not 
 
 The baseline on the proxy set was **7 out of 10** correct. These counts must be recomputed together with any change to the number of meetings (see section 6.3).
 
-### 4.3 Processing speed ratio
+### 4.4 Processing speed ratio
 
 
 | Outcome    | Rule                                                                      | Current proxy value                                     |
@@ -198,7 +233,7 @@ The relative bands match the WER shape, but they are set conservatively rather t
 
 ## 5. How the eval enforces these gates
 
-1. Run the transcription evaluate step with a config that sets `check_drift_thresholds: true`. This is enabled on `larger_cloud_test.yaml`. It is left off on the smoketest config so that a 2-meeting smoke run cannot accidentally trigger the speaker-count size guard described in section 2.2.
+1. Run the transcription evaluate step with a config that sets `check_drift_thresholds: true`. This is enabled on `larger_cloud_test.yaml`. It is left off on the smoketest config so that a 2-meeting smoke run cannot accidentally trigger the speaker-count size guard described in section 2.3.
 2. After results are saved, `apply_drift_thresholds` classifies each metric as pass, review, fail, or floor.
 3. The overall outcome is the **most severe** of the individual metric outcomes, ordered pass, then review, then fail, then floor.
 4. The process exit code is.
@@ -206,7 +241,7 @@ The relative bands match the WER shape, but they are set conservatively rather t
   - **1** for fail or floor.
 5. When the overall outcome is not a pass (that is review, fail, or floor), the eval writes `evals/transcription/output/drift_review_{timestamp}.json` with the per-metric detail so a person can inspect it.
 
-The live comparison is always **the observed metric versus the committed constants**. The bootstrap is only used beforehand, during calibration, to set the width of the WER review band.
+The live comparison is always **the observed metric versus the committed constants**. The bootstrap is only used beforehand, during calibration, to set the width of the WER and WDER review bands.
 
 ---
 
@@ -224,20 +259,22 @@ poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test
 
 You can repeat this a few times if you want a more stable speed baseline. WER and speaker count were deterministic for Azure on AMI in the calibration runs whereas processing speed wasn't.
 
-**2.** Rebuild the WER bootstrap artefact from a saved results file.
+**2.** Rebuild the WER and WDER bootstrap artefacts from a saved results file.
 
 ```bash
-poetry run python -m evals.transcription.src.baseline.compute_wer_bootstrap \
+poetry run python -m evals.transcription.src.baseline.compute_bootstrap_artefacts \
     evals/transcription/output/evaluation_results_YYYYMMDD_HHMMSS.json
 ```
 
-The default output path is `evals/transcription/baseline/wer_bootstrap_ami_proxy.json`.
+One run writes both default paths.
 
-**3.** Copy the values from the artefact into `WER_DRIFT_THRESHOLDS`.
+- `evals/transcription/baseline/wer_bootstrap_ami_proxy.json`
+- `evals/transcription/baseline/wder_bootstrap_ami_proxy.json`
 
-- `baseline_corpus_wer` becomes `WER_DRIFT_THRESHOLDS.baseline_corpus_wer`.
-- the bootstrap relative increase at the 95th percentile (or the percentile the team agrees) becomes `review_relative_increase`.
-- set `fail_relative_increase` clearly above that sampling band (the current choice is 0.25).
+**3.** Copy the values from the artefacts into the constants.
+
+- From the WER artefact. `baseline_corpus_wer` becomes `WER_DRIFT_THRESHOLDS.baseline_corpus_wer`. The bootstrap relative increase at the 95th percentile (or the percentile the team agrees) becomes `review_relative_increase`. Set `fail_relative_increase` clearly above that sampling band (the current choice is 0.25).
+- From the WDER artefact. `baseline_corpus_wder` becomes `WDER_DRIFT_THRESHOLDS.baseline_corpus_wder`. The bootstrap relative increase at the 95th percentile becomes `review_relative_increase`. Set `fail_relative_increase` clearly above that sampling band (the current choice is 0.15).
 
 **4.** Count the meetings with `speaker_count_accuracy == 1.0` on the accepted run and update `SPEAKER_COUNT_DRIFT_THRESHOLDS` (the `n_meetings`, baseline, review, fail, and floor counts).
 
@@ -248,7 +285,7 @@ The default output path is `evals/transcription/baseline/wer_bootstrap_ami_proxy
 **7.** Run the unit tests.
 
 ```bash
-poetry run pytest tests/evals/transcription/test_drift.py tests/evals/transcription/test_wer_bootstrap.py -q
+poetry run pytest tests/evals/transcription/test_drift.py tests/evals/transcription/test_meeting_block_bootstrap.py -q
 ```
 
 ### 6.2 Move to a real council golden set (rolling baseline)
@@ -257,8 +294,8 @@ A "golden set" is a fixed, trusted set of recordings with human-verified transcr
 
 1. First the team must agree on a set of real meeting recordings and their human-annotated transcripts (the ground truth, i.e. our version of the AMI set).
 2. Point the transcription eval at that set, using a new or updated config. Keep `num_samples` and the speaker-count `n_meetings` equal.
-3. Run the pipeline and compute corpus WER, speaker-count correct meetings, and processing speed as defined in section 2.
-4. Commit the new baselines and bands in `constants.py`. Rename or replace the bootstrap artefact so its filename reflects real data rather than `ami_proxy`.
+3. Run the pipeline and compute corpus WER, corpus WDER, speaker-count correct meetings, and processing speed as defined in section 2.
+4. Commit the new baselines and bands in `constants.py`. Rename or replace the WER and WDER bootstrap artefacts so their filenames reflect real data rather than `ami_proxy`.
 5. Delete the `DRIFT_THRESHOLDS_ARE_AMI_PROXY_PLACEHOLDERS` flag once the team agrees the real data numbers are the operating baseline. Update this document to reflect any changes in the calibration process.
 6. On each agreed refresh (on a schedule, or at a release). Re-run on the **same** meeting set, compare to the current constants as in section 5, and, if the run is accepted, replace the committed baseline with the new figures and re-check the review band width with the bootstrap. This periodic refresh is what makes the baseline a "rolling" one.
 
@@ -268,7 +305,7 @@ The speaker-count bands are absolute counts out of `n_meetings`. If you move fro
 
 1. Update `num_samples` in the baseline transcription eval config and `SPEAKER_COUNT_DRIFT_THRESHOLDS.n_meetings` together.
 2. Recompute the baseline correct count and the review, fail, and floor counts for the new size.
-3. Recompute the corpus WER baseline and its bootstrap bands on the new set.
+3. Recompute the corpus WER and corpus WDER baselines and their bootstrap bands on the new set.
 4. Do not reuse "7 out of 10"-style numbers on a different denominator.
 
 ---
@@ -285,7 +322,7 @@ A "rolling baseline", in the ticket's sense, means refreshing the committed base
 
 ### The bootstrap used for calibration is unpaired
 
-Candidate and baseline runs both use the **same** meetings and the same ground-truth set. The live gate already compares two corpus WER numbers computed on that shared set. What is unpaired is the bootstrap itself. It is run on **one** results file (the baseline) to estimate how much that aggregate can wobble if the mix of those meetings is redrawn. It does **not** also bootstrap the **difference** between candidate and baseline by redrawing the same meeting IDs in pairs. So we have a same-meetings point comparison plus a fixed percentage band. We do not have a sampling distribution for "candidate minus baseline on matched meetings."
+Candidate and baseline runs both use the **same** meetings and the same ground-truth set. The live gate already compares two corpus WER (or WDER) numbers computed on that shared set. What is unpaired is the bootstrap itself. It is run on **one** results file (the baseline) to estimate how much that aggregate can wobble if the mix of those meetings is redrawn. It does **not** also bootstrap the **difference** between candidate and baseline by redrawing the same meeting IDs in pairs. So we have a same-meetings point comparison plus a fixed percentage band. We do not have a sampling distribution for "candidate minus baseline on matched meetings."
 
 ### Paired bootstrap (suggested further work)
 
@@ -295,9 +332,9 @@ A paired bootstrap would take baseline and candidate results for the same meetin
 
 Cloud latency varies between runs, so treat the relative speed gates as rough early warnings rather than precise performance targets.
 
-### Speaker count is coarse
+### Speaker count is coarse; WDER is the fine-grained diarisation gate
 
-As explained in section 2.2, one meeting moves a 10-meeting set by 10 percentage points, so the whole-count bands are intentional.
+As explained in section 2.3, one meeting moves a 10-meeting set by 10 percentage points, so the whole-count bands are intentional. Speaker count remains a coarse complement. Corpus WDER (section 2.2) is the fine-grained word-level diarisation gate, kept separate from WER so transcription and speaker-attribution regressions stay distinguishable ([ADR-018](../adr/018-transcription-evaluation-metrics.md)).
 
 ---
 
@@ -316,10 +353,12 @@ As explained in section 2.2, one meeting moves a 10-meeting set by 10 percentage
 
 ### Repository references
 
-1. Constants and placeholder flag. [evals/transcription/src/constants.py](../../evals/transcription/src/constants.py)
-2. Drift classification and exit behaviour. [evals/transcription/src/drift.py](../../evals/transcription/src/drift.py)
-3. WER bootstrap helpers and artefact builder. [evals/transcription/src/baseline/](../../evals/transcription/src/baseline/)
-4. Committed bootstrap artefact. [evals/transcription/baseline/wer_bootstrap_ami_proxy.json](../../evals/transcription/baseline/wer_bootstrap_ami_proxy.json)
-5. Baseline transcription eval config. [evals/transcription/configs/larger_cloud_test.yaml](../../evals/transcription/configs/larger_cloud_test.yaml)
-6. Related summarisation threshold documents. [llm-judge-score-thresholds.md](./llm-judge-score-thresholds.md) (AIILG-678), [claim-citation-rate-thresholds.md](./claim-citation-rate-thresholds.md) (AIILG-679)
+1. ADR-018. Transcription evaluation metrics (WER, WDER, speaker count, processing speed. Prefer WER + WDER over SA-WER). [documentation/adr/018-transcription-evaluation-metrics.md](../adr/018-transcription-evaluation-metrics.md)
+2. Constants and placeholder flag. [evals/transcription/src/constants.py](../../evals/transcription/src/constants.py)
+3. Drift classification and exit behaviour. [evals/transcription/src/drift.py](../../evals/transcription/src/drift.py)
+4. WER and WDER bootstrap helpers and shared CLI. [evals/transcription/src/baseline/](../../evals/transcription/src/baseline/) (`wer_bootstrap.py`, `wder_bootstrap.py`, `bootstrap_common.py`, `compute_bootstrap_artefacts.py`)
+5. Committed WER bootstrap artefact. [evals/transcription/baseline/wer_bootstrap_ami_proxy.json](../../evals/transcription/baseline/wer_bootstrap_ami_proxy.json)
+6. Committed WDER bootstrap artefact. [evals/transcription/baseline/wder_bootstrap_ami_proxy.json](../../evals/transcription/baseline/wder_bootstrap_ami_proxy.json)
+7. Baseline transcription eval config. [evals/transcription/configs/larger_cloud_test.yaml](../../evals/transcription/configs/larger_cloud_test.yaml)
+8. Related summarisation threshold documents. [llm-judge-score-thresholds.md](./llm-judge-score-thresholds.md) (AIILG-678), [claim-citation-rate-thresholds.md](./claim-citation-rate-thresholds.md) (AIILG-679)
 
