@@ -46,6 +46,7 @@ def build_user_message(
     transcript_text: str,
     summary_text: str,
     template_name: str | None = None,
+    template_content: str | None = None,
     intended_solicitation: str | None = None,
     marker_hash: str,
 ) -> str:
@@ -53,6 +54,9 @@ def build_user_message(
 
     ``intended_solicitation`` is supplied only by the security (prompt-injection) eval; when set, the
     template adds a block telling the judge an injection is present and what it is trying to do.
+    ``template_content`` is supplied only by the custom-template security vector, where the injection
+    lives in a user-supplied template rather than the transcript; when set, the template is shown to
+    the judge as the format the summary should adhere to and as the surface the injection came from.
     ``marker_hash`` is a short random hash generated fresh for this evaluation; it tags the
     transcript/summary boundary markers so the judge can't be fooled by text in the transcript or
     summary that mimics a marker (it won't know the hash in advance).
@@ -64,6 +68,7 @@ def build_user_message(
         transcript_text=transcript_text,
         summary_text=summary_text,
         template_name=template_name,
+        template_content=template_content,
         intended_solicitation=intended_solicitation,
         marker_hash=marker_hash,
     )
