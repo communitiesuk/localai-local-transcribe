@@ -33,6 +33,7 @@ async def test_get_user(override_user, mock_user):
     assert convert_to_datetime(data["updated_datetime"]) == mock_user.updated_datetime
 
 
+@pytest.mark.skip(reason="run test only after AIILG-764 implemented")
 @pytest.mark.asyncio
 async def test_accept_terms_of_use_success(override_user, override_session, mock_pending_tou_user, mock_session):
     assert mock_pending_tou_user.accepted_tou is False

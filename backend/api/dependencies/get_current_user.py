@@ -94,11 +94,13 @@ PendingTouUserDep = Annotated[User, Depends(get_current_user)]
 
 
 async def require_accepted_tou(user: PendingTouUserDep) -> User:
-    if not user.accepted_tou:
-        raise HTTPException(
-            status_code=403,
-            detail="Terms of use must be accepted",
-        )
+    # TODO(@unassigned): check TOU accepted once AIILG-764 implemented
+    # https://mhclgdigital.atlassian.net/browse/AIILG-764
+    # if not user.accepted_tou:
+    #     raise HTTPException(
+    #         status_code=403,
+    #         detail="Terms of use must be accepted",
+    #     )
 
     return user
 
