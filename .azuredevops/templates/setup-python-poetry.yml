@@ -1,0 +1,31 @@
+# Reusable steps template: set up Python + Poetry with a cached in-project virtualenv.
+# ADO equivalent of the .github/actions/python-poetry-setup composite action.
+
+parameters:
+  - name: pythonVersion
+    type: string
+    default: '3.12'
+  - name: poetryVersion
+    type: string
+    default: '2.3.3'
+
+steps:
+  - task: UsePythonVersion@0
+    displayName: 'Set up Python ${{ parameters.pythonVersion }}'
+    inputs:
+      versionSpec: '${{ parameters.pythonVersion }}'
+
+  - script: pip install poetry==${{ parameters.poetryVersion }}
+    displayName: 'Install Poetry ${{ parameters.poetryVersion }}'
+
+  - script: poetry config virtualenvs.in-project true
+    displayName: 'Configure Poetry to create .venv in project'
+
+  - task: Cache@2
+    displayName: 'Cache virtualenv'
+    inputs:
+      key: 'venv | "$(Agent.OS)" | "${{ parameters.pythonVersion }}" | poetry.lock'
+      restoreKeys: |
+        venv | "$(Agent.OS)" | "${{ parameters.pythonVersion }}"
+        venv | "$(Agent.OS)"
+      path: .venv

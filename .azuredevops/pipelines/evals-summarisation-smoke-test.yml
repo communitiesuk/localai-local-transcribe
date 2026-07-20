@@ -1,0 +1,58 @@
+# Summarisation Evals — smoke test.
+# ADO equivalent of .github/workflows/evals-summarisation-smoke-test.yml.
+# Manual-run only (no CI/PR trigger); mirror of the GitHub workflow_dispatch.
+
+name: Summarisation Evals
+
+trigger: none
+pr: none
+
+parameters:
+  - name: pythonVersion
+    displayName: 'Python version'
+    type: string
+    default: '3.12'
+  - name: poetryVersion
+    displayName: 'Poetry version'
+    type: string
+    default: '2.3.3'
+
+variables:
+  # Variable group holding the APIM secrets (create in Pipelines > Library):
+  #   AZURE_APIM_URL, AZURE_APIM_API_VERSION, AZURE_APIM_ACCESS_TOKEN, AZURE_APIM_SUBSCRIPTION_KEY
+  - group: local-transcribe-apim
+  - name: ENVIRONMENT
+    value: test
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+
+  - template: ../templates/setup-python-poetry.yml
+    parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
+      poetryVersion: ${{ parameters.poetryVersion }}
+
+  - script: poetry sync --no-root --no-ansi --with evals-summarisation
+    displayName: 'Install dependencies'
+
+  - script: cp .env.example .env
+    displayName: 'Copy env file'
+
+  - script: poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/smoke-test.yaml
+    displayName: 'Run summarisation smoke test'
+    env:
+      # Secret variables are not exposed to scripts automatically — map them explicitly.
+      AZURE_APIM_URL: $(AZURE_APIM_URL)
+      AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
+      AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
+      AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Upload smoke test output'
+    condition: always()
+    inputs:
+      artifactName: summarisation-smoke-test-output
+      targetPath: evals/summarisation/output
