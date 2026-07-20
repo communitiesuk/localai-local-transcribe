@@ -44,6 +44,12 @@ def mock_user() -> User:
 
 
 @pytest.fixture
+def mock_pending_tou_user(mock_user) -> User:
+    mock_user.accepted_tou = False
+    return mock_user
+
+
+@pytest.fixture
 def mock_support_admin() -> User:
     return User(
         id=uuid4(),
