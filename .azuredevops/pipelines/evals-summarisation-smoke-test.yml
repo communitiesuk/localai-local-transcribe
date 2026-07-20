@@ -18,9 +18,8 @@ parameters:
     default: '2.3.3'
 
 variables:
-  # Variable group holding the APIM secrets (create in Pipelines > Library):
-  #   AZURE_APIM_URL, AZURE_APIM_API_VERSION, AZURE_APIM_ACCESS_TOKEN, AZURE_APIM_SUBSCRIPTION_KEY
-  - group: local-transcribe-apim
+  # APIM secrets (AZURE_APIM_URL, AZURE_APIM_API_VERSION, AZURE_APIM_ACCESS_TOKEN,
+  # AZURE_APIM_SUBSCRIPTION_KEY) are set directly on the pipeline for this one-off run.
   - name: ENVIRONMENT
     value: test
 
