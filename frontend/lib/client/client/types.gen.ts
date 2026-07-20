@@ -33,13 +33,7 @@ export interface Config<T extends ClientOptions = ClientOptions>
    * @default 'auto'
    */
   parseAs?:
-    | 'arrayBuffer'
-    | 'auto'
-    | 'blob'
-    | 'formData'
-    | 'json'
-    | 'stream'
-    | 'text'
+    'arrayBuffer' | 'auto' | 'blob' | 'formData' | 'json' | 'stream' | 'text'
   /**
    * Throw an error instead of returning it in the response?
    *
