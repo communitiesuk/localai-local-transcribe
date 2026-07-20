@@ -448,6 +448,10 @@ export type OrganisationPatchRequest = {
    * Allowed Domains
    */
   allowed_domains: Array<string>
+  /**
+   * Updated Datetime
+   */
+  updated_datetime: string
 }
 
 /**
@@ -774,9 +778,13 @@ export type TranscriptionMetadata = {
  */
 export type UpdateDialogueEntrySpeakerRequest = {
   /**
-   * New Speaker
+   * New Text
    */
-  new_speaker: string
+  new_text: string
+  /**
+   * Expected Text
+   */
+  expected_text?: string | null
   /**
    * Expected Speaker
    */
