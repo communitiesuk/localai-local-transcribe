@@ -3,9 +3,9 @@
 
 ## Status
 
-Proposed
+Accepted
 
-Date of decision: {yyyy-MM-dd}
+Date of decision: 2026-07-20
 
 ## Context and Problem Statement
 
@@ -23,6 +23,8 @@ What mechanism should we use to authenticate them?
 Internal Acccess, because it offers the best user experience and we believe the delivery risks are manageable. In particular
 we are happy, for the purposes of private beta, to accept risks to e.g. availability, and that we could migrate to another
 solution in a reasonable time frame if Internal Access proved inappropriate or was announced to be shutting down.
+
+We expect this decision may be revisited if new information comes to light - e.g. support for Internal Access changes.
 
 ## Pros and Cons of the Options
 
