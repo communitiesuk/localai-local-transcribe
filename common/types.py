@@ -25,7 +25,7 @@ DOMAIN_REGEX = re.compile(
 def validate_fqdn_list(domains: list[str]) -> list[str]:
     for domain in domains:
         if not DOMAIN_REGEX.match(domain):
-            message = "Domain '{}' is not a valid fully qualified domain name (FQDN)".format(domain)
+            message = f"Domain '{domain}' is not a valid fully qualified domain name (FQDN)"
             raise ValueError(message)
     return domains
 
