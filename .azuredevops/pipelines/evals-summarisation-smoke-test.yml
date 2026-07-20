@@ -1,6 +1,4 @@
-# Summarisation Evals — smoke test.
-# ADO equivalent of .github/workflows/evals-summarisation-smoke-test.yml.
-# Manual-run only (no CI/PR trigger); mirror of the GitHub workflow_dispatch.
+# Summarisation Evals smoke test — manual-run only.
 
 name: Summarisation Evals
 
@@ -16,12 +14,6 @@ parameters:
     displayName: 'Poetry version'
     type: string
     default: '2.4.1'
-
-variables:
-  # APIM secrets (AZURE_APIM_URL, AZURE_APIM_API_VERSION, AZURE_APIM_ACCESS_TOKEN,
-  # AZURE_APIM_SUBSCRIPTION_KEY) are set directly on the pipeline for this one-off run.
-  - name: ENVIRONMENT
-    value: test
 
 pool:
   vmImage: ubuntu-latest
@@ -43,11 +35,16 @@ steps:
   - script: poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/smoke-test.yaml
     displayName: 'Run summarisation smoke test'
     env:
-      # Secret variables are not exposed to scripts automatically — map them explicitly.
+      ENVIRONMENT: test
+      # Secret variables must be mapped explicitly; they aren't exposed to scripts by default.
       AZURE_APIM_URL: $(AZURE_APIM_URL)
       AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
       AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
       AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
+
+  - script: mkdir -p evals/summarisation/output
+    displayName: 'Ensure output dir exists'
+    condition: always()
 
   - task: PublishPipelineArtifact@1
     displayName: 'Upload smoke test output'

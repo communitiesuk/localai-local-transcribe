@@ -1,5 +1,4 @@
 # Reusable steps template: set up Python + Poetry with a cached in-project virtualenv.
-# ADO equivalent of the .github/actions/python-poetry-setup composite action.
 
 parameters:
   - name: pythonVersion
@@ -11,7 +10,7 @@ parameters:
 
 steps:
   - script: |
-      sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"/CodeQL
+      sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"/CodeQL
       df -h /
     displayName: 'Free up disk space'
 
