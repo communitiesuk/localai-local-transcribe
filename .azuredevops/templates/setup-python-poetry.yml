@@ -7,7 +7,7 @@ parameters:
     default: '3.12'
   - name: poetryVersion
     type: string
-    default: '2.3.3'
+    default: '2.4.1'
 
 steps:
   - task: UsePythonVersion@0

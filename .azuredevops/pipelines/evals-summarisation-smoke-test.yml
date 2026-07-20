@@ -15,7 +15,7 @@ parameters:
   - name: poetryVersion
     displayName: 'Poetry version'
     type: string
-    default: '2.3.3'
+    default: '2.4.1'
 
 variables:
   # APIM secrets (AZURE_APIM_URL, AZURE_APIM_API_VERSION, AZURE_APIM_ACCESS_TOKEN,
