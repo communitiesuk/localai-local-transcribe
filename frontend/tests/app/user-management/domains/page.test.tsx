@@ -162,9 +162,7 @@ describe('<EditApprovedDomainsPage />', () => {
   it('renders the hint text and the expandable help section', () => {
     renderPage()
 
-    expect(
-      screen.getByText(/List any approved domains/i)
-    ).toBeInTheDocument()
+    expect(screen.getByText(/List any approved domains/i)).toBeInTheDocument()
     expect(screen.getByText('More about approved domains')).toBeInTheDocument()
     expect(screen.getByText(/able to be invited to a/i)).toBeInTheDocument()
   })
