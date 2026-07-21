@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useCallback, useState, useEffect } from 'react'
+import { use, useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'

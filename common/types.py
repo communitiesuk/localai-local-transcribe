@@ -86,7 +86,6 @@ class RenameSpeakerRequest(BaseModel):
 
 class UpdateDialogueEntrySpeakerRequest(BaseModel):
     new_speaker: str
-    expected_text: str | None = None
     expected_speaker: str | None = None
     expected_start_time: float | None = None
     expected_end_time: float | None = None
@@ -359,7 +358,7 @@ class OrganisationCreateRequest(BaseModel):
 
     @field_validator("allowed_domains")
     @classmethod
-    def validate_domains(cls, v: list[str]) -> list[str]:
+    def validate_domains(cls, v): 
         return validate_fqdn_list(v)
 
 
