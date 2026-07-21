@@ -48,7 +48,7 @@ def test_run_evaluation(tmp_path, monkeypatch, kwargs, dataset_len, expected_loa
     ):
         result = run_evaluation(**kwargs)
 
-        assert result is None
+        assert result == 0
         mock_load.assert_called_once_with(**expected_load_call)
         mock_run.assert_called_once()
         assert len(mock_run.call_args.kwargs["adapters"]) == 1

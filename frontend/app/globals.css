@@ -197,15 +197,10 @@
 
 .editor-content ol {
   list-style-type: none;
-  counter-reset: list-counter;
-}
-
-.editor-content ol > li {
-  counter-increment: list-counter;
 }
 
 .editor-content ol > li::before {
-  content: counter(list-counter) '.';
+  content: counter(list-item) '.';
 }
 
 .editor-content h1 {
