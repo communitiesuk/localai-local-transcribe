@@ -247,7 +247,7 @@ describe('<EditApprovedDomainsPage />', () => {
         allowedDomains: ['maidstone.gov.uk', 'communities.gov.uk'],
         updatedDatetime: '2025-01-01T00:00:00Z',
       },
-      expect.any(Object)
+      undefined
     )
 
     await waitFor(() => {
