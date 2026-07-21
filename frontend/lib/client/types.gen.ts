@@ -780,7 +780,7 @@ export type UpdateDialogueEntrySpeakerRequest = {
   /**
    * New Text
    */
-  new_text: string
+  new_speaker: string
   /**
    * Expected Text
    */
