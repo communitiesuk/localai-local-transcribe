@@ -243,7 +243,9 @@ describe('<EditApprovedDomainsPage />', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     // Use findByText to allow the async error state update to resolve in the DOM
-    expect(await screen.findByText(/your changes were not saved/i)).toBeInTheDocument()
+    expect(
+      await screen.findByText(/your changes were not saved/i)
+    ).toBeInTheDocument()
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
         path: { organisation_id: 'org-1' },
