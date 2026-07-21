@@ -116,10 +116,36 @@ describe('<EditApprovedDomainsPage />', () => {
       }
     )
 
-    vi.mocked(useMutation).mockReturnValue({
-      mutateAsync: mockMutateAsync,
-      isPending: false,
-    } as unknown as ReturnType<typeof useMutation>)
+    // Transparently forward mutation callbacks to hook options
+    vi.mocked(useMutation).mockImplementation((options) => {
+      const mutateAsync = async (variables: unknown) => {
+        try {
+          const data = await mockMutateAsync(variables)
+          if (
+            options &&
+            'onSuccess' in options &&
+            typeof options.onSuccess === 'function'
+          ) {
+            options.onSuccess(data, variables, undefined)
+          }
+          return data
+        } catch (error) {
+          if (
+            options &&
+            'onError' in options &&
+            typeof options.onError === 'function'
+          ) {
+            options.onError(error as Error, variables, undefined)
+          }
+          throw error
+        }
+      }
+
+      return {
+        mutateAsync,
+        isPending: false,
+      } as unknown as ReturnType<typeof useMutation>
+    })
 
     vi.mocked(useQueryClient).mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
@@ -184,7 +210,6 @@ describe('<EditApprovedDomainsPage />', () => {
       name: 'Maidstone Borough Council',
       allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
     }
-    // Resolve directly to the updated organization
     mockMutateAsync.mockResolvedValueOnce(mockUpdatedOrganisation)
     renderPage()
 
@@ -199,14 +224,12 @@ describe('<EditApprovedDomainsPage />', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    // Expecting 1 argument (the variables object) and no second options argument
     expect(mockMutateAsync).toHaveBeenCalledWith({
       organisationId: 'org-1',
       allowedDomains: ['maidstone.gov.uk', 'communities.gov.uk'],
       updatedDatetime: '2025-01-01T00:00:00Z',
     })
 
-    // Wait for the component to handle the resolved promise
     await waitFor(() => {
       expect(mockSetQueryData).toHaveBeenCalledWith(
         getOrganisationOrganisationsOrganisationIdGetQueryKey({
@@ -242,13 +265,11 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('shows a conflict banner and refetches instead of navigating away when the domains were changed elsewhere', async () => {
-    // Reject with the error to trigger the catch block in the component
     mockMutateAsync.mockRejectedValueOnce(new DomainsUpdateConflictError())
     renderPage()
 
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    // Use findByText to allow the async error state update to resolve in the DOM
     expect(
       await screen.findByText(/your changes were not saved/i)
     ).toBeInTheDocument()
