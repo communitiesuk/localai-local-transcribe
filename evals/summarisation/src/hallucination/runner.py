@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -81,7 +82,16 @@ def run_hallucination_eval(
     grand_total = total_hallucinated + total_supported
     overall_hallucination_rate = round(total_hallucinated / grand_total, 3) if grand_total > 0 else 0.0
 
-    summary: dict[str, str | int | float | None | dict[str, float]] = {
+    # Roll the per-example citation outcomes up to the run level so the threshold verdict
+    # is visible in the summary rather than buried per-row in the results file.
+    outcome_counts = Counter(str(r.metrics["citation_outcome"]) for r in reports)
+    citation_outcomes = {
+        "pass": outcome_counts.get("pass", 0),
+        "review": outcome_counts.get("review", 0),
+        "fail": outcome_counts.get("fail", 0),
+    }
+
+    summary: dict[str, str | int | float | None | dict[str, float] | dict[str, int]] = {
         "run_id": run_id,
         "timestamp": datetime.now(UTC).isoformat(),
         "template_name": cfg.prompts.summarizer_template_name,
@@ -95,6 +105,7 @@ def run_hallucination_eval(
             "total_hallucinated_claims": total_hallucinated,
             "total_supported_claims": total_supported,
         },
+        "citation_outcomes": citation_outcomes,
     }
 
     summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))
