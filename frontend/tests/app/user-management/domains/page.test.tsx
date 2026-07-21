@@ -15,13 +15,13 @@ vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>()
   return {
     ...actual,
-    use: (promise: any) => {
+    use: <T>(promise: Promise<T> & { _value?: T }): T => {
       if (
         promise &&
         typeof promise.then === 'function' &&
         '_value' in promise
       ) {
-        return promise._value
+        return promise._value as T
       }
       return actual.use(promise)
     },
@@ -76,7 +76,7 @@ describe('<EditApprovedDomainsPage />', () => {
     useBannerStore.getState().clearBanner()
     currentOrganisationId = 'org-1'
 
-    vi.mocked(useAuthorisedUser).mockImplementation(((options?: any) => {
+    vi.mocked(useAuthorisedUser).mockImplementation((options?: { organisationId?: string }) => {
       const organisationId = options?.organisationId || currentOrganisationId
 
       return {
@@ -88,10 +88,10 @@ describe('<EditApprovedDomainsPage />', () => {
         isAllowed: organisationId === 'org-1',
         isLoading: false,
         isError: false,
-      } as any
-    }) as any)
+      } as unknown as ReturnType<typeof useAuthorisedUser>
+    })
 
-    vi.mocked(useOrganisation).mockImplementation(((param?: any) => {
+    vi.mocked(useOrganisation).mockImplementation((param?: string | { organisationId?: string }) => {
       const organisationId =
         typeof param === 'string'
           ? param
@@ -109,18 +109,18 @@ describe('<EditApprovedDomainsPage />', () => {
           updated_datetime: '2025-01-01T00:00:00Z',
         },
         isLoading: false,
-      } as any
-    }) as any)
+      } as unknown as ReturnType<typeof useOrganisation>
+    })
 
     vi.mocked(useMutation).mockReturnValue({
       mutateAsync: mockMutateAsync,
       isPending: false,
-    } as any)
+    } as unknown as ReturnType<typeof useMutation>)
 
     vi.mocked(useQueryClient).mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
       setQueryData: mockSetQueryData,
-    } as any)
+    } as unknown as ReturnType<typeof useQueryClient>)
   })
 
   // Synchronous page renderer using the synchronous `use` hook override
@@ -128,7 +128,7 @@ describe('<EditApprovedDomainsPage />', () => {
     currentOrganisationId = params.organisationId
     mockParams.mockReturnValue(params)
 
-    const paramsPromise = Promise.resolve(params) as any
+    const paramsPromise = Promise.resolve(params) as Promise<{ organisationId: string }> & { _value?: { organisationId: string } }
     paramsPromise._value = params
 
     render(<EditApprovedDomainsPage params={paramsPromise} />)
@@ -138,7 +138,7 @@ describe('<EditApprovedDomainsPage />', () => {
     vi.mocked(useOrganisation).mockReturnValue({
       data: undefined,
       isLoading: true,
-    } as any)
+    } as unknown as ReturnType<typeof useOrganisation>)
 
     renderPage()
     expect(screen.getByText('Loading...')).toBeInTheDocument()
@@ -243,9 +243,7 @@ describe('<EditApprovedDomainsPage />', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     // Use findByText to allow the async error state update to resolve in the DOM
-    expect(
-      await screen.findByText(/your changes were not saved/i)
-    ).toBeInTheDocument()
+    expect(await screen.findByText(/your changes were not saved/i)).toBeInTheDocument()
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
         path: { organisation_id: 'org-1' },
