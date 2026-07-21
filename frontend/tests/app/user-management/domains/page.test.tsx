@@ -15,7 +15,7 @@ vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>()
   return {
     ...actual,
-    use: <T>(promise: Promise<T> & { _value?: T }): T => {
+    use<T>(promise: Promise<T> & { _value?: T }): T {
       if (
         promise &&
         typeof promise.then === 'function' &&
