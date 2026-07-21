@@ -2,44 +2,54 @@
 
 Provisions a storage account with three private blob containers for pipeline data:
 
+
 | Container | Purpose metadata |
-|-----------|------------------|
+| --------- | ---------------- |
 | `input`   | `purpose=input`  |
 | `debug`   | `purpose=debug`  |
 | `output`  | `purpose=output` |
 
-Azure does not support resource tags on blob containers. Names are the primary identity; `purpose` is also set as container metadata. The storage account carries resource tags.
+
+Azure does not support resource tags on blob containers. Names are the primary identity. `purpose` is also set as container metadata. The storage account carries resource tags.
 
 Deployment is manual. There is no pipeline for this stack yet.
 
 ## Layout
 
-| Path | Role |
-|------|------|
-| `backend/` | One-time bootstrap of remote Terraform state storage |
-| `main.tf` | Evals storage account and the three containers |
+
+| Path               | Role                                                       |
+| ------------------ | ---------------------------------------------------------- |
+| `backend/`         | One-time bootstrap of remote Terraform state storage       |
+| `main.tf`          | Evals storage account and the three containers             |
 | `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally |
 
-## Sandbox vs assured environment
 
-| Topic | Transferable as-is | Must adapt later | Uncertain until assured env exists |
-|-------|--------------------|------------------|------------------------------------|
-| Three containers `input` / `debug` / `output` | Yes | Names only if platform mandates a prefix | Whether metadata is required beyond names |
-| Storage account shape (Standard LRS, private containers) | Yes | Tier / replication if platform policy differs | Final SKU and region |
-| Remote state via `azurerm` backend | Pattern yes | Resource group, state account name, key | Whether state lives in this subscription or a platform one |
-| Manual Cloud Shell apply | Process yes | Auth method if Cloud Shell is unavailable | Org policy on who may apply |
-| Variable values (`subscription_id`, names) | No | Always | Naming convention |
+
+
+## Softwire Sandbox vs assured Azure environment
+
+
+| Topic                                                    | Transferable as-is | Must adapt later                              | Uncertain until assured env exists                         |
+| -------------------------------------------------------- | ------------------ | --------------------------------------------- | ---------------------------------------------------------- |
+| Three containers `input` / `debug` / `output`            | Yes                | Names only if platform mandates a prefix      | Whether metadata is required beyond names                  |
+| Storage account shape (Standard LRS, private containers) | Yes                | Tier / replication if platform policy differs | Final SKU and region                                       |
+| Remote state via `azurerm` backend                       | Pattern yes        | Resource group, state account name, key       | Whether state lives in this subscription or a platform one |
+| Manual Cloud Shell apply                                 | Process yes        | Auth method if Cloud Shell is unavailable     | Org policy on who may apply                                |
+| Variable values (`subscription_id`, names)               | No                 | Always                                        | Naming convention                                          |
+
 
 Out of scope here: private endpoints, RBAC, network restrictions, retention, and loading data into containers.
 
 ## Prerequisites
 
-- Access to the target Azure subscription (sandbox now; assured environment later)
+- Access to the target Azure subscription (Softwire sandbox now, assured Azure environment later)
 - An **existing** resource group you are allowed to create storage accounts in
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Two globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one for evals data
 
-## Cloud Shell apply (sandbox)
+
+
+## Cloud Shell apply (Softwire sandbox)
 
 Cloud Shell is already authenticated as the portal user. Confirm context first:
 
@@ -59,10 +69,11 @@ Clone the repo (or upload the `terraform/azure/evals` folder) into Cloud Shell. 
 
 ```bash
 cd $HOME
-git clone <repo-url> localai-local-transcribe
+git clone https://github.com/communitiesuk/localai-local-transcribe
 cd localai-local-transcribe/terraform/azure/evals
-git checkout feat/AIILG-644-azure-blob-containers
 ```
+
+
 
 ### Step 1: Bootstrap remote state
 
@@ -80,26 +91,23 @@ terraform apply
 
 Note the outputs: `resource_group_name`, `storage_account_name`, `container_name`.
 
-Keep the local `backend/terraform.tfstate` file safe until you no longer need to change the state storage itself. Do not commit it.
-
 ### Step 2: Apply the evals containers stack
 
 ```bash
 cd ..
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars: same subscription and resource group; a *different*
-# storage_account_name for evals data
+# Edit terraform.tfvars: same subscription and resource group.
+# A DIFFERENT storage_account_name for evals data
 nano terraform.tfvars
 
-terraform init \
-  -backend-config="resource_group_name=<from-backend-output>" \
-  -backend-config="storage_account_name=<from-backend-output>" \
-  -backend-config="container_name=tfstate" \
-  -backend-config="key=evals-blob-containers.tfstate"
+# Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
+terraform init -backend-config="resource_group_name=<from-backend-output>" -backend-config="storage_account_name=<from-backend-output>" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate"
 
 terraform plan
 terraform apply
 ```
+
+
 
 ### Step 3: Verify in the portal or CLI
 
@@ -117,12 +125,4 @@ You should see `input`, `debug`, and `output`.
 1. Repeat Step 1 in the assured subscription or resource group (new state storage account name).
 2. Update `terraform.tfvars` for the evals stack with assured values.
 3. Run `terraform init -reconfigure` with the new `-backend-config` values, then `plan` / `apply`.
-4. Do not reuse sandbox state against the assured subscription.
 
-## Acceptance criteria mapping
-
-| Criterion | How this stack meets it |
-|-----------|-------------------------|
-| Terraform configured and documented for our Azure subscription | This tree plus variable-driven subscription targeting |
-| Three containers with correct identity | `input`, `debug`, `output` with matching `purpose` metadata |
-| Terraform state stored and managed appropriately | `backend/` creates versioned state storage; parent stack uses `azurerm` remote state |
