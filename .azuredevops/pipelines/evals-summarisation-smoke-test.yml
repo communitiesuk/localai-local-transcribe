@@ -36,7 +36,10 @@ steps:
     displayName: 'Run summarisation smoke test'
     env:
       ENVIRONMENT: test
-      # Secret variables must be mapped explicitly; they aren't exposed to scripts by default.
+      # These are set as pipeline variables directly in ADO (secret variables must be
+      # mapped explicitly).
+      # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
+      # to client_secret auth. It will need revisiting, due to it's short expiry.
       AZURE_APIM_URL: $(AZURE_APIM_URL)
       AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
       AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)

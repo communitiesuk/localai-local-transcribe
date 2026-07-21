@@ -10,6 +10,8 @@ parameters:
 
 steps:
   - script: |
+      # Delete pre-installed toolchains we don't use (dotnet, GHC, Android SDK, etc.)
+      # to reclaim disk space for the chonky evals summarisation dependencies.
       sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"/CodeQL
       df -h /
     displayName: 'Free up disk space'
