@@ -182,7 +182,7 @@ export function TranscriptionTab({
         newSpeaker,
         persist: () =>
           updateDialogueEntrySpeaker(index, {
-            new_text: newSpeaker,
+            new_speaker: newSpeaker,
             expected_speaker: originalSpeaker,
             expected_start_time: entry.start_time,
             expected_end_time: entry.end_time,

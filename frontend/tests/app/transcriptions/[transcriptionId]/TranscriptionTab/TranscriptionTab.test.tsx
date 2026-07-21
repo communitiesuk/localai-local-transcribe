@@ -172,7 +172,7 @@ describe('TranscriptionTab single speaker rename', () => {
 
     await waitFor(() => {
       expect(updateDialogueEntrySpeakerMock).toHaveBeenCalledWith(0, {
-        new_text: 'Bob',
+        new_speaker: 'Bob',
         expected_speaker: 'Alice',
         expected_start_time: 0,
         expected_end_time: 1,
