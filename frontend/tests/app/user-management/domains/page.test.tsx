@@ -188,11 +188,16 @@ describe('<EditApprovedDomainsPage />', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
+    // Change the expected argument structure here:
     expect(mockMutateAsync).toHaveBeenCalledWith(
       {
-        organisationId: 'org-1',
-        allowedDomains: ['maidstone.gov.uk', 'communities.gov.uk'],
-        updatedDatetime: '2025-01-01T00:00:00Z',
+        path: {
+          organisation_id: 'org-1',
+        },
+        body: {
+          allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
+          updated_datetime: '2025-01-01T00:00:00Z',
+        },
       },
       expect.any(Object)
     )
