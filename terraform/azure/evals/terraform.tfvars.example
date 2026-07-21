@@ -1,0 +1,11 @@
+# Example variable values for a sandbox apply.
+# Copy to terraform.tfvars (do not commit real subscription IDs if your team treats them as sensitive).
+#
+# Storage account names must be globally unique across all of Azure:
+# 3 to 24 characters, lowercase letters and digits only.
+
+subscription_id      = "00000000-0000-0000-0000-000000000000"
+resource_group_name  = "rg-evals-sandbox"
+location             = "uksouth"
+storage_account_name = "ltevalssandbox001"
+environment_name     = "sandbox"

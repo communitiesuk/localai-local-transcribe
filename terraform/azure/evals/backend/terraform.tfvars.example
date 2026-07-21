@@ -1,0 +1,8 @@
+# Example variable values for bootstrapping Terraform remote state in a sandbox.
+# Copy to terraform.tfvars in this directory before applying.
+
+subscription_id      = "00000000-0000-0000-0000-000000000000"
+resource_group_name  = "rg-evals-sandbox"
+location             = "uksouth"
+storage_account_name = "ltevalstfsandbox001"
+environment_name     = "sandbox"

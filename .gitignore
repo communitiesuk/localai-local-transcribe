@@ -18,10 +18,21 @@ Brewfile.lock.json
 **/.terraform/*
 **/terraform/terraform.tfstate.d
 **/.terraform*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# Local variable files may contain subscription IDs; keep examples tracked.
+*.tfvars
+!*.tfvars.example
 # Terraform lock files
 */.terraform.lock.hcl
 .terraform.lock.hcl
-*.terraform.lock.hcl 
+*.terraform.lock.hcl
 
 # Data
 *.csv
