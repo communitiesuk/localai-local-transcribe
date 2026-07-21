@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import EditApprovedDomainsPage, {
@@ -174,7 +173,13 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('submits the parsed domains list, updates the query cache, and navigates back on success', async () => {
-    mockMutateAsync.mockResolvedValueOnce({})
+    const mockUpdatedOrganisation = {
+      id: 'org-1',
+      name: 'Maidstone Borough Council',
+      allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
+    }
+    // Resolve directly to the updated organization
+    mockMutateAsync.mockResolvedValueOnce(mockUpdatedOrganisation)
     renderPage()
 
     const textarea = screen.getByLabelText('Approved domains', {
@@ -188,36 +193,23 @@ describe('<EditApprovedDomainsPage />', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    // Change the expected argument structure here:
-    expect(mockMutateAsync).toHaveBeenCalledWith(
-      {
-        path: {
-          organisation_id: 'org-1',
-        },
-        body: {
-          allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
-          updated_datetime: '2025-01-01T00:00:00Z',
-        },
-      },
-      expect.any(Object)
-    )
+    // Expecting 1 argument (the variables object) and no second options argument
+    expect(mockMutateAsync).toHaveBeenCalledWith({
+      organisationId: 'org-1',
+      allowedDomains: ['maidstone.gov.uk', 'communities.gov.uk'],
+      updatedDatetime: '2025-01-01T00:00:00Z',
+    })
 
-    const mockUpdatedOrganisation = {
-      id: 'org-1',
-      name: 'Maidstone Borough Council',
-      allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
-    }
+    // Wait for the component to handle the resolved promise
+    await waitFor(() => {
+      expect(mockSetQueryData).toHaveBeenCalledWith(
+        getOrganisationOrganisationsOrganisationIdGetQueryKey({
+          path: { organisation_id: 'org-1' },
+        }),
+        mockUpdatedOrganisation
+      )
+    })
 
-    const mutationCallArgs = mockMutateAsync.mock.calls[0]
-    const onSuccessCallback = mutationCallArgs[1]?.onSuccess
-    onSuccessCallback?.(mockUpdatedOrganisation)
-
-    expect(mockSetQueryData).toHaveBeenCalledWith(
-      getOrganisationOrganisationsOrganisationIdGetQueryKey({
-        path: { organisation_id: 'org-1' },
-      }),
-      mockUpdatedOrganisation
-    )
     expect(useBannerStore.getState().banner).toEqual(
       expect.objectContaining({
         variant: 'success',
@@ -244,14 +236,14 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('shows a conflict banner and refetches instead of navigating away when the domains were changed elsewhere', async () => {
-    mockMutateAsync.mockImplementationOnce(async (_variables, { onError }) => {
-      onError?.(new DomainsUpdateConflictError())
-    })
+    // Reject with the error to trigger the catch block in the component
+    mockMutateAsync.mockRejectedValueOnce(new DomainsUpdateConflictError())
     renderPage()
 
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-    expect(screen.getByText(/your changes were not saved/i)).toBeInTheDocument()
+    // Use findByText to allow the async error state update to resolve in the DOM
+    expect(await screen.findByText(/your changes were not saved/i)).toBeInTheDocument()
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
       queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
         path: { organisation_id: 'org-1' },
