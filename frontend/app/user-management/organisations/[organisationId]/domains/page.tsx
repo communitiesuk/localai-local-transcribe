@@ -47,7 +47,8 @@ export default function EditApprovedDomainsPage(props: {
     console.log('DIAGNOSTIC organisation changed:', organisation)
   }, [organisation])
 
-  const { mutate, isPending } = useMutation({
+  // 1. Destructure mutateAsync instead of mutate
+  const { mutateAsync, isPending } = useMutation({
     mutationFn: async (variables: {
       organisationId: string
       allowedDomains: string[]
@@ -103,19 +104,24 @@ export default function EditApprovedDomainsPage(props: {
     },
   })
 
+  // 2. Await mutateAsync and catch errors to prevent unhandled rejection errors
   const onSubmit = useCallback(
     async (data: EditDomainsFormData) => {
       if (!organisation) return
 
       setHasConflict(false)
 
-      mutate({
-        organisationId: organisation.id,
-        allowedDomains: parseDomains(data.domains),
-        updatedDatetime: organisation.updated_datetime,
-      })
+      try {
+        await mutateAsync({
+          organisationId: organisation.id,
+          allowedDomains: parseDomains(data.domains),
+          updatedDatetime: organisation.updated_datetime,
+        })
+      } catch {
+        // Handled globally in onError above
+      }
     },
-    [mutate, organisation]
+    [mutateAsync, organisation]
   )
 
   if (userLoading || organisationLoading || !organisation) {

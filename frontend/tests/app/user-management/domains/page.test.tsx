@@ -163,7 +163,7 @@ describe('<EditApprovedDomainsPage />', () => {
     renderPage()
 
     expect(
-      screen.getByText(/Please list any approved domains/i)
+      screen.getByText(/List any approved domains/i)
     ).toBeInTheDocument()
     expect(screen.getByText('More about approved domains')).toBeInTheDocument()
     expect(screen.getByText(/able to be invited to a/i)).toBeInTheDocument()
