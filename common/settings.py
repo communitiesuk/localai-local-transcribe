@@ -6,7 +6,7 @@ import dotenv
 from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
 from i_dot_ai_utilities.logging.types.enrichment_types import ExecutionEnvironmentType
 from i_dot_ai_utilities.logging.types.log_output_format import LogOutputFormat
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from common.logger import setup_logger, setup_structured_logger
@@ -160,6 +160,17 @@ class Settings(BaseSettings):
     GOVNOTIFY_INVITE_TEMPLATE_ID: str | None = Field(
         description="Use the GovNotify website to create an email template and copy in the template ID.", default=None
     )
+
+    @model_validator(mode="after")
+    def validate_govnotify(self) -> "Settings":
+        if self.EMAIL_SERVICE == "gov_notify":
+            if not self.GOVNOTIFY_API_KEY:
+                error_text = "GOVNOTIFY_API_KEY must be set when EMAIL_SERVICE='gov_notify'"
+                raise ValueError(error_text)
+            if not self.GOVNOTIFY_INVITE_TEMPLATE_ID:
+                error_text = "GOVNOTIFY_INVITE_TEMPLATE_ID must be set when EMAIL_SERVICE='gov_notify'"
+                raise ValueError(error_text)
+        return self
 
     # if running the worker inside a docker container (use "0.0.0.0" )
     RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
