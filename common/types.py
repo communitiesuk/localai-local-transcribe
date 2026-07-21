@@ -15,9 +15,8 @@ from common.database.postgres_models import (
     UserRole,
 )
 
-# Simple FQDN regex: requires at least one dot, labels 1-63 chars, no leading/trailing hyphens
 DOMAIN_REGEX = re.compile(
-    r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$",
+    r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z-]{0,61}[a-z]$",
     re.IGNORECASE,
 )
 
