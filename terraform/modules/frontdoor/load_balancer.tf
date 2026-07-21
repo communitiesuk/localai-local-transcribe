@@ -158,9 +158,9 @@ resource "aws_lb_listener_rule" "authentication" {
     authenticate_oidc {
       client_id              = data.aws_ssm_parameter.oidc_client_id[0].value
       issuer                 = local.gds_ia_issuer
-      authorization_endpoint = "${local.gds_ia_issuer}/auth/oidc"
-      token_endpoint         = "${local.gds_ia_issuer}/auth/token"
-      user_info_endpoint     = "${local.gds_ia_issuer}/auth/profile"
+      authorization_endpoint = "${local.gds_ia_issuer}/oauth2/authorization"
+      token_endpoint         = "${local.gds_ia_issuer}/oauth2/token"
+      user_info_endpoint     = "${local.gds_ia_issuer}/oauth2/userinfo"
       session_cookie_name    = "X-Amzn-Oidc-Data"
       client_secret          = data.aws_ssm_parameter.oidc_client_secret[0].value
       scope                  = "openid profile email"
