@@ -1,3 +1,6 @@
+from backend.api.dependencies import get_organisation_admin
+from backend.api.dependencies import get_organisation_admin
+from backend.api.dependencies import get_organisation_admin
 import logging
 import uuid
 from datetime import UTC, datetime
@@ -106,11 +109,6 @@ async def update_organisation(
     if not is_admin_for_org(user, org):
         raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
-    logger.info(
-        "DIAGNOSTIC db_updated_datetime=%r request_updated_datetime=%r",
-        org.updated_datetime,
-        request.updated_datetime,
-    )
     if org.updated_datetime != request.updated_datetime:
         raise HTTPException(
             status_code=409,

@@ -33,7 +33,6 @@ export default function EditApprovedDomainsPage(props: {
   const [hasConflict, setHasConflict] = useState(false)
 
   const { organisationId } = use(props.params)
-  console.log('DIAGNOSTIC: organisationId from params:', organisationId)
 
   const { currentUser, isLoading: userLoading } = useAuthorisedUser([
     UserRole.MHCLG_SUPPORT_ADMIN,
@@ -43,11 +42,6 @@ export default function EditApprovedDomainsPage(props: {
   const { data: organisation, isLoading: organisationLoading } =
     useOrganisation(organisationId)
 
-  useEffect(() => {
-    console.log('DIAGNOSTIC organisation changed:', organisation)
-  }, [organisation])
-
-  // 1. Destructure mutateAsync instead of mutate
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (variables: {
       organisationId: string
@@ -104,7 +98,6 @@ export default function EditApprovedDomainsPage(props: {
     },
   })
 
-  // 2. Await mutateAsync and catch errors to prevent unhandled rejection errors
   const onSubmit = useCallback(
     async (data: EditDomainsFormData) => {
       if (!organisation) return
