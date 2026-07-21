@@ -358,7 +358,7 @@ class OrganisationCreateRequest(BaseModel):
 
     @field_validator("allowed_domains")
     @classmethod
-    def validate_domains(cls, v):
+    def validate_domains(cls, v: list[str]) -> list[str]:
         return validate_fqdn_list(v)
 
 
