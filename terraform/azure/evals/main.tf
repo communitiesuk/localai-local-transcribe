@@ -37,6 +37,15 @@ resource "azurerm_storage_account" "evals" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
+  # Harden defaults that do not require network lockdown, RBAC, or private endpoints.
+  allow_nested_items_to_be_public = false
+  local_user_enabled              = false
+  default_to_oauth_authentication = true
+
+  blob_properties {
+    versioning_enabled = true
+  }
+
   tags = {
     purpose     = "evals-pipeline-data"
     workload    = "evals"
