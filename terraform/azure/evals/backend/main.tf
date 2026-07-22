@@ -30,7 +30,12 @@ resource "azurerm_storage_account" "terraform_state" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 
-  # Soft-delete and versioning protect state from accidental overwrite or delete.
+  # Harden defaults that do not require network lockdown, RBAC, or private endpoints.
+  allow_nested_items_to_be_public = false
+  local_user_enabled              = false
+  default_to_oauth_authentication = true
+
+  # Versioning protects state from accidental overwrite or delete.
   blob_properties {
     versioning_enabled = true
   }
