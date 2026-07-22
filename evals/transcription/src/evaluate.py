@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from evals.transcription.src.core.dataset import (
 )
 from evals.transcription.src.core.results import save_results
 from evals.transcription.src.core.runner import run_engines_parallel
+from evals.transcription.src.drift import apply_drift_thresholds
 
 settings = get_settings()
 WORKDIR = Path(__file__).resolve().parent.parent
@@ -31,9 +33,13 @@ def run_evaluation(
     prepare_only: bool = False,
     max_workers: int | None = None,
     adapter_names: list[str] | None = None,
-) -> None:
+    check_drift_thresholds: bool = False,
+) -> int:
     """
     Runs transcription evaluation on the specified dataset with configured adapters.
+
+    Returns a process exit code. 0 for success (and for drift review). 1 when drift fail or
+    floor checks breach. Drift checks run only when ``check_drift_thresholds`` is true.
     """
     output_dir = WORKDIR / "output"
     timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
@@ -52,7 +58,7 @@ def run_evaluation(
     if prepare_only:
         logger.info("=== Dataset Preparation Complete ===")
         logger.info("Prepared %d meetings", len(indices))
-        return
+        return 0
 
     if adapter_names is None:
         msg = "adapter_names is required when prepare_only is False"
@@ -92,6 +98,10 @@ def run_evaluation(
         )
     logger.info("Results saved to: %s", output_path)
 
+    if check_drift_thresholds:
+        return apply_drift_thresholds(results, output_dir, timestamp)
+    return 0
+
 
 def load_config(config_path: Path) -> dict[str, object]:
     """
@@ -126,6 +136,7 @@ def main() -> None:
     num_samples = get_config(config, "num_samples", int)
     max_workers = get_config(config, "max_workers", int)
     prepare_only = bool(get_config(config, "prepare_only", bool, default=False))
+    check_drift_thresholds = bool(get_config(config, "check_drift_thresholds", bool, default=False))
     adapter_names = get_config(config, "adapters", list, required=True)
 
     sample_duration_fraction_raw = config.get("sample_duration_fraction")
@@ -139,13 +150,15 @@ def main() -> None:
             raise TypeError(msg)
         sample_duration_fraction = float(sample_duration_fraction_raw)
 
-    run_evaluation(
+    exit_code = run_evaluation(
         num_samples=num_samples,
         sample_duration_fraction=sample_duration_fraction,
         prepare_only=prepare_only,
         max_workers=max_workers,
         adapter_names=adapter_names,
+        check_drift_thresholds=check_drift_thresholds,
     )
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":
