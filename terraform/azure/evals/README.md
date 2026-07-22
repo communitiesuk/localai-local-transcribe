@@ -29,16 +29,17 @@ Deployment is manual. There is no pipeline for this stack yet.
 ## Softwire Sandbox vs assured Azure environment
 
 
-| Topic                                                    | Transferable as-is | Must adapt later                              | Uncertain until assured env exists                         |
-| -------------------------------------------------------- | ------------------ | --------------------------------------------- | ---------------------------------------------------------- |
-| Three containers `input` / `debug` / `output`            | Yes                | Names only if platform mandates a prefix      | Whether metadata is required beyond names                  |
-| Storage account shape (Standard LRS, private containers) | Yes                | Tier / replication if platform policy differs | Final SKU and region                                       |
-| Remote state via `azurerm` backend                       | Pattern yes        | Resource group, state account name, key       | Whether state lives in this subscription or a platform one |
-| Manual Cloud Shell apply                                 | Process yes        | Auth method if Cloud Shell is unavailable     | Org policy on who may apply                                |
-| Variable values (`subscription_id`, names)               | No                 | Always                                        | Naming convention                                          |
+| Topic                                                | Transferable as-is | Must adapt later                                                         | Uncertain until assured env exists                         |
+| ---------------------------------------------------- | ------------------ | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Three containers `input` / `debug` / `output`        | Yes                | Names only if platform mandates a prefix                                 | Whether metadata is required beyond names                  |
+| Storage account shape (Standard, private containers) | Yes                | Tier / replication via `account_replication_type` if policy requires GRS | Final SKU and region                                       |
+| Soft delete, SAS expiry, versioning                  | Yes                | Retention days / SAS period if platform mandates different values        | Key rotation reminder (not exposed by azurerm yet)         |
+| Remote state via `azurerm` backend                   | Pattern yes        | Resource group, state account name, key                                  | Whether state lives in this subscription or a platform one |
+| Manual Cloud Shell apply                             | Process yes        | Auth method if Cloud Shell is unavailable                                | Org policy on who may apply                                |
+| Variable values (`subscription_id`, names)           | No                 | Always                                                                   | Naming convention                                          |
 
 
-Out of scope here: private endpoints, RBAC, network restrictions, retention, and loading data into containers.
+Out of scope here: private endpoints, RBAC, network restrictions, and loading data into containers. Soft delete and SAS expiry are included as low-regret hardening; geo-redundancy stays `LRS` by default via `account_replication_type`.
 
 ## Prerequisites
 
@@ -65,7 +66,7 @@ If you need a different subscription:
 az account set --subscription "<subscription-id-or-name>"
 ```
 
-Clone the repo (or upload the `terraform/azure/evals` folder) into Cloud Shell. Using git from Cloud Shell:
+Clone the repo. Using git from Cloud Shell:
 
 ```bash
 cd $HOME
@@ -122,7 +123,10 @@ You should see `input`, `debug`, and `output`.
 
 ## Retargeting to the assured environment
 
-1. Repeat Step 1 in the assured subscription or resource group (new state storage account name).
-2. Update `terraform.tfvars` for the evals stack with assured values.
-3. Run `terraform init -reconfigure` with the new `-backend-config` values, then `plan` / `apply`.
+Do not reuse Softwire sandbox state or `terraform.tfvars` against the assured subscription.
+
+1. **Gather assured values first** (for both stacks): subscription ID, resource group, location, two new globally unique storage account names (state + evals data), `environment_name`, and any other vars that differ from Softwire sandbox.
+2. **Bootstrap remote state in assured** (repeat Step 1): put the assured values in `backend/terraform.tfvars`, then `init` / `plan` / `apply` there. Use a new state storage account name.
+3. **Configure the evals stack**: put the assured values in `terraform/azure/evals/terraform.tfvars` (different storage account name from the state account).
+4. **Point evals at the new backend and apply**: from `terraform/azure/evals`, run `terraform init -reconfigure` with `-backend-config` values from step 2 outputs, then `plan` / `apply`.
 

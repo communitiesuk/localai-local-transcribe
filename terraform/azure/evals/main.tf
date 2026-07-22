@@ -7,8 +7,9 @@
 #   environment_name, and the backend block values after the assured environment exists.
 # - Uncertain: final naming conventions, whether containers need Azure metadata beyond
 #   names, and whether the storage account must sit in a platform-owned resource group.
-# - Out of scope for this ticket: private endpoints, RBAC, network restrictions,
-#   retention policy, and populating containers with data.
+# - Out of scope for the original ticket: private endpoints, RBAC, network restrictions,
+#   and populating containers with data. Soft delete and SAS expiry are included here as
+#   low-regret hardening ahead of the assured environment.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -35,15 +36,29 @@ resource "azurerm_storage_account" "evals" {
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
-  account_replication_type = "LRS"
+  account_replication_type = var.account_replication_type
 
   # Harden defaults that do not require network lockdown, RBAC, or private endpoints.
   allow_nested_items_to_be_public = false
   local_user_enabled              = false
   default_to_oauth_authentication = true
 
+  # Cap how long a newly created SAS token may remain valid.
+  sas_policy {
+    expiration_period = var.sas_expiration_period
+    expiration_action = "Log"
+  }
+
   blob_properties {
     versioning_enabled = true
+
+    delete_retention_policy {
+      days = var.soft_delete_retention_days
+    }
+
+    container_delete_retention_policy {
+      days = var.soft_delete_retention_days
+    }
   }
 
   tags = {
