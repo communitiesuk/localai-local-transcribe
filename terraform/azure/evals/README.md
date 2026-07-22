@@ -2,49 +2,48 @@
 
 Provisions a storage account with three private blob containers for pipeline data:
 
-
 | Container | Purpose metadata |
 | --------- | ---------------- |
 | `input`   | `purpose=input`  |
 | `debug`   | `purpose=debug`  |
 | `output`  | `purpose=output` |
 
-
 Azure does not support resource tags on blob containers. Names are the primary identity. `purpose` is also set as container metadata. The storage account carries resource tags.
+
+Both the state and evals storage accounts also set low-regret defaults: no public nested items, local users off, portal prefers Entra ID auth, blob versioning, soft delete (14 days), and a SAS expiration policy (7 days). Replication defaults to `LRS` via `account_replication_type`.
 
 Deployment is manual. There is no pipeline for this stack yet.
 
 ## Layout
 
-
-| Path               | Role                                                       |
-| ------------------ | ---------------------------------------------------------- |
-| `backend/`         | One-time bootstrap of remote Terraform state storage       |
-| `main.tf`          | Evals storage account and the three containers             |
-| `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally |
-
+| Path               | Role                                                                 |
+| ------------------ | -------------------------------------------------------------------- |
+| `backend/`         | One-time bootstrap of remote Terraform state storage                 |
+| `main.tf`          | Evals storage account and the three containers                       |
+| `variables.tf`     | Input variables (required values plus optional hardening defaults)   |
+| `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally           |
 
 ## Softwire Sandbox vs assured Azure environment
-
 
 | Topic                                                | Transferable as-is | Must adapt later                                                         | Uncertain until assured env exists                         |
 | ---------------------------------------------------- | ------------------ | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
 | Three containers `input` / `debug` / `output`        | Yes                | Names only if platform mandates a prefix                                 | Whether metadata is required beyond names                  |
 | Storage account shape (Standard, private containers) | Yes                | Tier / replication via `account_replication_type` if policy requires GRS | Final SKU and region                                       |
-| Soft delete, SAS expiry, versioning                  | Yes                | Retention days / SAS period if platform mandates different values        | Key rotation reminder (not exposed by azurerm yet)         |
+| Soft delete, SAS expiry, versioning, auth defaults   | Yes                | Retention days / SAS period if platform mandates different values        | Key rotation reminder (not exposed by azurerm yet)         |
 | Remote state via `azurerm` backend                   | Pattern yes        | Resource group, state account name, key                                  | Whether state lives in this subscription or a platform one |
 | Manual Cloud Shell apply                             | Process yes        | Auth method if Cloud Shell is unavailable                                | Org policy on who may apply                                |
-| Variable values (`subscription_id`, names)           | No                 | Always                                                                   | Naming convention                                          |
+| Tenant, subscription, and variable values            | No                 | Always                                                                   | Naming convention                                          |
 
-
-Out of scope here: private endpoints, RBAC, network restrictions, and loading data into containers. Soft delete and SAS expiry are included as low-regret hardening; geo-redundancy stays `LRS` by default via `account_replication_type`.
+Out of scope here: private endpoints, RBAC, network restrictions, blocking shared key access, customer-managed keys, and loading data into containers.
 
 ## Prerequisites
 
-- Access to the target Azure subscription (Softwire sandbox now, assured Azure environment later)
+- Access to the target Azure tenant and subscription (Softwire sandbox now; assured Azure environment later, which may be a different tenant)
 - An **existing** resource group you are allowed to create storage accounts in
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Two globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one for evals data
+
+Optional variables (`account_replication_type`, `soft_delete_retention_days`, `sas_expiration_period`) have defaults and need not appear in `terraform.tfvars` unless you want to override them.
 
 ## Cloud Shell apply (Softwire sandbox)
 
@@ -69,6 +68,8 @@ cd $HOME
 git clone https://github.com/communitiesuk/localai-local-transcribe
 cd localai-local-transcribe/terraform/azure/evals
 ```
+
+If Cloud Shell home storage was reset, clone again and recreate `terraform.tfvars` from the examples. The evals stack remote state still lives in Azure; the backend stack uses local state, so a wiped shell may need `terraform import` of the existing state storage account and `tfstate` container before a further backend apply.
 
 ### Step 1: Bootstrap remote state
 
@@ -113,6 +114,8 @@ az storage container list \
 
 You should see `input`, `debug`, and `output`.
 
+Confirm account settings under the storage account **Data management** → **Data protection** (versioning, soft delete) and **Settings** → **Configuration** (public access, Entra default, SAS policy) if needed.
+
 ## Assured Azure environment
 
-Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Use new `terraform.tfvars` values (including two new globally unique storage account names).
+Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including two new globally unique storage account names.

@@ -1,8 +1,10 @@
-# Example variable values for a sandbox apply.
+# Example variable values for a Softwire sandbox apply.
 # Copy to terraform.tfvars (do not commit real subscription IDs if your team treats them as sensitive).
 #
 # Storage account names must be globally unique across all of Azure:
 # 3 to 24 characters, lowercase letters and digits only.
+# Optional vars (account_replication_type, soft_delete_retention_days, sas_expiration_period)
+# have defaults and may be omitted.
 
 subscription_id      = "00000000-0000-0000-0000-000000000000"
 resource_group_name  = "rg-evals-sandbox"
