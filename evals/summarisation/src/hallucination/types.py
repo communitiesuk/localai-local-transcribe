@@ -23,7 +23,7 @@ class HallucinationReport(BaseModel):
     timestamp: datetime
     prompt_version: str
     statements: list[ClassifiedStatement]
-    metrics: dict[str, int | float | bool]
+    metrics: dict[str, int | float | bool | str]
 
 
 class HallucinationInput(BaseModel):
