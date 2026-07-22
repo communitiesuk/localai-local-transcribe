@@ -33,11 +33,13 @@ module "alb_logs" {
   access_log_bucket_name             = "local-transcribe-alb-logs-access-logs-${var.environment_name}"
   force_destroy                      = false
   object_lock_enabled                = false
-  noncurrent_version_expiration_days = 700
+  noncurrent_version_expiration_days = 365
   access_s3_log_expiration_days      = 365
   policy                             = data.aws_iam_policy_document.alb_logs_bucket_policy.json
   kms_key_arn                        = null
+
 }
+
 
 data "aws_iam_policy_document" "alb_logs_bucket_policy" {
   statement {
@@ -156,9 +158,9 @@ resource "aws_lb_listener_rule" "authentication" {
     authenticate_oidc {
       client_id              = data.aws_ssm_parameter.oidc_client_id[0].value
       issuer                 = local.gds_ia_issuer
-      authorization_endpoint = "${local.gds_ia_issuer}/auth/oidc"
-      token_endpoint         = "${local.gds_ia_issuer}/auth/token"
-      user_info_endpoint     = "${local.gds_ia_issuer}/auth/profile"
+      authorization_endpoint = "${local.gds_ia_issuer}/oauth2/authorization"
+      token_endpoint         = "${local.gds_ia_issuer}/oauth2/token"
+      user_info_endpoint     = "${local.gds_ia_issuer}/oauth2/userinfo"
       session_cookie_name    = "X-Amzn-Oidc-Data"
       client_secret          = data.aws_ssm_parameter.oidc_client_secret[0].value
       scope                  = "openid profile email"

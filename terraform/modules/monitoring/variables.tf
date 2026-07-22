@@ -17,6 +17,12 @@ variable "cloudwatch_log_expiration_days" {
   description = "Number of days to retain cloudwatch logs for"
 }
 
+variable "access_s3_log_expiration_days" {
+  type        = number
+  description = "The number of days to retain s3 access logs"
+  default     = 365
+}
+
 variable "ecs_cluster_name" {
   description = "Name of ECS cluster to create alarms for"
   type        = string
@@ -82,4 +88,10 @@ variable "backend_log_group_name" {
   description = "CloudWatch log group name for backend ECS service logs"
 
   type = string
+}
+
+variable "abort_incomplete_multipart_upload_days" {
+  type        = number
+  description = "Days after initiation to abort incomplete multipart uploads."
+  default     = 7
 }

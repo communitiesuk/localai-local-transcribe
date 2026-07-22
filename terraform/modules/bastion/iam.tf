@@ -25,10 +25,30 @@ resource "aws_iam_instance_profile" "ssm_bastion" {
   role = aws_iam_role.ssm_bastion.name
 }
 
-resource "aws_iam_role_policy_attachment" "ssm_bastion_maintenance_window" {
-  role       = aws_iam_role.ssm_bastion.name
+# Service role for SSM Maintenance Window to execute patch tasks
+data "aws_iam_policy_document" "ssm_maintenance_window_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ssm.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ssm_maintenance_window" {
+  name               = "${var.environment_name}-ssm-maintenance-window-role"
+  assume_role_policy = data.aws_iam_policy_document.ssm_maintenance_window_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_maintenance_window" {
+  role       = aws_iam_role.ssm_maintenance_window.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonSSMMaintenanceWindowRole"
 }
+
+
 
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}

@@ -172,13 +172,17 @@ export function TranscriptionTab({
         return
       }
 
+      // Capture the original speaker before making any changes, so we can use it in the persist function
+      // (entry is captured by the closure, but the speaker property might change before the persist function is called)
+      const originalSpeaker = entry.speaker
+
       await applySpeakerNameChange({
         indices: [index],
         newSpeaker,
         persist: () =>
           updateDialogueEntrySpeaker(index, {
             new_speaker: newSpeaker,
-            expected_speaker: entry.speaker,
+            expected_speaker: originalSpeaker,
             expected_start_time: entry.start_time,
             expected_end_time: entry.end_time,
           }),

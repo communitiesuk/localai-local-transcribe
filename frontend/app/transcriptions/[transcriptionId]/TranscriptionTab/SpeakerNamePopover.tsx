@@ -24,10 +24,6 @@ export const SpeakerNamePopover = ({
   const [isSaving, setIsSaving] = useState(false)
   const inputId = useId()
 
-  useEffect(() => {
-    setNewName(entry.speaker)
-  }, [entry.speaker])
-
   const handleUpdateAll = useCallback(async () => {
     setIsSaving(true)
     try {
@@ -57,8 +53,16 @@ export const SpeakerNamePopover = ({
     },
     [newName, onUpdateSingle]
   )
+
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open)
+
+    if (open) {
+      setNewName(entry.speaker)
+    }
+  }
   return (
-    <Popover open={open} onOpenChange={(open) => setOpen(open)}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
