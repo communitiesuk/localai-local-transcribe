@@ -6,28 +6,11 @@ import {
   getUserUsersMeGetOptions,
   listTranscriptionsTranscriptionsGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { GovukPagination } from '@/components/govuk/pagination'
+import { conditionalPluralSuffix } from '@/lib/utils'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-
-export const getPageNumbers = (
-  currentPage: number,
-  totalPages: number,
-  maxPagesToShow = 5
-) => {
-  const pages = []
-  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
-  const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
-
-  if (endPage - startPage + 1 < maxPagesToShow) {
-    startPage = Math.max(1, endPage - maxPagesToShow + 1)
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i)
-  }
-  return pages
-}
 
 export const PaginatedTranscriptions = () => {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
@@ -70,13 +53,13 @@ export const PaginatedTranscriptions = () => {
             Recent meetings
           </h1>
           <span className="govuk-body-s govuk-!-margin-bottom-0">
-            {totalCount} transcription{totalCount !== 1 ? 's' : ''}
+            {totalCount} transcription{conditionalPluralSuffix(totalCount)}
           </span>
         </div>
         {user && user.data_retention_days && (
           <p className="govuk-body-s govuk-!-margin-top-2 govuk-!-margin-bottom-0">
             Your data retention period is set to {user.data_retention_days} day
-            {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
+            {conditionalPluralSuffix(user.data_retention_days)}. Change this in{' '}
             <Link href="/settings" className="govuk-link">
               settings
             </Link>
@@ -101,10 +84,12 @@ export const PaginatedTranscriptions = () => {
             ))}
           </ul>
           {totalPages > 1 && (
-            <Pagination
+            <GovukPagination
               currentPage={currentPage}
               totalPages={totalPages}
-              pathname={pathname}
+              getHref={(page) => `${pathname}?page=${page}`}
+              maxPagesToShow={5}
+              scroll={false}
             />
           )}
         </>
@@ -112,88 +97,3 @@ export const PaginatedTranscriptions = () => {
     </div>
   )
 }
-
-const Pagination = ({
-  currentPage,
-  totalPages,
-  pathname,
-}: {
-  currentPage: number
-  totalPages: number
-  pathname: string
-}) => (
-  <nav className="govuk-pagination" role="navigation" aria-label="Pagination">
-    {currentPage > 1 && (
-      <div className="govuk-pagination__prev">
-        <Link
-          className="govuk-link govuk-pagination__link"
-          href={`${pathname}?page=${currentPage - 1}`}
-          rel="prev"
-          scroll={false}
-        >
-          <svg
-            className="govuk-pagination__icon govuk-pagination__icon--prev"
-            xmlns="http://www.w3.org/2000/svg"
-            height="13"
-            width="15"
-            aria-hidden="true"
-            focusable="false"
-            viewBox="0 0 15 13"
-          >
-            <path d="m6.5938-0.0078125-6.7266 6.7266 6.7441 6.4062 1.377-1.449-4.1856-3.9768h12.896v-2h-12.984l4.2931-4.293-1.3339-1.3336z"></path>
-          </svg>
-          <span className="govuk-pagination__link-title">
-            Previous<span className="govuk-visually-hidden"> page</span>
-          </span>
-        </Link>
-      </div>
-    )}
-    <ul className="govuk-pagination__list">
-      {getPageNumbers(currentPage, totalPages).map((page) => (
-        <li
-          key={page}
-          className={
-            page === currentPage
-              ? 'govuk-pagination__item govuk-pagination__item--current'
-              : 'govuk-pagination__item'
-          }
-        >
-          <Link
-            className="govuk-link govuk-pagination__link"
-            href={`${pathname}?page=${page}`}
-            aria-label={`Page ${page}`}
-            aria-current={page === currentPage ? 'page' : undefined}
-            scroll={false}
-          >
-            {page}
-          </Link>
-        </li>
-      ))}
-    </ul>
-    {currentPage < totalPages && (
-      <div className="govuk-pagination__next">
-        <Link
-          className="govuk-link govuk-pagination__link"
-          href={`${pathname}?page=${currentPage + 1}`}
-          rel="next"
-          scroll={false}
-        >
-          <span className="govuk-pagination__link-title">
-            Next<span className="govuk-visually-hidden"> page</span>
-          </span>
-          <svg
-            className="govuk-pagination__icon govuk-pagination__icon--next"
-            xmlns="http://www.w3.org/2000/svg"
-            height="13"
-            width="15"
-            aria-hidden="true"
-            focusable="false"
-            viewBox="0 0 15 13"
-          >
-            <path d="m8.107-0.0078125-1.4136 1.414 4.2926 4.293h-12.986v2h12.896l-4.1855 3.9766 1.377 1.4492 6.7441-6.4062-6.7246-6.7266z"></path>
-          </svg>
-        </Link>
-      </div>
-    )}
-  </nav>
-)

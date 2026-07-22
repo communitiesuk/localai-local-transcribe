@@ -281,7 +281,7 @@ export function TranscriptionTab({
                           }
                         }
                       }}
-                      className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--govuk-link-colour)] text-white hover:bg-[var(--govuk-link-hover-colour)]"
+                      className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--govuk-link-colour)] text-white hover:bg-[var(--govuk-link-hover-colour)] focus:bg-[var(--govuk-focus-colour)] focus:text-[var(--govuk-focus-text-colour)] focus:shadow-[0_2px_0_var(--govuk-focus-text-colour)] focus:[outline:3px_solid_transparent]"
                     >
                       <Play size={14} aria-hidden="true" />
                     </button>

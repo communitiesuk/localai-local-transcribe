@@ -1,10 +1,13 @@
-import { GovukTag } from '@/components/govuk'
+import { GovukTag, type TagColour } from '@/components/govuk'
 import { JobStatus } from '@/lib/client'
 
-// Status to GovukTag colour mapping (canonical GOV.UK tag colours):
-//   Processing (awaiting_start, in_progress) -> blue
-//   Completed                                -> green
-//   Failed                                   -> red
+const STATUS_TAG: Record<JobStatus, { colour: TagColour; label: string }> = {
+  awaiting_start: { colour: 'blue', label: 'Processing' },
+  in_progress: { colour: 'blue', label: 'Processing' },
+  completed: { colour: 'green', label: 'Completed' },
+  failed: { colour: 'red', label: 'Failed' },
+}
+
 export const StatusBadge = ({
   status,
   className,
@@ -12,27 +15,11 @@ export const StatusBadge = ({
   status: JobStatus
   className?: string
 }) => {
-  if (['awaiting_start', 'in_progress'].includes(status)) {
-    return (
-      <GovukTag colour="blue" className={className}>
-        Processing
-      </GovukTag>
-    )
-  }
+  const { colour, label } = STATUS_TAG[status]
 
-  if (status === 'completed') {
-    return (
-      <GovukTag colour="green" className={className}>
-        Completed
-      </GovukTag>
-    )
-  }
-
-  if (status === 'failed') {
-    return (
-      <GovukTag colour="red" className={className}>
-        Failed
-      </GovukTag>
-    )
-  }
+  return (
+    <GovukTag colour={colour} className={className}>
+      {label}
+    </GovukTag>
+  )
 }

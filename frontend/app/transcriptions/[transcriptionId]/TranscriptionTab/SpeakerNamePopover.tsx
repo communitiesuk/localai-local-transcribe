@@ -1,14 +1,12 @@
 import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { GovukButton, GovukInput } from '@/components/govuk'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { PenIcon } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 
 export const SpeakerNamePopover = ({
   entry,
@@ -24,6 +22,7 @@ export const SpeakerNamePopover = ({
   const [open, setOpen] = useState(false)
   const [newName, setNewName] = useState(entry.speaker)
   const [isSaving, setIsSaving] = useState(false)
+  const inputId = useId()
 
   useEffect(() => {
     setNewName(entry.speaker)
@@ -61,48 +60,50 @@ export const SpeakerNamePopover = ({
   return (
     <Popover open={open} onOpenChange={(open) => setOpen(open)}>
       <PopoverTrigger asChild>
-        <div
-          className="group flex max-w-[200px] min-w-[100px] cursor-pointer items-start space-x-1"
-          onClick={() => setOpen(true)}
+        <button
+          type="button"
+          className="govuk-link max-w-[200px] min-w-[100px] cursor-pointer text-left font-bold break-words"
         >
-          <PenIcon className="mt-1 size-4 shrink-0 text-gray-400 transition-colors group-hover:text-blue-500" />
-          <span className="font-bold break-words group-hover:text-blue-500">
-            {entry.speaker}:
-          </span>
-        </div>
+          {entry.speaker}:
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-80">
         <div className="grid gap-4">
-          <div className="space-y-2">
-            <h4 className="leading-none font-medium">Edit Speaker Name</h4>
-            <p className="text-muted-foreground text-sm">
+          <div>
+            <h4 className="govuk-heading-s govuk-!-margin-bottom-1">
+              Edit speaker name
+            </h4>
+            <label
+              className="govuk-hint govuk-!-margin-bottom-2"
+              htmlFor={inputId}
+            >
               Update either this occurrence or all occurrences of &apos;
               {entry.speaker}&apos;:
-            </p>
+            </label>
           </div>
           <div className="grid gap-2">
-            <Input
+            <GovukInput
+              id={inputId}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="col-span-3"
             />
-            <div className="">
-              <Button
+            <div className="flex flex-col items-start">
+              <GovukButton
                 type="button"
+                variant="secondary"
                 onClick={handleUpdateSingle(index)}
-                variant="outline"
                 disabled={isSaving}
               >
                 Update this occurrence
-              </Button>
-              <Button
+              </GovukButton>
+              <GovukButton
                 type="button"
-                className="mt-2"
+                className="govuk-!-margin-bottom-0"
                 onClick={handleUpdateAll}
                 disabled={isSaving}
               >
                 Update all occurrences
-              </Button>
+              </GovukButton>
             </div>
           </div>
         </div>

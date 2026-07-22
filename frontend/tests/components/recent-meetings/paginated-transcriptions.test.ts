@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getPageNumbers } from '@/components/recent-meetings/paginated-transcriptions'
+import { getPageNumbers } from '@/components/govuk/pagination'
 
 describe('getPageNumbers', () => {
   it('returns first pages when current page is near start', () => {

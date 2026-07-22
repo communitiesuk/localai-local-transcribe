@@ -26,6 +26,10 @@ export function hasAnyRole(
   return userRolesList.some((role) => allowedRoles.includes(role))
 }
 
+export function conditionalPluralSuffix(count: number): string {
+  return count === 1 ? '' : 's'
+}
+
 export function parseDomains(value: string): string[] {
   return value
     .split('\n')
