@@ -1,10 +1,11 @@
 # Evals Azure Blob Storage: storage account plus input, debug, and output containers.
 #
-# SANDBOX vs ASSURED ENVIRONMENT:
+# Softwire sandbox vs assured Azure environment:
 # - Transferable: three private containers named input, debug, and output; storage account
-#   shape; remote state via azurerm backend; manual plan/apply from Cloud Shell.
-# - Must adapt: subscription_id, resource_group_name, location, storage_account_name,
-#   environment_name, and the backend block values after the assured environment exists.
+#   shape; versioning; soft delete; SAS expiry; auth defaults; remote state via azurerm
+#   backend; manual plan/apply from Cloud Shell.
+# - Must adapt: tenant, subscription_id, resource_group_name, location, storage_account_name,
+#   environment_name, and backend -backend-config values. Assured may be a different tenant.
 # - Uncertain: final naming conventions, whether containers need Azure metadata beyond
 #   names, and whether the storage account must sit in a platform-owned resource group.
 # - Out of scope for the original ticket: private endpoints, RBAC, network restrictions,
@@ -49,6 +50,7 @@ resource "azurerm_storage_account" "evals" {
     expiration_action = "Log"
   }
 
+  # Versioning and soft delete protect blobs and containers from accidental overwrite or delete.
   blob_properties {
     versioning_enabled = true
 

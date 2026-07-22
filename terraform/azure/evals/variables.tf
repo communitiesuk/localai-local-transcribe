@@ -22,12 +22,12 @@ variable "storage_account_name" {
 
 variable "environment_name" {
   type        = string
-  description = "Short environment label used in tags, for example sandbox or assured."
+  description = "Short environment label used in tags, for example Softwire sandbox or assured."
 }
 
 variable "account_replication_type" {
   type        = string
-  description = "Storage replication type. Use LRS for sandbox; set GRS or GZRS later if assured-env policy requires geo-redundancy."
+  description = "Storage replication type. Use LRS for Softwire sandbox. Set GRS or GZRS later if assured-env policy requires geo-redundancy."
   default     = "LRS"
 }
 
