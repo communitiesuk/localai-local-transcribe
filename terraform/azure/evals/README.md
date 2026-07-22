@@ -24,8 +24,6 @@ Deployment is manual. There is no pipeline for this stack yet.
 | `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally |
 
 
-
-
 ## Softwire Sandbox vs assured Azure environment
 
 
@@ -47,8 +45,6 @@ Out of scope here: private endpoints, RBAC, network restrictions, and loading da
 - An **existing** resource group you are allowed to create storage accounts in
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Two globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one for evals data
-
-
 
 ## Cloud Shell apply (Softwire sandbox)
 
@@ -73,8 +69,6 @@ cd $HOME
 git clone https://github.com/communitiesuk/localai-local-transcribe
 cd localai-local-transcribe/terraform/azure/evals
 ```
-
-
 
 ### Step 1: Bootstrap remote state
 
@@ -108,8 +102,6 @@ terraform plan
 terraform apply
 ```
 
-
-
 ### Step 3: Verify in the portal or CLI
 
 ```bash
@@ -121,12 +113,6 @@ az storage container list \
 
 You should see `input`, `debug`, and `output`.
 
-## Retargeting to the assured environment
+## Assured Azure environment
 
-Do not reuse Softwire sandbox state or `terraform.tfvars` against the assured subscription.
-
-1. **Gather assured values first** (for both stacks): subscription ID, resource group, location, two new globally unique storage account names (state + evals data), `environment_name`, and any other vars that differ from Softwire sandbox.
-2. **Bootstrap remote state in assured** (repeat Step 1): put the assured values in `backend/terraform.tfvars`, then `init` / `plan` / `apply` there. Use a new state storage account name.
-3. **Configure the evals stack**: put the assured values in `terraform/azure/evals/terraform.tfvars` (different storage account name from the state account).
-4. **Point evals at the new backend and apply**: from `terraform/azure/evals`, run `terraform init -reconfigure` with `-backend-config` values from step 2 outputs, then `plan` / `apply`.
-
+Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Use new `terraform.tfvars` values (including two new globally unique storage account names).
