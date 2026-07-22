@@ -28,16 +28,30 @@ resource "azurerm_storage_account" "terraform_state" {
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
-  account_replication_type = "LRS"
+  account_replication_type = var.account_replication_type
 
   # Harden defaults that do not require network lockdown, RBAC, or private endpoints.
   allow_nested_items_to_be_public = false
   local_user_enabled              = false
   default_to_oauth_authentication = true
 
-  # Versioning protects state from accidental overwrite or delete.
+  # Cap how long a newly created SAS token may remain valid.
+  sas_policy {
+    expiration_period = var.sas_expiration_period
+    expiration_action = "Log"
+  }
+
+  # Versioning and soft delete protect state from accidental overwrite or delete.
   blob_properties {
     versioning_enabled = true
+
+    delete_retention_policy {
+      days = var.soft_delete_retention_days
+    }
+
+    container_delete_retention_policy {
+      days = var.soft_delete_retention_days
+    }
   }
 
   tags = {
