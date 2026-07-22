@@ -244,3 +244,9 @@ variable "data_s3_bucket_name" {
   description = "name of the S3 bucket for data storage"
   type        = string
 }
+
+variable "db_vpc_security_group" {
+  description = "The security group attached to the db"
+  type        = set(string)
+}
+

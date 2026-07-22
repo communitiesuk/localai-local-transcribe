@@ -1,12 +1,12 @@
-output "database_password" {
-  description = "Randomly generated password for database"
-  value       = random_password.database_password
+output "app_user_password" {
+  description = "Randomly generated password for the created app_user"
+  value       = random_password.app_user_password
   sensitive   = true
 }
 
 output "database_password_secret_arn" {
-  description = "ARN of the Secrets Manager secret that contains the database password"
-  value       = aws_secretsmanager_secret.database_password.arn
+  description = "valueFrom reference for the app DB password, for use in the ECS task definition's block"
+  value       = "${aws_secretsmanager_secret.database_secret.arn}:password::AWSCURRENT"
 }
 
 output "secrets_kms_key_arn" {
@@ -52,4 +52,10 @@ output "azure_apim_subscription_key_arn" {
 output "sentry_dsn_arn" {
   description = "ARN of the SSM parameter containing the Sentry DSN"
   value       = aws_ssm_parameter.sentry_dsn.arn
+}
+
+output "rds_master_secret_string" {
+  description = "Secret string for the RDS master secret version"
+  value       = data.aws_secretsmanager_secret_version.rds_master.secret_string
+  sensitive = true
 }

@@ -49,7 +49,7 @@ resource "aws_iam_role_policy" "secret_access" {
         ]
         Effect = "Allow"
         Resource = [
-          aws_secretsmanager_secret.database_password.arn,
+          aws_secretsmanager_secret.database_secret.arn,
         ]
       },
       {

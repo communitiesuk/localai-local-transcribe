@@ -82,3 +82,8 @@ output "worker_log_group_name" {
   description = "CloudWatch log group name for worker ECS service logs"
   value       = module.worker_log_group.name
 }
+
+output "lambda_rotation_sg_id" {
+  description = " The ID of the security group attached to the Lambda secret-rotation function"
+  value       = aws_security_group.lambda_rotation.id
+}

@@ -7,14 +7,20 @@ variable "environment_name" {
   }
 }
 
+variable "db_name" {
+  description = "name of the database"
+  type        = string
+}
+
 variable "database_username" {
   description = "username for the database"
   type        = string
   sensitive   = true
 }
 
-variable "database_password" {
-  description = "password for the database"
+
+variable "app_user_password" {
+  description = "password for the app_user"
   type        = string
   sensitive   = true
 }

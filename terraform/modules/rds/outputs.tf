@@ -22,3 +22,17 @@ output "database_name" {
   value       = aws_db_instance.main.db_name
   description = "The name of the database"
 }
+
+output "db_master_secret_arn" {
+  description = "The ARN of the master db secret"
+  value = try(
+    aws_db_instance.main.master_user_secret[0].secret_arn,
+    null,
+  
+  )
+}
+
+output "db_vpc_security_group" {
+  value       = aws_db_instance.main.vpc_security_group_ids
+  description = "The security group attached to the db"
+}
