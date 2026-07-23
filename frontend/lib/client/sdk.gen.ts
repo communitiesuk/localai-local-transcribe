@@ -141,7 +141,8 @@ import type {
 export type Options<
   TData extends TDataShape = TDataShape,
   ThrowOnError extends boolean = boolean,
-> = Options2<TData, ThrowOnError> & {
+  TResponse = unknown,
+> = Options2<TData, ThrowOnError, TResponse> & {
   /**
    * You can provide a client instance returned by `createClient()` instead of
    * individual options. This might be also useful if you want to implement a
@@ -933,7 +934,7 @@ export const getOrganisationOrganisationsOrganisationIdGet = <
 /**
  * Update Organisation
  *
- * Update an organisation's allowed email domains. Only accessible to system admins.
+ * Update an organisation's allowed email domains. Accessible to system admins or the organisation's own admin.
  */
 export const updateOrganisationOrganisationsOrganisationIdPatch = <
   ThrowOnError extends boolean = false,

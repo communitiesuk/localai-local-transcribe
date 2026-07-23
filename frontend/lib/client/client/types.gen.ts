@@ -85,6 +85,7 @@ export interface ResolvedRequestOptions<
   ThrowOnError extends boolean = boolean,
   Url extends string = string,
 > extends RequestOptions<unknown, ThrowOnError, Url> {
+  headers: Headers
   serializedBody?: string
 }
 
@@ -112,7 +113,8 @@ export type RequestResult<
               : TError
           }
       ) & {
-        response: Response
+        /** response may be undefined due to a network error where no response object is produced */
+        response?: Response
       }
     >
 
@@ -134,7 +136,7 @@ type SseFn = <
   TError = unknown,
   ThrowOnError extends boolean = false,
 >(
-  options: Omit<RequestOptions<TData, ThrowOnError>, 'method'>
+  options: Omit<RequestOptions<never, ThrowOnError>, 'method'>
 ) => Promise<ServerSentEventsResult<TData, TError>>
 
 type RequestFn = <
@@ -177,9 +179,7 @@ export type Client = CoreClient<
  */
 export type CreateClientConfig<T extends ClientOptions = ClientOptions> = (
   override?: Config<ClientOptions & T>
-) =>
-  | Config<Required<ClientOptions> & T>
-  | Promise<Config<Required<ClientOptions> & T>>
+) => Config<Required<ClientOptions> & T>
 
 export interface TDataShape {
   body?: unknown

@@ -128,10 +128,6 @@ class GetUserResponse(BaseModel):
     organisation_id: uuid.UUID | None
 
 
-class CreateUserResponse(GetUserResponse):
-    email_sent: bool
-
-
 class PaginatedUsersResponse(BaseModel):
     items: list[GetUserResponse]
     total_count: int

@@ -1626,7 +1626,7 @@ export const getOrganisationOrganisationsOrganisationIdGetOptions = (
 /**
  * Update Organisation
  *
- * Update an organisation's allowed email domains. Only accessible to system admins.
+ * Update an organisation's allowed email domains. Accessible to system admins or the organisation's own admin.
  */
 export const updateOrganisationOrganisationsOrganisationIdPatchMutation = (
   options?: Partial<
