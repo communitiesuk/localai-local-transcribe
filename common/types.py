@@ -170,9 +170,7 @@ class MinuteListItem(BaseModel):
 class MinutesCreateRequest(BaseModel):
     template_name: str = Field(description="Name of the template to use for the minutes")
     template_id: uuid.UUID | None = Field(description="Optional id of user template")
-    agenda: str | None = Field(
-        description="The agenda for the meeting", default=None, max_length=MAX_AGENDA_LENGTH
-    )
+    agenda: str | None = Field(description="The agenda for the meeting", default=None, max_length=MAX_AGENDA_LENGTH)
 
 
 class AiEdit(BaseModel):
