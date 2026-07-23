@@ -1,7 +1,7 @@
 'use client'
 
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
-import { GovukButton, GovukFormGroup } from '@/components/govuk'
+import { GovukButton, GovukFormGroup, GovukHint } from '@/components/govuk'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
 import {
   MAX_UPLOAD_FILE_SIZE_BYTES,
@@ -32,9 +32,7 @@ export const AudioUploadForm = () => {
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <GovukFormGroup hasError={!!fileError}>
-          <p className="govuk-hint">
-            Maximum file size: {MAX_UPLOAD_FILE_SIZE_LABEL}
-          </p>
+          <GovukHint>Maximum file size: {MAX_UPLOAD_FILE_SIZE_LABEL}</GovukHint>
           {fileError && (
             <p className="govuk-error-message" role="alert">
               <span className="govuk-visually-hidden">Error:</span> {fileError}
@@ -58,29 +56,38 @@ export const AudioUploadForm = () => {
                 }}
                 maxSize={MAX_UPLOAD_FILE_SIZE_BYTES}
                 multiple={false}
+                noClick
+                noKeyboard
               >
-                {({ getRootProps, getInputProps }) => (
+                {({ getRootProps, getInputProps, open }) => (
                   <div
                     {...getRootProps()}
                     className={cn(
-                      'govuk-!-margin-bottom-4 cursor-pointer border-2 border-[var(--govuk-border-colour)] p-6',
+                      'govuk-!-margin-bottom-4 border-2 border-[var(--govuk-border-colour)] p-6',
                       file instanceof File
-                        ? 'border-solid bg-[#f3f2f1]'
+                        ? 'border-solid bg-[var(--app-light-grey)]'
                         : 'border-dashed'
                     )}
                   >
                     <div
                       className={cn(
                         'govuk-body govuk-!-margin-bottom-3 px-4 py-3',
-                        file instanceof File ? 'bg-white' : 'bg-[#bbd4ea]'
+                        file instanceof File
+                          ? 'bg-white'
+                          : 'bg-[var(--app-dropzone-highlight)]'
                       )}
                     >
                       {file instanceof File ? file.name : 'No file chosen'}
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="govuk-button govuk-button--secondary govuk-!-margin-bottom-0">
+                      <GovukButton
+                        type="button"
+                        variant="secondary"
+                        className="govuk-!-margin-bottom-0"
+                        onClick={open}
+                      >
                         Choose file
-                      </span>
+                      </GovukButton>
                       <span className="govuk-body govuk-!-margin-bottom-0">
                         or drop file
                       </span>

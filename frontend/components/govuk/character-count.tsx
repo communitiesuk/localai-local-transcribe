@@ -1,44 +1,39 @@
 'use client'
 
+import { GovukHint } from '@/components/govuk/hint'
 import { cn } from '@/lib/utils'
 import React, { useEffect, useRef } from 'react'
 
 type Props = {
-  /**
-   * Id of the textarea this count belongs to. govuk-frontend looks for a
-   * message element with the id `${id}-info`, so the textarea must also list
-   * `${id}-info` in its aria-describedby.
-   */
+  /** Textarea id. Its aria-describedby must include `${id}-info`. */
   id: string
-  /** Maximum number of characters allowed. */
   maxLength: number
+  hasError?: boolean
   className?: string
-  /** The form group containing the label, hint and textarea. */
+  /** Label, hint and textarea. The textarea needs `govuk-js-character-count`. */
   children: React.ReactNode
-}
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'children' | 'id'>
 
-/**
- * GOV.UK Character count. Wraps a form group whose textarea carries the
- * `govuk-js-character-count` class, and renders the count message that
- * govuk-frontend turns into a live "You have X characters remaining" region.
- *
- * The count does not stop the user typing past the limit, which is the
- * canonical GOV.UK behaviour; it turns red and the form rejects on submit.
- */
+// Renders the form group itself, as GDS puts both classes on one element.
 export function GovukCharacterCount({
   id,
   maxLength,
+  hasError,
   className,
   children,
+  ...rest
 }: Props) {
-  const wrappedRef = useRef<HTMLDivElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
     import('govuk-frontend')
-      .then(({ initAll }) => {
-        if (!cancelled && wrappedRef.current) {
-          initAll(wrappedRef.current)
+      .then(({ CharacterCount }) => {
+        if (cancelled || !rootRef.current) return
+        try {
+          new CharacterCount(rootRef.current)
+        } catch {
+          // Already initialised, e.g. the double effect run in React strict mode.
         }
       })
       .catch((error) => {
@@ -50,20 +45,21 @@ export function GovukCharacterCount({
   }, [])
 
   return (
-    <div ref={wrappedRef}>
-      <div
-        className={cn('govuk-character-count', className)}
-        data-module="govuk-character-count"
-        data-maxlength={maxLength}
-      >
-        {children}
-        <div
-          id={`${id}-info`}
-          className="govuk-hint govuk-character-count__message"
-        >
-          You can enter up to {maxLength} characters
-        </div>
-      </div>
+    <div
+      {...rest}
+      ref={rootRef}
+      className={cn(
+        'govuk-form-group govuk-character-count',
+        hasError && 'govuk-form-group--error',
+        className
+      )}
+      data-module="govuk-character-count"
+      data-maxlength={maxLength}
+    >
+      {children}
+      <GovukHint id={`${id}-info`} className="govuk-character-count__message">
+        You can enter up to {maxLength} characters
+      </GovukHint>
     </div>
   )
 }

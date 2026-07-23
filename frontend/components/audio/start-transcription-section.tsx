@@ -3,7 +3,7 @@ import { TemplateSelect } from '@/components/template-select/template-select'
 import {
   GovukButton,
   GovukCharacterCount,
-  GovukFormGroup,
+  GovukHeading,
   GovukHint,
   GovukLabel,
   GovukTextarea,
@@ -29,7 +29,9 @@ export const StartTranscriptionSection = ({
   }
   return (
     <div className="govuk-!-margin-top-4">
-      <h2 className="govuk-heading-m">Choose a template</h2>
+      <GovukHeading as="h2" size="m">
+        Choose a template
+      </GovukHeading>
       <GovukHint className="govuk-!-margin-bottom-4">
         Choose a template style for your meeting summary
       </GovukHint>
@@ -44,44 +46,43 @@ export const StartTranscriptionSection = ({
         <GovukCharacterCount
           id="agenda"
           maxLength={MAX_AGENDA_LENGTH}
+          hasError={!!agendaError}
           className="govuk-!-margin-top-4"
         >
-          <GovukFormGroup hasError={!!agendaError}>
-            <GovukLabel htmlFor="agenda">
-              Agenda (
-              {selectedTemplate?.agenda_usage == 'optional'
-                ? 'optional'
-                : 'required'}
-              )
-            </GovukLabel>
-            <GovukHint id="agenda-hint">
-              Add discussion points from the meeting that should be included in
-              the summary.
-            </GovukHint>
-            {agendaError && (
-              <p id="agenda-error" className="govuk-error-message">
-                <span className="govuk-visually-hidden">Error:</span>{' '}
-                {agendaError.message}
-              </p>
+          <GovukLabel htmlFor="agenda">
+            Agenda (
+            {selectedTemplate?.agenda_usage == 'optional'
+              ? 'optional'
+              : 'required'}
+            )
+          </GovukLabel>
+          <GovukHint id="agenda-hint">
+            Add discussion points from the meeting that should be included in
+            the summary.
+          </GovukHint>
+          {agendaError && (
+            <p id="agenda-error" className="govuk-error-message">
+              <span className="govuk-visually-hidden">Error:</span>{' '}
+              {agendaError.message}
+            </p>
+          )}
+          <GovukTextarea
+            id="agenda"
+            className="govuk-js-character-count"
+            rows={5}
+            aria-invalid={!!agendaError}
+            aria-describedby={cn(
+              'agenda-info agenda-hint',
+              agendaError && 'agenda-error'
             )}
-            <GovukTextarea
-              id="agenda"
-              className="govuk-js-character-count"
-              rows={5}
-              aria-invalid={!!agendaError}
-              aria-describedby={cn(
-                'agenda-info agenda-hint',
-                agendaError && 'agenda-error'
-              )}
-              {...form.register('agenda', {
-                required: selectedTemplate?.agenda_usage == 'required',
-                maxLength: {
-                  value: MAX_AGENDA_LENGTH,
-                  message: `Agenda must be ${MAX_AGENDA_LENGTH} characters or less`,
-                },
-              })}
-            />
-          </GovukFormGroup>
+            {...form.register('agenda', {
+              required: selectedTemplate?.agenda_usage == 'required',
+              maxLength: {
+                value: MAX_AGENDA_LENGTH,
+                message: `Agenda must be ${MAX_AGENDA_LENGTH} characters or less`,
+              },
+            })}
+          />
         </GovukCharacterCount>
       )}
       <GovukButton
