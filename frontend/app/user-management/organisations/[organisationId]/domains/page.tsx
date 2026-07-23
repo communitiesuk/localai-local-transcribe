@@ -53,7 +53,6 @@ export default function EditApprovedDomainsPage(props: {
           path: { organisation_id: variables.organisationId },
           body: {
             allowed_domains: variables.allowedDomains,
-            updated_datetime: variables.updatedDatetime,
           },
           throwOnError: false,
         })
