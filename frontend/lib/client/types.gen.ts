@@ -243,7 +243,10 @@ export type HttpValidationError = {
  * JobStatus
  */
 export type JobStatus =
-  'awaiting_start' | 'in_progress' | 'completed' | 'failed'
+  | 'awaiting_start'
+  | 'in_progress'
+  | 'completed'
+  | 'failed'
 
 /**
  * Minute
@@ -448,10 +451,6 @@ export type OrganisationPatchRequest = {
    * Allowed Domains
    */
   allowed_domains: Array<string>
-  /**
-   * Updated Datetime
-   */
-  updated_datetime: string
 }
 
 /**
@@ -778,13 +777,9 @@ export type TranscriptionMetadata = {
  */
 export type UpdateDialogueEntrySpeakerRequest = {
   /**
-   * New Text
+   * New Speaker
    */
   new_speaker: string
-  /**
-   * Expected Text
-   */
-  expected_text?: string | null
   /**
    * Expected Speaker
    */
@@ -867,7 +862,9 @@ export type UserExistsResponse = {
  * UserRole
  */
 export type UserRole =
-  'standard_user' | 'local_authority_admin' | 'mhclg_support_admin'
+  | 'standard_user'
+  | 'local_authority_admin'
+  | 'mhclg_support_admin'
 
 /**
  * UserUpdateRoles
