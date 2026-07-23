@@ -40,11 +40,12 @@ import {
   getUserUsersMeGet,
   healthcheckHealthcheckGet,
   listChatTranscriptionsTranscriptionIdChatGet,
+  listLabelledTranscriptionsTranscriptionsLabelledGet,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGet,
   listMinuteVersionsMinutesMinuteIdVersionsGet,
   listOrganisationsOrganisationsGet,
   listOrganisationsUsersOrganisationsOrganisationIdUsersGet,
-  listTranscriptionsTranscriptionsGet,
+  listUnlabelledTranscriptionsTranscriptionsUnlabelledGet,
   listUsersUsersGet,
   type Options,
   renameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatch,
@@ -140,6 +141,9 @@ import type {
   ListChatTranscriptionsTranscriptionIdChatGetData,
   ListChatTranscriptionsTranscriptionIdChatGetError,
   ListChatTranscriptionsTranscriptionIdChatGetResponse,
+  ListLabelledTranscriptionsTranscriptionsLabelledGetData,
+  ListLabelledTranscriptionsTranscriptionsLabelledGetError,
+  ListLabelledTranscriptionsTranscriptionsLabelledGetResponse,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetError,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetResponse,
@@ -152,9 +156,9 @@ import type {
   ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData,
   ListOrganisationsUsersOrganisationsOrganisationIdUsersGetError,
   ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse,
-  ListTranscriptionsTranscriptionsGetData,
-  ListTranscriptionsTranscriptionsGetError,
-  ListTranscriptionsTranscriptionsGetResponse,
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetData,
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetError,
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponse,
   ListUsersUsersGetData,
   ListUsersUsersGetError,
   ListUsersUsersGetResponse,
@@ -253,34 +257,39 @@ export const healthcheckHealthcheckGetOptions = (
     queryKey: healthcheckHealthcheckGetQueryKey(options),
   })
 
-export const listTranscriptionsTranscriptionsGetQueryKey = (
-  options?: Options<ListTranscriptionsTranscriptionsGetData>
-) => createQueryKey('listTranscriptionsTranscriptionsGet', options)
+export const listLabelledTranscriptionsTranscriptionsLabelledGetQueryKey = (
+  options?: Options<ListLabelledTranscriptionsTranscriptionsLabelledGetData>
+) =>
+  createQueryKey('listLabelledTranscriptionsTranscriptionsLabelledGet', options)
 
 /**
- * List Transcriptions
+ * List Labelled Transcriptions
  *
- * Get paginated metadata for transcriptions for the current user.
+ * Get paginated metadata for labelled transcriptions for the current user.
  */
-export const listTranscriptionsTranscriptionsGetOptions = (
-  options?: Options<ListTranscriptionsTranscriptionsGetData>
+export const listLabelledTranscriptionsTranscriptionsLabelledGetOptions = (
+  options?: Options<ListLabelledTranscriptionsTranscriptionsLabelledGetData>
 ) =>
   queryOptions<
-    ListTranscriptionsTranscriptionsGetResponse,
-    ListTranscriptionsTranscriptionsGetError,
-    ListTranscriptionsTranscriptionsGetResponse,
-    ReturnType<typeof listTranscriptionsTranscriptionsGetQueryKey>
+    ListLabelledTranscriptionsTranscriptionsLabelledGetResponse,
+    ListLabelledTranscriptionsTranscriptionsLabelledGetError,
+    ListLabelledTranscriptionsTranscriptionsLabelledGetResponse,
+    ReturnType<
+      typeof listLabelledTranscriptionsTranscriptionsLabelledGetQueryKey
+    >
   >({
     queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listTranscriptionsTranscriptionsGet({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      })
+      const { data } =
+        await listLabelledTranscriptionsTranscriptionsLabelledGet({
+          ...options,
+          ...queryKey[0],
+          signal,
+          throwOnError: true,
+        })
       return data
     },
-    queryKey: listTranscriptionsTranscriptionsGetQueryKey(options),
+    queryKey:
+      listLabelledTranscriptionsTranscriptionsLabelledGetQueryKey(options),
   })
 
 const createInfiniteParams = <
@@ -317,58 +326,141 @@ const createInfiniteParams = <
   return params as unknown as typeof page
 }
 
-export const listTranscriptionsTranscriptionsGetInfiniteQueryKey = (
-  options?: Options<ListTranscriptionsTranscriptionsGetData>
-): QueryKey<Options<ListTranscriptionsTranscriptionsGetData>> =>
-  createQueryKey('listTranscriptionsTranscriptionsGet', options, true)
+export const listLabelledTranscriptionsTranscriptionsLabelledGetInfiniteQueryKey =
+  (
+    options?: Options<ListLabelledTranscriptionsTranscriptionsLabelledGetData>
+  ): QueryKey<
+    Options<ListLabelledTranscriptionsTranscriptionsLabelledGetData>
+  > =>
+    createQueryKey(
+      'listLabelledTranscriptionsTranscriptionsLabelledGet',
+      options,
+      true
+    )
 
 /**
- * List Transcriptions
+ * List Labelled Transcriptions
  *
- * Get paginated metadata for transcriptions for the current user.
+ * Get paginated metadata for labelled transcriptions for the current user.
  */
-export const listTranscriptionsTranscriptionsGetInfiniteOptions = (
-  options?: Options<ListTranscriptionsTranscriptionsGetData>
-) => {
-  const opts = infiniteQueryOptions<
-    ListTranscriptionsTranscriptionsGetResponse,
-    ListTranscriptionsTranscriptionsGetError,
-    InfiniteData<ListTranscriptionsTranscriptionsGetResponse>,
-    QueryKey<Options<ListTranscriptionsTranscriptionsGetData>>,
-    | number
-    | Pick<
-        QueryKey<Options<ListTranscriptionsTranscriptionsGetData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      >
-  >(
-    // @ts-ignore
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        // @ts-ignore
-        const page: Pick<
-          QueryKey<Options<ListTranscriptionsTranscriptionsGetData>>[0],
+export const listLabelledTranscriptionsTranscriptionsLabelledGetInfiniteOptions =
+  (
+    options?: Options<ListLabelledTranscriptionsTranscriptionsLabelledGetData>
+  ) => {
+    const opts = infiniteQueryOptions<
+      ListLabelledTranscriptionsTranscriptionsLabelledGetResponse,
+      ListLabelledTranscriptionsTranscriptionsLabelledGetError,
+      InfiniteData<ListLabelledTranscriptionsTranscriptionsLabelledGetResponse>,
+      QueryKey<
+        Options<ListLabelledTranscriptionsTranscriptionsLabelledGetData>
+      >,
+      | number
+      | Pick<
+          QueryKey<
+            Options<ListLabelledTranscriptionsTranscriptionsLabelledGetData>
+          >[0],
           'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  page: pageParam,
-                },
-              }
-        const params = createInfiniteParams(queryKey, page)
-        const { data } = await listTranscriptionsTranscriptionsGet({
+        >
+    >(
+      // @ts-ignore
+      {
+        queryFn: async ({ pageParam, queryKey, signal }) => {
+          // @ts-ignore
+          const page: Pick<
+            QueryKey<
+              Options<ListLabelledTranscriptionsTranscriptionsLabelledGetData>
+            >[0],
+            'body' | 'headers' | 'path' | 'query'
+          > =
+            typeof pageParam === 'object'
+              ? pageParam
+              : {
+                  query: {
+                    page: pageParam,
+                  },
+                }
+          const params = createInfiniteParams(queryKey, page)
+          const { data } =
+            await listLabelledTranscriptionsTranscriptionsLabelledGet({
+              ...options,
+              ...params,
+              signal,
+              throwOnError: true,
+            })
+          return data
+        },
+        queryKey:
+          listLabelledTranscriptionsTranscriptionsLabelledGetInfiniteQueryKey(
+            options
+          ),
+      }
+    )
+    return opts as Omit<typeof opts, 'initialData'>
+  }
+
+export const listUnlabelledTranscriptionsTranscriptionsUnlabelledGetQueryKey = (
+  options?: Options<ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetData>
+) =>
+  createQueryKey(
+    'listUnlabelledTranscriptionsTranscriptionsUnlabelledGet',
+    options
+  )
+
+/**
+ * List Unlabelled Transcriptions
+ *
+ * Get metadata for unlabelled transcriptions for the current user.
+ */
+export const listUnlabelledTranscriptionsTranscriptionsUnlabelledGetOptions = (
+  options?: Options<ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetData>
+) =>
+  queryOptions<
+    ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponse,
+    ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetError,
+    ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponse,
+    ReturnType<
+      typeof listUnlabelledTranscriptionsTranscriptionsUnlabelledGetQueryKey
+    >
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } =
+        await listUnlabelledTranscriptionsTranscriptionsUnlabelledGet({
           ...options,
-          ...params,
+          ...queryKey[0],
           signal,
           throwOnError: true,
         })
-        return data
-      },
-      queryKey: listTranscriptionsTranscriptionsGetInfiniteQueryKey(options),
-    }
-  )
-  return opts as Omit<typeof opts, 'initialData'>
+      return data
+    },
+    queryKey:
+      listUnlabelledTranscriptionsTranscriptionsUnlabelledGetQueryKey(options),
+  })
+
+/**
+ * Create Recording
+ */
+export const createRecordingRecordingsPostMutation = (
+  options?: Partial<Options<CreateRecordingRecordingsPostData>>
+): UseMutationOptions<
+  CreateRecordingRecordingsPostResponse,
+  CreateRecordingRecordingsPostError,
+  Options<CreateRecordingRecordingsPostData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateRecordingRecordingsPostResponse,
+    CreateRecordingRecordingsPostError,
+    Options<CreateRecordingRecordingsPostData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createRecordingRecordingsPost({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      })
+      return data
+    },
+  }
+  return mutationOptions
 }
 
 /**
@@ -390,33 +482,6 @@ export const createTranscriptionTranscriptionsPostMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await createTranscriptionTranscriptionsPost({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      })
-      return data
-    },
-  }
-  return mutationOptions
-}
-
-/**
- * Create Recording
- */
-export const createRecordingRecordingsPostMutation = (
-  options?: Partial<Options<CreateRecordingRecordingsPostData>>
-): UseMutationOptions<
-  CreateRecordingRecordingsPostResponse,
-  CreateRecordingRecordingsPostError,
-  Options<CreateRecordingRecordingsPostData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateRecordingRecordingsPostResponse,
-    CreateRecordingRecordingsPostError,
-    Options<CreateRecordingRecordingsPostData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await createRecordingRecordingsPost({
         ...options,
         ...fnOptions,
         throwOnError: true,

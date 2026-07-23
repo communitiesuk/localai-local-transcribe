@@ -249,6 +249,75 @@ export type JobStatus =
   | 'failed'
 
 /**
+ * LabelledTranscriptionMetadata
+ *
+ * Pydantic model for labelled transcription metadata.
+ */
+export type LabelledTranscriptionMetadata = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created Datetime
+   */
+  created_datetime: string
+  /**
+   * Title
+   */
+  title?: string | null
+  /**
+   * Text
+   */
+  text: string
+  status: JobStatus
+  /**
+   * Date Of Recording
+   */
+  date_of_recording: string
+  /**
+   * Client Date Of Birth
+   */
+  client_date_of_birth?: string | null
+  /**
+   * Client Name
+   */
+  client_name?: string | null
+  /**
+   * Case Id
+   */
+  case_id?: string | null
+}
+
+/**
+ * LabelledTranscriptionsResponse
+ *
+ * Response for labelled transcriptions.
+ */
+export type LabelledTranscriptionsResponse = {
+  /**
+   * Items
+   */
+  items: Array<LabelledTranscriptionMetadata>
+  /**
+   * Total Count
+   */
+  total_count: number
+  /**
+   * Page
+   */
+  page: number
+  /**
+   * Page Size
+   */
+  page_size: number
+  /**
+   * Total Pages
+   */
+  total_pages: number
+}
+
+/**
  * Minute
  */
 export type Minute = {
@@ -477,34 +546,6 @@ export type OrganisationResponse = {
    * Updated Datetime
    */
   updated_datetime: string
-}
-
-/**
- * PaginatedTranscriptionsResponse
- *
- * Paginated response for transcriptions.
- */
-export type PaginatedTranscriptionsResponse = {
-  /**
-   * Items
-   */
-  items: Array<TranscriptionMetadata>
-  /**
-   * Total Count
-   */
-  total_count: number
-  /**
-   * Page
-   */
-  page: number
-  /**
-   * Page Size
-   */
-  page_size: number
-  /**
-   * Total Pages
-   */
-  total_pages: number
 }
 
 /**
@@ -748,11 +789,11 @@ export type TranscriptionGetResponse = {
 }
 
 /**
- * TranscriptionMetadata
+ * UnlabelledTranscriptionMetadata
  *
- * Pydantic model for transcription metadata.
+ * Pydantic model for unlabelled transcription metadata.
  */
-export type TranscriptionMetadata = {
+export type UnlabelledTranscriptionMetadata = {
   /**
    * Id
    */
@@ -770,6 +811,22 @@ export type TranscriptionMetadata = {
    */
   text: string
   status: JobStatus
+}
+
+/**
+ * UnlabelledTranscriptionsResponse
+ *
+ * Response for unlabelled transcriptions.
+ */
+export type UnlabelledTranscriptionsResponse = {
+  /**
+   * Items
+   */
+  items: Array<UnlabelledTranscriptionMetadata>
+  /**
+   * Total Count
+   */
+  total_count: number
 }
 
 /**
@@ -918,7 +975,7 @@ export type HealthcheckHealthcheckGetResponses = {
   200: unknown
 }
 
-export type ListTranscriptionsTranscriptionsGetData = {
+export type ListLabelledTranscriptionsTranscriptionsLabelledGetData = {
   body?: never
   headers?: {
     /**
@@ -941,31 +998,31 @@ export type ListTranscriptionsTranscriptionsGetData = {
      */
     page_size?: number
   }
-  url: '/transcriptions'
+  url: '/transcriptions/labelled'
 }
 
-export type ListTranscriptionsTranscriptionsGetErrors = {
+export type ListLabelledTranscriptionsTranscriptionsLabelledGetErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError
 }
 
-export type ListTranscriptionsTranscriptionsGetError =
-  ListTranscriptionsTranscriptionsGetErrors[keyof ListTranscriptionsTranscriptionsGetErrors]
+export type ListLabelledTranscriptionsTranscriptionsLabelledGetError =
+  ListLabelledTranscriptionsTranscriptionsLabelledGetErrors[keyof ListLabelledTranscriptionsTranscriptionsLabelledGetErrors]
 
-export type ListTranscriptionsTranscriptionsGetResponses = {
+export type ListLabelledTranscriptionsTranscriptionsLabelledGetResponses = {
   /**
    * Successful Response
    */
-  200: PaginatedTranscriptionsResponse
+  200: LabelledTranscriptionsResponse
 }
 
-export type ListTranscriptionsTranscriptionsGetResponse =
-  ListTranscriptionsTranscriptionsGetResponses[keyof ListTranscriptionsTranscriptionsGetResponses]
+export type ListLabelledTranscriptionsTranscriptionsLabelledGetResponse =
+  ListLabelledTranscriptionsTranscriptionsLabelledGetResponses[keyof ListLabelledTranscriptionsTranscriptionsLabelledGetResponses]
 
-export type CreateTranscriptionTranscriptionsPostData = {
-  body: TranscriptionCreateRequest
+export type ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetData = {
+  body?: never
   headers?: {
     /**
      * X-Amzn-Oidc-Data
@@ -974,28 +1031,28 @@ export type CreateTranscriptionTranscriptionsPostData = {
   }
   path?: never
   query?: never
-  url: '/transcriptions'
+  url: '/transcriptions/unlabelled'
 }
 
-export type CreateTranscriptionTranscriptionsPostErrors = {
+export type ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError
 }
 
-export type CreateTranscriptionTranscriptionsPostError =
-  CreateTranscriptionTranscriptionsPostErrors[keyof CreateTranscriptionTranscriptionsPostErrors]
+export type ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetError =
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetErrors[keyof ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetErrors]
 
-export type CreateTranscriptionTranscriptionsPostResponses = {
+export type ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponses = {
   /**
    * Successful Response
    */
-  201: TranscriptionCreateResponse
+  200: UnlabelledTranscriptionsResponse
 }
 
-export type CreateTranscriptionTranscriptionsPostResponse =
-  CreateTranscriptionTranscriptionsPostResponses[keyof CreateTranscriptionTranscriptionsPostResponses]
+export type ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponse =
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponses[keyof ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponses]
 
 export type CreateRecordingRecordingsPostData = {
   body: RecordingCreateRequest
@@ -1029,6 +1086,39 @@ export type CreateRecordingRecordingsPostResponses = {
 
 export type CreateRecordingRecordingsPostResponse =
   CreateRecordingRecordingsPostResponses[keyof CreateRecordingRecordingsPostResponses]
+
+export type CreateTranscriptionTranscriptionsPostData = {
+  body: TranscriptionCreateRequest
+  headers?: {
+    /**
+     * X-Amzn-Oidc-Data
+     */
+    'x-amzn-oidc-data'?: string | null
+  }
+  path?: never
+  query?: never
+  url: '/transcriptions'
+}
+
+export type CreateTranscriptionTranscriptionsPostErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError
+}
+
+export type CreateTranscriptionTranscriptionsPostError =
+  CreateTranscriptionTranscriptionsPostErrors[keyof CreateTranscriptionTranscriptionsPostErrors]
+
+export type CreateTranscriptionTranscriptionsPostResponses = {
+  /**
+   * Successful Response
+   */
+  201: TranscriptionCreateResponse
+}
+
+export type CreateTranscriptionTranscriptionsPostResponse =
+  CreateTranscriptionTranscriptionsPostResponses[keyof CreateTranscriptionTranscriptionsPostResponses]
 
 export type DeleteTranscriptionTranscriptionsTranscriptionIdDeleteData = {
   body?: never

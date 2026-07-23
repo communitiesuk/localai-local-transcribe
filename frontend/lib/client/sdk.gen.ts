@@ -98,6 +98,9 @@ import type {
   ListChatTranscriptionsTranscriptionIdChatGetData,
   ListChatTranscriptionsTranscriptionIdChatGetErrors,
   ListChatTranscriptionsTranscriptionIdChatGetResponses,
+  ListLabelledTranscriptionsTranscriptionsLabelledGetData,
+  ListLabelledTranscriptionsTranscriptionsLabelledGetErrors,
+  ListLabelledTranscriptionsTranscriptionsLabelledGetResponses,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetData,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetErrors,
   ListMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetResponses,
@@ -110,9 +113,9 @@ import type {
   ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData,
   ListOrganisationsUsersOrganisationsOrganisationIdUsersGetErrors,
   ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponses,
-  ListTranscriptionsTranscriptionsGetData,
-  ListTranscriptionsTranscriptionsGetErrors,
-  ListTranscriptionsTranscriptionsGetResponses,
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetData,
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetErrors,
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponses,
   ListUsersUsersGetData,
   ListUsersUsersGetErrors,
   ListUsersUsersGetResponses,
@@ -175,24 +178,75 @@ export const healthcheckHealthcheckGet = <ThrowOnError extends boolean = false>(
   >({ url: '/healthcheck', ...options })
 
 /**
- * List Transcriptions
+ * List Labelled Transcriptions
  *
- * Get paginated metadata for transcriptions for the current user.
+ * Get paginated metadata for labelled transcriptions for the current user.
  */
-export const listTranscriptionsTranscriptionsGet = <
+export const listLabelledTranscriptionsTranscriptionsLabelledGet = <
   ThrowOnError extends boolean = false,
 >(
-  options?: Options<ListTranscriptionsTranscriptionsGetData, ThrowOnError>
+  options?: Options<
+    ListLabelledTranscriptionsTranscriptionsLabelledGetData,
+    ThrowOnError
+  >
 ): RequestResult<
-  ListTranscriptionsTranscriptionsGetResponses,
-  ListTranscriptionsTranscriptionsGetErrors,
+  ListLabelledTranscriptionsTranscriptionsLabelledGetResponses,
+  ListLabelledTranscriptionsTranscriptionsLabelledGetErrors,
   ThrowOnError
 > =>
   (options?.client ?? client).get<
-    ListTranscriptionsTranscriptionsGetResponses,
-    ListTranscriptionsTranscriptionsGetErrors,
+    ListLabelledTranscriptionsTranscriptionsLabelledGetResponses,
+    ListLabelledTranscriptionsTranscriptionsLabelledGetErrors,
     ThrowOnError
-  >({ url: '/transcriptions', ...options })
+  >({ url: '/transcriptions/labelled', ...options })
+
+/**
+ * List Unlabelled Transcriptions
+ *
+ * Get metadata for unlabelled transcriptions for the current user.
+ */
+export const listUnlabelledTranscriptionsTranscriptionsUnlabelledGet = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<
+    ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetData,
+    ThrowOnError
+  >
+): RequestResult<
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponses,
+  ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetResponses,
+    ListUnlabelledTranscriptionsTranscriptionsUnlabelledGetErrors,
+    ThrowOnError
+  >({ url: '/transcriptions/unlabelled', ...options })
+
+/**
+ * Create Recording
+ */
+export const createRecordingRecordingsPost = <
+  ThrowOnError extends boolean = false,
+>(
+  options: Options<CreateRecordingRecordingsPostData, ThrowOnError>
+): RequestResult<
+  CreateRecordingRecordingsPostResponses,
+  CreateRecordingRecordingsPostErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateRecordingRecordingsPostResponses,
+    CreateRecordingRecordingsPostErrors,
+    ThrowOnError
+  >({
+    url: '/recordings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  })
 
 /**
  * Create Transcription
@@ -214,31 +268,6 @@ export const createTranscriptionTranscriptionsPost = <
     ThrowOnError
   >({
     url: '/transcriptions',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  })
-
-/**
- * Create Recording
- */
-export const createRecordingRecordingsPost = <
-  ThrowOnError extends boolean = false,
->(
-  options: Options<CreateRecordingRecordingsPostData, ThrowOnError>
-): RequestResult<
-  CreateRecordingRecordingsPostResponses,
-  CreateRecordingRecordingsPostErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).post<
-    CreateRecordingRecordingsPostResponses,
-    CreateRecordingRecordingsPostErrors,
-    ThrowOnError
-  >({
-    url: '/recordings',
     ...options,
     headers: {
       'Content-Type': 'application/json',
