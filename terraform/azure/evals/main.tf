@@ -47,7 +47,7 @@ resource "azurerm_storage_account" "evals" {
   # Cap how long a newly created SAS token may remain valid.
   sas_policy {
     expiration_period = var.sas_expiration_period
-    expiration_action = "Log"
+    expiration_action = "Block"
   }
 
   # Versioning and soft delete protect blobs and containers from accidental overwrite or delete.
