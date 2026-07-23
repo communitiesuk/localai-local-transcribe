@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
@@ -182,6 +182,28 @@ def mock_minute_version(mock_minute) -> MinuteVersion:
 
 @pytest.fixture
 def mock_transcription(mock_minute, mock_user) -> Transcription:
+    return Transcription(
+        id=uuid4(),
+        user_id=mock_user.id,
+        audio_url="https://example.com/audio.mp3",
+        status=JobStatus.COMPLETED,
+        created_datetime=datetime.now(tz=UTC),
+        updated_datetime=datetime.now(tz=UTC),
+        minutes=[mock_minute],
+        title="Test Transcription",
+        dialogue_entries=[
+            {"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0},
+            {"speaker": "Bob", "text": "Hi there", "start_time": 1.0, "end_time": 2.0},
+        ],
+        date_of_recording=datetime.now(tz=UTC),
+        client_date_of_birth=datetime.now(tz=UTC) - timedelta(weeks=2_000),
+        client_name="Alice",
+        case_id="ABC123456",
+    )
+
+
+@pytest.fixture
+def mock_unlabelled_transcription(mock_minute, mock_user) -> Transcription:
     return Transcription(
         id=uuid4(),
         user_id=mock_user.id,

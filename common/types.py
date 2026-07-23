@@ -15,8 +15,32 @@ from common.database.postgres_models import (
 )
 
 
-class TranscriptionMetadata(BaseModel):
-    """Pydantic model for transcription metadata."""
+class LabelledTranscriptionMetadata(BaseModel):
+    """Pydantic model for labelled transcription metadata."""
+
+    id: uuid.UUID
+    created_datetime: datetime
+    title: str | None = None
+    text: str
+    status: JobStatus
+    date_of_recording: datetime | None = None
+    client_date_of_birth: datetime | None = None
+    client_name: str | None = None
+    case_id: str | None = None
+
+
+class LabelledTranscriptionsResponse(BaseModel):
+    """Response for labelled transcriptions."""
+
+    items: list[LabelledTranscriptionMetadata]
+    total_count: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class UnlabelledTranscriptionMetadata(BaseModel):
+    """Pydantic model for unlabelled transcription metadata."""
 
     id: uuid.UUID
     created_datetime: datetime
@@ -25,14 +49,11 @@ class TranscriptionMetadata(BaseModel):
     status: JobStatus
 
 
-class PaginatedTranscriptionsResponse(BaseModel):
-    """Paginated response for transcriptions."""
+class UnlabelledTranscriptionsResponse(BaseModel):
+    """Response for unlabelled transcriptions."""
 
-    items: list[TranscriptionMetadata]
+    items: list[UnlabelledTranscriptionMetadata]
     total_count: int
-    page: int
-    page_size: int
-    total_pages: int
 
 
 class TranscriptionCreateRequest(BaseModel):
