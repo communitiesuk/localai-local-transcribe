@@ -23,12 +23,13 @@ variable "force_destroy" {
 variable "noncurrent_version_expiration_days" {
   type        = number
   description = "Set to null to skip creating a bucket lifecycle configuration"
-  default     = 180
+  default     = 365
 }
 
 variable "access_s3_log_expiration_days" {
   type        = number
   description = "The number of days to retain s3 access logs"
+  default     = 365
 }
 
 variable "policy" {
@@ -41,4 +42,10 @@ variable "object_lock_enabled" {
   description = "Whether the bucket is configured to allow AWS Object Lock"
   type        = bool
   default     = false
+}
+
+variable "abort_incomplete_multipart_upload_days" {
+  type        = number
+  description = "Days after initiation to abort incomplete multipart uploads."
+  default     = 7
 }

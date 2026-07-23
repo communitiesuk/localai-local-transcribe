@@ -16,8 +16,7 @@ WORKDIR /app
 # Install Poetry
 RUN pip install --no-cache-dir poetry==2.4.1 poetry-plugin-export==1.9.0
 
-COPY pyproject.toml poetry.lock README.md ./
-
+COPY pyproject.toml README.md ./
 
 RUN poetry export \
       -f requirements.txt \
@@ -29,18 +28,19 @@ RUN poetry export \
 RUN pip install --no-cache-dir \
       --target=/opt/site-packages \
       -r requirements.txt
-COPY common/ common/
-COPY worker/ worker/
-COPY backend/__init__.py backend/__init__.py
 
-# Add code to site-packages so imports work cleanly
-RUN cp -a common /opt/site-packages/common && \
-    cp -a worker /opt/site-packages/worker && \
-    cp -a backend /opt/site-packages/backend
-
-# Clean unnecessary files to reduce size (safe version)
-RUN find /opt/site-packages -type d -name "__pycache__" -prune -exec rm -rf {} + && \
-    find /opt/site-packages -type d -name "tests" -prune -exec rm -rf {} +
+# -------------------------------------------------------------
+# Clean unnecessary files directly in Stage 1 to keep Stage 2 light
+# -------------------------------------------------------------
+# 1. Strip debug symbols from compiled Python extensions (.so files)
+RUN find /opt/site-packages -name "*.so" -exec strip --strip-unneeded {} + && \
+# 2. Delete pip, setuptools, and wheel
+    rm -rf /opt/site-packages/pip* \
+           /opt/site-packages/setuptools* \
+           /opt/site-packages/wheel* \
+# 3. Clean up pycaches and test directories
+    && find /opt/site-packages -type d -name "__pycache__" -prune -exec rm -rf {} + \
+    && find /opt/site-packages -type d -name "tests" -prune -exec rm -rf {} +
 
 # ==========================================
 # Stage 2: Runner
@@ -48,7 +48,9 @@ RUN find /opt/site-packages -type d -name "__pycache__" -prune -exec rm -rf {} +
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    # Set PYTHONPATH to /app so python naturally finds common, worker, and backend
+    PYTHONPATH=/app
 
 # Use Debian ffmpeg for now (caf-friendly version)
 RUN apt-get update && \
@@ -63,22 +65,22 @@ RUN groupadd -g 1000 appuser && \
 WORKDIR /app
 
 # Create writable directories
-RUN mkdir -p /app/config /app/logs && \
+# (no /app/logs - logs go to CloudWatch, nothing writes locally, same as backend)
+RUN mkdir -p /app/config && \
     chown -R appuser:appuser /app
 
-# Copy built site-packages from builder
+# Copy built site-packages from builder (already pre-cleaned & stripped)
 COPY --from=builder /opt/site-packages /usr/local/lib/python3.12/site-packages
 
-# Copy runtime code (assets, scripts, etc.)
+# Copy runtime code cleanly directly to /app (No duplication in site-packages)
 COPY --chown=appuser:appuser common/ common/
 COPY --chown=appuser:appuser worker/ worker/
+COPY --chown=appuser:appuser backend/__init__.py backend/__init__.py
 COPY --chown=appuser:appuser worker/entrypoint.sh ./entrypoint.sh
 
 # Ensure entrypoint is executable
 RUN chmod +x /app/worker/entrypoint.sh
 
 USER appuser
-
-ENV PYTHONPATH=/usr/local/lib/python3.12/site-packages
 
 ENTRYPOINT ["worker/entrypoint.sh"]

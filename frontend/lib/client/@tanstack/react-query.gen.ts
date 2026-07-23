@@ -329,8 +329,8 @@ export const listTranscriptionsTranscriptionsGetInfiniteQueryKey = (
  */
 export const listTranscriptionsTranscriptionsGetInfiniteOptions = (
   options?: Options<ListTranscriptionsTranscriptionsGetData>
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListTranscriptionsTranscriptionsGetResponse,
     ListTranscriptionsTranscriptionsGetError,
     InfiniteData<ListTranscriptionsTranscriptionsGetResponse>,
@@ -368,6 +368,8 @@ export const listTranscriptionsTranscriptionsGetInfiniteOptions = (
       queryKey: listTranscriptionsTranscriptionsGetInfiniteQueryKey(options),
     }
   )
+  return opts as Omit<typeof opts, 'initialData'>
+}
 
 /**
  * Create Transcription
@@ -762,8 +764,8 @@ export const listUsersUsersGetInfiniteQueryKey = (
  */
 export const listUsersUsersGetInfiniteOptions = (
   options?: Options<ListUsersUsersGetData>
-) =>
-  infiniteQueryOptions<
+) => {
+  const opts = infiniteQueryOptions<
     ListUsersUsersGetResponse,
     ListUsersUsersGetError,
     InfiniteData<ListUsersUsersGetResponse>,
@@ -801,6 +803,8 @@ export const listUsersUsersGetInfiniteOptions = (
       queryKey: listUsersUsersGetInfiniteQueryKey(options),
     }
   )
+  return opts as Omit<typeof opts, 'initialData'>
+}
 
 /**
  * Create User
@@ -1714,8 +1718,8 @@ export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteQu
 export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteOptions =
   (
     options: Options<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetData>
-  ) =>
-    infiniteQueryOptions<
+  ) => {
+    const opts = infiniteQueryOptions<
       ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse,
       ListOrganisationsUsersOrganisationsOrganisationIdUsersGetError,
       InfiniteData<ListOrganisationsUsersOrganisationsOrganisationIdUsersGetResponse>,
@@ -1763,6 +1767,8 @@ export const listOrganisationsUsersOrganisationsOrganisationIdUsersGetInfiniteOp
           ),
       }
     )
+    return opts as Omit<typeof opts, 'initialData'>
+  }
 
 export const signOutSignoutGetQueryKey = (
   options?: Options<SignOutSignoutGetData>

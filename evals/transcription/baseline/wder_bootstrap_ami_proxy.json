@@ -1,0 +1,97 @@
+{
+  "metric": "corpus_wder",
+  "resampling_unit": "meeting",
+  "description": "Meeting-block bootstrap of corpus WDER on the baseline transcription eval config (evals/transcription/configs/larger_cloud_test.yaml. 10 full audio recordings of the Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text). Estimates uncertainty in the aggregate metric, not provider run-to-run randomness.",
+  "source_results_file": "evaluation_results_20260715_180006.json",
+  "engine_version": "azure_stt_synchronous",
+  "n_meetings": 10,
+  "meetings": [
+    {
+      "example_id": "0",
+      "speaker_errors": 433,
+      "total_words": 7621,
+      "meeting_wder": 0.05681669072300223
+    },
+    {
+      "example_id": "1",
+      "speaker_errors": 298,
+      "total_words": 6064,
+      "meeting_wder": 0.04914248021108179
+    },
+    {
+      "example_id": "2",
+      "speaker_errors": 525,
+      "total_words": 10731,
+      "meeting_wder": 0.04892367906066536
+    },
+    {
+      "example_id": "3",
+      "speaker_errors": 411,
+      "total_words": 7830,
+      "meeting_wder": 0.0524904214559387
+    },
+    {
+      "example_id": "4",
+      "speaker_errors": 97,
+      "total_words": 2630,
+      "meeting_wder": 0.03688212927756654
+    },
+    {
+      "example_id": "5",
+      "speaker_errors": 360,
+      "total_words": 6828,
+      "meeting_wder": 0.05272407732864675
+    },
+    {
+      "example_id": "6",
+      "speaker_errors": 359,
+      "total_words": 7046,
+      "meeting_wder": 0.05095089412432586
+    },
+    {
+      "example_id": "7",
+      "speaker_errors": 285,
+      "total_words": 6175,
+      "meeting_wder": 0.046153846153846156
+    },
+    {
+      "example_id": "8",
+      "speaker_errors": 61,
+      "total_words": 1995,
+      "meeting_wder": 0.030576441102756893
+    },
+    {
+      "example_id": "9",
+      "speaker_errors": 270,
+      "total_words": 6117,
+      "meeting_wder": 0.04413928396272683
+    }
+  ],
+  "baseline_corpus_wder": 0.04916160350270476,
+  "bootstrap": {
+    "n_resamples": 10000,
+    "random_seed": 42,
+    "quantiles_requested": [
+      0.5,
+      0.9,
+      0.95,
+      0.99
+    ],
+    "mean": 0.04904596168636229,
+    "std": 0.001539543036084546,
+    "min": 0.041887188289705814,
+    "max": 0.05398296258712314,
+    "quantiles": {
+      "p50": 0.04914479857211812,
+      "p90": 0.05092529357014583,
+      "p95": 0.05140472385504596,
+      "p99": 0.05228477026281515
+    },
+    "relative_increase_vs_baseline_corpus_wder": {
+      "p50": -0.0003418303999321984,
+      "p90": 0.03587535681874245,
+      "p95": 0.04562748552776127,
+      "p99": 0.0635285779467825
+    }
+  }
+}
