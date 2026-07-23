@@ -21,6 +21,8 @@ ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
     NEXT_PUBLIC_POSTHOG_API_KEY=$NEXT_PUBLIC_POSTHOG_API_KEY \
     SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
 
+RUN npm run generate-client
+
 # Compile the application.
 # NOTE: sourcemaps are only safe to delete here if the Sentry Next.js webpack
 # plugin (withSentryConfig in next.config.js) uploads them synchronously as
