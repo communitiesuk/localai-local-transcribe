@@ -14,7 +14,7 @@ resource "aws_db_instance" "main" {
   instance_class                  = var.instance_class
   maintenance_window              = var.maintenance_window
   multi_az                        = var.multi_az
-  password                        = var.database_password
+  manage_master_user_password     = true
   port                            = var.database_port
   publicly_accessible             = false
   storage_encrypted               = true
