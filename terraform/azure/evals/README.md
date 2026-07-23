@@ -42,6 +42,7 @@ Out of scope here: private endpoints, RBAC, network restrictions, blocking share
 - An **existing** resource group you are allowed to create storage accounts in
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Two globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one for evals data
+- **Storage Blob Data Contributor** on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init` / `plan` / `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
 
 Optional variables (`account_replication_type`, `soft_delete_retention_days`, `sas_expiration_period`) have defaults and need not appear in `terraform.tfvars` unless you want to override them.
 
@@ -97,7 +98,9 @@ cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars
 
 # Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
-terraform init -backend-config="resource_group_name=<from-backend-output>" -backend-config="storage_account_name=<from-backend-output>" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate"
+# use_azuread_auth=true requires Storage Blob Data Contributor on the state storage
+# account or tfstate container for the applying identity; without that role, init fails.
+terraform init -backend-config="resource_group_name=<from-backend-output>" -backend-config="storage_account_name=<from-backend-output>" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate" -backend-config="use_azuread_auth=true"
 
 terraform plan
 terraform apply
@@ -118,4 +121,4 @@ Confirm account settings under the storage account **Data management** → **Dat
 
 ## Assured Azure environment
 
-Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including two new globally unique storage account names.
+Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including two new globally unique storage account names. The applying identity still needs **Storage Blob Data Contributor** on the state storage for `use_azuread_auth=true`.
