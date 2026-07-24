@@ -58,6 +58,7 @@ for SERVICE in "${SERVICES[@]}"; do
     BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_SENTRY_DSN=${SENTRY_DSN:-}")
     BUILD_ARGS+=(--build-arg "SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN:-}")
     BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_POSTHOG_API_KEY=${POSTHOG_API_KEY:-}")
+    BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_ENVIRONMENT=${ENVIRONMENT:-}")
   fi
 
   echo ""
