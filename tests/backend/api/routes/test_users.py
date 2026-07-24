@@ -1,7 +1,7 @@
 # ruff: noqa: ARG001
 # needed for pytest fixtures
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -16,6 +16,13 @@ from tests.utils import get_test_client
 
 def convert_to_datetime(json_datetime: str) -> datetime:
     return datetime.fromisoformat(json_datetime.replace("Z", "+00:00"))
+
+
+async def user_create_refresh(user):
+    user.id = uuid4()
+    user.created_datetime = datetime.now(UTC)
+    user.updated_datetime = datetime.now(UTC)
+    user.last_login = datetime.now(UTC)
 
 
 @pytest.mark.asyncio
