@@ -36,6 +36,7 @@ def mock_user() -> User:
     return User(
         id=uuid4(),
         email=mock_email,
+        accepted_tou=True,
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
@@ -44,10 +45,17 @@ def mock_user() -> User:
 
 
 @pytest.fixture
+def mock_pending_tou_user(mock_user) -> User:
+    mock_user.accepted_tou = False
+    return mock_user
+
+
+@pytest.fixture
 def mock_support_admin() -> User:
     return User(
         id=uuid4(),
         email=mock_email,
+        accepted_tou=True,
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
@@ -84,6 +92,7 @@ def make_user():
         return User(
             id=uuid4(),
             email=mock_email,
+            accepted_tou=True,
             organisation_id=organisation_id or uuid4(),
             roles=roles or [UserRole.STANDARD_USER],
             data_retention_days=30,
