@@ -137,12 +137,6 @@ class Settings(BaseSettings):
         "this.",
         default=None,
     )
-    # Evals summarisation blob storage (Entra ID auth, no account key).
-    AZURE_EVALS_STORAGE_ACCOUNT_URL: str | None = Field(
-        description="Blob endpoint of the evals storage account, e.g. https://<account>.blob.core.windows.net",
-        default=None,
-    )
-
     QUEUE_SERVICE_NAME: str = Field(
         description="Queue service type to communicate with worker. Currently supported are: sqs, azure-service-bus",
         default="sqs",

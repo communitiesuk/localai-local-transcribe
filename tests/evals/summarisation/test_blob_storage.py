@@ -75,9 +75,8 @@ def test_from_config_uses_account_url_from_config():
 def test_from_config_raises_without_account_url():
     cfg = BlobStorageConfig(enabled=True, account_url=None)
     with (
-        patch("evals.summarisation.src.common.blob_storage.get_settings") as mock_settings,
+        patch.dict("os.environ", {"AZURE_EVALS_STORAGE_ACCOUNT_URL": ""}, clear=False),
         patch("evals.summarisation.src.common.blob_storage.DefaultAzureCredential"),
+        pytest.raises(ValueError, match="account_url"),
     ):
-        mock_settings.return_value.AZURE_EVALS_STORAGE_ACCOUNT_URL = None
-        with pytest.raises(ValueError, match="account_url"):
-            EvalBlobStorage.from_config(cfg)
+        EvalBlobStorage.from_config(cfg)

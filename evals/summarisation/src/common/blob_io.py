@@ -15,6 +15,9 @@ logger = logging.getLogger(__name__)
 
 # summary.json is the only aggregated artefact; everything else is per-entry debug data.
 RESULTS_FILENAMES = frozenset({"summary.json"})
+INPUT_CONTAINER = "input"
+RESULTS_CONTAINER = "output"
+DEBUG_CONTAINER = "debug"
 
 
 def output_prefix_for(cfg: AppConfig, run_id: str, subtype: str | None = None) -> str:
@@ -28,7 +31,7 @@ def stage_dataset(cfg: AppConfig, blob: EvalBlobStorage, dest_dir: Path) -> Path
         msg = "dataset.blob_path must be set when dataset.source is 'blob'"
         raise ValueError(msg)
     dest_path = dest_dir / Path(cfg.dataset.blob_path).name
-    return blob.download_blob(cfg.blob.input_container, cfg.dataset.blob_path, dest_path)
+    return blob.download_blob(INPUT_CONTAINER, cfg.dataset.blob_path, dest_path)
 
 
 def publish_run_outputs(
@@ -43,7 +46,7 @@ def publish_run_outputs(
     for path in sorted(p for p in run_output_dir.rglob("*") if p.is_file()):
         relative = path.relative_to(run_output_dir).as_posix()
         is_result = path.name in RESULTS_FILENAMES
-        container = cfg.blob.results_container if is_result else cfg.blob.debug_container
+        container = RESULTS_CONTAINER if is_result else DEBUG_CONTAINER
         blob_name = f"{prefix}/{relative}"
         blob.upload_file(container, blob_name, path)
         published[relative] = f"{container}/{blob_name}"

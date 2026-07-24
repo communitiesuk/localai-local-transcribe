@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
-from common.settings import get_settings
 from evals.summarisation.src.common.config import BlobStorageConfig
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ class EvalBlobStorage:
 
     @classmethod
     def from_config(cls, blob_cfg: BlobStorageConfig, credential: TokenCredential | None = None) -> EvalBlobStorage:
-        account_url = blob_cfg.account_url or get_settings().AZURE_EVALS_STORAGE_ACCOUNT_URL
+        account_url = blob_cfg.account_url or os.getenv("AZURE_EVALS_STORAGE_ACCOUNT_URL")
         if not account_url:
             msg = "Set blob.account_url in the config or AZURE_EVALS_STORAGE_ACCOUNT_URL."
             raise ValueError(msg)

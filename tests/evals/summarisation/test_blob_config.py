@@ -13,9 +13,6 @@ _MINIMAL = {
 def test_blob_disabled_by_default():
     cfg = AppConfig.model_validate(_MINIMAL)
     assert cfg.blob.enabled is False
-    assert cfg.blob.input_container == "input"
-    assert cfg.blob.debug_container == "debug"
-    assert cfg.blob.results_container == "output"
     assert cfg.blob.output_prefix == "summarisation"
 
 
@@ -43,9 +40,6 @@ prompts:
 blob:
   enabled: true
   account_url: https://example.blob.core.windows.net
-  input_container: in
-  debug_container: dbg
-  results_container: res
   output_prefix: summ-out
 """,
         encoding="utf-8",
@@ -55,9 +49,6 @@ blob:
 
     assert cfg.blob.enabled is True
     assert cfg.blob.account_url == "https://example.blob.core.windows.net"
-    assert cfg.blob.input_container == "in"
-    assert cfg.blob.debug_container == "dbg"
-    assert cfg.blob.results_container == "res"
     assert cfg.dataset.source == "blob"
     assert cfg.dataset.blob_path == "summarisation/standard/dialogues.jsonl"
 

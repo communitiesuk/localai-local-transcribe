@@ -65,9 +65,6 @@ class BlobStorageConfig(BaseModel):
 
     enabled: bool = False
     account_url: str | None = None
-    input_container: str = "input"
-    debug_container: str = "debug"
-    results_container: str = "output"
     output_prefix: str = "summarisation"
 
 

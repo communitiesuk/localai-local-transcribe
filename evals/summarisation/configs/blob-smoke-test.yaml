@@ -28,7 +28,4 @@ prompts:
 blob:
   enabled: true
   # account_url falls back to AZURE_EVALS_STORAGE_ACCOUNT_URL when omitted.
-  input_container: input
-  debug_container: debug
-  results_container: output
   output_prefix: summarisation
