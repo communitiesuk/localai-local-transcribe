@@ -5,12 +5,21 @@ import { TranscriptionListItem } from '@/components/recent-meetings/transcriptio
 import { Button } from '@/components/ui/button'
 import {
   getUserUsersMeGetOptions,
-  listTranscriptionsTranscriptionsGetOptions,
+  listLabelledTranscriptionsTranscriptionsLabelledGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { GovukHeading, GovukHint } from '@/components/govuk'
+import {
+  GovukTable,
+  GovukTableBody,
+  GovukTableCell,
+  GovukTableHead,
+  GovukTableHeaderCell,
+  GovukTableRow,
+} from '@/components/govuk/table'
 
 export const getPageNumbers = (
   currentPage: number,
@@ -31,7 +40,7 @@ export const getPageNumbers = (
   return pages
 }
 
-export const PaginatedTranscriptions = () => {
+export const PaginatedLabelledTranscriptions = () => {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -43,7 +52,7 @@ export const PaginatedTranscriptions = () => {
     isLoading,
     error,
   } = useQuery({
-    ...listTranscriptionsTranscriptionsGetOptions({
+    ...listLabelledTranscriptionsTranscriptionsLabelledGetOptions({
       query: { page: currentPage, page_size: pageSize },
     }),
     refetchInterval: (query) =>
@@ -66,33 +75,10 @@ export const PaginatedTranscriptions = () => {
   return (
     <div>
       <OfflineRecordings />
-      <div className="pb-2">
-        <div className="flex items-center justify-between pb-2">
-          <h1 className="text-2xl font-bold">Recent meetings:</h1>
-          <div className="text-sm text-gray-600">
-            {totalCount} transcription{totalCount !== 1 ? 's' : ''}
-          </div>
-        </div>
-        {user && user.data_retention_days && (
-          <div className="text-muted-foreground flex items-center gap-1 py-1 text-sm">
-            <div className="mb-[2px]">
-              <Info className="inline h-4 w-4" />
-            </div>
-            <div>
-              Your data retention period is set to {user.data_retention_days}{' '}
-              day
-              {user.data_retention_days > 1 ? 's' : ''}. Change this in{' '}
-              <Link
-                href="/settings"
-                className="inline text-sky-700 underline hover:decoration-2"
-              >
-                settings
-              </Link>
-              .
-            </div>
-          </div>
-        )}
-      </div>
+      <GovukHeading as="h2" size="m">
+        Labelled recordings
+      </GovukHeading>
+      <GovukHint>Total: {totalCount}</GovukHint>
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
           <div className="text-gray-500">Loading transcriptions...</div>
@@ -107,6 +93,45 @@ export const PaginatedTranscriptions = () => {
         </div>
       ) : (
         <>
+          <GovukTable>
+            <GovukTableHead>
+              <GovukTableRow>
+                <GovukTableHeaderCell>Name</GovukTableHeaderCell>
+                <GovukTableHeaderCell>Case ID</GovukTableHeaderCell>
+                <GovukTableHeaderCell>Subject</GovukTableHeaderCell>
+                <GovukTableHeaderCell>Date of birth</GovukTableHeaderCell>
+                <GovukTableHeaderCell>Date recorded</GovukTableHeaderCell>
+                <GovukTableHeaderCell>
+                  <span className={'govuk-visually-hidden'}>
+                    Link to recording
+                  </span>
+                </GovukTableHeaderCell>
+              </GovukTableRow>
+            </GovukTableHead>
+            <GovukTableBody>
+              {transcriptions.map((transcription) => (
+                <GovukTableRow key={transcription.id}>
+                  <GovukTableCell>{transcription.client_name}</GovukTableCell>
+                  <GovukTableCell>{transcription.case_id}</GovukTableCell>
+                  <GovukTableCell>{transcription.title}</GovukTableCell>
+                  <GovukTableCell>
+                    {transcription.client_date_of_birth}
+                  </GovukTableCell>
+                  <GovukTableCell>
+                    {transcription.date_of_recording}
+                  </GovukTableCell>
+                  <GovukTableCell>
+                    <Link
+                      className="govuk-link"
+                      href={`/transcriptions/${transcription.id}`}
+                    >
+                      View
+                    </Link>
+                  </GovukTableCell>
+                </GovukTableRow>
+              ))}
+            </GovukTableBody>
+          </GovukTable>
           <ul className="mb-6 flex flex-col gap-2">
             {transcriptions.map((transcription) => (
               <TranscriptionListItem

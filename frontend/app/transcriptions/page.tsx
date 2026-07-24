@@ -1,4 +1,4 @@
-import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
+import { PaginatedLabelledTranscriptions } from '@/components/recent-meetings/paginated-labelled-transcriptions'
 import { Loader2 } from 'lucide-react'
 import { Suspense } from 'react'
 
@@ -12,7 +12,7 @@ export default function TranscriptionsPage() {
           </div>
         }
       >
-        <PaginatedTranscriptions />
+        <PaginatedLabelledTranscriptions />
       </Suspense>
     </div>
   )

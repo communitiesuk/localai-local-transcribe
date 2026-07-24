@@ -1,5 +1,5 @@
 import { PosthogBanner } from '@/components/posthog-banner'
-import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
+import { PaginatedLabelledTranscriptions } from '@/components/recent-meetings/paginated-labelled-transcriptions'
 import { Loader2, Plus } from 'lucide-react'
 import { GovukButtonLink } from '@/components/govuk'
 import { Suspense } from 'react'
@@ -30,7 +30,7 @@ export default function Home() {
             </div>
           }
         >
-          <PaginatedTranscriptions />
+          <PaginatedLabelledTranscriptions />
         </Suspense>
       </div>
     </div>
