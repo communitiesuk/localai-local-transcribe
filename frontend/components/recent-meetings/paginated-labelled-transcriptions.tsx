@@ -75,15 +75,17 @@ export const PaginatedLabelledTranscriptions = () => {
       <GovukHint>Total: {totalCount}</GovukHint>
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">Loading transcriptions...</div>
+          <div className="text-gray-500">Loading recordings...</div>
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-red-500">Error loading transcriptions</div>
+          <div className="text-red-500">
+            Error loading unlabelled recordings
+          </div>
         </div>
       ) : transcriptions.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">No transcriptions found</div>
+          <div className="text-gray-500">No labelled recordings found</div>
         </div>
       ) : (
         <>
