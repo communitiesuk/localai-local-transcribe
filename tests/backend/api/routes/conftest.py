@@ -254,6 +254,11 @@ def mock_chat(uid=None, user_content="hello", assistant_content="world", status=
 
 
 @pytest.fixture
+def mock_email_sender(mocker):
+    return mocker.patch("backend.api.routes.users.email_sender")
+
+
+@pytest.fixture
 def mock_user_template(mock_user) -> UserTemplate:
     return UserTemplate(
         id=uuid4(),
