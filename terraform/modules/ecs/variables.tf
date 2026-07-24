@@ -224,6 +224,16 @@ variable "sentry_dsn_arn" {
   type        = string
 }
 
+variable "govnotify_api_key_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify API key"
+  type        = string
+}
+
+variable "govnotify_invite_template_id_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify invite template ID"
+  type        = string
+}
+
 variable "lb_listener_exists" {
   description = "Indicates whether the load balancer listener has been created"
   type        = bool

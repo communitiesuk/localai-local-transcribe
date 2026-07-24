@@ -95,8 +95,14 @@ resource "aws_ssm_parameter" "sentry_dsn" {
 }
 
 resource "aws_secretsmanager_secret" "database_secret" {
-  name                    = "${var.environment_name}-local-transcribe-database-secret"
-  description             = "Local-transcribe backend database secret (alternating users rotation)"
+  name        = "${var.environment_name}-local-transcribe-database-secret"
+  description = "Local-transcribe backend database secret (alternating users rotation)"
+}
+
+
+resource "aws_secretsmanager_secret" "database_password" {
+  name                    = "tf-${var.environment_name}-local-transcribe-database-password"
+  description             = "Password for local-transcribe backend database user"
   recovery_window_in_days = 0
   kms_key_id              = aws_kms_key.rds_secrets.arn
 }
@@ -156,4 +162,26 @@ resource "aws_serverlessapplicationrepository_cloudformation_stack" "rds_rotatio
 
 }
 
+resource "aws_ssm_parameter" "govnotify_api_key" {
+  type        = "SecureString"
+  key_id      = aws_kms_key.local_transcribe_secrets.arn
+  name        = "/local-transcribe/govnotify/api_key"
+  description = "GovNotify API key"
+  value       = "placeholder" # Update value in SSM - Do not hardcode
 
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "aws_ssm_parameter" "govnotify_invite_template_id" {
+  type        = "SecureString"
+  key_id      = aws_kms_key.local_transcribe_secrets.arn
+  name        = "/local-transcribe/govnotify/invite_template_id"
+  description = "GovNotify invite email template ID"
+  value       = "placeholder" # Update value in SSM - Do not hardcode
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}

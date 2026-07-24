@@ -59,3 +59,13 @@ output "rds_master_secret_string" {
   value       = data.aws_secretsmanager_secret_version.rds_master.secret_string
   sensitive   = true
 }
+
+output "govnotify_api_key_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify API key"
+  value       = aws_ssm_parameter.govnotify_api_key.arn
+}
+
+output "govnotify_invite_template_id_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify invite template ID"
+  value       = aws_ssm_parameter.govnotify_invite_template_id.arn
+}

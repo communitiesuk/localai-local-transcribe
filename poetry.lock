@@ -1532,6 +1532,17 @@ trio = ["trio (>=0.30)"]
 wmi = ["wmi (>=1.5.1) ; platform_system == \"Windows\""]
 
 [[package]]
+name = "docopt"
+version = "0.6.2"
+description = "Pythonic argument parser, that will make you smile"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},
+]
+
+[[package]]
 name = "dspy"
 version = "3.2.1"
 description = "DSPy"
@@ -3968,6 +3979,22 @@ files = [
 ]
 
 [[package]]
+name = "notifications-python-client"
+version = "12.1.0"
+description = "Python API client for GOV.UK Notify."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "notifications_python_client-12.1.0-py3-none-any.whl", hash = "sha256:bc44987acbb72de4cded700447d0d246c020dcd0f0311ff2ca884ce1c4001b76"},
+]
+
+[package.dependencies]
+docopt = ">=0.3.0"
+PyJWT = ">=1.5.1"
+requests = ">=2.0.0"
+
+[[package]]
 name = "numba"
 version = "0.65.1"
 description = "compiling Python code using LLVM"
@@ -5343,14 +5370,14 @@ files = [
 
 [[package]]
 name = "pyasn1"
-version = "0.6.3"
+version = "0.6.4"
 description = "Pure-Python implementation of ASN.1 types and DER/BER/CER codecs (X.208)"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "worker"]
 files = [
-    {file = "pyasn1-0.6.3-py3-none-any.whl", hash = "sha256:a80184d120f0864a52a073acc6fc642847d0be408e7c7252f31390c0f4eadcde"},
-    {file = "pyasn1-0.6.3.tar.gz", hash = "sha256:697a8ecd6d98891189184ca1fa05d1bb00e2f84b5977c481452050549c8a72cf"},
+    {file = "pyasn1-0.6.4-py3-none-any.whl", hash = "sha256:deda9277cfd454080ec40b207fb6df82206a3a2688735233cdcd8d3d565f088b"},
+    {file = "pyasn1-0.6.4.tar.gz", hash = "sha256:9c447d8431c947fe4c8febc4ed9e760bc29011a5b01e5c74b67025bd9fb8ce81"},
 ]
 
 [[package]]
@@ -10163,4 +10190,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "173e4305303c8be7daa9b9c672163f44f0c62dcd817ff8790d6d8c0f56ab30b6"
+content-hash = "5e26912b6bde6177a863dd66f6c32740a750de6249ad2e255c602bf909d69f54"
