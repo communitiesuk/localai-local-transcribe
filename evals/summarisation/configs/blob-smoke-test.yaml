@@ -1,7 +1,6 @@
 # Standard summarisation smoke test reading from / writing to blob storage.
 run:
   eval_type: standard
-  output_dir: evals/summarisation/output  # local fallback when blob.enabled is false
   seed: 0
   split: test
   limit: 2
@@ -27,5 +26,4 @@ prompts:
 
 blob:
   enabled: true
-  # account_url falls back to AZURE_EVALS_STORAGE_ACCOUNT_URL when omitted.
   output_prefix: summarisation

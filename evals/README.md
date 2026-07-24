@@ -38,37 +38,22 @@ Outputs are written to `evals/summarisation/output/<run_id>/results.jsonl` and `
 
 ## Blob storage integration (standard eval)
 
-The standard summarisation eval can read its input from, and write its output to, Azure blob storage
-instead of local disk. This develops the full sensitive-data flow using safe proxy data — no real or
-sensitive data. Three containers are used (provisioned by `terraform/azure/evals/`):
+The standard summarisation eval can optionally read input from, and write output to, Azure blob
+storage (`input` / `debug` / `output` containers) instead of local disk, using safe proxy data. The
+containers are provisioned by `terraform/azure/evals/` — see its
+[README](../terraform/azure/evals/README.md) for setup.
 
-| Container | Holds                                                                              |
-| --------- | --------------------------------------------------------------------------------- |
-| `input`   | Dataset under `summarisation/`, e.g. `summarisation/standard/dialogues.jsonl`.     |
-| `debug`   | Per-entry data: `results.jsonl`, `hallucination_inputs.json`.                      |
-| `output`  | Aggregated results only: `summary.json` (means across entries).                    |
-
-### Config and env
-
-- Set `AZURE_EVALS_STORAGE_ACCOUNT_URL` (e.g. `https://<account>.blob.core.windows.net`), or put
-  `blob.account_url` in the config.
-- Enable via the config's `blob:` block and set `dataset.source: blob` with a `dataset.blob_path`.
-  See `evals/summarisation/configs/blob-smoke-test.yaml`.
-
-### Upload the sample data and run locally
+To use it: set `AZURE_EVALS_STORAGE_ACCOUNT_URL` (or `blob.account_url` in the config), enable the
+config's `blob:` block, and set `dataset.source: blob` with a `dataset.blob_path`. See
+`evals/summarisation/configs/blob-smoke-test.yaml`. With `blob.enabled: false` (the default) the
+pipeline reads and writes local disk as before.
 
 ```bash
-az login
-# Upload synthetic proxy data to input/summarisation/ (see evals/summarisation/sample_data/README.md)
-az storage blob upload-batch --account-name "<evals-account>" --auth-mode login \
-  --destination input --destination-path summarisation --source evals/summarisation/sample_data
-
 export AZURE_EVALS_STORAGE_ACCOUNT_URL="https://<evals-account>.blob.core.windows.net"
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
 ```
 
-With `blob.enabled: false` (the default in every other config) the pipeline reads and writes local
-disk exactly as before.
+Uploading the sample data is covered in `evals/summarisation/sample_data/README.md`.
 
 ## Running a new experiment
 
