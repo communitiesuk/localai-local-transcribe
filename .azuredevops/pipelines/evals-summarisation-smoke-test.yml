@@ -1,4 +1,5 @@
 # Summarisation Evals smoke test — manual-run only.
+# Reads input from / writes output to blob; Entra ID auth via the AzureCLI@2 service connection.
 
 name: Summarisation Evals
 
@@ -14,6 +15,14 @@ parameters:
     displayName: 'Poetry version'
     type: string
     default: '2.4.1'
+  - name: azureServiceConnection
+    displayName: 'Azure service connection (workload identity) with Storage Blob Data Contributor on the evals storage account'
+    type: string
+    default: 'evals-blob'
+  - name: config
+    displayName: 'Eval config'
+    type: string
+    default: 'evals/summarisation/configs/blob-smoke-test.yaml'
 
 pool:
   vmImage: ubuntu-latest
@@ -32,10 +41,18 @@ steps:
   - script: cp .env.example .env
     displayName: 'Copy env file'
 
-  - script: poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/smoke-test.yaml
-    displayName: 'Run summarisation smoke test'
+  - task: AzureCLI@2
+    displayName: 'Run summarisation smoke test (blob)'
+    inputs:
+      azureSubscription: ${{ parameters.azureServiceConnection }}
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        poetry run python -m evals.summarisation.src.main --config ${{ parameters.config }}
     env:
       ENVIRONMENT: test
+      # Blob endpoint of the evals storage account, set as a pipeline variable.
+      AZURE_EVALS_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_STORAGE_ACCOUNT_URL)
       # These are set as pipeline variables directly in ADO (secret variables must be
       # mapped explicitly).
       # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
@@ -44,14 +61,3 @@ steps:
       AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
       AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
       AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
-
-  - script: mkdir -p evals/summarisation/output
-    displayName: 'Ensure output dir exists'
-    condition: always()
-
-  - task: PublishPipelineArtifact@1
-    displayName: 'Upload smoke test output'
-    condition: always()
-    inputs:
-      artifactName: summarisation-smoke-test-output
-      targetPath: evals/summarisation/output

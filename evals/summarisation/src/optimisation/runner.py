@@ -110,11 +110,37 @@ def prepare_run_paths(output_dir: str | Path, run_id: str) -> tuple[Path, Path, 
     )
 
 
-def load_dspy_devset(cfg: AppConfig, split: str, limit: int | None) -> list[dspy.Example]:
-    ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
-    rows = ds[split]
-    if limit is not None:
-        rows = rows.select(range(min(limit, len(rows))))
+def _load_rows_from_jsonl(path: Path, limit: int | None) -> list[dict[str, Any]]:
+    """Read a JSONL dataset (one JSON object per line) staged from the input container."""
+    rows: list[dict[str, Any]] = []
+    with path.open("rb") as f:
+        for line in f:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            rows.append(orjson.loads(stripped))
+            if limit is not None and len(rows) >= limit:
+                break
+    return rows
+
+
+def load_dspy_devset(
+    cfg: AppConfig,
+    split: str,
+    limit: int | None,
+    dataset_path: Path | None = None,
+) -> list[dspy.Example]:
+    if cfg.dataset.source == "blob":
+        if dataset_path is None:
+            msg = "dataset_path must be provided when dataset.source is 'blob'"
+            raise ValueError(msg)
+        rows = _load_rows_from_jsonl(dataset_path, limit)
+    else:
+        ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
+        split_rows = ds[split]
+        if limit is not None:
+            split_rows = split_rows.select(range(min(limit, len(split_rows))))
+        rows = list(split_rows)
 
     examples = [
         DialogExample(
@@ -142,11 +168,15 @@ class EvalRun:
         split: str,
         limit: int | None,
         prompt_version: str,
+        output_dir: str | Path | None = None,
+        dataset_path: Path | None = None,
     ) -> None:
         self.cfg = cfg
         self.split = split
         self.limit = limit
         self.prompt_version = prompt_version
+        self.output_dir = output_dir if output_dir is not None else cfg.run.output_dir
+        self.dataset_path = dataset_path
 
         settings = get_settings()
         self.model_name: str = settings.FAST_LLM_MODEL_NAME
@@ -286,9 +316,9 @@ class EvalRun:
         self.run_id = str(uuid.uuid4())
 
         self.results_path, self.summary_path, self.hallucination_inputs_path = prepare_run_paths(
-            self.cfg.run.output_dir, self.run_id
+            self.output_dir, self.run_id
         )
-        self.devset = load_dspy_devset(self.cfg, self.split, self.limit)
+        self.devset = load_dspy_devset(self.cfg, self.split, self.limit, self.dataset_path)
 
         try:
             evaluator = Evaluate(
@@ -371,5 +401,14 @@ def run_eval(
     split: str,
     limit: int | None,
     prompt_version: str,
+    output_dir: str | Path | None = None,
+    dataset_path: Path | None = None,
 ) -> tuple[str, Path, Path, Path]:
-    return EvalRun(cfg, split=split, limit=limit, prompt_version=prompt_version).run()
+    return EvalRun(
+        cfg,
+        split=split,
+        limit=limit,
+        prompt_version=prompt_version,
+        output_dir=output_dir,
+        dataset_path=dataset_path,
+    ).run()

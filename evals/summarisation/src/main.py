@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import sys
+import tempfile
 from pathlib import Path
 
 import orjson
 import typer
 
 from evals.summarisation.src.common import AppConfig, load_config
+from evals.summarisation.src.common.blob_io import publish_run_outputs, stage_dataset
+from evals.summarisation.src.common.blob_storage import EvalBlobStorage
 from evals.summarisation.src.hallucination.types import HallucinationInput
 
 WORKDIR = Path(__file__).resolve().parent.parent
@@ -24,6 +27,29 @@ def _resolve_io_dirs(cfg: AppConfig, mode: str) -> tuple[Path, Path]:
         msg = f"input_dir must be specified in config under run.input_dir for {mode} evaluation"
         raise ValueError(msg)
     return Path(cfg.run.input_dir), Path(cfg.run.output_dir)
+
+
+def _make_blob(cfg: AppConfig) -> EvalBlobStorage | None:
+    return EvalBlobStorage.from_config(cfg.blob) if cfg.blob.enabled else None
+
+
+def _staged_output_dir(blob: EvalBlobStorage | None, cfg: AppConfig, staging_dir: Path) -> Path:
+    return staging_dir / "output" if blob is not None else Path(cfg.run.output_dir)
+
+
+def _publish(
+    blob: EvalBlobStorage | None,
+    cfg: AppConfig,
+    run_output_dir: Path,
+    run_id: str,
+    subtype: str | None = None,
+) -> None:
+    if blob is None:
+        return
+    published = publish_run_outputs(cfg, blob, run_output_dir, run_id, subtype)
+    typer.echo("Published outputs to blob storage:")
+    for name, dest in published.items():
+        typer.echo(f"  {name} -> {dest}")
 
 
 async def _drain_pending_tasks() -> None:
@@ -72,15 +98,21 @@ async def run_security_eval(config: Path) -> None:
     await _drain_pending_tasks()
 
 
-def run_standard_eval(config: Path) -> list[HallucinationInput]:
+def run_standard_eval(cfg: AppConfig, blob: EvalBlobStorage | None, staging_dir: Path) -> list[HallucinationInput]:
     from evals.summarisation.src.optimisation import run_eval
 
-    cfg = load_config(config)
+    dataset_path = None
+    if blob is not None and cfg.dataset.source == "blob":
+        dataset_path = stage_dataset(cfg, blob, staging_dir / "input" / "standard")
+    output_dir = _staged_output_dir(blob, cfg, staging_dir)
+
     run_id, results_path, summary_path, hallucination_inputs_path = run_eval(
         cfg,
         split=cfg.run.split,
         limit=cfg.run.limit,
         prompt_version=cfg.run.prompt_version,
+        output_dir=output_dir,
+        dataset_path=dataset_path,
     )
 
     typer.echo(f"\nRun ID: {run_id}")
@@ -89,7 +121,11 @@ def run_standard_eval(config: Path) -> list[HallucinationInput]:
     typer.echo(f"Hallucination inputs: {hallucination_inputs_path}")
 
     with hallucination_inputs_path.open("rb") as f:
-        return [HallucinationInput.model_validate(item) for item in orjson.loads(f.read())]
+        hallucination_inputs = [HallucinationInput.model_validate(item) for item in orjson.loads(f.read())]
+
+    _publish(blob, cfg, results_path.parent, run_id)
+
+    return hallucination_inputs
 
 
 @app.callback(invoke_without_command=True)
@@ -98,43 +134,40 @@ def run(
 ) -> None:
     cfg = load_config(config)
 
+    blob = _make_blob(cfg) if cfg.run.eval_type == "standard" else None
+
     hallucination_inputs: list[HallucinationInput] = []
 
-    if cfg.run.eval_type == "bias":
-        asyncio.run(run_bias_eval(config))
-    elif cfg.run.eval_type == "security":
-        asyncio.run(run_security_eval(config))
-    elif cfg.run.eval_type == "standard":
-        hallucination_inputs = run_standard_eval(config)
-    else:
-        msg = f"Unknown eval_type: {cfg.run.eval_type}. Must be 'standard', 'bias' or 'security'"
-        raise ValueError(msg)
+    with tempfile.TemporaryDirectory(prefix="evals-summarisation-") as staging:
+        staging_dir = Path(staging)
 
-    if cfg.hallucination.enabled:
-        from evals.summarisation.src.hallucination import run_hallucination_eval
-        from evals.summarisation.src.hallucination.constants import SUMMARY_FILENAME
-
-        if not hallucination_inputs:
-            msg = "Hallucination eval requires eval_type: standard"
+        if cfg.run.eval_type == "bias":
+            asyncio.run(run_bias_eval(config))
+        elif cfg.run.eval_type == "security":
+            asyncio.run(run_security_eval(config))
+        elif cfg.run.eval_type == "standard":
+            hallucination_inputs = run_standard_eval(cfg, blob, staging_dir)
+        else:
+            msg = f"Unknown eval_type: {cfg.run.eval_type}. Must be 'standard', 'bias' or 'security'"
             raise ValueError(msg)
 
-        h_run_id, h_results = run_hallucination_eval(
-            cfg,
-            inputs=hallucination_inputs,
-            output_dir=Path(cfg.run.output_dir),
-        )
-        typer.echo(f"\nHallucination run ID: {h_run_id}")
-        typer.echo(f"Hallucination results: {h_results}")
+        if cfg.hallucination.enabled:
+            from evals.summarisation.src.hallucination import run_hallucination_eval
 
-        with (h_results.parent / SUMMARY_FILENAME).open("rb") as f:
-            outcomes = orjson.loads(f.read())["citation_outcomes"]
-        typer.echo(f"Citation outcomes: {outcomes}")
-        if outcomes["fail"] > 0:
-            typer.echo(
-                f"Citation gate: {outcomes['fail']} summary/summaries failed the claim citation rate threshold.",
-                err=True,
+            if not hallucination_inputs:
+                msg = "Hallucination eval requires eval_type: standard"
+                raise ValueError(msg)
+
+            output_dir = _staged_output_dir(blob, cfg, staging_dir)
+            h_run_id, h_results = run_hallucination_eval(
+                cfg,
+                inputs=hallucination_inputs,
+                output_dir=output_dir,
             )
-            raise typer.Exit(code=1)
+            typer.echo(f"\nHallucination run ID: {h_run_id}")
+            typer.echo(f"Hallucination results: {h_results}")
+
+            _publish(blob, cfg, h_results.parent, h_run_id, subtype="hallucination")
 
 
 if __name__ == "__main__":

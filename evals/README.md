@@ -36,6 +36,40 @@ The evaluation type is determined by the `eval_type` field in the config file.
 
 Outputs are written to `evals/summarisation/output/<run_id>/results.jsonl` and `evals/summarisation/output/<run_id>/summary.json`.
 
+## Blob storage integration (standard eval)
+
+The standard summarisation eval can read its input from, and write its output to, Azure blob storage
+instead of local disk. This develops the full sensitive-data flow using safe proxy data — no real or
+sensitive data. Three containers are used (provisioned by `terraform/azure/evals/`):
+
+| Container | Holds                                                                              |
+| --------- | --------------------------------------------------------------------------------- |
+| `input`   | Dataset under `summarisation/`, e.g. `summarisation/standard/dialogues.jsonl`.     |
+| `debug`   | Per-entry data: `results.jsonl`, `hallucination_inputs.json`.                      |
+| `output`  | Aggregated results only: `summary.json` (means across entries).                    |
+
+### Config and env
+
+- Set `AZURE_EVALS_STORAGE_ACCOUNT_URL` (e.g. `https://<account>.blob.core.windows.net`), or put
+  `blob.account_url` in the config.
+- Enable via the config's `blob:` block and set `dataset.source: blob` with a `dataset.blob_path`.
+  See `evals/summarisation/configs/blob-smoke-test.yaml`.
+
+### Upload the sample data and run locally
+
+```bash
+az login
+# Upload synthetic proxy data to input/summarisation/ (see evals/summarisation/sample_data/README.md)
+az storage blob upload-batch --account-name "<evals-account>" --auth-mode login \
+  --destination input --destination-path summarisation --source evals/summarisation/sample_data
+
+export AZURE_EVALS_STORAGE_ACCOUNT_URL="https://<evals-account>.blob.core.windows.net"
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
+```
+
+With `blob.enabled: false` (the default in every other config) the pipeline reads and writes local
+disk exactly as before.
+
 ## Running a new experiment
 
 An experiment is defined by:

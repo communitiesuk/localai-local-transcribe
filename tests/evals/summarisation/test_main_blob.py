@@ -1,0 +1,75 @@
+"""The main CLI stages inputs from and publishes outputs to blob storage when blob.enabled.
+
+Exercises: evals.summarisation.src.main.app (standard eval, blob publish path).
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import yaml
+from typer.testing import CliRunner
+
+from evals.summarisation.src.main import app
+
+runner = CliRunner()
+
+
+def _write_config(tmp_path: Path) -> Path:
+    cfg = {
+        "run": {
+            "eval_type": "standard",
+            "output_dir": str(tmp_path / "local-out"),
+            "limit": 1,
+            "prompt_version": "dev",
+        },
+        "dataset": {
+            "name": "synthetic",
+            "source": "blob",
+            "blob_path": "summarisation/standard/d.jsonl",
+            "dialogue_field": "dialogue",
+            "reference_summary_field": "summary",
+        },
+        "judge": {"pass_threshold": 4},
+        "metrics": ["accuracy"],
+        "prompts": {"judge_template_path": "evals/summarisation/prompts/judge.j2"},
+        "blob": {"enabled": True, "account_url": "https://acct.blob.core.windows.net"},
+    }
+    path = tmp_path / "cfg.yaml"
+    path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    return path
+
+
+def _fake_run_eval(cfg, *, split, limit, prompt_version, output_dir, dataset_path):  # noqa: ARG001
+    run_id = "run1"
+    run_dir = Path(output_dir) / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "results.jsonl").write_text("{}\n", encoding="utf-8")
+    (run_dir / "summary.json").write_text("{}", encoding="utf-8")
+    (run_dir / "hallucination_inputs.json").write_text("[]", encoding="utf-8")
+    return run_id, run_dir / "results.jsonl", run_dir / "summary.json", run_dir / "hallucination_inputs.json"
+
+
+def test_standard_eval_publishes_split_outputs(tmp_path):
+    config = _write_config(tmp_path)
+    fake_blob = MagicMock()
+
+    with (
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_config", return_value=fake_blob),
+        patch("evals.summarisation.src.optimisation.run_eval", side_effect=_fake_run_eval),
+    ):
+        result = runner.invoke(app, ["--config", str(config)])
+
+    assert result.exit_code == 0, result.output
+
+    # Dataset was staged from the input container.
+    fake_blob.download_blob.assert_called_once()
+    assert fake_blob.download_blob.call_args.args[0] == "input"
+
+    # Outputs published with the results/debug split.
+    dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
+    assert dests["output"] == "summarisation/standard/run1/summary.json"
+    debug_blobs = {call.args[1] for call in fake_blob.upload_file.call_args_list if call.args[0] == "debug"}
+    assert "summarisation/standard/run1/results.jsonl" in debug_blobs
+    assert "summarisation/standard/run1/hallucination_inputs.json" in debug_blobs
