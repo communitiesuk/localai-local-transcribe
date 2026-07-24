@@ -1,0 +1,57 @@
+# Summarisation Evals smoke test — manual-run only.
+
+name: Summarisation Evals
+
+trigger: none
+pr: none
+
+parameters:
+  - name: pythonVersion
+    displayName: 'Python version'
+    type: string
+    default: '3.12'
+  - name: poetryVersion
+    displayName: 'Poetry version'
+    type: string
+    default: '2.4.1'
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+
+  - template: ../templates/setup-python-poetry.yml
+    parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
+      poetryVersion: ${{ parameters.poetryVersion }}
+
+  - script: poetry sync --no-root --no-ansi --with evals-summarisation
+    displayName: 'Install dependencies'
+
+  - script: cp .env.example .env
+    displayName: 'Copy env file'
+
+  - script: poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/smoke-test.yaml
+    displayName: 'Run summarisation smoke test'
+    env:
+      ENVIRONMENT: test
+      # These are set as pipeline variables directly in ADO (secret variables must be
+      # mapped explicitly).
+      # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
+      # to client_secret auth. It will need revisiting, due to it's short expiry.
+      AZURE_APIM_URL: $(AZURE_APIM_URL)
+      AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
+      AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
+      AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
+
+  - script: mkdir -p evals/summarisation/output
+    displayName: 'Ensure output dir exists'
+    condition: always()
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Upload smoke test output'
+    condition: always()
+    inputs:
+      artifactName: summarisation-smoke-test-output
+      targetPath: evals/summarisation/output

@@ -52,6 +52,7 @@ async def call_llm_judge_parallel(
     summary_text: str,
     dimensions: list[str],
     template_name: str | None = None,
+    template_content: str | None = None,
     intended_solicitation: str | None = None,
 ) -> dict:
     """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
@@ -69,6 +70,7 @@ async def call_llm_judge_parallel(
                 transcript_text=transcript_text,
                 summary_text=summary_text,
                 template_name=template_name,
+                template_content=template_content,
                 intended_solicitation=intended_solicitation,
                 marker_hash=marker_hash,
             )

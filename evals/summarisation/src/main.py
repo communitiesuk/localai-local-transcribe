@@ -112,6 +112,7 @@ def run(
 
     if cfg.hallucination.enabled:
         from evals.summarisation.src.hallucination import run_hallucination_eval
+        from evals.summarisation.src.hallucination.constants import SUMMARY_FILENAME
 
         if not hallucination_inputs:
             msg = "Hallucination eval requires eval_type: standard"
@@ -124,6 +125,16 @@ def run(
         )
         typer.echo(f"\nHallucination run ID: {h_run_id}")
         typer.echo(f"Hallucination results: {h_results}")
+
+        with (h_results.parent / SUMMARY_FILENAME).open("rb") as f:
+            outcomes = orjson.loads(f.read())["citation_outcomes"]
+        typer.echo(f"Citation outcomes: {outcomes}")
+        if outcomes["fail"] > 0:
+            typer.echo(
+                f"Citation gate: {outcomes['fail']} summary/summaries failed the claim citation rate threshold.",
+                err=True,
+            )
+            raise typer.Exit(code=1)
 
 
 if __name__ == "__main__":
