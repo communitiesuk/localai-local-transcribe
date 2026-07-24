@@ -1,6 +1,7 @@
 import { PaginatedLabelledTranscriptions } from '@/components/recent-meetings/paginated-labelled-transcriptions'
 import { Loader2 } from 'lucide-react'
 import { Suspense } from 'react'
+import { UnlabelledTranscriptions } from '@/components/recent-meetings/unlabelled-transcriptions'
 
 export default function TranscriptionsPage() {
   return (
@@ -12,6 +13,7 @@ export default function TranscriptionsPage() {
           </div>
         }
       >
+        <UnlabelledTranscriptions />
         <PaginatedLabelledTranscriptions />
       </Suspense>
     </div>
