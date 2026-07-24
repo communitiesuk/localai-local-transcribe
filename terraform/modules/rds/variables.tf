@@ -19,8 +19,8 @@ variable "database_username" {
 }
 
 
-variable "app_user_password" {
-  description = "password for the app_user"
+variable "backend_user_password" {
+  description = "password for the backend_user"
   type        = string
   sensitive   = true
 }
@@ -86,3 +86,5 @@ variable "bastion_group_id" {
   type        = string
   description = "The id of the bastion security group"
 }
+
+

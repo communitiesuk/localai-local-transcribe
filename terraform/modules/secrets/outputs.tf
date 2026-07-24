@@ -1,12 +1,12 @@
-output "app_user_password" {
-  description = "Randomly generated password for the created app_user"
-  value       = random_password.app_user_password
+output "backend_user_password" {
+  description = "Randomly generated password for the created backend_user"
+  value       = random_password.backend_user_password
   sensitive   = true
 }
 
 output "database_password_secret_arn" {
   description = "valueFrom reference for the app DB password, for use in the ECS task definition's block"
-  value       = "${aws_secretsmanager_secret.database_secret.arn}:password::AWSCURRENT"
+  value       = "${aws_secretsmanager_secret.database_secret.arn}:password::"
 }
 
 output "secrets_kms_key_arn" {
@@ -57,5 +57,5 @@ output "sentry_dsn_arn" {
 output "rds_master_secret_string" {
   description = "Secret string for the RDS master secret version"
   value       = data.aws_secretsmanager_secret_version.rds_master.secret_string
-  sensitive = true
+  sensitive   = true
 }

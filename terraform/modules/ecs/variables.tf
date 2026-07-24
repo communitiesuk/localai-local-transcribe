@@ -245,8 +245,4 @@ variable "data_s3_bucket_name" {
   type        = string
 }
 
-variable "db_vpc_security_group" {
-  description = "The security group attached to the db"
-  type        = set(string)
-}
 

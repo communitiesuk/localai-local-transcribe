@@ -13,8 +13,8 @@ resource "aws_kms_alias" "local_transcribe_secrets" {
 }
 
 resource "aws_kms_key" "rds_secrets" {
-  description             = "KMS key for encrypting RDS secrets"
-  enable_key_rotation     = true
+  description         = "KMS key for encrypting RDS secrets"
+  enable_key_rotation = true
 
 }
 

@@ -96,12 +96,12 @@ resource "aws_ssm_parameter" "sentry_dsn" {
 
 resource "aws_secretsmanager_secret" "database_secret" {
   name                    = "${var.environment_name}-local-transcribe-database-secret"
-  description             = "Local-transcribe backend database secret(alternating users rotation)"
+  description             = "Local-transcribe backend database secret (alternating users rotation)"
   recovery_window_in_days = 0
   kms_key_id              = aws_kms_key.rds_secrets.arn
 }
 
-resource "random_password" "app_user_password" {
+resource "random_password" "backend_user_password" {
   length  = 32
   special = false
 }
@@ -109,8 +109,8 @@ resource "random_password" "app_user_password" {
 resource "aws_secretsmanager_secret_version" "database_secret" {
   secret_id = aws_secretsmanager_secret.database_secret.id
   secret_string = jsonencode({
-    username  = "app_user"
-    password  = random_password.app_user_password.result
+    username  = "backend_user"
+    password  = random_password.backend_user_password.result
     engine    = "postgres"
     host      = var.database_url
     port      = var.database_port
@@ -135,16 +135,15 @@ data "aws_serverlessapplicationrepository_application" "rds_rotation_lambda" {
   application_id = "arn:aws:serverlessrepo:us-east-1:297356227824:applications/SecretsManagerRDSPostgreSQLRotationMultiUser"
 
 }
- 
+
 data "aws_secretsmanager_secret_version" "rds_master" {
   secret_id = var.master_user_secret_arn
 }
 
 resource "aws_serverlessapplicationrepository_cloudformation_stack" "rds_rotation_lambda" {
-  name             = "${var.environment_name}-db-rotation-lambda"
-  application_id   = data.aws_serverlessapplicationrepository_application.rds_rotation_lambda.application_id
-  capabilities     = data.aws_serverlessapplicationrepository_application.rds_rotation_lambda.required_capabilities
-  semantic_version = "1.1.692"
+  name           = "${var.environment_name}-db-rotation-lambda"
+  application_id = data.aws_serverlessapplicationrepository_application.rds_rotation_lambda.application_id
+  capabilities   = data.aws_serverlessapplicationrepository_application.rds_rotation_lambda.required_capabilities
 
   parameters = {
     functionName        = "${var.environment_name}-rotation-function"
