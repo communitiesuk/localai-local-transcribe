@@ -51,7 +51,7 @@ export const UnlabelledTranscriptions = () => {
           <GovukTable>
             <GovukTableHead>
               <GovukTableRow>
-                <GovukTableHeaderCell className="govuk-!-padding-1">
+                <GovukTableHeaderCell className="govuk-!-padding-1 govuk-!-width-one-quarter">
                   <span className={'govuk-visually-hidden'}>Date recorded</span>
                 </GovukTableHeaderCell>
                 <GovukTableHeaderCell className="govuk-!-padding-1">

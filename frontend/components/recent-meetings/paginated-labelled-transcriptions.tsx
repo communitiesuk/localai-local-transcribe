@@ -3,10 +3,7 @@
 import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
 import { TranscriptionListItem } from '@/components/recent-meetings/transcription-list-item'
 import { Button } from '@/components/ui/button'
-import {
-  getUserUsersMeGetOptions,
-  listLabelledTranscriptionsTranscriptionsLabelledGetOptions,
-} from '@/lib/client/@tanstack/react-query.gen'
+import { listLabelledTranscriptionsTranscriptionsLabelledGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import Link from 'next/link'
@@ -41,7 +38,6 @@ export const getPageNumbers = (
 }
 
 export const PaginatedLabelledTranscriptions = () => {
-  const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -97,10 +93,18 @@ export const PaginatedLabelledTranscriptions = () => {
             <GovukTableHead>
               <GovukTableRow>
                 <GovukTableHeaderCell>Name</GovukTableHeaderCell>
-                <GovukTableHeaderCell>Case ID</GovukTableHeaderCell>
-                <GovukTableHeaderCell>Subject</GovukTableHeaderCell>
-                <GovukTableHeaderCell>Date of birth</GovukTableHeaderCell>
-                <GovukTableHeaderCell>Date recorded</GovukTableHeaderCell>
+                <GovukTableHeaderCell className="text-nowrap">
+                  Case ID
+                </GovukTableHeaderCell>
+                <GovukTableHeaderCell className="govuk-!-width-one-third">
+                  Subject
+                </GovukTableHeaderCell>
+                <GovukTableHeaderCell className="text-nowrap">
+                  Date of birth
+                </GovukTableHeaderCell>
+                <GovukTableHeaderCell className="text-nowrap">
+                  Date recorded
+                </GovukTableHeaderCell>
                 <GovukTableHeaderCell>
                   <span className={'govuk-visually-hidden'}>
                     Link to recording
@@ -132,14 +136,6 @@ export const PaginatedLabelledTranscriptions = () => {
               ))}
             </GovukTableBody>
           </GovukTable>
-          <ul className="mb-6 flex flex-col gap-2">
-            {transcriptions.map((transcription) => (
-              <TranscriptionListItem
-                transcription={transcription}
-                key={transcription.id}
-              />
-            ))}
-          </ul>
           {totalPages > 1 && (
             <div className="flex items-center justify-center space-x-2">
               {currentPage > 1 && (
