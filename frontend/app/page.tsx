@@ -22,16 +22,6 @@ export default function Home() {
           <Plus />
           <span className="font-semibold">New meeting</span>
         </GovukButtonLink>
-
-        <Suspense
-          fallback={
-            <div className="govuk-body flex items-center gap-2">
-              <Loader2 className="animate-spin" />
-            </div>
-          }
-        >
-          <PaginatedLabelledTranscriptions />
-        </Suspense>
       </div>
     </div>
   )
