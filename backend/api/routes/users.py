@@ -16,7 +16,6 @@ from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
-from common.settings import get_settings
 from common.types import (
     DataRetentionUpdateResponse,
     GetUserResponse,
@@ -25,8 +24,6 @@ from common.types import (
     UserExistsResponse,
     UserUpdateRoles,
 )
-
-settings = get_settings()
 
 users_router = APIRouter(prefix="/users", tags=["Users"])
 

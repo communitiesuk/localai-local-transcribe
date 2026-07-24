@@ -67,9 +67,6 @@ locals {
       name  = "BEST_LLM_MODEL_NAME"
       value = "gpt5-1"
       }, {
-      name  = "EMAIL_SERVICE"
-      value = "gov_notify"
-      }, {
       name  = "ALB_ARN"
       value = var.alb_arn
       }, {
@@ -268,6 +265,10 @@ resource "aws_ecs_task_definition" "backend" {
       }
 
       environment = concat(local.shared_worker_backend_environment_variables, [
+        {
+          name  = "EMAIL_SERVICE"
+          value = "gov_notify"
+        },
         {
           name  = "APP_NAME"
           value = "local-transcribe-backend"
