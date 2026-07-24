@@ -140,6 +140,7 @@ class GetUserResponse(BaseModel):
     id: uuid.UUID
     created_datetime: datetime
     updated_datetime: datetime
+    accepted_tou: bool
     last_login: datetime
     is_active: bool
     name: str | None

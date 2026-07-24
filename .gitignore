@@ -131,3 +131,6 @@ evals/**/output/
 **/*.m4a
 
 frontend/public/assets/govuk.coverage
+
+#openapi auto-generated files
+frontend/lib/client/
