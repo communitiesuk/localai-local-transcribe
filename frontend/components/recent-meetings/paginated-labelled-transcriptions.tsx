@@ -1,11 +1,8 @@
 'use client'
 
 import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
-import { TranscriptionListItem } from '@/components/recent-meetings/transcription-list-item'
-import { Button } from '@/components/ui/button'
 import { listLabelledTranscriptionsTranscriptionsLabelledGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { GovukHeading, GovukHint } from '@/components/govuk'
@@ -17,6 +14,7 @@ import {
   GovukTableHeaderCell,
   GovukTableRow,
 } from '@/components/govuk/table'
+import { GovukPagination } from '@/components/govuk/pagination'
 
 export const getPageNumbers = (
   currentPage: number,
@@ -136,48 +134,17 @@ export const PaginatedLabelledTranscriptions = () => {
               ))}
             </GovukTableBody>
           </GovukTable>
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center space-x-2">
-              {currentPage > 1 && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link
-                    href={pathname + `?page=${currentPage - 1}`}
-                    scroll={false}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Link>
-                </Button>
-              )}
-              {getPageNumbers(currentPage, totalPages).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="sm"
-                  className="min-w-10"
-                  asChild
-                >
-                  <Link href={pathname + `?page=${page}`} scroll={false}>
-                    {page}
-                  </Link>
-                </Button>
-              ))}
-              {currentPage < totalPages && (
-                <Button variant="outline" size="sm" asChild>
-                  <Link
-                    href={pathname + `?page=${currentPage + 1}`}
-                    scroll={false}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              )}
+          {(totalPages ?? 0) > 1 && (
+            <div className="flex justify-center">
+              <GovukPagination
+                currentPage={currentPage}
+                totalPages={totalPages!}
+                getHref={(pageNumber: number) =>
+                  pathname + `?page=${pageNumber}`
+                }
+              />
             </div>
           )}
-          <div className="mt-4 text-center text-sm text-gray-500">
-            Page {currentPage} of {totalPages}
-          </div>
         </>
       )}
     </div>
