@@ -52,8 +52,12 @@ export const SpeakerEditor = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <GovukButton type="button" variant="secondary">
-          View/Edit Speaker Names
+        <GovukButton
+          type="button"
+          variant="secondary"
+          className="govuk-!-margin-bottom-0"
+        >
+          Edit speaker names
         </GovukButton>
       </DialogTrigger>
       <DialogContent className="scroll max-h-screen overflow-y-auto sm:max-w-2xl">

@@ -5,9 +5,14 @@ import { useState } from 'react'
 interface CopyButtonProps {
   textToCopy: string
   posthogEvent: string
+  label?: string
 }
 
-function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
+function CopyButton({
+  textToCopy,
+  posthogEvent,
+  label = 'Copy',
+}: CopyButtonProps) {
   const [showCopied, setShowCopied] = useState(false)
 
   const stripHtmlTags = (html: string) => {
@@ -47,7 +52,7 @@ function CopyButton({ textToCopy, posthogEvent }: CopyButtonProps) {
       onClick={handleCopy}
       className="govuk-!-margin-bottom-0"
     >
-      {showCopied ? 'Copied!' : 'Copy'}
+      {showCopied ? 'Copied!' : label}
     </GovukButton>
   )
 }

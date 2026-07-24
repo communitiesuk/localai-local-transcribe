@@ -2,12 +2,23 @@
 import { use } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import { DownloadButton } from '@/components/download-button'
-import { GovukHeading, GovukNotificationBanner } from '@/components/govuk'
+import {
+  GovukBackLink,
+  GovukButton,
+  GovukDateInput,
+  GovukDetails,
+  GovukFormGroup,
+  GovukHeading,
+  GovukInput,
+  GovukLabel,
+  GovukNotificationBanner,
+  GovukTabs,
+} from '@/components/govuk'
 import { StatusBadge } from '@/components/status-icon'
 import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TranscriptionGetResponse } from '@/lib/client'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
@@ -66,6 +77,8 @@ export default function TranscriptionPage(props: {
 
   const date = new Date(transcription.created_datetime)
   const dateLabel = `${date.toDateString()} at ${date.toLocaleTimeString()}`
+  const recordingDate = date.toLocaleDateString('en-GB')
+  const dateTimeLabel = `${date.toLocaleDateString('en-GB')} at ${date.toLocaleTimeString('en-GB')}`
 
   if (
     transcription.status &&
@@ -107,45 +120,63 @@ export default function TranscriptionPage(props: {
   }
   return (
     <div className="flex w-full flex-col">
-      <TranscriptionHeader
-        transcription={transcription}
-        dateLabel={dateLabel}
+      <GovukBackLink href="/transcriptions">Back</GovukBackLink>
+      <GovukHeading as="h1" size="xl">
+        {recordingDate}
+      </GovukHeading>
+      <RecordingDetails dateTimeLabel={dateTimeLabel} />
+      <NewMinuteDialog
+        transcriptionId={transcription.id!}
+        trigger={<GovukButton type="button">Create document</GovukButton>}
       />
-      <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="h-12 w-full">
-          <TabsTrigger
-            value="summary"
-            className="data-[state=active]:shadow-lg"
-          >
-            Meeting summary
-          </TabsTrigger>
-          <TabsTrigger
-            value="transcript"
-            className="data-[state=active]:shadow-lg"
-          >
-            Transcript
-          </TabsTrigger>
-          {isChatEnabled && (
-            <TabsTrigger value="chat" className="data-[state=active]:shadow-lg">
-              Chat with your meeting
-            </TabsTrigger>
-          )}
-        </TabsList>
-        <TabsContent value="summary">
-          <MinuteTab transcription={transcription} />
-        </TabsContent>
-        <TabsContent value="transcript">
+      <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
+        <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab transcription={transcription} />
-        </TabsContent>
+        </GovukTabs.Panel>
+        <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
+          <MinuteTab transcription={transcription} />
+        </GovukTabs.Panel>
         {isChatEnabled && (
-          <TabsContent value="chat">
+          <GovukTabs.Panel id="chat" label="Chat with your meeting">
             <ChatTab transcription={transcription} />
-          </TabsContent>
+          </GovukTabs.Panel>
         )}
-      </Tabs>
+      </GovukTabs>
     </div>
   )
 }
+
+// Client metadata fields are display only until AIILG-599 adds the backend; the frame is matched here.
+const RecordingDetails = ({ dateTimeLabel }: { dateTimeLabel: string }) => (
+  <>
+    <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
+      Recording details
+    </GovukHeading>
+    <GovukDetails summary="Show">
+      <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
+      <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
+      <GovukFormGroup>
+        <GovukLabel htmlFor="client-name">Client name (optional)</GovukLabel>
+        <GovukInput id="client-name" />
+      </GovukFormGroup>
+      <GovukFormGroup>
+        <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
+        <GovukInput id="case-id" />
+      </GovukFormGroup>
+      <GovukFormGroup>
+        <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
+        <GovukInput id="subject" />
+      </GovukFormGroup>
+      <GovukDateInput
+        id="client-dob"
+        legend="Client date of birth (optional)"
+      />
+      <GovukButton type="button" variant="secondary" disabled>
+        Update details
+      </GovukButton>
+    </GovukDetails>
+  </>
+)
 
 const TranscriptionHeader = ({
   transcription,

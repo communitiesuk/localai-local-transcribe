@@ -6,18 +6,20 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import posthog from 'posthog-js'
-import { useCallback, useEffect, useId, useState } from 'react'
+import { useCallback, useId, useState } from 'react'
 
 export const SpeakerNamePopover = ({
   entry,
   index,
   onUpdateAll,
   onUpdateSingle,
+  editing,
 }: {
   entry: DialogueEntryForm['entries'][0]
   index: number
   onUpdateAll: (originalSpeaker: string, newName: string) => Promise<void>
   onUpdateSingle: (index: number, newName: string) => Promise<void>
+  editing: boolean
 }) => {
   const [open, setOpen] = useState(false)
   const [newName, setNewName] = useState(entry.speaker)
@@ -53,7 +55,6 @@ export const SpeakerNamePopover = ({
     },
     [newName, onUpdateSingle]
   )
-
   const handleOpenChange = (open: boolean) => {
     setOpen(open)
 
@@ -61,6 +62,15 @@ export const SpeakerNamePopover = ({
       setNewName(entry.speaker)
     }
   }
+
+  if (!editing) {
+    return (
+      <span className="govuk-!-font-weight-bold max-w-[200px] min-w-[100px] break-words">
+        {entry.speaker}:
+      </span>
+    )
+  }
+
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
