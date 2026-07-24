@@ -109,3 +109,4 @@ function GovukAccordionBase({
 GovukAccordionBase.Section = Section
 
 export const GovukAccordion = GovukAccordionBase
+export const GovukAccordionSection = Section

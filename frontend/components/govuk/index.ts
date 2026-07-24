@@ -1,4 +1,5 @@
 export { GovukAccordion } from './accordion'
+export {GovukAccordionSection} from './accordion'
 export { GovukBackLink } from './back-link'
 export { GovukButton, GovukButtonGroup, GovukButtonLink } from './button'
 export { GovukDetails } from './details'
