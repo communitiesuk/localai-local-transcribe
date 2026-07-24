@@ -155,16 +155,20 @@ async def list_unlabelled_transcriptions(
     current_user: UserDep,
 ) -> UnlabelledTranscriptionsResponse:
     """Get metadata for unlabelled transcriptions for the current user."""
-    count_statement = select(func.count(col(Transcription.id))).where(Transcription.user_id == current_user.id)
-    count_result = await session.exec(count_statement)
-    total_count = count_result.one()
-
     labelled_filter = or_(
         col(Transcription.title).is_not(None),
         col(Transcription.client_date_of_birth).is_not(None),
         col(Transcription.client_name).is_not(None),
         col(Transcription.case_id).is_not(None),
     )
+
+    count_statement = (
+        select(func.count(col(Transcription.id)))
+        .where(Transcription.user_id == current_user.id)
+        .where(not_(labelled_filter))
+    )
+    count_result = await session.exec(count_statement)
+    total_count = count_result.one()
 
     statement = (
         select(Transcription)
