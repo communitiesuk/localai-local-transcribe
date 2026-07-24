@@ -99,7 +99,7 @@ async def list_labelled_transcriptions(
 ) -> LabelledTranscriptionsResponse:
     """Get paginated metadata for labelled transcriptions for the current user."""
     labelled_filter = or_(
-        col(Transcription.date_of_recording).is_not(None),
+        col(Transcription.title).is_not(None),
         col(Transcription.client_date_of_birth).is_not(None),
         col(Transcription.client_name).is_not(None),
         col(Transcription.case_id).is_not(None),
@@ -160,7 +160,7 @@ async def list_unlabelled_transcriptions(
     total_count = count_result.one()
 
     labelled_filter = or_(
-        col(Transcription.date_of_recording).is_not(None),
+        col(Transcription.title).is_not(None),
         col(Transcription.client_date_of_birth).is_not(None),
         col(Transcription.client_name).is_not(None),
         col(Transcription.case_id).is_not(None),
