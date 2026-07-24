@@ -18,3 +18,18 @@ output "container_names" {
     azurerm_storage_container.output.name,
   ]
 }
+
+output "pipeline_identity_client_id" {
+  description = "Client ID of the pipeline managed identity. Use as the Service Principal Id when creating the Azure DevOps service connection."
+  value       = azurerm_user_assigned_identity.pipeline.client_id
+}
+
+output "pipeline_identity_principal_id" {
+  description = "Principal (object) ID of the pipeline managed identity."
+  value       = azurerm_user_assigned_identity.pipeline.principal_id
+}
+
+output "storage_account_blob_endpoint" {
+  description = "Blob endpoint for AZURE_EVALS_STORAGE_ACCOUNT_URL."
+  value       = azurerm_storage_account.evals.primary_blob_endpoint
+}
