@@ -57,6 +57,7 @@ steps:
       # mapped explicitly).
       # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
       # to client_secret auth. It will need revisiting, due to it's short expiry.
+      AZURE_APIM_AUTH_METHOD: static_token
       AZURE_APIM_URL: $(AZURE_APIM_URL)
       AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
       AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
