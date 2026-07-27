@@ -26,15 +26,32 @@ resource "postgresql_role" "backend_user" {
 #Migrations: special role pointed to alembic with more 
 #privileges than the backend_user
 
+resource "random_password" "db_migrations" {
+  length  = 32
+  special = false
+}
+
+resource "aws_secretsmanager_secret" "db_migrations" {
+  name = "db-migrations-credentials"
+}
+
+resource "aws_secretsmanager_secret_version" "db_migrations" {
+  secret_id = aws_secretsmanager_secret.db_migrations.id
+  secret_string = jsonencode({
+    username = postgresql_role.db_migrations.name
+    password = random_password.db_migrations.result
+  })
+}
+
 resource "postgresql_role" "db_migrations" {
-  name     = "db_migrations"
-  login    = true
-  password = "todo"
+  name                = "db_migrations"
+  login               = true
+  password_wo         = random_password.db_migrations.result
+  password_wo_version = 1
   roles = [
     postgresql_role.app_role.name,
-    postgresql_role.app_owner_role.name
+    postgresql_role.app_owner_role.name,
   ]
-
 }
 
 
