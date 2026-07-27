@@ -255,7 +255,7 @@ export function TranscriptionTab({
             )}
           </GovukButtonGroup>
           {hasRecordings && (
-            <div className="govuk-!-margin-bottom-2 sticky top-0 flex flex-col gap-1 bg-[var(--govuk-body-background-colour)] py-2">
+            <div className="govuk-!-margin-bottom-2 sticky top-0 bg-[var(--govuk-body-background-colour)] py-2">
               <audio
                 controls
                 src={recordings[0].url}
@@ -268,15 +268,6 @@ export function TranscriptionTab({
                   }
                 }}
               />
-              <div>
-                <button
-                  type="button"
-                  onClick={scrollToPlaying}
-                  className="govuk-link govuk-body-s"
-                >
-                  Scroll to playing
-                </button>
-              </div>
             </div>
           )}
           <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
