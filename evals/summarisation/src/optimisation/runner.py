@@ -331,6 +331,13 @@ class EvalRun:
         )
 
         self.summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))
+
+        # The threshold review is a debug artefact: it isn't summary.json, so publish_run_outputs
+        # routes it to the debug container automatically — no change to the results/debug split.
+        review = _build_threshold_review(metrics_summary, self.run_id, self.cfg.judge.pass_threshold)
+        review_path = self.summary_path.parent / "threshold_review.json"
+        review_path.write_bytes(orjson.dumps(review, option=orjson.OPT_INDENT_2))
+
         self.hallucination_inputs_path.write_bytes(
             orjson.dumps(
                 [h.model_dump() for h in self.state.hallucination_inputs],
@@ -398,6 +405,30 @@ def _build_metrics_summary(metric_scores: dict[str, list[float]]) -> dict[str, d
         if name != "token_usage"
     }
     return metrics_summary
+
+
+def _build_threshold_review(
+    metrics_summary: dict[str, dict[str, float]],
+    run_id: str,
+    pass_threshold: int,
+) -> dict[str, Any]:
+    """Apply judge.pass_threshold to each rubric dimension's mean to produce a pass/fail review.
+
+    Written to the debug bucket so a reviewer can see, per dimension, whether the run cleared the
+    configured bar. A dimension passes when its mean score meets the threshold; the run passes only
+    when every dimension does. An empty run (nothing evaluated) is never a pass.
+    """
+    dimensions: dict[str, dict[str, Any]] = {
+        name: {"mean": stats["mean"], "passed": stats["mean"] >= pass_threshold}
+        for name, stats in metrics_summary.items()
+    }
+    overall_passed = bool(dimensions) and all(dim["passed"] for dim in dimensions.values())
+    return {
+        "run_id": run_id,
+        "pass_threshold": pass_threshold,
+        "dimensions": dimensions,
+        "overall_passed": overall_passed,
+    }
 
 
 def _build_run_summary(

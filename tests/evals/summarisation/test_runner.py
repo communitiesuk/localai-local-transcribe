@@ -11,6 +11,7 @@ import dspy
 from evals.summarisation.src.common import AppConfig, run_halted
 from evals.summarisation.src.optimisation.runner import (
     _build_run_summary,
+    _build_threshold_review,
     _dialogue_to_entries,
     _elapsed_ms,
     _p50,
@@ -231,6 +232,13 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     assert isinstance(hallucination_inputs_path, Path)
     assert hallucination_inputs_path.name == "hallucination_inputs.json"
 
+    # The threshold review is emitted alongside the summary so it publishes to the debug bucket.
+    review_path = results_path.parent / "threshold_review.json"
+    assert review_path.exists(), "threshold_review.json should be written for the standard eval"
+    review = json.loads(review_path.read_text())
+    assert review["pass_threshold"] == 4
+    assert review["overall_passed"] is True  # judge returned 5 for accuracy, above the threshold of 4
+
 
 def test_build_run_summary_records_errors():
     errors = [{"stage": "judge", "example_id": "x1", "error": "RuntimeError: boom"}]
@@ -256,6 +264,37 @@ def test_build_run_summary_defaults_errors_to_empty():
         judge_ms_values=[],
     )
     assert summary["errors"] == []
+
+
+def test_build_threshold_review_passes_when_all_means_meet_threshold():
+    review = _build_threshold_review(
+        {"rubric_accuracy": {"mean": 4.0}, "rubric_coverage": {"mean": 4.5}},
+        "r1",
+        pass_threshold=4,
+    )
+    assert review["run_id"] == "r1"
+    assert review["pass_threshold"] == 4
+    assert review["overall_passed"] is True
+    assert review["dimensions"]["rubric_accuracy"]["passed"] is True
+    assert review["dimensions"]["rubric_coverage"]["passed"] is True
+
+
+def test_build_threshold_review_fails_when_any_mean_below_threshold():
+    review = _build_threshold_review(
+        {"rubric_accuracy": {"mean": 4.2}, "rubric_coverage": {"mean": 3.9}},
+        "r1",
+        pass_threshold=4,
+    )
+    assert review["overall_passed"] is False
+    assert review["dimensions"]["rubric_accuracy"]["passed"] is True
+    assert review["dimensions"]["rubric_coverage"]["passed"] is False
+
+
+def test_build_threshold_review_empty_is_not_a_pass():
+    # A run that evaluated nothing must not report a green threshold review.
+    review = _build_threshold_review({}, "r1", pass_threshold=4)
+    assert review["overall_passed"] is False
+    assert review["dimensions"] == {}
 
 
 def test_run_eval_survives_dspy_halt_and_records_it(tmp_path):
