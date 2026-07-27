@@ -125,10 +125,12 @@ export default function TranscriptionPage(props: {
         {recordingDate}
       </GovukHeading>
       <RecordingDetails dateTimeLabel={dateTimeLabel} />
-      <NewMinuteDialog
-        transcriptionId={transcription.id!}
-        trigger={<GovukButton type="button">Create document</GovukButton>}
-      />
+      <div>
+        <NewMinuteDialog
+          transcriptionId={transcription.id!}
+          trigger={<GovukButton type="button">Create document</GovukButton>}
+        />
+      </div>
       <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
         <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab transcription={transcription} />
