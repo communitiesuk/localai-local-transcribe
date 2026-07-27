@@ -114,13 +114,19 @@ def _load_rows_from_jsonl(path: Path, limit: int | None) -> list[dict[str, Any]]
     """Read a JSONL dataset (one JSON object per line) staged from the input container."""
     rows: list[dict[str, Any]] = []
     with path.open("rb") as f:
-        for line in f:
+        for line_no, line in enumerate(f, start=1):
             stripped = line.strip()
             if not stripped:
                 continue
-            rows.append(orjson.loads(stripped))
             if limit is not None and len(rows) >= limit:
                 break
+            try:
+                rows.append(orjson.loads(stripped))
+            except orjson.JSONDecodeError as exc:
+                # A truncated/partial blob upload leaves a half-written line; surface the path and
+                # line number instead of a bare, context-free JSON parse error.
+                msg = f"Malformed JSON at line {line_no} of blob dataset {path}: {exc}"
+                raise ValueError(msg) from exc
     return rows
 
 
@@ -135,6 +141,9 @@ def load_dspy_devset(
             msg = "dataset_path must be provided when dataset.source is 'blob'"
             raise ValueError(msg)
         rows = _load_rows_from_jsonl(dataset_path, limit)
+        if not rows and limit != 0:
+            msg = f"No rows loaded from blob dataset {dataset_path}; the input file is empty or malformed"
+            raise ValueError(msg)
     else:
         ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
         split_rows = ds[split]
@@ -204,7 +213,11 @@ class EvalRun:
                 t0 = time.perf_counter()
 
                 # Check satisfies both mypy and pre-commit security rules
-                generated = _run_async(generate_summary(entries, run.template_name))
+                try:
+                    generated = _run_async(generate_summary(entries, run.template_name))
+                except Exception as exc:
+                    run.state.errors.append({"stage": "summarize", "error": f"{type(exc).__name__}: {exc}"})
+                    raise
                 run.state.summarize_ms_values.append(_elapsed_ms(t0, time.perf_counter()))
 
                 candidate = DialogSummary(
@@ -245,18 +258,27 @@ class EvalRun:
             judge_transcript = judge_transcript_from_dialogue(ex.dialogue)
 
             t_j0 = time.perf_counter()
-            rubric_evaluation = _run_async(
-                call_llm_judge_parallel(
-                    summary_id=ex.example_id,
-                    transcript_ref=str(ex.example_id),
-                    transcript_text=judge_transcript,
-                    summary_text=pred.summary,
-                    dimensions=run.dimensions,
+            try:
+                rubric_evaluation = _run_async(
+                    call_llm_judge_parallel(
+                        summary_id=ex.example_id,
+                        transcript_ref=str(ex.example_id),
+                        transcript_text=judge_transcript,
+                        summary_text=pred.summary,
+                        dimensions=run.dimensions,
+                    )
                 )
-            )
-            run.state.judge_ms_values.append(_elapsed_ms(t_j0, time.perf_counter()))
+                run.state.judge_ms_values.append(_elapsed_ms(t_j0, time.perf_counter()))
+                # Parse inside the try: a degraded-but-reachable APIM can return a 200 with a
+                # truncated/malformed payload, and the resulting KeyError/ValueError must be
+                # captured with an example_id rather than surfacing as an opaque dspy failure.
+                metrics_out = _collect_rubric_metrics(rubric_evaluation)
+            except Exception as exc:
+                run.state.errors.append(
+                    {"stage": "judge", "example_id": ex.example_id, "error": f"{type(exc).__name__}: {exc}"}
+                )
+                raise
 
-            metrics_out = _collect_rubric_metrics(rubric_evaluation)
             for name, res in metrics_out.items():
                 run.state.metric_scores[name].append(res.score)
 
@@ -294,14 +316,18 @@ class EvalRun:
             self.state.records.clear()
 
         metrics_summary = _build_metrics_summary(self.state.metric_scores)
+        # split is a HuggingFace concept; for blob datasets the whole file is used, so don't
+        # record a misleading split label.
+        recorded_split = None if self.cfg.dataset.source == "blob" else self.split
         summary = _build_run_summary(
             run_id=self.run_id,
-            split=self.split,
+            split=recorded_split,
             devset=self.devset,
             metrics_summary=metrics_summary,
             skipped_dimensions=self.skipped_dimensions,
             summarize_ms_values=self.state.summarize_ms_values,
             judge_ms_values=self.state.judge_ms_values,
+            errors=self.state.errors,
         )
 
         self.summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))
@@ -328,6 +354,14 @@ class EvalRun:
                 display_progress=True,
             )
             evaluator(self._build_program())
+        except Exception as exc:
+            # dspy halts past max_errors (e.g. APIM outage failing every example). Swallow it so the
+            # finalized run is still returned and published; the caller fails the pipeline on the
+            # stage="evaluate" marker in summary.json.
+            logger.exception("Eval halted before completion; finalizing partial run %s", self.run_id)
+            self.state.errors.append(
+                {"stage": "evaluate", "error": f"halted before completion: {type(exc).__name__}: {exc}"}
+            )
         finally:
             self._finalize()
 
@@ -369,12 +403,13 @@ def _build_metrics_summary(metric_scores: dict[str, list[float]]) -> dict[str, d
 def _build_run_summary(
     *,
     run_id: str,
-    split: str,
+    split: str | None,
     devset: list[dspy.Example],
     metrics_summary: dict[str, dict[str, float]],
     skipped_dimensions: list[str],
     summarize_ms_values: list[int],
     judge_ms_values: list[int],
+    errors: list[dict[str, str]] | None = None,
 ) -> RunSummary:
     rubric_scores = [v["mean"] for k, v in metrics_summary.items() if k.startswith("rubric_")]
     overall = float(sum(rubric_scores) / len(rubric_scores)) if rubric_scores else None
@@ -392,6 +427,7 @@ def _build_run_summary(
             "summarize_p50": _p50(summarize_ms_values),
             "judge_p50": _p50(judge_ms_values),
         },
+        "errors": errors or [],
     }
 
 

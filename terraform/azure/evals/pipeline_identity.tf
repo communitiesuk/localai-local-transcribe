@@ -17,6 +17,15 @@ resource "azurerm_user_assigned_identity" "pipeline" {
     workload    = "evals"
     environment = var.environment_name
   }
+
+  # The federated credential needs both the issuer and the subject. Setting only one silently
+  # provisions nothing (count = 0 below), so fail at plan time instead.
+  lifecycle {
+    precondition {
+      condition     = (var.ado_federation_issuer == null) == (var.ado_federation_subject == null)
+      error_message = "Set both ado_federation_issuer and ado_federation_subject, or neither."
+    }
+  }
 }
 
 resource "azurerm_role_assignment" "pipeline_blob" {

@@ -67,6 +67,21 @@ def test_publish_run_outputs_splits_results_from_debug(tmp_path):
     assert uploaded_containers == {"output", "debug"}
 
 
+def test_publish_run_outputs_nested_summary_goes_to_debug(tmp_path):
+    # Only the top-level summary.json is the aggregate; a nested one is per-entry debug data.
+    cfg = _cfg()
+    run_dir = tmp_path / "run1"
+    (run_dir / "sub").mkdir(parents=True)
+    (run_dir / "summary.json").write_text("{}", encoding="utf-8")
+    (run_dir / "sub" / "summary.json").write_text("{}", encoding="utf-8")
+
+    blob = MagicMock()
+    published = publish_run_outputs(cfg, blob, run_dir, "run1")
+
+    assert published["summary.json"] == "output/summarisation/standard/run1/summary.json"
+    assert published["sub/summary.json"] == "debug/summarisation/standard/run1/sub/summary.json"
+
+
 def test_publish_run_outputs_subtype_prefix(tmp_path):
     cfg = _cfg()
     run_dir = tmp_path / "hrun"

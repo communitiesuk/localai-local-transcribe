@@ -8,7 +8,7 @@ from pathlib import Path
 import orjson
 import typer
 
-from evals.summarisation.src.common import AppConfig, load_config
+from evals.summarisation.src.common import AppConfig, RunSummary, load_config, run_halted
 from evals.summarisation.src.common.blob_io import publish_run_outputs, stage_dataset
 from evals.summarisation.src.common.blob_storage import EvalBlobStorage
 from evals.summarisation.src.hallucination.types import HallucinationInput
@@ -52,6 +52,23 @@ def _publish(
         typer.echo(f"  {name} -> {dest}")
 
 
+def _fail_pipeline_if_halted(summary_path: Path) -> None:
+    """Fail the standard-eval pipeline when the run halted before completing.
+
+    Called only after outputs are published, so the summary.json explaining the failure is
+    preserved even though the CLI exits non-zero.
+    """
+    with summary_path.open("rb") as f:
+        summary: RunSummary = orjson.loads(f.read())
+
+    if run_halted(summary):
+        typer.echo(
+            "Eval halted before completion (see errors in summary.json); failing pipeline.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+
 async def _drain_pending_tasks() -> None:
     """Await any background tasks the eval left running so they finish before the process exits."""
     tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
@@ -59,12 +76,11 @@ async def _drain_pending_tasks() -> None:
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def run_bias_eval(config: Path) -> None:
+async def run_bias_eval(cfg: AppConfig) -> None:
     from evals.summarisation.src.bias import run_counterfactual_eval
     from evals.summarisation.src.bias.bias_types import BiasEvalResults
     from evals.summarisation.src.bias.thresholds import has_threshold_failures
 
-    cfg = load_config(config)
     input_dir, output_dir = _resolve_io_dirs(cfg, "bias")
 
     run_id, results_path = await run_counterfactual_eval(cfg, input_dir, output_dir)
@@ -82,10 +98,9 @@ async def run_bias_eval(config: Path) -> None:
         raise typer.Exit(code=1)
 
 
-async def run_security_eval(config: Path) -> None:
+async def run_security_eval(cfg: AppConfig) -> None:
     from evals.summarisation.src.security import run_security_eval as _run_security_eval
 
-    cfg = load_config(config)
     input_dir, output_dir = _resolve_io_dirs(cfg, "security")
 
     run_id, results_path = await _run_security_eval(cfg, input_dir, output_dir)
@@ -120,12 +135,14 @@ def run_standard_eval(cfg: AppConfig, blob: EvalBlobStorage | None, staging_dir:
     typer.echo(f"Summary: {summary_path}")
     typer.echo(f"Hallucination inputs: {hallucination_inputs_path}")
 
-    with hallucination_inputs_path.open("rb") as f:
-        hallucination_inputs = [HallucinationInput.model_validate(item) for item in orjson.loads(f.read())]
-
+    # Publish before the failure decision so a halted run's artifacts (summary.json with the
+    # error list that explains the halt) survive the staging temp-dir teardown.
     _publish(blob, cfg, results_path.parent, run_id)
 
-    return hallucination_inputs
+    _fail_pipeline_if_halted(summary_path)
+
+    with hallucination_inputs_path.open("rb") as f:
+        return [HallucinationInput.model_validate(item) for item in orjson.loads(f.read())]
 
 
 @app.callback(invoke_without_command=True)
@@ -134,29 +151,42 @@ def run(
 ) -> None:
     cfg = load_config(config)
 
-    blob = _make_blob(cfg) if cfg.run.eval_type == "standard" else None
+    if cfg.dataset.source == "blob" and not cfg.blob.enabled:
+        msg = "dataset.source: blob requires blob.enabled: true"
+        raise ValueError(msg)
 
-    hallucination_inputs: list[HallucinationInput] = []
+    if cfg.blob.enabled and cfg.run.eval_type != "standard":
+        typer.echo(
+            f"Warning: blob.enabled is set but eval_type is '{cfg.run.eval_type}'; blob storage is only "
+            "used for standard evals, so outputs will stay on local disk.",
+            err=True,
+        )
 
+    if cfg.hallucination.enabled and cfg.run.eval_type != "standard":
+        msg = "Hallucination eval requires eval_type: standard"
+        raise ValueError(msg)
+
+    if cfg.run.eval_type == "bias":
+        asyncio.run(run_bias_eval(cfg))
+        return
+    if cfg.run.eval_type == "security":
+        asyncio.run(run_security_eval(cfg))
+        return
+    if cfg.run.eval_type != "standard":
+        msg = f"Unknown eval_type: {cfg.run.eval_type}. Must be 'standard', 'bias' or 'security'"
+        raise ValueError(msg)
+
+    blob = _make_blob(cfg)
+
+    # Only the standard eval (and its optional hallucination add-on) stages to a temp dir; scoping
+    # its lifetime here keeps the C1 publish-before-teardown ordering clear.
     with tempfile.TemporaryDirectory(prefix="evals-summarisation-") as staging:
         staging_dir = Path(staging)
 
-        if cfg.run.eval_type == "bias":
-            asyncio.run(run_bias_eval(config))
-        elif cfg.run.eval_type == "security":
-            asyncio.run(run_security_eval(config))
-        elif cfg.run.eval_type == "standard":
-            hallucination_inputs = run_standard_eval(cfg, blob, staging_dir)
-        else:
-            msg = f"Unknown eval_type: {cfg.run.eval_type}. Must be 'standard', 'bias' or 'security'"
-            raise ValueError(msg)
+        hallucination_inputs = run_standard_eval(cfg, blob, staging_dir)
 
         if cfg.hallucination.enabled:
             from evals.summarisation.src.hallucination import run_hallucination_eval
-
-            if not hallucination_inputs:
-                msg = "Hallucination eval requires eval_type: standard"
-                raise ValueError(msg)
 
             output_dir = _staged_output_dir(blob, cfg, staging_dir)
             h_run_id, h_results = run_hallucination_eval(

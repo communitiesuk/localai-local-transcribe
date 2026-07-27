@@ -13,8 +13,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# summary.json is the only aggregated artefact; everything else is per-entry debug data.
-RESULTS_FILENAMES = frozenset({"summary.json"})
+RESULTS_RELATIVE_PATHS = frozenset({"summary.json"})
 INPUT_CONTAINER = "input"
 RESULTS_CONTAINER = "output"
 DEBUG_CONTAINER = "debug"
@@ -45,7 +44,7 @@ def publish_run_outputs(
     published: dict[str, str] = {}
     for path in sorted(p for p in run_output_dir.rglob("*") if p.is_file()):
         relative = path.relative_to(run_output_dir).as_posix()
-        is_result = path.name in RESULTS_FILENAMES
+        is_result = relative in RESULTS_RELATIVE_PATHS
         container = RESULTS_CONTAINER if is_result else DEBUG_CONTAINER
         blob_name = f"{prefix}/{relative}"
         blob.upload_file(container, blob_name, path)

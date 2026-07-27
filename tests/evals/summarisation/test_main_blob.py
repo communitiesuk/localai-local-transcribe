@@ -5,6 +5,7 @@ Exercises: evals.summarisation.src.main.app (standard eval, blob publish path).
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -41,14 +42,38 @@ def _write_config(tmp_path: Path) -> Path:
     return path
 
 
-def _fake_run_eval(cfg, *, split, limit, prompt_version, output_dir, dataset_path):  # noqa: ARG001
-    run_id = "run1"
-    run_dir = Path(output_dir) / run_id
-    run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "results.jsonl").write_text("{}\n", encoding="utf-8")
-    (run_dir / "summary.json").write_text("{}", encoding="utf-8")
-    (run_dir / "hallucination_inputs.json").write_text("[]", encoding="utf-8")
-    return run_id, run_dir / "results.jsonl", run_dir / "summary.json", run_dir / "hallucination_inputs.json"
+def _make_fake_run_eval(summary: dict):
+    def _fake_run_eval(cfg, *, split, limit, prompt_version, output_dir, dataset_path):  # noqa: ARG001
+        run_id = "run1"
+        run_dir = Path(output_dir) / run_id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "results.jsonl").write_text("{}\n", encoding="utf-8")
+        (run_dir / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
+        (run_dir / "hallucination_inputs.json").write_text("[]", encoding="utf-8")
+        return run_id, run_dir / "results.jsonl", run_dir / "summary.json", run_dir / "hallucination_inputs.json"
+
+    return _fake_run_eval
+
+
+_fake_run_eval = _make_fake_run_eval({})
+
+
+def test_blob_source_without_blob_enabled_is_rejected(tmp_path):
+    cfg = {
+        "run": {"eval_type": "standard", "output_dir": str(tmp_path / "out")},
+        "dataset": {"name": "synthetic", "source": "blob", "blob_path": "summarisation/standard/d.jsonl"},
+        "judge": {"pass_threshold": 4},
+        "prompts": {"judge_template_path": "evals/summarisation/prompts/judge.j2"},
+        "blob": {"enabled": False},
+    }
+    path = tmp_path / "cfg.yaml"
+    path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+
+    result = runner.invoke(app, ["--config", str(path)])
+
+    assert result.exit_code != 0
+    assert isinstance(result.exception, ValueError)
+    assert "blob.enabled" in str(result.exception)
 
 
 def test_standard_eval_publishes_split_outputs(tmp_path):
@@ -73,3 +98,22 @@ def test_standard_eval_publishes_split_outputs(tmp_path):
     debug_blobs = {call.args[1] for call in fake_blob.upload_file.call_args_list if call.args[0] == "debug"}
     assert "summarisation/standard/run1/results.jsonl" in debug_blobs
     assert "summarisation/standard/run1/hallucination_inputs.json" in debug_blobs
+
+
+def test_halted_run_publishes_then_fails_pipeline(tmp_path):
+    """A halted run must still publish its summary to blob, then exit non-zero."""
+    config = _write_config(tmp_path)
+    fake_blob = MagicMock()
+    halted_summary = {"errors": [{"stage": "evaluate", "error": "halted before completion: RuntimeError: 401"}]}
+
+    with (
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_config", return_value=fake_blob),
+        patch("evals.summarisation.src.optimisation.run_eval", side_effect=_make_fake_run_eval(halted_summary)),
+    ):
+        result = runner.invoke(app, ["--config", str(config)])
+
+    # Pipeline fails...
+    assert result.exit_code == 1, result.output
+    # ...but the summary explaining the failure was published to blob first.
+    dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
+    assert dests["output"] == "summarisation/standard/run1/summary.json"

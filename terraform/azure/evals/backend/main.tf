@@ -39,10 +39,11 @@ resource "azurerm_storage_account" "terraform_state" {
   local_user_enabled              = false
   default_to_oauth_authentication = true
 
-  # Cap how long a newly created SAS token may remain valid.
+  # Cap how long a newly created SAS token may remain valid. Block over-long SAS on the state
+  # account too — it holds Terraform state, which can contain sensitive values.
   sas_policy {
     expiration_period = var.sas_expiration_period
-    expiration_action = "Log"
+    expiration_action = "Block"
   }
 
   # Versioning and soft delete protect state from accidental overwrite or delete.

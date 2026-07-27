@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import contextlib
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import dspy
 
-from evals.summarisation.src.common import AppConfig
+from evals.summarisation.src.common import AppConfig, run_halted
 from evals.summarisation.src.optimisation.runner import (
+    _build_run_summary,
     _dialogue_to_entries,
     _elapsed_ms,
     _p50,
@@ -162,6 +165,19 @@ def test_dialogue_to_entries_has_timestamps():
     assert entries[1]["end_time"] == 2.0
 
 
+def test_run_halted_detects_evaluate_stage_error():
+    assert run_halted({"errors": [{"stage": "evaluate", "error": "halted before completion: ..."}]})
+
+
+def test_run_halted_ignores_per_example_errors():
+    # A completed run with a transient judge failure is not a halt.
+    assert not run_halted({"errors": [{"stage": "judge", "example_id": "x", "error": "boom"}]})
+
+
+def test_run_halted_handles_missing_errors_key():
+    assert not run_halted({})
+
+
 def test_run_eval_contract_returns_valid_paths(tmp_path):
     """CONTRACT TEST: run_eval returns valid run_id and Path objects for results."""
     cfg = _cfg(tmp_path, metrics=["accuracy"])
@@ -214,3 +230,155 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     assert isinstance(summary_path, Path)
     assert isinstance(hallucination_inputs_path, Path)
     assert hallucination_inputs_path.name == "hallucination_inputs.json"
+
+
+def test_build_run_summary_records_errors():
+    errors = [{"stage": "judge", "example_id": "x1", "error": "RuntimeError: boom"}]
+    summary = _build_run_summary(
+        run_id="r1",
+        split="test",
+        devset=[],
+        metrics_summary={},
+        summarize_ms_values=[],
+        judge_ms_values=[],
+        errors=errors,
+    )
+    assert summary["errors"] == errors
+
+
+def test_build_run_summary_defaults_errors_to_empty():
+    summary = _build_run_summary(
+        run_id="r1",
+        split="test",
+        devset=[],
+        metrics_summary={},
+        summarize_ms_values=[],
+        judge_ms_values=[],
+    )
+    assert summary["errors"] == []
+
+
+def test_run_eval_survives_dspy_halt_and_records_it(tmp_path):
+    """When dspy halts past its error budget, run_eval finalizes and returns instead of raising."""
+    cfg = _cfg(tmp_path, metrics=["accuracy"])
+
+    mock_rows = [{"id": "1", "dialogue": "#A#: Hello.", "summary": "Greeting"}]
+    mock_split = Mock()
+    mock_split.__iter__ = Mock(return_value=iter(mock_rows))
+    mock_split.select = Mock(return_value=mock_rows)
+    mock_split.__len__ = Mock(return_value=1)
+
+    # dspy's Evaluate(...) returns an evaluator; calling it raises once max_errors is exceeded.
+    halting_evaluator = Mock(side_effect=RuntimeError("Execution cancelled due to errors or interruption."))
+
+    with (
+        patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}),
+        patch("evals.summarisation.src.optimisation.runner.Evaluate", return_value=halting_evaluator),
+        patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
+        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
+    ):
+        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
+        mock_tokenizer.return_value.encode = Mock(return_value=[1])
+
+        # Must not raise: a halted run still returns its finalized paths.
+        run_id, results_path, summary_path, hallucination_inputs_path = run_eval(
+            cfg, split="test", limit=1, prompt_version="v1"
+        )
+
+    assert run_id
+    assert summary_path.exists(), "summary.json should be written even when the eval halts"
+    summary = json.loads(summary_path.read_text())
+    assert any(e["stage"] == "evaluate" for e in summary["errors"]), "the halt should be recorded"
+
+
+def test_run_eval_records_ai_call_failures_in_summary(tmp_path):
+    """When an AI call (here the judge) fails, summary.json records the error."""
+    cfg = _cfg(tmp_path, metrics=["accuracy"])
+
+    mock_rows = [{"id": "1", "dialogue": "#A#: Hello.", "summary": "Greeting"}]
+    mock_split = Mock()
+    mock_split.__iter__ = Mock(return_value=iter(mock_rows))
+    mock_split.select = Mock(return_value=mock_rows)
+    mock_split.__len__ = Mock(return_value=1)
+
+    mock_generated = Mock()
+    mock_generated.text = "Generated summary"
+    mock_generated.hallucinations = []
+    mock_generated.total_claims = 5
+
+    with (
+        patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}),
+        patch(
+            "evals.summarisation.src.optimisation.runner.generate_summary",
+            new_callable=AsyncMock,
+            return_value=mock_generated,
+        ),
+        patch(
+            "evals.summarisation.src.optimisation.runner.call_llm_judge_parallel",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("judge exploded"),
+        ),
+        patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
+        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
+    ):
+        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
+        mock_tokenizer.return_value.encode = Mock(return_value=[1, 2, 3, 4, 5])
+
+        # dspy may re-raise after hitting its error budget; summary is still written in the
+        # runner's finally block, which is what we assert on.
+        with contextlib.suppress(Exception):
+            run_eval(cfg, split="test", limit=1, prompt_version="v1")
+
+    summary_files = list((tmp_path / "output").rglob("summary.json"))
+    assert summary_files, "summary.json should be written even when AI calls fail"
+    summary = json.loads(summary_files[0].read_text())
+    assert summary["errors"], "AI-call errors should be recorded in the summary"
+    assert summary["errors"][0]["stage"] == "judge"
+    assert "judge exploded" in summary["errors"][0]["error"]
+
+
+def test_run_eval_records_malformed_judge_payload_in_summary(tmp_path):
+    """A 200 response with a malformed judge payload is captured with an example_id, not opaque."""
+    cfg = _cfg(tmp_path, metrics=["accuracy"])
+
+    mock_rows = [{"id": "1", "dialogue": "#A#: Hello.", "summary": "Greeting"}]
+    mock_split = Mock()
+    mock_split.__iter__ = Mock(return_value=iter(mock_rows))
+    mock_split.select = Mock(return_value=mock_rows)
+    mock_split.__len__ = Mock(return_value=1)
+
+    mock_generated = Mock()
+    mock_generated.text = "Generated summary"
+    mock_generated.hallucinations = []
+    mock_generated.total_claims = 5
+
+    # 200 OK but truncated: the "score" key is missing, so metric extraction raises KeyError.
+    malformed_judge_response = {"dimensions": {"accuracy": {"rationale": "no score field"}}}
+
+    with (
+        patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}),
+        patch(
+            "evals.summarisation.src.optimisation.runner.generate_summary",
+            new_callable=AsyncMock,
+            return_value=mock_generated,
+        ),
+        patch(
+            "evals.summarisation.src.optimisation.runner.call_llm_judge_parallel",
+            new_callable=AsyncMock,
+            return_value=malformed_judge_response,
+        ),
+        patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
+        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
+    ):
+        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
+        mock_tokenizer.return_value.encode = Mock(return_value=[1, 2, 3, 4, 5])
+
+        with contextlib.suppress(Exception):
+            run_eval(cfg, split="test", limit=1, prompt_version="v1")
+
+    summary_files = list((tmp_path / "output").rglob("summary.json"))
+    assert summary_files, "summary.json should be written even when the judge payload is malformed"
+    summary = json.loads(summary_files[0].read_text())
+    assert summary["errors"], "malformed judge payloads should be recorded, not silently dropped"
+    assert summary["errors"][0]["stage"] == "judge"
+    assert summary["errors"][0]["example_id"] == "1"

@@ -18,6 +18,7 @@ from evals.summarisation.src.common.schemas import (
     GenerationConfig,
     MetricResult,
     RunSummary,
+    run_halted,
 )
 from evals.summarisation.src.transcript import citation_markers, judge_transcript_text
 
@@ -40,5 +41,6 @@ __all__ = [
     "citation_markers",
     "judge_transcript_text",
     "load_config",
+    "run_halted",
     "write_jsonl",
 ]
