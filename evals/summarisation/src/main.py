@@ -8,13 +8,16 @@ from pathlib import Path
 import orjson
 import typer
 
+from evals.shared.blob_io import publish_run_outputs, stage_dataset
+from evals.shared.blob_storage import EvalBlobStorage
 from evals.summarisation.src.common import AppConfig, RunSummary, load_config, run_halted
-from evals.summarisation.src.common.blob_io import publish_run_outputs, stage_dataset
-from evals.summarisation.src.common.blob_storage import EvalBlobStorage
 from evals.summarisation.src.hallucination.types import HallucinationInput
 
 WORKDIR = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = WORKDIR / "configs" / "smoke-test.yaml"
+
+# Only summary.json is a headline result; everything else the run writes is per-entry debug output.
+RESULTS_RELATIVE_PATHS = frozenset({"summary.json"})
 
 app = typer.Typer()
 
@@ -30,7 +33,7 @@ def _resolve_io_dirs(cfg: AppConfig, mode: str) -> tuple[Path, Path]:
 
 
 def _make_blob(cfg: AppConfig) -> EvalBlobStorage | None:
-    return EvalBlobStorage.from_config(cfg.blob) if cfg.blob.enabled else None
+    return EvalBlobStorage.from_account_url(cfg.blob.account_url) if cfg.blob.enabled else None
 
 
 def _staged_output_dir(blob: EvalBlobStorage | None, cfg: AppConfig, staging_dir: Path) -> Path:
@@ -46,7 +49,15 @@ def _publish(
 ) -> None:
     if blob is None:
         return
-    published = publish_run_outputs(cfg, blob, run_output_dir, run_id, subtype)
+    published = publish_run_outputs(
+        blob,
+        run_output_dir,
+        run_id,
+        output_prefix=cfg.blob.output_prefix,
+        eval_type=cfg.run.eval_type,
+        results_relative_paths=RESULTS_RELATIVE_PATHS,
+        subtype=subtype,
+    )
     typer.echo("Published outputs to blob storage:")
     for name, dest in published.items():
         typer.echo(f"  {name} -> {dest}")
@@ -118,7 +129,7 @@ def run_standard_eval(cfg: AppConfig, blob: EvalBlobStorage | None, staging_dir:
 
     dataset_path = None
     if blob is not None and cfg.dataset.source == "blob":
-        dataset_path = stage_dataset(cfg, blob, staging_dir / "input" / "standard")
+        dataset_path = stage_dataset(blob, cfg.dataset.blob_path, staging_dir / "input" / "standard")
     output_dir = _staged_output_dir(blob, cfg, staging_dir)
 
     run_id, results_path, summary_path, hallucination_inputs_path = run_eval(

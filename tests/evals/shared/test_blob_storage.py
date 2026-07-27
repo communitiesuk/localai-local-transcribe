@@ -4,8 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from evals.summarisation.src.common.blob_storage import EvalBlobStorage
-from evals.summarisation.src.common.config import BlobStorageConfig
+from evals.shared.blob_storage import EvalBlobStorage
 
 
 class _FakeService:
@@ -32,7 +31,7 @@ class _FakeService:
 def _make_service(**kwargs):
     service = _FakeService(**kwargs)
     patcher = patch(
-        "evals.summarisation.src.common.blob_storage.BlobServiceClient",
+        "evals.shared.blob_storage.BlobServiceClient",
         return_value=service,
     )
     return service, patcher
@@ -41,7 +40,7 @@ def _make_service(**kwargs):
 def test_download_blob_writes_file(tmp_path):
     service, patcher = _make_service(blobs={("input", "summarisation/standard/data.jsonl"): b"line1\nline2\n"})
     dest = tmp_path / "nested" / "data.jsonl"
-    with patcher, patch("evals.summarisation.src.common.blob_storage.DefaultAzureCredential"):
+    with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
         blob = EvalBlobStorage("https://acct.blob.core.windows.net")
         result = blob.download_blob("input", "summarisation/standard/data.jsonl", dest)
 
@@ -53,30 +52,40 @@ def test_upload_file(tmp_path):
     src = tmp_path / "summary.json"
     src.write_bytes(b'{"overall": 4.2}')
     service, patcher = _make_service()
-    with patcher, patch("evals.summarisation.src.common.blob_storage.DefaultAzureCredential"):
+    with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
         blob = EvalBlobStorage("https://acct.blob.core.windows.net")
         blob.upload_file("output", "summarisation/standard/run1/summary.json", src)
 
     assert service.uploaded[("output", "summarisation/standard/run1/summary.json")] == b'{"overall": 4.2}'
 
 
-def test_from_config_uses_account_url_from_config():
-    cfg = BlobStorageConfig(enabled=True, account_url="https://cfg.blob.core.windows.net")
+def test_from_account_url_uses_given_url():
     with (
-        patch("evals.summarisation.src.common.blob_storage.BlobServiceClient") as mock_client,
-        patch("evals.summarisation.src.common.blob_storage.DefaultAzureCredential"),
+        patch("evals.shared.blob_storage.BlobServiceClient") as mock_client,
+        patch("evals.shared.blob_storage.DefaultAzureCredential"),
     ):
-        EvalBlobStorage.from_config(cfg)
+        EvalBlobStorage.from_account_url("https://cfg.blob.core.windows.net")
 
     _, kwargs = mock_client.call_args
     assert kwargs["account_url"] == "https://cfg.blob.core.windows.net"
 
 
-def test_from_config_raises_without_account_url():
-    cfg = BlobStorageConfig(enabled=True, account_url=None)
+def test_from_account_url_falls_back_to_env():
+    with (
+        patch.dict("os.environ", {"AZURE_EVALS_STORAGE_ACCOUNT_URL": "https://env.blob.core.windows.net"}, clear=False),
+        patch("evals.shared.blob_storage.BlobServiceClient") as mock_client,
+        patch("evals.shared.blob_storage.DefaultAzureCredential"),
+    ):
+        EvalBlobStorage.from_account_url(None)
+
+    _, kwargs = mock_client.call_args
+    assert kwargs["account_url"] == "https://env.blob.core.windows.net"
+
+
+def test_from_account_url_raises_without_account_url():
     with (
         patch.dict("os.environ", {"AZURE_EVALS_STORAGE_ACCOUNT_URL": ""}, clear=False),
-        patch("evals.summarisation.src.common.blob_storage.DefaultAzureCredential"),
+        patch("evals.shared.blob_storage.DefaultAzureCredential"),
         pytest.raises(ValueError, match="account_url"),
     ):
-        EvalBlobStorage.from_config(cfg)
+        EvalBlobStorage.from_account_url(None)

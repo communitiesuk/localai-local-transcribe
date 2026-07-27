@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
-from evals.summarisation.src.common.config import BlobStorageConfig
-
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from azure.core.credentials import TokenCredential
 
 logger = logging.getLogger(__name__)
+
+# Shared blob-layout conventions for the evals storage account.
+INPUT_CONTAINER = "input"
+RESULTS_CONTAINER = "output"
+DEBUG_CONTAINER = "debug"
 
 
 class EvalBlobStorage:
@@ -26,8 +30,12 @@ class EvalBlobStorage:
         )
 
     @classmethod
-    def from_config(cls, blob_cfg: BlobStorageConfig, credential: TokenCredential | None = None) -> EvalBlobStorage:
-        account_url = blob_cfg.account_url or os.getenv("AZURE_EVALS_STORAGE_ACCOUNT_URL")
+    def from_account_url(
+        cls,
+        account_url: str | None = None,
+        credential: TokenCredential | None = None,
+    ) -> EvalBlobStorage:
+        account_url = account_url or os.getenv("AZURE_EVALS_STORAGE_ACCOUNT_URL")
         if not account_url:
             msg = "Set blob.account_url in the config or AZURE_EVALS_STORAGE_ACCOUNT_URL."
             raise ValueError(msg)

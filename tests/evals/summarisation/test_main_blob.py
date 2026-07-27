@@ -82,7 +82,7 @@ def test_standard_eval_publishes_split_outputs(tmp_path):
     fake_blob = MagicMock()
 
     with (
-        patch("evals.summarisation.src.main.EvalBlobStorage.from_config", return_value=fake_blob),
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_url", return_value=fake_blob),
         patch("evals.summarisation.src.optimisation.run_eval", side_effect=_fake_run_eval),
     ):
         result = runner.invoke(app, ["--config", str(config)])
@@ -110,7 +110,7 @@ def test_halted_run_publishes_then_fails_pipeline(tmp_path):
     halted_summary = {"errors": [{"stage": "evaluate", "error": "halted before completion: RuntimeError: 401"}]}
 
     with (
-        patch("evals.summarisation.src.main.EvalBlobStorage.from_config", return_value=fake_blob),
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_url", return_value=fake_blob),
         patch("evals.summarisation.src.optimisation.run_eval", side_effect=_make_fake_run_eval(halted_summary)),
     ):
         result = runner.invoke(app, ["--config", str(config)])
