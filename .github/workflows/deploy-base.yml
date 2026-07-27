@@ -52,8 +52,9 @@ jobs:
           tags: ${{ secrets.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ inputs.environment }}-${{ matrix.service }}:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_SENTRY_DSN=${{ secrets.sentry-dsn }}
-            SENTRY_AUTH_TOKEN=${{ secrets.sentry-auth-token }}
             NEXT_PUBLIC_ENVIRONMENT=${{ inputs.environment }}
+          secrets: |
+            "sentry_auth_token=${{ secrets.sentry-auth-token }}"
             
       
       - name: Notify Slack on build failure

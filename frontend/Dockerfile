@@ -20,15 +20,15 @@ RUN npm run generate-client
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG NEXT_PUBLIC_POSTHOG_API_KEY
 ARG NEXT_PUBLIC_ENVIRONMENT
-ARG SENTRY_AUTH_TOKEN
 
 # Only export variables required by Next.js client bundle
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
     NEXT_PUBLIC_POSTHOG_API_KEY=$NEXT_PUBLIC_POSTHOG_API_KEY \
     NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
 
-# SENTRY_AUTH_TOKEN is read automatically from the ARG during npm run build
-RUN npm run build && \
+# SENTRY_AUTH_TOKEN is mounted as a secret during build
+RUN --mount=type=secret,id=sentry_auth_token \
+    SENTRY_AUTH_TOKEN=$(cat /run/secrets/sentry_auth_token) npm run build && \
     find .next -name "*.map" -delete
 
 # ==========================================
