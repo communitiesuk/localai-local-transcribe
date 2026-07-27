@@ -53,3 +53,13 @@ output "sentry_dsn_arn" {
   description = "ARN of the SSM parameter containing the Sentry DSN"
   value       = aws_ssm_parameter.sentry_dsn.arn
 }
+
+output "govnotify_api_key_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify API key"
+  value       = aws_ssm_parameter.govnotify_api_key.arn
+}
+
+output "govnotify_invite_template_id_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify invite template ID"
+  value       = aws_ssm_parameter.govnotify_invite_template_id.arn
+}
