@@ -39,3 +39,8 @@ button.govuk-link:disabled {
 .govuk-summary-card__action button.govuk-link:disabled {
   color: var(--govuk-link-colour);
 }
+
+// GDS uses square corners, so strip the rounding the browser adds to the native audio player.
+audio::-webkit-media-controls-enclosure {
+  border-radius: 0;
+}
