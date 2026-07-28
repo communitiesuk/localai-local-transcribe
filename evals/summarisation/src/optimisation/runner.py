@@ -210,12 +210,16 @@ class EvalRun:
                 reference_summary=getattr(gold, "reference_summary", None),
             )
 
+            # Numbered once and reused for the record, so a rationale citing `[n]` can be resolved
+            # against the transcript stored beside it.
+            judge_transcript = judge_transcript_from_dialogue(ex.dialogue)
+
             t_j0 = time.perf_counter()
             rubric_evaluation = _run_async(
                 call_llm_judge_parallel(
                     summary_id=ex.example_id,
                     transcript_ref=str(ex.example_id),
-                    transcript_text=judge_transcript_from_dialogue(ex.dialogue),
+                    transcript_text=judge_transcript,
                     summary_text=pred.summary,
                     dimensions=run.dimensions,
                 )
@@ -241,7 +245,7 @@ class EvalRun:
             record = EvalRecord(
                 run_id=run.run_id,
                 example_id=ex.example_id,
-                dialogue=ex.dialogue,
+                dialogue=judge_transcript,
                 reference_summary=ex.reference_summary,
                 candidate=pred.candidate,
                 metrics=metrics_out,

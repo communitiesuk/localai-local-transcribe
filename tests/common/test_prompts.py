@@ -100,6 +100,19 @@ def test_get_extract_claims_prompt_excludes_document_metadata():
     assert "document metadata" in content.lower()
 
 
+def test_get_extract_claims_prompt_still_extracts_the_meeting_purpose():
+    """A purpose the summariser invented is the fabrication a reader is least likely to question.
+
+    The extractor only ever sees the draft, never the transcript, so it cannot tell an invented
+    purpose from a grounded one — excluding "the summariser's own characterisation" therefore drops
+    both, and an unsupported purpose statement is never checked against the transcript at all.
+    """
+    content = get_extract_claims_prompt("The purpose of the meeting was to approve the budget.")[0]["content"]
+
+    assert "the purpose of the meeting was to" in content.lower()
+    assert "ARE claims and must be extracted" in content
+
+
 def test_get_cite_claims_prompt():
     messages = get_cite_claims_prompt("Draft text.", ["The budget is £1m"], _TRANSCRIPT)
     assert len(messages) == 1

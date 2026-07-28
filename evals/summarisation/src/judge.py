@@ -4,8 +4,8 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from evals.summarisation.src.common.transcript import citation_markers
 from evals.summarisation.src.constants import CRITICAL_DIMENSIONS, DIMENSIONS
+from evals.summarisation.src.transcript import citation_markers, transcript_entry_count
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "prompts"
 _env = Environment(
@@ -64,11 +64,13 @@ def build_user_message(
 
     The summary's citation markers are extracted mechanically and stated in the message. Left to
     read them off the summary itself, the judge confabulates markers that aren't there and credits
-    the summary for them — so which markers exist is settled before it is asked to judge them.
+    the summary for them — so which markers exist is settled before it is asked to judge them. Only
+    markers that resolve to an entry of ``transcript_text`` are listed, so an ordinary bracketed
+    number in the summary is not passed off to the judge as a citation.
     """
     template = _env.get_template("user_message.j2")
     return template.render(
-        citation_markers=citation_markers(summary_text),
+        citation_markers=citation_markers(summary_text, transcript_entry_count(transcript_text)),
         summary_id=summary_id,
         transcript_ref=transcript_ref,
         transcript_text=transcript_text,

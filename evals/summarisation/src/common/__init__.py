@@ -14,7 +14,7 @@ from evals.summarisation.src.common.schemas import (
     MetricResult,
     RunSummary,
 )
-from evals.summarisation.src.common.transcript import citation_markers, judge_transcript_text
+from evals.summarisation.src.transcript import citation_markers, judge_transcript_text
 
 __all__ = [
     "AppConfig",

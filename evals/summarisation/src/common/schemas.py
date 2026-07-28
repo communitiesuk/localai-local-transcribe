@@ -23,7 +23,12 @@ class RunSummary(TypedDict):
 
 
 class DialogExample(BaseModel):
-    """Example containing dialogue and optional reference summary."""
+    """Example containing dialogue and optional reference summary.
+
+    Where the example is handed to a judge metric, ``dialogue`` must already be numbered by
+    ``judge_transcript_text``: the judge is told its transcript is numbered and is asked to resolve
+    ``[n]`` citation markers against it.
+    """
 
     example_id: str
     dialogue: str

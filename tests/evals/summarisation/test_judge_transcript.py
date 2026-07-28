@@ -9,16 +9,18 @@ traceability. These tests pin the numbering at every judge call site.
 from __future__ import annotations
 
 import asyncio
+import re
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+from common.templates.citations import combine_consecutive_citations
 from evals.summarisation.src.common import AppConfig
-from evals.summarisation.src.common.transcript import citation_markers, judge_transcript_text
 from evals.summarisation.src.judge import build_user_message
 from evals.summarisation.src.optimisation.runner import judge_transcript_from_dialogue, run_eval
+from evals.summarisation.src.transcript import citation_markers, judge_transcript_text
 
 _ENTRIES = [
     {"speaker": "Housing Officer", "text": "The application was signed off.", "start_time": 0.0, "end_time": 1.0},
@@ -174,11 +176,42 @@ def test_bias_iteration_judges_against_numbered_transcript():
 def test_citation_markers_finds_single_and_range_markers():
     summary = "Signed off [11]. Discussed at length [4-6]. Not a marker [see annex] or [].".strip()
 
-    assert citation_markers(summary) == ["[11]", "[4-6]"]
+    assert citation_markers(summary, n_entries=20) == ["[11]", "[4-6]"]
 
 
 def test_citation_markers_empty_for_uncited_summary():
-    assert citation_markers("The Housing Officer confirmed the application was signed off.") == []
+    assert citation_markers("The Housing Officer confirmed the application was signed off.", n_entries=20) == []
+
+
+@pytest.mark.parametrize("indices", [[1, 3], [1, 2, 4, 6], [5, 7], [80, 81], [0], [11, 12]])
+def test_citation_markers_reads_back_everything_the_citation_step_writes(indices):
+    """Pinned to the real producer: a marker form it emits but we don't parse is invisible evidence.
+
+    The judge is told the extracted list is the summary's real citations, so a form the regex misses
+    is reported to it as an absence — a correctly cited summary judged as uncited.
+    """
+    cited = combine_consecutive_citations("Claim " + "".join(f"[{i}]" for i in indices))
+
+    markers = citation_markers(cited, n_entries=max(indices) + 1)
+    covered = {int(n) for marker in markers for n in re.findall(r"\d+", marker)}
+
+    assert covered, f"no markers recovered from {cited!r}"
+    assert min(covered) == min(indices)
+    assert max(covered) == max(indices)
+
+
+def test_citation_markers_reads_the_comma_form_the_citing_model_emits():
+    """`cite_claims.j2` warns against `[80, 81]`, which is evidence the model produces it."""
+    assert citation_markers("Masha and Hero were well matched [5, 7].", n_entries=20) == ["[5, 7]"]
+
+
+def test_citation_markers_ignores_bracketed_numbers_outside_the_transcript():
+    """Otherwise a stray bracketed year turns an uncited summary into a 'cited' one."""
+    assert citation_markers("The [2024-2025] budget rose.", n_entries=20) == []
+
+
+def test_citation_markers_collapses_repeats_so_the_count_reads_as_coverage():
+    assert citation_markers("Agreed [3]. Confirmed [3]. Noted [4].", n_entries=20) == ["[3]", "[4]"]
 
 
 def _user_message(summary_text: str) -> str:
@@ -195,6 +228,18 @@ def test_user_message_states_when_summary_has_no_citation_markers():
     message = _user_message("The Housing Officer confirmed the application was signed off.")
 
     assert "contains no citation markers" in message
+
+
+def test_user_message_does_not_excuse_a_summary_for_having_no_citations():
+    """Auditability is skipped outright for templates that can't cite (`judged_dimensions`).
+
+    So the no-markers branch only ever runs for a template that was *supposed* to cite, where the
+    absence is a failed citation step. Telling the judge it is "expected rather than a malfunction"
+    there turns a total loss of the citation feature into a mediocre-but-plausible score.
+    """
+    message = _user_message("The Housing Officer confirmed the application was signed off.")
+
+    assert "expected here rather than a malfunction" not in message
 
 
 def test_user_message_lists_the_markers_a_cited_summary_contains():
