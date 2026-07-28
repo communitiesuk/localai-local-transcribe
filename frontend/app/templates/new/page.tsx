@@ -41,7 +41,7 @@ function NewTemplateContent() {
               : undefined,
         },
   })
-  const navigation = useRouter()
+  const router = useRouter()
   const setBanner = useBannerStore((store) => store.setBanner)
   const { mutateAsync: saveTemplate } = useMutation({
     ...createUserTemplateUserTemplatesPostMutation(),
@@ -52,7 +52,7 @@ function NewTemplateContent() {
         message: `Template '${form.getValues('name')}' was successfully created at ${formatCurrentDateTime()}`,
       })
       posthog.capture('template_created')
-      navigation.push('/templates')
+      router.push('/templates')
     },
   })
   const onSubmit = async (data: TemplateData) => {

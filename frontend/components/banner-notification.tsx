@@ -1,10 +1,17 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { GovukNotificationBanner } from '@/components/govuk/notification-banner'
 
 export function BannerNotification() {
-  const { banner } = useBannerStore()
+  const { banner, clearBanner } = useBannerStore()
+
+  useEffect(() => {
+    return () => {
+      clearBanner()
+    }
+  }, [clearBanner])
 
   if (!banner) {
     return null
