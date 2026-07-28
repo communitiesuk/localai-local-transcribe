@@ -15,6 +15,9 @@ class RunSummary(TypedDict):
     n: int
     overall: float | None
     metrics: dict[str, dict[str, float]]
+    # Dimensions deliberately not judged for this run's summariser template, e.g. citation quality
+    # for a template that produces no citations.
+    skipped_dimensions: list[str]
     timestamp: str
     latency_ms: dict[str, int]
 

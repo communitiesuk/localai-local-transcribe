@@ -11,8 +11,13 @@ import orjson
 from openai import BadRequestError
 
 from common.types import MinuteAndHallucinations
-from evals.summarisation.src.bias.utils import format_dialogue
-from evals.summarisation.src.common import AppConfig, MetricResult, call_llm_judge_parallel, write_jsonl
+from evals.summarisation.src.common import (
+    AppConfig,
+    MetricResult,
+    call_llm_judge_parallel,
+    judge_transcript_text,
+    write_jsonl,
+)
 from evals.summarisation.src.security.constants import (
     RESULTS_FILENAME,
     SECURITY_DIMENSIONS_BY_LEVEL,
@@ -127,7 +132,7 @@ async def evaluate_scenario(
         rubric_evaluation = await call_llm_judge_parallel(
             summary_id=scenario.scenario_id,
             transcript_ref=scenario.scenario_id,
-            transcript_text=format_dialogue(scenario.dialogue_entries),
+            transcript_text=judge_transcript_text(scenario.dialogue_entries),
             summary_text=summary_text,
             dimensions=list(dimensions),
             template_name=judge_template_name,

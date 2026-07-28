@@ -1,34 +1,43 @@
 ### Dimension: Citation Quality (Auditability)
 
-Substantive claims in the summary are traceable back to the source transcript via accurate speaker attribution and, where applicable, timestamp anchors. Citations should be concise and directly relevant — a targeted pointer to the relevant phrase or time window — not long transcript excerpts.
+Substantive claims in the summary are traceable back to the source transcript, so a reviewer can verify any claim without re-reading or re-listening to the whole recording.
+
+Traceability is carried by inline citation markers of the form `[n]`, where `n` is the number of a transcript entry in the numbered transcript you have been given (`[4-6]` cites entries 4 to 6 inclusive). Resolving a marker gives the reviewer both the wording and the speaker of the cited entry, so a correct marker is itself the attribution. Prose attribution ("the Housing Officer confirmed…") is a complement to the markers, not a substitute for them, and matters most for decisions, commitments, and actions where the reader needs to know whose claim it is.
+
+Judge the markers by resolving them: a marker that points at an entry which does not support the claim is worse than no marker at all, because it creates the appearance of traceability without the substance. Citations should be targeted pointers, not long transcript excerpts pasted into the summary.
+
+Resolve each marker in its place in the transcript rather than as an isolated line. A reviewer who follows a marker lands at that point in the conversation and reads the turns around it, so an elliptical utterance that only carries its meaning together with the question before it — or the reply after it — is still correct support. Ask whether a reviewer landing at the cited entry could verify the claim, not whether that one line restates it in full.
+
+Where the summary carries no citation markers at all, score what it actually offers rather than what it lacks a mechanism for. Prose attribution alone — naming the speaker or role a claim belongs to — reaches at most **3**, because a reviewer must still search the transcript for the wording; a summary with neither markers nor attribution scores **1**. Scores of 4 and 5 require resolvable markers, so an uncited summary cannot reach them however well written it is. Report the absence plainly in your reasoning: a template configured without citations is a known limitation of that summary path, not a defect in this particular summary.
+
+Timestamps are only expected where the transcript entries themselves carry them, or where the summary template requires them. Do not mark a summary down for omitting timestamps that the source does not provide — and never read a citation marker as a timestamp; the numbers are entry indices.
 
 #### Score Definitions:
 
-- **Score 5 — Excellent:** All claims attributed correctly with speaker role or name; timestamps accurate and consistently formatted; fully auditable. Citations are short and targeted so a reviewer can verify claims quickly.
-- **Score 4 — Good:** All substantive claims attributed; timestamps present where required by template.
-- **Score 3 — Adequate:** Key decisions attributed; minor speakers or contextual comments may be unattributed.
-- **Score 2 — Poor:** Some attributions present but frequently incorrect, absent for key claims, or formatted inconsistently. Citations may also be overly long or unfocused, making verification difficult.
-- **Score 1 — Unacceptable:** No attributions; all statements are unverifiable without re-listening to the full recording.
+- **Score 5 — Excellent:** Every substantive claim carries at least one citation marker, and every marker resolves to an entry that genuinely supports its claim. Speakers and owners are named where the claim belongs to a person. Citations are short and targeted, so a reviewer can verify any claim in one step.
+- **Score 4 — Good:** All substantive claims are cited and the markers resolve correctly, with only minor gaps — a contextual claim left uncited, an occasional marker that supports the claim loosely rather than squarely, or an attribution left implicit where the cited entry still makes the speaker clear.
+- **Score 3 — Adequate:** Key decisions, actions, and commitments are cited and attributed, but minor speakers or contextual claims are unattributed or uncited, or citation coverage is patchy across sections.
+- **Score 2 — Poor:** Citation markers are present but frequently resolve to entries that do not support the claim, are missing for key claims or decisions, or are formatted inconsistently. Citations may also be overly long or unfocused, making verification difficult.
+- **Score 1 — Unacceptable:** No citations and no attributions; nothing in the summary can be verified without re-reading the whole transcript.
 
 **Hallucination Gate:** No — review is not automatically triggered by low scores on this dimension alone, unless combined with failures in critical dimensions.
 
 #### Worked Examples
 
-**Scenario:** Claims must be attributed to speakers with accurate timestamps. Bad summary uses inaccurate attributions and omits all attribution.
+**Scenario:** Substantive claims must carry citation markers that resolve to supporting transcript entries, with the responsible person named. The bad summary drops both the markers and the attribution.
 
-**Transcript Excerpt:**
+**Numbered transcript excerpt:**
 ```text
-Housing Officer (00:34:12): I can confirm the customer's application has been signed off by the assessor on 3 April 2026.
-Customer (00:34:50): That's a relief, thank you.
+[11] Housing Officer: I can confirm the customer's application has been signed off by the assessor on 3 April 2026.
+[12] Customer: That's a relief, thank you.
 ```
 
 **Good Summary (Score ≥ 4):**
 ```text
-The Housing Officer (00:34:12) confirmed that the customer's application had been signed off by the assessor on 3 April 2026. The customer acknowledged the update.
+The Housing Officer confirmed that the customer's application had been signed off by the assessor on 3 April 2026 [11]. The customer acknowledged the update [12].
 ```
 
 **Bad Summary (Score ≤ 2):**
 ```text
 The Housing Officer said his application was going okay and things were moving in the right direction. There were no issues flagged at this stage.
 ```
-

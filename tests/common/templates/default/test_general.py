@@ -43,6 +43,27 @@ def test_prompt_without_agenda():
     assert "Jane" in transcript_messages["content"]
 
 
+def test_prompt_forbids_declining_to_summarise():
+    """A recording of an informal conversation must still produce minutes, not a refusal.
+
+    Without this the summariser decides some transcripts are "not a meeting" and answers with a
+    request for a different transcript, which is useless to the user and leaves nothing cited.
+    """
+    result = General.prompt([DialogueEntry(text="Traffic was awful today", speaker="John")], None)
+
+    prompt_body = result[0]["content"]
+
+    assert "Always produce minutes from the transcript you are given" in prompt_body
+    assert "never decline" in prompt_body
+
+
+def test_prompt_forbids_inventing_actions():
+    """Actions the summariser proposes itself cannot be cited, and read as agreed commitments."""
+    result = General.prompt([DialogueEntry(text="Traffic was awful today", speaker="John")], None)
+
+    assert "actually agreed or stated in the discussion" in result[0]["content"]
+
+
 def test_prompt_date_inclusion():
     transcript = []
 
