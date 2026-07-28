@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -9,6 +10,7 @@ import orjson
 
 from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.jsonl import write_jsonl
+from evals.summarisation.src.constants import citation_rate_outcome
 from evals.summarisation.src.hallucination.constants import RESULTS_FILENAME, SUMMARY_FILENAME
 from evals.summarisation.src.hallucination.extractor import build_statements
 from evals.summarisation.src.hallucination.types import HallucinationInput, HallucinationReport
@@ -49,6 +51,7 @@ def run_hallucination_eval(
             n_supported = max(0, record.total_claims - n_hallucinations)
             total = record.total_claims
             hallucination_rate = round(n_hallucinations / total, 3) if total > 0 else 0.0
+            outcome = citation_rate_outcome(n_supported, total)
 
             report = HallucinationReport(
                 run_id=run_id,
@@ -63,6 +66,7 @@ def run_hallucination_eval(
                     "n_supported": n_supported,
                     "hallucination_rate": hallucination_rate,
                     "no_hallucinations": n_hallucinations == 0,
+                    "citation_outcome": outcome,
                 },
             )
             reports.append(report)
@@ -73,12 +77,21 @@ def run_hallucination_eval(
 
     n_examples = len(inputs)
     processed = len(reports)
-    total_hallucinated = sum(r.metrics["n_hallucinations"] for r in reports)
-    total_supported = sum(r.metrics["n_supported"] for r in reports)
+    total_hallucinated = sum(int(r.metrics["n_hallucinations"]) for r in reports)
+    total_supported = sum(int(r.metrics["n_supported"]) for r in reports)
     grand_total = total_hallucinated + total_supported
     overall_hallucination_rate = round(total_hallucinated / grand_total, 3) if grand_total > 0 else 0.0
 
-    summary: dict[str, str | int | float | None | dict[str, float]] = {
+    # Roll the per-example citation outcomes up to the run level so the threshold verdict
+    # is visible in the summary rather than buried per-row in the results file.
+    outcome_counts = Counter(str(r.metrics["citation_outcome"]) for r in reports)
+    citation_outcomes = {
+        "pass": outcome_counts.get("pass", 0),
+        "review": outcome_counts.get("review", 0),
+        "fail": outcome_counts.get("fail", 0),
+    }
+
+    summary: dict[str, str | int | float | None | dict[str, float] | dict[str, int]] = {
         "run_id": run_id,
         "timestamp": datetime.now(UTC).isoformat(),
         "template_name": cfg.prompts.summarizer_template_name,
@@ -92,6 +105,7 @@ def run_hallucination_eval(
             "total_hallucinated_claims": total_hallucinated,
             "total_supported_claims": total_supported,
         },
+        "citation_outcomes": citation_outcomes,
     }
 
     summary_path.write_bytes(orjson.dumps(summary, option=orjson.OPT_INDENT_2))

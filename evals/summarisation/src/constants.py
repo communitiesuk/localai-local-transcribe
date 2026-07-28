@@ -1,4 +1,4 @@
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 # Judge rubric scores are stored normalised to [0, 1] from the raw 1-5 rubric scale.
 JUDGE_RAW_MIN = 1.0
@@ -146,7 +146,30 @@ CITATION_RATE_THRESHOLDS_ARE_CALIBRATION_PLACEHOLDERS = True
 # that a value on a boundary is not moved by rounding. This is why the review band is wider than the pass band.
 CITATION_RATE_BAND = CitationRateBand(pass_minimum=0.95, review_minimum=0.85)
 
+CitationOutcome = Literal["pass", "review", "fail"]
+
 # How to treat a summary from which no claims were extracted (total_claims == 0). The citation
 # rate is undefined in that case (a division of zero by zero), so such a summary must never
 # count as a pass by default. It is routed to the review band for human inspection instead.
-CITATION_RATE_ZERO_CLAIMS_POLICY = "review"
+CITATION_RATE_ZERO_CLAIMS_POLICY: CitationOutcome = "review"
+
+
+def citation_rate_outcome(
+    n_supported: int,
+    total_claims: int,
+    band: CitationRateBand = CITATION_RATE_BAND,
+) -> CitationOutcome:
+    """Score a summary's claim citation rate against the pass/review/fail bands.
+
+    The decision is taken from the raw counts (n_supported over total_claims) rather than
+    the rounded rate, so a value sitting on a band boundary is not moved by rounding. A
+    summary with no extracted claims (total_claims == 0) has an undefined rate and is
+    routed to review per CITATION_RATE_ZERO_CLAIMS_POLICY, never an automatic pass.
+    """
+    if total_claims <= 0:
+        return CITATION_RATE_ZERO_CLAIMS_POLICY
+    if n_supported >= band.pass_minimum * total_claims:
+        return "pass"
+    if n_supported >= band.review_minimum * total_claims:
+        return "review"
+    return "fail"

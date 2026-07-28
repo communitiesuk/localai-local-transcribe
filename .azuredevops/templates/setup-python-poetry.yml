@@ -1,0 +1,37 @@
+# Reusable steps template: set up Python + Poetry with a cached in-project virtualenv.
+
+parameters:
+  - name: pythonVersion
+    type: string
+    default: '3.12'
+  - name: poetryVersion
+    type: string
+    default: '2.4.1'
+
+steps:
+  - script: |
+      # Delete pre-installed toolchains we don't use (dotnet, GHC, Android SDK, etc.)
+      # to reclaim disk space for the chonky evals summarisation dependencies.
+      sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"/CodeQL
+      df -h /
+    displayName: 'Free up disk space'
+
+  - task: UsePythonVersion@0
+    displayName: 'Set up Python ${{ parameters.pythonVersion }}'
+    inputs:
+      versionSpec: '${{ parameters.pythonVersion }}'
+
+  - script: pip install poetry==${{ parameters.poetryVersion }}
+    displayName: 'Install Poetry ${{ parameters.poetryVersion }}'
+
+  - script: poetry config virtualenvs.in-project true
+    displayName: 'Configure Poetry to create .venv in project'
+
+  - task: Cache@2
+    displayName: 'Cache virtualenv'
+    inputs:
+      key: 'venv | "$(Agent.OS)" | "${{ parameters.pythonVersion }}" | poetry.lock'
+      restoreKeys: |
+        venv | "$(Agent.OS)" | "${{ parameters.pythonVersion }}"
+        venv | "$(Agent.OS)"
+      path: .venv
