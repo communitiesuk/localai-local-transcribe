@@ -1,8 +1,10 @@
 import { UserTemplatesList } from '@/app/templates/components/user-templates-list'
+import { BannerNotification } from '@/components/banner-notification'
 
 export default function TemplatesPage() {
   return (
     <div>
+      <BannerNotification />
       <header className="govuk-!-margin-bottom-6">
         <div className="flex items-center gap-3">
           <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
