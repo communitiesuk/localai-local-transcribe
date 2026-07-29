@@ -2,10 +2,10 @@
 FROM node:24-alpine AS builder
 WORKDIR /app
 
-COPY frontend/package.json frontend/package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY frontend .
+COPY . .
 
 # Generate client before declaring build ARGs (preserves layer cache)
 RUN npm run generate-client
