@@ -15,12 +15,12 @@
         }
       }
     },
-    "/transcriptions": {
+    "/transcriptions/labelled": {
       "get": {
         "tags": ["Transcriptions"],
-        "summary": "List Transcriptions",
-        "description": "Get paginated metadata for transcriptions for the current user.",
-        "operationId": "list_transcriptions_transcriptions_get",
+        "summary": "List Labelled Transcriptions",
+        "description": "Get paginated metadata for labelled transcriptions for the current user.",
+        "operationId": "list_labelled_transcriptions_transcriptions_labelled_get",
         "parameters": [
           {
             "name": "page",
@@ -65,7 +65,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedTranscriptionsResponse"
+                  "$ref": "#/components/schemas/LabelledTranscriptionsResponse"
                 }
               }
             }
@@ -79,12 +79,14 @@
             }
           }
         }
-      },
-      "post": {
+      }
+    },
+    "/transcriptions/unlabelled": {
+      "get": {
         "tags": ["Transcriptions"],
-        "summary": "Create Transcription",
-        "description": "Start a transcription job.",
-        "operationId": "create_transcription_transcriptions_post",
+        "summary": "List Unlabelled Transcriptions",
+        "description": "Get metadata for unlabelled transcriptions for the current user.",
+        "operationId": "list_unlabelled_transcriptions_transcriptions_unlabelled_get",
         "parameters": [
           {
             "name": "x-amzn-oidc-data",
@@ -96,23 +98,13 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TranscriptionCreateRequest"
-              }
-            }
-          }
-        },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TranscriptionCreateResponse"
+                  "$ref": "#/components/schemas/UnlabelledTranscriptionsResponse"
                 }
               }
             }
@@ -161,6 +153,55 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecordingCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transcriptions": {
+      "post": {
+        "tags": ["Transcriptions"],
+        "summary": "Create Transcription",
+        "description": "Start a transcription job.",
+        "operationId": "create_transcription_transcriptions_post",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscriptionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionCreateResponse"
                 }
               }
             }
@@ -525,6 +566,42 @@
         "tags": ["Users"],
         "summary": "Get User",
         "operationId": "get_user_users_me_get",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/terms-of-use": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Accept Terms Of Use",
+        "operationId": "accept_terms_of_use_users_terms_of_use_post",
         "parameters": [
           {
             "name": "x-amzn-oidc-data",
@@ -2220,6 +2297,7 @@
             "format": "date-time",
             "title": "Updated Datetime"
           },
+          "accepted_tou": { "type": "boolean", "title": "Accepted Tou" },
           "last_login": {
             "type": "string",
             "format": "date-time",
@@ -2253,6 +2331,7 @@
           "id",
           "created_datetime",
           "updated_datetime",
+          "accepted_tou",
           "last_login",
           "is_active",
           "name",
@@ -2299,6 +2378,73 @@
         "type": "string",
         "enum": ["awaiting_start", "in_progress", "completed", "failed"],
         "title": "JobStatus"
+      },
+      "LabelledTranscriptionMetadata": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "created_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created Datetime"
+          },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          },
+          "text": { "type": "string", "title": "Text" },
+          "status": { "$ref": "#/components/schemas/JobStatus" },
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
+          },
+          "client_date_of_birth": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Client Date Of Birth"
+          },
+          "client_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Client Name"
+          },
+          "case_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Id"
+          }
+        },
+        "type": "object",
+        "required": ["id", "created_datetime", "text", "status"],
+        "title": "LabelledTranscriptionMetadata",
+        "description": "Pydantic model for labelled transcription metadata."
+      },
+      "LabelledTranscriptionsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LabelledTranscriptionMetadata"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total_count": { "type": "integer", "title": "Total Count" },
+          "page": { "type": "integer", "title": "Page" },
+          "page_size": { "type": "integer", "title": "Page Size" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total_count",
+          "page",
+          "page_size",
+          "total_pages"
+        ],
+        "title": "LabelledTranscriptionsResponse",
+        "description": "Response for labelled transcriptions."
       },
       "Minute": {
         "properties": {
@@ -2573,29 +2719,6 @@
         ],
         "title": "OrganisationResponse"
       },
-      "PaginatedTranscriptionsResponse": {
-        "properties": {
-          "items": {
-            "items": { "$ref": "#/components/schemas/TranscriptionMetadata" },
-            "type": "array",
-            "title": "Items"
-          },
-          "total_count": { "type": "integer", "title": "Total Count" },
-          "page": { "type": "integer", "title": "Page" },
-          "page_size": { "type": "integer", "title": "Page Size" },
-          "total_pages": { "type": "integer", "title": "Total Pages" }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "total_count",
-          "page",
-          "page_size",
-          "total_pages"
-        ],
-        "title": "PaginatedTranscriptionsResponse",
-        "description": "Paginated response for transcriptions."
-      },
       "PaginatedUsersResponse": {
         "properties": {
           "items": {
@@ -2819,13 +2942,15 @@
         ],
         "title": "TranscriptionGetResponse"
       },
-      "TranscriptionMetadata": {
+      "UnlabelledTranscriptionMetadata": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "created_datetime": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created Datetime"
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
           },
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -2835,9 +2960,25 @@
           "status": { "$ref": "#/components/schemas/JobStatus" }
         },
         "type": "object",
-        "required": ["id", "created_datetime", "text", "status"],
-        "title": "TranscriptionMetadata",
-        "description": "Pydantic model for transcription metadata."
+        "required": ["id", "text", "status"],
+        "title": "UnlabelledTranscriptionMetadata",
+        "description": "Pydantic model for unlabelled transcription metadata."
+      },
+      "UnlabelledTranscriptionsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UnlabelledTranscriptionMetadata"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total_count": { "type": "integer", "title": "Total Count" }
+        },
+        "type": "object",
+        "required": ["items", "total_count"],
+        "title": "UnlabelledTranscriptionsResponse",
+        "description": "Response for unlabelled transcriptions."
       },
       "UpdateDialogueEntrySpeakerRequest": {
         "properties": {

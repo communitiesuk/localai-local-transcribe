@@ -11,7 +11,8 @@ from backend.api.routes.transcriptions import (
     delete_transcription,
     get_recordings_for_transcription,
     get_transcription,
-    list_transcriptions,
+    list_labelled_transcriptions,
+    list_unlabelled_transcriptions,
     rename_speaker_everywhere,
     update_dialogue_entry_speaker,
     update_dialogue_entry_text,
@@ -362,19 +363,41 @@ async def test_update_dialogue_entry_text_not_found(mock_session, mock_user, moc
 
 
 @pytest.mark.asyncio
-async def test_list_transcriptions(mock_session, mock_user, mock_transcription):
+async def test_list_labelled_transcriptions(mock_session, mock_user, mock_transcription):
     mock_session.exec = AsyncMock()
     mock_session.exec.side_effect = [Mock(one=Mock(return_value=1)), Mock(all=Mock(return_value=[mock_transcription]))]
     mock_transcription.dialogue_entries = [{"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0}]
     mock_transcription.status = JobStatus.COMPLETED
     mock_transcription.title = "Test Title"
+    mock_transcription.date_of_recording = datetime(year=2021, month=1, day=1, tzinfo=UTC)
 
-    result = await list_transcriptions(mock_session, mock_user, page=1, page_size=20)
+    result = await list_labelled_transcriptions(mock_session, mock_user, page=1, page_size=20)
     assert result.total_count == 1
-    assert result.items[0].title == "Test Title"
-    assert result.items[0].status == JobStatus.COMPLETED
+    assert result.items[0].title == mock_transcription.title
+    assert result.items[0].status == mock_transcription.status
     assert result.total_pages == 1
     assert result.items[0].created_datetime == mock_transcription.created_datetime
+    assert result.items[0].date_of_recording == mock_transcription.date_of_recording
+
+
+@pytest.mark.asyncio
+async def test_list_unlabelled_transcriptions(mock_session, mock_user, mock_unlabelled_transcription):
+    mock_session.exec = AsyncMock()
+    mock_session.exec.side_effect = [
+        Mock(one=Mock(return_value=1)),
+        Mock(all=Mock(return_value=[mock_unlabelled_transcription])),
+    ]
+    mock_unlabelled_transcription.dialogue_entries = [
+        {"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0}
+    ]
+    mock_unlabelled_transcription.status = JobStatus.COMPLETED
+    mock_unlabelled_transcription.title = "Test Title"
+
+    result = await list_unlabelled_transcriptions(mock_session, mock_user)
+    assert result.total_count == 1
+    assert result.items[0].title == mock_unlabelled_transcription.title
+    assert result.items[0].status == mock_unlabelled_transcription.status
+    assert result.items[0].date_of_recording == mock_unlabelled_transcription.date_of_recording
 
 
 @pytest.mark.asyncio

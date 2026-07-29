@@ -13,7 +13,8 @@ import {
 } from '@/lib/client'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
-  listTranscriptionsTranscriptionsGetQueryKey,
+  listLabelledTranscriptionsTranscriptionsLabelledGetQueryKey,
+  listUnlabelledTranscriptionsTranscriptionsUnlabelledGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -32,7 +33,8 @@ vi.mock('@/lib/client', () => ({
 
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey: vi.fn(),
-  listTranscriptionsTranscriptionsGetQueryKey: vi.fn(),
+  listLabelledTranscriptionsTranscriptionsLabelledGetQueryKey: vi.fn(),
+  listUnlabelledTranscriptionsTranscriptionsUnlabelledGetQueryKey: vi.fn(),
 }))
 
 describe('use-update-transcription-speakers hooks', () => {
@@ -44,9 +46,12 @@ describe('use-update-transcription-speakers hooks', () => {
     vi.mocked(
       getTranscriptionTranscriptionsTranscriptionIdGetQueryKey
     ).mockReturnValue(['transcription'] as never)
-    vi.mocked(listTranscriptionsTranscriptionsGetQueryKey).mockReturnValue([
-      'transcriptions',
-    ] as never)
+    vi.mocked(
+      listLabelledTranscriptionsTranscriptionsLabelledGetQueryKey
+    ).mockReturnValue(['transcriptions'] as never)
+    vi.mocked(
+      listUnlabelledTranscriptionsTranscriptionsUnlabelledGetQueryKey
+    ).mockReturnValue(['transcriptions'] as never)
 
     vi.mocked(
       renameSpeakerEverywhereTranscriptionsTranscriptionIdSpeakersPatch
