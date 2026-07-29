@@ -120,7 +120,9 @@ export default function TranscriptionPage(props: {
   }
   return (
     <div className="flex w-full flex-col">
-      <GovukBackLink href="/transcriptions">Back</GovukBackLink>
+      <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
+        Back
+      </GovukBackLink>
       <GovukHeading as="h1" size="xl" className="govuk-!-margin-bottom-2">
         {recordingDate}
       </GovukHeading>
