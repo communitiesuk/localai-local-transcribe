@@ -124,10 +124,6 @@ const SpeakerNameEditor = ({
     }
   }, [selected])
 
-  useEffect(() => {
-    setValue(speaker)
-  }, [speaker])
-
   if (!selected) {
     return (
       <Button

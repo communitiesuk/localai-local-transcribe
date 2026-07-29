@@ -2,5 +2,6 @@ num_samples: 10
 sample_duration_fraction: null
 max_workers: 4
 prepare_only: false
+check_drift_thresholds: true
 adapters:
   - azure

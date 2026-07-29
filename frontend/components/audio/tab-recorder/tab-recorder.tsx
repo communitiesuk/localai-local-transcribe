@@ -74,6 +74,8 @@ function TabRecorder({
   const streamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
+  const [stream, setStream] = useState<MediaStream | null>(null)
+
   useTabCloseWarning(isRecording || !!recordedAudio)
 
   const stopAllTracks = useCallback(() => {
@@ -91,6 +93,7 @@ function TabRecorder({
     streamRef.current = null
     micStreamRef.current = null
     mediaRecorderRef.current = null
+    setStream(null)
 
     setIsRecording(false)
     releaseWakeLock()
@@ -158,6 +161,7 @@ function TabRecorder({
         )
       }
       screenStreamRef.current = screenStream
+      setStream(screenStream)
 
       const newAudioContext = new AudioContext()
       const destination = newAudioContext.createMediaStreamDestination()
@@ -193,6 +197,7 @@ function TabRecorder({
         composedStream.addTrack(track)
       })
       streamRef.current = composedStream
+      setStream(composedStream)
 
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(composedStream, options)
@@ -328,7 +333,7 @@ function TabRecorder({
           ) : (
             <div className="space-y-4">
               <RecordingControl
-                stream={streamRef.current}
+                stream={stream}
                 isRecording={isRecording}
                 onStopRecording={stopRecording}
                 onPauseStateChange={handlePauseStateChange}
