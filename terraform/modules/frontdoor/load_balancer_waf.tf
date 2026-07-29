@@ -15,7 +15,7 @@ resource "aws_wafv2_web_acl" "load_balancer" {
 
   rule {
     name     = "validate-cloudfront-header"
-    priority = 3
+    priority = 1
 
     action {
       block {}
@@ -49,7 +49,54 @@ resource "aws_wafv2_web_acl" "load_balancer" {
   }
 
   rule {
-    name     = "aws-managed-rules-common-rule-set"
+    name     = "aws-managed-rules-common-rule-set-default"
+    priority = 3
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+
+        rule_action_override {
+          name = "SizeRestrictions_BODY"
+          action_to_use {
+            count {}
+          }
+        }
+
+        scope_down_statement {
+          not_statement {
+            statement {
+              byte_match_statement {
+                field_to_match {
+                  uri_path {}
+                }
+                positional_constraint = "STARTS_WITH"
+                search_string         = "/monitoring"
+                text_transformation {
+                  priority = 0
+                  type     = "NONE"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "waf-block-common-exploit"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "aws-managed-rules-common-rule-set-monitoring"
     priority = 4
 
     override_action {
@@ -60,12 +107,33 @@ resource "aws_wafv2_web_acl" "load_balancer" {
       managed_rule_group_statement {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
+
+        rule_action_override {
+          name = "SizeRestrictions_BODY"
+          action_to_use {
+            count {}
+          }
+        }
+
+        scope_down_statement {
+          byte_match_statement {
+            field_to_match {
+              uri_path {}
+            }
+            positional_constraint = "STARTS_WITH"
+            search_string         = "/monitoring"
+            text_transformation {
+              priority = 0
+              type     = "NONE"
+            }
+          }
+        }
       }
     }
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name                = "waf-block-common-exploit"
+      metric_name                = "waf-block-common-exploit-monitoring"
       sampled_requests_enabled   = true
     }
   }
