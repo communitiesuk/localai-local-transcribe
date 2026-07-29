@@ -1,5 +1,5 @@
 'use client'
-import { use } from 'react'
+import { use, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
@@ -121,12 +121,12 @@ export default function TranscriptionPage(props: {
   return (
     <div className="flex w-full flex-col">
       <GovukBackLink href="/transcriptions">Back</GovukBackLink>
-      <GovukHeading as="h1" size="xl">
+      <GovukHeading as="h1" size="xl" className="govuk-!-margin-bottom-2">
         {recordingDate}
       </GovukHeading>
-      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
+      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
       <RecordingDetails dateTimeLabel={dateTimeLabel} />
-      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
+      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
       <div>
         <NewMinuteDialog
           transcriptionId={transcription.id!}
@@ -150,37 +150,47 @@ export default function TranscriptionPage(props: {
   )
 }
 
-// Client metadata fields are display only until AIILG-599 adds the backend; the frame is matched here.
-const RecordingDetails = ({ dateTimeLabel }: { dateTimeLabel: string }) => (
-  <>
-    <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
-      Recording details
-    </GovukHeading>
-    <GovukDetails summary="Show">
-      <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
-      <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
-      <GovukFormGroup>
-        <GovukLabel htmlFor="client-name">Client name (optional)</GovukLabel>
-        <GovukInput id="client-name" />
-      </GovukFormGroup>
-      <GovukFormGroup>
-        <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
-        <GovukInput id="case-id" />
-      </GovukFormGroup>
-      <GovukFormGroup>
-        <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
-        <GovukInput id="subject" />
-      </GovukFormGroup>
-      <GovukDateInput
-        id="client-dob"
-        legend="Client date of birth (optional)"
-      />
-      <GovukButton type="button" variant="secondary" disabled>
-        Update details
-      </GovukButton>
-    </GovukDetails>
-  </>
-)
+const RecordingDetails = ({ dateTimeLabel }: { dateTimeLabel: string }) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
+        Recording details
+      </GovukHeading>
+      <GovukDetails
+        summary={open ? 'Hide' : 'Show'}
+        onToggle={(e) => setOpen(e.currentTarget.open)}
+      >
+        <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
+        <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
+        <GovukFormGroup>
+          <GovukLabel htmlFor="client-name">Client name (optional)</GovukLabel>
+          <GovukInput id="client-name" />
+        </GovukFormGroup>
+        <GovukFormGroup>
+          <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
+          <GovukInput id="case-id" />
+        </GovukFormGroup>
+        <GovukFormGroup>
+          <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
+          <GovukInput id="subject" />
+        </GovukFormGroup>
+        <GovukDateInput
+          id="client-dob"
+          legend="Client date of birth (optional)"
+        />
+        <GovukButton
+          type="button"
+          variant="secondary"
+          disabled
+          className="govuk-!-margin-bottom-2"
+        >
+          Update details
+        </GovukButton>
+      </GovukDetails>
+    </>
+  )
+}
 
 const TranscriptionHeader = ({
   transcription,
