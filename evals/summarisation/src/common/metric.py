@@ -44,16 +44,15 @@ def judged_dimensions(dimensions: Iterable[str], template_name: str | None) -> l
     was never configured to have — and it drags the run's overall mean down for no reason.
     """
     kept = list(dimensions)
-    if template_supports_citations(template_name):
+    # Resolved first, and unconditionally, so an unknown template name always raises.
+    if template_supports_citations(template_name) or CITATION_DIMENSION not in kept:
         return kept
 
-    skipped = [d for d in kept if d == CITATION_DIMENSION]
-    if skipped:
-        logger.info(
-            "Skipping %s: template %r does not produce citations, so citation quality is not scored.",
-            ", ".join(skipped),
-            template_name or "<basic minutes>",
-        )
+    logger.info(
+        "Skipping %s: template %r does not produce citations, so citation quality is not scored.",
+        CITATION_DIMENSION,
+        template_name or "<basic minutes>",
+    )
     return [d for d in kept if d != CITATION_DIMENSION]
 
 

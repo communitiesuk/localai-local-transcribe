@@ -9,16 +9,12 @@ flat 3.0 — a constant, not a measurement. The dimension is skipped for those p
 
 from __future__ import annotations
 
-from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
-
 import orjson
 import pytest
 
 from common.services.template_manager import TemplateNotFoundError
-from evals.summarisation.src.common import AppConfig, build_metrics
+from evals.summarisation.src.common import build_metrics
 from evals.summarisation.src.common.metric import CITATION_DIMENSION, judged_dimensions, template_supports_citations
-from evals.summarisation.src.optimisation.runner import run_eval
 
 
 @pytest.mark.parametrize(
@@ -47,15 +43,21 @@ def test_judged_dimensions_keeps_auditability_for_a_citing_template():
     assert dimensions == ["accuracy", CITATION_DIMENSION]
 
 
+def test_judged_dimensions_rejects_an_unknown_template_even_without_auditability():
+    """The template name is resolved on every call, so a typo fails before any LLM call is made."""
+    with pytest.raises(TemplateNotFoundError):
+        judged_dimensions(["accuracy"], "No Such Template")
+
+
 def test_judged_dimensions_drops_auditability_for_a_non_citing_template():
     dimensions = judged_dimensions(["accuracy", CITATION_DIMENSION], "Short 'n' Sweet")
 
     assert dimensions == ["accuracy"]
 
 
-def test_build_metrics_drops_auditability_for_a_non_citing_template(tmp_path):
+def test_build_metrics_drops_auditability_for_a_non_citing_template(eval_config):
     """The bias eval builds its judge metrics from config; the same rule has to apply there."""
-    cfg = _cfg(tmp_path, template_name="Short 'n' Sweet", metrics=["accuracy", CITATION_DIMENSION])
+    cfg = eval_config(template_name="Short 'n' Sweet", metrics=["accuracy", CITATION_DIMENSION])
 
     assert [m.criterion for m in build_metrics(cfg)] == ["accuracy"]
 
@@ -63,58 +65,10 @@ def test_build_metrics_drops_auditability_for_a_non_citing_template(tmp_path):
 # --- standard eval ---
 
 
-def _cfg(tmp_path: Path, *, template_name: str | None, **overrides: object) -> AppConfig:
-    return AppConfig.model_validate(
-        {
-            "run": {"output_dir": str(tmp_path / "output")},
-            "dataset": {"name": "d", "dialogue_field": "dialogue", "reference_summary_field": "summary"},
-            "judge": {"pass_threshold": 4},
-            "prompts": {
-                "judge_template_path": "prompts/judge.jinja2",
-                "summarizer_template_name": template_name,
-            },
-            **overrides,
-        }
-    )
+def test_standard_eval_skips_auditability_for_a_non_citing_template(eval_config, run_standard_eval, judge_scoring_5):
+    judge = judge_scoring_5(["accuracy"])
 
-
-def _run(cfg: AppConfig, judge: AsyncMock) -> Path:
-    mock_rows = [{"id": "1", "dialogue": "#A#: We agreed the deadline.", "summary": "Deadline agreed"}]
-    mock_split = Mock()
-    mock_split.select = Mock(return_value=mock_rows)
-    mock_split.__len__ = Mock(return_value=1)
-
-    generated = Mock(text="Deadline agreed.", hallucinations=[], total_claims=0)
-
-    with (
-        patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}),
-        patch(
-            "evals.summarisation.src.optimisation.runner.generate_summary",
-            new_callable=AsyncMock,
-            return_value=generated,
-        ),
-        patch("evals.summarisation.src.optimisation.runner.call_llm_judge_parallel", judge),
-        patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
-        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
-    ):
-        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
-        mock_tokenizer.return_value.encode = Mock(return_value=[1])
-
-        _run_id, _results, summary_path, _h = run_eval(cfg, split="test", limit=1, prompt_version="v1")
-
-    return summary_path
-
-
-def _judge_returning(dimensions: list[str]) -> AsyncMock:
-    return AsyncMock(
-        return_value={"dimensions": {d: {"score": "5", "rationale": "fine"} for d in dimensions}},
-    )
-
-
-def test_standard_eval_skips_auditability_for_a_non_citing_template(tmp_path):
-    judge = _judge_returning(["accuracy"])
-
-    summary_path = _run(_cfg(tmp_path, template_name="Short 'n' Sweet"), judge)
+    summary_path = run_standard_eval(eval_config(template_name="Short 'n' Sweet"), judge=judge)
 
     assert CITATION_DIMENSION not in judge.await_args.kwargs["dimensions"]
 
@@ -123,10 +77,10 @@ def test_standard_eval_skips_auditability_for_a_non_citing_template(tmp_path):
     assert summary["skipped_dimensions"] == [CITATION_DIMENSION]
 
 
-def test_standard_eval_judges_auditability_for_a_citing_template(tmp_path):
-    judge = _judge_returning([CITATION_DIMENSION])
+def test_standard_eval_judges_auditability_for_a_citing_template(eval_config, run_standard_eval, judge_scoring_5):
+    judge = judge_scoring_5([CITATION_DIMENSION])
 
-    summary_path = _run(_cfg(tmp_path, template_name="General"), judge)
+    summary_path = run_standard_eval(eval_config(template_name="General"), judge=judge)
 
     assert CITATION_DIMENSION in judge.await_args.kwargs["dimensions"]
     assert orjson.loads(summary_path.read_bytes())["skipped_dimensions"] == []

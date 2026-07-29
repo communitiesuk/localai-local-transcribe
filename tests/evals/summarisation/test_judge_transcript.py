@@ -12,14 +12,13 @@ import asyncio
 import re
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
 from common.templates.citations import combine_consecutive_citations
-from evals.summarisation.src.common import AppConfig
 from evals.summarisation.src.judge import build_user_message
-from evals.summarisation.src.optimisation.runner import judge_transcript_from_dialogue, run_eval
+from evals.summarisation.src.optimisation.runner import judge_transcript_from_dialogue
 from evals.summarisation.src.transcript import citation_markers, judge_transcript_text
 
 _ENTRIES = [
@@ -46,43 +45,16 @@ def test_judge_transcript_from_dialogue_numbers_dialogsum_lines():
 # --- standard eval ---
 
 
-def _cfg(tmp_path: Path) -> AppConfig:
-    return AppConfig.model_validate(
-        {
-            "run": {"output_dir": str(tmp_path / "output")},
-            "dataset": {"name": "d", "dialogue_field": "dialogue", "reference_summary_field": "summary"},
-            "judge": {"pass_threshold": 4},
-            "prompts": {"judge_template_path": "prompts/judge.jinja2"},
-            "metrics": ["auditability"],
-        }
+def test_standard_eval_judges_against_numbered_transcript(eval_config, run_standard_eval, judge_scoring_5):
+    judge = judge_scoring_5(["auditability"])
+
+    run_standard_eval(
+        eval_config(template_name="General", metrics=["auditability"]),
+        judge=judge,
+        dialogue="#A#: We agreed the deadline.\n#B#: Understood.",
+        summary="Deadline agreed [0].",
+        total_claims=1,
     )
-
-
-def test_standard_eval_judges_against_numbered_transcript(tmp_path):
-    dialogue = "#A#: We agreed the deadline.\n#B#: Understood."
-    mock_rows = [{"id": "1", "dialogue": dialogue, "summary": "Deadline agreed"}]
-    mock_split = Mock()
-    mock_split.select = Mock(return_value=mock_rows)
-    mock_split.__len__ = Mock(return_value=1)
-
-    generated = Mock(text="Deadline agreed [0].", hallucinations=[], total_claims=1)
-    judge = AsyncMock(return_value={"dimensions": {"auditability": {"score": "5", "rationale": "Cited"}}})
-
-    with (
-        patch("evals.summarisation.src.optimisation.runner.load_dataset", return_value={"test": mock_split}),
-        patch(
-            "evals.summarisation.src.optimisation.runner.generate_summary",
-            new_callable=AsyncMock,
-            return_value=generated,
-        ),
-        patch("evals.summarisation.src.optimisation.runner.call_llm_judge_parallel", judge),
-        patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
-        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
-    ):
-        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
-        mock_tokenizer.return_value.encode = Mock(return_value=[1])
-
-        run_eval(_cfg(tmp_path), split="test", limit=1, prompt_version="v1")
 
     assert judge.await_args.kwargs["transcript_text"] == "[0] A: We agreed the deadline.\n[1] B: Understood."
 
@@ -166,11 +138,7 @@ def test_bias_iteration_judges_against_numbered_transcript():
 
 # --- the judge is told, mechanically, which markers the summary really contains ---
 #
-# Templates with citations_required = False (Short 'n' Sweet) and the basic-minutes path emit no
-# markers at all. Asked to judge such a summary against a numbered transcript, the judge invents
-# markers wholesale and scores them: an observed run of Short 'n' Sweet scored 4.2/5 on rationales
-# citing "[4]-[10]" against summaries containing no marker whatsoever. A mechanical extraction
-# passed alongside the summary removes the judge's licence to imagine evidence.
+# See ``citation_markers`` for why: left to read markers off the summary, the judge invents them.
 
 
 def test_citation_markers_finds_single_and_range_markers():
