@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
     ContentSource,
     DialogueEntry,
@@ -15,31 +16,52 @@ from common.database.postgres_models import (
 )
 
 
-class TranscriptionMetadata(BaseModel):
-    """Pydantic model for transcription metadata."""
+class LabelledTranscriptionMetadata(BaseModel):
+    """Pydantic model for labelled transcription metadata."""
 
     id: uuid.UUID
     created_datetime: datetime
     title: str | None = None
     text: str
     status: JobStatus
+    date_of_recording: datetime | None = None
+    client_date_of_birth: datetime | None = None
+    client_name: str | None = None
+    case_id: str | None = None
 
 
-class PaginatedTranscriptionsResponse(BaseModel):
-    """Paginated response for transcriptions."""
+class LabelledTranscriptionsResponse(BaseModel):
+    """Response for labelled transcriptions."""
 
-    items: list[TranscriptionMetadata]
+    items: list[LabelledTranscriptionMetadata]
     total_count: int
     page: int
     page_size: int
     total_pages: int
 
 
+class UnlabelledTranscriptionMetadata(BaseModel):
+    """Pydantic model for unlabelled transcription metadata."""
+
+    id: uuid.UUID
+    date_of_recording: datetime | None = None
+    title: str | None = None
+    text: str
+    status: JobStatus
+
+
+class UnlabelledTranscriptionsResponse(BaseModel):
+    """Response for unlabelled transcriptions."""
+
+    items: list[UnlabelledTranscriptionMetadata]
+    total_count: int
+
+
 class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
     template_name: str
     template_id: uuid.UUID | None = None
-    agenda: str | None = None
+    agenda: str | None = Field(default=None, max_length=MAX_AGENDA_LENGTH)
     title: str | None = None
 
 
@@ -170,7 +192,7 @@ class MinuteListItem(BaseModel):
 class MinutesCreateRequest(BaseModel):
     template_name: str = Field(description="Name of the template to use for the minutes")
     template_id: uuid.UUID | None = Field(description="Optional id of user template")
-    agenda: str | None = Field(description="The agenda for the meeting", default=None)
+    agenda: str | None = Field(description="The agenda for the meeting", default=None, max_length=MAX_AGENDA_LENGTH)
 
 
 class AiEdit(BaseModel):
