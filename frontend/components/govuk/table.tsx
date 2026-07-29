@@ -10,11 +10,12 @@ type Props = {
 export function GovukTable({
   caption,
   captionSize = 'm',
+  className,
   children,
   ...rest
 }: Props) {
   return (
-    <table className="govuk-table" {...rest}>
+    <table className={cn('govuk-table', className)} {...rest}>
       {caption && (
         <caption
           className={cn(
@@ -32,55 +33,60 @@ export function GovukTable({
 }
 
 export function GovukTableHead({
+  className,
   children,
   ...rest
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className="govuk-table__head" {...rest}>
+    <thead className={cn('govuk-table__head', className)} {...rest}>
       {children}
     </thead>
   )
 }
 
 export function GovukTableBody({
+  className,
   children,
   ...rest
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <tbody className="govuk-table__body" {...rest}>
+    <tbody className={cn('govuk-table__body', className)} {...rest}>
       {children}
     </tbody>
   )
 }
 
 export function GovukTableRow({
+  className,
   children,
   ...rest
 }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className="govuk-table__row" {...rest}>
+    <tr className={cn('govuk-table__row', className)} {...rest}>
       {children}
     </tr>
   )
 }
 
 export function GovukTableHeaderCell({
+  className,
   children,
   ...rest
 }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th className="govuk-table__header" {...rest}>
+    <th className={cn('govuk-table__header', className)} {...rest}>
       {children}
     </th>
   )
 }
 
 export function GovukTableCell({
+  className,
   children,
   ...rest
 }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className="govuk-table__cell" {...rest}>
+    <td className={cn('govuk-table__cell', className)} {...rest}>
       {children}
     </td>
   )

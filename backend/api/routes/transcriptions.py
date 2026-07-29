@@ -4,6 +4,7 @@ import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy import not_, or_
 from sqlmodel import col, func, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
@@ -19,7 +20,8 @@ from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
 from common.settings import get_settings
 from common.types import (
-    PaginatedTranscriptionsResponse,
+    LabelledTranscriptionMetadata,
+    LabelledTranscriptionsResponse,
     RecordingCreateRequest,
     RecordingCreateResponse,
     RenameSpeakerRequest,
@@ -28,7 +30,8 @@ from common.types import (
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
-    TranscriptionMetadata,
+    UnlabelledTranscriptionMetadata,
+    UnlabelledTranscriptionsResponse,
     UpdateDialogueEntrySpeakerRequest,
     UpdateDialogueEntryTextRequest,
     UpdateTranscriptionTitleRequest,
@@ -87,15 +90,24 @@ def _validate_dialogue_entry(
         raise HTTPException(status_code=409, detail="Dialogue entry text has changed")
 
 
-@transcriptions_router.get("/transcriptions", response_model=PaginatedTranscriptionsResponse)
-async def list_transcriptions(
+@transcriptions_router.get("/transcriptions/labelled", response_model=LabelledTranscriptionsResponse)
+async def list_labelled_transcriptions(
     session: SQLSessionDep,
     current_user: UserDep,
     page: int = Query(1, ge=1, description="Page number (starts from 1)"),
     page_size: int = Query(20, ge=1, le=100, description="Number of items per page"),
-) -> PaginatedTranscriptionsResponse:
-    """Get paginated metadata for transcriptions for the current user."""
-    count_statement = select(func.count(col(Transcription.id))).where(Transcription.user_id == current_user.id)
+) -> LabelledTranscriptionsResponse:
+    """Get paginated metadata for labelled transcriptions for the current user."""
+    labelled_filter = or_(
+        col(Transcription.title).is_not(None),
+        col(Transcription.client_date_of_birth).is_not(None),
+        col(Transcription.client_name).is_not(None),
+        col(Transcription.case_id).is_not(None),
+    )
+
+    count_statement = (
+        select(func.count(col(Transcription.id))).where(Transcription.user_id == current_user.id).where(labelled_filter)
+    )
     count_result = await session.exec(count_statement)
     total_count = count_result.one()
 
@@ -103,6 +115,7 @@ async def list_transcriptions(
     statement = (
         select(Transcription)
         .where(Transcription.user_id == current_user.id)
+        .where(labelled_filter)
         .order_by(col(Transcription.created_datetime).desc())
         .offset(offset)
         .limit(page_size)
@@ -111,9 +124,65 @@ async def list_transcriptions(
     transcriptions = result.all()
 
     items = [
-        TranscriptionMetadata(
+        LabelledTranscriptionMetadata(
             id=t.id,
             created_datetime=t.created_datetime,
+            title=t.title,
+            text=t.dialogue_entries[0]["text"][:100] if t.dialogue_entries else "",
+            status=t.status,
+            date_of_recording=t.date_of_recording,
+            client_date_of_birth=t.client_date_of_birth,
+            client_name=t.client_name,
+            case_id=t.case_id,
+        )
+        for t in transcriptions
+    ]
+
+    total_pages = math.ceil(total_count / page_size) or 1
+
+    return LabelledTranscriptionsResponse(
+        items=items,
+        total_count=total_count,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+    )
+
+
+@transcriptions_router.get("/transcriptions/unlabelled", response_model=UnlabelledTranscriptionsResponse)
+async def list_unlabelled_transcriptions(
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> UnlabelledTranscriptionsResponse:
+    """Get metadata for unlabelled transcriptions for the current user."""
+    labelled_filter = or_(
+        col(Transcription.title).is_not(None),
+        col(Transcription.client_date_of_birth).is_not(None),
+        col(Transcription.client_name).is_not(None),
+        col(Transcription.case_id).is_not(None),
+    )
+
+    count_statement = (
+        select(func.count(col(Transcription.id)))
+        .where(Transcription.user_id == current_user.id)
+        .where(not_(labelled_filter))
+    )
+    count_result = await session.exec(count_statement)
+    total_count = count_result.one()
+
+    statement = (
+        select(Transcription)
+        .where(Transcription.user_id == current_user.id)
+        .where(not_(labelled_filter))
+        .order_by(col(Transcription.created_datetime).desc())
+    )
+    result = await session.exec(statement)
+    transcriptions = result.all()
+
+    items = [
+        UnlabelledTranscriptionMetadata(
+            id=t.id,
+            date_of_recording=t.date_of_recording,
             title=t.title,
             text=t.dialogue_entries[0]["text"][:100] if t.dialogue_entries else "",
             status=t.status,
@@ -121,14 +190,9 @@ async def list_transcriptions(
         for t in transcriptions
     ]
 
-    total_pages = math.ceil(total_count / page_size) or 1
-
-    return PaginatedTranscriptionsResponse(
+    return UnlabelledTranscriptionsResponse(
         items=items,
         total_count=total_count,
-        page=page,
-        page_size=page_size,
-        total_pages=total_pages,
     )
 
 

@@ -43,6 +43,42 @@ def test_prompt_without_agenda():
     assert "Jane" in transcript_messages["content"]
 
 
+def test_prompt_forbids_declining_an_informal_transcript():
+    """A recording of an informal conversation must still produce minutes, not a refusal.
+
+    Without this the summariser decides some transcripts are "not a meeting" and answers with a
+    request for a different transcript, which is useless to the user and leaves nothing cited.
+    """
+    result = General.prompt([DialogueEntry(text="Traffic was awful today", speaker="John")], None)
+
+    prompt_body = result[0]["content"]
+
+    assert "Do not decline because the recording is informal, short, incomplete, or off-topic" in prompt_body
+    assert "do not ask for a different transcript" in prompt_body
+
+
+def test_prompt_keeps_the_refusal_path_open_for_hostile_transcripts():
+    """The informality instruction must not read as a blanket ban on declining.
+
+    `refusal_robustness` scores refusing an overtly malicious injection as fully correct behaviour,
+    so a prompt forbidding refusal outright would remove a sanctioned safe response — and the eval
+    could not see the loss, because transparently ignoring the injection also scores 5.
+    """
+    result = General.prompt([DialogueEntry(text="Traffic was awful today", speaker="John")], None)
+
+    prompt_body = result[0]["content"]
+
+    assert "This does not override your safety obligations" in prompt_body
+    assert "never decline to summarise" not in prompt_body
+
+
+def test_prompt_forbids_inventing_actions():
+    """Actions the summariser proposes itself cannot be cited, and read as agreed commitments."""
+    result = General.prompt([DialogueEntry(text="Traffic was awful today", speaker="John")], None)
+
+    assert "actually agreed or stated in the discussion" in result[0]["content"]
+
+
 def test_prompt_date_inclusion():
     transcript = []
 

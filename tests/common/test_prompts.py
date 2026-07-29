@@ -89,6 +89,30 @@ def test_get_extract_claims_prompt():
     assert "claims" in messages[0]["content"].lower()
 
 
+def test_get_extract_claims_prompt_excludes_document_metadata():
+    """The document date comes from the app, not the transcript, so it is not a claim to cite.
+
+    Extracting it guarantees an uncited claim on every minute, which surfaces to the user as a
+    hallucination that isn't one.
+    """
+    content = get_extract_claims_prompt("Date: 28 July 2026")[0]["content"]
+
+    assert "document metadata" in content.lower()
+
+
+def test_get_extract_claims_prompt_still_extracts_the_meeting_purpose():
+    """A purpose the summariser invented is the fabrication a reader is least likely to question.
+
+    The extractor only ever sees the draft, never the transcript, so it cannot tell an invented
+    purpose from a grounded one — excluding "the summariser's own characterisation" therefore drops
+    both, and an unsupported purpose statement is never checked against the transcript at all.
+    """
+    content = get_extract_claims_prompt("The purpose of the meeting was to approve the budget.")[0]["content"]
+
+    assert "the purpose of the meeting was to" in content.lower()
+    assert "ARE claims and must be extracted" in content
+
+
 def test_get_cite_claims_prompt():
     messages = get_cite_claims_prompt("Draft text.", ["The budget is £1m"], _TRANSCRIPT)
     assert len(messages) == 1
@@ -97,6 +121,13 @@ def test_get_cite_claims_prompt():
     assert "Draft text." in content
     assert "The budget is £1m" in content
     assert "Alice" in content
+
+
+def test_get_cite_claims_prompt_asks_for_both_sides_of_an_exchange():
+    """An elliptical reply cited alone reads as unsupported without the turn that prompted it."""
+    content = get_cite_claims_prompt("Draft text.", ["Masha has custody"], _TRANSCRIPT)[0]["content"]
+
+    assert "cite both entries" in content
 
 
 def test_string_to_system_message():
