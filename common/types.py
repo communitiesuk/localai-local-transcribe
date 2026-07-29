@@ -6,6 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
     ContentSource,
     DialogueEntry,
@@ -60,7 +61,7 @@ class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
     template_name: str
     template_id: uuid.UUID | None = None
-    agenda: str | None = None
+    agenda: str | None = Field(default=None, max_length=MAX_AGENDA_LENGTH)
     title: str | None = None
 
 
@@ -191,7 +192,7 @@ class MinuteListItem(BaseModel):
 class MinutesCreateRequest(BaseModel):
     template_name: str = Field(description="Name of the template to use for the minutes")
     template_id: uuid.UUID | None = Field(description="Optional id of user template")
-    agenda: str | None = Field(description="The agenda for the meeting", default=None)
+    agenda: str | None = Field(description="The agenda for the meeting", default=None, max_length=MAX_AGENDA_LENGTH)
 
 
 class AiEdit(BaseModel):
