@@ -95,9 +95,9 @@ export default function UserPage(props: {
             meetings and meeting summaries.
           </GovukListItem>
           <GovukListItem>
-            <strong>Organisation admin:</strong> can invite standard users, toggle standard &
-            organisation admin status of accounts and can delete users within their
-            organisation.
+            <strong>Organisation admin:</strong> can invite standard users,
+            toggle standard & organisation admin status of accounts and can
+            delete users within their organisation.
           </GovukListItem>
         </GovukList>
       </GovukDetails>
@@ -184,7 +184,10 @@ function RolesForm({ user }: { user: GetUserResponse }) {
                 ref={ref}
                 options={[
                   { label: 'Standard user', value: 'standard_user' },
-                  { label: 'Organisation admin', value: 'local_authority_admin' },
+                  {
+                    label: 'Organisation admin',
+                    value: 'local_authority_admin',
+                  },
                 ]}
               />
             )}
