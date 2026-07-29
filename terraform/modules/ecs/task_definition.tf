@@ -124,6 +124,19 @@ locals {
     },
     # AZURE_BLOB_CONNECTION_STRING and AZURE_TRANSCRIPTION_CONTAINER_NAME needed here for batch adapter - see AIILG-528
   ]
+  backend_secrets = concat(
+    local.shared_worker_backend_secrets,
+    [
+      {
+        name      = "GOVNOTIFY_API_KEY"
+        valueFrom = var.govnotify_api_key_arn
+      },
+      {
+        name      = "GOVNOTIFY_INVITE_TEMPLATE_ID"
+        valueFrom = var.govnotify_invite_template_id_arn
+      },
+    ]
+  )
   frontend_environment_variables = [
     {
       name  = "ENVIRONMENT"
@@ -253,12 +266,16 @@ resource "aws_ecs_task_definition" "backend" {
 
       environment = concat(local.shared_worker_backend_environment_variables, [
         {
+          name  = "EMAIL_SERVICE"
+          value = "gov_notify"
+        },
+        {
           name  = "APP_NAME"
           value = "local-transcribe-backend"
         }
       ])
 
-      secrets = local.shared_worker_backend_secrets
+      secrets = local.backend_secrets
 
       healthCheck = {
         command     = ["CMD-SHELL", "curl --fail http://localhost:${var.backend_port}/healthcheck"]
