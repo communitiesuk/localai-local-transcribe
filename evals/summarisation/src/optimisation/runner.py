@@ -32,8 +32,10 @@ from evals.summarisation.src.common import (
     MetricResult,
     RunSummary,
     call_llm_judge_parallel,
+    judge_transcript_text,
     write_jsonl,
 )
+from evals.summarisation.src.common.metric import judged_dimensions
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
 
@@ -89,6 +91,15 @@ def _dialogue_to_entries(dialogue: str) -> list[DialogueEntry]:
     return entries
 
 
+def judge_transcript_from_dialogue(dialogue: str) -> str:
+    """Render a raw dataset dialogue for the judge with the citation step's entry numbering.
+
+    The summariser is handed the dialogue as ``DialogueEntry`` objects and cites them by index, so
+    the judge has to be shown the same entries under the same numbers to check a ``[n]`` marker.
+    """
+    return judge_transcript_text(_dialogue_to_entries(dialogue))
+
+
 def prepare_run_paths(output_dir: str | Path, run_id: str) -> tuple[Path, Path, Path]:
     out_dir = Path(output_dir) / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -141,6 +152,9 @@ class EvalRun:
         self.model_name: str = settings.FAST_LLM_MODEL_NAME
         self.template_name: str | None = cfg.prompts.summarizer_template_name
         self.hallucination_enabled: bool = cfg.hallucination.enabled
+        # Resolved once up front so an unknown template name fails before any LLM call is made.
+        self.dimensions: list[str] = judged_dimensions(DIMENSIONS, self.template_name)
+        self.skipped_dimensions: list[str] = [d for d in DIMENSIONS if d not in self.dimensions]
         self.enc: tiktoken.Encoding = tiktoken.encoding_for_model(self.model_name)
 
         self.run_id: str = ""
@@ -196,14 +210,18 @@ class EvalRun:
                 reference_summary=getattr(gold, "reference_summary", None),
             )
 
+            # Numbered once and reused for the record, so a rationale citing `[n]` can be resolved
+            # against the transcript stored beside it.
+            judge_transcript = judge_transcript_from_dialogue(ex.dialogue)
+
             t_j0 = time.perf_counter()
             rubric_evaluation = _run_async(
                 call_llm_judge_parallel(
                     summary_id=ex.example_id,
                     transcript_ref=str(ex.example_id),
-                    transcript_text=ex.dialogue,
+                    transcript_text=judge_transcript,
                     summary_text=pred.summary,
-                    dimensions=list(DIMENSIONS.keys()),
+                    dimensions=run.dimensions,
                 )
             )
             run.state.judge_ms_values.append(_elapsed_ms(t_j0, time.perf_counter()))
@@ -227,7 +245,7 @@ class EvalRun:
             record = EvalRecord(
                 run_id=run.run_id,
                 example_id=ex.example_id,
-                dialogue=ex.dialogue,
+                dialogue=judge_transcript,
                 reference_summary=ex.reference_summary,
                 candidate=pred.candidate,
                 metrics=metrics_out,
@@ -251,6 +269,7 @@ class EvalRun:
             split=self.split,
             devset=self.devset,
             metrics_summary=metrics_summary,
+            skipped_dimensions=self.skipped_dimensions,
             summarize_ms_values=self.state.summarize_ms_values,
             judge_ms_values=self.state.judge_ms_values,
         )
@@ -323,6 +342,7 @@ def _build_run_summary(
     split: str,
     devset: list[dspy.Example],
     metrics_summary: dict[str, dict[str, float]],
+    skipped_dimensions: list[str],
     summarize_ms_values: list[int],
     judge_ms_values: list[int],
 ) -> RunSummary:
@@ -335,6 +355,9 @@ def _build_run_summary(
         "n": len(devset),
         "overall": overall,
         "metrics": metrics_summary,
+        # Recorded so a dimension missing from `metrics` reads as deliberately out of scope for this
+        # summary path, not as a dimension that silently failed to produce a score.
+        "skipped_dimensions": skipped_dimensions,
         "latency_ms": {
             "summarize_p50": _p50(summarize_ms_values),
             "judge_p50": _p50(judge_ms_values),
