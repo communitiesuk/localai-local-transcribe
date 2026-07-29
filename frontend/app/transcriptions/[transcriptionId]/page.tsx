@@ -124,7 +124,9 @@ export default function TranscriptionPage(props: {
       <GovukHeading as="h1" size="xl">
         {recordingDate}
       </GovukHeading>
+      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
       <RecordingDetails dateTimeLabel={dateTimeLabel} />
+      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
       <div>
         <NewMinuteDialog
           transcriptionId={transcription.id!}
