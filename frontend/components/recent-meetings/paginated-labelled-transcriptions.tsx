@@ -1,6 +1,5 @@
 'use client'
 
-import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
 import { listLabelledTranscriptionsTranscriptionsLabelledGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
@@ -68,7 +67,6 @@ export const PaginatedLabelledTranscriptions = () => {
 
   return (
     <div>
-      <OfflineRecordings />
       <GovukHeading as="h2" size="m">
         Labelled recordings
       </GovukHeading>
