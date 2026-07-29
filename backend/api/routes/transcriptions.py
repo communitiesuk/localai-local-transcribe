@@ -182,7 +182,7 @@ async def list_unlabelled_transcriptions(
     items = [
         UnlabelledTranscriptionMetadata(
             id=t.id,
-            created_datetime=t.created_datetime,
+            date_of_recording=t.date_of_recording,
             title=t.title,
             text=t.dialogue_entries[0]["text"][:100] if t.dialogue_entries else "",
             status=t.status,

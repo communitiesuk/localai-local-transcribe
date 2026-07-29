@@ -43,7 +43,7 @@ class UnlabelledTranscriptionMetadata(BaseModel):
     """Pydantic model for unlabelled transcription metadata."""
 
     id: uuid.UUID
-    created_datetime: datetime
+    date_of_recording: datetime | None = None
     title: str | None = None
     text: str
     status: JobStatus

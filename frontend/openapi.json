@@ -2940,10 +2940,12 @@
       "UnlabelledTranscriptionMetadata": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "created_datetime": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created Datetime"
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
           },
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -2953,7 +2955,7 @@
           "status": { "$ref": "#/components/schemas/JobStatus" }
         },
         "type": "object",
-        "required": ["id", "created_datetime", "text", "status"],
+        "required": ["id", "text", "status"],
         "title": "UnlabelledTranscriptionMetadata",
         "description": "Pydantic model for unlabelled transcription metadata."
       },
