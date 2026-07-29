@@ -9,7 +9,10 @@ import { useBannerStore } from '@/stores/use-banner-store'
 
 // Mock the generated client (requires a running backend to generate)
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
-  getTargetUserUsersUserIdGetOptions: vi.fn(() => ({ queryKey: ['user'], queryFn: vi.fn() })),
+  getTargetUserUsersUserIdGetOptions: vi.fn(() => ({
+    queryKey: ['user'],
+    queryFn: vi.fn(),
+  })),
   getTargetUserUsersUserIdGetQueryKey: vi.fn(() => ['user']),
   updateUserRolesUsersUserIdRolesPatchMutation: vi.fn(() => ({})),
 }))
