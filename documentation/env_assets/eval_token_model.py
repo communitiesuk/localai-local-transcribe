@@ -13,10 +13,12 @@ Assumptions -- ✅ verified in repo, ⚠️ assumed:
   ✅ r = 109 words/turn            measured, range 91-146
   ✅ S = 2 speakers                config.py:10
   ✅ actors FAST, facilitator BEST participant.py:11, transcript_generator.py:77
-  ✅ FAST gpt-5-nano, BEST gpt5-1  settings.py:114,124
+  ✅ FAST gpt-5-nano, BEST gpt5-1  settings.py:114,124, both via azure_apim (settings.py:110,119)
+  ✅ Azure Sweden Central Data Zone azure.microsoft.com/pricing/details/azure-openai, GBP. All money
+                                   below is GBP. Standard SKU, not Priority Processing (2x).
   ✅ 3 calls per summarisation     types.py:92-108 + citations.py:25,34. Not 6: env-impact B.2 also
                                    counts speaker-ID/title/hallucination, none on this path.
-  ⚠️ summary = 0.5*L words         env-impact B.2. Weakest input; at 0.25*L the bill is $2.37 not $2.92
+  ⚠️ summary = 0.5*L words         env-impact B.2. Weakest input; at 0.25*L the bill is £2.00 not £2.46
   ✅ 8 judge dimensions            constants.py:19, optimisation/runner.py:206. But the bias eval
                                    reads cfg.metrics and counterfactual.yaml:20 still lists 3.
   ✅ judge output ~60 words        measured `reason` fields, median 45-47
@@ -71,9 +73,9 @@ JUDGE_WRAPPER_W = 60
 JUDGE_OUT_W = 60  # measured rationale 45-47 words + JSON envelope
 SUMMARY_RATIO = 0.5  # minute output = 0.5*L words (env-impact B.2)
 
-PRICE = {  # $ per token: (input, cached input, output)
-    "FAST": (0.05e-6, 0.005e-6, 0.40e-6),
-    "BEST": (1.25e-6, 0.125e-6, 10.00e-6),
+PRICE = {  # GBP per token: (input, cached input, output). Azure OpenAI, Sweden Central, Data Zone.
+    "FAST": (0.05e-6, 0.01e-6, 0.34e-6),  # gpt-5-nano
+    "BEST": (1.05e-6, 0.11e-6, 8.34e-6),  # gpt-5.1
 }
 
 
@@ -177,7 +179,7 @@ def report(L=9000.0):
 
     print(f"\n{'=' * 104}\nL = {L:,.0f} words   S = {S}   iterations = {ITERATIONS}   dims = {DIMS}\n{'=' * 104}")
     print(
-        f"\n{'Stage':<40}{'FAST tok':>11}{'BEST tok':>11}{'Total':>11}{'tok%':>7}{'$/M':>8}{'Cost':>8}{'%':>6}{'No cache':>10}"
+        f"\n{'Stage':<40}{'FAST tok':>11}{'BEST tok':>11}{'Total':>11}{'tok%':>7}{'£/M':>8}{'Cost £':>8}{'%':>6}{'No cache':>10}"
     )
     for s in st:
         print(
@@ -194,7 +196,7 @@ def report(L=9000.0):
     for tier in ("FAST", "BEST"):
         t = sum(s.tok(tier) for s in st)
         cc = sum(s.cost(tier=tier) for s in st)
-        print(f"  {tier:<5}{t:>11,.0f} tok ({t / tok * 100:.0f}%)   ${cc:.2f} ({cc / cost * 100:.0f}% of cost)")
+        print(f"  {tier:<5}{t:>11,.0f} tok ({t / tok * 100:.0f}%)   £{cc:.2f} ({cc / cost * 100:.0f}% of cost)")
 
     print("\nSummarising vs judging")
     judges = [c for s in st for c in s.calls if c.tier == "BEST" and c.out_w == JUDGE_OUT_W]
@@ -208,13 +210,13 @@ def report(L=9000.0):
     ]:
         t = sum(c.tok for c in group)
         cc = sum(c.cost() for c in group)
-        print(f"  {name:<34}{n:>6.0f} calls{t:>11,.0f} tok   ${cc:.2f} ({cc / cost * 100:.0f}%)")
+        print(f"  {name:<34}{n:>6.0f} calls{t:>11,.0f} tok   £{cc:.2f} ({cc / cost * 100:.0f}%)")
 
     print("\nTotals by N")
     for n in (10, 50, 100, 500):
         t = tok * n
         unit = f"{t / 1e6:.0f}M" if t < 1e9 else f"{t / 1e9:.2f}B"
-        print(f"  N={n:<5}{unit:>8}   ${cost * n:>8,.0f}   ask for ~{t * 2 / 1e6:,.0f}M / ~${cost * n * 2:,.0f}")
+        print(f"  N={n:<5}{unit:>8}   £{cost * n:>8,.0f}   ask for ~{t * 2 / 1e6:,.0f}M / ~£{cost * n * 2:,.0f}")
 
 
 if __name__ == "__main__":
