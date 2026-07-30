@@ -2678,10 +2678,15 @@
             "items": { "type": "string" },
             "type": "array",
             "title": "Allowed Domains"
+          },
+          "updated_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated Datetime"
           }
         },
         "type": "object",
-        "required": ["allowed_domains"],
+        "required": ["allowed_domains", "updated_datetime"],
         "title": "OrganisationPatchRequest"
       },
       "OrganisationResponse": {
