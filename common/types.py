@@ -1,10 +1,11 @@
+import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
@@ -14,6 +15,19 @@ from common.database.postgres_models import (
     TemplateType,
     UserRole,
 )
+
+DOMAIN_REGEX = re.compile(
+    r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z-]{0,61}[a-z]$",
+    re.IGNORECASE,
+)
+
+
+def validate_fqdn_list(domains: list[str]) -> list[str]:
+    for domain in domains:
+        if not DOMAIN_REGEX.match(domain):
+            message = f"Domain '{domain}' is not a valid fully qualified domain name (FQDN)"
+            raise ValueError(message)
+    return domains
 
 
 class LabelledTranscriptionMetadata(BaseModel):
@@ -364,9 +378,20 @@ class OrganisationCreateRequest(BaseModel):
     name: str
     allowed_domains: list[str]
 
+    @field_validator("allowed_domains")
+    @classmethod
+    def validate_domains(cls, v: list[str]) -> list[str]:
+        return validate_fqdn_list(v)
+
 
 class OrganisationPatchRequest(BaseModel):
     allowed_domains: list[str]
+    updated_datetime: datetime
+
+    @field_validator("allowed_domains")
+    @classmethod
+    def validate_domains(cls, v: list[str]) -> list[str]:
+        return validate_fqdn_list(v)
 
 
 class UserExistsResponse(BaseModel):

@@ -1,6 +1,6 @@
 # ruff: noqa: ARG001
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -187,7 +187,7 @@ async def test_update_organisations_domains(
 
     response = await client.patch(
         f"/organisations/{org.id}",
-        json={"allowed_domains": new_domains},
+        json={"allowed_domains": new_domains, "updated_datetime": time_now.isoformat()},
     )
 
     assert response.status_code == 200
@@ -197,6 +197,45 @@ async def test_update_organisations_domains(
 
     mock_session.commit.assert_awaited_once()
     mock_session.refresh.assert_awaited_once_with(org)
+
+
+@pytest.mark.asyncio
+async def test_update_organisations_domains_conflict_on_stale_updated_datetime(
+    client,
+    override_user,
+    override_session,
+    mock_user,
+    mock_session,
+):
+    """Simulates two tabs editing the same organisation: the second save must not
+    silently overwrite the first, since it was based on stale data."""
+    mock_user.roles = [UserRole.MHCLG_SUPPORT_ADMIN]
+    loaded_time = datetime.now(UTC)
+    time_after_other_tab_saved = loaded_time + timedelta(seconds=5)
+
+    org = Organisation(
+        id=uuid.uuid4(),
+        name="Test Organisation",
+        allowed_domains=["old.gov.uk", "other-tab-added-this.gov.uk"],
+        created_datetime=loaded_time,
+        updated_datetime=time_after_other_tab_saved,
+    )
+
+    mock_session.get.return_value = org
+
+    response = await client.patch(
+        f"/organisations/{org.id}",
+        json={
+            "allowed_domains": ["old.gov.uk", "this-tab-added-this.gov.uk"],
+            "updated_datetime": loaded_time.isoformat(),
+        },
+    )
+
+    assert response.status_code == 409
+    assert org.allowed_domains == ["old.gov.uk", "other-tab-added-this.gov.uk"]
+
+    mock_session.commit.assert_not_awaited()
+    mock_session.refresh.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -215,7 +254,10 @@ async def test_update_organisation_not_found(
 
     response = await client.patch(
         f"/organisations/{organisation_id}",
-        json={"allowed_domains": ["updated.gov.uk"]},
+        json={
+            "allowed_domains": ["updated.gov.uk"],
+            "updated_datetime": datetime.now(UTC).isoformat(),
+        },
     )
 
     assert response.status_code == 404
