@@ -2,6 +2,7 @@ import logging
 import math
 import uuid
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import not_, or_
@@ -24,6 +25,7 @@ from common.types import (
     LabelledTranscriptionsResponse,
     RecordingCreateRequest,
     RecordingCreateResponse,
+    RecordingSortOrder,
     RenameSpeakerRequest,
     SingleRecording,
     TaskType,
@@ -90,12 +92,18 @@ def _validate_dialogue_entry(
         raise HTTPException(status_code=409, detail="Dialogue entry text has changed")
 
 
+def _created_datetime_order(sort: RecordingSortOrder):
+    column = col(Transcription.created_datetime)
+    return column.asc() if sort == RecordingSortOrder.oldest else column.desc()
+
+
 @transcriptions_router.get("/transcriptions/labelled", response_model=LabelledTranscriptionsResponse)
 async def list_labelled_transcriptions(
     session: SQLSessionDep,
     current_user: UserDep,
     page: int = Query(1, ge=1, description="Page number (starts from 1)"),
     page_size: int = Query(20, ge=1, le=100, description="Number of items per page"),
+    sort: Annotated[RecordingSortOrder, Query(description="Sort order for date recorded")] = RecordingSortOrder.newest,
 ) -> LabelledTranscriptionsResponse:
     """Get paginated metadata for labelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -116,7 +124,7 @@ async def list_labelled_transcriptions(
         select(Transcription)
         .where(Transcription.user_id == current_user.id)
         .where(labelled_filter)
-        .order_by(col(Transcription.created_datetime).desc())
+        .order_by(_created_datetime_order(sort))
         .offset(offset)
         .limit(page_size)
     )
@@ -153,6 +161,7 @@ async def list_labelled_transcriptions(
 async def list_unlabelled_transcriptions(
     session: SQLSessionDep,
     current_user: UserDep,
+    sort: Annotated[RecordingSortOrder, Query(description="Sort order for date recorded")] = RecordingSortOrder.newest,
 ) -> UnlabelledTranscriptionsResponse:
     """Get metadata for unlabelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -174,7 +183,7 @@ async def list_unlabelled_transcriptions(
         select(Transcription)
         .where(Transcription.user_id == current_user.id)
         .where(not_(labelled_filter))
-        .order_by(col(Transcription.created_datetime).desc())
+        .order_by(_created_datetime_order(sort))
     )
     result = await session.exec(statement)
     transcriptions = result.all()

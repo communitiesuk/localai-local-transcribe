@@ -307,6 +307,11 @@ class AgendaUsage(StrEnum):
     REQUIRED = auto()
 
 
+class RecordingSortOrder(StrEnum):
+    newest = auto()
+    oldest = auto()
+
+
 class TemplateMetadata(BaseModel):
     name: str
     description: str

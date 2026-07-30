@@ -12,14 +12,19 @@ import {
   GovukTableRow,
 } from '@/components/govuk/table'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 export const UnlabelledTranscriptions = () => {
+  const searchParams = useSearchParams()
+  const sort = searchParams.get('sort') === 'oldest' ? 'oldest' : 'newest'
   const {
     data: response,
     isLoading,
     error,
   } = useQuery({
-    ...listUnlabelledTranscriptionsTranscriptionsUnlabelledGetOptions(),
+    ...listUnlabelledTranscriptionsTranscriptionsUnlabelledGetOptions({
+      query: { sort },
+    }),
     placeholderData: keepPreviousData,
   })
 

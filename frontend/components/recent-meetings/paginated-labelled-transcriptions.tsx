@@ -41,13 +41,14 @@ export const PaginatedLabelledTranscriptions = () => {
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
   const pageSize = 10
+  const sort = searchParams.get('sort') === 'oldest' ? 'oldest' : 'newest'
   const {
     data: paginatedResponse,
     isLoading,
     error,
   } = useQuery({
     ...listLabelledTranscriptionsTranscriptionsLabelledGetOptions({
-      query: { page: currentPage, page_size: pageSize },
+      query: { page: currentPage, page_size: pageSize, sort },
     }),
     refetchInterval: (query) =>
       !!query.state.data &&
