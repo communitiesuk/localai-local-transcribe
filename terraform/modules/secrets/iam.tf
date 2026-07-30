@@ -30,7 +30,7 @@ resource "aws_kms_key_policy" "kms_webapp_secrets_decrypt_policy" {
   policy = data.aws_iam_policy_document.kms_secrets_decrypt.json
 }
 
-resource "aws_iam_role_policy" "secret_access" {
+resource "aws_iam_role_policy" "execution_secret_access" {
   for_each = {
     frontend = var.frontend_task_execution_role_id
     backend  = var.backend_task_execution_role_id
@@ -43,15 +43,6 @@ resource "aws_iam_role_policy" "secret_access" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Effect = "Allow"
-        Resource = [
-          aws_secretsmanager_secret.database_secret.arn,
-        ]
-      },
       {
         Action = [
           "ssm:GetParameters"
@@ -67,6 +58,31 @@ resource "aws_iam_role_policy" "secret_access" {
           aws_ssm_parameter.oidc_client_id.arn,
           aws_ssm_parameter.govnotify_api_key.arn,
           aws_ssm_parameter.govnotify_invite_template_id.arn,
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "runtime_secrets_access" {
+  for_each = {
+    backend = var.backend_task_role_id
+    worker  = var.worker_task_role_id
+  }
+
+  name = "${var.environment_name}-runtime-secret-access"
+  role = each.value
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Effect = "Allow"
+        Resource = [
+          aws_secretsmanager_secret.database_secret.arn,
         ]
       }
     ]

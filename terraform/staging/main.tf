@@ -154,7 +154,7 @@ module "database" {
   source = "../modules/rds"
 
   environment_name                 = local.environment_name
-  database_username                = local.database_username
+  master_database_username         = local.database_username
   database_password                = module.secrets.database_password.result
   database_port                    = local.database_port
   allocated_storage                = local.database_allocated_storage

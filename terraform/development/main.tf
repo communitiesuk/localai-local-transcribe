@@ -32,8 +32,8 @@ locals {
   max_transcription_processes = 1
   max_llm_proccesses          = 1
 
-  database_username = "postgres"
-  db_name           = "localtranscribedb"
+  master_database_username = "postgres"
+  db_name                  = "localtranscribedb"
 
   app_host                  = "development.local-transcribe.test.communities.gov.uk"
   load_balancer_domain_name = "lb.development.local-transcribe.test.communities.gov.uk"
@@ -141,8 +141,7 @@ module "github_actions_access" {
 module "secrets" {
   source = "../modules/secrets"
 
-  environment_name  = local.environment_name
-  database_username = local.database_username
+  environment_name = local.environment_name
 
   db_name                          = local.db_name
   database_url                     = module.database.database_url
@@ -154,6 +153,8 @@ module "secrets" {
   master_user_secret_arn           = module.database.db_master_secret_arn
   worker_task_execution_role_arn   = module.ecs.worker_execution_task_arn
   worker_task_execution_role_id    = module.ecs.worker_execution_task_id
+  backend_task_role_id             = module.ecs.backend_task_id
+  worker_task_role_id              = module.ecs.worker_task_id
   vpc_id                           = module.networking.vpc.id
   private_subnet_ids               = module.networking.private_subnets[*].id
   lambda_rotation_sg_id            = module.database.lambda_rotation_sg_id
@@ -177,7 +178,7 @@ module "database" {
   db_name                          = local.db_name
   backend_user_password            = module.secrets.backend_user_password.result
   environment_name                 = local.environment_name
-  database_username                = local.database_username
+  master_database_username         = local.master_database_username
   database_port                    = local.database_port
   allocated_storage                = local.database_allocated_storage
   backup_retention_period          = 7
@@ -208,11 +209,10 @@ module "ecs" {
   frontend_port               = local.frontend_port
   backend_port                = local.backend_port
 
-  database_port                = local.database_port
-  database_host                = module.database.database_url
-  database_name                = module.database.database_name
-  database_user                = local.database_username
-  database_password_secret_arn = module.secrets.database_password_secret_arn
+  database_port       = local.database_port
+  database_host       = module.database.database_url
+  database_name       = module.database.database_name
+  database_secret_arn = module.secrets.database_secret_arn
 
   lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id

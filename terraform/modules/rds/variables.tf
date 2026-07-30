@@ -12,8 +12,8 @@ variable "db_name" {
   type        = string
 }
 
-variable "database_username" {
-  description = "username for the database"
+variable "master_database_username" {
+  description = "username for the database master user"
   type        = string
   sensitive   = true
 }
@@ -86,5 +86,4 @@ variable "bastion_group_id" {
   type        = string
   description = "The id of the bastion security group"
 }
-
 

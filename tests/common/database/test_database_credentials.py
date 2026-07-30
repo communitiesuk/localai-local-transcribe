@@ -41,7 +41,7 @@ def provider(monkeypatch):
     # resolvable AWS region); hand it a mock instead.
     monkeypatch.setattr(
         "common.database.database_credentials.boto3.client",
-        lambda: MagicMock(),
+        lambda _service_name, **_kwargs: MagicMock(),
     )
     credential_provider = SecretsManagerCredentialProvider(secret_arn="arn:secret", ttl_seconds=300)
     credential_provider._client.get_secret_value = MagicMock(return_value=_secret_response("user", "pass"))  # noqa: SLF001

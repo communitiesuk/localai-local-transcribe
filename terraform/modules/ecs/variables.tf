@@ -53,13 +53,8 @@ variable "database_port" {
   type        = number
 }
 
-variable "database_user" {
-  description = "Database username"
-  type        = string
-}
-
-variable "database_password_secret_arn" {
-  description = "ARN of the Secrets Manager secret containing the database password"
+variable "database_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the database credentials"
   type        = string
 }
 

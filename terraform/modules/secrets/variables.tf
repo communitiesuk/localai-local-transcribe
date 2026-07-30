@@ -37,10 +37,14 @@ variable "worker_task_execution_role_id" {
   type        = string
 }
 
-variable "database_username" {
-  description = "username for the database"
+variable "backend_task_role_id" {
+  description = "id of the IAM role for the backend ECS task"
   type        = string
-  sensitive   = true
+}
+
+variable "worker_task_role_id" {
+  description = "id of the IAM role for the worker ECS task"
+  type        = string
 }
 
 variable "database_port" {

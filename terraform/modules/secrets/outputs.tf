@@ -4,9 +4,9 @@ output "backend_user_password" {
   sensitive   = true
 }
 
-output "database_password_secret_arn" {
-  description = "valueFrom reference for the app DB password, for use in the ECS task definition's block"
-  value       = "${aws_secretsmanager_secret.database_secret.arn}:password::"
+output "database_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the database credentials"
+  value       = aws_secretsmanager_secret.database_secret.arn
 }
 
 output "secrets_kms_key_arn" {
