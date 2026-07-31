@@ -50,6 +50,17 @@
             "description": "Number of items per page"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RecordingSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
+          {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
@@ -88,6 +99,17 @@
         "description": "Get metadata for unlabelled transcriptions for the current user.",
         "operationId": "list_unlabelled_transcriptions_transcriptions_unlabelled_get",
         "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RecordingSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
@@ -2678,15 +2700,10 @@
             "items": { "type": "string" },
             "type": "array",
             "title": "Allowed Domains"
-          },
-          "updated_datetime": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated Datetime"
           }
         },
         "type": "object",
-        "required": ["allowed_domains", "updated_datetime"],
+        "required": ["allowed_domains"],
         "title": "OrganisationPatchRequest"
       },
       "OrganisationResponse": {
@@ -2801,6 +2818,11 @@
         "type": "object",
         "required": ["id", "upload_url"],
         "title": "RecordingCreateResponse"
+      },
+      "RecordingSortOrder": {
+        "type": "string",
+        "enum": ["newest", "oldest"],
+        "title": "RecordingSortOrder"
       },
       "RenameSpeakerRequest": {
         "properties": {
@@ -2945,12 +2967,10 @@
       "UnlabelledTranscriptionMetadata": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "date_of_recording": {
-            "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
-            ],
-            "title": "Date Of Recording"
+          "created_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created Datetime"
           },
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -2960,7 +2980,7 @@
           "status": { "$ref": "#/components/schemas/JobStatus" }
         },
         "type": "object",
-        "required": ["id", "text", "status"],
+        "required": ["id", "created_datetime", "text", "status"],
         "title": "UnlabelledTranscriptionMetadata",
         "description": "Pydantic model for unlabelled transcription metadata."
       },
