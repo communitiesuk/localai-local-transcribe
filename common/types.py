@@ -1,19 +1,12 @@
 import re
 import uuid
-from dataclasses import dataclass
 from datetime import datetime
-from enum import IntEnum, StrEnum, auto
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field
 
 from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
-    ContentSource,
-    DialogueEntry,
     JobStatus,
-    TemplateType,
-    UserRole,
 )
 
 DOMAIN_REGEX = re.compile(
