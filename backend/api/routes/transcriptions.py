@@ -2,10 +2,10 @@ import logging
 import math
 import uuid
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import not_, or_
+from sqlalchemy import ColumnElement, not_, or_
 from sqlmodel import col, func, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
@@ -92,7 +92,7 @@ def _validate_dialogue_entry(
         raise HTTPException(status_code=409, detail="Dialogue entry text has changed")
 
 
-def _created_datetime_order(sort: RecordingSortOrder):
+def _created_datetime_order(sort: RecordingSortOrder) -> ColumnElement[Any]:
     column = col(Transcription.created_datetime)
     return column.asc() if sort == RecordingSortOrder.oldest else column.desc()
 
