@@ -18,7 +18,7 @@ export const UserTemplatesList = () => {
 
   const sortedTemplates = useMemo(
     () => [...templates].sort((a, b) => a.name.localeCompare(b.name)),
-    [templates],
+    [templates]
   )
 
   if (isLoading) {
@@ -65,15 +65,12 @@ export const UserTemplatesList = () => {
                 {template.updated_datetime
                   ? new Date(template.updated_datetime).toLocaleDateString(
                       'en-GB',
-                      { day: '2-digit', month: '2-digit', year: 'numeric' },
+                      { day: '2-digit', month: '2-digit', year: 'numeric' }
                     )
                   : 'Original template'}
               </td>
               <td className="govuk-table__cell govuk-table__cell--numeric">
-                <Link
-                  href={`/templates/${template.id}`}
-                  className="govuk-link"
-                >
+                <Link href={`/templates/${template.id}`} className="govuk-link">
                   Edit
                 </Link>
               </td>

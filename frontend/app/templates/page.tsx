@@ -16,7 +16,9 @@ export default function TemplatesPage() {
       <h2 className="govuk-heading-m govuk-!-margin-bottom-3">
         Create template
       </h2>
-      <GovukButtonLink href="/templates/new" variant="secondary">Create</GovukButtonLink>
+      <GovukButtonLink href="/templates/new" variant="secondary">
+        Create
+      </GovukButtonLink>
 
       <UserTemplatesList />
     </div>
