@@ -61,25 +61,27 @@ resource "aws_wafv2_web_acl" "load_balancer" {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
 
-        rule_action_override {
-          name = "SizeRestrictions_BODY"
-          action_to_use {
-            count {}
-          }
-        }
-
         scope_down_statement {
           not_statement {
             statement {
-              byte_match_statement {
-                field_to_match {
-                  uri_path {}
+              or_statement {
+                statement {
+                  byte_match_statement {
+                    field_to_match { uri_path {} }
+                    positional_constraint = "EXACTLY"
+                    search_string         = "/monitoring"
+                    text_transformation { priority = 0, type = "URL_DECODE" }
+                    text_transformation { priority = 1, type = "NORMALIZE_PATH" }
+                  }
                 }
-                positional_constraint = "STARTS_WITH"
-                search_string         = "/monitoring"
-                text_transformation {
-                  priority = 0
-                  type     = "NONE"
+                statement {
+                  byte_match_statement {
+                    field_to_match { uri_path {} }
+                    positional_constraint = "EXACTLY"
+                    search_string         = "/monitoring/"
+                    text_transformation { priority = 0, type = "URL_DECODE" }
+                    text_transformation { priority = 1, type = "NORMALIZE_PATH" }
+                  }
                 }
               }
             }
@@ -116,15 +118,24 @@ resource "aws_wafv2_web_acl" "load_balancer" {
         }
 
         scope_down_statement {
-          byte_match_statement {
-            field_to_match {
-              uri_path {}
+          or_statement {
+            statement {
+              byte_match_statement {
+                field_to_match { uri_path {} }
+                positional_constraint = "EXACTLY"
+                search_string         = "/monitoring"
+                text_transformation { priority = 0, type = "URL_DECODE" }
+                text_transformation { priority = 1, type = "NORMALIZE_PATH" }
+              }
             }
-            positional_constraint = "STARTS_WITH"
-            search_string         = "/monitoring"
-            text_transformation {
-              priority = 0
-              type     = "NONE"
+            statement {
+              byte_match_statement {
+                field_to_match { uri_path {} }
+                positional_constraint = "EXACTLY"
+                search_string         = "/monitoring/"
+                text_transformation { priority = 0, type = "URL_DECODE" }
+                text_transformation { priority = 1, type = "NORMALIZE_PATH" }
+              }
             }
           }
         }
