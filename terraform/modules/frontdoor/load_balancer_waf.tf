@@ -67,20 +67,36 @@ resource "aws_wafv2_web_acl" "load_balancer" {
               or_statement {
                 statement {
                   byte_match_statement {
-                    field_to_match { uri_path {} }
+                    field_to_match {
+                      uri_path {}
+                    }
                     positional_constraint = "EXACTLY"
                     search_string         = "/monitoring"
-                    text_transformation { priority = 0, type = "URL_DECODE" }
-                    text_transformation { priority = 1, type = "NORMALIZE_PATH" }
+                    text_transformation {
+                      priority = 0
+                      type     = "URL_DECODE"
+                    }
+                    text_transformation {
+                      priority = 1
+                      type     = "NORMALIZE_PATH"
+                    }
                   }
                 }
                 statement {
                   byte_match_statement {
-                    field_to_match { uri_path {} }
+                    field_to_match {
+                      uri_path {}
+                    }
                     positional_constraint = "EXACTLY"
                     search_string         = "/monitoring/"
-                    text_transformation { priority = 0, type = "URL_DECODE" }
-                    text_transformation { priority = 1, type = "NORMALIZE_PATH" }
+                    text_transformation {
+                      priority = 0
+                      type     = "URL_DECODE"
+                    }
+                    text_transformation {
+                      priority = 1
+                      type     = "NORMALIZE_PATH"
+                    }
                   }
                 }
               }
@@ -121,20 +137,36 @@ resource "aws_wafv2_web_acl" "load_balancer" {
           or_statement {
             statement {
               byte_match_statement {
-                field_to_match { uri_path {} }
+                field_to_match {
+                  uri_path {}
+                }
                 positional_constraint = "EXACTLY"
                 search_string         = "/monitoring"
-                text_transformation { priority = 0, type = "URL_DECODE" }
-                text_transformation { priority = 1, type = "NORMALIZE_PATH" }
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+                text_transformation {
+                  priority = 1
+                  type     = "NORMALIZE_PATH"
+                }
               }
             }
             statement {
               byte_match_statement {
-                field_to_match { uri_path {} }
+                field_to_match {
+                  uri_path {}
+                }
                 positional_constraint = "EXACTLY"
                 search_string         = "/monitoring/"
-                text_transformation { priority = 0, type = "URL_DECODE" }
-                text_transformation { priority = 1, type = "NORMALIZE_PATH" }
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+                text_transformation {
+                  priority = 1
+                  type     = "NORMALIZE_PATH"
+                }
               }
             }
           }
