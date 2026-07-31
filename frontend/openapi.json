@@ -2672,7 +2672,10 @@
             "description": "Optional id of user template"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Agenda",
             "description": "The agenda for the meeting"
           }
@@ -2700,10 +2703,15 @@
             "items": { "type": "string" },
             "type": "array",
             "title": "Allowed Domains"
+          },
+          "updated_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated Datetime"
           }
         },
         "type": "object",
-        "required": ["allowed_domains"],
+        "required": ["allowed_domains", "updated_datetime"],
         "title": "OrganisationPatchRequest"
       },
       "OrganisationResponse": {
@@ -2910,7 +2918,10 @@
             "title": "Template Id"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Agenda"
           },
           "title": {
@@ -2967,10 +2978,12 @@
       "UnlabelledTranscriptionMetadata": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "created_datetime": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created Datetime"
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
           },
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -2980,7 +2993,7 @@
           "status": { "$ref": "#/components/schemas/JobStatus" }
         },
         "type": "object",
-        "required": ["id", "created_datetime", "text", "status"],
+        "required": ["id", "text", "status"],
         "title": "UnlabelledTranscriptionMetadata",
         "description": "Pydantic model for unlabelled transcription metadata."
       },
