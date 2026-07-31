@@ -14,6 +14,7 @@ from evals.summarisation.src.common.schemas import (
     MetricResult,
     RunSummary,
 )
+from evals.summarisation.src.transcript import citation_markers, judge_transcript_text
 
 __all__ = [
     "AppConfig",
@@ -30,6 +31,8 @@ __all__ = [
     "build_azure_apim_adapter",
     "build_metrics",
     "call_llm_judge_parallel",
+    "citation_markers",
+    "judge_transcript_text",
     "load_config",
     "write_jsonl",
 ]
