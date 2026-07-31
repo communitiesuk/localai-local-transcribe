@@ -13,25 +13,22 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 # Copy the application source code
 COPY frontend .
 
-# Build-time environment variables (placed right before build to protect dependency layer cache)
-ARG NEXT_PUBLIC_SENTRY_DSN
-ARG NEXT_PUBLIC_POSTHOG_API_KEY
-ARG SENTRY_AUTH_TOKEN
-ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
-    NEXT_PUBLIC_POSTHOG_API_KEY=$NEXT_PUBLIC_POSTHOG_API_KEY \
-    SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
-
+# Generate client code before declaring build-time ARGs (preserves layer cache)
 RUN npm run generate-client
 
-# Compile the application.
-# NOTE: sourcemaps are only safe to delete here if the Sentry Next.js webpack
-# plugin (withSentryConfig in next.config.js) uploads them synchronously as
-# part of `next build` - confirm that before relying on this ordering. If
-# upload instead happens via a separate sentry-cli step outside this
-# Dockerfile, move the `find .next -name "*.map" -delete` line out of this
-# build (e.g. into the CI step that runs after upload) instead.
-RUN npm run build && \
-    # Clean up sourcemaps after Sentry has uploaded them to keep the production image secure & lightweight
+# Build-time environment variables
+ARG NEXT_PUBLIC_SENTRY_DSN
+ARG NEXT_PUBLIC_POSTHOG_API_KEY
+ARG NEXT_PUBLIC_ENVIRONMENT
+
+# Only export variables required by Next.js client bundle
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
+    NEXT_PUBLIC_POSTHOG_API_KEY=$NEXT_PUBLIC_POSTHOG_API_KEY \
+    NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
+
+# SENTRY_AUTH_TOKEN is mounted as a secret during build
+RUN --mount=type=secret,id=sentry_auth_token \
+    SENTRY_AUTH_TOKEN=$(cat /run/secrets/sentry_auth_token) npm run build && \
     find .next -name "*.map" -delete
 
 # ==========================================
@@ -53,7 +50,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Prune default global tooling we don't need at runtime
+# Prune default global tooling not needed at runtime
 RUN rm -rf /usr/local/lib/node_modules/npm \
     /usr/local/lib/node_modules/corepack \
     /usr/local/bin/npm \

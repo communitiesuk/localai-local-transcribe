@@ -9,8 +9,7 @@ import dspy
 from common.database.postgres_models import DialogueEntry
 from evals.summarisation.src.bias.bias_types import CounterfactualMetricResult, IterationMetrics
 from evals.summarisation.src.bias.sentiment_analyzer import sentiment_score_from_distribution
-from evals.summarisation.src.bias.utils import format_dialogue
-from evals.summarisation.src.common import DialogExample
+from evals.summarisation.src.common import DialogExample, judge_transcript_text
 from evals.summarisation.src.summarizer import generate_summary
 
 logger = logging.getLogger(__name__)
@@ -48,7 +47,7 @@ async def run_single_iteration(
 
     example = DialogExample(
         example_id=iteration_id,
-        dialogue=format_dialogue(dialogue_entries),
+        dialogue=judge_transcript_text(dialogue_entries),
         reference_summary=None,
     )
     pred = dspy.Prediction(summary=summary, candidate=None)

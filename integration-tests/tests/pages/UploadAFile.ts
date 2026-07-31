@@ -11,11 +11,9 @@ export class UploadAFile {
     return this.page.getByRole('link', { name: 'Back', exact: true })
   }
 
-  // Commented out pending the file size enforcement ticket. Restore once the
-  // "Maximum file size" hint is added back to the upload page.
-  // maxFileSize(): Locator {
-  //   return this.page.getByText('Maximum file size: 5GB')
-  // }
+  maxFileSize(): Locator {
+    return this.page.getByText('Maximum file size: 5GB')
+  }
 
   fileUploadButton(): Locator {
     return this.page.getByRole('button', { name: 'Choose a file' })

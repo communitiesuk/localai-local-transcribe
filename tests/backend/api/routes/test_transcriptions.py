@@ -397,7 +397,7 @@ async def test_list_unlabelled_transcriptions(mock_session, mock_user, mock_unla
     assert result.total_count == 1
     assert result.items[0].title == mock_unlabelled_transcription.title
     assert result.items[0].status == mock_unlabelled_transcription.status
-    assert result.items[0].created_datetime == mock_unlabelled_transcription.created_datetime
+    assert result.items[0].date_of_recording == mock_unlabelled_transcription.date_of_recording
 
 
 @pytest.mark.asyncio

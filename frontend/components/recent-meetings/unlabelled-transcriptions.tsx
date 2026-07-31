@@ -76,15 +76,17 @@ export const UnlabelledTranscriptions = () => {
                 <GovukTableRow key={transcription.id}>
                   <GovukTableCell>Date recorded</GovukTableCell>
                   <GovukTableCell>
-                    <div>
-                      {new Date(
-                        transcription.created_datetime
-                      ).toLocaleDateString()}
-                      <br />
-                      {new Date(
-                        transcription.created_datetime
-                      ).toLocaleTimeString()}
-                    </div>
+                    {transcription.date_of_recording ? (
+                      <div>
+                        {new Date(
+                          transcription.date_of_recording
+                        ).toLocaleDateString()}
+                        <br />
+                        {new Date(
+                          transcription.date_of_recording
+                        ).toLocaleTimeString()}
+                      </div>
+                    ) : null}
                   </GovukTableCell>
                   <GovukTableCell className="govuk-!-text-align-right">
                     <Link
