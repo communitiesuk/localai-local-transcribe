@@ -6,10 +6,7 @@ terraform {
       source  = "hashicorp/aws"
       version = "~>6.5"
     }
-
-    postgresql = {
-      source  = "cyrilgdn/postgresql"
-      version = "~>1.26"
-    }
   }
 }
+
+data "aws_caller_identity" "current" {}

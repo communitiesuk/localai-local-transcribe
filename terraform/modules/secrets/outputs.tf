@@ -1,14 +1,3 @@
-output "backend_user_password" {
-  description = "Randomly generated password for the created backend_user"
-  value       = random_password.backend_user_password
-  sensitive   = true
-}
-
-output "database_secret_arn" {
-  description = "ARN of the Secrets Manager secret containing the database credentials"
-  value       = aws_secretsmanager_secret.database_secret.arn
-}
-
 output "secrets_kms_key_arn" {
   description = "ARN of the KMS key used to encrypt the secrets"
   value       = aws_kms_key.local_transcribe_secrets.arn

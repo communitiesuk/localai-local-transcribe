@@ -28,8 +28,8 @@ locals {
       name  = "POSTGRES_PORT"
       value = tostring(var.database_port)
       }, {
-      name  = "DB_SECRET_ARN"
-      value = var.database_secret_arn
+      name  = "POSTGRES_USER"
+      value = tostring(var.database_username)
       }, {
       name  = "POSTGRES_DB"
       value = var.database_name

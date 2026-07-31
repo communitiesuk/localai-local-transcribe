@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = Field(description="PostgreSQL database name")
     POSTGRES_USER: str | None = Field(description="PostgreSQL database user", default=None)
     POSTGRES_PASSWORD: str | None = Field(description="PostgreSQL database password", default=None)
+    RDS_CA_BUNDLE_PATH: str = Field(
+        description="Path to the Amazon RDS CA certificate bundle",
+        default="/app/config/rds-ca-bundle.pem",
+    )
     DB_SECRET_ARN: str | None = Field(
         description="Arn of secret which contains the current database credentials", default=None
     )

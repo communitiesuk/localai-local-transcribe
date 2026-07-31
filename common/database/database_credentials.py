@@ -19,20 +19,19 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import logging
-import threading
-import time
 from dataclasses import dataclass
 from typing import Protocol
 
 import boto3
-from botocore.exceptions import ClientError
 from sqlalchemy import Dialect, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from common.settings import get_settings
+
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 @dataclass(frozen=True)
@@ -43,7 +42,6 @@ class DbCredentials:
 
 class DbCredentialsProvider(Protocol):
     def get_credentials(self) -> DbCredentials: ...
-    def invalidate_credentials(self) -> None: ...
 
 
 class StaticDbCredentialsProvider:
@@ -57,72 +55,23 @@ class StaticDbCredentialsProvider:
             password=self._password,
         )
 
-    def invalidate_credentials(self) -> None:
-        return
 
-
-class SecretsManagerCredentialProvider:
-    """
-    Thread-safe, TTL-cached credential fetcher backed by AWS Secrets Manager.
-
-    - get_credentials() returns the cached value if it's still fresh.
-    - get_credentials(force_refresh=True) always hits Secrets Manager,
-      regardless of TTL — used when a connection attempt fails auth.
-    """
-
-    def __init__(
-        self,
-        secret_arn: str,
-        ttl_seconds: int = 300,
-        region_name: str | None = None,
-    ) -> None:
-        self._secret_arn = secret_arn
-        self._ttl_seconds = ttl_seconds
-        self._client = boto3.client("secretsmanager", region_name=region_name)
-
-        self._lock = threading.Lock()
-        self._cached: DbCredentials | None = None
-        self._fetched_at: float = 0.0
+class IamDbCredentialsProvider:
+    def __init__(self, db_hostname: str, port: int, username: str, region_name: str) -> None:
+        self.db_hostname = db_hostname
+        self.port = port
+        self.username = username
+        self.region_name = region_name
+        self.client = boto3.client("rds", region_name=self.region_name)
 
     def get_credentials(self) -> DbCredentials:
-        with self._lock:
-            is_stale = (time.monotonic() - self._fetched_at) >= self._ttl_seconds
-            if self._cached is None or is_stale:
-                self._cached = self._fetch()
-                self._fetched_at = time.monotonic()
-            return self._cached
-
-    def _fetch(self) -> DbCredentials:
-        try:
-            response = self._client.get_secret_value(SecretId=self._secret_arn)
-        except ClientError:
-            logger.exception("Failed to fetch DB secret %s from Secrets Manager", self._secret_arn)
-            # If we have a stale cached value, prefer serving it over hard-failing —
-            # better to keep using a slightly-old-but-still-valid credential than
-            # to break every DB connection because Secrets Manager had a blip.
-            if self._cached is not None:
-                logger.warning("Falling back to previously cached DB credentials")
-                return self._cached
-            raise
-
-        payload = json.loads(response["SecretString"])
-        return DbCredentials(username=payload["username"], password=payload["password"])
-
-    def invalidate_credentials(self) -> None:
-        with self._lock:
-            self._cached = None
-
-
-_AUTH_FAILURE_MARKERS = (
-    "password authentication failed",
-    "28P01",  # postgres SQLSTATE for invalid_password
-    "auth",
-)
-
-
-def _looks_like_auth_failure(exc: Exception) -> bool:
-    message = str(exc).lower()
-    return any(marker in message for marker in _AUTH_FAILURE_MARKERS)
+        token = self.client.generate_db_auth_token(
+            DBHostname=self.db_hostname, Port=self.port, DBUsername=self.username, Region=self.region_name
+        )
+        return DbCredentials(
+            username=self.username,
+            password=token,
+        )
 
 
 def attach_dynamic_credentials(engine: Engine | AsyncEngine, credential_provider: DbCredentialsProvider) -> None:
@@ -141,19 +90,8 @@ def attach_dynamic_credentials(engine: Engine | AsyncEngine, credential_provider
 
     @event.listens_for(target_engine, "do_connect")
     def _do_connect(dialect: Dialect, _, cargs, cparams):
-        creds = credential_provider.get_credentials()
-        cparams["user"] = creds.username
-        cparams["password"] = creds.password
+        credentials = credential_provider.get_credentials()
+        cparams["user"] = credentials.username
+        cparams["password"] = credentials.password
 
-        try:
-            return dialect.connect(*cargs, **cparams)
-        except Exception as exc:
-            if not _looks_like_auth_failure(exc):
-                raise
-
-            logger.warning("DB connection failed auth check — forcing credential refresh and retrying once")
-            credential_provider.invalidate_credentials()
-            creds = credential_provider.get_credentials()
-            cparams["user"] = creds.username
-            cparams["password"] = creds.password
-            return dialect.connect(*cargs, **cparams)
+        return dialect.connect(*cargs, **cparams)

@@ -1,10 +1,11 @@
 import logging
+import ssl
 
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Session, create_engine
 
 from common.database.database_credentials import (
-    SecretsManagerCredentialProvider,
+    IamDbCredentialsProvider,
     StaticDbCredentialsProvider,
     attach_dynamic_credentials,
 )
@@ -32,8 +33,20 @@ DB_NAME = settings.POSTGRES_DB
 SYNC_DATABASE_URL = f"postgresql+psycopg2://{DB_HOST}:{DB_PORT}/{DB_NAME}"
 ASYNC_DATABASE_URL = f"postgresql+asyncpg://{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
+sync_connect_args = {}
+async_connect_args = {}
+if settings.ENVIRONMENT != "local":
+    sync_connect_args = {
+        "sslmode": "verify-full",
+        "sslrootcert": settings.RDS_CA_BUNDLE_PATH,
+    }
+    async_connect_args = {
+        "ssl": ssl.create_default_context(cafile=settings.RDS_CA_BUNDLE_PATH),
+    }
+
 engine = create_engine(
     SYNC_DATABASE_URL,
+    connect_args=sync_connect_args,
     pool_size=20,
     max_overflow=30,
     pool_timeout=60,
@@ -44,6 +57,7 @@ engine = create_engine(
 
 async_engine = create_async_engine(
     ASYNC_DATABASE_URL,
+    connect_args=async_connect_args,
     pool_size=20,
     max_overflow=30,
     pool_timeout=60,
@@ -57,9 +71,11 @@ if settings.ENVIRONMENT == "local":
         password=settings.POSTGRES_PASSWORD,
     )
 else:
-    credential_provider = SecretsManagerCredentialProvider(
-        secret_arn=settings.DB_SECRET_ARN,  # the backend_user secret ARN from Secrets Manager
-        ttl_seconds=300,  # scheduled refresh: re-fetch at most every 5 minutes
+    credential_provider = IamDbCredentialsProvider(
+        db_hostname=settings.POSTGRES_HOST,
+        port=settings.POSTGRES_PORT,
+        username=settings.POSTGRES_USER,
+        region_name=settings.AWS_REGION,
     )
 
 attach_dynamic_credentials(engine, credential_provider)

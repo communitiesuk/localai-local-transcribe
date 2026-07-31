@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~>6.5"
     }
-    postgresql = {
-      source  = "cyrilgdn/postgresql"
-      version = "~> 1.26"
-    }
   }
 
   backend "s3" {
@@ -175,20 +171,19 @@ module "bastion" {
 module "database" {
   source = "../modules/rds"
 
-  db_name                          = local.db_name
-  backend_user_password            = module.secrets.backend_user_password.result
-  environment_name                 = local.environment_name
-  master_database_username         = local.master_database_username
-  database_port                    = local.database_port
-  allocated_storage                = local.database_allocated_storage
-  backup_retention_period          = 7
-  db_subnet_group_name             = module.networking.db_subnet_group_name
-  instance_class                   = "db.t4g.small"
-  multi_az                         = local.multi_az
-  vpc_id                           = module.networking.vpc.id
-  backend_task_execution_role_name = module.ecs.backend_execution_task_name
-  worker_task_execution_role_name  = module.ecs.worker_execution_task_name
-  bastion_group_id                 = module.bastion.security_group_id
+  db_name                  = local.db_name
+  environment_name         = local.environment_name
+  master_database_username = local.master_database_username
+  database_port            = local.database_port
+  allocated_storage        = local.database_allocated_storage
+  backup_retention_period  = 7
+  db_subnet_group_name     = module.networking.db_subnet_group_name
+  instance_class           = "db.t4g.small"
+  multi_az                 = local.multi_az
+  vpc_id                   = module.networking.vpc.id
+  backend_task_role_name   = module.ecs.backend_task_role_name
+  worker_task_role_name    = module.ecs.worker_task_role_name
+  bastion_group_id         = module.bastion.security_group_id
 }
 
 module "sqs" {
@@ -209,10 +204,10 @@ module "ecs" {
   frontend_port               = local.frontend_port
   backend_port                = local.backend_port
 
-  database_port       = local.database_port
-  database_host       = module.database.database_url
-  database_name       = module.database.database_name
-  database_secret_arn = module.secrets.database_secret_arn
+  database_port     = local.database_port
+  database_host     = module.database.database_url
+  database_name     = module.database.database_name
+  database_username = local.master_database_username
 
   lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id

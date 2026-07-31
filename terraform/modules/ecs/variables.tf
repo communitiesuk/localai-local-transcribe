@@ -48,14 +48,14 @@ variable "database_name" {
   type        = string
 }
 
+variable "database_username" {
+  description = "The username for the database"
+  type        = string
+}
+
 variable "database_port" {
   description = "The port for the database"
   type        = number
-}
-
-variable "database_secret_arn" {
-  description = "ARN of the Secrets Manager secret containing the database credentials"
-  type        = string
 }
 
 variable "lb_target_group_arn" {

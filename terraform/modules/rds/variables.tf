@@ -18,13 +18,6 @@ variable "master_database_username" {
   sensitive   = true
 }
 
-
-variable "backend_user_password" {
-  description = "password for the backend_user"
-  type        = string
-  sensitive   = true
-}
-
 variable "database_port" {
   description = "port for the database"
   type        = number
@@ -72,13 +65,13 @@ variable "vpc_id" {
   description = "The ID of the VPC to be associated with"
 }
 
-variable "backend_task_execution_role_name" {
-  description = "Name of the IAM role for the backend ECS task execution"
+variable "backend_task_role_name" {
+  description = "Name of the IAM role for the backend ECS task"
   type        = string
 }
 
-variable "worker_task_execution_role_name" {
-  description = "Name of the IAM role for the worker ECS task execution"
+variable "worker_task_role_name" {
+  description = "Name of the IAM role for the worker ECS task"
   type        = string
 }
 
