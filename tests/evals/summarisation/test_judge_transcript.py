@@ -182,12 +182,13 @@ def test_citation_markers_collapses_repeats_so_the_count_reads_as_coverage():
     assert citation_markers("Agreed [3]. Confirmed [3]. Noted [4].", n_entries=20) == ["[3]", "[4]"]
 
 
-def _user_message(summary_text: str) -> str:
+def _user_message(summary_text: str, target_dimension: str | None = None) -> str:
     return build_user_message(
         summary_id="s1",
         transcript_ref="t1",
         transcript_text=judge_transcript_text(_ENTRIES),
         summary_text=summary_text,
+        target_dimension=target_dimension,
         marker_hash="abc123",
     )
 
@@ -222,17 +223,13 @@ def test_user_message_lists_the_markers_a_cited_summary_contains():
 
 @pytest.mark.parametrize("marker", ["[n]", "numbered"])
 def test_auditability_rubric_describes_index_citations(marker):
-    from evals.summarisation.src.judge import build_system_prompt
-
-    prompt = build_system_prompt("auditability", marker_hash="abc123")
+    prompt = _user_message("Signed off [0].", target_dimension="auditability")
 
     assert marker in prompt
 
 
 def test_auditability_rubric_does_not_require_timestamps_unconditionally():
     """A transcript with no timestamps must still be able to reach the top score."""
-    from evals.summarisation.src.judge import build_system_prompt
-
-    prompt = build_system_prompt("auditability", marker_hash="abc123")
+    prompt = _user_message("Signed off [0].", target_dimension="auditability")
 
     assert "timestamps accurate and consistently formatted; fully auditable" not in prompt

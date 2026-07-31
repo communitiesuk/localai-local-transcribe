@@ -10,6 +10,7 @@ from evals.summarisation.src.constants import (
 from evals.summarisation.src.judge import (
     build_system_prompt,
     build_user_message,
+    judge_marker_hash,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "REVIEW_THRESHOLD",
     "build_system_prompt",
     "build_user_message",
+    "judge_marker_hash",
 ]

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import secrets
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -14,7 +13,7 @@ from evals.summarisation.src.common.adapter_factory import build_azure_apim_adap
 from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
 from evals.summarisation.src.constants import CONCURRENCY, normalise_judge_score
-from evals.summarisation.src.judge import build_system_prompt, build_user_message
+from evals.summarisation.src.judge import build_system_prompt, build_user_message, judge_marker_hash
 
 logger = logging.getLogger(__name__)
 
@@ -100,17 +99,20 @@ async def call_llm_judge_parallel(
     """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
     semaphore = asyncio.Semaphore(CONCURRENCY)  # Limit concurrency to prevent rate limits
 
+    # Both are the same for every dimension: the system turn carries no rubric, and the marker hash
+    # is derived from the transcript rather than drawn per call, so each dimension's prompt differs
+    # only where its rubric does. Built once here rather than per dimension inside the fan-out.
+    marker_hash = judge_marker_hash(transcript_text)
+    sys_prompt = build_system_prompt(intended_solicitation)
+
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
         async with semaphore:
-            # Freshly generated per call so the judge can distinguish genuine boundary markers from
-            # any lookalike text injected into the transcript or summary.
-            marker_hash = secrets.token_hex(4)
-            sys_prompt = build_system_prompt(dim, intended_solicitation, marker_hash=marker_hash)
             user_msg = build_user_message(
                 summary_id=summary_id,
                 transcript_ref=transcript_ref,
                 transcript_text=transcript_text,
                 summary_text=summary_text,
+                target_dimension=dim,
                 template_name=template_name,
                 template_content=template_content,
                 intended_solicitation=intended_solicitation,
@@ -143,14 +145,14 @@ class DialogSummaryMetric:
     def _build_judge_messages(
         self, rubric_dim: str, example: DialogExample, prediction: dspy.Prediction
     ) -> tuple[str, str]:
-        marker_hash = secrets.token_hex(4)
-        sys_prompt = build_system_prompt(rubric_dim, marker_hash=marker_hash)
+        sys_prompt = build_system_prompt()
         user_msg = build_user_message(
             summary_id=example.example_id,
             transcript_ref=str(example.example_id),
             transcript_text=example.dialogue,
             summary_text=prediction.summary,
-            marker_hash=marker_hash,
+            target_dimension=rubric_dim,
+            marker_hash=judge_marker_hash(example.dialogue),
         )
         return sys_prompt, user_msg
 
