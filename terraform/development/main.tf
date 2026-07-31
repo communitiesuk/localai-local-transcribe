@@ -3,11 +3,8 @@ terraform {
 
   required_providers {
     aws = {
-      source = "hashicorp/aws"
-      # Pinned: 6.57.0 breaks reads of SSM parameters, IAM policies and IAM OIDC
-      # providers (SerializationException). Unpin once a fix is released.
-      # https://github.com/hashicorp/terraform-provider-aws/issues/49170
-      version = "6.56.0"
+      source  = "hashicorp/aws"
+      version = "~>6.5"
     }
   }
 
