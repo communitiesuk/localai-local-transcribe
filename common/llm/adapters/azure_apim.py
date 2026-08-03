@@ -30,6 +30,27 @@ settings = get_settings()
 MAX_RETRIES = 6
 
 
+def _log_usage(response: ChatCompletion, method_name: str) -> None:
+    """Logs prompt-token usage, including how much of the prompt the provider served from cache.
+
+    Cache hits depend on the prompt's leading tokens being byte-identical between calls, so this is
+    the signal for whether prompt ordering is actually paying off.
+    """
+    usage = response.usage
+    if usage is None:
+        return
+
+    details = usage.prompt_tokens_details
+    cached = details.cached_tokens if details and details.cached_tokens else 0
+    logger.info(
+        "APIM USAGE: %s prompt=%d cached=%d completion=%d",
+        method_name,
+        usage.prompt_tokens,
+        cached,
+        usage.completion_tokens,
+    )
+
+
 class AzureAPIMModelAdapter(ModelAdapter):
     def __init__(
         self,
@@ -89,6 +110,8 @@ class AzureAPIMModelAdapter(ModelAdapter):
             "structured_chat",
         )
 
+        _log_usage(response, "structured_chat")
+
         parsed = response.choices[0].message.parsed
 
         if parsed is None:
@@ -138,6 +161,8 @@ class AzureAPIMModelAdapter(ModelAdapter):
             call,
             "chat",
         )
+
+        _log_usage(response, "chat")
 
         choice = response.choices[0]
 
