@@ -32,11 +32,6 @@ steps:
   - script: cp .env.example .env
     displayName: 'Copy env file'
 
-  # Keys the judge's boundary-marker hash. One value per run keeps the judge prompt prefix cacheable
-  # across the run's calls, without a stored secret that would be the same on every run.
-  - script: echo "##vso[task.setvariable variable=judgeMarkerSecret;issecret=true]$(openssl rand -hex 32)"
-    displayName: 'Generate judge marker secret'
-
   - script: poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/smoke-test.yaml
     displayName: 'Run summarisation smoke test'
     env:
@@ -49,7 +44,6 @@ steps:
       AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
       AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
       AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
-      JUDGE_MARKER_SECRET: $(judgeMarkerSecret)
 
   - script: mkdir -p evals/summarisation/output
     displayName: 'Ensure output dir exists'

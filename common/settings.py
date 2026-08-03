@@ -185,13 +185,6 @@ class Settings(BaseSettings):
     POSTHOG_API_KEY: str | None = Field(description="PostHog API key for analytics", default=None)
     POSTHOG_HOST: str = Field(description="PostHog service host URL", default="https://eu.i.posthog.com")
 
-    JUDGE_MARKER_SECRET: str | None = Field(
-        description="Secret keying the eval judge's transcript/summary boundary-marker hash. Keeps the hash stable "
-        "between judge calls on one transcript, so the prompt prefix caches, while leaving it unguessable to text "
-        "inside the transcript. Unset, the judge falls back to a fresh random hash per call and caching is lost.",
-        default=None,
-    )
-
     GUARDRAIL_THRESHOLD: float = Field(
         default=0.7,
         description="Guardrail threshold for LLM responses",

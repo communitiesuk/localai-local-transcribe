@@ -221,15 +221,27 @@ def test_user_message_lists_the_markers_a_cited_summary_contains():
 # --- rubric wording matches the mechanism the product actually uses ---
 
 
+def _rubric_section(summary_text: str, target_dimension: str) -> str:
+    """The rubric block alone, sliced out of the rendered user message.
+
+    Asserting against the whole message would be vacuous: its standing guidance already explains
+    `[n]` numbered entries, so a test looking for that wording passes even when the rubric it means
+    to check is absent entirely.
+    """
+    message = _user_message(summary_text, target_dimension=target_dimension)
+    return message[message.index("BEGIN rubric") : message.index("END rubric")]
+
+
 @pytest.mark.parametrize("marker", ["[n]", "numbered"])
 def test_auditability_rubric_describes_index_citations(marker):
-    prompt = _user_message("Signed off [0].", target_dimension="auditability")
+    rubric = _rubric_section("Signed off [0].", target_dimension="auditability")
 
-    assert marker in prompt
+    assert "Citation Quality" in rubric, "the auditability rubric itself must be present"
+    assert marker in rubric
 
 
 def test_auditability_rubric_does_not_require_timestamps_unconditionally():
     """A transcript with no timestamps must still be able to reach the top score."""
-    prompt = _user_message("Signed off [0].", target_dimension="auditability")
+    rubric = _rubric_section("Signed off [0].", target_dimension="auditability")
 
-    assert "timestamps accurate and consistently formatted; fully auditable" not in prompt
+    assert "timestamps accurate and consistently formatted; fully auditable" not in rubric

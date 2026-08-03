@@ -406,15 +406,6 @@ ALLOW_TESTS_TO_ACCESS_PAID_APIS=1
 
 is in your `.env` file.
 
-#### `JUDGE_MARKER_SECRET` (evals only)
-
-Keys the LLM judge's boundary-marker hash so it is stable per transcript and the judge prompt prefix caches. Unset, the
-judge uses a random hash per call and nothing caches. Set or roll it with:
-
-```bash
-S=$(openssl rand -hex 32); grep -q '^JUDGE_MARKER_SECRET=' .env && sed -i '' "s|^JUDGE_MARKER_SECRET=.*|JUDGE_MARKER_SECRET=$S|" .env || echo "JUDGE_MARKER_SECRET=$S" >> .env
-```
-
 In order to run some tests, you will need some preprocessed transcript `.json` files. These should be located in
 the top level `.data` dir in the repo. Within this directory, different subdirectories are routed to
 different tests (see [test_queues_e2e.py](tests/test_queues_e2e.py) for an example).

@@ -96,14 +96,23 @@ async def call_llm_judge_parallel(
     template_content: str | None = None,
     intended_solicitation: str | None = None,
 ) -> dict:
-    """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls."""
+    """Evaluate multiple dimensions using separate single-dimension LLM judge calls.
+
+    The first dimension is awaited before the rest fan out. Every dimension's prompt is byte-identical
+    up to the end of the summary — only the rubric at the tail differs — so the first call is what
+    populates the provider's prefix cache and the remaining calls hit it. Firing all of them at once
+    would have every one of them miss.
+    """
+    if not dimensions:
+        return {"dimensions": {}}
+
     semaphore = asyncio.Semaphore(CONCURRENCY)  # Limit concurrency to prevent rate limits
 
-    # Both are the same for every dimension: the system turn carries no rubric, and the marker hash
-    # is derived from the transcript rather than drawn per call, so each dimension's prompt differs
-    # only where its rubric does. Built once here rather than per dimension inside the fan-out.
+    # Both are the same for every dimension: the system turn carries no rubric, and the marker is
+    # drawn per transcript rather than per call, so each dimension's prompt differs only where its
+    # rubric does. Built once here rather than per dimension inside the fan-out.
     marker_hash = judge_marker_hash(transcript_text)
-    sys_prompt = build_system_prompt(intended_solicitation)
+    sys_prompt = build_system_prompt(marker_hash=marker_hash, intended_solicitation=intended_solicitation)
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
         async with semaphore:
@@ -127,8 +136,9 @@ async def call_llm_judge_parallel(
                 dim_data = {"score": 1, "rationale": "Missing evaluation data"}
             return dim, dim_data
 
-    tasks = [evaluate_single_dim(d) for d in dimensions]
-    results = await asyncio.gather(*tasks)
+    first, *rest = dimensions
+    results = [await evaluate_single_dim(first)]
+    results.extend(await asyncio.gather(*(evaluate_single_dim(d) for d in rest)))
 
     merged_dimensions = dict(results)
     return {"dimensions": merged_dimensions}
@@ -145,14 +155,15 @@ class DialogSummaryMetric:
     def _build_judge_messages(
         self, rubric_dim: str, example: DialogExample, prediction: dspy.Prediction
     ) -> tuple[str, str]:
-        sys_prompt = build_system_prompt()
+        marker_hash = judge_marker_hash(example.dialogue)
+        sys_prompt = build_system_prompt(marker_hash=marker_hash)
         user_msg = build_user_message(
             summary_id=example.example_id,
             transcript_ref=str(example.example_id),
             transcript_text=example.dialogue,
             summary_text=prediction.summary,
             target_dimension=rubric_dim,
-            marker_hash=judge_marker_hash(example.dialogue),
+            marker_hash=marker_hash,
         )
         return sys_prompt, user_msg
 
