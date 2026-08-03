@@ -1,17 +1,9 @@
 """The judge prompt must be laid out so a provider's prefix cache can hit on it.
 
 Azure OpenAI caches on an exact prefix match from the start of the request, so what varies between
-calls has to sit after what does not. The judge turn is ordered: static guidance, per-scenario
-template blocks, transcript, summary, rubric. The rubric goes LAST because the dimension is what
-varies fastest — a run scores one summary against several dimensions, so with the rubric at the tail
-every one of those calls shares a prefix that already contains the transcript and the summary, by far
-the largest blocks in the prompt. The system turn tells the judge to read the rubric first, so
-reading order is preserved without spending the prefix on it.
-
-The boundary-marker hash is what makes this possible. Drawn freshly per call it changed the prompt
-ahead of the transcript and nothing could ever cache. It is now drawn once per transcript per process
-and memoised, so it is stable for the life of a run while staying unguessable to text inside the
-transcript — the marker's whole purpose is that data cannot forge a boundary line.
+calls sits after what does not: guidance, template, transcript, summary, then the rubric last, since
+the dimension varies fastest. The marker is memoised per transcript rather than drawn per call —
+drawn per call it changed the prompt ahead of the transcript and nothing could ever cache.
 """
 
 from __future__ import annotations

@@ -30,17 +30,6 @@ settings = get_settings()
 MAX_RETRIES = 6
 
 
-def _cached_prompt_tokens(response: ChatCompletion) -> int:
-    """Prompt tokens the provider served from its prefix cache, or 0 if it reported none.
-
-    Logged so a change that claims a caching win can be checked against the provider's own counter
-    instead of being inferred from prompt layout.
-    """
-    usage = getattr(response, "usage", None)
-    details = getattr(usage, "prompt_tokens_details", None)
-    return getattr(details, "cached_tokens", None) or 0
-
-
 class AzureAPIMModelAdapter(ModelAdapter):
     def __init__(
         self,
@@ -122,11 +111,9 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
             raise TypeError(error_msg)
 
-        logger.info(
-            "APIM SUCCESS: structured_chat - %d/%d prompt tokens served from the prefix cache",
-            _cached_prompt_tokens(response),
-            getattr(response.usage, "prompt_tokens", 0) if response.usage else 0,
-        )
+        # usage carries prompt_tokens_details.cached_tokens, so prompt-prefix cache hits are
+        # measurable rather than inferred from how the prompt is laid out.
+        logger.info("APIM SUCCESS: structured_chat - usage=%s", response.usage)
 
         return parsed
 
@@ -180,11 +167,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
             raise TypeError(error_msg)
 
-        logger.info(
-            "APIM SUCCESS: chat - %d/%d prompt tokens served from the prefix cache",
-            _cached_prompt_tokens(response),
-            getattr(response.usage, "prompt_tokens", 0) if response.usage else 0,
-        )
+        logger.info("APIM SUCCESS: chat")
 
         return message_content
 

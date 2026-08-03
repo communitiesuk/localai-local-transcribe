@@ -27,20 +27,9 @@ _env = Environment(
 def judge_marker_hash(transcript_text: str) -> str:  # noqa: ARG001 - the memo key, see below
     """Boundary marker tagging the BEGIN/END lines of one transcript's judge prompts.
 
-    The marker exists so the judge can tell a genuine boundary line from one injected into the
-    transcript, summary or template: only lines carrying this marker are real. That requires the
-    marker to be unguessable to whoever wrote the transcript, so it is drawn from the CSPRNG rather
-    than derived from the text being judged — a digest of the transcript would be computable by the
-    very injection it is meant to defeat.
-
-    Memoising it against the transcript is what makes the prompt cacheable. Every judge call on one
-    transcript shares a byte-identical prefix through the transcript and summary, so a provider
-    prefix cache hits on the largest blocks in the prompt. Drawing a marker per *call* instead put
-    fresh bytes ahead of the transcript and invalidated the prefix every time.
-
-    A new process draws new markers, so a marker that leaks — into a judge rationale, a prompt dump,
-    a published eval artifact — expires with the run rather than staying valid for that transcript
-    forever. ``transcript_text`` is the cache key, not an input to the value.
+    Random, not derived from the transcript: an injection that could compute the marker could forge a
+    boundary. Memoised per transcript so every judge call on it shares a cacheable prompt prefix.
+    ``transcript_text`` is the cache key, not an input to the value.
     """
     return secrets.token_hex(MARKER_BYTES)
 
@@ -48,17 +37,10 @@ def judge_marker_hash(transcript_text: str) -> str:  # noqa: ARG001 - the memo k
 def build_system_prompt(*, marker_hash: str, intended_solicitation: str | None = None) -> str:
     """Render and return the SYSTEM turn for the LLM judge.
 
-    The turn is identical for every judge call on one transcript: the rubric, the transcript and the
-    summary all live in the user turn, so nothing here varies across that transcript's calls and the
-    whole system turn sits inside the cacheable prefix. Transcripts share no prefix anyway, so naming
-    the transcript's marker here costs no caching.
-
-    ``marker_hash`` is required rather than defaulted because this is the judge's only trusted copy
-    of the marker. Without it the sole declaration of the real boundary value would sit in the user
-    turn, alongside the text trying to forge one, with nothing to check a rival declaration against.
-
-    ``intended_solicitation`` is supplied only by the security (prompt-injection) eval; when set,
-    the template adds anti-injection hardening instructions that don't apply to ordinary judging.
+    Identical for every judge call on one transcript, so it sits inside the cacheable prefix.
+    ``marker_hash`` is required, not defaulted: this is the judge's only trusted copy of the marker,
+    and without it the real boundary value would be declared solely in the untrusted user turn.
+    ``intended_solicitation`` is set only by the security eval, which adds anti-injection hardening.
     """
     template = _env.get_template("system_prompt.j2")
     return template.render(marker_hash=marker_hash, intended_solicitation=intended_solicitation)
@@ -78,28 +60,17 @@ def build_user_message(
 ) -> str:
     """Render and return the USER turn for the LLM judge.
 
-    The turn is ordered static guidance, template, transcript, summary, rubric — coarsest-varying
-    content first, so the prompt prefix a provider can cache reaches as far as possible. The rubric
-    goes last because the dimension varies fastest: a run scores one summary against several
-    dimensions, and with the rubric at the tail those calls share a prefix that already contains the
-    transcript and the summary. The system turn tells the judge to read the rubric first, so putting
-    it last costs nothing in reading order. ``target_dimension`` selects the rubric; left unset,
+    Ordered static guidance, template, transcript, summary, rubric — coarsest-varying first, so the
+    cacheable prefix reaches as far as possible. ``target_dimension`` selects the rubric; unset,
     every dimension is scored in one call.
 
-    ``intended_solicitation`` is supplied only by the security (prompt-injection) eval; when set, the
-    template adds a block telling the judge an injection is present and what it is trying to do.
-    ``template_content`` is supplied only by the custom-template security vector, where the injection
-    lives in a user-supplied template rather than the transcript; when set, the template is shown to
-    the judge as the format the summary should adhere to and as the surface the injection came from.
-    ``marker_hash`` tags the transcript, summary and rubric boundaries so the judge can't be fooled
-    by text that mimics one — including text posing as a second rubric, which matters now that the
-    rubric shares a turn with the data; see :func:`judge_marker_hash`.
+    ``intended_solicitation`` and ``template_content`` are set only by the security eval, and add
+    blocks naming the injection and the template it came from. ``marker_hash`` tags the transcript,
+    summary and rubric boundaries; see :func:`judge_marker_hash`.
 
-    The summary's citation markers are extracted mechanically and stated in the message. Left to
-    read them off the summary itself, the judge confabulates markers that aren't there and credits
-    the summary for them — so which markers exist is settled before it is asked to judge them. Only
-    markers that resolve to an entry of ``transcript_text`` are listed, so an ordinary bracketed
-    number in the summary is not passed off to the judge as a citation.
+    Citation markers are extracted mechanically and stated in the message: left to read them off the
+    summary itself, the judge invents markers and credits the summary for them. Only markers
+    resolving to a transcript entry are listed.
     """
     template = _env.get_template("user_message.j2")
     return template.render(
