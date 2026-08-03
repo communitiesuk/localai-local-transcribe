@@ -37,6 +37,7 @@ from evals.summarisation.src.common import (
 )
 from evals.summarisation.src.common.metric import judged_dimensions
 from evals.summarisation.src.hallucination.types import HallucinationInput
+from evals.summarisation.src.optimisation.data.loader import load_local_examples
 from evals.summarisation.src.summarizer import generate_summary
 
 _DIALOGSUM_SPEAKER_RE = re.compile(r"^#([^#]+)#:\s*(.+)$")
@@ -110,7 +111,33 @@ def prepare_run_paths(output_dir: str | Path, run_id: str) -> tuple[Path, Path, 
     )
 
 
-def load_dspy_devset(cfg: AppConfig, split: str, limit: int | None) -> list[dspy.Example]:
+def _configured_input_dir(cfg: AppConfig) -> Path:
+    if cfg.run.input_dir is None:
+        msg = "run.input_dir must be set when dataset.source is 'local_dir'"
+        raise ValueError(msg)
+    return Path(cfg.run.input_dir)
+
+
+def load_dspy_devset(
+    cfg: AppConfig,
+    split: str,
+    limit: int | None,
+    dataset_path: Path | None = None,
+) -> list[dspy.Example]:
+    """Builds the devset from the configured source; ``dataset_path`` overrides ``run.input_dir``."""
+    if cfg.dataset.source == "local_dir":
+        input_dir = dataset_path if dataset_path is not None else _configured_input_dir(cfg)
+        # Entries travel with the example so the summariser gets the transcript as generated.
+        return [
+            dspy.Example(
+                example_id=ex.example_id,
+                dialogue=ex.dialogue,
+                dialogue_entries=ex.dialogue_entries,
+                reference_summary=ex.reference_summary,
+            ).with_inputs("dialogue", "dialogue_entries")
+            for ex in load_local_examples(input_dir, limit)
+        ]
+
     ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
     rows = ds[split]
     if limit is not None:
@@ -142,11 +169,13 @@ class EvalRun:
         split: str,
         limit: int | None,
         prompt_version: str,
+        dataset_path: Path | None = None,
     ) -> None:
         self.cfg = cfg
         self.split = split
         self.limit = limit
         self.prompt_version = prompt_version
+        self.dataset_path = dataset_path
 
         settings = get_settings()
         self.model_name: str = settings.FAST_LLM_MODEL_NAME
@@ -168,8 +197,8 @@ class EvalRun:
         run = self
 
         class _Program(dspy.Module):
-            def forward(self, dialogue: str) -> dspy.Prediction:
-                entries = _dialogue_to_entries(dialogue)
+            def forward(self, dialogue: str, dialogue_entries: list[DialogueEntry] | None = None) -> dspy.Prediction:
+                entries = dialogue_entries if dialogue_entries else _dialogue_to_entries(dialogue)
 
                 t0 = time.perf_counter()
 
@@ -207,12 +236,17 @@ class EvalRun:
             ex = DialogExample(
                 example_id=str(gold.example_id),
                 dialogue=str(gold.dialogue),
+                dialogue_entries=getattr(gold, "dialogue_entries", None),
                 reference_summary=getattr(gold, "reference_summary", None),
             )
 
             # Numbered once and reused for the record, so a rationale citing `[n]` can be resolved
             # against the transcript stored beside it.
-            judge_transcript = judge_transcript_from_dialogue(ex.dialogue)
+            judge_transcript = (
+                judge_transcript_text(ex.dialogue_entries)
+                if ex.dialogue_entries
+                else judge_transcript_from_dialogue(ex.dialogue)
+            )
 
             t_j0 = time.perf_counter()
             rubric_evaluation = _run_async(
@@ -264,9 +298,11 @@ class EvalRun:
             self.state.records.clear()
 
         metrics_summary = _build_metrics_summary(self.state.metric_scores)
+        # split is a HuggingFace concept; a local dataset uses the whole input dir.
+        recorded_split = None if self.cfg.dataset.source == "local_dir" else self.split
         summary = _build_run_summary(
             run_id=self.run_id,
-            split=self.split,
+            split=recorded_split,
             devset=self.devset,
             metrics_summary=metrics_summary,
             skipped_dimensions=self.skipped_dimensions,
@@ -288,7 +324,7 @@ class EvalRun:
         self.results_path, self.summary_path, self.hallucination_inputs_path = prepare_run_paths(
             self.cfg.run.output_dir, self.run_id
         )
-        self.devset = load_dspy_devset(self.cfg, self.split, self.limit)
+        self.devset = load_dspy_devset(self.cfg, self.split, self.limit, self.dataset_path)
 
         try:
             evaluator = Evaluate(
@@ -339,7 +375,7 @@ def _build_metrics_summary(metric_scores: dict[str, list[float]]) -> dict[str, d
 def _build_run_summary(
     *,
     run_id: str,
-    split: str,
+    split: str | None,
     devset: list[dspy.Example],
     metrics_summary: dict[str, dict[str, float]],
     skipped_dimensions: list[str],
@@ -371,5 +407,12 @@ def run_eval(
     split: str,
     limit: int | None,
     prompt_version: str,
+    dataset_path: Path | None = None,
 ) -> tuple[str, Path, Path, Path]:
-    return EvalRun(cfg, split=split, limit=limit, prompt_version=prompt_version).run()
+    return EvalRun(
+        cfg,
+        split=split,
+        limit=limit,
+        prompt_version=prompt_version,
+        dataset_path=dataset_path,
+    ).run()

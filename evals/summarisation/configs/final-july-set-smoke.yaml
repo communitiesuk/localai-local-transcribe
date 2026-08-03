@@ -1,0 +1,31 @@
+# Two-transcript smoke test of the generated July set: checks the wiring (and APIM auth) before
+# committing to a full run over the whole set.
+run:
+  eval_type: standard
+  input_dir: evals/summarisation/input/final_july_set
+  output_dir: evals/summarisation/output
+  seed: 0
+  limit: 2
+  prompt_version: dev
+  dataset_version: final_july_set
+
+dataset:
+  name: final_july_set
+  source: local_dir
+
+judge:
+  pass_threshold: 4
+
+metrics:
+  - accuracy
+  - numerical_accuracy
+  - template_fit
+  - coverage
+  - action_clarity
+  - professional_tone
+  - readability
+  - auditability
+
+prompts:
+  summarizer_template_name: General
+  judge_template_path: evals/summarisation/prompts/judge.j2

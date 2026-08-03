@@ -56,6 +56,9 @@ class DatasetConfig(BaseModel):
     config: str | None = None
     dialogue_field: str = "dialogue"
     reference_summary_field: str = "summary"
+    # "local_dir" reads generated transcript JSON files from ``run.input_dir`` instead of pulling a
+    # split from HuggingFace; ``config`` and the field mappings are then unused.
+    source: Literal["huggingface", "local_dir"] = "huggingface"
 
 
 class JudgeConfig(BaseModel):

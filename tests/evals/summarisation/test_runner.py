@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import dspy
+import orjson
+import pytest
 
 from evals.summarisation.src.common import AppConfig
 from evals.summarisation.src.optimisation.runner import (
@@ -128,6 +131,71 @@ def test_load_dspy_devset_missing_id_uses_index():
     assert devset[0].example_id == "0"
 
 
+_LOCAL_ENTRIES = [
+    {"speaker": "1", "text": "Hello Mrs Parsons, it's Sandra.", "start_time": 0.0, "end_time": 1.0},
+    {
+        "speaker": "2",
+        "text": "Lovely to hear from you.\nThe tap is still dripping.",
+        "start_time": 1.0,
+        "end_time": 2.0,
+    },
+]
+
+
+def _write_local_dataset(input_dir: Path, *names: str) -> Path:
+    input_dir.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        (input_dir / f"{name}.json").write_text(
+            json.dumps({"theme": "t", "num_speakers": 2, "dialogue_entries": _LOCAL_ENTRIES}),
+            encoding="utf-8",
+        )
+    return input_dir
+
+
+def _local_cfg(tmp_path: Path, **overrides: object) -> AppConfig:
+    return _cfg(
+        tmp_path,
+        dataset={"name": "final_july_set", "source": "local_dir"},
+        **overrides,
+    )
+
+
+def test_load_dspy_devset_local_dir_reads_input_dir(tmp_path):
+    _write_local_dataset(tmp_path / "input", "b_call", "a_call")
+    cfg = _local_cfg(tmp_path, run={"output_dir": str(tmp_path / "output"), "input_dir": str(tmp_path / "input")})
+
+    devset = load_dspy_devset(cfg, split="test", limit=None)
+
+    assert [ex.example_id for ex in devset] == ["a_call", "b_call"]
+    assert devset[0].dialogue_entries == _LOCAL_ENTRIES
+    assert set(devset[0].inputs().keys()) == {"dialogue", "dialogue_entries"}
+
+
+def test_load_dspy_devset_local_dir_applies_limit(tmp_path):
+    _write_local_dataset(tmp_path / "input", "a", "b", "c")
+    cfg = _local_cfg(tmp_path, run={"output_dir": str(tmp_path / "output"), "input_dir": str(tmp_path / "input")})
+
+    devset = load_dspy_devset(cfg, split="test", limit=2)
+
+    assert len(devset) == 2
+
+
+def test_load_dspy_devset_local_dir_dataset_path_overrides_input_dir(tmp_path):
+    _write_local_dataset(tmp_path / "override", "override_call")
+    cfg = _local_cfg(tmp_path, run={"output_dir": str(tmp_path / "output"), "input_dir": str(tmp_path / "input")})
+
+    devset = load_dspy_devset(cfg, split="test", limit=None, dataset_path=tmp_path / "override")
+
+    assert [ex.example_id for ex in devset] == ["override_call"]
+
+
+def test_load_dspy_devset_local_dir_without_input_dir_raises(tmp_path):
+    cfg = _local_cfg(tmp_path)
+
+    with pytest.raises(ValueError, match="run.input_dir must be set"):
+        load_dspy_devset(cfg, split="test", limit=None)
+
+
 def test_dialogue_to_entries_dialogsum_format():
     dialogue = "#Person1#: Hello there.\n#Person2#: How are you?"
     entries = _dialogue_to_entries(dialogue)
@@ -214,3 +282,52 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     assert isinstance(summary_path, Path)
     assert isinstance(hallucination_inputs_path, Path)
     assert hallucination_inputs_path.name == "hallucination_inputs.json"
+
+
+def test_run_eval_local_dir_summarises_dataset_entries(tmp_path):
+    """A local_dir run summarises every transcript in the input dir, entries passed through as-is."""
+    _write_local_dataset(tmp_path / "input", "tenancy_call")
+    cfg = _local_cfg(
+        tmp_path,
+        run={"output_dir": str(tmp_path / "output"), "input_dir": str(tmp_path / "input")},
+        metrics=["accuracy"],
+    )
+
+    mock_generated = Mock()
+    mock_generated.text = "Generated summary"
+    mock_generated.hallucinations = []
+    mock_generated.total_claims = 5
+
+    mock_judge_response = {"dimensions": {"accuracy": {"score": "5", "rationale": "Accurate"}}}
+
+    with (
+        patch(
+            "evals.summarisation.src.optimisation.runner.generate_summary",
+            new_callable=AsyncMock,
+            return_value=mock_generated,
+        ) as mock_summarise,
+        patch(
+            "evals.summarisation.src.optimisation.runner.call_llm_judge_parallel",
+            new_callable=AsyncMock,
+            return_value=mock_judge_response,
+        ) as mock_judge,
+        patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
+        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
+    ):
+        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
+        mock_tokenizer.return_value.encode = Mock(return_value=[1])
+
+        _, results_path, summary_path, _ = run_eval(cfg, split="test", limit=None, prompt_version="v1")
+
+    # The generated entries reach the summariser untouched: a multi-line utterance stays one entry.
+    assert mock_summarise.await_args.args[0] == _LOCAL_ENTRIES
+
+    summary = orjson.loads(summary_path.read_bytes())
+    assert summary["n"] == 1
+    assert summary["split"] is None
+
+    record = orjson.loads(results_path.read_text(encoding="utf-8").splitlines()[0])
+    assert record["example_id"] == "tenancy_call"
+    # The judge sees the dataset's own entries, numbered for citation resolution.
+    assert mock_judge.await_args.kwargs["transcript_text"].startswith("[0] ")
+    assert "The tap is still dripping." in mock_judge.await_args.kwargs["transcript_text"]

@@ -24,6 +24,9 @@ poetry run python -m evals.summarisation.src.main --config evals/summarisation/c
 
 # Security / prompt-injection evaluation
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/security.yaml
+
+# Standard evaluation over our own generated transcript set (see "Local transcript datasets")
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/final-july-set.yaml
 ```
 
 **Available configs:**
@@ -31,6 +34,8 @@ poetry run python -m evals.summarisation.src.main --config evals/summarisation/c
 - `test.yaml` - Full test suite (`eval_type: standard`)
 - `counterfactual.yaml` - Bias evaluation (`eval_type: bias`)
 - `security.yaml` - Prompt-injection evaluation (`eval_type: security`)
+- `final-july-set.yaml` - Standard eval over the generated July transcript set (`dataset.source: local_dir`)
+- `final-july-set-smoke.yaml` - The same, limited to 2 transcripts, for checking wiring and APIM auth
 
 The evaluation type is determined by the `eval_type` field in the config file.
 
@@ -44,6 +49,43 @@ An experiment is defined by:
 - Prompt templates in `evals/summarisation/prompts/` (how we ask the model to summarise, and how we ask the judge to score).
 
 All run parameters (`split`, `limit`, `prompt_version`) are now configured in the YAML file under the `run:` section, not as CLI flags.
+
+## Local transcript datasets (`dataset.source: local_dir`)
+
+The standard eval reads a HuggingFace split by default. Set `dataset.source: local_dir` to run it
+instead over the transcripts we generate ourselves, i.e. the JSON files written by
+`evals/dataset_generation/transcription_generation`:
+
+```yaml
+run:
+  eval_type: standard
+  input_dir: evals/summarisation/input/final_july_set
+dataset:
+  name: final_july_set
+  source: local_dir
+```
+
+Every `*.json` file under `input_dir` is one example, evaluated in filename order; `run.limit` caps
+how many are taken. The filename (without `.json`) becomes the `example_id` in `results.jsonl`, and
+`summary.json` records `split: null`, since a local dataset uses the whole directory rather than a
+HuggingFace split. `dataset.config` and the `dialogue_field`/`reference_summary_field` mappings are
+unused for this source, and there is no reference summary — the rubric judge is reference-free.
+
+Transcript entries are handed to the summariser exactly as generated, rather than being recovered by
+splitting a flat dialogue string: generated utterances often span several lines, so splitting would
+break one turn into several and misattribute the tail of it.
+
+Datasets themselves are not committed (`evals/**/input/` is gitignored). Point `input_dir` at a
+dataset with a symlink, e.g.:
+
+```bash
+ln -s ../../dataset_generation/transcription_generation/output/final_july_set \
+  evals/summarisation/input/final_july_set
+```
+
+To check the wiring before committing to a full run, use a config with a small `run.limit`
+(`final-july-set-smoke.yaml` caps it at 2 transcripts). A broken symlink or an unparseable
+transcript fails during dataset loading, before any LLM call is made.
 
 ## Counterfactual Bias Evaluation
 

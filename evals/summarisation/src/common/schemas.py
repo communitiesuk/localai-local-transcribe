@@ -6,12 +6,14 @@ from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
+from common.database.postgres_models import DialogueEntry
 from evals.summarisation.src.hallucination.types import HallucinationInput
 
 
 class RunSummary(TypedDict):
     run_id: str
-    split: str
+    # A HuggingFace concept: null for a dataset read from disk, where the whole input is used.
+    split: str | None
     n: int
     overall: float | None
     metrics: dict[str, dict[str, float]]
@@ -28,10 +30,14 @@ class DialogExample(BaseModel):
     Where the example is handed to a judge metric, ``dialogue`` must already be numbered by
     ``judge_transcript_text``: the judge is told its transcript is numbered and is asked to resolve
     ``[n]`` citation markers against it.
+
+    ``dialogue_entries`` is set when the dataset supplies real transcript entries; the summariser is
+    then handed those instead of entries recovered by splitting ``dialogue``.
     """
 
     example_id: str
     dialogue: str
+    dialogue_entries: list[DialogueEntry] | None = None
     reference_summary: str | None = None
 
 
