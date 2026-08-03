@@ -1,7 +1,7 @@
 'use client'
 
 import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import { Button } from '@/components/ui/button'
+import { GovukButton, GovukInput } from '@/components/govuk'
 import {
   Dialog,
   DialogClose,
@@ -12,10 +12,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { DialogueEntry } from '@/lib/client'
-import { Edit2, Pause, Play } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Pause, Play } from 'lucide-react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFormContext, useWatch } from 'react-hook-form'
 
 export const SpeakerEditor = ({
@@ -52,11 +51,14 @@ export const SpeakerEditor = ({
 
   return (
     <Dialog>
-      <DialogTrigger asChild className="mb-4">
-        <Button className="active:bg-yellow-400">
-          <Edit2 />
-          View/Edit Speaker Names
-        </Button>
+      <DialogTrigger asChild>
+        <GovukButton
+          type="button"
+          variant="secondary"
+          className="govuk-!-margin-bottom-0"
+        >
+          Edit speaker names
+        </GovukButton>
       </DialogTrigger>
       <DialogContent className="scroll max-h-screen overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
@@ -95,7 +97,9 @@ export const SpeakerEditor = ({
         </FormProvider>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Done</Button>
+            <GovukButton type="button" variant="secondary">
+              Done
+            </GovukButton>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -117,6 +121,7 @@ const SpeakerNameEditor = ({
   const [value, setValue] = useState(speaker)
   const inputRef = useRef<HTMLInputElement | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const inputId = useId()
 
   useEffect(() => {
     if (selected && inputRef.current) {
@@ -126,28 +131,31 @@ const SpeakerNameEditor = ({
 
   if (!selected) {
     return (
-      <Button
+      <button
+        type="button"
         onClick={() => {
           setSelected(speaker)
         }}
-        variant="link"
-        type="button"
+        className="govuk-link govuk-body cursor-pointer text-left"
       >
-        <Edit2 /> {speaker}
-      </Button>
+        {speaker}
+      </button>
     )
   }
 
   return (
-    <div className="flex flex-1 gap-1">
-      <Input
+    <div className="flex flex-1 items-start gap-1">
+      <GovukInput
+        id={inputId}
+        aria-label={`Speaker name for ${speaker}`}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         ref={inputRef}
       />
-      <Button
+      <GovukButton
         type="button"
         variant="secondary"
+        className="govuk-!-margin-bottom-0"
         disabled={isSaving}
         onClick={() => {
           setValue(speaker)
@@ -155,9 +163,10 @@ const SpeakerNameEditor = ({
         }}
       >
         Cancel
-      </Button>
-      <Button
+      </GovukButton>
+      <GovukButton
         type="button"
+        className="govuk-!-margin-bottom-0"
         disabled={isSaving}
         onClick={async () => {
           setIsSaving(true)
@@ -170,7 +179,7 @@ const SpeakerNameEditor = ({
         }}
       >
         Save
-      </Button>
+      </GovukButton>
     </div>
   )
 }
@@ -219,9 +228,10 @@ const PlayClipButton = ({
   }, [endTime, src, startTime])
 
   return (
-    <Button
+    <button
       type="button"
-      className="size-8 rounded-full bg-blue-500 text-xs text-white hover:bg-blue-800 hover:text-white"
+      aria-label={isPlaying ? 'Pause clip' : 'Play clip'}
+      className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--govuk-link-colour)] text-white hover:bg-[var(--govuk-link-hover-colour)] focus:bg-[var(--govuk-focus-colour)] focus:text-[var(--govuk-focus-text-colour)] focus:shadow-[0_2px_0_var(--govuk-focus-text-colour)] focus:[outline:3px_solid_transparent]"
       onClick={() => {
         if (audioRef.current) {
           if (audioRef.current.paused) {
@@ -232,7 +242,11 @@ const PlayClipButton = ({
         }
       }}
     >
-      {isPlaying ? <Pause /> : <Play />}
-    </Button>
+      {isPlaying ? (
+        <Pause size={14} aria-hidden="true" />
+      ) : (
+        <Play size={14} aria-hidden="true" />
+      )}
+    </button>
   )
 }

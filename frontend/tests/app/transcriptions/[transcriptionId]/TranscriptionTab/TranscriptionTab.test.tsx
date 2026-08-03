@@ -132,6 +132,9 @@ describe('TranscriptionTab text edit rollback', () => {
 
     render(<TranscriptionTab transcription={transcription} />)
 
+    // Transcript is read-only until put into edit mode
+    fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
+
     const text = screen.getByText('Original text')
 
     fireEvent.click(text)
@@ -162,6 +165,9 @@ describe('TranscriptionTab single speaker rename', () => {
 
   it('sends the original speaker name as expected_speaker, not the optimistically updated one', async () => {
     render(<TranscriptionTab transcription={transcription} />)
+
+    // Speaker names are only editable in edit mode
+    fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
 
     fireEvent.click(screen.getByText('Alice:'))
 
