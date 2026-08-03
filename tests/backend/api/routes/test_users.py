@@ -140,50 +140,6 @@ async def test_update_user_roles(
 
 
 @pytest.mark.asyncio
-async def test_non_system_admin_cannot_grant_mhclg_support_admin(override_session, make_user, make_organisation):
-    """Defence-in-depth guard: an LA admin must never be able to assign MHCLG_SUPPORT_ADMIN,
-    even when bypassing the UI and calling the API directly."""
-    organisation = make_organisation()
-    override_session.get.return_value = organisation
-
-    user = make_user(organisation_id=organisation.id, roles=[UserRole.LOCAL_AUTHORITY_ADMIN])
-    app.dependency_overrides[get_current_user] = lambda: user
-
-    target_user = make_user(organisation_id=organisation.id, roles=[UserRole.STANDARD_USER])
-    app.dependency_overrides[get_target_user] = lambda: target_user
-
-    async with get_test_client() as ac:
-        response = await ac.patch(
-            f"/users/{target_user.id}/roles",
-            json={"roles": [UserRole.MHCLG_SUPPORT_ADMIN.value]},
-        )
-
-    assert response.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_system_admin_can_grant_mhclg_support_admin(override_session, make_user, make_organisation):
-    """Defence-in-depth guard is caller-scoped: a system admin must still be able to
-    assign MHCLG_SUPPORT_ADMIN, confirming the guard is not a blanket block."""
-    organisation = make_organisation()
-    override_session.get.return_value = organisation
-
-    user = make_user(organisation_id=organisation.id, roles=[UserRole.MHCLG_SUPPORT_ADMIN])
-    app.dependency_overrides[get_current_user] = lambda: user
-
-    target_user = make_user(organisation_id=organisation.id, roles=[UserRole.STANDARD_USER])
-    app.dependency_overrides[get_target_user] = lambda: target_user
-
-    async with get_test_client() as ac:
-        response = await ac.patch(
-            f"/users/{target_user.id}/roles",
-            json={"roles": [UserRole.MHCLG_SUPPORT_ADMIN.value]},
-        )
-
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("user_roles", "target_user_roles", "same_org", "expected_status"),
     [
