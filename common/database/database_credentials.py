@@ -1,22 +1,3 @@
-"""
-Dynamic DB credential provider for RDS-managed / rotating secrets.
-
-Fetches username+password from Secrets Manager, caches them with a TTL,
-and forces a refresh either on schedule (lazy, checked on access) or
-immediately when a connection attempt fails auth.
-
-Usage:
-    from db_credentials import SecretsManagerCredentialProvider, attach_dynamic_credentials
-
-    credential_provider = SecretsManagerCredentialProvider(
-        secret_arn=settings.DB_SECRET_ARN,
-        ttl_seconds=300,  # re-fetch at most every 5 min unless a failure forces it sooner
-    )
-
-    attach_dynamic_credentials(engine, credential_provider)
-    attach_dynamic_credentials(async_engine, credential_provider)
-"""
-
 from __future__ import annotations
 
 import logging
