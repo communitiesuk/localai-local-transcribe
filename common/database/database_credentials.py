@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 import boto3
 from sqlalchemy import Dialect, event
@@ -70,7 +70,7 @@ def attach_dynamic_credentials(engine: Engine | AsyncEngine, credential_provider
     target_engine = engine if isinstance(engine, Engine) else engine.sync_engine
 
     @event.listens_for(target_engine, "do_connect")
-    def _do_connect(dialect: Dialect, _, cargs, cparams):
+    def _do_connect(dialect: Dialect, _: object, cargs: tuple[Any, ...], cparams: dict[str, Any]) -> Any:
         credentials = credential_provider.get_credentials()
         cparams["user"] = credentials.username
         cparams["password"] = credentials.password

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Session, create_engine
 
 from common.database.database_credentials import (
+    DbCredentialsProvider,
     IamDbCredentialsProvider,
     StaticDbCredentialsProvider,
     attach_dynamic_credentials,
@@ -61,12 +62,25 @@ async_engine = create_async_engine(
     pool_recycle=1800,
 )
 
+credential_provider: DbCredentialsProvider
 if settings.ENVIRONMENT != "prod":
+    if settings.POSTGRES_USER is None:
+        msg = "POSTGRES_USER must be set"
+        raise ValueError(msg)
+    if settings.POSTGRES_PASSWORD is None:
+        msg = "POSTGRES_PASSWORD must be set"
+        raise ValueError(msg)
     credential_provider = StaticDbCredentialsProvider(
         username=settings.POSTGRES_USER,
         password=settings.POSTGRES_PASSWORD,
     )
 else:
+    if settings.POSTGRES_USER is None:
+        msg = "POSTGRES_USER must be set"
+        raise ValueError(msg)
+    if settings.AWS_REGION is None:
+        msg = "AWS_REGION must be set"
+        raise ValueError(msg)
     credential_provider = IamDbCredentialsProvider(
         db_hostname=settings.POSTGRES_HOST,
         port=settings.POSTGRES_PORT,
