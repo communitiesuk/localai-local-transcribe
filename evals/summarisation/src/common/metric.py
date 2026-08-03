@@ -96,16 +96,15 @@ async def call_llm_judge_parallel(
     template_content: str | None = None,
     intended_solicitation: str | None = None,
 ) -> dict:
-    """Evaluate multiple dimensions using separate single-dimension LLM judge calls.
+    """Evaluate multiple dimensions in parallel using separate single-dimension LLM judge calls.
 
-    The first dimension is awaited before the rest fan out. Every dimension's prompt is byte-identical
-    up to the end of the summary — only the rubric at the tail differs — so the first call is what
-    populates the provider's prefix cache and the remaining calls hit it. Firing all of them at once
-    would have every one of them miss.
+    Every dimension's prompt is byte-identical up to the end of the summary — only the rubric at the
+    tail differs — so a provider that caches prompt prefixes can serve most of each call after the
+    first. Warming that cache by awaiting one dimension before fanning out the rest is deliberately
+    *not* done: it serialises a round trip on every path, and on the paths that judge one summary per
+    transcript (the security eval, two dimensions per scenario) it doubles judge wall-clock to save
+    two 128-token blocks. The dimensions run concurrently and whichever cache hits, hits.
     """
-    if not dimensions:
-        return {"dimensions": {}}
-
     semaphore = asyncio.Semaphore(CONCURRENCY)  # Limit concurrency to prevent rate limits
 
     # Both are the same for every dimension: the system turn carries no rubric, and the marker is
@@ -136,9 +135,16 @@ async def call_llm_judge_parallel(
                 dim_data = {"score": 1, "rationale": "Missing evaluation data"}
             return dim, dim_data
 
-    first, *rest = dimensions
-    results = [await evaluate_single_dim(first)]
-    results.extend(await asyncio.gather(*(evaluate_single_dim(d) for d in rest)))
+    tasks = [asyncio.ensure_future(evaluate_single_dim(dim)) for dim in dimensions]
+    try:
+        results = await asyncio.gather(*tasks)
+    finally:
+        # A failing dimension makes ``gather`` return while its siblings are still running, holding
+        # the semaphore and holding an exception nobody will retrieve. Drain them before the failure
+        # leaves this function; on the happy path every task is already done and this is a no-op.
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     merged_dimensions = dict(results)
     return {"dimensions": merged_dimensions}

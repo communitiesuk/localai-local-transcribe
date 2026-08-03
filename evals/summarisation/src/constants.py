@@ -56,10 +56,6 @@ CONCURRENCY = 4
 # advance.
 MARKER_BYTES = 16
 
-# Transcripts whose markers are remembered at once. A run judges one transcript at a time, so this
-# only has to outlive the fan-out over that transcript's dimensions and summaries.
-MARKER_CACHE_SIZE = 256
-
 
 class ScoreBand(NamedTuple):
     """Pass, review, and fail boundaries for one judge dimension on the 1 to 5 scale.
