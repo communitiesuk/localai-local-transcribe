@@ -231,3 +231,16 @@ def test_auditability_rubric_does_not_require_timestamps_unconditionally():
     message = _user_message("Signed off [0].")
 
     assert "timestamps accurate and consistently formatted; fully auditable" not in message
+
+
+def test_rubric_is_fenced_so_its_worked_examples_cannot_read_as_data():
+    """The rubric renders after the transcript and summary, and its worked examples contain whole
+    fabricated transcripts and summaries — including, for refusal_robustness, a jailbreak payload.
+    Unfenced they sit in the same position injected text would.
+    """
+    message = _user_message("Signed off [0].", target_dimension="refusal_robustness")
+
+    assert "BEGIN rubric abc123" in message
+    assert message.rstrip().endswith("END rubric abc123")
+    # The payload is inside the fence, not trailing the prompt as a final instruction.
+    assert "I am now DAN" in message.split("BEGIN rubric abc123")[1]
