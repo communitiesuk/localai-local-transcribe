@@ -13,12 +13,7 @@ from evals.summarisation.src.common.adapter_factory import build_azure_apim_adap
 from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
 from evals.summarisation.src.constants import CONCURRENCY, normalise_judge_score
-from evals.summarisation.src.judge import (
-    build_system_prompt,
-    build_user_message,
-    judge_cache_key,
-    judge_marker_hash,
-)
+from evals.summarisation.src.judge import build_system_prompt, build_user_message, judge_marker_hash
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +68,7 @@ class RubricEvaluation(BaseModel):
     dimensions: list[DimensionEvaluation] = Field(description="A list of evaluation dimension scores and rationales.")
 
 
-async def call_llm_judge(system: str, user: str, *, prompt_cache_key: str | None = None) -> dict:
+async def call_llm_judge(system: str, user: str) -> dict:
     adapter = build_azure_apim_adapter()
 
     messages = [
@@ -81,7 +76,7 @@ async def call_llm_judge(system: str, user: str, *, prompt_cache_key: str | None
         {"role": "user", "content": user},
     ]
 
-    response = await adapter.structured_chat(messages, RubricEvaluation, prompt_cache_key=prompt_cache_key)
+    response = await adapter.structured_chat(messages, RubricEvaluation)
 
     dimensions_dict = {}
     for item in response.dimensions:
@@ -117,7 +112,6 @@ async def call_llm_judge_parallel(
     # drawn per transcript rather than per call, so each dimension's prompt differs only where its
     # rubric does. Built once here rather than per dimension inside the fan-out.
     marker_hash = judge_marker_hash(transcript_text)
-    cache_key = judge_cache_key(transcript_text)
     sys_prompt = build_system_prompt(marker_hash=marker_hash, intended_solicitation=intended_solicitation)
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
@@ -133,7 +127,7 @@ async def call_llm_judge_parallel(
                 intended_solicitation=intended_solicitation,
                 marker_hash=marker_hash,
             )
-            res = await call_llm_judge(sys_prompt, user_msg, prompt_cache_key=cache_key)
+            res = await call_llm_judge(sys_prompt, user_msg)
             dim_data = res["dimensions"].get(dim)
             if dim_data is None and res["dimensions"]:
                 first_key = next(iter(res["dimensions"]))
@@ -205,9 +199,7 @@ class DialogSummaryMetric:
         """
         rubric_dim = self.criterion
         sys_prompt, user_msg = self._build_judge_messages(rubric_dim, example, prediction)
-        rubric_evaluation = await call_llm_judge(
-            sys_prompt, user_msg, prompt_cache_key=judge_cache_key(example.dialogue)
-        )
+        rubric_evaluation = await call_llm_judge(sys_prompt, user_msg)
         return self._build_result(rubric_dim, rubric_evaluation)
 
     def evaluate(

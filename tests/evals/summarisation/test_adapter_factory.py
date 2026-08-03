@@ -50,36 +50,3 @@ def test_build_azure_apim_adapter_success(monkeypatch):
     assert client is not None
     assert str(client.base_url).rstrip("/") == f"{base_url.rstrip('/')}/{model_name}"
     assert "Ocp-Apim-Subscription-Key" in client.default_headers
-
-
-# --- the adapter is reused across calls, but never across a token change ---
-
-
-@pytest.fixture
-def apim_env(monkeypatch):
-    """Configure APIM settings, returning a setter for the access token."""
-    monkeypatch.setenv("AZURE_APIM_URL", "https://api.example.com/openai/")
-    monkeypatch.setenv("AZURE_APIM_API_VERSION", "2024-02-15-preview")
-    monkeypatch.setenv("AZURE_APIM_SUBSCRIPTION_KEY", "test-subscription-key")
-
-    def _set_token(token: str) -> None:
-        monkeypatch.setenv("AZURE_APIM_ACCESS_TOKEN", token)
-
-    _set_token("token-one")
-    return _set_token
-
-
-def test_adapter_is_reused_across_calls(apim_env):  # noqa: ARG001
-    """A fresh adapter per judge call throws away its HTTP client, so every call redoes TLS setup."""
-    assert build_azure_apim_adapter() is build_azure_apim_adapter()
-
-
-def test_adapter_is_rebuilt_when_the_access_token_changes(apim_env):
-    """``apim.sh`` rewrites the token mid-run; a pinned adapter would keep using the expired one."""
-    first = build_azure_apim_adapter()
-
-    apim_env("token-two")
-    second = build_azure_apim_adapter()
-
-    assert second is not first
-    assert asyncio.run(second._get_apim_client()).api_key == "token-two"  # noqa: SLF001

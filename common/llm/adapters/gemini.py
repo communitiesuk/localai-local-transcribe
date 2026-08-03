@@ -75,13 +75,7 @@ class GeminiModelAdapter(ModelAdapter):
                 logger.warning(msg)
         return gemini_messages, Content(parts=[Part.from_text(text=instruction) for instruction in system_instructions])
 
-    async def structured_chat[T](
-        self,
-        messages: list[dict[str, str]],
-        response_format: type[T],
-        *,
-        prompt_cache_key: str | None = None,  # noqa: ARG002 - Gemini has no prompt-cache routing key
-    ) -> T:
+    async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
         contents, system_instruction = self._convert_openai_messages_to_gemini(messages)
         response = await self.client.aio.models.generate_content(
             contents=contents,
