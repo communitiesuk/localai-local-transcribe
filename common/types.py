@@ -1,11 +1,13 @@
+import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
     ContentSource,
     DialogueEntry,
@@ -14,32 +16,66 @@ from common.database.postgres_models import (
     UserRole,
 )
 
+DOMAIN_REGEX = re.compile(
+    r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z-]{0,61}[a-z]$",
+    re.IGNORECASE,
+)
 
-class TranscriptionMetadata(BaseModel):
-    """Pydantic model for transcription metadata."""
+
+def validate_fqdn_list(domains: list[str]) -> list[str]:
+    for domain in domains:
+        if not DOMAIN_REGEX.match(domain):
+            message = f"Domain '{domain}' is not a valid fully qualified domain name (FQDN)"
+            raise ValueError(message)
+    return domains
+
+
+class LabelledTranscriptionMetadata(BaseModel):
+    """Pydantic model for labelled transcription metadata."""
 
     id: uuid.UUID
     created_datetime: datetime
     title: str | None = None
     text: str
     status: JobStatus
+    date_of_recording: datetime | None = None
+    client_date_of_birth: datetime | None = None
+    client_name: str | None = None
+    case_id: str | None = None
 
 
-class PaginatedTranscriptionsResponse(BaseModel):
-    """Paginated response for transcriptions."""
+class LabelledTranscriptionsResponse(BaseModel):
+    """Response for labelled transcriptions."""
 
-    items: list[TranscriptionMetadata]
+    items: list[LabelledTranscriptionMetadata]
     total_count: int
     page: int
     page_size: int
     total_pages: int
 
 
+class UnlabelledTranscriptionMetadata(BaseModel):
+    """Pydantic model for unlabelled transcription metadata."""
+
+    id: uuid.UUID
+    date_of_recording: datetime | None = None
+    title: str | None = None
+    text: str
+    status: JobStatus
+
+
+class UnlabelledTranscriptionsResponse(BaseModel):
+    """Response for unlabelled transcriptions."""
+
+    items: list[UnlabelledTranscriptionMetadata]
+    total_count: int
+
+
 class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
     template_name: str
     template_id: uuid.UUID | None = None
-    agenda: str | None = None
+    agenda: str | None = Field(default=None, max_length=MAX_AGENDA_LENGTH)
     title: str | None = None
 
 
@@ -170,7 +206,7 @@ class MinuteListItem(BaseModel):
 class MinutesCreateRequest(BaseModel):
     template_name: str = Field(description="Name of the template to use for the minutes")
     template_id: uuid.UUID | None = Field(description="Optional id of user template")
-    agenda: str | None = Field(description="The agenda for the meeting", default=None)
+    agenda: str | None = Field(description="The agenda for the meeting", default=None, max_length=MAX_AGENDA_LENGTH)
 
 
 class AiEdit(BaseModel):
@@ -342,9 +378,20 @@ class OrganisationCreateRequest(BaseModel):
     name: str
     allowed_domains: list[str]
 
+    @field_validator("allowed_domains")
+    @classmethod
+    def validate_domains(cls, v: list[str]) -> list[str]:
+        return validate_fqdn_list(v)
+
 
 class OrganisationPatchRequest(BaseModel):
     allowed_domains: list[str]
+    updated_datetime: datetime
+
+    @field_validator("allowed_domains")
+    @classmethod
+    def validate_domains(cls, v: list[str]) -> list[str]:
+        return validate_fqdn_list(v)
 
 
 class UserExistsResponse(BaseModel):

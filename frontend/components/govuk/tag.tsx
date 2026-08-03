@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-type TagColour =
+export type TagColour =
   | 'grey'
   | 'green'
   | 'turquoise'

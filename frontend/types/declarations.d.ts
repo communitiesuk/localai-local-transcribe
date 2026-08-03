@@ -6,7 +6,12 @@ declare interface Window {
   webkitAudioContext: typeof AudioContext
 }
 
-// govuk-frontend v6.1 ships no .d.ts files. Declare the runtime entry point used by GovukInit.
+// govuk-frontend v6.1 ships no .d.ts files. Declare the parts we use.
 declare module 'govuk-frontend' {
   export function initAll(scope?: Element | Document): void
+
+  // Instantiated directly, as initAll only looks at descendants of its scope.
+  export class CharacterCount {
+    constructor(root: Element)
+  }
 }

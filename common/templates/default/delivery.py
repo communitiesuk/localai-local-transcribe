@@ -37,6 +37,9 @@ class Delivery(Template):
     category = "Formal Minutes"
     description = "Formal minutes following the delivery style guide"
     agenda_usage = AgendaUsage.NOT_USED
+    # ``generate`` below always runs the citation step, unlike the SimpleTemplate paths where this
+    # flag drives it. Declared so the flag is a reliable answer for every template.
+    citations_required = True
 
     @classmethod
     def get_system_message_for_delivery(cls, transcript: list[DialogueEntry]) -> list[dict[str, str]]:

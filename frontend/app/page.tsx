@@ -1,5 +1,5 @@
 import { PosthogBanner } from '@/components/posthog-banner'
-import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
+import { PaginatedLabelledTranscriptions } from '@/components/recent-meetings/paginated-labelled-transcriptions'
 import { Loader2, Plus } from 'lucide-react'
 import { GovukButtonLink } from '@/components/govuk'
 import { Suspense } from 'react'
@@ -22,16 +22,6 @@ export default function Home() {
           <Plus />
           <span className="font-semibold">New meeting</span>
         </GovukButtonLink>
-
-        <Suspense
-          fallback={
-            <div className="govuk-body flex items-center gap-2">
-              <Loader2 className="animate-spin" />
-            </div>
-          }
-        >
-          <PaginatedTranscriptions />
-        </Suspense>
       </div>
     </div>
   )

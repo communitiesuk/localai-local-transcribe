@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import isFQDN from 'validator/lib/isFQDN'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -26,11 +27,19 @@ export function hasAnyRole(
   return userRolesList.some((role) => allowedRoles.includes(role))
 }
 
+export function conditionalPluralSuffix(count: number): string {
+  return count === 1 ? '' : 's'
+}
+
 export function parseDomains(value: string): string[] {
   return value
     .split('\n')
     .map((domain) => domain.trim())
     .filter(Boolean)
+}
+
+export function isValidFQDN(domain: string): boolean {
+  return isFQDN(domain)
 }
 
 export function formatCurrentDateTime() {

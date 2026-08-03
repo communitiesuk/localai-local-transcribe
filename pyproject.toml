@@ -103,7 +103,7 @@ uvicorn = "^0.31.0"
 apscheduler = "^3.11.0"
 
 [tool.poetry.group.worker.dependencies]
-ray = {extras = ["default"], version = "^2.53.0"}
+ray = {extras = ["default"], version = "^2.56.0"}
 
 [tool.poetry.group.evals-transcription.dependencies]
 datasets = "^3.0.0"

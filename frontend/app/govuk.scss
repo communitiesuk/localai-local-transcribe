@@ -4,6 +4,15 @@
   $govuk-assets-path: '/assets/govuk/'
 );
 
+// The GOV.UK web palette is Sass only, so mirror what we need as properties.
+:root {
+  // govuk-colour('light-grey')
+  --app-light-grey: #f3f3f3;
+
+  // Not in the GOV.UK palette. Bespoke to the file upload dropzone.
+  --app-dropzone-highlight: #bbd4ea;
+}
+
 // govuk-frontend sets link colours via :link and :visited pseudo-classes.
 // :link only fires for unvisited <a> elements; href="#" is treated as visited
 // (current page), so neither :link nor :visited reliably applies. These rules
@@ -38,4 +47,9 @@ button.govuk-link:disabled {
 // match the design, rather than picking up the greyed disabled colour above.
 .govuk-summary-card__action button.govuk-link:disabled {
   color: var(--govuk-link-colour);
+}
+
+// GDS uses square corners, so strip the rounding the browser adds to the native audio player.
+audio::-webkit-media-controls-enclosure {
+  border-radius: 0;
 }
