@@ -9,4 +9,10 @@ settings = get_settings()
 
 class ModelAdapter(Protocol):
     async def chat(self, messages: list[dict[str, str]]) -> str: ...
-    async def structured_chat[T: BaseModel](self, messages: list[dict[str, str]], response_format: type[T]) -> T: ...
+    async def structured_chat[T: BaseModel](
+        self,
+        messages: list[dict[str, str]],
+        response_format: type[T],
+        *,
+        prompt_cache_key: str | None = None,
+    ) -> T: ...

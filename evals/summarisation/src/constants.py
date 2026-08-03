@@ -60,6 +60,10 @@ MARKER_BYTES = 16
 # only has to outlive the fan-out over that transcript's dimensions and summaries.
 MARKER_CACHE_SIZE = 256
 
+# Hex characters of the prompt-cache routing key. Long enough that two transcripts in a run won't
+# collide onto one replica; it carries no secrecy requirement.
+CACHE_KEY_CHARS = 32
+
 
 class ScoreBand(NamedTuple):
     """Pass, review, and fail boundaries for one judge dimension on the 1 to 5 scale.

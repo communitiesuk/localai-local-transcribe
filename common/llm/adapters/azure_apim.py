@@ -13,6 +13,7 @@ from openai import (
     AuthenticationError,
     BadRequestError,
     RateLimitError,
+    omit,
 )
 from openai.types.chat import ChatCompletion, ParsedChatCompletion
 from openai.types.chat.chat_completion import Choice
@@ -69,7 +70,11 @@ class AzureAPIMModelAdapter(ModelAdapter):
         self,
         messages: list[dict[str, str]],
         response_format: type[T],
+        *,
+        prompt_cache_key: str | None = None,
     ) -> T:
+        """``prompt_cache_key`` routes requests sharing a prompt prefix to the same backend replica,
+        so a warm prefix cache is actually reached instead of hit by chance."""
         openai_messages = [convert_to_openai_message(msg) for msg in messages]
 
         async def call() -> ParsedChatCompletion[T]:
@@ -80,6 +85,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 messages=openai_messages,
                 response_format=response_format,
                 extra_query={"api-version": self._api_version},
+                prompt_cache_key=prompt_cache_key or omit,
             )
 
         logger.info("APIM REQUEST: structured_chat")

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any, cast
 
-from openai import AsyncAzureOpenAI
+from openai import AsyncAzureOpenAI, omit
 from openai.types.chat import ChatCompletion, ChatCompletionMessageParam
 from openai.types.chat.chat_completion import Choice
 
@@ -35,11 +35,18 @@ class OpenAIModelAdapter(ModelAdapter):
         )
         self._kwargs = kwargs
 
-    async def structured_chat[T](self, messages: list[dict[str, str]], response_format: type[T]) -> T:
+    async def structured_chat[T](
+        self,
+        messages: list[dict[str, str]],
+        response_format: type[T],
+        *,
+        prompt_cache_key: str | None = None,
+    ) -> T:
         response = await self.async_azure_client.beta.chat.completions.parse(
             model=self._model,
             messages=cast(list[ChatCompletionMessageParam], messages),
             response_format=response_format,
+            prompt_cache_key=prompt_cache_key or omit,
             **self._kwargs,
         )
         parsed = response.choices[0].message.parsed

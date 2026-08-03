@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import secrets
 from functools import lru_cache
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from evals.summarisation.src.constants import DIMENSIONS, MARKER_BYTES, MARKER_CACHE_SIZE
+from evals.summarisation.src.constants import CACHE_KEY_CHARS, DIMENSIONS, MARKER_BYTES, MARKER_CACHE_SIZE
 from evals.summarisation.src.transcript import citation_markers, transcript_entry_count
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "prompts"
@@ -32,6 +33,15 @@ def judge_marker_hash(transcript_text: str) -> str:  # noqa: ARG001 - the memo k
     ``transcript_text`` is the cache key, not an input to the value.
     """
     return secrets.token_hex(MARKER_BYTES)
+
+
+def judge_cache_key(transcript_text: str) -> str:
+    """Routing key so a transcript's judge calls reach the replica holding its cached prefix.
+
+    Deliberately a plain digest, unlike :func:`judge_marker_hash`: it routes requests rather than
+    authenticating a boundary, so it needs to be stable across processes, not unguessable.
+    """
+    return hashlib.sha256(transcript_text.encode()).hexdigest()[:CACHE_KEY_CHARS]
 
 
 def build_system_prompt(*, marker_hash: str, intended_solicitation: str | None = None) -> str:
