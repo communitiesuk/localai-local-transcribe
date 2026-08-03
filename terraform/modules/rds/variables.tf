@@ -13,6 +13,12 @@ variable "master_database_username" {
   sensitive   = true
 }
 
+variable "database_password" {
+  description = "password for the database"
+  type        = string
+  sensitive   = true
+}
+
 variable "database_port" {
   description = "port for the database"
   type        = number
@@ -74,4 +80,3 @@ variable "bastion_group_id" {
   type        = string
   description = "The id of the bastion security group"
 }
-

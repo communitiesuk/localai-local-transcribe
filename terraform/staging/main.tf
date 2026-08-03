@@ -160,6 +160,7 @@ module "database" {
 
   environment_name         = local.environment_name
   master_database_username = local.master_database_username
+  database_password        = module.secrets.database_password.result
   database_port            = local.database_port
   allocated_storage        = local.database_allocated_storage
   backup_retention_period  = 7

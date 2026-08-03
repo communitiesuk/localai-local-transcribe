@@ -19,6 +19,7 @@ resource "aws_db_instance" "main" {
     "iam-db-auth-error"
   ]
   multi_az                        = var.multi_az
+  password                        = var.database_password
   port                            = var.database_port
   publicly_accessible             = false
   storage_encrypted               = true
