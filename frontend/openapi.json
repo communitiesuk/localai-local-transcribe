@@ -556,6 +556,42 @@
         }
       }
     },
+    "/users/terms-of-use": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Accept Terms Of Use",
+        "operationId": "accept_terms_of_use_users_terms_of_use_post",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/data-retention": {
       "patch": {
         "tags": ["Users"],
@@ -2220,6 +2256,7 @@
             "format": "date-time",
             "title": "Updated Datetime"
           },
+          "accepted_tou": { "type": "boolean", "title": "Accepted Tou" },
           "last_login": {
             "type": "string",
             "format": "date-time",
@@ -2253,6 +2290,7 @@
           "id",
           "created_datetime",
           "updated_datetime",
+          "accepted_tou",
           "last_login",
           "is_active",
           "name",

@@ -7,14 +7,13 @@ variable "environment_name" {
   }
 }
 
-variable "database_username" {
-  description = "username for the database"
+variable "db_name" {
+  description = "name of the database"
   type        = string
-  sensitive   = true
 }
 
-variable "database_password" {
-  description = "password for the database"
+variable "master_database_username" {
+  description = "username for the database master user"
   type        = string
   sensitive   = true
 }
@@ -66,13 +65,13 @@ variable "vpc_id" {
   description = "The ID of the VPC to be associated with"
 }
 
-variable "backend_task_execution_role_name" {
-  description = "Name of the IAM role for the backend ECS task execution"
+variable "backend_task_role_name" {
+  description = "Name of the IAM role for the backend ECS task"
   type        = string
 }
 
-variable "worker_task_execution_role_name" {
-  description = "Name of the IAM role for the worker ECS task execution"
+variable "worker_task_role_name" {
+  description = "Name of the IAM role for the worker ECS task"
   type        = string
 }
 
@@ -80,3 +79,4 @@ variable "bastion_group_id" {
   type        = string
   description = "The id of the bastion security group"
 }
+

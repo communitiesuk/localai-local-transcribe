@@ -29,7 +29,7 @@ locals {
       value = tostring(var.database_port)
       }, {
       name  = "POSTGRES_USER"
-      value = var.database_user
+      value = tostring(var.database_username)
       }, {
       name  = "POSTGRES_DB"
       value = var.database_name
@@ -90,10 +90,6 @@ locals {
     },
   ]
   shared_worker_backend_secrets = [
-    {
-      name      = "POSTGRES_PASSWORD"
-      valueFrom = var.database_password_secret_arn
-    },
     {
       name      = "AZURE_APIM_TENANT_ID"
       valueFrom = var.azure_apim_tenant_id_arn
