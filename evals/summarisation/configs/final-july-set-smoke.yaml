@@ -8,6 +8,8 @@ run:
   limit: 2
   prompt_version: dev
   dataset_version: final_july_set
+  # Exercised here too, so the full run is not the first time the refresh path is used.
+  refresh_apim_token: true
 
 dataset:
   name: final_july_set

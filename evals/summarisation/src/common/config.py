@@ -47,6 +47,9 @@ class RunConfig(BaseModel):
     # When true (bias eval only), derive an SPC baseline from this run's deltas and write it
     # instead of loading an existing baseline and applying threshold checks.
     emit_spc_baseline: bool = False
+    # When true, re-run ``./apim.sh`` as examples complete so a static APIM token cannot expire
+    # part-way through a long run. Local only: it shells out to the az CLI.
+    refresh_apim_token: bool = False
 
 
 class DatasetConfig(BaseModel):

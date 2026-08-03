@@ -331,3 +331,45 @@ def test_run_eval_local_dir_summarises_dataset_entries(tmp_path):
     # The judge sees the dataset's own entries, numbered for citation resolution.
     assert mock_judge.await_args.kwargs["transcript_text"].startswith("[0] ")
     assert "The tap is still dripping." in mock_judge.await_args.kwargs["transcript_text"]
+
+
+@pytest.mark.parametrize(("refresh_apim_token", "expected_refreshes"), [(True, 3), (False, 0)])
+def test_run_eval_refreshes_apim_token_per_example(tmp_path, refresh_apim_token, expected_refreshes):
+    """With the option on, the token is refreshed before the run and as each of the 2 examples ends."""
+    _write_local_dataset(tmp_path / "input", "call_one", "call_two")
+    cfg = _local_cfg(
+        tmp_path,
+        run={
+            "output_dir": str(tmp_path / "output"),
+            "input_dir": str(tmp_path / "input"),
+            "refresh_apim_token": refresh_apim_token,
+        },
+        metrics=["accuracy"],
+    )
+
+    mock_generated = Mock()
+    mock_generated.text = "Generated summary"
+    mock_generated.hallucinations = []
+    mock_generated.total_claims = 5
+
+    with (
+        patch(
+            "evals.summarisation.src.optimisation.runner.generate_summary",
+            new_callable=AsyncMock,
+            return_value=mock_generated,
+        ),
+        patch(
+            "evals.summarisation.src.optimisation.runner.call_llm_judge_parallel",
+            new_callable=AsyncMock,
+            return_value={"dimensions": {"accuracy": {"score": "5", "rationale": "Accurate"}}},
+        ),
+        patch("evals.summarisation.src.optimisation.runner.get_settings") as mock_settings,
+        patch("evals.summarisation.src.optimisation.runner.tiktoken.encoding_for_model") as mock_tokenizer,
+        patch("evals.summarisation.src.optimisation.runner.ApimTokenRefresher") as mock_refresher_cls,
+    ):
+        mock_settings.return_value.FAST_LLM_MODEL_NAME = "test-model"
+        mock_tokenizer.return_value.encode = Mock(return_value=[1])
+
+        run_eval(cfg, split="test", limit=None, prompt_version="v1")
+
+    assert mock_refresher_cls.return_value.refresh.call_count == expected_refreshes

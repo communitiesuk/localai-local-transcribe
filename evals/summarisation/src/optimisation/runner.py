@@ -35,6 +35,7 @@ from evals.summarisation.src.common import (
     judge_transcript_text,
     write_jsonl,
 )
+from evals.summarisation.src.common.apim_token import ApimTokenRefresher
 from evals.summarisation.src.common.metric import judged_dimensions
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.optimisation.data.loader import load_local_examples
@@ -185,6 +186,7 @@ class EvalRun:
         self.dimensions: list[str] = judged_dimensions(DIMENSIONS, self.template_name)
         self.skipped_dimensions: list[str] = [d for d in DIMENSIONS if d not in self.dimensions]
         self.enc: tiktoken.Encoding = tiktoken.encoding_for_model(self.model_name)
+        self.token_refresher: ApimTokenRefresher | None = ApimTokenRefresher() if cfg.run.refresh_apim_token else None
 
         self.run_id: str = ""
         self.results_path: Path = Path()
@@ -287,6 +289,10 @@ class EvalRun:
             run.state.records.append(record)
             _maybe_flush_records(run.results_path, run.state.records, flush_every=10)
 
+            # This example is done, so the next one starts on a token that has time left on it.
+            if run.token_refresher is not None:
+                run.token_refresher.refresh()
+
             score_values = [res.score for res in metrics_out.values()]
             return sum(score_values) / len(score_values) if score_values else 0.0
 
@@ -325,6 +331,11 @@ class EvalRun:
             self.cfg.run.output_dir, self.run_id
         )
         self.devset = load_dspy_devset(self.cfg, self.split, self.limit, self.dataset_path)
+
+        # Up front as well as between examples: a run started on an already-expired token otherwise
+        # dies on its first LLM call, before any refresh point is reached.
+        if self.token_refresher is not None:
+            self.token_refresher.refresh()
 
         try:
             evaluator = Evaluate(

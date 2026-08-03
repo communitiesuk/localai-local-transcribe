@@ -9,6 +9,8 @@ run:
   # No limit: the whole set is evaluated.
   prompt_version: dev
   dataset_version: final_july_set
+  # The whole set takes longer than an APIM token lives, so refresh it as examples complete.
+  refresh_apim_token: true
 
 dataset:
   name: final_july_set
