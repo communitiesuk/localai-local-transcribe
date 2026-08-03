@@ -132,21 +132,12 @@ module "secrets" {
 
   environment_name = local.environment_name
 
-  db_name                          = local.db_name
-  database_url                     = module.database.database_url
-  database_port                    = local.database_port
   frontend_task_execution_role_arn = module.ecs.frontend_execution_task_arn
   frontend_task_execution_role_id  = module.ecs.frontend_execution_task_id
   backend_task_execution_role_arn  = module.ecs.backend_execution_task_arn
   backend_task_execution_role_id   = module.ecs.backend_execution_task_id
-  master_user_secret_arn           = module.database.db_master_secret_arn
   worker_task_execution_role_arn   = module.ecs.worker_execution_task_arn
   worker_task_execution_role_id    = module.ecs.worker_execution_task_id
-  backend_task_role_id             = module.ecs.backend_task_id
-  worker_task_role_id              = module.ecs.worker_task_id
-  vpc_id                           = module.networking.vpc.id
-  private_subnet_ids               = module.networking.private_subnets[*].id
-  lambda_rotation_sg_id            = module.database.lambda_rotation_sg_id
 }
 
 module "bastion" {
