@@ -18,13 +18,9 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-# Get database connection details from environment variables
 DB_USER = settings.POSTGRES_USER
-DB_PASSWORD = settings.POSTGRES_PASSWORD
+DB_PASSWORD = settings.POSTGRES_PASSWORD  # Only used for local dev
 
-# Host/port/db are stable and can stay as plain settings.
-# User/password are NO LONGER read here — they're injected per-connection
-# by the credential provider below, since they now rotate.
 DB_HOST = settings.POSTGRES_HOST
 DB_PORT = settings.POSTGRES_PORT
 DB_NAME = settings.POSTGRES_DB

@@ -7,11 +7,6 @@ variable "environment_name" {
   }
 }
 
-variable "db_name" {
-  description = "name of the database"
-  type        = string
-}
-
 variable "master_database_username" {
   description = "username for the database master user"
   type        = string

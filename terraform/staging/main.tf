@@ -29,7 +29,6 @@ locals {
   max_llm_proccesses          = 1
 
   master_database_username = "postgres"
-  db_name                  = "localtranscribedb"
 
   app_host                  = "staging.local-transcribe.test.communities.gov.uk"
   load_balancer_domain_name = "lb.staging.local-transcribe.test.communities.gov.uk"
@@ -159,7 +158,6 @@ module "bastion" {
 module "database" {
   source = "../modules/rds"
 
-  db_name                  = local.db_name
   environment_name         = local.environment_name
   master_database_username = local.master_database_username
   database_port            = local.database_port
