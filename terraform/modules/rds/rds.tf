@@ -24,7 +24,7 @@ resource "aws_db_instance" "main" {
   publicly_accessible             = false
   storage_encrypted               = true
   storage_type                    = "gp2"
-  username                        = var.master_database_username
+  username                        = var.database_username
   vpc_security_group_ids          = [aws_security_group.main.id]
   performance_insights_enabled    = true
   performance_insights_kms_key_id = aws_kms_key.performance_insights.arn

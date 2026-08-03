@@ -28,7 +28,7 @@ locals {
   max_transcription_processes = 1
   max_llm_proccesses          = 1
 
-  master_database_username = "postgres"
+  database_username = "postgres"
 
   app_host                  = "development.local-transcribe.test.communities.gov.uk"
   load_balancer_domain_name = "lb.development.local-transcribe.test.communities.gov.uk"
@@ -152,19 +152,19 @@ module "bastion" {
 module "database" {
   source = "../modules/rds"
 
-  environment_name         = local.environment_name
-  master_database_username = local.master_database_username
-  database_password        = module.secrets.database_password.result
-  database_port            = local.database_port
-  allocated_storage        = local.database_allocated_storage
-  backup_retention_period  = 7
-  db_subnet_group_name     = module.networking.db_subnet_group_name
-  instance_class           = "db.t4g.small"
-  multi_az                 = local.multi_az
-  vpc_id                   = module.networking.vpc.id
-  backend_task_role_name   = module.ecs.backend_task_role_name
-  worker_task_role_name    = module.ecs.worker_task_role_name
-  bastion_group_id         = module.bastion.security_group_id
+  environment_name        = local.environment_name
+  database_username       = local.database_username
+  database_password       = module.secrets.database_password.result
+  database_port           = local.database_port
+  allocated_storage       = local.database_allocated_storage
+  backup_retention_period = 7
+  db_subnet_group_name    = module.networking.db_subnet_group_name
+  instance_class          = "db.t4g.small"
+  multi_az                = local.multi_az
+  vpc_id                  = module.networking.vpc.id
+  backend_task_role_name  = module.ecs.backend_task_role_name
+  worker_task_role_name   = module.ecs.worker_task_role_name
+  bastion_group_id        = module.bastion.security_group_id
 }
 
 module "sqs" {
@@ -188,7 +188,7 @@ module "ecs" {
   database_port     = local.database_port
   database_host     = module.database.database_url
   database_name     = module.database.database_name
-  database_username = local.master_database_username
+  database_username = local.database_username
 
   lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id

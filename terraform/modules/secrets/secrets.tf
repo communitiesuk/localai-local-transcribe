@@ -1,6 +1,6 @@
 resource "aws_secretsmanager_secret" "database_password" {
   name                    = "tf-${var.environment_name}-local-transcribe-database-password"
-  description             = "Password for local-transcribe backend database user"
+  description             = "Password for local-transcribe database user"
   recovery_window_in_days = 30
   kms_key_id              = aws_kms_key.local_transcribe_secrets.arn
 }
