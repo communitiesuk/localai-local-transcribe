@@ -17,13 +17,3 @@ output "database_name" {
   value       = aws_db_instance.main.db_name
   description = "The name of the database"
 }
-
-output "db_master_secret_arn" {
-  description = "The ARN of the master db secret"
-  value       = aws_db_instance.main.master_user_secret[0].secret_arn
-}
-
-output "lambda_rotation_sg_id" {
-  description = " The ID of the security group attached to the Lambda secret-rotation function"
-  value       = aws_security_group.lambda_rotation.id
-}

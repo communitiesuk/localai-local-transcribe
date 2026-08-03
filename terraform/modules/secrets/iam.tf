@@ -63,28 +63,3 @@ resource "aws_iam_role_policy" "execution_secret_access" {
     ]
   })
 }
-
-resource "aws_iam_role_policy" "runtime_secrets_access" {
-  for_each = {
-    backend = var.backend_task_role_id
-    worker  = var.worker_task_role_id
-  }
-
-  name = "${var.environment_name}-runtime-secret-access"
-  role = each.value
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Effect = "Allow"
-        Resource = [
-          aws_secretsmanager_secret.database_secret.arn,
-        ]
-      }
-    ]
-  })
-}

@@ -43,12 +43,6 @@ output "sentry_dsn_arn" {
   value       = aws_ssm_parameter.sentry_dsn.arn
 }
 
-output "rds_master_secret_string" {
-  description = "Secret string for the RDS master secret version"
-  value       = data.aws_secretsmanager_secret_version.rds_master.secret_string
-  sensitive   = true
-}
-
 output "govnotify_api_key_arn" {
   description = "ARN of the SSM parameter containing the GovNotify API key"
   value       = aws_ssm_parameter.govnotify_api_key.arn
