@@ -1,0 +1,9 @@
+# Full AMI test split: all 16 meetings at full duration (~8.9 hours of audio).
+# num_samples counts meetings, not utterances; null selects every meeting in the split.
+num_samples: null
+sample_duration_fraction: null
+max_workers: 4
+prepare_only: false
+check_drift_thresholds: false
+adapters:
+  - azure
