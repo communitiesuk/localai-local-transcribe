@@ -2,8 +2,16 @@
 
 import {
   getUserTemplatesUserTemplatesGetOptions,
-  getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
+import {
+  GovukHeading,
+  GovukTable,
+  GovukTableBody,
+  GovukTableCell,
+  GovukTableHead,
+  GovukTableHeaderCell,
+  GovukTableRow,
+} from '@/components/govuk'
 import { useQuery } from '@tanstack/react-query'
 import { FileWarning, Loader2 } from 'lucide-react'
 import Link from 'next/link'
@@ -36,48 +44,44 @@ export const UserTemplatesList = () => {
 
   return (
     <div>
-      <h2 className="govuk-heading-m govuk-!-margin-bottom-1">
+      <GovukHeading size="m" as="h2" className="govuk-!-margin-bottom-1">
         Your templates
-      </h2>
+      </GovukHeading>
       <p className="govuk-body govuk-!-margin-bottom-4">
         Includes common templates and any templates you create yourself.
       </p>
 
-      <table className="govuk-table">
-        <thead className="govuk-table__head">
-          <tr className="govuk-table__row">
-            <th className="govuk-table__header" scope="col">
-              Title
-            </th>
-            <th className="govuk-table__header" scope="col">
-              Last updated
-            </th>
-            <th className="govuk-table__header" scope="col">
+      <GovukTable>
+        <GovukTableHead>
+          <GovukTableRow>
+            <GovukTableHeaderCell scope="col">Title</GovukTableHeaderCell>
+            <GovukTableHeaderCell scope="col">Last updated</GovukTableHeaderCell>
+            <GovukTableHeaderCell scope="col">
               <span className="govuk-visually-hidden">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="govuk-table__body">
+            </GovukTableHeaderCell>
+          </GovukTableRow>
+        </GovukTableHead>
+        <GovukTableBody>
           {sortedTemplates.map((template) => (
-            <tr className="govuk-table__row" key={template.id}>
-              <td className="govuk-table__cell">{template.name}</td>
-              <td className="govuk-table__cell">
+            <GovukTableRow key={template.id}>
+              <GovukTableCell>{template.name}</GovukTableCell>
+              <GovukTableCell>
                 {template.updated_datetime
                   ? new Date(template.updated_datetime).toLocaleDateString(
                       'en-GB',
                       { day: '2-digit', month: '2-digit', year: 'numeric' }
                     )
                   : 'Original template'}
-              </td>
-              <td className="govuk-table__cell govuk-table__cell--numeric">
+              </GovukTableCell>
+              <GovukTableCell className="govuk-table__cell--numeric">
                 <Link href={`/templates/${template.id}`} className="govuk-link">
                   Edit
                 </Link>
-              </td>
-            </tr>
+              </GovukTableCell>
+            </GovukTableRow>
           ))}
-        </tbody>
-      </table>
+        </GovukTableBody>
+      </GovukTable>
     </div>
   )
 }
