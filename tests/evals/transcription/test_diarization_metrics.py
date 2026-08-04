@@ -99,6 +99,27 @@ def test_compute_wder(ref_segments, hyp_segments, expected):
     assert result == expected
 
 
+def test_compute_wder_is_independent_of_segment_list_order():
+    """
+    Segments supplied out of chronological order must score the same as sorted ones.
+    The AMI reference diarization is not guaranteed to arrive in time order.
+    """
+    chronological = [
+        {"speaker": "Speaker_2", "text": "right", "start": 0.0, "end": 1.0},
+        {"speaker": "Speaker_3", "text": "sure right", "start": 1.0, "end": 2.0},
+        {"speaker": "Speaker_2", "text": "okay okay", "start": 2.0, "end": 3.0},
+        {"speaker": "Speaker_2", "text": "yes", "start": 3.0, "end": 4.0},
+    ]
+    hypothesis = [{**segment, "speaker": segment["speaker"].replace("Speaker", "Hyp")} for segment in chronological]
+    expected = {"wder": 0.0, "speaker_errors": 0, "total_words": 6}
+
+    assert compute_wder(chronological, hypothesis) == expected
+
+    out_of_order = [chronological[1], chronological[0], chronological[2], chronological[3]]
+    assert compute_wder(out_of_order, hypothesis) == expected
+    assert compute_wder(chronological, [hypothesis[1], hypothesis[0], *hypothesis[2:]]) == expected
+
+
 @pytest.mark.parametrize(
     ("ref_segments", "hyp_segments", "expected"),
     [

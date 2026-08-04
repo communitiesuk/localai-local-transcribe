@@ -78,6 +78,22 @@ def find_optimal_speaker_mapping(
     return mapping
 
 
+def _sort_segments_chronologically(
+    segments: list[DiarizationSegment],
+) -> list[DiarizationSegment]:
+    """
+    Return segments in chronological order.
+    """
+    return sorted(
+        segments,
+        key=lambda segment: (
+            segment["start"],
+            segment["end"],
+            segment["speaker"],
+        ),
+    )
+
+
 def flatten_segments_to_word_speaker_pairs(
     segments: list[DiarizationSegment],
 ) -> list[tuple[str, str]]:
@@ -111,9 +127,12 @@ def compute_wder(
     WDER measures speaker assignment errors on correctly transcribed words.
     Uses optimal speaker mapping based on word overlap to align hypothesis
     speakers with reference speakers before computing errors.
+
+    Both segment lists are sorted chronologically first, as word alignment
+    depends on time order and callers may supply segments unordered.
     """
-    ref_pairs = flatten_segments_to_word_speaker_pairs(ref_segments)
-    hyp_pairs = flatten_segments_to_word_speaker_pairs(hyp_segments)
+    ref_pairs = flatten_segments_to_word_speaker_pairs(_sort_segments_chronologically(ref_segments))
+    hyp_pairs = flatten_segments_to_word_speaker_pairs(_sort_segments_chronologically(hyp_segments))
 
     total_ref_words = len(ref_pairs)
     if total_ref_words == 0 or len(hyp_pairs) == 0:
