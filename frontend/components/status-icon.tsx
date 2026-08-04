@@ -1,6 +1,12 @@
-import { Badge } from '@/components/ui/badge'
+import { GovukTag, type TagColour } from '@/components/govuk'
 import { JobStatus } from '@/lib/client'
-import { CircleCheckBig, CircleX, Loader2 } from 'lucide-react'
+
+const STATUS_TAG: Record<JobStatus, { colour: TagColour; label: string }> = {
+  awaiting_start: { colour: 'blue', label: 'Processing' },
+  in_progress: { colour: 'blue', label: 'Processing' },
+  completed: { colour: 'green', label: 'Completed' },
+  failed: { colour: 'red', label: 'Failed' },
+}
 
 export const StatusBadge = ({
   status,
@@ -9,29 +15,11 @@ export const StatusBadge = ({
   status: JobStatus
   className?: string
 }) => {
-  if (['awaiting_start', 'in_progress'].includes(status)) {
-    return (
-      <Badge variant="outline" className={className}>
-        <Loader2 className="animate-spin" />
-        <p>Processing</p>
-      </Badge>
-    )
-  }
+  const { colour, label } = STATUS_TAG[status]
 
-  if (status == 'completed') {
-    return (
-      <Badge variant="outline" className={className}>
-        <CircleCheckBig />
-        <p>Completed</p>
-      </Badge>
-    )
-  }
-  if (status == 'failed') {
-    return (
-      <Badge variant="outline" className={className}>
-        <CircleX />
-        <p>Failed</p>
-      </Badge>
-    )
-  }
+  return (
+    <GovukTag colour={colour} className={className}>
+      {label}
+    </GovukTag>
+  )
 }

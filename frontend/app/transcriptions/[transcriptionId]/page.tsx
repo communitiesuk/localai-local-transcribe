@@ -1,19 +1,32 @@
 'use client'
-import { use } from 'react'
+import { use, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
+import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import { DownloadButton } from '@/components/download-button'
-import { AudioWav } from '@/components/icons/AudioWav'
+import {
+  GovukBackLink,
+  GovukButton,
+  GovukDateInput,
+  GovukDetails,
+  GovukFormGroup,
+  GovukHeading,
+  GovukInput,
+  GovukLabel,
+  GovukNotificationBanner,
+  GovukTabs,
+} from '@/components/govuk'
+import { StatusBadge } from '@/components/status-icon'
 import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TranscriptionGetResponse } from '@/lib/client'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
-import { Clock, Frown, LoaderCircle, SearchX } from 'lucide-react'
+import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { redirect } from 'next/navigation'
 
@@ -44,22 +57,28 @@ export default function TranscriptionPage(props: {
   if (isLoading) {
     return (
       <div className="flex h-72 flex-col items-center justify-center">
-        <LoaderCircle size={80} className="animate-spin" />
+        <LoaderCircle size={80} className="animate-spin" aria-hidden="true" />
       </div>
     )
   }
 
   if (!transcription) {
     return (
-      <div className="flex flex-col items-center justify-center">
-        <SearchX size={100} />
-        <p>404 - Transcription not found</p>
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <GovukHeading>Transcription not found</GovukHeading>
+          <p className="govuk-body">
+            We could not find that transcription. It may have been deleted.
+          </p>
+        </div>
       </div>
     )
   }
 
   const date = new Date(transcription.created_datetime)
   const dateLabel = `${date.toDateString()} at ${date.toLocaleTimeString()}`
+  const recordingDate = date.toLocaleDateString('en-GB')
+  const dateTimeLabel = `${date.toLocaleDateString('en-GB')} at ${date.toLocaleTimeString('en-GB')}`
 
   if (
     transcription.status &&
@@ -67,22 +86,17 @@ export default function TranscriptionPage(props: {
   ) {
     return (
       <div>
-        <TranscriptionTitleEditor
-          title={transcription.title}
-          transcriptionId={transcription.id}
-          status={transcription.status}
+        <TranscriptionHeader
+          transcription={transcription}
+          dateLabel={dateLabel}
         />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock size="0.8rem" />
-          {dateLabel}
-        </div>
-        <div className="flex flex-col items-center justify-center">
-          <AudioWav />
-          <p className="mb-4">
-            Transcription being processed, you can close the tab.
+        <GovukNotificationBanner title="Processing">
+          <p className="govuk-notification-banner__heading">
+            Your transcription is being processed. You can close the tab and
+            come back later.
           </p>
-          <AudioPlayer transcriptionId={transcription.id} />
-        </div>
+        </GovukNotificationBanner>
+        <AudioPlayer transcriptionId={transcription.id} />
       </div>
     )
   }
@@ -90,72 +104,115 @@ export default function TranscriptionPage(props: {
   if (transcription.status == 'failed') {
     return (
       <div>
-        <TranscriptionTitleEditor
-          title={transcription.title}
-          transcriptionId={transcription.id}
-          status={transcription.status}
+        <TranscriptionHeader
+          transcription={transcription}
+          dateLabel={dateLabel}
         />
-        <div className="flex items-center gap-1 text-xs text-slate-500">
-          <Clock size="0.8rem" />
-          {dateLabel}
-        </div>
-        <div className="flex flex-col items-center justify-center gap-2">
-          <Frown size={100} />
-          <p>
+        <GovukNotificationBanner title="Transcription failed">
+          <p className="govuk-notification-banner__heading">
             Something went wrong with your transcription. You may need to try
             again.
           </p>
-          <AudioPlayer transcriptionId={transcription.id} />
-        </div>
+        </GovukNotificationBanner>
+        <AudioPlayer transcriptionId={transcription.id} />
       </div>
     )
   }
   return (
     <div className="flex w-full flex-col">
-      <TranscriptionTitleEditor
-        title={transcription.title}
-        transcriptionId={transcription.id}
-        status={transcription.status}
-      />
-      <div className="mb-4 flex items-center gap-1 text-xs text-slate-500">
-        <Clock size="0.8rem" />
-        {dateLabel}
+      <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
+        Back
+      </GovukBackLink>
+      <GovukHeading as="h1" size="xl" className="govuk-!-margin-bottom-2">
+        {recordingDate}
+      </GovukHeading>
+      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
+      <RecordingDetails dateTimeLabel={dateTimeLabel} />
+      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
+      <div>
+        <NewMinuteDialog
+          transcriptionId={transcription.id!}
+          trigger={<GovukButton type="button">Create document</GovukButton>}
+        />
       </div>
-      <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="h-12 w-full">
-          <TabsTrigger
-            value="summary"
-            className="data-[state=active]:shadow-lg"
-          >
-            Meeting summary
-          </TabsTrigger>
-          <TabsTrigger
-            value="transcript"
-            className="data-[state=active]:shadow-lg"
-          >
-            Transcript
-          </TabsTrigger>
-          {isChatEnabled && (
-            <TabsTrigger value="chat" className="data-[state=active]:shadow-lg">
-              Chat with your meeting
-            </TabsTrigger>
-          )}
-        </TabsList>
-        <TabsContent value="summary">
-          <MinuteTab transcription={transcription} />
-        </TabsContent>
-        <TabsContent value="transcript">
+      <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
+        <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab transcription={transcription} />
-        </TabsContent>
+        </GovukTabs.Panel>
+        <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
+          <MinuteTab transcription={transcription} />
+        </GovukTabs.Panel>
         {isChatEnabled && (
-          <TabsContent value="chat">
+          <GovukTabs.Panel id="chat" label="Chat with your meeting">
             <ChatTab transcription={transcription} />
-          </TabsContent>
+          </GovukTabs.Panel>
         )}
-      </Tabs>
+      </GovukTabs>
     </div>
   )
 }
+
+const RecordingDetails = ({ dateTimeLabel }: { dateTimeLabel: string }) => {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
+        Recording details
+      </GovukHeading>
+      <GovukDetails
+        summary={open ? 'Hide' : 'Show'}
+        onToggle={(e) => setOpen(e.currentTarget.open)}
+      >
+        <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
+        <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
+        <GovukFormGroup>
+          <GovukLabel htmlFor="client-name">Client name (optional)</GovukLabel>
+          <GovukInput id="client-name" />
+        </GovukFormGroup>
+        <GovukFormGroup>
+          <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
+          <GovukInput id="case-id" />
+        </GovukFormGroup>
+        <GovukFormGroup>
+          <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
+          <GovukInput id="subject" />
+        </GovukFormGroup>
+        <GovukDateInput
+          id="client-dob"
+          legend="Client date of birth (optional)"
+        />
+        <GovukButton
+          type="button"
+          variant="secondary"
+          disabled
+          className="govuk-!-margin-bottom-2"
+        >
+          Update details
+        </GovukButton>
+      </GovukDetails>
+    </>
+  )
+}
+
+const TranscriptionHeader = ({
+  transcription,
+  dateLabel,
+}: {
+  transcription: TranscriptionGetResponse
+  dateLabel: string
+}) => (
+  <>
+    <TranscriptionTitleEditor
+      title={transcription.title}
+      transcriptionId={transcription.id}
+      status={transcription.status}
+    />
+    <div className="govuk-!-margin-bottom-4 flex items-center gap-2">
+      <StatusBadge status={transcription.status} />
+      <span className="govuk-body-s govuk-!-margin-bottom-0">{dateLabel}</span>
+    </div>
+  </>
+)
 
 const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
   const { data: recordings } = useQuery({
