@@ -7,7 +7,6 @@ import {
   getUserTemplateUserTemplatesTemplateIdGetOptions,
   getUserTemplateUserTemplatesTemplateIdGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { formatCurrentDateTime } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
 import {
