@@ -5,6 +5,8 @@ import { GovukButtonLink, GovukHeading } from '@/components/govuk'
 export default function TemplatesPage() {
   return (
     <div>
+      {/* Next dev mode (`npm run dev`) can clear the store that triggers this banner. 
+      In prod (`npm run build && npm start`) this is not an issue */}
       <BannerNotification />
       <GovukHeading size="l">Manage templates</GovukHeading>
       <p className="govuk-body">
