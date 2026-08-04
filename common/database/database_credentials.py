@@ -56,17 +56,6 @@ class IamDbCredentialsProvider:
 
 
 def attach_dynamic_credentials(engine: Engine | AsyncEngine, credential_provider: DbCredentialsProvider) -> None:
-    """
-    Registers a do_connect listener that:
-      1. Injects the current cached credentials into every new physical connection.
-      2. If the connection attempt fails with what looks like an auth error,
-         forces a credential refresh and retries once before giving up.
-
-    The engine's connection URL should NOT embed a real user/password —
-    build it with host/port/db only; this listener supplies credentials
-    for every connection attempt.
-    """
-
     target_engine = engine if isinstance(engine, Engine) else engine.sync_engine
 
     @event.listens_for(target_engine, "do_connect")
