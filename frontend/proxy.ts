@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   '/privacy',
   '/support',
   '/signout',
+  '/assets', // Bypass middleware for static asset files
 ]
 
 const TOU_PATH = '/terms-of-use'
@@ -106,8 +107,6 @@ function redirectTo(req: NextRequest, page: string) {
 // Configure which paths this middleware should run on
 export const config = {
   matcher: [
-    // Match all paths except those starting with excluded paths
-    // You can customize this as needed
-    '/((?!_next/static|_next/image|favicon.ico|api/health).*)',
+  '/((?!_next/static|_next/image|favicon.ico|api/health).*)',
   ],
 }
