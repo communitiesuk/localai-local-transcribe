@@ -106,7 +106,5 @@ function redirectTo(req: NextRequest, page: string) {
 
 // Configure which paths this middleware should run on
 export const config = {
-  matcher: [
-  '/((?!_next/static|_next/image|favicon.ico|api/health).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/health).*)'],
 }
