@@ -48,8 +48,6 @@ engine = create_engine(
     max_overflow=30,
     pool_timeout=60,
     pool_pre_ping=True,
-    pool_recycle=1800,  # recycle idle connections every 30 min so they periodically
-    # pick up freshly cached creds, independent of any failure
 )
 
 async_engine = create_async_engine(
