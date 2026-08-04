@@ -1,8 +1,6 @@
 'use client'
 
-import {
-  getUserTemplatesUserTemplatesGetOptions,
-} from '@/lib/client/@tanstack/react-query.gen'
+import { getUserTemplatesUserTemplatesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import {
   GovukHeading,
   GovukTable,
@@ -55,7 +53,9 @@ export const UserTemplatesList = () => {
         <GovukTableHead>
           <GovukTableRow>
             <GovukTableHeaderCell scope="col">Title</GovukTableHeaderCell>
-            <GovukTableHeaderCell scope="col">Last updated</GovukTableHeaderCell>
+            <GovukTableHeaderCell scope="col">
+              Last updated
+            </GovukTableHeaderCell>
             <GovukTableHeaderCell scope="col">
               <span className="govuk-visually-hidden">Actions</span>
             </GovukTableHeaderCell>
