@@ -22,6 +22,12 @@ logger = logging.getLogger(__name__)
 # that produces citations.
 CITATION_DIMENSION = "auditability"
 
+# Tags the BEGIN/END markers around the transcript and summary so the judge can tell a genuine
+# boundary from one mimicked by injected text. Drawn once per process rather than per call: it sits
+# in the shared prefix of every judge prompt, so re-drawing it would cost every call its prompt
+# cache, and a hash the summariser never saw is unguessable however long it lives.
+MARKER_HASH = secrets.token_hex(4)
+
 
 def template_supports_citations(template_name: str | None) -> bool:
     """Whether summaries from ``template_name`` carry ``[n]`` citations into the transcript.
@@ -102,11 +108,9 @@ async def call_llm_judge_parallel(
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
         async with semaphore:
-            # Freshly generated per call so the judge can distinguish genuine boundary markers from
-            # any lookalike text injected into the transcript or summary.
-            marker_hash = secrets.token_hex(4)
-            sys_prompt = build_system_prompt(dim, intended_solicitation, marker_hash=marker_hash)
+            sys_prompt = build_system_prompt(intended_solicitation, marker_hash=MARKER_HASH)
             user_msg = build_user_message(
+                target_dimension=dim,
                 summary_id=summary_id,
                 transcript_ref=transcript_ref,
                 transcript_text=transcript_text,
@@ -114,7 +118,7 @@ async def call_llm_judge_parallel(
                 template_name=template_name,
                 template_content=template_content,
                 intended_solicitation=intended_solicitation,
-                marker_hash=marker_hash,
+                marker_hash=MARKER_HASH,
             )
             res = await call_llm_judge(sys_prompt, user_msg)
             dim_data = res["dimensions"].get(dim)
@@ -143,14 +147,14 @@ class DialogSummaryMetric:
     def _build_judge_messages(
         self, rubric_dim: str, example: DialogExample, prediction: dspy.Prediction
     ) -> tuple[str, str]:
-        marker_hash = secrets.token_hex(4)
-        sys_prompt = build_system_prompt(rubric_dim, marker_hash=marker_hash)
+        sys_prompt = build_system_prompt(marker_hash=MARKER_HASH)
         user_msg = build_user_message(
+            target_dimension=rubric_dim,
             summary_id=example.example_id,
             transcript_ref=str(example.example_id),
             transcript_text=example.dialogue,
             summary_text=prediction.summary,
-            marker_hash=marker_hash,
+            marker_hash=MARKER_HASH,
         )
         return sys_prompt, user_msg
 
