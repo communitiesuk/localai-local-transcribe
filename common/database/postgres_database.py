@@ -32,7 +32,7 @@ ASYNC_DATABASE_URL = f"postgresql+asyncpg://{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 sync_connect_args = {}
 async_connect_args = {}
-if settings.ENVIRONMENT == "prod":
+if settings.ENVIRONMENT in ["prod", "staging", "development"]:
     sync_connect_args = {
         "sslmode": "verify-full",
         "sslrootcert": settings.RDS_CA_BUNDLE_PATH,
