@@ -4,7 +4,6 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
-from evals.summarisation.src.constants import CRITICAL_DIMENSIONS, DIMENSIONS
 from evals.summarisation.src.transcript import citation_markers, transcript_entry_count
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "prompts"
@@ -19,11 +18,14 @@ _env = Environment(
 
 
 def build_system_prompt(
-    target_dimension: str | None = None,
     intended_solicitation: str | None = None,
     marker_hash: str = "",
 ) -> str:
-    """Render and return the SYSTEM turn for a single specific dimension.
+    """Render and return the SYSTEM turn, which is the same for every dimension.
+
+    The dimension being scored is not named here: it is the only thing that varies between the judge
+    calls for one summary, so it goes last, at the end of the user turn, where it cannot displace
+    the shared prompt prefix the provider caches.
 
     ``intended_solicitation`` is supplied only by the security (prompt-injection) eval; when set,
     the template adds anti-injection hardening instructions that don't apply to ordinary judging.
@@ -32,9 +34,6 @@ def build_system_prompt(
     """
     template = _env.get_template("system_prompt.j2")
     return template.render(
-        target_dimension=target_dimension,
-        dimensions=DIMENSIONS,
-        critical_dimensions=sorted(CRITICAL_DIMENSIONS),
         intended_solicitation=intended_solicitation,
         marker_hash=marker_hash,
     )
@@ -42,6 +41,7 @@ def build_system_prompt(
 
 def build_user_message(
     *,
+    target_dimension: str,
     summary_id: str,
     transcript_ref: str,
     transcript_text: str,
@@ -52,6 +52,10 @@ def build_user_message(
     marker_hash: str,
 ) -> str:
     """Render and return the USER turn for the LLM judge.
+
+    Everything shared by the judge calls for one summary comes first and the rubric for
+    ``target_dimension`` comes last, so those calls differ only in their tail and the provider can
+    serve the transcript and summary from its prompt cache.
 
     ``intended_solicitation`` is supplied only by the security (prompt-injection) eval; when set, the
     template adds a block telling the judge an injection is present and what it is trying to do.
@@ -70,6 +74,7 @@ def build_user_message(
     """
     template = _env.get_template("user_message.j2")
     return template.render(
+        target_dimension=target_dimension,
         citation_markers=citation_markers(summary_text, transcript_entry_count(transcript_text)),
         summary_id=summary_id,
         transcript_ref=transcript_ref,

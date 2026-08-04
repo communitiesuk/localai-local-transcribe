@@ -1,8 +1,7 @@
 import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
-import { DownloadButton } from '@/components/download-button'
-import { Button } from '@/components/ui/button'
+import { GovukButton, GovukButtonGroup } from '@/components/govuk'
 import CopyButton from '@/components/ui/copy-button'
 import {
   useUpdateTranscription,
@@ -10,9 +9,10 @@ import {
 } from '@/hooks/use-update-transcription-speakers'
 import { DialogueEntry, TranscriptionGetResponse } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { downloadTranscriptDoc } from '@/lib/download-word-doc'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowDown, Play } from 'lucide-react'
+import { Play } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
 
@@ -201,6 +201,10 @@ export function TranscriptionTab({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playingRef = useRef<HTMLDivElement | null>(null)
   const [time, setTime] = useState(0)
+  const [isEditing, setIsEditing] = useState(false)
+
+  const handleDownloadTranscript = () =>
+    downloadTranscriptDoc(getValues('entries'))
 
   const scrollToPlaying = () => {
     if (playingRef.current) {
@@ -220,18 +224,38 @@ export function TranscriptionTab({
     <div>
       <FormProvider {...methods}>
         <form>
-          <div className="flex justify-between">
+          <GovukButtonGroup className="govuk-!-margin-bottom-4">
             <SpeakerEditor
               src={hasRecordings ? recordings[0].url : undefined}
               onSaveSpeaker={handleRenameSpeakerEverywhere}
             />
+            <GovukButton
+              type="button"
+              variant="secondary"
+              className="govuk-!-margin-bottom-0"
+              aria-pressed={isEditing}
+              onClick={() => setIsEditing((editing) => !editing)}
+            >
+              {isEditing ? 'Stop editing' : 'Edit transcript'}
+            </GovukButton>
             <CopyButton
               textToCopy={transcriptionString}
               posthogEvent="transcript_content_copied"
+              label="Copy transcript"
             />
-          </div>
+            {fields.length > 0 && (
+              <GovukButton
+                type="button"
+                variant="secondary"
+                className="govuk-!-margin-bottom-0"
+                onClick={handleDownloadTranscript}
+              >
+                Download transcript
+              </GovukButton>
+            )}
+          </GovukButtonGroup>
           {hasRecordings && (
-            <div className="sticky top-0 mb-2 flex flex-col gap-2 rounded border bg-white p-2">
+            <div className="govuk-!-margin-bottom-2 sticky top-0 bg-[var(--govuk-body-background-colour)] py-2">
               <audio
                 controls
                 src={recordings[0].url}
@@ -244,16 +268,9 @@ export function TranscriptionTab({
                   }
                 }}
               />
-              <div className="flex justify-between">
-                <div>
-                  <Button onClick={scrollToPlaying} variant="link">
-                    <ArrowDown /> Scroll to playing
-                  </Button>
-                </div>
-                <DownloadButton recordings={recordings} />
-              </div>
             </div>
           )}
+          <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
           <div className="flex flex-col gap-6">
             {fields.map((field, index) => {
               const entry = watchedEntries?.[index] ?? field
@@ -264,15 +281,16 @@ export function TranscriptionTab({
               )
               return (
                 <div
-                  className={cn('flex items-start gap-2 rounded', {
-                    'bg-blue-100': isPlaying,
+                  className={cn('flex items-start gap-2', {
+                    'bg-[var(--govuk-surface-background-colour)]': isPlaying,
                   })}
                   key={field.id}
                   ref={isPlaying ? playingRef : null}
                 >
                   {hasRecordings && (
-                    <Button
+                    <button
                       type="button"
+                      aria-label="Play from here"
                       onClick={() => {
                         if (audioRef.current) {
                           audioRef.current.currentTime = entry.start_time
@@ -281,23 +299,23 @@ export function TranscriptionTab({
                           }
                         }
                       }}
-                      variant="ghost"
-                      className="size-6 rounded-full bg-blue-500 text-xs text-white hover:bg-blue-800 hover:text-white"
-                      size="icon"
+                      className="govuk-!-margin-top-1 flex shrink-0 items-center text-[var(--govuk-text-colour)] hover:text-[var(--govuk-link-colour)] focus:bg-[var(--govuk-focus-colour)] focus:text-[var(--govuk-focus-text-colour)] focus:shadow-[0_2px_0_var(--govuk-focus-text-colour)] focus:[outline:3px_solid_transparent]"
                     >
-                      <Play />
-                    </Button>
+                      <Play size={12} fill="currentColor" aria-hidden="true" />
+                    </button>
                   )}
                   <SpeakerNamePopover
                     entry={entry}
                     index={index}
                     onUpdateAll={handleRenameSpeakerEverywhere}
                     onUpdateSingle={handleRenameSingleSpeaker}
+                    editing={isEditing}
                   />
                   <TranscriptionTextArea
                     control={control}
                     index={index}
                     onSaveText={handleUpdateEntryText}
+                    editing={isEditing}
                   />
                 </div>
               )
