@@ -130,6 +130,16 @@ evals/**/output/
 **/*.mp3
 **/*.m4a
 
+# AIILG-792 bias July dataset artefacts kept local for now (absolute machine paths; not yet sanitised)
+evals/dataset_generation/counterfactual_generation/bias_july_dataset/
+evals/dataset_generation/characteristics/configs/bias_july_dataset.yaml
+evals/dataset_generation/characteristics/configs/bias_july_rehab.yaml
+evals/dataset_generation/characteristics/configs/bias_july_replacements.yaml
+evals/dataset_generation/characteristics/configs/bias_july_rich_one.yaml
+evals/dataset_generation/characteristics/configs/bias_july_topup.yaml
+evals/dataset_generation/characteristics/configs/bias_july_topup2.yaml
+final_july_set_report.md
+
 frontend/public/assets/govuk.coverage
 
 #openapi auto-generated files
