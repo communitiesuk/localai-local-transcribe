@@ -71,6 +71,14 @@ class CounterfactualRewriter:
         rewritten_entries = self._reconstruct_entries(original_transcript.dialogue_entries, rewritten_texts)
         modified_indices = identify_modified_entries(original_transcript.dialogue_entries, rewritten_entries)
 
+        # A counterfactual that leaves every turn unchanged has not applied the locked axis change.
+        if not modified_indices:
+            msg = (
+                f"Rewrite made no edits for {axis_change.axis} "
+                f"({axis_change.original_value} -> {axis_change.target_value})"
+            )
+            raise ValueError(msg)
+
         if characteristic_detection.evidence_spans:
             verify_evidence_modifications(
                 characteristic_detection.evidence_spans,

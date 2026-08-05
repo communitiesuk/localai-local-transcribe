@@ -136,6 +136,18 @@ async def test_rewrite_transcript_text_count_mismatch(
 
 
 @pytest.mark.asyncio
+async def test_rewrite_transcript_rejects_zero_edits(
+    mock_chatbot, sample_transcript, sample_detection, sample_axis_change
+):
+    """A rewrite that returns the original wording has not applied the axis change."""
+    mock_chatbot.chat.return_value = '["He is a doctor", "Yes, he works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    with pytest.raises(ValueError, match="Rewrite made no edits"):
+        await rewriter.rewrite_transcript(sample_transcript, sample_detection, sample_axis_change)
+
+
+@pytest.mark.asyncio
 async def test_rewrite_transcript_preserves_structure(
     mock_chatbot, sample_transcript, sample_detection, sample_axis_change
 ):
