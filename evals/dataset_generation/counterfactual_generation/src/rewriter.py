@@ -13,7 +13,10 @@ from evals.dataset_generation.counterfactual_generation.src.models import (
     CounterfactualOutput,
     TranscriptInput,
 )
-from evals.dataset_generation.counterfactual_generation.src.parser import parse_llm_response
+from evals.dataset_generation.counterfactual_generation.src.parser import (
+    parse_llm_response,
+    strip_leading_entry_indexes,
+)
 from evals.dataset_generation.counterfactual_generation.src.validation import (
     identify_modified_entries,
     validate_evidence_spans,
@@ -57,7 +60,7 @@ class CounterfactualRewriter:
         messages = [{"role": "user", "content": prompt}]
         response = await self.chatbot.chat(messages=messages)
 
-        rewritten_texts = parse_llm_response(response)
+        rewritten_texts = strip_leading_entry_indexes(parse_llm_response(response))
 
         if len(rewritten_texts) != len(original_transcript.dialogue_entries):
             expected = len(original_transcript.dialogue_entries)

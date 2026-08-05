@@ -103,7 +103,8 @@ If any span above is still present unchanged, replace it now before returning.
 5. Return exactly {{ dialogue_texts|length }} text strings in the same order
 
 **Output Format**:
-Return ONLY a valid JSON array of rewritten text strings, one for each dialogue entry in the same order:
+Return ONLY a valid JSON array of rewritten text strings, one for each dialogue entry in the same order.
+Each JSON string must be the turn text only, with no leading entry index (do not copy the `0. `, `1. `, ... prefixes from the transcript above):
 ```json
 [
   "rewritten text for entry 0",
