@@ -1,5 +1,6 @@
 'use client'
 
+import { GovukFormGroup, GovukLabel, GovukSelect } from '@/components/govuk'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChangeEvent } from 'react'
 
@@ -17,12 +18,9 @@ export const RecordingsSort = () => {
   }
 
   return (
-    <div className="govuk-form-group">
-      <label className="govuk-label" htmlFor="sort-recordings">
-        Sort by
-      </label>
-      <select
-        className="govuk-select"
+    <GovukFormGroup>
+      <GovukLabel htmlFor="sort-recordings">Sort by</GovukLabel>
+      <GovukSelect
         id="sort-recordings"
         name="sort-recordings"
         value={sort}
@@ -30,7 +28,7 @@ export const RecordingsSort = () => {
       >
         <option value="newest">Date recorded (newest to oldest)</option>
         <option value="oldest">Date recorded (oldest to newest)</option>
-      </select>
-    </div>
+      </GovukSelect>
+    </GovukFormGroup>
   )
 }

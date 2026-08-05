@@ -25,13 +25,13 @@ from common.types import (
     LabelledTranscriptionsResponse,
     RecordingCreateRequest,
     RecordingCreateResponse,
-    RecordingSortOrder,
     RenameSpeakerRequest,
     SingleRecording,
     TaskType,
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
+    TranscriptionSortOrder,
     UnlabelledTranscriptionMetadata,
     UnlabelledTranscriptionsResponse,
     UpdateDialogueEntrySpeakerRequest,
@@ -92,9 +92,9 @@ def _validate_dialogue_entry(
         raise HTTPException(status_code=409, detail="Dialogue entry text has changed")
 
 
-def _created_datetime_order(sort: RecordingSortOrder) -> ColumnElement[Any]:
+def _created_datetime_order(sort: TranscriptionSortOrder) -> ColumnElement[Any]:
     column = col(Transcription.created_datetime)
-    return column.asc() if sort == RecordingSortOrder.oldest else column.desc()
+    return column.asc() if sort == TranscriptionSortOrder.oldest else column.desc()
 
 
 @transcriptions_router.get("/transcriptions/labelled", response_model=LabelledTranscriptionsResponse)
@@ -103,7 +103,9 @@ async def list_labelled_transcriptions(
     current_user: UserDep,
     page: int = Query(1, ge=1, description="Page number (starts from 1)"),
     page_size: int = Query(20, ge=1, le=100, description="Number of items per page"),
-    sort: Annotated[RecordingSortOrder, Query(description="Sort order for date recorded")] = RecordingSortOrder.newest,
+    sort: Annotated[
+        TranscriptionSortOrder, Query(description="Sort order for date recorded")
+    ] = TranscriptionSortOrder.newest,
 ) -> LabelledTranscriptionsResponse:
     """Get paginated metadata for labelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -161,7 +163,9 @@ async def list_labelled_transcriptions(
 async def list_unlabelled_transcriptions(
     session: SQLSessionDep,
     current_user: UserDep,
-    sort: Annotated[RecordingSortOrder, Query(description="Sort order for date recorded")] = RecordingSortOrder.newest,
+    sort: Annotated[
+        TranscriptionSortOrder, Query(description="Sort order for date recorded")
+    ] = TranscriptionSortOrder.newest,
 ) -> UnlabelledTranscriptionsResponse:
     """Get metadata for unlabelled transcriptions for the current user."""
     labelled_filter = or_(

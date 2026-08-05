@@ -322,7 +322,7 @@ class AgendaUsage(StrEnum):
     REQUIRED = auto()
 
 
-class RecordingSortOrder(StrEnum):
+class TranscriptionSortOrder(StrEnum):
     newest = auto()
     oldest = auto()
 
