@@ -106,18 +106,22 @@ async def test_rewrite_transcript_axis_mismatch(mock_chatbot, sample_transcript,
 
 
 @pytest.mark.asyncio
-async def test_rewrite_transcript_original_value_mismatch(mock_chatbot, sample_transcript, sample_detection, caplog):
-    mismatched_change = AxisChange(
+async def test_rewrite_transcript_allows_original_value_to_differ_from_detected_value(
+    mock_chatbot, sample_transcript, sample_detection
+):
+    # A change carries a controlled vocabulary value while a detection carries the detector's own
+    # phrasing, so a difference between the two must not block the rewrite.
+    vocabulary_change = AxisChange(
         axis=ProtectedCharacteristic.SEX,
-        original_value="female",
-        target_value="male",
+        original_value="male_participant",
+        target_value="female",
     )
-    mock_chatbot.chat.return_value = '["He is a doctor", "Yes, he works at the hospital"]'
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
 
     rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
-    await rewriter.rewrite_transcript(sample_transcript, sample_detection, mismatched_change)
+    result = await rewriter.rewrite_transcript(sample_transcript, sample_detection, vocabulary_change)
 
-    assert "Original value mismatch" in caplog.text
+    assert result.rewritten_transcript[0]["text"] == "She is a doctor"
 
 
 @pytest.mark.asyncio

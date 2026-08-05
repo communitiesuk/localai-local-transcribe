@@ -88,20 +88,20 @@ class CounterfactualRewriter:
     def _validate_axis_compatibility(
         self, characteristic_detection: CharacteristicDetection, axis_change: AxisChange
     ) -> None:
-        """Validate axis change is compatible with characteristic detection."""
+        """Validate the axis change refers to the same axis as the characteristic detection.
+
+        The original values are deliberately not compared. A change carries a controlled
+        vocabulary value such as "female", used for grouping in the bias evaluation, while a
+        detection carries the free text phrase the detector produced such as "Female (name and
+        pronoun proxy)". Which detection record a change applies to is settled when the
+        detections are loaded, so the two values are not expected to be identical here.
+        """
         if axis_change.axis != characteristic_detection.axis:
             msg = (
                 f"Axis mismatch: change requests {axis_change.axis} "
                 f"but detection found {characteristic_detection.axis}"
             )
             raise ValueError(msg)
-
-        if axis_change.original_value != characteristic_detection.detected_value:
-            logger.warning(
-                "Original value mismatch: change specifies %s but detection found %s",
-                axis_change.original_value,
-                characteristic_detection.detected_value,
-            )
 
     def _log_evidence_usage(self, characteristic_detection: CharacteristicDetection, max_index: int) -> None:
         """Log evidence span usage and validate if present."""
