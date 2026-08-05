@@ -66,7 +66,11 @@ The following areas contain evidence of the {{ axis }} characteristic:
 - "{{ span.text_snippet or span.text }}"
 {% endfor %}
 
+{% if axis == "Sex" %}
+Focus on evidence that belongs to the participant(s) whose sex is being changed from "{{ original_value }}" to "{{ target_value }}". If an evidence span is only another speaker's name, keep that name unchanged and do not treat it as something to rewrite.
+{% else %}
 Focus on these areas when applying the transformation, then ensure consistency throughout the entire transcript.
+{% endif %}
 {% else %}
 **Note**: Apply transformation uniformly across all relevant dialogue entries.
 {% endif %}
@@ -86,20 +90,29 @@ Then systematically transform it to "{{ target_value }}" by:
 
 **Final Check — work through this checklist before producing your output**:
 {% if evidence_spans and evidence_spans|length > 0 %}
+{% if axis == "Sex" %}
+For each evidence span below:
+- If it is only the name of a speaker whose sex is not being changed, leave every occurrence character-for-character unchanged.
+- Otherwise, locate every occurrence in your draft output and confirm it is gone or rewritten for the participant whose sex is changing.
+{% for span in evidence_spans %}
+- [ ] "{{ span.text_snippet or span.text }}"
+{% endfor %}
+{% else %}
 For each evidence span below, locate every occurrence in your draft output and confirm it is gone:
 {% for span in evidence_spans %}
 - [ ] "{{ span.text_snippet or span.text }}" — must not appear verbatim anywhere in the rewrite. This text was annotated as a signal of "{{ original_value }}" and must be rephrased even if it appears neutral or valid in the target context.
 {% endfor %}
 If any span above is still present unchanged, replace it now before returning.
 {% endif %}
-- [ ] Every participant name that could signal "{{ original_value }}" has been substituted with a different name.
+{% endif %}
+- [ ] {% if axis == "Sex" %}Only the participant(s) whose sex is changing have had sex-signalling names, pronouns, or titles updated; every other speaker's name is character-for-character unchanged{% else %}Every participant name that could signal "{{ original_value }}" has been substituted with a different name{% endif %}.
 - [ ] Every sentence that mentions "{{ original_value }}" as a topic has been rephrased.
 
 **Requirements**:
 1. Apply changes consistently throughout the entire transcript
-2. Update ALL pronouns, names, and references to maintain consistency — participant names can implicitly signal the characteristic even when not listed in the evidence spans
+2. Update ALL pronouns, names, and references to maintain consistency — participant names can implicitly signal the characteristic even when not listed in the evidence spans{% if axis == "Sex" %}. For Sex, apply that only to the participant(s) whose sex is being changed; leave every other speaker's name exactly as written{% endif %}
 3. Preserve meeting content and structure
-4. Do NOT change unrelated attributes or technical content. Changing Marriage and Civil Partnership must not change the partner's sex or sexual orientation; marriage may be same-sex. Changing Sex must not change surnames; signal Sex through first names, pronouns, titles, and gendered language only. Changing Religion or Belief must not change participant names; signal religion through practice, belief, and religious titles only.
+4. Do NOT change unrelated attributes or technical content. Changing Marriage and Civil Partnership must not change the partner's sex or sexual orientation; marriage may be same-sex. Changing Sex must not change surnames; signal Sex through first names, pronouns, titles, and gendered language only. Changing Sex applies only to the participant(s) whose sex is being changed: leave every other speaker's first name, surname, and form of address character-for-character unchanged, even if those names could also be read as gendered. Changing Religion or Belief must not change participant names; signal religion through practice, belief, and religious titles only.
 5. Return exactly {{ dialogue_texts|length }} text strings in the same order
 
 **Output Format**:

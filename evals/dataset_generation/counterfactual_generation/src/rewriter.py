@@ -128,6 +128,22 @@ class CounterfactualRewriter:
             rewritten_entries.append(rewritten_entry)
         return rewritten_entries
 
+    def _unique_evidence_spans_for_prompt(self, evidence_spans: list) -> list:
+        """Keep the first span for each distinct text snippet when building the rewrite prompt.
+
+        Detection often repeats the same phrase across overlapping character ranges. Listing
+        every copy in the prompt bloated the evidence checklist and caused the model to return
+        the wrong number of dialogue turns on long, densely annotated transcripts.
+        """
+        seen_snippets: set[str] = set()
+        unique_spans = []
+        for span in evidence_spans:
+            if span.text_snippet in seen_snippets:
+                continue
+            seen_snippets.add(span.text_snippet)
+            unique_spans.append(span)
+        return unique_spans
+
     def _build_prompt(
         self,
         dialogue_texts: list[str],
@@ -143,6 +159,6 @@ class CounterfactualRewriter:
             axis=axis_change.axis,
             original_value=axis_change.original_value,
             target_value=axis_change.target_value,
-            evidence_spans=characteristic_detection.evidence_spans,
+            evidence_spans=self._unique_evidence_spans_for_prompt(characteristic_detection.evidence_spans),
             custom_instructions=custom_instructions,
         )
