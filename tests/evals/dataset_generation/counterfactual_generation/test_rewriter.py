@@ -236,3 +236,28 @@ async def test_sex_prompt_includes_pregnancy_coherence_exception(
     assert "Sex and Pregnancy coherence" in prompt_content
     assert "male participant must not remain described as pregnant" in prompt_content
     assert "do not invent pregnancy or maternity" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_race_prompt_includes_interpreting_language_consistency(mock_chatbot, sample_transcript):
+    """Race rewrites must require interpreting labels and body language to match."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.RACE,
+        detected_value="Middle Eastern",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="Dari", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.RACE,
+        original_value="middle_eastern_north_african",
+        target_value="asian_british",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "Race and interpreting language consistency" in prompt_content
+    assert "Do not announce a new interpreting language" in prompt_content
+    assert "English language label and the body language or script now match" in prompt_content
