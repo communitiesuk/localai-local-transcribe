@@ -139,6 +139,7 @@ evals/dataset_generation/characteristics/configs/bias_july_rich_one.yaml
 evals/dataset_generation/characteristics/configs/bias_july_topup.yaml
 evals/dataset_generation/characteristics/configs/bias_july_topup2.yaml
 final_july_set_report.md
+evals/dataset_generation/counterfactual_generation/notes_from_bias_dataset_generation.md
 
 frontend/public/assets/govuk.coverage
 
