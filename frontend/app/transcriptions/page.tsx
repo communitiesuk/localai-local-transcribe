@@ -1,8 +1,10 @@
-import { PaginatedTranscriptions } from '@/components/recent-meetings/paginated-transcriptions'
+import { PaginatedLabelledTranscriptions } from '@/components/recent-meetings/paginated-labelled-transcriptions'
 import { Loader2 } from 'lucide-react'
 import { Suspense } from 'react'
 import { GovukAccordion } from '../../components/govuk/accordion'
 import { GovukAccordionSection } from '../../components/govuk/accordion'
+import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
+import { UnlabelledTranscriptions } from '@/components/recent-meetings/unlabelled-transcriptions'
 
 export default function TranscriptionsPage() {
 
@@ -30,7 +32,9 @@ export default function TranscriptionsPage() {
           </div>
         }
       >
-        <PaginatedTranscriptions />
+        <OfflineRecordings />
+        <UnlabelledTranscriptions />
+        <PaginatedLabelledTranscriptions />
       </Suspense>
     </div>
   )

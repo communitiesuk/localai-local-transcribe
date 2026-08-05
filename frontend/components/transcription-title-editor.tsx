@@ -1,8 +1,7 @@
-import { Button } from '@/components/ui/button'
+import { GovukButton } from '@/components/govuk'
 import { useUpdateTranscription } from '@/hooks/use-update-transcription-speakers'
 import { JobStatus } from '@/lib/client'
 import { cn } from '@/lib/utils'
-import { Edit } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
@@ -52,7 +51,7 @@ export const TranscriptionTitleEditor = ({
             void form.handleSubmit(onSubmit)()
           },
         })}
-        className="rounded-md border-2 border-slate-400 text-3xl font-bold"
+        className="govuk-input govuk-!-font-size-36 govuk-!-font-weight-bold govuk-!-margin-bottom-2"
         placeholder={placeholder}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
@@ -65,18 +64,23 @@ export const TranscriptionTitleEditor = ({
 
   return (
     <div className="flex items-baseline gap-2">
-      <h1 className={cn('text-3xl font-bold', { 'text-gray-400': !title })}>
+      <h1
+        className={cn('govuk-heading-l govuk-!-margin-bottom-2', {
+          'text-[var(--govuk-secondary-text-colour)]': !title,
+        })}
+      >
         {titleValue || placeholder}
       </h1>
-      <Button
+      <GovukButton
+        type="button"
+        variant="secondary"
+        className="govuk-!-margin-bottom-0"
         onClick={() => {
           setEditing(true)
         }}
-        variant="ghost"
-        className="text-slate-500"
       >
-        <Edit /> Rename
-      </Button>
+        Rename
+      </GovukButton>
     </div>
   )
 }

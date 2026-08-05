@@ -1,25 +1,27 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import EditApprovedDomainsPage from '@/app/user-management/organisations/[organisationId]/domains/page'
+import EditApprovedDomainsPage, {
+  DomainsUpdateConflictError,
+} from '@/app/user-management/organisations/[organisationId]/domains/page'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { getOrganisationOrganisationsOrganisationIdGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
+import { useBannerStore } from '@/stores/use-banner-store'
 
 // Overrides React's `use` hook to synchronously unwrap dynamic promises during tests
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>()
   return {
     ...actual,
-    use: (promise: any) => {
+    use<T>(promise: Promise<T> & { _value?: T }): T {
       if (
         promise &&
         typeof promise.then === 'function' &&
         '_value' in promise
       ) {
-        return promise._value
+        return promise._value as T
       }
       return actual.use(promise)
     },
@@ -71,53 +73,101 @@ describe('<EditApprovedDomainsPage />', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    useBannerStore.getState().clearBanner()
     currentOrganisationId = 'org-1'
 
-    vi.mocked(useAuthorisedUser).mockImplementation(((options?: any) => {
-      const organisationId = options?.organisationId || currentOrganisationId
+    vi.mocked(useAuthorisedUser).mockImplementation(
+      (options?: { organisationId?: string }) => {
+        const organisationId = options?.organisationId || currentOrganisationId
+
+        return {
+          currentUser: {
+            id: 'user-1',
+            organisation_id: 'org-1',
+            roles: ['local_authority_admin'],
+          },
+          isAllowed: organisationId === 'org-1',
+          isLoading: false,
+          isError: false,
+        } as unknown as ReturnType<typeof useAuthorisedUser>
+      }
+    )
+
+    vi.mocked(useOrganisation).mockImplementation(
+      (param?: string | { organisationId?: string }) => {
+        const organisationId =
+          typeof param === 'string'
+            ? param
+            : param?.organisationId || currentOrganisationId
+
+        return {
+          data: {
+            id: organisationId,
+            name:
+              organisationId === 'org-1'
+                ? 'Maidstone Borough Council'
+                : 'Different Council',
+            allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
+            created_datetime: '2025-01-01T00:00:00Z',
+            updated_datetime: '2025-01-01T00:00:00Z',
+          },
+          isLoading: false,
+        } as unknown as ReturnType<typeof useOrganisation>
+      }
+    )
+
+    // Transparently forward mutation callbacks defined both in useMutation options
+    // and dynamically in the mutateAsync call options
+    vi.mocked(useMutation).mockImplementation((mutationOptions) => {
+      const mutateAsync = async (
+        variables: unknown,
+        callOptions?: {
+          onSuccess?: (
+            data: unknown,
+            variables: unknown,
+            context: unknown
+          ) => void
+          onError?: (error: Error, variables: unknown, context: unknown) => void
+        }
+      ) => {
+        try {
+          const data = await mockMutateAsync(variables, callOptions)
+          if (
+            mutationOptions &&
+            'onSuccess' in mutationOptions &&
+            typeof mutationOptions.onSuccess === 'function'
+          ) {
+            mutationOptions.onSuccess(data, variables, undefined)
+          }
+          if (callOptions?.onSuccess) {
+            callOptions.onSuccess(data, variables, undefined)
+          }
+          return data
+        } catch (error) {
+          if (
+            mutationOptions &&
+            'onError' in mutationOptions &&
+            typeof mutationOptions.onError === 'function'
+          ) {
+            mutationOptions.onError(error as Error, variables, undefined)
+          }
+          if (callOptions?.onError) {
+            callOptions.onError(error as Error, variables, undefined)
+          }
+          throw error
+        }
+      }
 
       return {
-        currentUser: {
-          id: 'user-1',
-          organisation_id: 'org-1',
-          roles: ['local_authority_admin'],
-        },
-        isAllowed: organisationId === 'org-1',
-        isLoading: false,
-        isError: false,
-      } as any
-    }) as any)
-
-    vi.mocked(useOrganisation).mockImplementation(((param?: any) => {
-      const organisationId =
-        typeof param === 'string'
-          ? param
-          : param?.organisationId || currentOrganisationId
-
-      return {
-        data: {
-          id: organisationId,
-          name:
-            organisationId === 'org-1'
-              ? 'Maidstone Borough Council'
-              : 'Different Council',
-          allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
-          created_datetime: '2025-01-01T00:00:00Z',
-          updated_datetime: '2025-01-01T00:00:00Z',
-        },
-        isLoading: false,
-      } as any
-    }) as any)
-
-    vi.mocked(useMutation).mockReturnValue({
-      mutateAsync: mockMutateAsync,
-      isPending: false,
-    } as any)
+        mutateAsync,
+        isPending: false,
+      } as unknown as ReturnType<typeof useMutation>
+    })
 
     vi.mocked(useQueryClient).mockReturnValue({
       invalidateQueries: mockInvalidateQueries,
       setQueryData: mockSetQueryData,
-    } as any)
+    } as unknown as ReturnType<typeof useQueryClient>)
   })
 
   // Synchronous page renderer using the synchronous `use` hook override
@@ -125,7 +175,9 @@ describe('<EditApprovedDomainsPage />', () => {
     currentOrganisationId = params.organisationId
     mockParams.mockReturnValue(params)
 
-    const paramsPromise = Promise.resolve(params) as any
+    const paramsPromise = Promise.resolve(params) as Promise<{
+      organisationId: string
+    }> & { _value?: { organisationId: string } }
     paramsPromise._value = params
 
     render(<EditApprovedDomainsPage params={paramsPromise} />)
@@ -135,7 +187,7 @@ describe('<EditApprovedDomainsPage />', () => {
     vi.mocked(useOrganisation).mockReturnValue({
       data: undefined,
       isLoading: true,
-    } as any)
+    } as unknown as ReturnType<typeof useOrganisation>)
 
     renderPage()
     expect(screen.getByText('Loading...')).toBeInTheDocument()
@@ -158,9 +210,7 @@ describe('<EditApprovedDomainsPage />', () => {
   it('renders the hint text and the expandable help section', () => {
     renderPage()
 
-    expect(
-      screen.getByText(/Please list any approved domains/i)
-    ).toBeInTheDocument()
+    expect(screen.getByText(/List any approved domains/i)).toBeInTheDocument()
     expect(screen.getByText('More about approved domains')).toBeInTheDocument()
     expect(screen.getByText(/able to be invited to a/i)).toBeInTheDocument()
   })
@@ -172,7 +222,12 @@ describe('<EditApprovedDomainsPage />', () => {
   })
 
   it('submits the parsed domains list, updates the query cache, and navigates back on success', async () => {
-    mockMutateAsync.mockResolvedValueOnce({})
+    const mockUpdatedOrganisation = {
+      id: 'org-1',
+      name: 'Maidstone Borough Council',
+      allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
+    }
+    mockMutateAsync.mockResolvedValueOnce(mockUpdatedOrganisation)
     renderPage()
 
     const textarea = screen.getByLabelText('Approved domains', {
@@ -188,27 +243,27 @@ describe('<EditApprovedDomainsPage />', () => {
 
     expect(mockMutateAsync).toHaveBeenCalledWith(
       {
-        path: { organisation_id: 'org-1' },
-        body: { allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'] },
+        organisationId: 'org-1',
+        allowedDomains: ['maidstone.gov.uk', 'communities.gov.uk'],
+        updatedDatetime: '2025-01-01T00:00:00Z',
       },
-      expect.any(Object)
+      undefined
     )
 
-    const mockUpdatedOrganisation = {
-      id: 'org-1',
-      name: 'Maidstone Borough Council',
-      allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
-    }
+    await waitFor(() => {
+      expect(mockSetQueryData).toHaveBeenCalledWith(
+        getOrganisationOrganisationsOrganisationIdGetQueryKey({
+          path: { organisation_id: 'org-1' },
+        }),
+        mockUpdatedOrganisation
+      )
+    })
 
-    const mutationCallArgs = mockMutateAsync.mock.calls[0]
-    const onSuccessCallback = mutationCallArgs[1]?.onSuccess
-    onSuccessCallback?.(mockUpdatedOrganisation)
-
-    expect(mockSetQueryData).toHaveBeenCalledWith(
-      getOrganisationOrganisationsOrganisationIdGetQueryKey({
-        path: { organisation_id: 'org-1' },
-      }),
-      mockUpdatedOrganisation
+    expect(useBannerStore.getState().banner).toEqual(
+      expect.objectContaining({
+        variant: 'success',
+        title: 'Approved domains updated',
+      })
     )
     expect(mockPush).toHaveBeenCalledWith('/user-management')
   })
@@ -227,6 +282,24 @@ describe('<EditApprovedDomainsPage />', () => {
       screen.getAllByText('Enter at least one approved domain')
     ).not.toHaveLength(0)
     expect(mockMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('shows a conflict banner and refetches instead of navigating away when the domains were changed elsewhere', async () => {
+    mockMutateAsync.mockRejectedValueOnce(new DomainsUpdateConflictError())
+    renderPage()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      await screen.findByText(/your changes were not saved/i)
+    ).toBeInTheDocument()
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({
+      queryKey: getOrganisationOrganisationsOrganisationIdGetQueryKey({
+        path: { organisation_id: 'org-1' },
+      }),
+    })
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(useBannerStore.getState().banner).toBeNull()
   })
 
   it('renders a Cancel link back to user management', () => {

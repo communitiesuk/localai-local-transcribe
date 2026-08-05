@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
@@ -36,6 +36,7 @@ def mock_user() -> User:
     return User(
         id=uuid4(),
         email=mock_email,
+        accepted_tou=True,
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
@@ -44,10 +45,17 @@ def mock_user() -> User:
 
 
 @pytest.fixture
+def mock_pending_tou_user(mock_user) -> User:
+    mock_user.accepted_tou = False
+    return mock_user
+
+
+@pytest.fixture
 def mock_support_admin() -> User:
     return User(
         id=uuid4(),
         email=mock_email,
+        accepted_tou=True,
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
@@ -84,6 +92,7 @@ def make_user():
         return User(
             id=uuid4(),
             email=mock_email,
+            accepted_tou=True,
             organisation_id=organisation_id or uuid4(),
             roles=roles or [UserRole.STANDARD_USER],
             data_retention_days=30,
@@ -195,6 +204,28 @@ def mock_transcription(mock_minute, mock_user) -> Transcription:
             {"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0},
             {"speaker": "Bob", "text": "Hi there", "start_time": 1.0, "end_time": 2.0},
         ],
+        date_of_recording=datetime.now(tz=UTC),
+        client_date_of_birth=datetime.now(tz=UTC) - timedelta(weeks=2_000),
+        client_name="Alice",
+        case_id="ABC123456",
+    )
+
+
+@pytest.fixture
+def mock_unlabelled_transcription(mock_minute, mock_user) -> Transcription:
+    return Transcription(
+        id=uuid4(),
+        user_id=mock_user.id,
+        audio_url="https://example.com/audio.mp3",
+        status=JobStatus.COMPLETED,
+        created_datetime=datetime.now(tz=UTC),
+        updated_datetime=datetime.now(tz=UTC),
+        minutes=[mock_minute],
+        title="Test Transcription",
+        dialogue_entries=[
+            {"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0},
+            {"speaker": "Bob", "text": "Hi there", "start_time": 1.0, "end_time": 2.0},
+        ],
     )
 
 
@@ -242,6 +273,11 @@ def mock_chat(uid=None, user_content="hello", assistant_content="world", status=
         created_datetime=datetime.now(tz=UTC),
         updated_datetime=datetime.now(tz=UTC),
     )
+
+
+@pytest.fixture
+def mock_email_sender(mocker):
+    return mocker.patch("backend.api.routes.users.email_sender")
 
 
 @pytest.fixture

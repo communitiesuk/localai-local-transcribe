@@ -7,6 +7,7 @@ import {
   getUserTemplateUserTemplatesTemplateIdGetOptions,
   getUserTemplateUserTemplatesTemplateIdGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
 import {
   keepPreviousData,
@@ -15,10 +16,10 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { useEffect, use } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
 
 export default function EditTemplatePage(props: {
   params: Promise<{ templateId: string }>
@@ -85,17 +86,24 @@ const TemplateEditorForm = ({
     }
   }, [form, form.formState.isSubmitSuccessful])
 
+  const router = useRouter()
+  const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
   const { mutate } = useMutation({
     ...editUserTemplateUserTemplatesTemplateIdPatchMutation(),
     onSuccess: () => {
-      toast.success('Changes saved!', { position: 'top-center' })
       queryClient.invalidateQueries({
         queryKey: getUserTemplateUserTemplatesTemplateIdGetQueryKey({
           path: { template_id: templateId },
         }),
       })
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: `Changes to '${form.getValues('name')}' saved`,
+      })
       posthog.capture('template_edited')
+      router.push('/templates')
     },
   })
 

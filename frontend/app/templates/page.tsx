@@ -1,8 +1,12 @@
 import { UserTemplatesList } from '@/app/templates/components/user-templates-list'
+import { BannerNotification } from '@/components/banner-notification'
 
 export default function TemplatesPage() {
   return (
     <div>
+      {/* Next dev mode (`npm run dev`) can clear the store that triggers this banner. 
+      In prod (`npm run build && npm start`) this is not an issue */}
+      <BannerNotification />
       <header className="govuk-!-margin-bottom-6">
         <div className="flex items-center gap-3">
           <h1 className="govuk-heading-l govuk-!-margin-bottom-0">

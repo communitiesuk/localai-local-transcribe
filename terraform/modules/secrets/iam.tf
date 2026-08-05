@@ -65,6 +65,8 @@ resource "aws_iam_role_policy" "secret_access" {
           aws_ssm_parameter.azure_apim_subscription_key.arn,
           aws_ssm_parameter.sentry_dsn.arn,
           aws_ssm_parameter.oidc_client_id.arn,
+          aws_ssm_parameter.govnotify_api_key.arn,
+          aws_ssm_parameter.govnotify_invite_template_id.arn,
         ]
       }
     ]

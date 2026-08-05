@@ -1,8 +1,11 @@
 'use client'
 import { useRouter } from 'next/navigation'
 
-import { useMutation } from '@tanstack/react-query'
-import { createOrganisationOrganisationsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  createOrganisationOrganisationsPostMutation,
+  listOrganisationsOrganisationsGetQueryKey,
+} from '@/lib/client/@tanstack/react-query.gen'
 
 import { GovukHeading, GovukBackLink } from '@/components/govuk'
 import { EditDomainsForm } from '@/components/organisations/domains-form'
@@ -14,6 +17,7 @@ import { useBannerStore } from '@/stores/use-banner-store'
 
 export default function CreateNewOrganisationDomains() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { newOrg } = useNewOrgStore()
   const clearNewOrg = useNewOrgStore((store) => store.clearNewOrg)
   const setBanner = useBannerStore((store) => store.setBanner)
@@ -22,6 +26,9 @@ export default function CreateNewOrganisationDomains() {
     useMutation({
       ...createOrganisationOrganisationsPostMutation(),
       onSuccess() {
+        queryClient.invalidateQueries({
+          queryKey: listOrganisationsOrganisationsGetQueryKey(),
+        })
         setBanner({
           variant: 'success',
           title: 'Organisation created',

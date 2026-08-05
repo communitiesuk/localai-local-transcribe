@@ -1,7 +1,7 @@
 # ruff: noqa: ARG001
 # needed for pytest fixtures
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -18,6 +18,13 @@ def convert_to_datetime(json_datetime: str) -> datetime:
     return datetime.fromisoformat(json_datetime.replace("Z", "+00:00"))
 
 
+async def user_create_refresh(user):
+    user.id = uuid4()
+    user.created_datetime = datetime.now(UTC)
+    user.updated_datetime = datetime.now(UTC)
+    user.last_login = datetime.now(UTC)
+
+
 @pytest.mark.asyncio
 async def test_get_user(override_user, mock_user):
     async with get_test_client() as ac:
@@ -31,6 +38,26 @@ async def test_get_user(override_user, mock_user):
     assert data["data_retention_days"] == mock_user.data_retention_days
     assert convert_to_datetime(data["created_datetime"]) == mock_user.created_datetime
     assert convert_to_datetime(data["updated_datetime"]) == mock_user.updated_datetime
+
+
+@pytest.mark.skip(reason="run test only after AIILG-764 implemented")
+@pytest.mark.asyncio
+async def test_accept_terms_of_use_success(override_user, override_session, mock_pending_tou_user, mock_session):
+    assert mock_pending_tou_user.accepted_tou is False
+
+    async with get_test_client() as ac:
+        response = await ac.post("/users/terms-of-use")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert mock_pending_tou_user.accepted_tou is True
+    assert data["id"] == str(mock_pending_tou_user.id)
+    assert data["email"] == mock_pending_tou_user.email
+    assert data["accepted_tou"] is True
+
+    mock_session.commit.assert_awaited_once()
+    mock_session.refresh.assert_awaited_once_with(mock_pending_tou_user)
 
 
 @pytest.mark.parametrize("retention_period", [1, 7, 30])

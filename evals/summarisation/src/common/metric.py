@@ -1,17 +1,65 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import secrets
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import dspy
 from pydantic import BaseModel, ConfigDict, Field
 
+from common.services.template_manager import TemplateManager
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
 from evals.summarisation.src.common.config import AppConfig
 from evals.summarisation.src.common.schemas import DialogExample, MetricResult
 from evals.summarisation.src.constants import CONCURRENCY, normalise_judge_score
 from evals.summarisation.src.judge import build_system_prompt, build_user_message
+
+logger = logging.getLogger(__name__)
+
+# The judge dimension that scores citation quality, and so only means anything for a summary path
+# that produces citations.
+CITATION_DIMENSION = "auditability"
+
+# Tags the BEGIN/END markers around the transcript and summary so the judge can tell a genuine
+# boundary from one mimicked by injected text. Drawn once per process rather than per call: it sits
+# in the shared prefix of every judge prompt, so re-drawing it would cost every call its prompt
+# cache, and a hash the summariser never saw is unguessable however long it lives.
+MARKER_HASH = secrets.token_hex(4)
+
+
+def template_supports_citations(template_name: str | None) -> bool:
+    """Whether summaries from ``template_name`` carry ``[n]`` citations into the transcript.
+
+    ``None`` is the basic-minutes fallback used when no template is configured; it has no citation
+    step. Any other name is resolved through the production template registry, so an unknown name
+    raises rather than quietly answering False — a mistyped template must not silently drop a
+    dimension from the run.
+    """
+    if template_name is None:
+        return False
+    return TemplateManager.get_template(template_name).citations_required
+
+
+def judged_dimensions(dimensions: Iterable[str], template_name: str | None) -> list[str]:
+    """Filter ``dimensions`` down to those worth judging for ``template_name``.
+
+    Citation quality is dropped for a template that cannot cite. Scored anyway it yields a constant
+    rather than a measurement — every such summary earns the same mark for lacking a mechanism it
+    was never configured to have — and it drags the run's overall mean down for no reason.
+    """
+    kept = list(dimensions)
+    # Resolved first, and unconditionally, so an unknown template name always raises.
+    if template_supports_citations(template_name) or CITATION_DIMENSION not in kept:
+        return kept
+
+    logger.info(
+        "Skipping %s: template %r does not produce citations, so citation quality is not scored.",
+        CITATION_DIMENSION,
+        template_name or "<basic minutes>",
+    )
+    return [d for d in kept if d != CITATION_DIMENSION]
 
 
 class DimensionEvaluation(BaseModel):
@@ -60,11 +108,9 @@ async def call_llm_judge_parallel(
 
     async def evaluate_single_dim(dim: str) -> tuple[str, dict]:
         async with semaphore:
-            # Freshly generated per call so the judge can distinguish genuine boundary markers from
-            # any lookalike text injected into the transcript or summary.
-            marker_hash = secrets.token_hex(4)
-            sys_prompt = build_system_prompt(dim, intended_solicitation, marker_hash=marker_hash)
+            sys_prompt = build_system_prompt(intended_solicitation, marker_hash=MARKER_HASH)
             user_msg = build_user_message(
+                target_dimension=dim,
                 summary_id=summary_id,
                 transcript_ref=transcript_ref,
                 transcript_text=transcript_text,
@@ -72,7 +118,7 @@ async def call_llm_judge_parallel(
                 template_name=template_name,
                 template_content=template_content,
                 intended_solicitation=intended_solicitation,
-                marker_hash=marker_hash,
+                marker_hash=MARKER_HASH,
             )
             res = await call_llm_judge(sys_prompt, user_msg)
             dim_data = res["dimensions"].get(dim)
@@ -101,14 +147,14 @@ class DialogSummaryMetric:
     def _build_judge_messages(
         self, rubric_dim: str, example: DialogExample, prediction: dspy.Prediction
     ) -> tuple[str, str]:
-        marker_hash = secrets.token_hex(4)
-        sys_prompt = build_system_prompt(rubric_dim, marker_hash=marker_hash)
+        sys_prompt = build_system_prompt(marker_hash=MARKER_HASH)
         user_msg = build_user_message(
+            target_dimension=rubric_dim,
             summary_id=example.example_id,
             transcript_ref=str(example.example_id),
             transcript_text=example.dialogue,
             summary_text=prediction.summary,
-            marker_hash=marker_hash,
+            marker_hash=MARKER_HASH,
         )
         return sys_prompt, user_msg
 
@@ -158,10 +204,13 @@ class DialogSummaryMetric:
 
 
 def build_metrics(cfg: AppConfig) -> list[DialogSummaryMetric]:
-    """Builds list of judge metrics from configuration."""
+    """Builds list of judge metrics from configuration.
+
+    Dimensions that cannot be judged for the configured summariser template are dropped.
+    """
     metrics: list[DialogSummaryMetric] = []
 
-    for name in cfg.metrics:
+    for name in judged_dimensions(cfg.metrics, cfg.prompts.summarizer_template_name):
         rubric_dim = name
 
         metrics.append(

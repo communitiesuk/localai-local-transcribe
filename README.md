@@ -360,7 +360,7 @@ from the environment. Waiting a couple of hours also seemed to resolve this on i
 
 Local Transcribe was developed to run on AWS and/or Azure, with abstractions available for message queues and cloud storage.
 
-<img src="local_transcribe_mhclg_target_architecture.png" height="800" alt="Local Transcribe architecture diagram"/>
+<img src="local_transcribe_cloud_architecture.png" height="800" alt="Local Transcribe architecture diagram"/>
 
 #### Database Schema
 

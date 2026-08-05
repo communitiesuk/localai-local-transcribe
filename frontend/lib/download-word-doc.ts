@@ -102,6 +102,17 @@ export function preprocessHtml(
 </html>`
 }
 
+export async function downloadTranscriptDoc(
+  transcript: DialogueEntry[],
+  fileName: string = 'transcript.docx'
+): Promise<void> {
+  const html = `<!DOCTYPE html><html><head>${getDocumentStyles()}</head><body>${formatTranscript(transcript)}</body></html>`
+  const result = await asBlob(html)
+  const blob = result instanceof Blob ? result : new Blob([result as BlobPart])
+
+  saveAs(blob, fileName)
+}
+
 async function convertHTMLToWordAndDownload(
   htmlContent: string,
   transcript: DialogueEntry[],

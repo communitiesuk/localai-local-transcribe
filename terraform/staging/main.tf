@@ -89,9 +89,14 @@ module "frontdoor" {
     "45.150.142.210/32",
     # MHCLG
     "4.158.35.41/32",
+    # Cyberfort (temporarily allowed for pen testing)
+    "37.200.119.11/32",
+    "185.10.12.32/28",
+    "176.65.68.112/28",
   ]
 
-  ipv6_allowlist = []
+  # Cyberfort (temporarily allowed for pen testing)
+  ipv6_allowlist = ["2a00:1430:2106::/48"]
 
   app_host                                = local.app_host
   internal_access_oidc_client_id_name     = module.secrets.internal_access_oidc_client_id_name
@@ -225,6 +230,9 @@ module "ecs" {
   azure_apim_scope_arn            = module.secrets.azure_apim_scope_arn
   azure_apim_subscription_key_arn = module.secrets.azure_apim_subscription_key_arn
   sentry_dsn_arn                  = module.secrets.sentry_dsn_arn
+
+  govnotify_api_key_arn            = module.secrets.govnotify_api_key_arn
+  govnotify_invite_template_id_arn = module.secrets.govnotify_invite_template_id_arn
 }
 
 module "uploads_bucket" {
