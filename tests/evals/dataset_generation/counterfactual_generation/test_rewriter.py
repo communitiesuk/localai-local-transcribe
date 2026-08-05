@@ -261,3 +261,29 @@ async def test_race_prompt_includes_interpreting_language_consistency(mock_chatb
     assert "Race and interpreting language consistency" in prompt_content
     assert "Do not announce a new interpreting language" in prompt_content
     assert "English language label and the body language or script now match" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_age_prompt_includes_name_coherence_exception(mock_chatbot, sample_transcript):
+    """Age rewrites must default to keeping names, with an implausibility exception."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.AGE,
+        detected_value="Older person",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="older residents", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.AGE,
+        original_value="older_adult",
+        target_value="young_adult",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "Age and name coherence" in prompt_content
+    assert "do not change participant names when rewriting Age" in prompt_content
+    assert "clearly implausible for the target age band" in prompt_content
+    assert "same sex signalling and keep the surname" in prompt_content
