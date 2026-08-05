@@ -220,3 +220,19 @@ async def test_rewrite_transcript_builds_prompt_with_evidence_and_instructions(
     prompt_content = messages[0]["content"]
     assert "Focus on pronouns only" in prompt_content
     assert "He" in prompt_content or "he" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_sex_prompt_includes_pregnancy_coherence_exception(
+    mock_chatbot, sample_transcript, sample_detection, sample_axis_change
+):
+    """Sex rewrites must document the pregnancy coherence exception in the prompt."""
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, sample_detection, sample_axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "Sex and Pregnancy coherence" in prompt_content
+    assert "male participant must not remain described as pregnant" in prompt_content
+    assert "do not invent pregnancy or maternity" in prompt_content

@@ -75,6 +75,14 @@ Focus on these areas when applying the transformation, then ensure consistency t
 **Note**: Apply transformation uniformly across all relevant dialogue entries.
 {% endif %}
 
+{% if axis == "Sex" %}
+**Sex and Pregnancy coherence (documented exception to single-axis isolation):**
+Sex and pregnancy are not independent in reality. Keep single-axis isolation as the default for other attributes, but apply these coherence rules when rewriting Sex:
+- If the Sex target is male (including female to male): for each participant whose sex is changing to male, remove pregnancy and maternity references that apply to that same person (for example pregnant, midwife notes, due date, postnatal support, birth planning tied to their pregnancy). A male participant must not remain described as pregnant.
+- If the Sex target is female (including male to female): do not invent pregnancy or maternity. A female participant can be pregnant, but only keep pregnancy or maternity language if the original transcript already says so for that person.
+- Always complete the Sex change itself: update sex-signalling first names, pronouns, titles, and gendered language for the participant(s) whose sex is changing. Do not only remove pregnancy wording and leave the original sex-signalling names in place when the target is male.
+{% endif %}
+
 **Transformation Instructions**:
 {% if custom_instructions %}
 {{ custom_instructions }}
@@ -114,12 +122,16 @@ If any span above is still present unchanged, replace it now before returning.
 {% endif %}
 - [ ] {% if axis == "Sex" %}Only the participant(s) whose sex is changing have had sex-signalling names, pronouns, or titles updated; every other speaker's name is character-for-character unchanged{% elif axis == "Marriage and Civil Partnership" or axis == "Religion or Belief" %}Every participant name is character-for-character unchanged{% else %}Every participant name that could signal "{{ original_value }}" has been substituted with a different name{% endif %}.
 - [ ] Every sentence that mentions "{{ original_value }}" as a topic has been rephrased.
+{% if axis == "Sex" %}
+- [ ] If the Sex target is male, no participant whose sex changed to male is still described as pregnant or with maternity wording that applied to them in the original.
+- [ ] If the Sex target is female, no new pregnancy or maternity content has been invented that was absent from the original transcript.
+{% endif %}
 
 **Requirements**:
 1. Apply changes consistently throughout the entire transcript
 2. Update ALL pronouns, names, and references to maintain consistency — participant names can implicitly signal the characteristic even when not listed in the evidence spans{% if axis == "Sex" %}. For Sex, apply that only to the participant(s) whose sex is being changed; leave every other speaker's name exactly as written{% elif axis == "Marriage and Civil Partnership" or axis == "Religion or Belief" %}. For {{ axis }}, leave every participant name exactly as written{% endif %}
 3. Preserve meeting content and structure
-4. Do NOT change unrelated attributes or technical content. Changing Marriage and Civil Partnership must not change the partner's sex or sexual orientation; marriage may be same-sex. Changing Marriage and Civil Partnership must not change participant names; signal marriage status through relationship language and titles only. Changing Sex must not change surnames; signal Sex through first names, pronouns, titles, and gendered language only. Changing Sex applies only to the participant(s) whose sex is being changed: leave every other speaker's first name, surname, and form of address character-for-character unchanged, even if those names could also be read as gendered. Changing Religion or Belief must not change participant names; signal religion through practice, belief, and religious titles only.
+4. Do NOT change unrelated attributes or technical content. Changing Marriage and Civil Partnership must not change the partner's sex or sexual orientation; marriage may be same-sex. Changing Marriage and Civil Partnership must not change participant names; signal marriage status through relationship language and titles only. Changing Sex must not change surnames; signal Sex through first names, pronouns, titles, and gendered language only. Changing Sex applies only to the participant(s) whose sex is being changed: leave every other speaker's first name, surname, and form of address character-for-character unchanged, even if those names could also be read as gendered. Changing Sex has a documented coherence exception with Pregnancy and Maternity: male participants must not remain pregnant, so female-to-male Sex rewrites must remove pregnancy and maternity references for the person whose sex is changing; male-to-female Sex rewrites must not invent pregnancy or maternity unless the original transcript already states it. Changing Religion or Belief must not change participant names; signal religion through practice, belief, and religious titles only.
 5. Return exactly {{ dialogue_texts|length }} text strings in the same order
 
 **Output Format**:
