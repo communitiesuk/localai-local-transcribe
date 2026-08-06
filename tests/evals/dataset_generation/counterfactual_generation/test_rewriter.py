@@ -529,3 +529,28 @@ async def test_disability_subtype_prompt_forbids_other_disability_types(mock_cha
     assert 'Change the disability to "learning_disability" only' in prompt_content
     assert "Do not add a different Disability subtype" in prompt_content
     assert "adds another disability type, is wrong" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_religion_prompt_rewrites_place_of_worship_names(mock_chatbot, sample_transcript):
+    """Religion rewrites must replace place-of-worship names that still signal the original faith."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.RELIGION_BELIEF,
+        detected_value="Muslim (religious title and mosque affiliation)",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="Al-Nur Mosque", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.RELIGION_BELIEF,
+        original_value="muslim",
+        target_value="christian",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "place-of-worship names that signal" in prompt_content
+    assert "keeps a place-of-worship name from the original religion is wrong" in prompt_content
+    assert "Place-of-worship names no longer signal" in prompt_content
