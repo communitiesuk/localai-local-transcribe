@@ -69,6 +69,10 @@ WORKDIR /app
 RUN mkdir -p /app/config && \
     chown -R appuser:appuser /app
 
+ADD --chown=appuser:appuser --chmod=0444 \
+    https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
+    /app/config/rds-ca-bundle.pem
+
 # Copy built site-packages from builder (already pre-cleaned & stripped)
 COPY --from=builder /opt/site-packages /usr/local/lib/python3.12/site-packages
 

@@ -135,6 +135,7 @@ module "secrets" {
   backend_task_execution_role_id   = module.ecs.backend_execution_task_id
   worker_task_execution_role_arn   = module.ecs.worker_execution_task_arn
   worker_task_execution_role_id    = module.ecs.worker_execution_task_id
+
 }
 
 module "bastion" {
@@ -151,19 +152,19 @@ module "bastion" {
 module "database" {
   source = "../modules/rds"
 
-  environment_name                 = local.environment_name
-  database_username                = local.database_username
-  database_password                = module.secrets.database_password.result
-  database_port                    = local.database_port
-  allocated_storage                = local.database_allocated_storage
-  backup_retention_period          = 7
-  db_subnet_group_name             = module.networking.db_subnet_group_name
-  instance_class                   = "db.t4g.small"
-  multi_az                         = local.multi_az
-  vpc_id                           = module.networking.vpc.id
-  backend_task_execution_role_name = module.ecs.backend_execution_task_name
-  worker_task_execution_role_name  = module.ecs.worker_execution_task_name
-  bastion_group_id                 = module.bastion.security_group_id
+  environment_name        = local.environment_name
+  database_username       = local.database_username
+  database_password       = module.secrets.database_password.result
+  database_port           = local.database_port
+  allocated_storage       = local.database_allocated_storage
+  backup_retention_period = 7
+  db_subnet_group_name    = module.networking.db_subnet_group_name
+  instance_class          = "db.t4g.small"
+  multi_az                = local.multi_az
+  vpc_id                  = module.networking.vpc.id
+  backend_task_role_name  = module.ecs.backend_task_role_name
+  worker_task_role_name   = module.ecs.worker_task_role_name
+  bastion_group_id        = module.bastion.security_group_id
 }
 
 module "sqs" {
@@ -184,11 +185,10 @@ module "ecs" {
   frontend_port               = local.frontend_port
   backend_port                = local.backend_port
 
-  database_port                = local.database_port
-  database_host                = module.database.database_url
-  database_name                = module.database.database_name
-  database_user                = local.database_username
-  database_password_secret_arn = module.secrets.database_password_secret_arn
+  database_port     = local.database_port
+  database_host     = module.database.database_url
+  database_name     = module.database.database_name
+  database_username = local.database_username
 
   lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
