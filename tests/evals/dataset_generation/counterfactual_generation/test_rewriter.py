@@ -298,8 +298,9 @@ async def test_age_prompt_includes_name_coherence_exception(mock_chatbot, sample
     assert "clearly implausible for the target age band" in prompt_content
     assert "same sex signalling and keep the surname" in prompt_content
     assert "Use natural spoken age language" in prompt_content
+    assert "Put the age-band words next to that kinship term" in prompt_content
     assert "bare age-band label" in prompt_content
-    assert "stack redundant age labels" in prompt_content
+    assert "swap the age band for slang" in prompt_content
 
 
 @pytest.mark.asyncio

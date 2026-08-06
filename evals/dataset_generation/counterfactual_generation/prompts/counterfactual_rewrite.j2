@@ -83,7 +83,7 @@ Do not change participant names. Update religious titles, places of worship, and
 {# Age-band labels dumped in as noun phrases sound like form fields, not speech
    (for example "your young adult" or stacked "grown-up son, who's an older adult"). #}
 {% if axis == "Age" %}
-Use natural spoken age language. Keep kinship terms such as son or daughter. Do not replace a person with a bare age-band label (for example "your young adult" or "my young adult lad"), and do not stack redundant age labels (for example "grown-up son, who's an older adult"). Prefer ordinary phrases such as "my young adult son" or "my older son". A rewrite that sounds like a form field instead of speech is wrong for this target.
+Use natural spoken age language. Keep kinship terms such as son or daughter. Put the age-band words next to that kinship term (for example "my young adult son" or "my older son"). Do not replace a person with a bare age-band label (for example "your young adult"), do not stack redundant or conflicting age labels (for example "grown-up son, who's an older adult" or "grown-up son, he's a young bloke"), and do not swap the age band for slang such as "bloke" or "lad". A rewrite that sounds like a form field, or that uses slang instead of the age band, is wrong for this target.
 {% endif %}
 
 ---
@@ -243,7 +243,7 @@ If any span above is still present unchanged, replace it now before returning.
 {% endif %}
 {% if axis == "Age" %}
 - [ ] Age language (routes, age bands, life-stage wording) matches "{{ target_value }}", and any Age-driven first-name substitute kept sex and surname unchanged.
-- [ ] Age wording sounds like natural speech: kinship terms kept; no bare age-band noun phrases; no stacked redundant age labels.
+- [ ] Age wording sounds like natural speech: kinship terms kept; age-band words sit with the kinship term; no bare age-band noun phrases; no stacked or slang age labels.
 {% endif %}
 {% if axis == "Religion or Belief" %}
 - [ ] Place-of-worship names no longer signal "{{ original_value }}"; titles and places of worship match "{{ target_value }}".
