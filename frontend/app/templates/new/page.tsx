@@ -9,7 +9,6 @@ import {
 } from '@/app/templates/data/example-templates'
 import { TemplateType } from '@/lib/client'
 import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
-import { formatCurrentDateTime } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
@@ -49,7 +48,7 @@ function NewTemplateContent() {
       setBanner({
         variant: 'success',
         title: 'Success',
-        message: `Template '${form.getValues('name')}' was successfully created at ${formatCurrentDateTime()}`,
+        message: `'${form.getValues('name')}' created`,
       })
       posthog.capture('template_created')
       router.push('/templates')
