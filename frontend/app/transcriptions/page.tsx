@@ -2,6 +2,7 @@ import { PaginatedLabelledTranscriptions } from '@/components/recent-meetings/pa
 import { Loader2 } from 'lucide-react'
 import { Suspense } from 'react'
 import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
+import { RecordingsSort } from '@/components/recent-meetings/recordings-sort'
 import { UnlabelledTranscriptions } from '@/components/recent-meetings/unlabelled-transcriptions'
 
 export default function TranscriptionsPage() {
@@ -15,6 +16,7 @@ export default function TranscriptionsPage() {
         }
       >
         <OfflineRecordings />
+        <RecordingsSort />
         <UnlabelledTranscriptions />
         <PaginatedLabelledTranscriptions />
       </Suspense>
