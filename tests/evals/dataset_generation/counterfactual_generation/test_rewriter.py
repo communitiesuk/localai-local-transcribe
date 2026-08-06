@@ -532,7 +532,10 @@ async def test_disability_removal_prompt_scrubs_condition_specific_wording(mock_
 
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert "original disability and its condition-specific wording are gone" in prompt_content
-    assert "still names the original condition or its specific symptoms is wrong" in prompt_content
+    assert (
+        "still names the original condition or its specific symptoms, or that renames anyone, is wrong"
+        in prompt_content
+    )
     assert "Do not change participant names" in prompt_content
     assert "Every participant name is character-for-character unchanged" in prompt_content
 
