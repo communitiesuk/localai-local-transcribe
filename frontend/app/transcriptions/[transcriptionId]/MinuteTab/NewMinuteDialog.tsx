@@ -20,7 +20,7 @@ import { Template } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { useController, useForm, useWatch } from 'react-hook-form'
 
 type CreateMinuteForm = {
@@ -31,9 +31,11 @@ type CreateMinuteForm = {
 export function NewMinuteDialog({
   transcriptionId,
   agenda,
+  trigger,
 }: {
   transcriptionId: string
   agenda?: string
+  trigger?: ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const form = useForm<CreateMinuteForm>({
@@ -95,9 +97,11 @@ export function NewMinuteDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex gap-2 bg-blue-600 hover:bg-blue-800">
-          <Plus /> Generate New
-        </Button>
+        {trigger ?? (
+          <Button className="flex gap-2 bg-blue-600 hover:bg-blue-800">
+            <Plus /> Generate New
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-auto lg:min-w-3xl">
         <DialogHeader>

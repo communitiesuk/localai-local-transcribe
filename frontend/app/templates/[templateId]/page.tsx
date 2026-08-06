@@ -7,7 +7,6 @@ import {
   getUserTemplateUserTemplatesTemplateIdGetOptions,
   getUserTemplateUserTemplatesTemplateIdGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { formatCurrentDateTime } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
 import {
@@ -93,15 +92,15 @@ const TemplateEditorForm = ({
   const { mutate } = useMutation({
     ...editUserTemplateUserTemplatesTemplateIdPatchMutation(),
     onSuccess: () => {
-      setBanner({
-        variant: 'success',
-        title: 'Success',
-        message: `Template '${form.getValues('name')}' was successfully saved at ${formatCurrentDateTime()}`,
-      })
       queryClient.invalidateQueries({
         queryKey: getUserTemplateUserTemplatesTemplateIdGetQueryKey({
           path: { template_id: templateId },
         }),
+      })
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: `Changes to '${form.getValues('name')}' saved`,
       })
       posthog.capture('template_edited')
       router.push('/templates')

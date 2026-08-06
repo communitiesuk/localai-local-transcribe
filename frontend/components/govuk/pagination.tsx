@@ -6,10 +6,40 @@ type Props = {
   currentPage: number
   totalPages: number
   getHref: (page: number) => string
+  /** Window the list around the current page instead of listing every page. */
+  maxPagesToShow?: number
+  scroll?: boolean
 }
 
-export function GovukPagination({ currentPage, totalPages, getHref }: Props) {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+export const getPageNumbers = (
+  currentPage: number,
+  totalPages: number,
+  maxPagesToShow = 5
+) => {
+  const pages = []
+  let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
+  const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
+
+  if (endPage - startPage + 1 < maxPagesToShow) {
+    startPage = Math.max(1, endPage - maxPagesToShow + 1)
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i)
+  }
+  return pages
+}
+
+export function GovukPagination({
+  currentPage,
+  totalPages,
+  getHref,
+  maxPagesToShow,
+  scroll = true,
+}: Props) {
+  const pages = maxPagesToShow
+    ? getPageNumbers(currentPage, totalPages, maxPagesToShow)
+    : Array.from({ length: totalPages }, (_, i) => i + 1)
 
   return (
     <nav className="govuk-pagination" aria-label="Pagination">
@@ -19,6 +49,7 @@ export function GovukPagination({ currentPage, totalPages, getHref }: Props) {
             className="govuk-link govuk-pagination__link"
             href={getHref(currentPage - 1)}
             rel="prev"
+            scroll={scroll}
           >
             <svg
               className="govuk-pagination__icon govuk-pagination__icon--prev"
@@ -51,6 +82,7 @@ export function GovukPagination({ currentPage, totalPages, getHref }: Props) {
               href={getHref(page)}
               aria-label={`Page ${page}`}
               aria-current={page === currentPage ? 'page' : undefined}
+              scroll={scroll}
             >
               {page}
             </Link>
@@ -63,6 +95,7 @@ export function GovukPagination({ currentPage, totalPages, getHref }: Props) {
             className="govuk-link govuk-pagination__link"
             href={getHref(currentPage + 1)}
             rel="next"
+            scroll={scroll}
           >
             <span className="govuk-pagination__link-title">
               Next<span className="govuk-visually-hidden"> page</span>
