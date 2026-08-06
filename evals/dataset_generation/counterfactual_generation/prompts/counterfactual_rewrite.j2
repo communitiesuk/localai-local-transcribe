@@ -48,6 +48,16 @@ Change Race name and language proxies for the household the meeting is about (th
 {% if axis == "Pregnancy and Maternity" %}
 Do not change participant names. Signal pregnancy and maternity through pregnancy, parenting, and dependant language only. A rewrite that renames anyone is wrong for this target.
 {% endif %}
+{# Disability evidence often names the condition only a few times, while related symptom words
+   (breathing, respiratory, inhaler) remain elsewhere. Subtype swaps must not invent another
+   Disability type as supporting colour. #}
+{% if axis == "Disability" %}
+{% if "no_disability" in target_value|lower %}
+"{{ target_value }}" means the original disability and its condition-specific wording are gone. Remove every mention of "{{ original_value }}" and any symptom or treatment vocabulary that still signals that same condition. Generic housing urgency without naming a disability or that condition is fine. A rewrite that still names the original condition or its specific symptoms is wrong for this target.
+{% else %}
+Change the disability to "{{ target_value }}" only. Remove every mention of "{{ original_value }}" and any symptom or treatment vocabulary that still signals that original condition. Do not add a different Disability subtype than "{{ target_value }}". A rewrite that still names the original condition, or that adds another disability type, is wrong for this target.
+{% endif %}
+{% endif %}
 
 ---
 

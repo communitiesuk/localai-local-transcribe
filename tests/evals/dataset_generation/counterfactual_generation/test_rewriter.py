@@ -454,3 +454,52 @@ async def test_pregnancy_prompt_keeps_participant_names(mock_chatbot, sample_tra
     assert "Do not change participant names" in prompt_content
     assert "A rewrite that renames anyone is wrong for this target" in prompt_content
     assert "Every participant name is character-for-character unchanged" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_disability_removal_prompt_scrubs_condition_specific_wording(mock_chatbot, sample_transcript):
+    """Disability removal must clear the original condition and its symptom vocabulary."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.DISABILITY,
+        detected_value="Asthma (chronic health condition)",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="asthma", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.DISABILITY,
+        original_value="asthma_respiratory",
+        target_value="no_disability_mentioned",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "original disability and its condition-specific wording are gone" in prompt_content
+    assert "still names the original condition or its specific symptoms is wrong" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_disability_subtype_prompt_forbids_other_disability_types(mock_chatbot, sample_transcript):
+    """Disability subtype swaps must not invent a different Disability type as colour."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.DISABILITY,
+        detected_value="Asthma (chronic health condition)",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="asthma", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.DISABILITY,
+        original_value="asthma_respiratory",
+        target_value="learning_disability",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert 'Change the disability to "learning_disability" only' in prompt_content
+    assert "Do not add a different Disability subtype" in prompt_content
+    assert "adds another disability type, is wrong" in prompt_content
