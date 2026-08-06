@@ -342,3 +342,62 @@ async def test_orientation_prompt_omits_subject_sex_rule_for_other_targets(mock_
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert "means a woman whose partner is a woman" not in prompt_content
     assert "means a man whose partner is a man" not in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_gender_reassignment_prompt_keeps_surname(mock_chatbot, sample_transcript):
+    """Gender Reassignment rewrites must keep the surname so Race proxies do not move."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.GENDER_REASSIGNMENT,
+        detected_value="Gender reassignment / name change associated with transition",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="Leila Turner", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.GENDER_REASSIGNMENT,
+        original_value="trans_woman",
+        target_value="trans_man",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "Keep the subject's surname character-for-character unchanged" in prompt_content
+    assert "Update the subject's first name, title, and pronouns to match" in prompt_content
+    assert "no gender transition appears" not in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_gender_reassignment_no_transition_prompt_scrubs_transition_language(mock_chatbot, sample_transcript):
+    """A no-transition target must remove deed-poll framing, not only rename the subject."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.GENDER_REASSIGNMENT,
+        detected_value="Gender reassignment / name change associated with transition",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="deed poll", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.GENDER_REASSIGNMENT,
+        original_value="trans_woman",
+        target_value="no_transition_mentioned",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "no gender transition appears in the transcript" in prompt_content
+    assert "Delete every mention of deed poll" in prompt_content
+    assert "Do not rename the subject" in prompt_content
+    assert "A rewrite that still mentions a deed poll" in prompt_content
+    assert "Keep the subject's surname character-for-character unchanged" in prompt_content
+    # The generic evidence checklist would force deleting name spans; no-transition must carve names out.
+    assert (
+        "If it is only a participant name, leave every occurrence character-for-character unchanged" in prompt_content
+    )
+    assert "no deed poll or name-change certificate remains" in prompt_content
+    assert "Every participant name is character-for-character unchanged" in prompt_content
+    assert "must not appear verbatim anywhere in the rewrite" not in prompt_content
