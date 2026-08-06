@@ -429,3 +429,28 @@ async def test_sex_prompt_limits_change_to_meeting_subject_and_requires_first_na
     assert "Replace that subject's first name, titles, and pronouns everywhere" in prompt_content
     assert "leaves the subject's original first name in place" in prompt_content
     assert "changes another speaker's sex" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_pregnancy_prompt_keeps_participant_names(mock_chatbot, sample_transcript):
+    """Pregnancy rewrites must not rename anyone, so Race name proxies stay put."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.PREGNANCY_MATERNITY,
+        detected_value="Parent (has a child)",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="my daughter", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.PREGNANCY_MATERNITY,
+        original_value="parent_of_dependants",
+        target_value="no_pregnancy_or_maternity_mentioned",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "Do not change participant names" in prompt_content
+    assert "A rewrite that renames anyone is wrong for this target" in prompt_content
+    assert "Every participant name is character-for-character unchanged" in prompt_content
