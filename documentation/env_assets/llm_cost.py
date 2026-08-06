@@ -52,6 +52,7 @@ class Meeting:
         """transcript_as_index_speaker_and_utterance, + an index ("[212] ", ~3 tokens)."""
         return self.t + ENTRIES_PER_HOUR * self.hours * 3
 
+
 # Prompt files and inline prompts, words -> tokens
 P_GENERAL = 579 * TOK  # general.j2
 P_EXEC = 129 * TOK  # executive_summary.j2
@@ -77,8 +78,9 @@ REASONING = 1.15
 CACHE_HIT = 0.75
 
 # =============================================================================
-# Pricing: Azure Data Zone list price in GBP per 1M tokens
-# (input, cached input, output)
+# Pricing: GBP per 1M tokens, (input, cached input, output).
+# Azure OpenAI Sweden Central Data Zone list price:
+# https://azure.microsoft.com/en-us/pricing/details/azure-openai/
 # =============================================================================
 
 PRICES = {
@@ -86,7 +88,8 @@ PRICES = {
     "fast": (0.04, 0.01, 0.31),  # gpt-5-nano (FAST_LLM_MODEL_NAME)
 }
 
-# Azure AI Speech standard transcription, GBP per hour of audio.
+# Azure AI Speech standard transcription, UK South, GBP per hour of audio:
+# https://azure.microsoft.com/en-us/pricing/details/speech/
 SPEECH_GBP_PER_HOUR = {
     "realtime": 0.753,
     "fast": 0.271,
@@ -236,6 +239,7 @@ def tokens(invs: list[Inv]) -> dict[str, float]:
     agg: dict[str, float] = {"calls": len(invs)}
     for tier in ("fast", "best"):
         sel = [i for i in invs if i.tier == tier]
+        agg[f"{tier}_calls"] = len(sel)
         agg[f"{tier}_new_in"] = sum(i.new_in for i in sel)
         agg[f"{tier}_cacheable_in"] = sum(i.cacheable_in for i in sel)
         agg[f"{tier}_out"] = sum(i.out for i in sel) * REASONING
@@ -245,15 +249,16 @@ def tokens(invs: list[Inv]) -> dict[str, float]:
 def _derive(agg: dict[str, float]) -> dict[str, float]:
     for key in ("new_in", "cacheable_in", "out"):
         agg[key] = agg[f"fast_{key}"] + agg[f"best_{key}"]
-    agg["total_in"] = agg["new_in"] + agg["cacheable_in"]
-    agg["cached_in"] = agg["cacheable_in"] * CACHE_HIT
-    agg["uncached_in"] = agg["total_in"] - agg["cached_in"]
+    for prefix in ("fast_", "best_", ""):
+        agg[f"{prefix}total_in"] = agg[f"{prefix}new_in"] + agg[f"{prefix}cacheable_in"]
+        agg[f"{prefix}cached_in"] = agg[f"{prefix}cacheable_in"] * CACHE_HIT
+        agg[f"{prefix}uncached_in"] = agg[f"{prefix}total_in"] - agg[f"{prefix}cached_in"]
     return agg
 
 
 def weighted(m: Meeting) -> dict[str, float]:
     """Usage-weighted average across the production templates."""
-    keys = [f"{t}_{k}" for t in ("fast", "best") for k in ("new_in", "cacheable_in", "out")]
+    keys = [f"{t}_{k}" for t in ("fast", "best") for k in ("calls", "new_in", "cacheable_in", "out")]
     agg = dict.fromkeys([*keys, "calls"], 0.0)
     for name, share in SHARES.items():
         tk = tokens(TEMPLATES[name](m))
@@ -262,10 +267,11 @@ def weighted(m: Meeting) -> dict[str, float]:
     return _derive(agg)
 
 
-def cost(tk: dict[str, float], *, caching: bool = True) -> float:
-    """GBP for one meeting. caching=False bills every replayed prefix at full price."""
+def cost(tk: dict[str, float], *, caching: bool = True, only: str | None = None) -> float:
+    """GBP for one meeting. caching=False bills every replayed prefix at full price.
+    only="fast"/"best" restricts the total to that tier."""
     total = 0.0
-    for tier in ("fast", "best"):
+    for tier in ("fast", "best") if only is None else (only,):
         p_in, p_cached, p_out = PRICES[tier]
         cached = tk[f"{tier}_cacheable_in"] * CACHE_HIT if caching else 0.0
         uncached = tk[f"{tier}_new_in"] + tk[f"{tier}_cacheable_in"] - cached
@@ -289,37 +295,47 @@ def headroom(tk: dict[str, float], name: str, m: Meeting) -> float:
 def display() -> None:
     one_hour = Meeting(1.0)
     print(f"\nPer 1-hour meeting (X = {one_hour.words:,.0f} words, {TOK} tokens/word, BEST=gpt-5.1, FAST=gpt-5-nano)")
-    print("=" * 100)
+    print("=" * 118)
     print(
-        f"{'Template':<26} {'Calls':>5} {'In (total)':>11} {'In (cached)':>13} {'Output':>9}"
-        f" {'GBP cached':>11} {'GBP no cache':>13}"
+        f"{'Template':<26} {'Calls':>5} {'In FAST':>10} {'In BEST':>10} {'Out FAST':>9}"
+        f" {'Out BEST':>9} {'GBP FAST':>9} {'GBP BEST':>9} {'GBP total':>10} {'GBP no cache':>13}"
     )
-    print("-" * 100)
+    print("-" * 118)
     rows = {name: tokens(fn(one_hour)) for name, fn in TEMPLATES.items()}
     rows["Usage-weighted"] = weighted(one_hour)
     for name, tk in rows.items():
         if name == "Usage-weighted":
-            print("-" * 100)
-        cached = "Close to Zero" if round(tk["cached_in"]) == 0 else f"{tk['cached_in']:,.0f}"
+            print("-" * 118)
         print(
-            f"{name:<26} {tk['calls']:>5.1f} {tk['total_in']:>11,.0f} {cached:>13}"
-            f" {tk['out']:>9,.0f} {cost(tk):>11.4f} {cost(tk, caching=False):>13.4f}"
+            f"{name:<26} {tk['calls']:>5.1f} {tk['fast_total_in']:>10,.0f} {tk['best_total_in']:>10,.0f}"
+            f" {tk['fast_out']:>9,.0f} {tk['best_out']:>9,.0f}"
+            f" {cost(tk, only='fast'):>9.4f} {cost(tk, only='best'):>9.4f}"
+            f" {cost(tk):>10.4f} {cost(tk, caching=False):>13.4f}"
         )
 
     wt = rows["Usage-weighted"]
     c_cached, c_none = cost(wt), cost(wt, caching=False)
-    print("\n\nHeadline: usage-weighted average meeting")
+    print("\n\nHeadline: usage-weighted average meeting, split by tier")
     print("=" * 100)
-    for label, value in [
-        ("Input tokens (total)", wt["total_in"]),
-        ("  of which cached", wt["cached_in"]),
-        ("  of which non-cached", wt["uncached_in"]),
-        (f"Output tokens (incl. {REASONING - 1:.0%} reasoning allowance)", wt["out"]),
+    print(f"  {'':<44} {'FAST':>14} {'BEST':>14} {'Total':>14}")
+    print("  " + "-" * 88)
+    for label, key in [
+        ("Calls", "calls"),
+        ("Input tokens (total)", "total_in"),
+        ("  of which cached", "cached_in"),
+        ("  of which non-cached", "uncached_in"),
+        (f"Output tokens (incl. {REASONING - 1:.0%} reasoning)", "out"),
     ]:
-        print(f"  {label:<48} {value:>12,.0f}")
-    print(f"  {'Cost, prompt caching as built (GBP)':<48} {c_cached:>12.4f}")
-    print(f"  {'Cost, prompt caching off (GBP)':<48} {c_none:>12.4f}")
-    print(f"  {'Cost per 1,000 meetings, caching as built (GBP)':<48} {c_cached * 1e3:>12.2f}")
+        fmt = ",.1f" if key == "calls" else ",.0f"
+        print(f"  {label:<44} {wt[f'fast_{key}']:>14{fmt}} {wt[f'best_{key}']:>14{fmt}} {wt[key]:>14{fmt}}")
+    print("  " + "-" * 88)
+    for label, caching in [("Cost, caching as built (GBP)", True), ("Cost, caching off (GBP)", False)]:
+        f_c = cost(wt, caching=caching, only="fast")
+        b_c = cost(wt, caching=caching, only="best")
+        print(f"  {label:<44} {f_c:>14.4f} {b_c:>14.4f} {f_c + b_c:>14.4f}")
+    f_share, b_share = cost(wt, only="fast") / c_cached, cost(wt, only="best") / c_cached
+    print(f"  {'Share of cost, caching as built':<44} {f_share:>13.0%} {b_share:>13.0%}")
+    print(f"\n  {'Cost per 1,000 meetings, caching as built (GBP)':<48} {c_cached * 1e3:>10.2f}")
     print(
         f"\n  Caching only bites where one conversation replays a prefix (SectionTemplate), so"
         f"\n  turning it off costs {c_none / c_cached - 1:+.1%}. Leading every prompt with an identically"
