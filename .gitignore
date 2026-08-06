@@ -126,6 +126,7 @@ evals/**/results/
 evals/**/datasets/
 evals/**/input/
 evals/**/output/
+evals/dataset_generation/counterfactual_generation/output_unedited/
 **/*.wav
 **/*.mp3
 **/*.m4a
