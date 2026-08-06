@@ -63,9 +63,10 @@ export default function EditTemplatePage(props: {
         defaultValues={{
           name: template.name,
           description: template.description,
+          content: template.content,
+          heading: '',
           questions: template.questions,
           type: template.type,
-          content: template.content,
         }}
       />
     </>
@@ -115,7 +116,12 @@ const TemplateEditorForm = ({
           onSubmit={(data) =>
             mutate({
               path: { template_id: templateId },
-              body: { ...data, questions: null },
+              body: {
+                name: data.name,
+                description: data.description,
+                content: data.content,
+                questions: null,
+              },
             })
           }
         />
@@ -127,15 +133,20 @@ const TemplateEditorForm = ({
     return (
       <FormProvider {...form}>
         <FormTemplateEditor
+          submitLabel="Save changes"
           onSubmit={(data) =>
             mutate({
               path: { template_id: templateId },
               body: {
-                ...data,
+                name: data.name,
+                description: data.description,
+                content: data.content,
+                // heading and question format_instructions are captured in the form, wire them here once the backend supports them
                 questions:
                   data.questions?.map((q, i) => ({
-                    ...q,
                     position: i,
+                    title: q.title,
+                    description: q.description,
                   })) || null,
               },
             })
