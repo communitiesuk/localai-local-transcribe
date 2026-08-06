@@ -50,6 +50,17 @@
             "description": "Number of items per page"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RecordingSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
+          {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
@@ -88,6 +99,17 @@
         "description": "Get metadata for unlabelled transcriptions for the current user.",
         "operationId": "list_unlabelled_transcriptions_transcriptions_unlabelled_get",
         "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RecordingSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
@@ -2650,7 +2672,10 @@
             "description": "Optional id of user template"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Agenda",
             "description": "The agenda for the meeting"
           }
@@ -2802,6 +2827,11 @@
         "required": ["id", "upload_url"],
         "title": "RecordingCreateResponse"
       },
+      "RecordingSortOrder": {
+        "type": "string",
+        "enum": ["newest", "oldest"],
+        "title": "RecordingSortOrder"
+      },
       "RenameSpeakerRequest": {
         "properties": {
           "original_speaker": { "type": "string", "title": "Original Speaker" },
@@ -2888,7 +2918,10 @@
             "title": "Template Id"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Agenda"
           },
           "title": {
