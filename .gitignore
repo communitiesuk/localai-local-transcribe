@@ -131,7 +131,11 @@ evals/dataset_generation/counterfactual_generation/output_unedited/
 **/*.mp3
 **/*.m4a
 
-# AIILG-792 bias July dataset artefacts kept local for now (absolute machine paths; not yet sanitised)
+# AIILG-792 bias July artefacts: keep local (SharePoint holds the dataset). Track only the
+# reviewer README from the eval pack; ignore everything else produced for this work.
+evals/dataset_generation/counterfactual_generation/bias_july_counterfactuals_for_eval/*
+!evals/dataset_generation/counterfactual_generation/bias_july_counterfactuals_for_eval/README.md
+evals/dataset_generation/counterfactual_generation/bias_july_counterfactuals_for_eval.zip
 evals/dataset_generation/counterfactual_generation/bias_july_dataset/
 evals/dataset_generation/characteristics/configs/bias_july_dataset.yaml
 evals/dataset_generation/characteristics/configs/bias_july_rehab.yaml
