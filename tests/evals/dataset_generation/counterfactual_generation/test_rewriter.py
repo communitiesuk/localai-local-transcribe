@@ -262,11 +262,16 @@ async def test_race_prompt_includes_interpreting_language_consistency(mock_chatb
     assert "Do not announce a new interpreting language" in prompt_content
     assert "English language label and the body language or script now match" in prompt_content
     assert "Leave council or staff officer names character-for-character unchanged" in prompt_content
-    assert "A rewrite that renames the officer is wrong for this target" in prompt_content
+    assert (
+        "A rewrite that renames the officer, or that leaves the household's original race-coded name in place"
+        in prompt_content
+    )
     assert "If it is only the name of a council or staff officer" in prompt_content
     assert "Household Race-signalling names have been substituted" in prompt_content
     assert "second-language side must be a real non-English language" in prompt_content
     assert "whose other-language lines are English, is wrong for this target" in prompt_content
+    assert "even when those names are not listed in the evidence spans" in prompt_content
+    assert "The household's original race-coded name is gone everywhere" in prompt_content
 
 
 @pytest.mark.asyncio

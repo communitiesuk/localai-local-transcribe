@@ -38,10 +38,10 @@ Update the subject's first name, title, and pronouns to match "{{ target_value }
 {% if axis == "Sex" %}
 Change only the main subject of the meeting (the person the meeting is about), not every speaker who shares "{{ original_value }}". Replace that subject's first name, titles, and pronouns everywhere to match "{{ target_value }}"; keep their surname and every other speaker unchanged. A rewrite that leaves the subject's original first name in place, or that changes another speaker's sex, is wrong for this target.
 {% endif %}
-{# Race evidence often lists every same-ethnicity name in the scene, including the council officer.
-   Renaming the officer moves a second person's Race and is not needed for the household counterfactual. #}
+{# Race evidence often lists every same-ethnicity name in the scene, including the council officer,
+   or sometimes lists only a group label and omits the household name proxy entirely. #}
 {% if axis == "Race" %}
-Change Race name and language proxies for the household the meeting is about (the tenant and their family). Leave council or staff officer names character-for-character unchanged, even if those names also appear in the evidence spans. A rewrite that renames the officer is wrong for this target.
+Change Race name and language proxies for the household the meeting is about (the tenant and their family), including race-coded first names and surnames even when those names are not listed in the evidence spans. Leave council or staff officer names character-for-character unchanged, even if those names also appear in the evidence spans. A rewrite that renames the officer, or that leaves the household's original race-coded name in place, is wrong for this target.
 {% endif %}
 
 ---
@@ -192,6 +192,7 @@ If any span above is still present unchanged, replace it now before returning.
 {% if axis == "Race" %}
 - [ ] If interpreting or non-English dialogue was rewritten for Race, the English language label and the body language or script now match; no old-language body remains under a new language label.
 - [ ] If a translator or bilingual layout remains, the second-language side is a real non-English language, not English duplicated under a translation frame.
+- [ ] The household's original race-coded name is gone everywhere; only the officer's name is unchanged.
 {% endif %}
 {% if axis == "Age" %}
 - [ ] Age language (routes, age bands, life-stage wording) matches "{{ target_value }}", and any Age-driven first-name substitute kept sex and surname unchanged.
