@@ -3,7 +3,7 @@ import logging
 from common.database.postgres_models import DialogueEntry
 from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
 from evals.dataset_generation.counterfactual_generation.src.constants import (
-    COUNTERFACTUAL_REWRITE_TEMPLATE,
+    counterfactual_rewrite_template_name,
     get_template,
 )
 from evals.dataset_generation.counterfactual_generation.src.evidence_tracker import verify_evidence_modifications
@@ -158,8 +158,8 @@ class CounterfactualRewriter:
         characteristic_detection: CharacteristicDetection,
         axis_change: AxisChange,
     ) -> str:
-        """Build the prompt for LLM rewriting."""
-        template = get_template(COUNTERFACTUAL_REWRITE_TEMPLATE)
+        """Build the prompt for LLM rewriting from the shared base plus the axis template."""
+        template = get_template(counterfactual_rewrite_template_name(axis_change.axis))
         custom_instructions = getattr(axis_change, "instructions", None)
 
         return template.render(

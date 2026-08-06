@@ -1,0 +1,14 @@
+{% extends "counterfactual_rewrite/base.j2" %}
+{# Disability evidence often names the condition only a few times, while related symptom words
+   (breathing, respiratory, inhaler) remain elsewhere. Subtype swaps must not invent another
+   Disability type as supporting colour. #}
+{% block task_axis_rules %}
+Do not change participant names.
+{% if "no_disability" in target_value|lower %}
+"{{ target_value }}" means the original disability and its condition-specific wording are gone. Remove every mention of "{{ original_value }}" and any symptom or treatment vocabulary that still signals that same condition. Generic housing urgency without naming a disability or that condition is fine. A rewrite that still names the original condition or its specific symptoms, or that renames anyone, is wrong for this target.
+{% else %}
+Change the disability to "{{ target_value }}" only. Remove every mention of "{{ original_value }}" and any symptom or treatment vocabulary that still signals that original condition. Do not add a different Disability subtype than "{{ target_value }}". A rewrite that still names the original condition, that adds another disability type, or that renames anyone, is wrong for this target.
+{% endif %}
+{% endblock %}
+{% block name_checklist_item %}Every participant name is character-for-character unchanged{% endblock %}
+{% block requirements_name_clause %}. For {{ axis }}, leave every participant name exactly as written{% endblock %}

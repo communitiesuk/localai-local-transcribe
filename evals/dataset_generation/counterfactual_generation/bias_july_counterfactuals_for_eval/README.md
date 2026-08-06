@@ -93,9 +93,7 @@ held constant so the rewrite tests representation and not case content.
 
 ## Prompt changes and why
 
-All of the following are in `evals/dataset_generation/counterfactual_generation/prompts/counterfactual_rewrite.j2`.
-Each rule was added after a specific observed failure, and each is rendered only for the axis
-it applies to, so unaffected axes keep their earlier prompt text.
+All of the following live under `evals/dataset_generation/counterfactual_generation/prompts/counterfactual_rewrite/`: a shared `base.j2` plus one file per protected characteristic. Each rule was added after a specific observed failure, and only the matching axis template is loaded for a rewrite, so unaffected axes keep their earlier prompt text.
 
 | Change                                                                                                                                                               | Failure it addresses                                                                                                                               |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
