@@ -13,6 +13,15 @@ You are working with one of the 9 UK Equality Act 2010 protected characteristics
 9. Sexual Orientation
 
 **Task**: Rewrite the transcript to change the {{ axis }} from "{{ original_value }}" to "{{ target_value }}".
+{# Lesbian and gay targets name the sex of both the subject and the partner, so the rewrite has to
+   change the subject's sex as well as the partner wording. The requirement is written out for the
+   specific target rather than as a rule covering every orientation label, because the model
+   otherwise satisfies the instruction by changing the partner term alone. #}
+{% if axis == "Sexual Orientation" and "lesbian" in target_value|lower %}
+"{{ target_value }}" means a woman whose partner is a woman. Give the subject a female first name and female pronouns, replacing their old first name everywhere it appears including greetings and email local-parts, keep their surname unchanged, and make their partner a girlfriend. A rewrite in which the subject is still a man is wrong for this target.
+{% elif axis == "Sexual Orientation" and "gay" in target_value|lower %}
+"{{ target_value }}" means a man whose partner is a man. Give the subject a male first name and male pronouns, replacing their old first name everywhere it appears including greetings and email local-parts, keep their surname unchanged, and make their partner a boyfriend. A rewrite in which the subject is still a woman is wrong for this target.
+{% endif %}
 
 ---
 

@@ -287,3 +287,58 @@ async def test_age_prompt_includes_name_coherence_exception(mock_chatbot, sample
     assert "do not change participant names when rewriting Age" in prompt_content
     assert "clearly implausible for the target age band" in prompt_content
     assert "same sex signalling and keep the surname" in prompt_content
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("target_value", "expected_partner_term", "unexpected_partner_term"),
+    [("lesbian", "girlfriend", "boyfriend"), ("gay", "boyfriend", "girlfriend")],
+)
+async def test_same_sex_orientation_prompt_states_subject_and_partner_sex(
+    mock_chatbot, sample_transcript, target_value, expected_partner_term, unexpected_partner_term
+):
+    """Lesbian and gay targets must ask for a matching subject sex, not only a partner term swap."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.SEXUAL_ORIENTATION,
+        detected_value="Gay / same-sex relationship",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="my boyfriend", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.SEXUAL_ORIENTATION,
+        original_value="gay",
+        target_value=target_value,
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert f'"{target_value}" means a' in prompt_content
+    assert f"make their partner a {expected_partner_term}" in prompt_content
+    assert f"make their partner a {unexpected_partner_term}" not in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_orientation_prompt_omits_subject_sex_rule_for_other_targets(mock_chatbot, sample_transcript):
+    """Targets that do not name a subject sex must not carry the subject rename requirement."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.SEXUAL_ORIENTATION,
+        detected_value="Gay / same-sex relationship",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="my boyfriend", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.SEXUAL_ORIENTATION,
+        original_value="gay",
+        target_value="heterosexual",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "means a woman whose partner is a woman" not in prompt_content
+    assert "means a man whose partner is a man" not in prompt_content
