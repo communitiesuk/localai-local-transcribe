@@ -352,6 +352,32 @@ async def test_orientation_prompt_omits_subject_sex_rule_for_other_targets(mock_
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert "means a woman whose partner is a woman" not in prompt_content
     assert "means a man whose partner is a man" not in prompt_content
+    assert "orientation-coded hate" in prompt_content
+    assert "generic neighbour-harassment language" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_orientation_hetero_prompt_scrubs_orientation_coded_hate(mock_chatbot, sample_transcript):
+    """Heterosexual and removal SO targets must scrub stock anti-gay abuse phrasing."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.SEXUAL_ORIENTATION,
+        detected_value="Gay / same-sex relationship",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="homophobic", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.SEXUAL_ORIENTATION,
+        original_value="gay",
+        target_value="no_orientation_mentioned",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "Also remove abuse wording that still signals" in prompt_content
+    assert "Orientation-coded hate phrases from the original" in prompt_content
 
 
 @pytest.mark.asyncio

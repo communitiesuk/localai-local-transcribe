@@ -21,6 +21,9 @@ You are working with one of the 9 UK Equality Act 2010 protected characteristics
 "{{ target_value }}" means a woman whose partner is a woman. Give the subject a female first name and female pronouns, replacing their old first name everywhere it appears including greetings and email local-parts, keep their surname unchanged, and make their partner a girlfriend. A rewrite in which the subject is still a man is wrong for this target.
 {% elif axis == "Sexual Orientation" and "gay" in target_value|lower %}
 "{{ target_value }}" means a man whose partner is a man. Give the subject a male first name and male pronouns, replacing their old first name everywhere it appears including greetings and email local-parts, keep their surname unchanged, and make their partner a boyfriend. A rewrite in which the subject is still a woman is wrong for this target.
+{% elif axis == "Sexual Orientation" and ("hetero" in target_value|lower or "no_orientation" in target_value|lower) %}
+{# Leaving stock anti-gay abuse phrases after clearing "homophobic" still signals the original orientation. #}
+Also remove abuse wording that still signals "{{ original_value }}" (for example homophobic, unnatural, or "people like them" used as orientation-coded hate). Replace it with generic neighbour-harassment language. A rewrite that still uses orientation-coded hate phrases is wrong for this target.
 {% endif %}
 {# Gender Reassignment evidence often includes the subject's full name, so the model may change the
    surname and thereby move Race. A no-transition target also fails if deed-poll / old-name framing
@@ -236,6 +239,9 @@ If any span above is still present unchanged, replace it now before returning.
 {% endif %}
 {% if axis == "Religion or Belief" %}
 - [ ] Place-of-worship names no longer signal "{{ original_value }}"; titles and places of worship match "{{ target_value }}".
+{% endif %}
+{% if axis == "Sexual Orientation" and ("hetero" in target_value|lower or "no_orientation" in target_value|lower) %}
+- [ ] Orientation-coded hate phrases from the original (for example unnatural, homophobic, or "people like them") are gone; only generic harassment language remains.
 {% endif %}
 
 **Requirements**:
