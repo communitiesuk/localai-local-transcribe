@@ -61,7 +61,7 @@ async_engine = create_async_engine(
 )
 
 credential_provider: DbCredentialsProvider
-if settings.ENVIRONMENT == "local":
+if settings.ENVIRONMENT in ["local", "test"]:
     if settings.POSTGRES_USER is None:
         msg = "POSTGRES_USER must be set"
         raise ValueError(msg)
