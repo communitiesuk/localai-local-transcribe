@@ -9,18 +9,25 @@ export default function TemplatesPage() {
       In prod (`npm run build && npm start`) this is not an issue */}
       <BannerNotification />
       <GovukHeading size="l">Manage templates</GovukHeading>
-      <p className="govuk-body">
-        Use templates to summarise your conversations. You can customise the
-        structure and style of any template – edit or duplicate an existing one,
-        or create a new one.
-      </p>
 
       <GovukHeading size="m" as="h2" className="govuk-!-margin-bottom-3">
         Create template
       </GovukHeading>
-      <GovukButtonLink href="/templates/new" variant="secondary">
-        Create
-      </GovukButtonLink>
+      <p className="govuk-body">
+        Use templates to customise the structure and style of your summaries.
+      </p>
+
+      <div>
+        <GovukButtonLink 
+          href="/templates/new" 
+          variant="secondary"
+          className="!mb-0"
+        >
+          Create template
+        </GovukButtonLink>
+      </div>
+
+      <hr className="my-6 border-0 border-t border-[var(--govuk-border-colour)]" />
 
       <UserTemplatesList />
     </div>

@@ -61,7 +61,7 @@ export const UserTemplatesList = () => {
 
   return (
     <div>
-      <GovukHeading size="m" as="h2" className="govuk-!-margin-bottom-1">
+      <GovukHeading size="m" as="h2" className="govuk-!-margin-top-4 govuk-!-margin-bottom-1">
         Your templates
       </GovukHeading>
       <p className="govuk-body govuk-!-margin-bottom-4">
