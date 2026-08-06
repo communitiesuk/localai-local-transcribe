@@ -41,7 +41,9 @@ export const UserTemplatesList = () => {
     isError,
   } = useQuery(getUserTemplatesUserTemplatesGetOptions())
 
-  const sortedTemplates = [...templates].sort((a, b) => a.name.localeCompare(b.name))
+  const sortedTemplates = [...templates].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
 
   if (isLoading) {
     return <Loader2 className="animate-spin" />
@@ -58,7 +60,11 @@ export const UserTemplatesList = () => {
 
   return (
     <div>
-      <GovukHeading size="m" as="h2" className="govuk-!-margin-top-4 govuk-!-margin-bottom-1">
+      <GovukHeading
+        size="m"
+        as="h2"
+        className="govuk-!-margin-top-4 govuk-!-margin-bottom-1"
+      >
         Your templates
       </GovukHeading>
       <p className="govuk-body govuk-!-margin-bottom-4">
@@ -89,7 +95,7 @@ export const UserTemplatesList = () => {
                     )
                   : 'Original template'}
               </GovukTableCell>
-              <GovukTableCell isNumeric>  
+              <GovukTableCell isNumeric>
                 <Link href={`/templates/${template.id}`} className="govuk-link">
                   Edit
                 </Link>

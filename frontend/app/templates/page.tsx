@@ -18,8 +18,8 @@ export default function TemplatesPage() {
       </p>
 
       <div>
-        <GovukButtonLink 
-          href="/templates/new" 
+        <GovukButtonLink
+          href="/templates/new"
           variant="secondary"
           className="!mb-0"
         >
