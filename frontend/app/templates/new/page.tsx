@@ -7,11 +7,13 @@ import {
   exampleDocumentTemplates,
   exampleFormTemplates,
 } from '@/app/templates/data/example-templates'
+import { GovukButton, GovukButtonGroup } from '@/components/govuk'
 import { TemplateType } from '@/lib/client'
 import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import posthog from 'posthog-js'
 import { Suspense } from 'react'
@@ -65,6 +67,25 @@ function NewTemplateContent() {
       },
     })
   }
+  const { isSubmitting } = form.formState
+  const actions = (
+    <GovukButtonGroup>
+      <GovukButton
+        type="submit"
+        disabled={isSubmitting}
+        className="govuk-!-margin-bottom-0"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="animate-spin" aria-hidden="true" />
+            Saving…
+          </>
+        ) : (
+          'Save'
+        )}
+      </GovukButton>
+    </GovukButtonGroup>
+  )
   const templateType = useWatch({ name: 'type', control: form.control })
   const onSelectExample = (example: TemplateData) => {
     form.setValue('name', example.name, { shouldDirty: true })
@@ -96,7 +117,7 @@ function NewTemplateContent() {
             provide style guidance. Try an example to get started.
           </p>
         </header>
-        <DocumentTemplateEditor onSubmit={onSubmit} />
+        <DocumentTemplateEditor onSubmit={onSubmit} actions={actions} />
       </FormProvider>
     )
   }
@@ -119,7 +140,7 @@ function NewTemplateContent() {
             provide style guidance. Try an example to get started.
           </p>
         </header>
-        <FormTemplateEditor onSubmit={onSubmit} />
+        <FormTemplateEditor onSubmit={onSubmit} actions={actions} />
       </FormProvider>
     )
   }

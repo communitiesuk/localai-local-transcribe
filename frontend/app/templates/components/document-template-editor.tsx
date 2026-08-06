@@ -2,7 +2,6 @@
 
 import { TemplateEditorToolbar } from '@/app/templates/components/editor/editor-toolbar'
 import {
-  GovukButton,
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
@@ -17,17 +16,18 @@ import Paragraph from '@tiptap/extension-paragraph'
 import Text from '@tiptap/extension-text'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { Loader2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
 
 export const DocumentTemplateEditor = ({
   onSubmit,
+  actions,
 }: {
   onSubmit: (data: TemplateData) => void
+  actions: ReactNode
 }) => {
   const form = useFormContext<TemplateData>()
-  const { errors, isSubmitting, isSubmitted } = form.formState
+  const { errors, isSubmitted } = form.formState
 
   const errorList = [
     errors.name?.message && {
@@ -58,24 +58,6 @@ export const DocumentTemplateEditor = ({
           data-testid="error-summary"
         />
       )}
-
-      <div>
-        <GovukButton
-          type="submit"
-          disabled={isSubmitting}
-          className="govuk-!-margin-bottom-0"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="animate-spin" aria-hidden="true" />
-              Saving…
-            </>
-          ) : (
-            'Save'
-          )}
-        </GovukButton>
-        <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-4 govuk-!-margin-bottom-0" />
-      </div>
 
       <div>
         <h2 className="govuk-heading-m govuk-!-margin-bottom-1">
@@ -176,6 +158,8 @@ export const DocumentTemplateEditor = ({
           />
         </GovukFormGroup>
       </div>
+
+      {actions}
     </form>
   )
 }

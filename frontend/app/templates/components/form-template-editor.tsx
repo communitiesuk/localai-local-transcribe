@@ -10,16 +10,18 @@ import {
   GovukTextarea,
 } from '@/components/govuk'
 import { TemplateData } from '@/types/templates'
-import { Loader2 } from 'lucide-react'
+import { ReactNode } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
 export const FormTemplateEditor = ({
   onSubmit,
+  actions,
 }: {
   onSubmit: (data: TemplateData) => void
+  actions: ReactNode
 }) => {
   const form = useFormContext<TemplateData>()
-  const { errors, isSubmitting, isSubmitted } = form.formState
+  const { errors, isSubmitted } = form.formState
 
   const fieldArray = useFieldArray({
     control: form.control,
@@ -69,24 +71,6 @@ export const FormTemplateEditor = ({
           data-testid="error-summary"
         />
       )}
-
-      <div>
-        <GovukButton
-          type="submit"
-          disabled={isSubmitting}
-          className="govuk-!-margin-bottom-0"
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="animate-spin" aria-hidden="true" />
-              Saving…
-            </>
-          ) : (
-            'Save'
-          )}
-        </GovukButton>
-        <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-4 govuk-!-margin-bottom-0" />
-      </div>
 
       {/* Template details */}
       <div>
@@ -301,6 +285,8 @@ export const FormTemplateEditor = ({
           </div>
         </GovukFormGroup>
       </div>
+
+      {actions}
     </form>
   )
 }
