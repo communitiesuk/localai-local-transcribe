@@ -89,7 +89,7 @@ export const UserTemplatesList = () => {
                     )
                   : 'Original template'}
               </GovukTableCell>
-              <GovukTableCell className="govuk-table__cell--numeric">
+              <GovukTableCell isNumeric>  
                 <Link href={`/templates/${template.id}`} className="govuk-link">
                   Edit
                 </Link>
