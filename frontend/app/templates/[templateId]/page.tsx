@@ -64,7 +64,7 @@ export default function EditTemplatePage(props: {
           name: template.name,
           description: template.description,
           content: template.content,
-          heading: '',
+          heading: template.heading,
           questions: template.questions,
           type: template.type,
         }}
@@ -141,12 +141,13 @@ const TemplateEditorForm = ({
                 name: data.name,
                 description: data.description,
                 content: data.content,
-                // heading and question format_instructions are captured in the form, wire them here once the backend supports them
+                heading: data.heading,
                 questions:
                   data.questions?.map((q, i) => ({
                     position: i,
                     title: q.title,
                     description: q.description,
+                    format_instructions: q.format_instructions,
                   })) || null,
               },
             })

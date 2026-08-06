@@ -60,13 +60,14 @@ export default function NewTemplatePage() {
         name: data.name,
         description: data.description,
         content: data.content,
+        heading: data.heading,
         type: data.type,
-        // heading and question format_instructions are captured in the form; wire them here once the backend supports them
         questions:
           data.questions?.map((q, i) => ({
             position: i,
             title: q.title,
             description: q.description,
+            format_instructions: q.format_instructions,
           })) ?? null,
       },
     })
