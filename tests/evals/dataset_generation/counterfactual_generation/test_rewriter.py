@@ -401,3 +401,20 @@ async def test_gender_reassignment_no_transition_prompt_scrubs_transition_langua
     assert "no deed poll or name-change certificate remains" in prompt_content
     assert "Every participant name is character-for-character unchanged" in prompt_content
     assert "must not appear verbatim anywhere in the rewrite" not in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_sex_prompt_limits_change_to_meeting_subject_and_requires_first_name(
+    mock_chatbot, sample_transcript, sample_detection, sample_axis_change
+):
+    """Sex rewrites must flip the meeting subject's first name and leave other same-sex speakers alone."""
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, sample_detection, sample_axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "Change only the main subject of the meeting" in prompt_content
+    assert "Replace that subject's first name, titles, and pronouns everywhere" in prompt_content
+    assert "leaves the subject's original first name in place" in prompt_content
+    assert "changes another speaker's sex" in prompt_content

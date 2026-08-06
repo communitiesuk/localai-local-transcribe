@@ -33,6 +33,11 @@ Keep the subject's surname character-for-character unchanged.
 Update the subject's first name, title, and pronouns to match "{{ target_value }}", replacing the old first name everywhere it appears. Keep the surname unchanged.
 {% endif %}
 {% endif %}
+{# When several people share the original sex value, evidence lists all of them, and the model
+   flips every matching title while often leaving the subject's first name unchanged. #}
+{% if axis == "Sex" %}
+Change only the main subject of the meeting (the person the meeting is about), not every speaker who shares "{{ original_value }}". Replace that subject's first name, titles, and pronouns everywhere to match "{{ target_value }}"; keep their surname and every other speaker unchanged. A rewrite that leaves the subject's original first name in place, or that changes another speaker's sex, is wrong for this target.
+{% endif %}
 
 ---
 
