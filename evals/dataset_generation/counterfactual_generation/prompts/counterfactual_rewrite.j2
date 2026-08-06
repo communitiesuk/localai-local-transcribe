@@ -73,7 +73,7 @@ Change the disability to "{{ target_value }}" only. Remove every mention of "{{ 
 {# Religion keep-name is already required below. Place-of-worship names often keep the original
    faith signal after the title and building type have already been rewritten. #}
 {% if axis == "Religion or Belief" %}
-Do not change participant names. Update religious titles, places of worship, and place-of-worship names that signal "{{ original_value }}" so they match "{{ target_value }}". A rewrite that keeps a place-of-worship name from the original religion is wrong for this target.
+Do not change participant names. Update religious titles, places of worship, and place-of-worship names that signal "{{ original_value }}" so they match "{{ target_value }}". Do not keep the original place-of-worship name under a new building type. A rewrite that keeps a place-of-worship name from the original religion is wrong for this target.
 {% endif %}
 
 ---

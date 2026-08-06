@@ -552,5 +552,6 @@ async def test_religion_prompt_rewrites_place_of_worship_names(mock_chatbot, sam
 
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert "place-of-worship names that signal" in prompt_content
+    assert "Do not keep the original place-of-worship name under a new building type" in prompt_content
     assert "keeps a place-of-worship name from the original religion is wrong" in prompt_content
     assert "Place-of-worship names no longer signal" in prompt_content
