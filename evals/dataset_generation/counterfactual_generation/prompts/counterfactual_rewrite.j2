@@ -40,7 +40,7 @@ Update the subject's first name, title, and pronouns to match "{{ target_value }
 {# When several people share the original sex value, evidence lists all of them, and the model
    flips every matching title while often leaving the subject's first name unchanged. #}
 {% if axis == "Sex" %}
-Change only the main subject of the meeting (the person the meeting is about), not every speaker who shares "{{ original_value }}". Replace that subject's first name with a different first name that signals "{{ target_value }}", and update titles and pronouns everywhere; keep their surname and every other speaker unchanged. A rewrite that still uses the subject's original first name anywhere, including after Mr or Mrs, or that changes another speaker's sex, is wrong for this target.
+Change only the main subject of the meeting (the person the meeting is about), not every speaker who shares "{{ original_value }}". Replace that subject's first name with a different first name that signals "{{ target_value }}". Do this for greetings and for lines where the subject states their own first name. Update titles and pronouns everywhere. Keep their surname and every other speaker unchanged. A rewrite that still uses the subject's original first name anywhere, including after Mr or Mrs, in greetings such as "Hi …", or in self-naming such as "… here", or that changes another speaker's sex, is wrong for this target.
 {# A Sex-only rewrite that keeps the old partner sex flips Sexual Orientation (for example a
    widow with a late husband becoming a man with a late husband). Preserve the original
    opposite-sex or same-sex pattern by updating partner terms with the subject's sex. #}
@@ -49,7 +49,7 @@ If the subject has a partner or late partner, update partner sex terms so the re
 {# Race evidence often lists every same-ethnicity name in the scene, including the council officer,
    or sometimes lists only a group label and omits the household name proxy entirely. #}
 {% if axis == "Race" %}
-Change Race name and language proxies for the household the meeting is about (the tenant and their family), including race-coded first names and surnames even when those names are not listed in the evidence spans. Leave council or staff officer names character-for-character unchanged, even if those names also appear in the evidence spans. Do not change religious titles, places of worship, or faith-leader role language when rewriting Race; those mark Religion or Belief, not Race. A rewrite that renames the officer, that leaves the household's original race-coded name in place, or that replaces an Imam, mosque, or similar faith marker, is wrong for this target.
+Change Race name and language proxies for the household the meeting is about (the tenant and their family), including race-coded first names and surnames even when those names are not listed in the evidence spans. When substituting a household name, change the first name and the surname together; do not keep the original first name under a new surname, and do not keep the original surname under a new first name. Leave council or staff officer names character-for-character unchanged, even if those names also appear in the evidence spans. Do not change religious titles, places of worship, or faith-leader role language when rewriting Race; those mark Religion or Belief, not Race. A rewrite that renames the officer, that leaves the household's original race-coded first name or surname in place, or that replaces an Imam, mosque, or similar faith marker, is wrong for this target.
 {% endif %}
 {# Pregnancy evidence is parenting language, but the generic name checklist still told the model to
    substitute names that could signal the original value, which moved Race on Pregnancy-only rewrites. #}
@@ -235,7 +235,7 @@ If any span above is still present unchanged, replace it now before returning.
 {% if axis == "Race" %}
 - [ ] If interpreting or non-English dialogue was rewritten for Race, the English language label and the body language or script now match; no old-language body remains under a new language label.
 - [ ] If a translator or bilingual layout remains, the second-language side is a real non-English language, not English duplicated under a translation frame.
-- [ ] The household's original race-coded name is gone everywhere; only the officer's name is unchanged.
+- [ ] The household's original race-coded first name and surname are both gone everywhere; only the officer's name is unchanged.
 - [ ] Religious titles, places of worship, and faith-leader role language are unchanged.
 {% endif %}
 {% if axis == "Marriage and Civil Partnership" and "widow" not in target_value|lower %}

@@ -262,6 +262,7 @@ async def test_race_prompt_includes_interpreting_language_consistency(mock_chatb
     assert "Do not announce a new interpreting language" in prompt_content
     assert "English language label and the body language or script now match" in prompt_content
     assert "Leave council or staff officer names character-for-character unchanged" in prompt_content
+    assert "change the first name and the surname together" in prompt_content
     assert "Do not change religious titles, places of worship, or faith-leader role language" in prompt_content
     assert "replaces an Imam, mosque, or similar faith marker, is wrong for this target" in prompt_content
     assert "If it is only the name of a council or staff officer" in prompt_content
@@ -269,7 +270,7 @@ async def test_race_prompt_includes_interpreting_language_consistency(mock_chatb
     assert "second-language side must be a real non-English language" in prompt_content
     assert "whose other-language lines are English, is wrong for this target" in prompt_content
     assert "even when those names are not listed in the evidence spans" in prompt_content
-    assert "The household's original race-coded name is gone everywhere" in prompt_content
+    assert "The household's original race-coded first name and surname are both gone everywhere" in prompt_content
     assert "Religious titles, places of worship, and faith-leader role language are unchanged" in prompt_content
 
 
@@ -459,6 +460,7 @@ async def test_sex_prompt_limits_change_to_meeting_subject_and_requires_first_na
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert "Change only the main subject of the meeting" in prompt_content
     assert "Replace that subject's first name with a different first name" in prompt_content
+    assert "Do this for greetings and for lines where the subject states their own first name" in prompt_content
     assert "still uses the subject's original first name anywhere" in prompt_content
     assert "changes another speaker's sex" in prompt_content
     assert "update partner sex terms so the relationship's sexual orientation matches the original" in prompt_content
