@@ -354,6 +354,7 @@ async def test_orientation_prompt_omits_subject_sex_rule_for_other_targets(mock_
     assert "means a man whose partner is a man" not in prompt_content
     assert "orientation-coded hate" in prompt_content
     assert "generic neighbour-harassment language" in prompt_content
+    assert "Do not change participant names" in prompt_content
 
 
 @pytest.mark.asyncio
@@ -377,7 +378,9 @@ async def test_orientation_hetero_prompt_scrubs_orientation_coded_hate(mock_chat
 
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert "Also remove abuse wording that still signals" in prompt_content
+    assert "Do not change participant names" in prompt_content
     assert "Orientation-coded hate phrases from the original" in prompt_content
+    assert "Every participant name is character-for-character unchanged" in prompt_content
 
 
 @pytest.mark.asyncio
