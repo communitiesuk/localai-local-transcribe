@@ -36,17 +36,29 @@ Update the subject's first name, title, and pronouns to match "{{ target_value }
 {# When several people share the original sex value, evidence lists all of them, and the model
    flips every matching title while often leaving the subject's first name unchanged. #}
 {% if axis == "Sex" %}
-Change only the main subject of the meeting (the person the meeting is about), not every speaker who shares "{{ original_value }}". Replace that subject's first name, titles, and pronouns everywhere to match "{{ target_value }}"; keep their surname and every other speaker unchanged. A rewrite that leaves the subject's original first name in place, or that changes another speaker's sex, is wrong for this target.
+Change only the main subject of the meeting (the person the meeting is about), not every speaker who shares "{{ original_value }}". Replace that subject's first name with a different first name that signals "{{ target_value }}", and update titles and pronouns everywhere; keep their surname and every other speaker unchanged. A rewrite that still uses the subject's original first name anywhere, including after Mr or Mrs, or that changes another speaker's sex, is wrong for this target.
+{# A Sex-only rewrite that keeps the old partner sex flips Sexual Orientation (for example a
+   widow with a late husband becoming a man with a late husband). Preserve the original
+   opposite-sex or same-sex pattern by updating partner terms with the subject's sex. #}
+If the subject has a partner or late partner, update partner sex terms so the relationship's sexual orientation matches the original transcript. If the original was opposite-sex, a male subject must have a wife or late wife, not a husband; a female subject must have a husband or late husband, not a wife. A rewrite that changes the subject's sex but also changes the relationship into a different sexual orientation is wrong for this target.
 {% endif %}
 {# Race evidence often lists every same-ethnicity name in the scene, including the council officer,
    or sometimes lists only a group label and omits the household name proxy entirely. #}
 {% if axis == "Race" %}
-Change Race name and language proxies for the household the meeting is about (the tenant and their family), including race-coded first names and surnames even when those names are not listed in the evidence spans. Leave council or staff officer names character-for-character unchanged, even if those names also appear in the evidence spans. A rewrite that renames the officer, or that leaves the household's original race-coded name in place, is wrong for this target.
+Change Race name and language proxies for the household the meeting is about (the tenant and their family), including race-coded first names and surnames even when those names are not listed in the evidence spans. Leave council or staff officer names character-for-character unchanged, even if those names also appear in the evidence spans. Do not change religious titles, places of worship, or faith-leader role language when rewriting Race; those mark Religion or Belief, not Race. A rewrite that renames the officer, that leaves the household's original race-coded name in place, or that replaces an Imam, mosque, or similar faith marker, is wrong for this target.
 {% endif %}
 {# Pregnancy evidence is parenting language, but the generic name checklist still told the model to
    substitute names that could signal the original value, which moved Race on Pregnancy-only rewrites. #}
 {% if axis == "Pregnancy and Maternity" %}
 Do not change participant names. Signal pregnancy and maternity through pregnancy, parenting, and dependant language only. A rewrite that renames anyone is wrong for this target.
+{% endif %}
+{# Marriage keep-name is already required below. Widowed sources must not stay bereaved when the
+   target is a living status such as married or civil_partner. #}
+{% if axis == "Marriage and Civil Partnership" %}
+Do not change participant names. Signal marriage status through relationship language and titles only.
+{% if "widow" not in target_value|lower %}
+"{{ target_value }}" is a living status, not bereavement. Remove death, late-partner, widow, and succession-after-death framing. Signal "{{ target_value }}" through living relationship language only. A rewrite that still describes the subject as having lost a partner, or as succeeding a late partner's tenancy because of bereavement, is wrong for this target.
+{% endif %}
 {% endif %}
 {# Disability evidence often names the condition only a few times, while related symptom words
    (breathing, respiratory, inhaler) remain elsewhere. Subtype swaps must not invent another
@@ -203,11 +215,16 @@ If any span above is still present unchanged, replace it now before returning.
 {% if axis == "Sex" %}
 - [ ] If the Sex target is male, no participant whose sex changed to male is still described as pregnant or with maternity wording that applied to them in the original.
 - [ ] If the Sex target is female, no new pregnancy or maternity content has been invented that was absent from the original transcript.
+- [ ] Partner or late-partner sex terms still match the original relationship's sexual orientation.
 {% endif %}
 {% if axis == "Race" %}
 - [ ] If interpreting or non-English dialogue was rewritten for Race, the English language label and the body language or script now match; no old-language body remains under a new language label.
 - [ ] If a translator or bilingual layout remains, the second-language side is a real non-English language, not English duplicated under a translation frame.
 - [ ] The household's original race-coded name is gone everywhere; only the officer's name is unchanged.
+- [ ] Religious titles, places of worship, and faith-leader role language are unchanged.
+{% endif %}
+{% if axis == "Marriage and Civil Partnership" and "widow" not in target_value|lower %}
+- [ ] Death, late-partner, widow, and succession-after-death framing are gone; living "{{ target_value }}" language is used instead.
 {% endif %}
 {% if axis == "Age" %}
 - [ ] Age language (routes, age bands, life-stage wording) matches "{{ target_value }}", and any Age-driven first-name substitute kept sex and surname unchanged.
@@ -217,7 +234,7 @@ If any span above is still present unchanged, replace it now before returning.
 1. Apply changes consistently throughout the entire transcript
 2. Update ALL pronouns, names, and references to maintain consistency — participant names can implicitly signal the characteristic even when not listed in the evidence spans{% if axis == "Sex" %}. For Sex, apply that only to the participant(s) whose sex is being changed; leave every other speaker's name exactly as written{% elif axis == "Marriage and Civil Partnership" or axis == "Religion or Belief" or axis == "Pregnancy and Maternity" %}. For {{ axis }}, leave every participant name exactly as written{% elif axis == "Age" %}. For Age, leave participant names unchanged by default; only substitute a first name when it is clearly implausible for the target age band, keeping sex signalling and surname unchanged{% endif %}
 3. Preserve meeting content and structure
-4. Do NOT change unrelated attributes or technical content. Changing Marriage and Civil Partnership must not change the partner's sex or sexual orientation; marriage may be same-sex. Changing Marriage and Civil Partnership must not change participant names; signal marriage status through relationship language and titles only. Changing Sex must not change surnames; signal Sex through first names, pronouns, titles, and gendered language only. Changing Sex applies only to the participant(s) whose sex is being changed: leave every other speaker's first name, surname, and form of address character-for-character unchanged, even if those names could also be read as gendered. Changing Sex has a documented coherence exception with Pregnancy and Maternity: male participants must not remain pregnant, so female-to-male Sex rewrites must remove pregnancy and maternity references for the person whose sex is changing; male-to-female Sex rewrites must not invent pregnancy or maternity unless the original transcript already states it. Changing Race must keep interpreting language labels and interpreted or non-English body text consistent: do not rename the interpreting language in English while leaving the old language's wording or script unchanged. Changing Age must not change participant names by default; signal Age through route labels, age bands, life-stage language, and explicit ages. If a first name is clearly implausible for the target age band, a first-name substitute is allowed only when it keeps the same sex signalling and the same surname. Changing Religion or Belief must not change participant names; signal religion through practice, belief, and religious titles only.
+4. Do NOT change unrelated attributes or technical content. Changing Marriage and Civil Partnership must not change the partner's sex or sexual orientation; marriage may be same-sex. Changing Marriage and Civil Partnership must not change participant names; signal marriage status through relationship language and titles only. When the Marriage and Civil Partnership target is not widowed, remove death and late-partner framing and use living relationship language for the target status. Changing Sex must not change surnames; signal Sex through first names, pronouns, titles, and gendered language only. Changing Sex applies only to the participant(s) whose sex is being changed: leave every other speaker's first name, surname, and form of address character-for-character unchanged, even if those names could also be read as gendered. Changing Sex has a documented coherence exception with Pregnancy and Maternity: male participants must not remain pregnant, so female-to-male Sex rewrites must remove pregnancy and maternity references for the person whose sex is changing; male-to-female Sex rewrites must not invent pregnancy or maternity unless the original transcript already states it. Changing Sex must also keep the original relationship sexual orientation by updating partner or late-partner sex terms with the subject's sex. Changing Race must keep interpreting language labels and interpreted or non-English body text consistent: do not rename the interpreting language in English while leaving the old language's wording or script unchanged. Changing Race must not change religious titles, places of worship, or faith-leader role language. Changing Age must not change participant names by default; signal Age through route labels, age bands, life-stage language, and explicit ages. If a first name is clearly implausible for the target age band, a first-name substitute is allowed only when it keeps the same sex signalling and the same surname. Changing Religion or Belief must not change participant names; signal religion through practice, belief, and religious titles only.
 5. Return exactly {{ dialogue_texts|length }} text strings in the same order
 
 **Output Format**:

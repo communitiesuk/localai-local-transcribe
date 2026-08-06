@@ -262,16 +262,15 @@ async def test_race_prompt_includes_interpreting_language_consistency(mock_chatb
     assert "Do not announce a new interpreting language" in prompt_content
     assert "English language label and the body language or script now match" in prompt_content
     assert "Leave council or staff officer names character-for-character unchanged" in prompt_content
-    assert (
-        "A rewrite that renames the officer, or that leaves the household's original race-coded name in place"
-        in prompt_content
-    )
+    assert "Do not change religious titles, places of worship, or faith-leader role language" in prompt_content
+    assert "replaces an Imam, mosque, or similar faith marker, is wrong for this target" in prompt_content
     assert "If it is only the name of a council or staff officer" in prompt_content
     assert "Household Race-signalling names have been substituted" in prompt_content
     assert "second-language side must be a real non-English language" in prompt_content
     assert "whose other-language lines are English, is wrong for this target" in prompt_content
     assert "even when those names are not listed in the evidence spans" in prompt_content
     assert "The household's original race-coded name is gone everywhere" in prompt_content
+    assert "Religious titles, places of worship, and faith-leader role language are unchanged" in prompt_content
 
 
 @pytest.mark.asyncio
@@ -426,9 +425,36 @@ async def test_sex_prompt_limits_change_to_meeting_subject_and_requires_first_na
 
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert "Change only the main subject of the meeting" in prompt_content
-    assert "Replace that subject's first name, titles, and pronouns everywhere" in prompt_content
-    assert "leaves the subject's original first name in place" in prompt_content
+    assert "Replace that subject's first name with a different first name" in prompt_content
+    assert "still uses the subject's original first name anywhere" in prompt_content
     assert "changes another speaker's sex" in prompt_content
+    assert "update partner sex terms so the relationship's sexual orientation matches the original" in prompt_content
+    assert "changes the relationship into a different sexual orientation is wrong" in prompt_content
+
+
+@pytest.mark.asyncio
+async def test_marriage_living_status_prompt_scrubs_bereavement(mock_chatbot, sample_transcript):
+    """Non-widowed Marriage targets must not keep death or late-partner framing."""
+    detection = CharacteristicDetection(
+        axis=ProtectedCharacteristic.MARRIAGE_CIVIL_PARTNERSHIP,
+        detected_value="Married (widow of late husband)",
+        evidence_spans=[EvidenceSpan(dialogue_index=0, text_snippet="lost her husband", confidence=0.9)],
+        overall_confidence=0.9,
+    )
+    axis_change = AxisChange(
+        axis=ProtectedCharacteristic.MARRIAGE_CIVIL_PARTNERSHIP,
+        original_value="widowed",
+        target_value="civil_partner",
+    )
+    mock_chatbot.chat.return_value = '["She is a doctor", "Yes, she works at the hospital"]'
+
+    rewriter = CounterfactualRewriter(chatbot=mock_chatbot)
+    await rewriter.rewrite_transcript(sample_transcript, detection, axis_change)
+
+    prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
+    assert "is a living status, not bereavement" in prompt_content
+    assert "still describes the subject as having lost a partner" in prompt_content
+    assert "Death, late-partner, widow, and succession-after-death framing are gone" in prompt_content
 
 
 @pytest.mark.asyncio
