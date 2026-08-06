@@ -145,6 +145,13 @@ async def get_target_user(user: UserDep, target_user: TargetUserDep, session: SQ
 async def update_user_roles(
     data: UserUpdateRoles, target_user: TargetUserDep, session: SQLSessionDep, user: UserDep
 ) -> GetUserResponse:
+    is_promoting_to_system_admin = UserRole.MHCLG_SUPPORT_ADMIN in data.roles and not is_system_admin(target_user)
+    if is_promoting_to_system_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="MHCLG support admin role can only be assigned via AWS CloudShell/CLI",
+        )
+
     involves_system_admin_role = UserRole.MHCLG_SUPPORT_ADMIN in data.roles or is_system_admin(target_user)
 
     if is_system_admin(user):
