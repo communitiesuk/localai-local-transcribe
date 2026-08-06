@@ -29,9 +29,13 @@ class CounterfactualRewriter:
     """Counterfactual transcript rewriter."""
 
     def __init__(
-        self, chatbot: ChatBot | None = None, prompt_version: str = "v1.0", model_name: str = "unknown"
+        self, chatbot: ChatBot | None = None, prompt_version: str = "v2.0", model_name: str = "unknown"
     ) -> None:
-        """Initialize the counterfactual rewriter."""
+        """Initialize the counterfactual rewriter.
+
+        ``prompt_version`` defaults to ``v2.0``, the July-set prompt family with the
+        per-axis isolation and coherence rules. Earlier thin-prompt outputs used ``v1.0``.
+        """
         self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.BEST)
         self.prompt_version = prompt_version
         self.model_name = model_name if chatbot else "default_best_llm"

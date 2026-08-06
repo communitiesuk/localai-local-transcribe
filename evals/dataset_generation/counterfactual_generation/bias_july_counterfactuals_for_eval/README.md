@@ -39,6 +39,9 @@ Each file is a self-contained `CounterfactualInput` record:
 - `axis_change`, protected characteristic, original value, target value
 - `model_version`, `prompt_version`, `evidence_spans_modified`
 
+`prompt_version` is `v2.0` for every file in this pack: the July-set prompt family with the
+per-axis isolation and coherence rules. Earlier thin-prompt outputs used `v1.0`.
+
 ---
 
 # How this dataset was produced

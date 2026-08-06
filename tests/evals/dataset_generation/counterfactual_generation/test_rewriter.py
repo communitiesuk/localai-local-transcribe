@@ -52,12 +52,12 @@ def sample_axis_change():
 
 def test_rewriter_initialization(mock_chatbot):
     default_rewriter = CounterfactualRewriter()
-    assert default_rewriter.prompt_version == "v1.0"
+    assert default_rewriter.prompt_version == "v2.0"
     assert default_rewriter.model_name == "default_best_llm"
 
-    custom_rewriter = CounterfactualRewriter(chatbot=mock_chatbot, prompt_version="v2.0", model_name="gpt-4")
+    custom_rewriter = CounterfactualRewriter(chatbot=mock_chatbot, prompt_version="v3.0", model_name="gpt-4")
     assert custom_rewriter.chatbot == mock_chatbot
-    assert custom_rewriter.prompt_version == "v2.0"
+    assert custom_rewriter.prompt_version == "v3.0"
     assert custom_rewriter.model_name == "gpt-4"
 
 
@@ -75,7 +75,7 @@ async def test_rewrite_transcript_applies_transformation_correctly(
     assert result.rewritten_transcript[1]["text"] == "Yes, she works at the hospital"
     assert result.axis_change == sample_axis_change
     assert set(result.evidence_spans_modified) == {0, 1}
-    assert result.prompt_version == "v1.0"
+    assert result.prompt_version == "v2.0"
 
 
 @pytest.mark.asyncio
