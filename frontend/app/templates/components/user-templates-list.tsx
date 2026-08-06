@@ -41,10 +41,7 @@ export const UserTemplatesList = () => {
     isError,
   } = useQuery(getUserTemplatesUserTemplatesGetOptions())
 
-  const sortedTemplates = useMemo(
-    () => [...templates].sort((a, b) => a.name.localeCompare(b.name)),
-    [templates]
-  )
+  const sortedTemplates = [...templates].sort((a, b) => a.name.localeCompare(b.name))
 
   if (isLoading) {
     return <Loader2 className="animate-spin" />
