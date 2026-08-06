@@ -533,6 +533,8 @@ async def test_disability_removal_prompt_scrubs_condition_specific_wording(mock_
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert "original disability and its condition-specific wording are gone" in prompt_content
     assert "still names the original condition or its specific symptoms is wrong" in prompt_content
+    assert "Do not change participant names" in prompt_content
+    assert "Every participant name is character-for-character unchanged" in prompt_content
 
 
 @pytest.mark.asyncio
@@ -557,7 +559,8 @@ async def test_disability_subtype_prompt_forbids_other_disability_types(mock_cha
     prompt_content = mock_chatbot.chat.call_args[1]["messages"][0]["content"]
     assert 'Change the disability to "learning_disability" only' in prompt_content
     assert "Do not add a different Disability subtype" in prompt_content
-    assert "adds another disability type, is wrong" in prompt_content
+    assert "adds another disability type, or that renames anyone, is wrong" in prompt_content
+    assert "Do not change participant names" in prompt_content
 
 
 @pytest.mark.asyncio
