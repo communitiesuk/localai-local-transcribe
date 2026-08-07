@@ -13,6 +13,7 @@ resource "aws_db_instance" "main" {
   instance_class                      = var.instance_class
   maintenance_window                  = var.maintenance_window
   iam_database_authentication_enabled = true
+  apply_immediately                   = true
   enabled_cloudwatch_logs_exports = [
     "postgresql",
     "upgrade",
