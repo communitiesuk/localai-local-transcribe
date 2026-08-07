@@ -34,7 +34,7 @@ Azure AI Speech is billed per hour of audio, so a 1-hour meeting costs whichever
 
 Selection is by audio duration, not by cost. `TranscriptionServiceManager.select_adaptor` (`common/services/transcription_services/transcription_manager.py:56`) walks the configured `TRANSCRIPTION_SERVICES` list in order and returns the first adapter whose `max_audio_length` covers the recording. Fast is listed first, so anything up to 2 hours goes to Fast; 2–4 hours falls through to Batch; longer than 4 hours raises. Fast is synchronous — one HTTP call that blocks until the transcript comes back — while Batch submits a job and is polled, which is why the cheaper path is only used when Fast cannot take the file. Note the deployed ECS task definition currently sets `TRANSCRIPTION_SERVICES=["azure_stt_synchronous"]`, so in production every meeting takes the Fast path today; `.env.example` enables both.
 
-At £0.271, transcription is about 2.5x the LLM cost of the same meeting: roughly £0.38 per 1-hour meeting end to end.
+At £0.271, transcription is about 2.5x the LLM cost of the same meeting: roughly £0.38 per 1-hour meeting for both AI stages.
 
 ## Conclusion
 
