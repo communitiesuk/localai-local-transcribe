@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, select
+from sqlmodel import col, func, select
 
 from backend.api.dependencies import UserDep
 from backend.api.dependencies.get_session import SQLSessionDep
@@ -98,6 +98,18 @@ async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: 
 
 @templates_router.post("/user-templates")
 async def create_user_template(user: UserDep, session: SQLSessionDep, request: CreateUserTemplateRequest) -> None:
+    existing_template = (
+        await session.exec(
+            select(UserTemplate).where(
+                UserTemplate.user_id == user.id,
+                func.lower(func.trim(col(UserTemplate.name))) == request.name.strip().lower(),
+            )
+        )
+    ).first()
+
+    if existing_template:
+        raise HTTPException(status_code=409, detail="A template with this title already exists")
+
     template = UserTemplate(
         name=request.name,
         content=request.content,

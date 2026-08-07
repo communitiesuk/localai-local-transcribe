@@ -3,16 +3,19 @@
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
 import { GovukHeading } from '@/components/govuk'
 import {
-  createUserTemplateUserTemplatesPostMutation,
-  getUserTemplatesUserTemplatesGetOptions,
-} from '@/lib/client/@tanstack/react-query.gen'
-import { formatCurrentDateTime } from '@/lib/utils'
+  CreateUserTemplateRequest,
+  createUserTemplateUserTemplatesPost,
+} from '@/lib/client'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
 import { FormProvider, useForm } from 'react-hook-form'
+
+const CONFLICT_STATUS = 409
+
+export class TemplateTitleConflictError extends Error {}
 
 export default function NewTemplatePage() {
   const form = useForm<TemplateData>({
@@ -29,34 +32,42 @@ export default function NewTemplatePage() {
   })
   const router = useRouter()
   const setBanner = useBannerStore((store) => store.setBanner)
-  const { data: templates = [] } = useQuery(
-    getUserTemplatesUserTemplatesGetOptions()
-  )
   const { mutateAsync: saveTemplate } = useMutation({
-    ...createUserTemplateUserTemplatesPostMutation(),
+    mutationFn: async (body: CreateUserTemplateRequest) => {
+      const { response } = await createUserTemplateUserTemplatesPost({
+        body,
+        throwOnError: false,
+      })
+
+      if (response?.status === CONFLICT_STATUS) {
+        throw new TemplateTitleConflictError()
+      }
+
+      if (!response?.ok) {
+        throw new Error('Failed to create template')
+      }
+    },
     onSuccess: () => {
       setBanner({
         variant: 'success',
         title: 'Success',
-        message: `Template '${form.getValues('name')}' was successfully created at ${formatCurrentDateTime()}`,
+        message: `'${form.getValues('name')}' created`,
       })
       posthog.capture('template_created')
       router.push('/templates')
     },
+    onError: (error) => {
+      if (error instanceof TemplateTitleConflictError) {
+        form.setError('name', {
+          message: 'A template with this title already exists',
+        })
+      }
+    },
   })
 
   const onSubmit = async (data: TemplateData) => {
-    const titleTaken = templates.some(
-      (t) => t.name.trim().toLowerCase() === data.name.trim().toLowerCase()
-    )
-    if (titleTaken) {
-      form.setError('name', {
-        message: 'A template with this title already exists',
-      })
-      return
-    }
-    await saveTemplate({
-      body: {
+    try {
+      await saveTemplate({
         name: data.name,
         description: data.description,
         content: data.content,
@@ -69,8 +80,10 @@ export default function NewTemplatePage() {
             description: q.description,
             format_instructions: q.format_instructions,
           })) ?? null,
-      },
-    })
+      })
+    } catch {
+      // Handled in onError above
+    }
   }
 
   return (

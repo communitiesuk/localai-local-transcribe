@@ -68,6 +68,10 @@ async def test_create_user_template_calls_add_and_commit(
 ):
     monkeypatch.setattr("backend.api.routes.templates.UserTemplate", lambda **_: mock_user_template)
 
+    exec_result = Mock()
+    exec_result.first.return_value = None
+    mock_session.exec.return_value = exec_result
+
     await create_user_template(mock_user, mock_session, mock_request)
     mock_session.add.assert_called_once_with(mock_user_template)
     mock_session.commit.assert_awaited()
@@ -75,12 +79,31 @@ async def test_create_user_template_calls_add_and_commit(
 
 @pytest.mark.asyncio
 async def test_create_user_template_has_right_details(mock_session, mock_user, mock_request):
+    exec_result = Mock()
+    exec_result.first.return_value = None
+    mock_session.exec.return_value = exec_result
+
     await create_user_template(mock_user, mock_session, mock_request)
     template = mock_session.add.call_args.args[0]
     assert template.name == mock_request.name
     assert template.content == mock_request.content
+    assert template.heading == mock_request.heading
     assert template.description == mock_request.description
     assert template.type == mock_request.type
+
+
+@pytest.mark.asyncio
+async def test_create_user_template_duplicate_title(mock_session, mock_user, mock_user_template, mock_request):
+    exec_result = Mock()
+    exec_result.first.return_value = mock_user_template
+    mock_session.exec.return_value = exec_result
+
+    with pytest.raises(HTTPException) as exc_info:
+        await create_user_template(mock_user, mock_session, mock_request)
+
+    assert exc_info.value.status_code == 409
+    mock_session.add.assert_not_called()
+    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -198,6 +221,7 @@ async def test_edit_user_template_question_at_index_zero_is_updated(mock_session
     request = SimpleNamespace(
         name=None,
         content=None,
+        heading=None,
         description=None,
         questions=[Question(id=existing_question.id, position=0, title="New Title", description="New Description")],
     )
@@ -212,7 +236,9 @@ async def test_edit_user_template_question_at_index_zero_is_updated(mock_session
 async def test_edit_user_template_adds_new_question_when_no_id(
     mock_session, mock_user, mock_user_template, mock_request
 ):
-    mock_request.questions = [SimpleNamespace(id=None, position=1, title="Foo", description="foobar")]
+    mock_request.questions = [
+        SimpleNamespace(id=None, position=1, title="Foo", description="foobar", format_instructions="")
+    ]
 
     exec_result = Mock()
     exec_result.first.return_value = mock_user_template
