@@ -4,7 +4,7 @@ import { GovukBackLink } from '@/components/govuk'
 export default function RecordAudio() {
   return (
     <div>
-      <GovukBackLink href="/new" />
+      <GovukBackLink href="/" />
       <h1 className="govuk-heading-xl">Record a meeting</h1>
       <MicRecorderForm />
     </div>

@@ -1,3 +1,4 @@
+export { GovukBody } from './body'
 export { GovukAccordion } from './accordion'
 export { GovukBackLink } from './back-link'
 export { GovukButton, GovukButtonGroup, GovukButtonLink } from './button'
@@ -20,7 +21,9 @@ export { GovukSelect } from './select'
 export { GovukHeading } from './heading'
 export { GovukWarningText } from './warning'
 export { GovukTag, type TagColour } from './tag'
+export { GovukLink } from './link'
 export { GovukTextarea } from './textarea'
+export { GovukSectionBreak } from './section-break'
 export {
   GovukPanel,
   GovukPanelHeader,
