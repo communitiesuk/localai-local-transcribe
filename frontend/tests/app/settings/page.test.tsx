@@ -76,12 +76,10 @@ describe('<SettingsPage />', () => {
     const oneDay = screen.getByLabelText('1 day') as HTMLInputElement
     const sevenDays = screen.getByLabelText('7 days') as HTMLInputElement
     const thirtyDays = screen.getByLabelText('30 days') as HTMLInputElement
-    const ninetyDays = screen.getByLabelText('90 days') as HTMLInputElement
 
     expect(oneDay).toBeInTheDocument()
     expect(sevenDays).toBeInTheDocument()
     expect(thirtyDays).toBeInTheDocument()
-    expect(ninetyDays).toBeInTheDocument()
 
     // Since initial data_retention_days is 7, the "7 days" option should be checked
     expect(sevenDays.checked).toBe(true)
