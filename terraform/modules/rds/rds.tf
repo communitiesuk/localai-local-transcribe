@@ -1,18 +1,23 @@
 #tfsec:ignore:AVD-AWS-0176:iam authentication not suitable as tokens only last 15minutes, password authentication preferred
 resource "aws_db_instance" "main" {
-  identifier                      = "${var.environment_name}-database"
-  db_name                         = "localtranscribedb"
-  allocated_storage               = var.allocated_storage #units are GiB
-  backup_retention_period         = var.backup_retention_period
-  backup_window                   = var.backup_window
-  db_subnet_group_name            = var.db_subnet_group_name
-  delete_automated_backups        = false
-  deletion_protection             = true # needs to be set to false and applied if you need to delete the DB
-  engine                          = "postgres"
-  engine_version                  = "18.2"
-  final_snapshot_identifier       = "${var.environment_name}-database-final-snapshot"
-  instance_class                  = var.instance_class
-  maintenance_window              = var.maintenance_window
+  identifier                          = "${var.environment_name}-database"
+  allocated_storage                   = var.allocated_storage #units are GiB
+  backup_retention_period             = var.backup_retention_period
+  backup_window                       = var.backup_window
+  db_subnet_group_name                = var.db_subnet_group_name
+  delete_automated_backups            = false
+  deletion_protection                 = true # needs to be set to false and applied if you need to delete the DB
+  engine                              = "postgres"
+  engine_version                      = "18.2"
+  final_snapshot_identifier           = "${var.environment_name}-database-final-snapshot"
+  instance_class                      = var.instance_class
+  maintenance_window                  = var.maintenance_window
+  iam_database_authentication_enabled = true
+  enabled_cloudwatch_logs_exports = [
+    "postgresql",
+    "upgrade",
+    "iam-db-auth-error"
+  ]
   multi_az                        = var.multi_az
   password                        = var.database_password
   port                            = var.database_port
