@@ -61,7 +61,8 @@ export default function DuplicateTemplatePage(props: {
       cancelHref={`/templates/${templateId}`}
     >
       <p className="govuk-body">
-        The duplicate will appear as {`‘${name} (Copy)’`} until you change its title.
+        The duplicate will appear as {`‘${name} (Copy)’`} until you change its
+        title.
       </p>
     </ConfirmationInterstitial>
   )
