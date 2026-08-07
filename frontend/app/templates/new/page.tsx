@@ -3,9 +3,17 @@
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
 import { GovukHeading } from '@/components/govuk'
 import {
+<<<<<<< HEAD
   CreateUserTemplateRequest,
   createUserTemplateUserTemplatesPost,
 } from '@/lib/client'
+=======
+  exampleDocumentTemplates,
+  exampleFormTemplates,
+} from '@/app/templates/data/example-templates'
+import { TemplateType } from '@/lib/client'
+import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
+>>>>>>> development
 import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
 import { useMutation } from '@tanstack/react-query'

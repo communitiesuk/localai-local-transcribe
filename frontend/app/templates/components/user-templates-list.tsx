@@ -16,6 +16,7 @@ import {
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
 import { GovukButton, GovukButtonLink } from '@/components/govuk'
 import { TemplateResponse } from '@/lib/client'
+import { useBannerStore } from '@/stores/use-banner-store'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
@@ -125,12 +126,18 @@ export const UserTemplatesList = () => {
   )
 }
 const TemplateCard = ({ template }: { template: TemplateResponse }) => {
+  const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
   const deleteMutation = useMutation({
     ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
+      setBanner({
+        variant: 'important',
+        title: 'Template deleted',
+        message: `'${template.name}' deleted`,
       })
       posthog.capture('template_deleted')
     },
@@ -140,6 +147,11 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
+      })
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: `'${template.name} (Copy)' created`,
       })
       posthog.capture('template_duplicated')
     },

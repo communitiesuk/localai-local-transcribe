@@ -1,0 +1,8 @@
+{% extends "counterfactual_rewrite/base.j2" %}
+{# Pregnancy evidence is parenting language, but the generic name checklist still told the model to
+   substitute names that could signal the original value, which moved Race on Pregnancy-only rewrites. #}
+{% block task_axis_rules %}
+Do not change participant names. Signal pregnancy and maternity through pregnancy, parenting, and dependant language only. A rewrite that renames anyone is wrong for this target.
+{% endblock %}
+{% block name_checklist_item %}Every participant name is character-for-character unchanged{% endblock %}
+{% block requirements_name_clause %}. For {{ axis }}, leave every participant name exactly as written{% endblock %}

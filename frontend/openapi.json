@@ -50,6 +50,17 @@
             "description": "Number of items per page"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TranscriptionSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
+          {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
@@ -88,6 +99,17 @@
         "description": "Get metadata for unlabelled transcriptions for the current user.",
         "operationId": "list_unlabelled_transcriptions_transcriptions_unlabelled_get",
         "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TranscriptionSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
@@ -2268,7 +2290,7 @@
         "required": ["name", "content", "description", "type"],
         "title": "CreateUserTemplateRequest"
       },
-      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30, 90] },
+      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30] },
       "DataRetentionUpdateResponse": {
         "properties": {
           "data_retention_days": {
@@ -2964,6 +2986,11 @@
           "created_datetime"
         ],
         "title": "TranscriptionGetResponse"
+      },
+      "TranscriptionSortOrder": {
+        "type": "string",
+        "enum": ["newest", "oldest"],
+        "title": "TranscriptionSortOrder"
       },
       "UnlabelledTranscriptionMetadata": {
         "properties": {
