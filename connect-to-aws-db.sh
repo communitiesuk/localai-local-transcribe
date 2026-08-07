@@ -22,8 +22,22 @@ LOCAL_PORT="5433"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --environment) ENVIRONMENT="$2"; shift 2 ;;
-    --local-port)  LOCAL_PORT="$2"; shift 2 ;;
+    --environment)
+      if [[ $# -lt 2 || "$2" == --* ]]; then
+        echo "Error: --environment requires a value, e.g. --environment development."
+        usage
+      fi
+      ENVIRONMENT="$2"
+      shift 2
+      ;;
+    --local-port)
+      if [[ $# -lt 2 || "$2" == --* ]]; then
+        echo "Error: --local-port requires a port number, e.g. --local-port 5433."
+        usage
+      fi
+      LOCAL_PORT="$2"
+      shift 2
+      ;;
     --help|-h)     usage ;;
     --)            shift; break ;;
     --*)           echo "Unknown option: $1"; usage ;;
