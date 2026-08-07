@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 resource "aws_kms_key" "performance_insights" {
   description         = "KMS key used for db performance insights."
   enable_key_rotation = true
