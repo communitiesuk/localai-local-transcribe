@@ -54,7 +54,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/RecordingSortOrder",
+              "$ref": "#/components/schemas/TranscriptionSortOrder",
               "description": "Sort order for date recorded",
               "default": "newest"
             },
@@ -104,7 +104,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/RecordingSortOrder",
+              "$ref": "#/components/schemas/TranscriptionSortOrder",
               "description": "Sort order for date recorded",
               "default": "newest"
             },
@@ -2284,7 +2284,7 @@
         "required": ["name", "content", "description", "type"],
         "title": "CreateUserTemplateRequest"
       },
-      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30, 90] },
+      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30] },
       "DataRetentionUpdateResponse": {
         "properties": {
           "data_retention_days": {
@@ -2827,11 +2827,6 @@
         "required": ["id", "upload_url"],
         "title": "RecordingCreateResponse"
       },
-      "RecordingSortOrder": {
-        "type": "string",
-        "enum": ["newest", "oldest"],
-        "title": "RecordingSortOrder"
-      },
       "RenameSpeakerRequest": {
         "properties": {
           "original_speaker": { "type": "string", "title": "Original Speaker" },
@@ -2974,6 +2969,11 @@
           "created_datetime"
         ],
         "title": "TranscriptionGetResponse"
+      },
+      "TranscriptionSortOrder": {
+        "type": "string",
+        "enum": ["newest", "oldest"],
+        "title": "TranscriptionSortOrder"
       },
       "UnlabelledTranscriptionMetadata": {
         "properties": {
