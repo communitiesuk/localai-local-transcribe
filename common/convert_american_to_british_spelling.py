@@ -46,10 +46,10 @@ def convert_american_to_british_spelling(text: str, strict: bool = False) -> str
         # Group 3: Trailing non-letters (including empty)
         pattern = r"([^a-zA-Z]*?)([a-zA-Z]+)([^a-zA-Z]*?)"
         result = re.sub(pattern, replace_word, text)
-        
+
         if unmapped_count > 0:
             logger.warning("Unmapped spelling conversions: %d", unmapped_count)
-        
+
         return result
 
     except Exception:
