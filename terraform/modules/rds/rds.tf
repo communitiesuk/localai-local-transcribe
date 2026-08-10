@@ -1,4 +1,3 @@
-#tfsec:ignore:AVD-AWS-0176:iam authentication not suitable as tokens only last 15minutes, password authentication preferred
 resource "aws_db_instance" "main" {
   identifier                          = "${var.environment_name}-database"
   allocated_storage                   = var.allocated_storage #units are GiB
