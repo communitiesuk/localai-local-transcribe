@@ -33,7 +33,6 @@ import { FileSpreadsheet, FileType, FileWarning, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
 
-
 export const UserTemplatesList = () => {
   const {
     data: templates = [],
