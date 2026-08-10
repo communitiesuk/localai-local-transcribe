@@ -138,8 +138,8 @@ export default function AdminAddUserConfirmPage() {
 
             <p className="govuk-body govuk-!-margin-bottom-5">
               They will be granted standard user access by default. If you would
-              like to grant them admin permissions you can change this in their
-              user account.
+              like to grant them organisation admin permissions you can change
+              this in their user account.
             </p>
 
             <div className="govuk-warning-text">
