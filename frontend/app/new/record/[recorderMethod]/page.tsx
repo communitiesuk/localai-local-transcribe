@@ -9,7 +9,7 @@ import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 type RecorderMethod = 'in-person' | 'online'
 
 const titleMapper = {
-  idle: 'Select a Mic',
+  idle: 'Select a Microphone',
   recording: 'Recording in progress',
   paused: 'Recording Paused',
   review: 'Are you sure you want to stop recording?',
@@ -22,7 +22,7 @@ export default function RecordPage() {
 
   return (
     <div>
-      <GovukBackLink href="/" />
+      {recordingState !== 'review' && <GovukBackLink href="/" />}
       <GovukHeading>{titleMapper[recordingState]}</GovukHeading>
       {recorderMethod === 'in-person' ? (
         <MicRecorderForm />

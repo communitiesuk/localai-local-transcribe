@@ -1,6 +1,11 @@
 'use client'
 
-import { GovukButton, GovukButtonGroup } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukButtonGroup,
+  GovukWarningText,
+  GovukLink,
+} from '@/components/govuk'
 import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 import { useEffect, useRef, useState } from 'react'
 
@@ -29,6 +34,9 @@ export default function RecordingControl({
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const [localIsPaused, setLocalIsPaused] = useState(false)
+  const [recordingDurationSeconds, setRecordingDurationSeconds] = useState(0)
+  const recordingStartedAtRef = useRef<number | null>(null)
+  const accumulatedRecordingMsRef = useRef(0)
 
   const { recordingState: recordingStateUI } = useRecordingUiStore()
   const setRecordingStateUI = useRecordingUiStore(
@@ -40,6 +48,51 @@ export default function RecordingControl({
     recorderControls?.isPaused !== undefined
       ? recorderControls.isPaused
       : localIsPaused
+
+  useEffect(() => {
+    if (!isRecording) {
+      recordingStartedAtRef.current = null
+      accumulatedRecordingMsRef.current = 0
+      setRecordingDurationSeconds(0)
+      return
+    }
+
+    if (isPaused && recordingStartedAtRef.current !== null) {
+      accumulatedRecordingMsRef.current +=
+        Date.now() - recordingStartedAtRef.current
+      recordingStartedAtRef.current = null
+      return
+    }
+
+    if (recordingStartedAtRef.current === null) {
+      recordingStartedAtRef.current = Date.now()
+    }
+
+    const updateDuration = () => {
+      const currentSessionMs =
+        recordingStartedAtRef.current === null
+          ? 0
+          : Date.now() - recordingStartedAtRef.current
+
+      setRecordingDurationSeconds(
+        Math.floor(
+          (accumulatedRecordingMsRef.current + currentSessionMs) / 1000
+        )
+      )
+    }
+
+    updateDuration()
+
+    const interval = window.setInterval(updateDuration, 1000)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [isRecording, isPaused])
+
+  const formattedRecordingDuration = new Date(recordingDurationSeconds * 1000)
+    .toISOString()
+    .substring(11, 19)
 
   useEffect(() => {
     const isValidStream =
@@ -301,6 +354,8 @@ export default function RecordingControl({
     <div>
       {isRecording && !(recordingStateUI === 'review') && (
         <div>
+          <p>Recording length: {formattedRecordingDuration}</p>
+
           {/* audio visulisation canvas */}
           <div
             ref={containerRef}
@@ -324,6 +379,7 @@ export default function RecordingControl({
               type="button"
               onClick={togglePause}
               variant="secondary"
+              className="min-w-36"
             >
               {isPaused ? 'Resume' : 'Pause'}
             </GovukButton>
@@ -331,6 +387,7 @@ export default function RecordingControl({
               type="button"
               onClick={handleStopRecording}
               variant="warning"
+              className="min-w-36"
             >
               Stop
             </GovukButton>
@@ -339,23 +396,22 @@ export default function RecordingControl({
       )}
 
       {recordingStateUI === 'review' && (
-        <div className="govuk-inset-text">
-          <p className="govuk-body">
-            Are you sure you want to stop recording? You won&apos;t be able to
-            resume recording after stopping.
-          </p>
-          <div className="flex gap-2">
+        <div>
+          <GovukWarningText>
+            You will not be able to resume recording if you proceed.
+          </GovukWarningText>
+          <GovukButtonGroup>
             <GovukButton type="button" onClick={confirmStop} variant="warning">
               Stop Recording
             </GovukButton>
-            <GovukButton
-              type="button"
+            {/* presenting this button as a link */}
+            <button
+              className="govuk-link govuk-link--no-visited-state"
               onClick={() => setRecordingStateUI('recording')}
-              variant="secondary"
             >
               Cancel
-            </GovukButton>
-          </div>
+            </button>
+          </GovukButtonGroup>
         </div>
       )}
     </div>
