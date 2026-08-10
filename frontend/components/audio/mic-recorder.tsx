@@ -16,6 +16,8 @@ import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from './audio-player'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
+import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
+import { RecordingLoading } from '@/components/recording-loading'
 
 export function MicRecorderForm() {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -63,6 +65,11 @@ function MicRecorderComponent({
   const micStreamRef = useRef<MediaStream | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
   const [isRecording, setIsRecording] = useState(false)
+  const [isStartingRecording, setIsStartingRecording] = useState(false)
+
+  const setRecordingUIState = useRecordingUiStore(
+    (state) => state.setRecordingState
+  )
 
   const stopAllTracks = useCallback(() => {
     if (micStreamRef.current) {
@@ -198,6 +205,32 @@ function MicRecorderComponent({
 
   useTabCloseWarning(!!recordedAudio || isRecording)
 
+  const handleStartRecordingClick = useCallback(() => {
+    setError(null)
+    setRecordedAudio(null)
+    setIsStartingRecording(true)
+    setRecordingUIState('starting')
+  }, [setRecordedAudio, setRecordingUIState])
+
+  const handleLoadingComplete = useCallback(() => {
+    setIsStartingRecording(false)
+    startRecording()
+  }, [startRecording])
+
+  const handleLoadingCancel = useCallback(() => {
+    setIsStartingRecording(false)
+    setRecordingUIState('idle')
+  }, [setRecordingUIState])
+
+  if (isStartingRecording) {
+    return (
+      <RecordingLoading
+        onComplete={handleLoadingComplete}
+        onCancel={handleLoadingCancel}
+      />
+    )
+  }
+
   if (!permissionGranted || !audioDevices.length) {
     return (
       <div className="space-y-4">
@@ -256,7 +289,7 @@ function MicRecorderComponent({
             </p>
             <GovukButton
               type="button"
-              onClick={startRecording}
+              onClick={handleStartRecordingClick}
               className="govuk-!-margin-bottom-0"
             >
               Start recording

@@ -1,7 +1,8 @@
 'use client'
 
-import { GovukButton } from '@/components/govuk'
+import { GovukButton, GovukButtonGroup } from '@/components/govuk'
 import React, { useEffect, useRef, useState } from 'react'
+import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -29,12 +30,73 @@ export default function RecordingControl({
   const audioContextRef = useRef<AudioContext | null>(null)
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [localIsPaused, setLocalIsPaused] = useState(false)
+  const [recordingDurationSeconds, setRecordingDurationSeconds] = useState(0)
+  const recordingStartedAtRef = useRef<number | null>(null)
+  const accumulatedRecordingMsRef = useRef(0)
+
+  const setRecordingState = useRecordingUiStore(
+    (state) => state.setRecordingState
+  )
 
   const mediaTracks = stream ? stream.getAudioTracks() : []
   const isPaused =
     recorderControls?.isPaused !== undefined
       ? recorderControls.isPaused
       : localIsPaused
+
+  useEffect(() => {
+    if (!isRecording) {
+      setRecordingState('idle')
+      return
+    }
+
+    setRecordingState(isPaused ? 'paused' : 'recording')
+  }, [isRecording, isPaused, setRecordingState])
+
+  useEffect(() => {
+    if (!isRecording) {
+      recordingStartedAtRef.current = null
+      accumulatedRecordingMsRef.current = 0
+      setRecordingDurationSeconds(0)
+      return
+    }
+
+    if (isPaused && recordingStartedAtRef.current !== null) {
+      accumulatedRecordingMsRef.current +=
+        Date.now() - recordingStartedAtRef.current
+      recordingStartedAtRef.current = null
+      return
+    }
+
+    if (recordingStartedAtRef.current === null) {
+      recordingStartedAtRef.current = Date.now()
+    }
+
+    const updateDuration = () => {
+      const currentSessionMs =
+        recordingStartedAtRef.current === null
+          ? 0
+          : Date.now() - recordingStartedAtRef.current
+
+      setRecordingDurationSeconds(
+        Math.floor(
+          (accumulatedRecordingMsRef.current + currentSessionMs) / 1000
+        )
+      )
+    }
+
+    updateDuration()
+
+    const interval = window.setInterval(updateDuration, 1000)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [isRecording, isPaused])
+
+  const formattedRecordingDuration = new Date(recordingDurationSeconds * 1000)
+    .toISOString()
+    .substring(11, 19)
 
   useEffect(() => {
     const isValidStream =
@@ -292,6 +354,8 @@ export default function RecordingControl({
 
   return (
     <div className="space-y-4">
+      <p>Recording length: {formattedRecordingDuration}</p>
+
       <div
         ref={containerRef}
         className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
@@ -308,22 +372,26 @@ export default function RecordingControl({
           </div>
         )}
       </div>
-
       {isRecording && !showStopConfirm && (
-        <div className="flex justify-between gap-2">
-          <GovukButton type="button" onClick={togglePause} variant="secondary">
-            {isPaused ? 'Resume Recording' : 'Pause Recording'}
+        <GovukButtonGroup>
+          <GovukButton
+            type="button"
+            onClick={togglePause}
+            variant="secondary"
+            className="min-w-36"
+          >
+            {isPaused ? 'Resume' : 'Pause'}
           </GovukButton>
           <GovukButton
             type="button"
             onClick={handleStopRecording}
             variant="warning"
+            className="min-w-36"
           >
-            Stop Recording
+            Stop
           </GovukButton>
-        </div>
+        </GovukButtonGroup>
       )}
-
       {showStopConfirm && (
         <div className="govuk-inset-text">
           <p className="govuk-body">

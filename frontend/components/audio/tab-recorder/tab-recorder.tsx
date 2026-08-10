@@ -18,6 +18,7 @@ import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from '../audio-player'
+import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 
 export const TabRecorderForm = () => {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -75,6 +76,10 @@ function TabRecorder({
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+
+  const setRecordingUIState = useRecordingUiStore(
+    (state) => state.setRecordingState
+  )
 
   useTabCloseWarning(isRecording || !!recordedAudio)
 
@@ -272,6 +277,11 @@ function TabRecorder({
     )
   }
 
+  function handleStartRecording() {
+    setRecordingUIState('starting')
+    startRecording()
+  }
+
   return (
     <div className="space-y-4">
       {recordedAudio ? (
@@ -323,7 +333,7 @@ function TabRecorder({
                 </p>
                 <GovukButton
                   type="button"
-                  onClick={startRecording}
+                  onClick={handleStartRecording}
                   className="govuk-!-margin-bottom-0"
                 >
                   Start recording
