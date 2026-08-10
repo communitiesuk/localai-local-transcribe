@@ -16,6 +16,7 @@ import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from './audio-player'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
+import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 
 export function MicRecorderForm() {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -63,6 +64,10 @@ function MicRecorderComponent({
   const micStreamRef = useRef<MediaStream | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
   const [isRecording, setIsRecording] = useState(false)
+
+  const setRecordingStateUI = useRecordingUiStore(
+    (store) => store.setRecordingState
+  )
 
   const stopAllTracks = useCallback(() => {
     if (micStreamRef.current) {
@@ -140,6 +145,7 @@ function MicRecorderComponent({
       await requestWakeLock()
       mediaRecorder.start(1000) // Collect data every second
       setIsRecording(true)
+      setRecordingStateUI('recording')
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
     }

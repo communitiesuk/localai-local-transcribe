@@ -18,6 +18,7 @@ import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from '../audio-player'
+import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 
 export const TabRecorderForm = () => {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -75,6 +76,10 @@ function TabRecorder({
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+
+  const setRecordingStateUI = useRecordingUiStore(
+    (store) => store.setRecordingState
+  )
 
   useTabCloseWarning(isRecording || !!recordedAudio)
 
@@ -185,6 +190,7 @@ function TabRecorder({
         const micGain = newAudioContext.createGain()
         micGain.gain.value = 1.0
         micSource.connect(micGain).connect(gainNode).connect(destination)
+        setRecordingStateUI('recording')
       } catch (micError) {
         console.warn(
           'Could not access microphone. Recording only tab audio.',

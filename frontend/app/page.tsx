@@ -17,10 +17,10 @@ export default function Home() {
         <GovukHeading size="m">Record a conversation</GovukHeading>
         <GovukBody>Start a recording with one click</GovukBody>
         <GovukButtonGroup>
-          <GovukButtonLink href="/new/record-audio" variant="secondary">
+          <GovukButtonLink href="/new/record/in-person" variant="secondary">
             In person
           </GovukButtonLink>
-          <GovukButtonLink href="/new/record-virtual" variant="secondary">
+          <GovukButtonLink href="/new/record/online" variant="secondary">
             Online
           </GovukButtonLink>
         </GovukButtonGroup>

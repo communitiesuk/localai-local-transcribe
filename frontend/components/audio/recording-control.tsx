@@ -1,7 +1,8 @@
 'use client'
 
-import { GovukButton } from '@/components/govuk'
-import React, { useEffect, useRef, useState } from 'react'
+import { GovukButton, GovukButtonGroup } from '@/components/govuk'
+import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
+import { useEffect, useRef, useState } from 'react'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -27,8 +28,12 @@ export default function RecordingControl({
   const analyserRef = useRef<AnalyserNode | null>(null)
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
-  const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [localIsPaused, setLocalIsPaused] = useState(false)
+
+  const { recordingState: recordingStateUI } = useRecordingUiStore()
+  const setRecordingStateUI = useRecordingUiStore(
+    (store) => store.setRecordingState
+  )
 
   const mediaTracks = stream ? stream.getAudioTracks() : []
   const isPaused =
@@ -263,13 +268,14 @@ export default function RecordingControl({
       resizeObserver.disconnect()
       window.removeEventListener('resize', resizeCanvas)
     }
-  }, [stream, isRecording, isPaused])
+  }, [stream, isRecording, isPaused, recordingStateUI])
 
   const togglePause = () => {
+    const newPausedState = !isPaused
     if (recorderControls?.togglePauseResume) {
       recorderControls.togglePauseResume()
+      setRecordingStateUI(newPausedState ? 'paused' : 'recording')
     } else if (stream && mediaTracks.length > 0) {
-      const newPausedState = !isPaused
       mediaTracks.forEach((track) => {
         const newTrack = track
         newTrack.enabled = !newPausedState
@@ -278,53 +284,61 @@ export default function RecordingControl({
       if (onPauseStateChange) {
         onPauseStateChange(newPausedState)
       }
+      setRecordingStateUI(newPausedState ? 'paused' : 'recording')
     }
   }
 
   const handleStopRecording = () => {
-    setShowStopConfirm(true)
+    setRecordingStateUI('review')
   }
 
   const confirmStop = () => {
     onStopRecording()
-    setShowStopConfirm(false)
+    setRecordingStateUI('idle')
   }
 
   return (
-    <div className="space-y-4">
-      <div
-        ref={containerRef}
-        className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
-      >
-        <canvas ref={canvasRef} className="size-full" />
-        {!isRecording && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-            Audio visualization will appear here when recording
-          </div>
-        )}
-        {isRecording && !stream && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 text-sm text-gray-500 dark:bg-gray-800/80 dark:text-gray-400">
-            Connecting to audio stream...
-          </div>
-        )}
-      </div>
-
-      {isRecording && !showStopConfirm && (
-        <div className="flex justify-between gap-2">
-          <GovukButton type="button" onClick={togglePause} variant="secondary">
-            {isPaused ? 'Resume Recording' : 'Pause Recording'}
-          </GovukButton>
-          <GovukButton
-            type="button"
-            onClick={handleStopRecording}
-            variant="warning"
+    <div>
+      {isRecording && !(recordingStateUI === 'review') && (
+        <div>
+          {/* audio visulisation canvas */}
+          <div
+            ref={containerRef}
+            className="relative mb-6 h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
           >
-            Stop Recording
-          </GovukButton>
+            <canvas ref={canvasRef} className="size-full" />
+            {!isRecording && (
+              <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                Audio visualization will appear here when recording
+              </div>
+            )}
+            {isRecording && !stream && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 text-sm text-gray-500 dark:bg-gray-800/80 dark:text-gray-400">
+                Connecting to audio stream...
+              </div>
+            )}
+          </div>
+
+          <GovukButtonGroup>
+            <GovukButton
+              type="button"
+              onClick={togglePause}
+              variant="secondary"
+            >
+              {isPaused ? 'Resume' : 'Pause'}
+            </GovukButton>
+            <GovukButton
+              type="button"
+              onClick={handleStopRecording}
+              variant="warning"
+            >
+              Stop
+            </GovukButton>
+          </GovukButtonGroup>
         </div>
       )}
 
-      {showStopConfirm && (
+      {recordingStateUI === 'review' && (
         <div className="govuk-inset-text">
           <p className="govuk-body">
             Are you sure you want to stop recording? You won&apos;t be able to
@@ -336,7 +350,7 @@ export default function RecordingControl({
             </GovukButton>
             <GovukButton
               type="button"
-              onClick={() => setShowStopConfirm(false)}
+              onClick={() => setRecordingStateUI('recording')}
               variant="secondary"
             >
               Cancel
