@@ -1,7 +1,11 @@
 import json
 import logging
+import re
 
 logger = logging.getLogger(__name__)
+
+# Matches a leading "0. " style index the model may copy from the numbered prompt transcript.
+_LEADING_ENTRY_INDEX = re.compile(r"^\d+\.\s")
 
 
 def parse_llm_response(response: str) -> list[str]:
@@ -30,6 +34,16 @@ def parse_llm_response(response: str) -> list[str]:
         logger.error("Failed to parse response. First 500 chars: %s", response[:500])
         msg = f"Failed to parse LLM response as JSON: {e}"
         raise ValueError(msg) from e
+
+
+def strip_leading_entry_indexes(texts: list[str]) -> list[str]:
+    """Remove a leading entry index such as ``0. `` from each rewritten turn.
+
+    The rewrite prompt numbers input turns for clarity. The model sometimes copies that
+    prefix into each JSON string. Stripping it before comparing turns keeps modification
+    counts limited to real content changes.
+    """
+    return [_LEADING_ENTRY_INDEX.sub("", text) for text in texts]
 
 
 def _extract_from_code_block(response: str) -> str:
