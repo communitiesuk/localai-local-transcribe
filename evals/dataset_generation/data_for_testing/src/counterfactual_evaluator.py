@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from common.llm.client import ChatBot
 from evals.dataset_generation.counterfactual_generation.src.constants import (
-    COUNTERFACTUAL_REWRITE_TEMPLATE,
+    counterfactual_rewrite_template_name,
 )
 from evals.dataset_generation.counterfactual_generation.src.constants import (
     get_template as get_rewrite_template,
@@ -81,7 +81,7 @@ async def _rewrite_transcript(
     evidence_spans: list[SpanContext],
 ) -> list[str]:
     axis_spans = [s for s in evidence_spans if s["category"].lower() == axis_transform.axis.lower()]
-    prompt = get_rewrite_template(COUNTERFACTUAL_REWRITE_TEMPLATE).render(
+    prompt = get_rewrite_template(counterfactual_rewrite_template_name(axis_transform.axis)).render(
         dialogue_texts=dialogue_texts,
         axis=axis_transform.axis,
         original_value=axis_transform.original_value,
