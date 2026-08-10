@@ -68,25 +68,49 @@ export function GovukTableRow({
   )
 }
 
+type GovukTableHeaderCellProps = {
+  isNumeric?: boolean
+} & React.ThHTMLAttributes<HTMLTableCellElement>
+
 export function GovukTableHeaderCell({
+  isNumeric,
   className,
   children,
   ...rest
-}: React.ThHTMLAttributes<HTMLTableCellElement>) {
+}: GovukTableHeaderCellProps) {
   return (
-    <th className={cn('govuk-table__header', className)} {...rest}>
+    <th
+      className={cn(
+        'govuk-table__header',
+        isNumeric && 'govuk-table__header--numeric',
+        className
+      )}
+      {...rest}
+    >
       {children}
     </th>
   )
 }
 
+type GovukTableCellProps = {
+  isNumeric?: boolean
+} & React.TdHTMLAttributes<HTMLTableCellElement>
+
 export function GovukTableCell({
+  isNumeric,
   className,
   children,
   ...rest
-}: React.TdHTMLAttributes<HTMLTableCellElement>) {
+}: GovukTableCellProps) {
   return (
-    <td className={cn('govuk-table__cell', className)} {...rest}>
+    <td
+      className={cn(
+        'govuk-table__cell',
+        isNumeric && 'govuk-table__cell--numeric',
+        className
+      )}
+      {...rest}
+    >
       {children}
     </td>
   )
