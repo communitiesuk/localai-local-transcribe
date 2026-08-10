@@ -345,7 +345,7 @@ Using the AWS CLI (see [AWS Access](#aws-access)), authenticate and then use the
 - Running bastion instance ID (`EC2 > Instances`)
 - RDS endpoint (`Aurora and RDS > Databases > <our database> > Connectivity & Security > Endpoints > Endpoint`)
 - DB name (`Aurora and RDS > Databases > <our database> > Configuration > DB name`)
-- Database username in the SSM parameter store (`AWS Systems Manager > Parameter Store > <database username parameter>`)
+- Database username is a terraform variable. (see e.g. `development/main.tf`)
 - Database password from Secrets Manager (`AWS Secrets Manager > <database password secret>`)
 
 Using this information you can start an SSM session tunnelling to the database using the command, replacing any $variable with the values you found:
@@ -358,7 +358,9 @@ aws ssm start-session \
   --parameters "{\"host\":[\"$RDS_ENDPOINT\"],\"portNumber\":[\"5432\"],\"localPortNumber\":[\"5432\"]}" &
 ```
 
-This opens a proxy on port 5432 on local machine to the database. Then continue connecting viat
+(The `&` at the end runs the command in the background so you can continue using the terminal)
+
+This opens a proxy on port 5432 on local machine to the database. Then continue connecting via
 
 ```bash
 psql -h 127.0.0.1 -U $DB_USERNAME -d $DB_NAME 
