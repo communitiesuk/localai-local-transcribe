@@ -79,7 +79,7 @@ class SQSQueueService(QueueService):
             self.sqs.send_message(QueueUrl=self.dead_letter_queue_url, MessageBody=message.model_dump_json())
             self.sqs.delete_message(QueueUrl=self.queue_url, ReceiptHandle=receipt_handle)
         except self.sqs.exceptions.ReceiptHandleIsInvalid:
-            logger.warning("ReceiptHandleIsInvalid raised when deadlettering message. Message=%s", message.model_dump())
+            logger.warning("ReceiptHandleIsInvalid raised when deadlettering message. id=%s type=%s", message.id, message.type)
 
     def abandon_message(self, receipt_handle: str) -> None:
         try:

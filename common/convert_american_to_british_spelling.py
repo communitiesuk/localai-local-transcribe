@@ -12,8 +12,10 @@ def convert_american_to_british_spelling(text: str, strict: bool = False) -> str
         return text
 
     try:
+        unmapped_count = 0
 
         def replace_word(match: Match[str]) -> str:
+            nonlocal unmapped_count
             # The first group contains any leading punctuation/spaces
             # The second group contains the word
             # The third group contains any trailing punctuation/spaces
@@ -32,8 +34,8 @@ def convert_american_to_british_spelling(text: str, strict: bool = False) -> str
                     elif word.istitle():
                         british = british.title()
                     return pre + british + post
-                except Exception as e:
-                    logger.warning("Failed to convert word '%s': %s", word, e)
+                except Exception:
+                    unmapped_count += 1
                     if strict:
                         raise
             return match.group(0)
@@ -43,7 +45,12 @@ def convert_american_to_british_spelling(text: str, strict: bool = False) -> str
         # Group 2: The word itself (only letters)
         # Group 3: Trailing non-letters (including empty)
         pattern = r"([^a-zA-Z]*?)([a-zA-Z]+)([^a-zA-Z]*?)"
-        return re.sub(pattern, replace_word, text)
+        result = re.sub(pattern, replace_word, text)
+        
+        if unmapped_count > 0:
+            logger.warning("Unmapped spelling conversions: %d", unmapped_count)
+        
+        return result
 
     except Exception:
         logger.exception("Failed to convert text")

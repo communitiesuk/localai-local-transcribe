@@ -69,5 +69,5 @@ Conversation:
             return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
         else:
             # For other errors, log and return original speaker labels
-            logger.error("Error predicting speaker names: %s", error_message)
+            logger.error("Error predicting speaker names: %s", type(e).__name__)
             return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
