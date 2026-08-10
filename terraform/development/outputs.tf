@@ -27,3 +27,8 @@ output "load_balancer_certificate_validation" {
   value       = module.certificates.load_balancer_certificate_validation
   description = "The domain validation objects for the load balancer certificate"
 }
+
+output "nat_gateway_ip" {
+  value       = module.networking.nat_gateway_ip
+  description = "The IP address of the NAT gateway"
+}

@@ -22,6 +22,14 @@ export { GovukWarningText } from './warning'
 export { GovukTag, type TagColour } from './tag'
 export { GovukTextarea } from './textarea'
 export {
+  GovukTable,
+  GovukTableHead,
+  GovukTableBody,
+  GovukTableRow,
+  GovukTableHeaderCell,
+  GovukTableCell,
+} from './table'
+export {
   GovukPanel,
   GovukPanelHeader,
   GovukPanelTitle,

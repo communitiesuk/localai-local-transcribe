@@ -383,6 +383,9 @@ where as before you substitute `$DB_USERNAME` with the username you found in SSM
 > [!WARNING]
 > Enabling IAM authentication disables password authentication for the database user. Only IAM auth will work from now on.
 
+After IAM authentication is enabled, you can use `./connect-to-aws-db.sh` to make further connections to the database without having to manually set up the SSM session and psql connection.
+You'll need to have the AWS CLI installed and configured with the correct profile, and have the `psql` command available in your path.
+
 ###### 6. Push images
 
 Run the `build-and-push.sh` script as described above to build and push the latest images to ECR, and trigger a deployment.
