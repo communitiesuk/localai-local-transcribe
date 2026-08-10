@@ -254,10 +254,7 @@ function RolesForm({ user }: { user: GetUserResponse }) {
       </GovukFormGroup>
 
       <GovukButtonGroup className="govuk-!-margin-top-6">
-        <GovukButton
-          type="submit"
-          disabled={isPending}
-        >
+        <GovukButton type="submit" disabled={isPending}>
           Save changes
         </GovukButton>
         <GovukButtonLink
