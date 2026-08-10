@@ -1,0 +1,17 @@
+{% extends "counterfactual_rewrite/base.j2" %}
+{# Age-band labels dumped in as noun phrases sound like form fields, not speech
+   (for example "your young adult" or stacked "grown-up son, who's an older adult"). #}
+{% block task_axis_rules %}
+Use natural spoken age language. Keep kinship terms such as son or daughter. Put the age-band words next to that kinship term (for example "my young adult son" or "my older son"). Do not replace a person with a bare age-band label (for example "your young adult"), do not stack redundant or conflicting age labels (for example "grown-up son, who's an older adult" or "grown-up son, he's a young bloke"), and do not swap the age band for slang such as "bloke" or "lad". A rewrite that sounds like a form field, or that uses slang instead of the age band, is wrong for this target.
+{% endblock %}
+{% block coherence_section %}
+**Age and name coherence (documented exception to single-axis isolation):**
+Default: do not change participant names when rewriting Age. Signal Age through route labels, age bands, life-stage language, and explicit ages only.
+Exception: if a participant's first name is clearly implausible for the target age band (for example a strongly older-coded first name when the target is seventeen or young adult), you may substitute a different first name that fits the target age. Keep the same sex signalling and keep the surname character-for-character unchanged. Do not rename other speakers. Do not rename merely because a name is slightly age-stereotyped when it remains plausible for the target (for example an older-coded name can still fit a generic adult target).
+{% endblock %}
+{% block name_checklist_item %}Participant names are unchanged unless a first name was clearly implausible for the target age band; any substitute keeps the same sex signalling and the same surname{% endblock %}
+{% block final_checklist_extras %}
+- [ ] Age language (routes, age bands, life-stage wording) matches "{{ target_value }}", and any Age-driven first-name substitute kept sex and surname unchanged.
+- [ ] Age wording sounds like natural speech: kinship terms kept; age-band words sit with the kinship term; no bare age-band noun phrases; no stacked or slang age labels.
+{% endblock %}
+{% block requirements_name_clause %}. For Age, leave participant names unchanged by default; only substitute a first name when it is clearly implausible for the target age band, keeping sex signalling and surname unchanged{% endblock %}

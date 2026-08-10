@@ -30,7 +30,7 @@ resource "aws_kms_key_policy" "kms_webapp_secrets_decrypt_policy" {
   policy = data.aws_iam_policy_document.kms_secrets_decrypt.json
 }
 
-resource "aws_iam_role_policy" "secret_access" {
+resource "aws_iam_role_policy" "execution_secret_access" {
   for_each = {
     frontend = var.frontend_task_execution_role_id
     backend  = var.backend_task_execution_role_id
@@ -43,15 +43,6 @@ resource "aws_iam_role_policy" "secret_access" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Effect = "Allow"
-        Resource = [
-          aws_secretsmanager_secret.database_password.arn,
-        ]
-      },
       {
         Action = [
           "ssm:GetParameters"

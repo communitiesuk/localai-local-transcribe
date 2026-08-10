@@ -173,7 +173,7 @@ class PaginatedUsersResponse(BaseModel):
     total_pages: int
 
 
-type DataRetentionOptions = Literal[1, 7, 30, 90]
+type DataRetentionOptions = Literal[1, 7, 30]
 
 
 class DataRetentionUpdateResponse(BaseModel):
@@ -320,6 +320,11 @@ class AgendaUsage(StrEnum):
     NOT_USED = auto()
     OPTIONAL = auto()
     REQUIRED = auto()
+
+
+class TranscriptionSortOrder(StrEnum):
+    newest = auto()
+    oldest = auto()
 
 
 class TemplateMetadata(BaseModel):

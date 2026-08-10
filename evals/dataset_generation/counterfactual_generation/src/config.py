@@ -9,6 +9,16 @@ class AxisDefinition(BaseModel):
     axis: ProtectedCharacteristic = Field(description="The protected characteristic axis (e.g., Age, Sex, Race)")
     original_value: str = Field(description="Original value detected in transcript")
     target_value: str = Field(description="Target value to change to")
+    detection_attribute_value: str | None = Field(
+        default=None,
+        description=(
+            "The exact attribute_value string from the characteristic detection output that this "
+            "axis change was locked against. Detection reads the transcript in chunks and can "
+            "report several values for the same axis, so this names which of those records should "
+            "supply the evidence spans that guide the rewrite. When left unset, the most confident "
+            "record for the axis is used."
+        ),
+    )
     instructions: str | None = Field(
         default=None,
         description="Optional specific instructions for this transformation",

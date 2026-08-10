@@ -5,6 +5,7 @@ import pytest
 from evals.dataset_generation.counterfactual_generation.src.parser import (
     _extract_from_code_block,
     parse_llm_response,
+    strip_leading_entry_indexes,
 )
 
 
@@ -73,3 +74,22 @@ That's the data."""
     assert result.strip() == '["Item 1", "Item 2"]'
     assert "Here is" not in result
     assert "That's" not in result
+
+
+def test_strip_leading_entry_indexes_removes_prompt_style_prefixes():
+    """Copied ``N. `` prefixes are removed; untouched text and internal numbers stay."""
+    texts = [
+        "0. Hello Jordan",
+        "1. Hi Sarah\n\nMore detail",
+        "No prefix here",
+        "12. Longer index",
+        "See item 3. in the middle",
+    ]
+
+    assert strip_leading_entry_indexes(texts) == [
+        "Hello Jordan",
+        "Hi Sarah\n\nMore detail",
+        "No prefix here",
+        "Longer index",
+        "See item 3. in the middle",
+    ]
