@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useCallback } from 'react'
+import { use, useCallback, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
@@ -17,6 +17,7 @@ import {
   GovukList,
   GovukListItem,
   GovukButtonGroup,
+  GovukNotificationBanner,
 } from '@/components/govuk'
 import {
   GovukTable,
@@ -105,15 +106,60 @@ export default function UserPage(props: {
   )
 }
 
-type UserRoleForm = { role: UserRole }
+type UserRoleForm = { role: AssignableUserRole | undefined }
+type AssignableUserRole = Extract<
+  UserRole,
+  'standard_user' | 'local_authority_admin'
+>
+
+const ASSIGNABLE_USER_ROLES: readonly AssignableUserRole[] = [
+  'standard_user',
+  'local_authority_admin',
+]
+
+function getDefaultAssignableRole(
+  userRoles: UserRole[] | undefined
+): AssignableUserRole | undefined {
+  if (!userRoles?.length) {
+    return undefined
+  }
+
+  if (userRoles.includes('local_authority_admin')) {
+    return 'local_authority_admin'
+  }
+
+  if (userRoles.includes('standard_user')) {
+    return 'standard_user'
+  }
+
+  return undefined
+}
+
+function getRoleUpdateErrorMessage(error: unknown): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'error' in error &&
+    typeof error.error === 'object' &&
+    error.error !== null &&
+    'detail' in error.error &&
+    typeof error.error.detail === 'string'
+  ) {
+    return error.error.detail
+  }
+
+  return 'Could not update user permissions. Please try again.'
+}
 
 function RolesForm({ user }: { user: GetUserResponse }) {
   const router = useRouter()
   const setBanner = useBannerStore((store) => store.setBanner)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const defaultRole = getDefaultAssignableRole(user.roles)
 
   const form = useForm<UserRoleForm>({
     defaultValues: {
-      role: user.roles ? (user.roles[0] as UserRole) : undefined,
+      role: defaultRole,
     },
   })
   const queryClient = useQueryClient()
@@ -123,31 +169,37 @@ function RolesForm({ user }: { user: GetUserResponse }) {
 
   const onSubmit = useCallback(
     async (data: UserRoleForm) => {
-      await mutateAsync(
-        {
+      if (!data.role || !ASSIGNABLE_USER_ROLES.includes(data.role)) {
+        return
+      }
+
+      setSubmitError(null)
+
+      try {
+        await mutateAsync({
           body: {
-            roles: data.role === undefined ? [] : [data.role],
+            roles: [data.role],
           },
           path: {
             user_id: user.id,
           },
-        },
-        {
-          onSuccess() {
-            queryClient.invalidateQueries({
-              queryKey: getTargetUserUsersUserIdGetQueryKey({
-                path: { user_id: user.id },
-              }),
-            })
-            setBanner({
-              variant: 'success',
-              title: 'Success',
-              message: `Permissions for ${user.name ?? user.email} saved at ${formatCurrentDateTime()}`,
-            })
-            router.replace('/user-management')
-          },
-        }
-      )
+        })
+      } catch (error) {
+        setSubmitError(getRoleUpdateErrorMessage(error))
+        return
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: getTargetUserUsersUserIdGetQueryKey({
+          path: { user_id: user.id },
+        }),
+      })
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: `Permissions for ${user.name ?? user.email} saved at ${formatCurrentDateTime()}`,
+      })
+      router.replace('/user-management')
     },
     [
       user.id,
@@ -165,6 +217,12 @@ function RolesForm({ user }: { user: GetUserResponse }) {
       onSubmit={form.handleSubmit(onSubmit)}
       className="govuk-!-margin-top-6"
     >
+      {submitError && (
+        <GovukNotificationBanner title="There is a problem" variant="important">
+          {submitError}
+        </GovukNotificationBanner>
+      )}
+
       <GovukFormGroup>
         <GovukFieldset aria-describedby="role-hint">
           <GovukLegend size="m">Role</GovukLegend>
@@ -198,7 +256,7 @@ function RolesForm({ user }: { user: GetUserResponse }) {
       <GovukButtonGroup className="govuk-!-margin-top-6">
         <GovukButton
           type="submit"
-          disabled={isPending || !form.formState.isDirty}
+          disabled={isPending}
         >
           Save changes
         </GovukButton>

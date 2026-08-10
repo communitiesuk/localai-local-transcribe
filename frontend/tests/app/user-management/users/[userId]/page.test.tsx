@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import UserPage from '@/app/user-management/users/[userId]/page'
@@ -148,8 +148,57 @@ describe('<UserPage />', () => {
       expect.objectContaining({
         body: { roles: ['local_authority_admin'] },
         path: { user_id: 'user-1' },
-      }),
-      expect.any(Object)
+      })
     )
+  })
+
+  it('redirects to user management and shows a success banner after saving', async () => {
+    mockMutateAsync.mockResolvedValueOnce({})
+    renderPage()
+
+    await userEvent.click(screen.getByLabelText('Organisation admin'))
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() => {
+      expect(mockSetBanner).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'Success',
+        message: 'Permissions for Alice Smith saved at 01/01/2026, 12:00',
+      })
+    })
+    expect(mockReplace).toHaveBeenCalledWith('/user-management')
+  })
+
+  it('shows an error banner and does not redirect when role update fails', async () => {
+    mockMutateAsync.mockRejectedValueOnce({
+      error: { detail: 'Only a system admin can perform this action' },
+    })
+    renderPage()
+
+    await userEvent.click(screen.getByLabelText('Organisation admin'))
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    expect(
+      await screen.findByText('Only a system admin can perform this action')
+    ).toBeInTheDocument()
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
+  it('defaults to "Organisation admin" when user has both standard and admin roles', () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: {
+        ...baseUser,
+        roles: ['standard_user', 'local_authority_admin'],
+      },
+      isLoading: false,
+      isError: false,
+    } as any)
+
+    renderPage()
+
+    const organisationAdmin = screen.getByLabelText(
+      'Organisation admin'
+    ) as HTMLInputElement
+    expect(organisationAdmin.checked).toBe(true)
   })
 })
