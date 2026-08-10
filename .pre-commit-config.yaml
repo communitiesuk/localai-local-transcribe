@@ -20,7 +20,7 @@ repos:
         name: Detect IP addresses
         entry: '^(?!0\.0\.0\.0$)(?!127\.0\.0\.1$)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
         language: pygrep
-        exclude: '^static/|\.lock'
+        exclude: '^static/|\.lock|session-manager-plugin\.pkg$'
         files: .
 
       - id: npm-format
