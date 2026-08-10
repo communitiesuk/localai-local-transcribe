@@ -105,11 +105,12 @@ async def test_update_data_retention_invalid(
 @pytest.mark.parametrize(
     ("user_roles", "target_user_roles", "same_org", "new_roles", "expected_status"),
     [
-        ([UserRole.MHCLG_SUPPORT_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.MHCLG_SUPPORT_ADMIN], 200),
+        ([UserRole.MHCLG_SUPPORT_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.MHCLG_SUPPORT_ADMIN], 403),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.LOCAL_AUTHORITY_ADMIN], 200),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], True, [UserRole.MHCLG_SUPPORT_ADMIN], 403),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, [UserRole.STANDARD_USER], 403),
         ([UserRole.LOCAL_AUTHORITY_ADMIN], [UserRole.STANDARD_USER], False, [UserRole.LOCAL_AUTHORITY_ADMIN], 404),
+        ([UserRole.MHCLG_SUPPORT_ADMIN], [UserRole.MHCLG_SUPPORT_ADMIN], True, [UserRole.STANDARD_USER], 200),
     ],
 )
 async def test_update_user_roles(
