@@ -31,6 +31,8 @@ def _convert_characteristics_schema(char_data: dict, dialogue_entries: list) -> 
 
     Maps character-level spans to dialogue entry indices by reconstructing the transcript
     in the same format as the characteristic detection (speaker: text with newlines).
+    The confidence reported by detection is carried through unchanged, because it is used
+    later to choose between several records describing the same axis.
     """
     dialogue_positions = []
     current_pos = 0
@@ -68,39 +70,97 @@ def _convert_characteristics_schema(char_data: dict, dialogue_entries: list) -> 
         axis=char_data["characteristic"],
         detected_value=char_data["attribute_value"],
         evidence_spans=evidence_spans,
-        overall_confidence=1.0,
+        overall_confidence=char_data["confidence"],
     )
 
 
 def _load_characteristic_detections(
     detection_path: Path, dialogue_entries: list
-) -> dict[ProtectedCharacteristic, CharacteristicDetection]:
-    """Load all characteristic detections from file, returning a dict keyed by axis."""
+) -> dict[ProtectedCharacteristic, list[CharacteristicDetection]]:
+    """Load characteristic detections from file, grouped by axis.
+
+    Detection reads the transcript in chunks, so a single axis normally appears many times in
+    the output with different attribute values. Those values can be alternative wordings of
+    one fact (for example "Asthma (chronic health condition)" and "Asthma (long-term health
+    condition)") or genuinely different facts about different people (for example Female and
+    Male on the Sex axis). Records that report the same attribute value are combined into one
+    detection holding every evidence span found for that value and the highest confidence
+    reported for it. Every value for an axis is returned so that the caller decides which one
+    the rewrite should follow, rather than silently keeping whichever record came last.
+    """
     logger.info("Loading characteristic detection from: %s", detection_path)
     with detection_path.open() as f:
         detection_data = json.load(f)
 
-    detections_by_axis = {}
+    detections_by_axis: dict[ProtectedCharacteristic, list[CharacteristicDetection]] = {}
 
     if "detected_characteristics" in detection_data:
         detected_chars = detection_data["detected_characteristics"]
         if detected_chars:
             logger.info("Found %d detected characteristics", len(detected_chars))
+            detections_by_value: dict[tuple[ProtectedCharacteristic, str], CharacteristicDetection] = {}
             for char_data in detected_chars:
                 detection = _convert_characteristics_schema(char_data, dialogue_entries)
-                detections_by_axis[detection.axis] = detection
+                key = (detection.axis, detection.detected_value)
+                already_seen = detections_by_value.get(key)
+                if already_seen is None:
+                    detections_by_value[key] = detection
+                else:
+                    already_seen.evidence_spans.extend(detection.evidence_spans)
+                    already_seen.overall_confidence = max(already_seen.overall_confidence, detection.overall_confidence)
+            for detection in detections_by_value.values():
+                detections_by_axis.setdefault(detection.axis, []).append(detection)
+            logger.info(
+                "Grouped into %d distinct attribute values across %d axes",
+                len(detections_by_value),
+                len(detections_by_axis),
+            )
         else:
             logger.warning("No characteristics detected in file, will use config-based axes")
     else:
         detection = CharacteristicDetection(**detection_data)
-        detections_by_axis[detection.axis] = detection
+        detections_by_axis[detection.axis] = [detection]
 
     return detections_by_axis
 
 
-async def generate_counterfactual_from_config(config: CounterfactualConfig) -> list[CounterfactualOutput]:
-    transcript_path = config.get_transcript_path(PROJECT_ROOT)
+def _select_detection(
+    detections_for_axis: list[CharacteristicDetection],
+    detection_attribute_value: str | None,
+) -> CharacteristicDetection:
+    """Choose which detection record for an axis should guide the rewrite.
 
+    When the config names an attribute value, that exact record is used, which keeps a locked
+    vector pinned to the evidence a reviewer checked it against. When no value is named, the
+    record with the highest detection confidence is used, and the number of evidence spans
+    breaks ties so that the better evidenced wording is preferred.
+    """
+    if detection_attribute_value is None:
+        return max(
+            detections_for_axis,
+            key=lambda detection: (detection.overall_confidence, len(detection.evidence_spans)),
+        )
+
+    for detection in detections_for_axis:
+        if detection.detected_value == detection_attribute_value:
+            return detection
+
+    available_values = [detection.detected_value for detection in detections_for_axis]
+    msg = (
+        f"Config names detection attribute value {detection_attribute_value!r} for axis "
+        f"{detections_for_axis[0].axis}, but detection reported: {available_values}"
+    )
+    raise ValueError(msg)
+
+
+def _load_transcript(transcript_path: Path) -> TranscriptInput:
+    """Load a transcript file and return its dialogue together with its source provenance.
+
+    Everything in the file other than the dialogue itself describes how that transcript was
+    generated, such as its theme and its actor definitions. That description is kept, along with
+    the transcript identifier and path, because otherwise a counterfactual file records nothing
+    about which transcript it was derived from.
+    """
     logger.info("Loading transcript from: %s", transcript_path)
     with transcript_path.open() as f:
         transcript_data = json.load(f)
@@ -116,17 +176,35 @@ async def generate_counterfactual_from_config(config: CounterfactualConfig) -> l
         msg = f"No dialogue_entries found in transcript file: {transcript_path}"
         raise ValueError(msg)
 
-    transcript_input = TranscriptInput(dialogue_entries=dialogue_entries)
+    source_metadata = (
+        {key: value for key, value in transcript_data.items() if key != "dialogue_entries"}
+        if isinstance(transcript_data, dict)
+        else {}
+    )
+    source_metadata["source_transcript_id"] = transcript_path.stem
+    source_metadata["source_transcript_path"] = str(transcript_path)
+
+    return TranscriptInput(dialogue_entries=dialogue_entries, metadata=source_metadata)
+
+
+async def generate_counterfactual_from_config(config: CounterfactualConfig) -> list[CounterfactualOutput]:
+    transcript_path = config.get_transcript_path(PROJECT_ROOT)
+    transcript_input = _load_transcript(transcript_path)
 
     characteristic_detection_path = config.get_characteristic_detection_path(PROJECT_ROOT)
     if characteristic_detection_path:
-        detections_by_axis = _load_characteristic_detections(characteristic_detection_path, dialogue_entries)
+        detections_by_axis = _load_characteristic_detections(
+            characteristic_detection_path, transcript_input.dialogue_entries
+        )
     else:
         logger.info("No characteristic detection file provided, using config-based axes")
         detections_by_axis = {}
 
+    # The transcript identifier leads the directory name so that a run can be attributed to its
+    # source transcript from the path alone, and so that repeating one transcript after a failure
+    # produces a directory that is obviously a second attempt at that same transcript.
     run_timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
-    run_output_dir = WORKDIR / "output" / f"run_{run_timestamp}"
+    run_output_dir = WORKDIR / "output" / f"{transcript_path.stem}_{run_timestamp}"
     run_output_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
@@ -144,7 +222,15 @@ async def generate_counterfactual_from_config(config: CounterfactualConfig) -> l
 
         if detections_by_axis:
             if axis_change.axis in detections_by_axis:
-                detection_to_use = detections_by_axis[axis_change.axis]
+                detection_to_use = _select_detection(
+                    detections_by_axis[axis_change.axis], axis_def.detection_attribute_value
+                )
+                logger.info(
+                    "Using detection value %r (confidence %.2f, %d evidence spans)",
+                    detection_to_use.detected_value,
+                    detection_to_use.overall_confidence,
+                    len(detection_to_use.evidence_spans),
+                )
             else:
                 logger.warning(
                     "No detection found for axis %s, using config-based detection with empty evidence",
@@ -170,7 +256,14 @@ async def generate_counterfactual_from_config(config: CounterfactualConfig) -> l
             axis_change=axis_change,
         )
 
-        output_path = run_output_dir / f"counterfactual_{axis_def.axis}_{axis_def.target_value}.json"
+        # An axis enum formats as its member name inside an f-string, so the readable value is used
+        # instead. The transcript identifier is repeated in the file name so that a counterfactual
+        # stays identifiable if these files are later gathered into one directory, where many
+        # transcripts produce the same axis and target pair.
+        axis_file_label = axis_def.axis.value.replace(" ", "_")
+        output_stem = f"{transcript_path.stem}_{axis_file_label}_{axis_def.target_value}"
+
+        output_path = run_output_dir / f"counterfactual_{output_stem}.json"
 
         with output_path.open("w") as f:
             json.dump(result.model_dump(), f, indent=2, default=str)
@@ -178,7 +271,7 @@ async def generate_counterfactual_from_config(config: CounterfactualConfig) -> l
         logger.info("Counterfactual saved to: %s", output_path)
         logger.info("Modified %d dialogue entries", len(result.evidence_spans_modified))
 
-        html_report_path = run_output_dir / f"report_{axis_def.axis}_{axis_def.target_value}.html"
+        html_report_path = run_output_dir / f"report_{output_stem}.html"
         generate_modification_report(result, html_report_path)
         logger.info("Modification report saved to: %s", html_report_path)
 
