@@ -4,7 +4,6 @@ import {
   GovukButton,
   GovukButtonGroup,
   GovukWarningText,
-  GovukLink,
 } from '@/components/govuk'
 import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 import { useEffect, useRef, useState } from 'react'
@@ -356,7 +355,7 @@ export default function RecordingControl({
         <div>
           <p>Recording length: {formattedRecordingDuration}</p>
 
-          {/* audio visulisation canvas */}
+          {/* audio visualisation canvas */}
           <div
             ref={containerRef}
             className="relative mb-6 h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
@@ -407,7 +406,9 @@ export default function RecordingControl({
             {/* presenting this button as a link */}
             <button
               className="govuk-link govuk-link--no-visited-state"
-              onClick={() => setRecordingStateUI('recording')}
+              onClick={() =>
+                setRecordingStateUI(isPaused ? 'paused' : 'recording')
+              }
             >
               Cancel
             </button>

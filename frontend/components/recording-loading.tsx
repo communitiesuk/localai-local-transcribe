@@ -1,23 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
-import { GovukBody, GovukLink } from '@/components/govuk'
+import { GovukBody, GovukButton } from '@/components/govuk'
 
 export function RecordingLoading({
-  nextPath,
-  cancelPath,
+  onComplete,
+  onCancel,
 }: {
-  nextPath: string
-  cancelPath: string
+  onComplete: () => void
+  onCancel: () => void
 }) {
-  const router = useRouter()
   const [countdown, setCountdown] = useState(3)
 
   useEffect(() => {
     if (countdown === 0) {
-      router.replace(nextPath)
+      onComplete()
       return
     }
 
@@ -26,13 +24,19 @@ export function RecordingLoading({
     }, 1000)
 
     return () => window.clearTimeout(timeoutId)
-  }, [countdown, nextPath, router])
+  }, [countdown, onComplete])
 
   return (
     <div className="govuk-!-text-align-centre">
       <GovukBody size="l">Recording starts in...</GovukBody>
       <p className="mb-7 text-5xl font-bold">{countdown}</p>
-      <GovukLink href={cancelPath}>cancel</GovukLink>
+      {/* presenting this button as a link */}
+      <button
+        className="govuk-link govuk-link--no-visited-state"
+        onClick={onCancel}
+      >
+        Cancel
+      </button>
     </div>
   )
 }
