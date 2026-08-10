@@ -32,7 +32,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileSpreadsheet, FileType, FileWarning, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import posthog from 'posthog-js'
-import { useMemo } from 'react'
+
 
 export const UserTemplatesList = () => {
   const {
