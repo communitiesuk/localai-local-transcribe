@@ -38,4 +38,4 @@ At £0.271, transcription is about 2.5x the LLM cost of the same meeting: roughl
 
 ## Conclusion
 
-About £0.11 per meeting in LLM spend, 93% of it BEST and only 7% FAST; BEST output tokens alone are 70% of the total. Prompt caching is worth only 5% today because each of the ~5 transcript copies per meeting sits behind a different leading message, so none share a cacheable prefix — leading every prompt with an identically formatted transcript block would cut the bill ~14% (£0.0945).
+About £0.11 per meeting in LLM spend, 93% of it BEST and only 7% FAST; BEST output tokens alone are 70% of the total. Prompt caching is worth only 5% today because only SectionTemplate replays a prefix within one conversation. The other transcript copies are not all byte-for-byte compatible: speaker identification sees pre-prediction labels, citation uses indexed transcript lines, and FAST calls cannot seed BEST cache entries. Moving the currently compatible FAST transcript replays into a shared prefix would reduce the bill by less than 1%, to about £0.1094.

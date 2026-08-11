@@ -220,7 +220,7 @@ SHARES = {
     "SectionTemplate (Y=6)": 0.0589 + 0.0120,  # Cabinet + Planning Committee
 }
 
-# Full transcript copies sent per meeting, (FAST, BEST), for the headroom figure.
+# Full transcript copies sent per meeting, (FAST, BEST).
 TRANSCRIPT_COPIES: dict[str, tuple[float, float]] = {
     "General": (4, 1),  # speaker, title, cite_claims, guardrail | minutes
     "Short 'n' Sweet": (3, 1),  # speaker, title, guardrail | minutes
@@ -231,6 +231,22 @@ TRANSCRIPT_COPIES: dict[str, tuple[float, float]] = {
 TRANSCRIPT_COPIES["Usage-weighted"] = (
     sum(SHARES[n] * TRANSCRIPT_COPIES[n][0] for n in SHARES),
     sum(SHARES[n] * TRANSCRIPT_COPIES[n][1] for n in SHARES),
+)
+
+# Transcript replays that could become cache hits if prompts led with the same currently
+# compatible transcript block, excluding the first copy that has to populate the cache.
+# Speaker ID uses pre-prediction labels ("Unknown speaker N"), cite_claims uses indexed
+# transcript lines, and FAST calls cannot seed BEST cache entries.
+CACHEABLE_TRANSCRIPT_REPLAYS: dict[str, tuple[float, float]] = {
+    "General": (1, 0),  # title -> guardrail
+    "Short 'n' Sweet": (1, 0),  # title -> guardrail
+    "Delivery": (1, 0),  # title -> guardrail
+    "User generated (DOCUMENT)": (1, 0),  # title -> guardrail
+    "SectionTemplate (Y=6)": (2, 0),  # section_detection -> title -> guardrail
+}
+CACHEABLE_TRANSCRIPT_REPLAYS["Usage-weighted"] = (
+    sum(SHARES[n] * CACHEABLE_TRANSCRIPT_REPLAYS[n][0] for n in SHARES),
+    sum(SHARES[n] * CACHEABLE_TRANSCRIPT_REPLAYS[n][1] for n in SHARES),
 )
 
 
@@ -280,21 +296,24 @@ def cost(tk: dict[str, float], *, caching: bool = True, only: str | None = None)
 
 
 def headroom(tk: dict[str, float], name: str, m: Meeting) -> float:
-    """Cost if every prompt led with an identically formatted transcript block, so only
-    the first copy paid full price. Speaker ID runs in the transcription flow, so it is
-    the copy assumed to pay."""
-    fast_copies, best_copies = TRANSCRIPT_COPIES[name]
+    """Cost if compatible transcript replays were moved into a cacheable prefix.
+
+    The first compatible transcript copy remains in new_in; only later copies are
+    reclassified as cacheable. This counts the transcript body only, not small wrapper
+    text around the block.
+    """
     hypo = dict(tk)
-    hypo["fast_new_in"] -= m.t * (fast_copies - 1)
-    hypo["fast_cacheable_in"] += m.t * (fast_copies - 1)
-    hypo["best_new_in"] -= m.t * best_copies
-    hypo["best_cacheable_in"] += m.t * best_copies
+    for tier, replays in zip(("fast", "best"), CACHEABLE_TRANSCRIPT_REPLAYS[name], strict=True):
+        replay_tokens = m.t * replays
+        hypo[f"{tier}_new_in"] -= replay_tokens
+        hypo[f"{tier}_cacheable_in"] += replay_tokens
     return cost(hypo)
 
 
 def display() -> None:
     one_hour = Meeting(1.0)
-    print(f"\nPer 1-hour meeting (X = {one_hour.words:,.0f} words, {TOK} tokens/word, BEST=gpt-5.1, FAST=gpt-5-nano)")
+    model_labels = "BEST=gpt-5.1, FAST=gpt-5-nano"
+    print(f"\nPer 1-hour meeting (X = {one_hour.words:,.0f} words, {TOK} tokens/word, {model_labels})")
     print("=" * 118)
     print(
         f"{'Template':<26} {'Calls':>5} {'In FAST':>10} {'In BEST':>10} {'Out FAST':>9}"
@@ -338,8 +357,8 @@ def display() -> None:
     print(f"\n  {'Cost per 1,000 meetings, caching as built (GBP)':<48} {c_cached * 1e3:>10.2f}")
     print(
         f"\n  Caching only bites where one conversation replays a prefix (SectionTemplate), so"
-        f"\n  turning it off costs {c_none / c_cached - 1:+.1%}. Leading every prompt with an identically"
-        f"\n  formatted transcript block would instead land at GBP {headroom(wt, 'Usage-weighted', one_hour):.4f}"
+        f"\n  turning it off costs {c_none / c_cached - 1:+.1%}. Moving currently compatible transcript"
+        f"\n  replays into a shared prefix would instead land at GBP {headroom(wt, 'Usage-weighted', one_hour):.4f}"
         f" ({headroom(wt, 'Usage-weighted', one_hour) / c_cached - 1:+.0%})."
     )
 
