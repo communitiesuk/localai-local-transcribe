@@ -1,41 +1,44 @@
-const [count, setCount] = useState(0)
+import { useEffect, useRef } from 'react'
 
-function animationInterval(ms, signal, callback) {
-  const start = document.timeline
-    ? document.timeline.currentTime
-    : performance.now()
+function animationInterval(
+  ms: number,
+  signal: AbortSignal,
+  callback: (time: DOMHighResTimeStamp) => void
+) {
+  const start = performance.now()
 
-  function frame(time) {
+  function frame(time: DOMHighResTimeStamp) {
     if (signal.aborted) return
     callback(time)
     scheduleFrame(time)
   }
 
-  function scheduleFrame(time) {
+  function scheduleFrame(time: DOMHighResTimeStamp) {
     const elapsed = time - start
     const roundedElapsed = Math.round(elapsed / ms) * ms
     const targetNext = start + roundedElapsed + ms
     const delay = targetNext - performance.now()
-    setTimeout(() => requestAnimationFrame(frame), delay)
+
+    window.setTimeout(() => {
+      requestAnimationFrame(frame)
+    }, delay)
   }
 
   scheduleFrame(start)
 }
 
-const useAnimationFrame = (ms, callback) => {
+export const useAnimationFrame = (ms: number, callback: () => void) => {
   const callbackRef = useRef(callback)
+
   useEffect(() => {
     callbackRef.current = callback
   }, [callback])
 
   useEffect(() => {
     const controller = new AbortController()
+
     animationInterval(ms, controller.signal, () => callbackRef.current())
+
     return () => controller.abort()
   }, [ms])
 }
-
-useAnimationFrame(1000, () => {
-  if (isPaused) return
-  setCount((count) => count + 1)
-})

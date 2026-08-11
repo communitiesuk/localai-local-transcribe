@@ -3,6 +3,7 @@
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
 import React, { useEffect, useRef, useState } from 'react'
 import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
+import { useAnimationFrame } from '@/components/audio/recording-timer'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -32,7 +33,9 @@ export default function RecordingControl({
   const [localIsPaused, setLocalIsPaused] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
 
-  const formattedRecordingDuration = `${Math.floor(meetingDuration / 60)
+  const formattedRecordingDuration = `${Math.floor(meetingDuration / 3600)
+    .toString()
+    .padStart(2, '0')}:${Math.floor((meetingDuration % 3600) / 60)
     .toString()
     .padStart(2, '0')}:${(meetingDuration % 60).toString().padStart(2, '0')}`
 
@@ -46,6 +49,11 @@ export default function RecordingControl({
       ? recorderControls.isPaused
       : localIsPaused
 
+  useAnimationFrame(1000, () => {
+    if (!isRecording || isPaused) return
+    setMeetingDuration((duration) => duration + 1)
+  })
+
   useEffect(() => {
     if (!isRecording) {
       setRecordingState('idle')
@@ -54,25 +62,6 @@ export default function RecordingControl({
 
     setRecordingState(isPaused ? 'paused' : 'recording')
   }, [isRecording, isPaused, setRecordingState])
-
-  useEffect(() => {
-    if (!isRecording) {
-      setMeetingDuration(0)
-      return
-    }
-
-    if (isPaused) {
-      return
-    }
-
-    const intervalId = window.setInterval(() => {
-      setMeetingDuration((duration) => duration + 1)
-    }, 1000)
-
-    return () => {
-      window.clearInterval(intervalId)
-    }
-  }, [isRecording, isPaused])
 
   useEffect(() => {
     const isValidStream =
@@ -330,7 +319,6 @@ export default function RecordingControl({
 
   return (
     <div className="space-y-4">
-      <p>Check: {count}</p>
       <p>Recording length: {formattedRecordingDuration}</p>
 
       <div
