@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import selectinload
-from sqlmodel import col, select
+from sqlmodel import col, func, select
 
 from backend.api.dependencies import UserDep
 from backend.api.dependencies.get_session import SQLSessionDep
@@ -51,6 +51,7 @@ async def get_user_templates(user: UserDep, session: SQLSessionDep) -> list[Temp
             updated_datetime=template.updated_datetime,
             name=template.name,
             content=template.content,
+            heading=template.heading,
             description=template.description,
             type=template.type,
             questions=None,
@@ -77,12 +78,19 @@ async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: 
         name=template.name,
         updated_datetime=template.updated_datetime,
         content=template.content,
+        heading=template.heading,
         description=template.description,
         type=template.type,
         questions=None
         if template.type == TemplateType.DOCUMENT
         else [
-            Question(id=question.id, title=question.title, description=question.description, position=question.position)
+            Question(
+                id=question.id,
+                title=question.title,
+                description=question.description,
+                format_instructions=question.format_instructions,
+                position=question.position,
+            )
             for question in template.questions
         ],
     )
@@ -90,9 +98,22 @@ async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: 
 
 @templates_router.post("/user-templates")
 async def create_user_template(user: UserDep, session: SQLSessionDep, request: CreateUserTemplateRequest) -> None:
+    existing_template = (
+        await session.exec(
+            select(UserTemplate).where(
+                UserTemplate.user_id == user.id,
+                func.lower(func.trim(col(UserTemplate.name))) == request.name.strip().lower(),
+            )
+        )
+    ).first()
+
+    if existing_template:
+        raise HTTPException(status_code=409, detail="A template with this title already exists")
+
     template = UserTemplate(
         name=request.name,
         content=request.content,
+        heading=request.heading,
         description=request.description,
         user_id=user.id,
         type=request.type,
@@ -101,6 +122,7 @@ async def create_user_template(user: UserDep, session: SQLSessionDep, request: C
                 position=question.position,
                 title=question.title,
                 description=question.description,
+                format_instructions=question.format_instructions,
             )
             for question in (request.questions or [])
         ],
@@ -125,6 +147,8 @@ async def edit_user_template(
         template.name = request.name
     if request.content is not None:
         template.content = request.content
+    if request.heading is not None:
+        template.heading = request.heading
     if request.description is not None:
         template.description = request.description
     if request.questions is not None:
@@ -138,6 +162,7 @@ async def edit_user_template(
                     existing = questions.pop(existing_idx)
                     existing.title = question.title
                     existing.description = question.description
+                    existing.format_instructions = question.format_instructions
                     existing.position = question.position
                     continue
 
@@ -147,6 +172,7 @@ async def edit_user_template(
                     position=question.position,
                     title=question.title,
                     description=question.description,
+                    format_instructions=question.format_instructions,
                 )
             )
         for remaining_question in questions:
@@ -188,12 +214,14 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
         name=original_template.name + " (Copy)",
         description=original_template.description,
         content=original_template.content,
+        heading=original_template.heading,
         type=original_template.type,
         questions=[
             TemplateQuestion(
                 position=question.position,
                 title=question.title,
                 description=question.description,
+                format_instructions=question.format_instructions,
             )
             for question in original_template.questions
         ],
