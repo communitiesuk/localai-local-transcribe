@@ -49,7 +49,10 @@ export default function TranscriptionPage(props: {
 
   useEffect(() => {
     if (lineEditError && errorSummaryRef.current) {
-      errorSummaryRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      errorSummaryRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
     }
   }, [lineEditError])
 
@@ -150,7 +153,10 @@ export default function TranscriptionPage(props: {
           </h2>
           <div className="govuk-error-summary__body">
             <ul className="govuk-list govuk-error-summary__list">
-              <li> <a href="#line-edit-actions">{lineEditError}</a></li>
+              <li>
+                {' '}
+                <a href="#line-edit-actions">{lineEditError}</a>
+              </li>
             </ul>
           </div>
         </div>
@@ -164,12 +170,20 @@ export default function TranscriptionPage(props: {
       <div>
         <NewMinuteDialog
           transcriptionId={transcription.id!}
-          trigger={<GovukButton type="button" disabled={isTranscriptEditing}>Create document</GovukButton>}
+          trigger={
+            <GovukButton type="button" disabled={isTranscriptEditing}>
+              Create document
+            </GovukButton>
+          }
         />
       </div>
       <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
         <GovukTabs.Panel id="transcript" label="Transcript">
-          <TranscriptionTab transcription={transcription} onLineEditError={handleLineEditError} onEditModeChange={setIsTranscriptEditing} />
+          <TranscriptionTab
+            transcription={transcription}
+            onLineEditError={handleLineEditError}
+            onEditModeChange={setIsTranscriptEditing}
+          />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
           <MinuteTab transcription={transcription} />

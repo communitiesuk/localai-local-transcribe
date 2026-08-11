@@ -44,7 +44,8 @@ export function buildTranscriptionHtml(
     .join('\n\n')
 }
 
-const cloneEntries = (entries: DialogueEntry[]) => entries.map((e) => ({ ...e }))
+const cloneEntries = (entries: DialogueEntry[]) =>
+  entries.map((e) => ({ ...e }))
 
 export function TranscriptionTab({
   transcription,
@@ -208,7 +209,9 @@ export function TranscriptionTab({
   const [time, setTime] = useState(0)
 
   const [isLineEditMode, setIsLineEditMode] = useState(false)
-  const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(null)
+  const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(
+    null
+  )
   const [selectedLineOriginalText, setSelectedLineOriginalText] = useState('')
   const [lineEditInProgress, setLineEditInProgress] = useState(false)
 
@@ -261,7 +264,9 @@ export function TranscriptionTab({
 
     setError(null)
     setSelectedLineIndex(index)
-    setSelectedLineOriginalText(getValues(`entries.${index}.text` as const) ?? '')
+    setSelectedLineOriginalText(
+      getValues(`entries.${index}.text` as const) ?? ''
+    )
 
     const startTime = getValues(`entries.${index}.start_time` as const)
     if (audioRef.current && startTime != null) {
@@ -271,10 +276,19 @@ export function TranscriptionTab({
 
   const saveLineEdit = async () => {
     if (selectedLineIndex == null) return
-    const newText = getValues(`entries.${selectedLineIndex}.text` as const) ?? ''
+    const newText =
+      getValues(`entries.${selectedLineIndex}.text` as const) ?? ''
     try {
-      await handleUpdateEntryText(selectedLineIndex, newText, selectedLineOriginalText)
-      setBanner({ variant: 'success', title: 'Success', message: 'Line edit saved' })
+      await handleUpdateEntryText(
+        selectedLineIndex,
+        newText,
+        selectedLineOriginalText
+      )
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: 'Line edit saved',
+      })
       setSelectedLineIndex(null)
       setSelectedLineOriginalText('')
       setLineEditInProgress(false)
@@ -321,7 +335,7 @@ export function TranscriptionTab({
     <div>
       <FormProvider {...methods}>
         <form>
-          <GovukButtonGroup className="govuk-!-margin-bottom-4" >
+          <GovukButtonGroup className="govuk-!-margin-bottom-4">
             <SpeakerEditor
               src={hasRecordings ? recordings[0].url : undefined}
               onSaveSpeaker={handleRenameSpeakerEverywhere}

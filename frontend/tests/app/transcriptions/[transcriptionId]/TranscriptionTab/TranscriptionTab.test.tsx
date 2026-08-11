@@ -60,7 +60,6 @@ vi.mock('posthog-js', () => ({
   default: { capture: vi.fn() },
 }))
 
-
 const renderTab = (transcription: TranscriptionGetResponse) =>
   render(
     <TranscriptionTab
@@ -149,17 +148,29 @@ describe('TranscriptionTab default view', () => {
 
   it('renders the four action buttons', () => {
     renderTab(transcription)
-    expect(screen.getByRole('button', { name: 'Speaker editor' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Edit transcript' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Speaker editor' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Edit transcript' })
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Download transcript' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Download transcript' })
+    ).toBeInTheDocument()
   })
 
   it('does not show line edit buttons in default view', () => {
     renderTab(transcription)
-    expect(screen.queryByRole('button', { name: 'Save line edit' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Cancel line edit' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Finish editing' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Save line edit' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Cancel line edit' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Finish editing' })
+    ).not.toBeInTheDocument()
   })
 
   it('does not show radio buttons in default view', () => {
@@ -175,19 +186,31 @@ describe('TranscriptionTab entering line edit mode', () => {
     renderTab(transcription)
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
 
-    expect(screen.getByRole('button', { name: 'Speaker editor' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Edit transcript' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Speaker editor' })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Edit transcript' })
+    ).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Download transcript' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Download transcript' })
+    ).toBeDisabled()
   })
 
   it('shows Save line edit, Cancel line edit and Finish editing buttons', () => {
     renderTab(transcription)
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
 
-    expect(screen.getByRole('button', { name: 'Save line edit' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Cancel line edit' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Finish editing' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Save line edit' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Cancel line edit' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Finish editing' })
+    ).toBeInTheDocument()
   })
 
   it('shows a radio button per dialogue entry', () => {
@@ -201,8 +224,12 @@ describe('TranscriptionTab entering line edit mode', () => {
     renderTab(transcription)
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
 
-    expect(screen.getByRole('button', { name: 'Save line edit' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Cancel line edit' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Save line edit' })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Cancel line edit' })
+    ).toBeDisabled()
   })
 
   it('enables Save line edit and Cancel line edit after text is entered in the textarea', () => {
@@ -210,8 +237,12 @@ describe('TranscriptionTab entering line edit mode', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
     fireEvent.input(screen.getByText('Original text'))
 
-    expect(screen.getByRole('button', { name: 'Save line edit' })).not.toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Cancel line edit' })).not.toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Save line edit' })
+    ).not.toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Cancel line edit' })
+    ).not.toBeDisabled()
   })
 })
 
@@ -233,7 +264,9 @@ describe('TranscriptionTab finish editing validation', () => {
     renderTab(twoEntryTranscription)
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
     fireEvent.input(screen.getByText('First line'))
-    fireEvent.click(screen.getByRole('radio', { name: 'Select line 2 to edit' }))
+    fireEvent.click(
+      screen.getByRole('radio', { name: 'Select line 2 to edit' })
+    )
 
     expect(onLineEditErrorMock).toHaveBeenCalledWith(
       'You must save or cancel your line edit to finish editing'
@@ -243,7 +276,9 @@ describe('TranscriptionTab finish editing validation', () => {
   it('clears the error when Finish editing is clicked after cancel', () => {
     renderTab(transcription)
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
-    fireEvent.click(screen.getByRole('radio', { name: 'Select line 1 to edit' }))
+    fireEvent.click(
+      screen.getByRole('radio', { name: 'Select line 1 to edit' })
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Cancel line edit' }))
     fireEvent.click(screen.getByRole('button', { name: 'Finish editing' }))
 
@@ -259,11 +294,19 @@ describe('TranscriptionTab finishing editing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
     fireEvent.click(screen.getByRole('button', { name: 'Finish editing' }))
 
-    expect(screen.queryByRole('button', { name: 'Save line edit' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Cancel line edit' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Finish editing' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Save line edit' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Cancel line edit' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Finish editing' })
+    ).not.toBeInTheDocument()
 
-    expect(screen.getByRole('button', { name: 'Edit transcript' })).not.toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Edit transcript' })
+    ).not.toBeDisabled()
     expect(screen.queryByRole('radio')).not.toBeInTheDocument()
   })
 })
@@ -278,7 +321,10 @@ describe('TranscriptionTab cancel line edit', () => {
     const text = screen.getByText('Original text')
     fireEvent.click(text)
     fireEvent.input(text)
-    Object.defineProperty(text, 'innerText', { value: 'Changed text', configurable: true })
+    Object.defineProperty(text, 'innerText', {
+      value: 'Changed text',
+      configurable: true,
+    })
     fireEvent.blur(text)
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel line edit' }))
@@ -292,14 +338,17 @@ describe('TranscriptionTab cancel line edit', () => {
     fireEvent.input(screen.getByText('Original text'))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel line edit' }))
 
-    expect(screen.getByRole('button', { name: 'Save line edit' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Cancel line edit' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Save line edit' })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Cancel line edit' })
+    ).toBeDisabled()
   })
 })
 
 describe('TranscriptionTab save line edit', () => {
   beforeEach(() => vi.clearAllMocks())
-
 
   it('shows the success banner after a successful save', async () => {
     updateDialogueEntryTextMock.mockResolvedValue(undefined)
@@ -327,7 +376,10 @@ describe('TranscriptionTab save line edit', () => {
     const text = screen.getByText('Original text')
     fireEvent.click(text)
     fireEvent.input(text)
-    Object.defineProperty(text, 'innerText', { value: 'Edited text', configurable: true })
+    Object.defineProperty(text, 'innerText', {
+      value: 'Edited text',
+      configurable: true,
+    })
     fireEvent.blur(text)
 
     fireEvent.click(screen.getByRole('button', { name: 'Save line edit' }))
