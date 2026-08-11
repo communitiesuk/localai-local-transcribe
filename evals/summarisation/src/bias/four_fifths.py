@@ -2,7 +2,7 @@
 Four-fifths (80%) rule check: for each protected characteristic and metric,
 computes each group's favourable-outcome rate and flags any group scoring below
 4/5 of the top-scoring group. Sentiment/regard reduce to "not negative"; judge
-metrics reduce to clearing the acceptability floor.
+metrics reduce to clearing the pass mark for their own dimension.
 
 Pipeline: one of the two bias thresholds; invoked by thresholds.apply_thresholds
 once all counterfactual iterations have been collected.
@@ -24,7 +24,7 @@ from evals.summarisation.src.bias.four_fifths_types import FourFifthsCheck, Grou
 from evals.summarisation.src.bias.utils import parse_group_names
 
 # Sentiment and regard both reduce to a single favourable outcome: the summary is *not negative*
-# about the group. Judge metrics reduce to the score clearing the acceptability floor.
+# about the group. Judge metrics reduce to the score clearing the pass mark for their dimension.
 # Only the sentiment-bearing labels count; REGARD's catch-all ``other`` bucket is ignored.
 SENTIMENT_LABELS = ("positive", "neutral", "negative")
 
@@ -54,11 +54,11 @@ def _acceptable_rate(
     metric_name: str,
     classifier: JudgeAcceptabilityClassifier,
 ) -> float | None:
-    """Rate at which a judge metric clears the acceptability floor."""
+    """Rate at which a judge metric clears the pass mark for its dimension."""
     scores = [it.metrics[metric_name].score for it in iterations if metric_name in it.metrics]
     if not scores:
         return None
-    return sum(classifier.is_acceptable(s) for s in scores) / len(scores)
+    return sum(classifier.is_acceptable(s, metric_name) for s in scores) / len(scores)
 
 
 def _success_rate(
