@@ -220,19 +220,6 @@ SHARES = {
     "SectionTemplate (Y=6)": 0.0589 + 0.0120,  # Cabinet + Planning Committee
 }
 
-# Full transcript copies sent per meeting, (FAST, BEST).
-TRANSCRIPT_COPIES: dict[str, tuple[float, float]] = {
-    "General": (4, 1),  # speaker, title, cite_claims, guardrail | minutes
-    "Short 'n' Sweet": (3, 1),  # speaker, title, guardrail | minutes
-    "Delivery": (4, 1),  # speaker, title, cite_claims, guardrail | sections
-    "User generated (DOCUMENT)": (3, 1),  # speaker, title, guardrail | document
-    "SectionTemplate (Y=6)": (5, 1),  # + section_detection | section_1
-}
-TRANSCRIPT_COPIES["Usage-weighted"] = (
-    sum(SHARES[n] * TRANSCRIPT_COPIES[n][0] for n in SHARES),
-    sum(SHARES[n] * TRANSCRIPT_COPIES[n][1] for n in SHARES),
-)
-
 # Transcript replays that could become cache hits if prompts led with the same currently
 # compatible transcript block, excluding the first copy that has to populate the cache.
 # Speaker ID uses pre-prediction labels ("Unknown speaker N"), cite_claims uses indexed
