@@ -4,7 +4,6 @@ import { useParams } from 'next/navigation'
 import { MicRecorderForm } from '@/components/audio/mic-recorder'
 import { TabRecorderForm } from '@/components/audio/tab-recorder/tab-recorder'
 import { GovukBackLink, GovukHeading } from '@/components/govuk'
-import { RecordingLoading } from '@/components/recording-loading'
 import {
   useRecordingUiStore,
   type RecordingState,
