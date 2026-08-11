@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 from common.database.postgres_models import DialogueEntry, Minute
 from common.llm.client import FastOrBestLLM, create_default_chatbot
-from common.prompts import get_transcript_messages
+from common.prompts import build_summarisation_system_message, get_transcript_messages, render_prompt_template
 from common.templates.citations import add_citations_to_minute
 from common.templates.types import Template
 from common.templates.utils.template_renderer import render_template
@@ -44,10 +44,7 @@ class Delivery(Template):
     @classmethod
     def get_system_message_for_delivery(cls, transcript: list[DialogueEntry]) -> list[dict[str, str]]:
         return [
-            {
-                "role": "system",
-                "content": """You are an AI meeting assistant. Your task is to extract and summarise different aspects of a meeting based on a transcript of a meeting.""",
-            },
+            build_summarisation_system_message(render_prompt_template("delivery_system.j2")),
             get_transcript_messages(transcript),
         ]
 
@@ -58,14 +55,12 @@ class Delivery(Template):
 
         return {
             "role": "user",
-            "content": f"""Generate a list of sections that the meeting should be split into.
-            The sections should be in the order they appear in the transcript. Typically you will at least have an introduction and a conclusion. Use the following style guide to guide you:
-            {style_guide}""",
+            "content": render_prompt_template("delivery_sections.j2", style_guide=style_guide),
         }
 
     @classmethod
     def get_messages_for_attendees(cls) -> dict[str, str]:
-        return {"role": "user", "content": "Your task is to now extract a list of attendees from the meeting"}
+        return {"role": "user", "content": render_prompt_template("delivery_attendees.j2")}
 
     @classmethod
     async def generate(

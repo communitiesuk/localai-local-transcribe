@@ -1,6 +1,6 @@
 # flake8: noqa: E501, RUF001
 from common.database.postgres_models import DialogueEntry
-from common.format_transcript import transcript_as_speaker_and_utterance
+from common.prompts import build_summarisation_system_message, get_transcript_messages
 from common.settings import get_settings
 from common.templates.default.template_prompts.eligibility_criteria import ELIGIBILITY_CRITERIA
 from common.templates.types import SimpleTemplate
@@ -35,6 +35,6 @@ class CareAssessmentV2(SimpleTemplate):
         prompt_body = call_macro(template, "prompt", eligibility_criteria=ELIGIBILITY_CRITERIA)
 
         return [
-            {"role": "system", "content": prompt_body},
-            {"role": "user", "content": transcript_as_speaker_and_utterance(transcript)},
+            build_summarisation_system_message(prompt_body),
+            get_transcript_messages(transcript),
         ]
