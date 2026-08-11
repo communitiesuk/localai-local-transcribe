@@ -62,9 +62,10 @@ export default function EditTemplatePage(props: {
         defaultValues={{
           name: template.name,
           description: template.description,
+          content: template.content,
+          heading: template.heading,
           questions: template.questions,
           type: template.type,
-          content: template.content,
         }}
       />
     </>
@@ -114,7 +115,12 @@ const TemplateEditorForm = ({
           onSubmit={(data) =>
             mutate({
               path: { template_id: templateId },
-              body: { ...data, questions: null },
+              body: {
+                name: data.name,
+                description: data.description,
+                content: data.content,
+                questions: null,
+              },
             })
           }
         />
@@ -126,15 +132,21 @@ const TemplateEditorForm = ({
     return (
       <FormProvider {...form}>
         <FormTemplateEditor
+          submitLabel="Save changes"
           onSubmit={(data) =>
             mutate({
               path: { template_id: templateId },
               body: {
-                ...data,
+                name: data.name,
+                description: data.description,
+                content: data.content,
+                heading: data.heading,
                 questions:
                   data.questions?.map((q, i) => ({
-                    ...q,
                     position: i,
+                    title: q.title,
+                    description: q.description,
+                    format_instructions: q.format_instructions,
                   })) || null,
               },
             })
