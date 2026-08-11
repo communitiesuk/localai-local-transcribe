@@ -66,6 +66,7 @@ function MicRecorderComponent({
   const mediaChunksRef = useRef<Blob[]>([])
   const [isRecording, setIsRecording] = useState(false)
   const [isStartingRecording, setIsStartingRecording] = useState(false)
+  const [isPreparingRecording, setIsPreparingRecording] = useState(false)
 
   const setRecordingUIState = useRecordingUiStore(
     (state) => state.setRecordingState
@@ -84,6 +85,8 @@ function MicRecorderComponent({
   }, [releaseWakeLock])
 
   const startRecording = useCallback(async () => {
+    setIsPreparingRecording(true)
+
     try {
       setError(null)
       mediaChunksRef.current = []
@@ -149,6 +152,8 @@ function MicRecorderComponent({
       setIsRecording(true)
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
+    } finally {
+      setIsPreparingRecording(false)
     }
     // Create a media recorder from the composed stream
   }, [
@@ -229,6 +234,10 @@ function MicRecorderComponent({
         onCancel={handleLoadingCancel}
       />
     )
+  }
+
+  if (isPreparingRecording) {
+    return null
   }
 
   if (!permissionGranted || !audioDevices.length) {
