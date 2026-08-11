@@ -1,6 +1,7 @@
 """
 Tests the judge-score pass marks: checks each dimension is held to the pass mark from
 its own score band, and that a score sitting exactly on the pass mark is acceptable.
+Also checks every judge dimension has a pass mark defined for it.
 
 Exercises: evals.summarisation.src.acceptability.JudgeAcceptabilityClassifier.
 """
@@ -10,6 +11,7 @@ from __future__ import annotations
 import pytest
 
 from evals.summarisation.src.acceptability import JudgeAcceptabilityClassifier
+from evals.summarisation.src.constants import DIMENSION_SCORE_BANDS, DIMENSIONS_LABELS
 
 
 @pytest.mark.parametrize(
@@ -40,3 +42,16 @@ def test_bare_dimension_name_is_accepted():
 def test_unknown_dimension_raises():
     with pytest.raises(KeyError):
         JudgeAcceptabilityClassifier().is_acceptable(1.0, "rubric_not_a_dimension")
+
+
+def test_every_judge_dimension_has_a_score_band():
+    # The classifier raises when a dimension has no band. That would happen partway through a
+    # bias run, once the summarisation and judge calls have already been paid for and before any
+    # results are written. Checking the two mappings agree here means a dimension added without a
+    # pass mark fails in CI instead. The reverse direction is checked too, so a band left behind
+    # after a dimension is removed is also caught.
+    dimensions_with_no_band = set(DIMENSIONS_LABELS) - set(DIMENSION_SCORE_BANDS)
+    bands_with_no_dimension = set(DIMENSION_SCORE_BANDS) - set(DIMENSIONS_LABELS)
+
+    assert not dimensions_with_no_band, f"judge dimensions with no pass mark: {sorted(dimensions_with_no_band)}"
+    assert not bands_with_no_dimension, f"pass marks for unknown dimensions: {sorted(bands_with_no_dimension)}"
