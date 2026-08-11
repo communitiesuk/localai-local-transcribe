@@ -284,6 +284,10 @@ export function TranscriptionTab({
         newText,
         selectedLineOriginalText
       )
+      editSnapshotRef.current[selectedLineIndex] = {
+        ...editSnapshotRef.current[selectedLineIndex],
+        text: newText,
+      }
       setBanner({
         variant: 'success',
         title: 'Success',
@@ -295,7 +299,7 @@ export function TranscriptionTab({
       setError(null)
     } catch {
       // Error is handled in handleUpdateEntryText but a visual banner
-      //isn't provided to relay to the user. Raised with UCD.
+      //isn't provided to relay to the user. Issue raised with the UCD team.
     }
   }
 
@@ -311,6 +315,7 @@ export function TranscriptionTab({
     setSelectedLineOriginalText('')
     setLineEditInProgress(false)
     setError(null)
+    clearBanner()
   }
 
   const handleTextInput = useCallback(() => {
