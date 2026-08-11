@@ -11,9 +11,9 @@ import { useBannerStore } from '@/stores/use-banner-store'
 import { useTemplateCreateStore } from '@/stores/use-template-create-store'
 import * as Sentry from '@sentry/nextjs'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { redirect, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const CONFLICT_STATUS = 409
 
@@ -67,12 +67,15 @@ export default function CreateTemplateConfirmPage() {
     },
   })
 
+  // Nothing to create (direct navigation or a refresh) means there's no stashed
+  // input, so return to the form. A successful create also clears the draft, but
+  // it redirects to the list itself (isSuccess), so don't bounce to the form then.
+  useEffect(() => {
+    if (!draft && !isSuccess) router.replace('/templates/new')
+  }, [draft, isSuccess, router])
+
   if (!draft) {
-    // A successful create clears the draft as it redirects to the list; render
-    // nothing while that navigation completes. Otherwise there's nothing to
-    // create (direct navigation or a refresh), so return to the form.
-    if (isSuccess) return null
-    redirect('/templates/new')
+    return null
   }
 
   const handleCreate = () => {

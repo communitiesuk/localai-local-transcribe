@@ -10,9 +10,9 @@ import {
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { redirect, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { use } from 'react'
+import { use, useEffect } from 'react'
 
 export default function SaveTemplatePage(props: {
   params: Promise<{ templateId: string }>
@@ -48,12 +48,15 @@ export default function SaveTemplatePage(props: {
     },
   })
 
+  // No edited data (direct navigation or a refresh) means there's nothing to
+  // save, so return to the editor. A successful save also clears the draft, but
+  // it redirects to the list itself (isSuccess), so don't bounce to the editor then.
+  useEffect(() => {
+    if (!data && !isSuccess) router.replace(`/templates/${templateId}`)
+  }, [data, isSuccess, router, templateId])
+
   if (!data) {
-    // A successful save clears the draft as it redirects to the list; render
-    // nothing while that navigation completes. Otherwise there's nothing to save
-    // (direct navigation or a refresh), so return to the editor.
-    if (isSuccess) return null
-    redirect(`/templates/${templateId}`)
+    return null
   }
 
   const handleSave = () => {
