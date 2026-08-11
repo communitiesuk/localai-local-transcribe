@@ -51,24 +51,24 @@ Conversation:
         error_message = str(e)
         # Check for content filter errors from Azure OpenAI
         if any(
-    term in error_message.lower()
-    for term in [
-        "content_filter",
-        "content filter",
-        "content management policy",
-        "filtered",
-        "policy violation",
-    ]
-):
-    # Log the content filter error but continue with original speaker labels
-    logger.warning(
-        "Content filter detected in transcript. Continuing with original speaker labels: %s",
-        type(e).__name__,
-    )
+            term in error_message.lower()
+            for term in [
+                "content_filter",
+                "content filter",
+                "content management policy",
+                "filtered",
+                "policy violation",
+            ]
+        ):
+            # Log the content filter error but continue with original speaker labels
+            logger.warning(
+                "Content filter detected in transcript. Continuing with original speaker labels: %s",
+                type(e).__name__,
+            )
 
-    # Return original speaker labels
-    return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
-else:
-    # For other errors, log and return original speaker labels
-    logger.error("Error predicting speaker names: %s", type(e).__name__)
-    return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
+            # Return original speaker labels
+            return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
+        else:
+            # For other errors, log and return original speaker labels
+            logger.error("Error predicting speaker names: %s", type(e).__name__)
+            return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
