@@ -2,9 +2,9 @@
 
 ## Status
 
-Proposed
+Approved
 
-Date of decision: {yyyy-MM-dd}
+Date of decision: 2026-08-11
 
 ## Context and Problem Statement
 
