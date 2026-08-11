@@ -6,13 +6,14 @@ import {
   GovukButtonGroup,
   GovukSectionBreak,
 } from '@/components/govuk'
+import { OrganisationHeading } from '@/components/organisation-heading'
 
 export default function Home() {
   return (
     <div className="govuk-grid-row flex justify-center">
       <PosthogBanner />
       <div className="govuk-grid-column-three-quarters">
-        <GovukHeading>Council Name Here</GovukHeading>
+        <OrganisationHeading />
         <GovukBody>Suitable up to OFFICIAL SENSITIVE.</GovukBody>
         <GovukHeading size="m">Record a conversation</GovukHeading>
         <GovukBody>Start a recording with one click</GovukBody>
