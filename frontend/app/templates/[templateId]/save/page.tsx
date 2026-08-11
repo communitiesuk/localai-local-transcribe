@@ -10,10 +10,9 @@ import {
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { use, useEffect, useRef } from 'react'
+import { use } from 'react'
 
 export default function SaveTemplatePage(props: {
   params: Promise<{ templateId: string }>
@@ -24,11 +23,10 @@ export default function SaveTemplatePage(props: {
   const clearDraft = useTemplateDraftStore((store) => store.clearDraft)
   const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
-  const submitInProgress = useRef(false)
 
   const data = draft?.templateId === templateId ? draft.data : null
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     ...editUserTemplateUserTemplatesTemplateIdPatchMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -50,18 +48,15 @@ export default function SaveTemplatePage(props: {
     },
   })
 
-  // Without the edited data there is nothing to save; return to the editor.
-  useEffect(() => {
-    if (submitInProgress.current) return
-    if (!data) router.replace(`/templates/${templateId}`)
-  }, [data, router, templateId])
-
   if (!data) {
-    return <Loader2 className="animate-spin" aria-hidden="true" />
+    // A successful save clears the draft as it redirects to the list; render
+    // nothing while that navigation completes. Otherwise there's nothing to save
+    // (direct navigation or a refresh), so return to the editor.
+    if (isSuccess) return null
+    redirect(`/templates/${templateId}`)
   }
 
   const handleSave = () => {
-    submitInProgress.current = true
     mutate({
       path: { template_id: templateId },
       body: {

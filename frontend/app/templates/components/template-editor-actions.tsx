@@ -57,9 +57,9 @@ export function TemplateEditorActions({ templateId }: { templateId: string }) {
         >
           Delete template
         </GovukButton>
-        <button type="button" className="govuk-link" onClick={goToCancel}>
+        <GovukButton variant="link" onClick={goToCancel}>
           Cancel
-        </button>
+        </GovukButton>
       </GovukButtonGroup>
     </div>
   )

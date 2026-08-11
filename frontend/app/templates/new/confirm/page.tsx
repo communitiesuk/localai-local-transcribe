@@ -11,10 +11,9 @@ import { useBannerStore } from '@/stores/use-banner-store'
 import { useTemplateCreateStore } from '@/stores/use-template-create-store'
 import * as Sentry from '@sentry/nextjs'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 
 const CONFLICT_STATUS = 409
 
@@ -29,10 +28,9 @@ export default function CreateTemplateConfirmPage() {
   const clear = useTemplateCreateStore((store) => store.clear)
   const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
-  const submitInProgress = useRef(false)
   const [hasUnexpectedError, setHasUnexpectedError] = useState(false)
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: async (body: CreateUserTemplateRequest) => {
       const { response } = await createUserTemplateUserTemplatesPost({
         body,
@@ -69,18 +67,15 @@ export default function CreateTemplateConfirmPage() {
     },
   })
 
-  // Without the stashed input there is nothing to create; return to the form.
-  useEffect(() => {
-    if (submitInProgress.current) return
-    if (!draft) router.replace('/templates/new')
-  }, [draft, router])
-
   if (!draft) {
-    return <Loader2 className="animate-spin" aria-hidden="true" />
+    // A successful create clears the draft as it redirects to the list; render
+    // nothing while that navigation completes. Otherwise there's nothing to
+    // create (direct navigation or a refresh), so return to the form.
+    if (isSuccess) return null
+    redirect('/templates/new')
   }
 
   const handleCreate = () => {
-    submitInProgress.current = true
     setHasUnexpectedError(false)
     mutate({
       ...draft,
