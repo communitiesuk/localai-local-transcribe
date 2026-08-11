@@ -30,9 +30,11 @@ export default function RecordingControl({
   const audioContextRef = useRef<AudioContext | null>(null)
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [localIsPaused, setLocalIsPaused] = useState(false)
-  const [recordingDurationSeconds, setRecordingDurationSeconds] = useState(0)
-  const recordingStartedAtRef = useRef<number | null>(null)
-  const accumulatedRecordingMsRef = useRef(0)
+  const [meetingDuration, setMeetingDuration] = useState(0)
+
+  const formattedRecordingDuration = `${Math.floor(meetingDuration / 60)
+    .toString()
+    .padStart(2, '0')}:${(meetingDuration % 60).toString().padStart(2, '0')}`
 
   const setRecordingState = useRecordingUiStore(
     (state) => state.setRecordingState
@@ -55,48 +57,22 @@ export default function RecordingControl({
 
   useEffect(() => {
     if (!isRecording) {
-      recordingStartedAtRef.current = null
-      accumulatedRecordingMsRef.current = 0
-      setRecordingDurationSeconds(0)
+      setMeetingDuration(0)
       return
     }
 
-    if (isPaused && recordingStartedAtRef.current !== null) {
-      accumulatedRecordingMsRef.current +=
-        Date.now() - recordingStartedAtRef.current
-      recordingStartedAtRef.current = null
+    if (isPaused) {
       return
     }
 
-    if (recordingStartedAtRef.current === null) {
-      recordingStartedAtRef.current = Date.now()
-    }
-
-    const updateDuration = () => {
-      const currentSessionMs =
-        recordingStartedAtRef.current === null
-          ? 0
-          : Date.now() - recordingStartedAtRef.current
-
-      setRecordingDurationSeconds(
-        Math.floor(
-          (accumulatedRecordingMsRef.current + currentSessionMs) / 1000
-        )
-      )
-    }
-
-    updateDuration()
-
-    const interval = window.setInterval(updateDuration, 1000)
+    const intervalId = window.setInterval(() => {
+      setMeetingDuration((duration) => duration + 1)
+    }, 1000)
 
     return () => {
-      window.clearInterval(interval)
+      window.clearInterval(intervalId)
     }
   }, [isRecording, isPaused])
-
-  const formattedRecordingDuration = new Date(recordingDurationSeconds * 1000)
-    .toISOString()
-    .substring(11, 19)
 
   useEffect(() => {
     const isValidStream =
@@ -354,6 +330,7 @@ export default function RecordingControl({
 
   return (
     <div className="space-y-4">
+      <p>Check: {count}</p>
       <p>Recording length: {formattedRecordingDuration}</p>
 
       <div

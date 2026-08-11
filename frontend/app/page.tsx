@@ -27,7 +27,7 @@ export default function Home() {
         <GovukSectionBreak className="govuk-!-margin-bottom-4" />
         <GovukHeading size="m">Upload a recording</GovukHeading>
         <GovukBody>
-          Upload a file of a conversation you've already recorded
+          Upload a file of a conversation you&apos;ve already recorded
         </GovukBody>
         <GovukButtonLink href="/new/upload" variant="secondary">
           Add file
