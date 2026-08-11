@@ -1,16 +1,18 @@
 'use client'
 
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
-import { GovukHeading } from '@/components/govuk'
+import { GovukHeading, GovukNotificationBanner } from '@/components/govuk'
 import {
   CreateUserTemplateRequest,
   createUserTemplateUserTemplatesPost,
 } from '@/lib/client'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
+import * as Sentry from '@sentry/nextjs'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
+import { useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 
 const CONFLICT_STATUS = 409
@@ -32,6 +34,7 @@ export default function NewTemplatePage() {
   })
   const router = useRouter()
   const setBanner = useBannerStore((store) => store.setBanner)
+  const [hasUnexpectedError, setHasUnexpectedError] = useState(false)
   const { mutateAsync: saveTemplate } = useMutation({
     mutationFn: async (body: CreateUserTemplateRequest) => {
       const { response } = await createUserTemplateUserTemplatesPost({
@@ -61,11 +64,15 @@ export default function NewTemplatePage() {
         form.setError('name', {
           message: 'A template with this title already exists',
         })
+        return
       }
+      Sentry.captureException(error)
+      setHasUnexpectedError(true)
     },
   })
 
   const onSubmit = async (data: TemplateData) => {
+    setHasUnexpectedError(false)
     try {
       await saveTemplate({
         name: data.name,
@@ -88,6 +95,15 @@ export default function NewTemplatePage() {
 
   return (
     <FormProvider {...form}>
+      {hasUnexpectedError && (
+        <GovukNotificationBanner
+          variant="important"
+          title="There is a problem"
+          className="govuk-!-margin-bottom-6"
+        >
+          Something went wrong creating the template. Please try again.
+        </GovukNotificationBanner>
+      )}
       <GovukHeading as="h1" size="l" className="govuk-!-margin-bottom-6">
         Create template
       </GovukHeading>
