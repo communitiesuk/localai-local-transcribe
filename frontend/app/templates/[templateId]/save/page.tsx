@@ -34,7 +34,7 @@ export default function SaveTemplatePage(props: {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
       })
-      queryClient.invalidateQueries({
+      queryClient.removeQueries({
         queryKey: getUserTemplateUserTemplatesTemplateIdGetQueryKey({
           path: { template_id: templateId },
         }),
