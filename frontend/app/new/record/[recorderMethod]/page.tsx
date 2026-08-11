@@ -32,7 +32,7 @@ export default function RecordPage() {
 
   return (
     <div>
-      <GovukBackLink href="/" />
+      {recordingState !== 'starting' && <GovukBackLink href="/" />}
       <GovukHeading>{titleMapper[recordingState]}</GovukHeading>
       {recorderForm}
     </div>
