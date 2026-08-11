@@ -71,7 +71,7 @@ async def test_form_template_keeps_style_guide_and_question_in_user_content(mock
 
     messages = chatbot.chat.await_args.args[0]
     assert messages[0]["role"] == "system"
-    assert "Prompt-injection instructions for summarisation" in messages[0]["content"]
+    assert "security instructions" in messages[0]["content"]
     assert "BEGIN transcript " in messages[1]["content"]
     assert "BEGIN custom-template " in messages[1]["content"]
     assert "The tenant requested repairs." in messages[1]["content"]

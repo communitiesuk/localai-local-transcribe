@@ -20,10 +20,7 @@ def render_prompt_template(template_name: str, **kwargs: object) -> str:
 
 
 PROMPT_INJECTION_INSTRUCTIONS = render_prompt_template("prompt_injection_instructions.j2").rstrip()
-
-SUMMARISATION_PROMPT_INJECTION_INSTRUCTIONS = render_prompt_template(
-    "summarisation_prompt_injection_instructions.j2"
-).rstrip()
+SUMMARISATION_PROMPT_INJECTION_INSTRUCTIONS = PROMPT_INJECTION_INSTRUCTIONS
 
 
 def build_prompt_injection_aware_system_message(content: str) -> dict[str, str]:
