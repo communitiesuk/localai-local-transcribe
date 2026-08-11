@@ -301,6 +301,7 @@ def mock_request():
     return SimpleNamespace(
         name="Test Template",
         content="Hello World",
+        heading="Test Heading",
         description="test template",
         type=TemplateType.DOCUMENT,
         questions=[Question(id=uuid4(), position=1, title="Foo", description="foobar")],

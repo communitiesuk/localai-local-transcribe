@@ -2,6 +2,7 @@
 
 import {
   GovukButton,
+  GovukDetails,
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
@@ -27,8 +28,14 @@ export const FormTemplateEditor = ({
     control: form.control,
     name: 'questions',
     rules: {
-      minLength: { value: 1, message: 'Must have at least one question.' },
-      required: { value: true, message: 'Must have at least one question.' },
+      minLength: {
+        value: 1,
+        message: 'A template must have at least one section',
+      },
+      required: {
+        value: true,
+        message: 'A template must have at least one section',
+      },
     },
   })
 
@@ -42,19 +49,19 @@ export const FormTemplateEditor = ({
       text: errors.description.message,
     },
     errors.questions?.root?.message && {
-      href: '#template-questions',
+      href: '#template-sections',
       text: errors.questions.root.message,
     },
-    ...(fieldArray.fields
-      .map((_, index) =>
-        errors.questions?.[index]?.title?.message
-          ? {
-              href: `#question-title-${index}`,
-              text: `Question ${index + 1}: ${errors.questions![index]!.title!.message}`,
-            }
-          : null
-      )
-      .filter(Boolean) as { href: string; text: string }[]),
+    ...(fieldArray.fields.flatMap((_, index) => [
+      errors.questions?.[index]?.title?.message && {
+        href: `#section-heading-${index}`,
+        text: `Section ${index + 1}: ${errors.questions![index]!.title!.message}`,
+      },
+      errors.questions?.[index]?.description?.message && {
+        href: `#section-information-${index}`,
+        text: `Section ${index + 1}: ${errors.questions![index]!.description!.message}`,
+      },
+    ]) as { href: string; text: string }[]),
   ].filter(Boolean) as { href: string; text: string }[]
 
   return (
@@ -67,25 +74,20 @@ export const FormTemplateEditor = ({
         <GovukErrorSummary
           title="There is a problem"
           errorList={errorList}
-          className="govuk-!-margin-bottom-6"
           data-testid="error-summary"
         />
       )}
 
-      {/* Template details */}
       <div>
-        <h2 className="govuk-heading-m">Template details</h2>
+        <h2 className="govuk-heading-m govuk-!-margin-bottom-1">
+          Template details
+        </h2>
         <GovukHint className="govuk-!-margin-bottom-4">
-          Add a name and description so you can find your template later. Name
-          and description are not used to generate your minute — add structure
-          and style instructions to the template content field below.
+          Add a title and description to help you find your template later
         </GovukHint>
 
-        <GovukFormGroup
-          hasError={!!errors.name}
-          className="govuk-!-margin-bottom-4"
-        >
-          <GovukLabel htmlFor="template-name">Template name</GovukLabel>
+        <GovukFormGroup hasError={!!errors.name}>
+          <GovukLabel htmlFor="template-name">Title</GovukLabel>
           {errors.name?.message && (
             <p id="template-name-error" className="govuk-error-message">
               <span className="govuk-visually-hidden">Error:</span>{' '}
@@ -94,11 +96,10 @@ export const FormTemplateEditor = ({
           )}
           <GovukInput
             id="template-name"
-            className="govuk-!-margin-top-1"
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? 'template-name-error' : undefined}
             {...form.register('name', {
-              required: { value: true, message: 'Enter a template name' },
+              required: { value: true, message: 'Enter a title' },
             })}
           />
         </GovukFormGroup>
@@ -116,7 +117,6 @@ export const FormTemplateEditor = ({
           )}
           <GovukInput
             id="template-description"
-            className="govuk-!-margin-top-1"
             aria-invalid={!!errors.description}
             aria-describedby={
               errors.description ? 'template-description-error' : undefined
@@ -128,42 +128,95 @@ export const FormTemplateEditor = ({
         </GovukFormGroup>
       </div>
 
-      {/* Template content */}
+      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-bottom-0" />
+
       <div>
-        <h2 className="govuk-heading-m">Template content</h2>
-        <GovukHint className="govuk-!-margin-bottom-4">
-          Add questions that you would like to be answered based on the
-          transcript. For each question you can provide a description of how to
-          answer it, including any style guidance. Use the &ldquo;Style
-          guide&rdquo; to provide guidance that applies to every question.
+        <h2 className="govuk-heading-m govuk-!-margin-bottom-1">
+          Content and style
+        </h2>
+        <GovukHint className="govuk-!-margin-bottom-2">
+          Add and order sections to make up this template
         </GovukHint>
 
+        <GovukDetails summary="Useful tips" className="govuk-!-margin-bottom-4">
+          <p className="govuk-body">
+            Customise your template based on how you want your document to be
+            presented. Each section has 3 editable fields:
+          </p>
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
+            Section heading:
+          </p>
+          <ul className="govuk-list govuk-list--bullet">
+            <li>
+              how you want each section&rsquo;s heading to appear in the
+              document
+            </li>
+            <li>headings are case sensitive</li>
+          </ul>
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
+            Section information:
+          </p>
+          <ul className="govuk-list govuk-list--bullet">
+            <li>
+              state the information you&rsquo;d like to include, or questions
+              you&rsquo;d like answered, in this section
+            </li>
+            <li>
+              use a new line for each question or desired piece of information
+            </li>
+            <li>
+              the information will be pulled from the transcript into the
+              document
+            </li>
+          </ul>
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
+            Format instructions (optional):
+          </p>
+          <ul className="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+            <li>
+              state how you&rsquo;d like the information to be presented, for
+              example:
+              <ul className="govuk-list govuk-list--bullet">
+                <li>tone (more or less formal)</li>
+                <li>specific language to include</li>
+                <li>length</li>
+                <li>bulleted list</li>
+                <li>any text to make bold</li>
+              </ul>
+            </li>
+          </ul>
+        </GovukDetails>
+
         <GovukFormGroup className="govuk-!-margin-bottom-4">
-          <GovukLabel htmlFor="template-style-guide">Style guide</GovukLabel>
+          <GovukLabel htmlFor="template-heading">
+            Template heading (optional)
+          </GovukLabel>
           <GovukHint
-            id="style-guide-hint"
-            className="govuk-!-margin-top-1 govuk-!-margin-bottom-2"
+            id="template-heading-hint"
+            className="govuk-!-margin-bottom-1"
           >
-            Optional. Enter guidance that should be followed throughout the
-            whole form.
+            This will appear at the top of your document above Section 1 (it can
+            be different from the template title, which will not appear in the
+            document)
           </GovukHint>
-          <GovukTextarea
-            id="template-style-guide"
-            rows={3}
-            aria-describedby="style-guide-hint"
-            {...form.register('content')}
+          <GovukInput
+            id="template-heading"
+            aria-describedby="template-heading-hint"
+            {...form.register('heading')}
           />
         </GovukFormGroup>
 
         <GovukFormGroup
           hasError={!!errors.questions?.root}
-          id="template-questions"
+          id="template-sections"
           className="govuk-!-margin-bottom-0"
         >
-          <h3 className="govuk-heading-m govuk-!-margin-bottom-2">Questions</h3>
+          <h3 className="govuk-heading-s govuk-!-margin-bottom-2">
+            Template sections
+          </h3>
           {errors.questions?.root?.message && (
             <p
-              id="template-questions-error"
+              id="template-sections-error"
               className="govuk-error-message govuk-!-margin-bottom-2"
             >
               <span className="govuk-visually-hidden">Error:</span>{' '}
@@ -175,9 +228,9 @@ export const FormTemplateEditor = ({
             {fieldArray.fields.map((field, index, array) => (
               <div key={field.id} className="govuk-summary-card">
                 <div className="govuk-summary-card__title-wrapper">
-                  <h3 className="govuk-summary-card__title">
-                    Question {index + 1}
-                  </h3>
+                  <h4 className="govuk-summary-card__title">
+                    Section {index + 1}
+                  </h4>
                   <ul className="govuk-summary-card__actions">
                     <li className="govuk-summary-card__action">
                       <button
@@ -185,7 +238,7 @@ export const FormTemplateEditor = ({
                         className="govuk-link govuk-body-s govuk-!-font-weight-bold"
                         disabled={index === 0}
                         onClick={() => fieldArray.swap(index, index - 1)}
-                        aria-label={`Move question ${index + 1} up`}
+                        aria-label={`Move section ${index + 1} up`}
                       >
                         Move up
                       </button>
@@ -196,21 +249,21 @@ export const FormTemplateEditor = ({
                         className="govuk-link govuk-body-s govuk-!-font-weight-bold"
                         disabled={index === array.length - 1}
                         onClick={() => fieldArray.swap(index, index + 1)}
-                        aria-label={`Move question ${index + 1} down`}
+                        aria-label={`Move section ${index + 1} down`}
                       >
                         Move down
                       </button>
                     </li>
                     <li className="govuk-summary-card__action">
-                      <GovukButton
+                      <button
                         type="button"
-                        variant="warning"
-                        className="govuk-!-margin-bottom-0"
+                        className="govuk-link govuk-body-s govuk-!-font-weight-bold"
+                        disabled={array.length === 1}
                         onClick={() => fieldArray.remove(index)}
-                        aria-label={`Delete question ${index + 1}`}
+                        aria-label={`Remove section ${index + 1}`}
                       >
-                        Delete
-                      </GovukButton>
+                        Remove
+                      </button>
                     </li>
                   </ul>
                 </div>
@@ -220,12 +273,12 @@ export const FormTemplateEditor = ({
                       hasError={!!errors.questions?.[index]?.title}
                       className="govuk-!-margin-bottom-0"
                     >
-                      <GovukLabel htmlFor={`question-title-${index}`}>
-                        Question text
+                      <GovukLabel htmlFor={`section-heading-${index}`}>
+                        Section heading
                       </GovukLabel>
                       {errors.questions?.[index]?.title?.message && (
                         <p
-                          id={`question-title-${index}-error`}
+                          id={`section-heading-${index}-error`}
                           className="govuk-error-message"
                         >
                           <span className="govuk-visually-hidden">Error:</span>{' '}
@@ -233,32 +286,65 @@ export const FormTemplateEditor = ({
                         </p>
                       )}
                       <GovukInput
-                        id={`question-title-${index}`}
-                        className="govuk-!-margin-top-1"
+                        id={`section-heading-${index}`}
                         aria-invalid={!!errors.questions?.[index]?.title}
                         aria-describedby={
                           errors.questions?.[index]?.title
-                            ? `question-title-${index}-error`
+                            ? `section-heading-${index}-error`
                             : undefined
                         }
                         {...form.register(`questions.${index}.title`, {
                           required: {
                             value: true,
-                            message: 'Enter a question',
+                            message: 'Enter a section heading',
+                          },
+                        })}
+                      />
+                    </GovukFormGroup>
+                    <GovukFormGroup
+                      hasError={!!errors.questions?.[index]?.description}
+                      className="govuk-!-margin-bottom-0"
+                    >
+                      <GovukLabel htmlFor={`section-information-${index}`}>
+                        Section information
+                      </GovukLabel>
+                      {errors.questions?.[index]?.description?.message && (
+                        <p
+                          id={`section-information-${index}-error`}
+                          className="govuk-error-message"
+                        >
+                          <span className="govuk-visually-hidden">Error:</span>{' '}
+                          {errors.questions[index].description.message}
+                        </p>
+                      )}
+                      <GovukTextarea
+                        id={`section-information-${index}`}
+                        rows={3}
+                        aria-invalid={!!errors.questions?.[index]?.description}
+                        aria-describedby={
+                          errors.questions?.[index]?.description
+                            ? `section-information-${index}-error`
+                            : undefined
+                        }
+                        {...form.register(`questions.${index}.description`, {
+                          required: {
+                            value: true,
+                            message: 'Enter section information',
                           },
                         })}
                       />
                     </GovukFormGroup>
                     <GovukFormGroup className="govuk-!-margin-bottom-0">
-                      <GovukLabel htmlFor={`question-description-${index}`}>
-                        Optional description of how to answer the question, what
-                        information to include and style guidance:
+                      <GovukLabel htmlFor={`section-format-${index}`}>
+                        Format instructions (optional)
                       </GovukLabel>
                       <GovukTextarea
-                        id={`question-description-${index}`}
+                        id={`section-format-${index}`}
                         className="govuk-!-margin-top-1"
                         rows={3}
-                        {...form.register(`questions.${index}.description`)}
+                        {...form.register(
+                          `questions.${index}.format_instructions`
+                        )}
                       />
                     </GovukFormGroup>
                   </div>
@@ -276,16 +362,16 @@ export const FormTemplateEditor = ({
                 fieldArray.append({
                   title: '',
                   description: '',
-                  position: form.watch('questions')?.length || 0,
+                  format_instructions: '',
+                  position: fieldArray.fields.length,
                 })
               }
             >
-              Add question
+              Add section
             </GovukButton>
           </div>
         </GovukFormGroup>
       </div>
-
       {actions}
     </form>
   )

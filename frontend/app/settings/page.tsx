@@ -20,12 +20,12 @@ import { Loader2 } from 'lucide-react'
 import { useCallback } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
-type UserSettingsForm = { dataRetention: '1' | '7' | '30' | '90' }
+type UserSettingsForm = { dataRetention: '1' | '7' | '30' }
 
 const toRetentionOption = (
   days: number | null | undefined
 ): UserSettingsForm['dataRetention'] =>
-  days === 1 || days === 7 || days === 30 || days === 90 ? `${days}` : '30'
+  days === 1 || days === 7 || days === 30 ? `${days}` : '30'
 
 export default function SettingsPage() {
   const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
@@ -110,7 +110,6 @@ function SettingsForm({ user }: { user: GetUserResponse }) {
                   { label: '1 day', value: '1' },
                   { label: '7 days', value: '7' },
                   { label: '30 days', value: '30' },
-                  { label: '90 days', value: '90' },
                 ]}
               />
             )}

@@ -1,51 +1,54 @@
 'use client'
 
-import { DocumentTemplateEditor } from '@/app/templates/components/document-template-editor'
-import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
-import {
-  exampleDocumentTemplates,
-  exampleFormTemplates,
-} from '@/app/templates/data/example-templates'
+import { GovukHeading, GovukNotificationBanner } from '@/components/govuk'
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
-import { TemplateType } from '@/lib/client'
-import { createUserTemplateUserTemplatesPostMutation } from '@/lib/client/@tanstack/react-query.gen'
+import { CreateUserTemplateRequest, createUserTemplateUserTemplatesPost } from '@/lib/client'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { TemplateData } from '@/types/templates'
+import * as Sentry from '@sentry/nextjs'
 import { useMutation } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { Suspense } from 'react'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
 
-function NewTemplateContent() {
-  const searchParams = useSearchParams()
-  const templateTypeParam = searchParams.get('type')
-  const templateExampleParam = searchParams.get('example')
-  const foundExample = [
-    ...exampleDocumentTemplates,
-    ...exampleFormTemplates,
-  ].find((v) => v.name == templateExampleParam)
+const CONFLICT_STATUS = 409
+
+export class TemplateTitleConflictError extends Error {}
+
+export default function NewTemplatePage() {
   const form = useForm<TemplateData>({
-    defaultValues: foundExample
-      ? foundExample
-      : {
-          name: '',
-          description: '',
-          content: '',
-          questions: [],
-          type:
-            templateTypeParam &&
-            ['document', 'form'].includes(templateTypeParam)
-              ? (templateTypeParam as TemplateType)
-              : undefined,
-        },
+    defaultValues: {
+      name: '',
+      description: '',
+      content: '',
+      heading: '',
+      type: 'form',
+      questions: [
+        { title: '', description: '', format_instructions: '', position: 0 },
+      ],
+    },
   })
   const router = useRouter()
   const setBanner = useBannerStore((store) => store.setBanner)
+  const [hasUnexpectedError, setHasUnexpectedError] = useState(false)
   const { mutateAsync: saveTemplate } = useMutation({
-    ...createUserTemplateUserTemplatesPostMutation(),
+    mutationFn: async (body: CreateUserTemplateRequest) => {
+      const { response } = await createUserTemplateUserTemplatesPost({
+        body,
+        throwOnError: false,
+      })
+
+      if (response?.status === CONFLICT_STATUS) {
+        throw new TemplateTitleConflictError()
+      }
+
+      if (!response?.ok) {
+        throw new Error('Failed to create template')
+      }
+    },
     onSuccess: () => {
       setBanner({
         variant: 'success',
@@ -55,18 +58,36 @@ function NewTemplateContent() {
       posthog.capture('template_created')
       router.push('/templates')
     },
+    onError: (error) => {
+      if (error instanceof TemplateTitleConflictError) {
+        form.setError('name', {
+          message: 'A template with this title already exists',
+        })
+        return
+      }
+      Sentry.captureException(error)
+      setHasUnexpectedError(true)
+    },
   })
+
   const onSubmit = async (data: TemplateData) => {
-    await saveTemplate({
-      body: {
-        ...data,
+    setHasUnexpectedError(false)
+    try {
+      await saveTemplate({
+        name: data.name,
+        description: data.description,
+        content: data.content,
+        heading: data.heading,
+        type: data.type,
         questions:
-          data.type === 'form' && data.questions
-            ? data.questions.map((q, i) => ({ ...q, position: i }))
-            : null,
-      },
-    })
+          data.questions?.map((q, i) => ({ ...q, position: i }))
+          ?? null,
+      })
+    } catch {
+      // Handled in onError above
+    }
   }
+
   const { isSubmitting } = form.formState
   const actions = (
     <GovukButtonGroup>
@@ -81,75 +102,27 @@ function NewTemplateContent() {
             Saving…
           </>
         ) : (
-          'Save'
+          'Create template'
         )}
       </GovukButton>
     </GovukButtonGroup>
   )
-  const templateType = useWatch({ name: 'type', control: form.control })
-  const onSelectExample = (example: TemplateData) => {
-    form.setValue('name', example.name, { shouldDirty: true })
-    form.setValue('description', example.description, { shouldDirty: true })
-    form.setValue('type', example.type, { shouldDirty: true })
-    form.setValue('content', example.content, { shouldDirty: true })
-    if (example.questions) {
-      form.setValue('questions', example.questions, { shouldDirty: true })
-    } else {
-      form.setValue('questions', null, { shouldDirty: true })
-    }
-  }
 
-  if (templateType == 'document') {
-    return (
-      <FormProvider {...form}>
-        <header className="govuk-!-margin-bottom-4">
-          <div className="govuk-!-margin-bottom-2 flex items-baseline gap-4">
-            <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
-              New template
-            </h1>
-            <ExampleTemplatesDialog
-              onSelectTemplate={onSelectExample}
-              examples={exampleDocumentTemplates}
-            />
-          </div>
-          <p className="govuk-body govuk-hint govuk-!-margin-bottom-0">
-            Design your minute template. You can describe a structure and
-            provide style guidance. Try an example to get started.
-          </p>
-        </header>
-        <DocumentTemplateEditor onSubmit={onSubmit} actions={actions} />
-      </FormProvider>
-    )
-  }
-
-  if (templateType == 'form') {
-    return (
-      <FormProvider {...form}>
-        <header className="govuk-!-margin-bottom-4">
-          <div className="govuk-!-margin-bottom-2 flex items-baseline gap-4">
-            <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
-              New template
-            </h1>
-            <ExampleTemplatesDialog
-              onSelectTemplate={onSelectExample}
-              examples={exampleFormTemplates}
-            />
-          </div>
-          <p className="govuk-body govuk-hint govuk-!-margin-bottom-0">
-            Design your minute template. You can describe a structure and
-            provide style guidance. Try an example to get started.
-          </p>
-        </header>
-        <FormTemplateEditor onSubmit={onSubmit} actions={actions} />
-      </FormProvider>
-    )
-  }
-}
-
-export default function Page() {
   return (
-    <Suspense fallback={<div className="govuk-body">Loading…</div>}>
-      <NewTemplateContent />
-    </Suspense>
+    <FormProvider {...form}>
+      {hasUnexpectedError && (
+        <GovukNotificationBanner
+          variant="important"
+          title="There is a problem"
+          className="govuk-!-margin-bottom-6"
+        >
+          Something went wrong creating the template. Please try again.
+        </GovukNotificationBanner>
+      )}
+      <GovukHeading as="h1" size="l" className="govuk-!-margin-bottom-6">
+        Create template
+      </GovukHeading>
+      <FormTemplateEditor onSubmit={onSubmit} actions={actions} />
+    </FormProvider>
   )
 }

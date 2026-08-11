@@ -8,6 +8,16 @@ output "ecs_cluster_name" {
   description = "The name of the ECS cluster for this environment"
 }
 
+output "backend_task_id" {
+  value       = aws_iam_role.backend_ecs_task.id
+  description = "The id of the task role used by the backend ecs task"
+}
+
+output "worker_task_id" {
+  value       = aws_iam_role.worker_ecs_task.id
+  description = "The id of the task role used by the worker ecs task"
+}
+
 output "backend_execution_task_name" {
   value       = aws_iam_role.ecs_task_execution.name
   description = "The name of the task execution role used by the backend ecs task"
@@ -82,3 +92,4 @@ output "worker_log_group_name" {
   description = "CloudWatch log group name for worker ECS service logs"
   value       = module.worker_log_group.name
 }
+

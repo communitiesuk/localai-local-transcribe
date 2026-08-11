@@ -3,7 +3,7 @@ import logging
 from common.database.postgres_models import DialogueEntry
 from common.llm.client import ChatBot, FastOrBestLLM, create_default_chatbot
 from evals.dataset_generation.counterfactual_generation.src.constants import (
-    COUNTERFACTUAL_REWRITE_TEMPLATE,
+    counterfactual_rewrite_template_name,
     get_template,
 )
 from evals.dataset_generation.counterfactual_generation.src.evidence_tracker import verify_evidence_modifications
@@ -13,7 +13,10 @@ from evals.dataset_generation.counterfactual_generation.src.models import (
     CounterfactualOutput,
     TranscriptInput,
 )
-from evals.dataset_generation.counterfactual_generation.src.parser import parse_llm_response
+from evals.dataset_generation.counterfactual_generation.src.parser import (
+    parse_llm_response,
+    strip_leading_entry_indexes,
+)
 from evals.dataset_generation.counterfactual_generation.src.validation import (
     identify_modified_entries,
     validate_evidence_spans,
@@ -26,9 +29,13 @@ class CounterfactualRewriter:
     """Counterfactual transcript rewriter."""
 
     def __init__(
-        self, chatbot: ChatBot | None = None, prompt_version: str = "v1.0", model_name: str = "unknown"
+        self, chatbot: ChatBot | None = None, prompt_version: str = "v2.0", model_name: str = "unknown"
     ) -> None:
-        """Initialize the counterfactual rewriter."""
+        """Initialize the counterfactual rewriter.
+
+        ``prompt_version`` defaults to ``v2.0``, the July-set prompt family with the
+        per-axis isolation and coherence rules. Earlier thin-prompt outputs used ``v1.0``.
+        """
         self.chatbot = chatbot or create_default_chatbot(FastOrBestLLM.BEST)
         self.prompt_version = prompt_version
         self.model_name = model_name if chatbot else "default_best_llm"
@@ -57,7 +64,7 @@ class CounterfactualRewriter:
         messages = [{"role": "user", "content": prompt}]
         response = await self.chatbot.chat(messages=messages)
 
-        rewritten_texts = parse_llm_response(response)
+        rewritten_texts = strip_leading_entry_indexes(parse_llm_response(response))
 
         if len(rewritten_texts) != len(original_transcript.dialogue_entries):
             expected = len(original_transcript.dialogue_entries)
@@ -67,6 +74,14 @@ class CounterfactualRewriter:
 
         rewritten_entries = self._reconstruct_entries(original_transcript.dialogue_entries, rewritten_texts)
         modified_indices = identify_modified_entries(original_transcript.dialogue_entries, rewritten_entries)
+
+        # A counterfactual that leaves every turn unchanged has not applied the locked axis change.
+        if not modified_indices:
+            msg = (
+                f"Rewrite made no edits for {axis_change.axis} "
+                f"({axis_change.original_value} -> {axis_change.target_value})"
+            )
+            raise ValueError(msg)
 
         if characteristic_detection.evidence_spans:
             verify_evidence_modifications(
@@ -88,20 +103,20 @@ class CounterfactualRewriter:
     def _validate_axis_compatibility(
         self, characteristic_detection: CharacteristicDetection, axis_change: AxisChange
     ) -> None:
-        """Validate axis change is compatible with characteristic detection."""
+        """Validate the axis change refers to the same axis as the characteristic detection.
+
+        The original values are deliberately not compared. A change carries a controlled
+        vocabulary value such as "female", used for grouping in the bias evaluation, while a
+        detection carries the free text phrase the detector produced such as "Female (name and
+        pronoun proxy)". Which detection record a change applies to is settled when the
+        detections are loaded, so the two values are not expected to be identical here.
+        """
         if axis_change.axis != characteristic_detection.axis:
             msg = (
                 f"Axis mismatch: change requests {axis_change.axis} "
                 f"but detection found {characteristic_detection.axis}"
             )
             raise ValueError(msg)
-
-        if axis_change.original_value != characteristic_detection.detected_value:
-            logger.warning(
-                "Original value mismatch: change specifies %s but detection found %s",
-                axis_change.original_value,
-                characteristic_detection.detected_value,
-            )
 
     def _log_evidence_usage(self, characteristic_detection: CharacteristicDetection, max_index: int) -> None:
         """Log evidence span usage and validate if present."""
@@ -125,14 +140,30 @@ class CounterfactualRewriter:
             rewritten_entries.append(rewritten_entry)
         return rewritten_entries
 
+    def _unique_evidence_spans_for_prompt(self, evidence_spans: list) -> list:
+        """Keep the first span for each distinct text snippet when building the rewrite prompt.
+
+        Detection often repeats the same phrase across overlapping character ranges. Listing
+        every copy in the prompt bloated the evidence checklist and caused the model to return
+        the wrong number of dialogue turns on long, densely annotated transcripts.
+        """
+        seen_snippets: set[str] = set()
+        unique_spans = []
+        for span in evidence_spans:
+            if span.text_snippet in seen_snippets:
+                continue
+            seen_snippets.add(span.text_snippet)
+            unique_spans.append(span)
+        return unique_spans
+
     def _build_prompt(
         self,
         dialogue_texts: list[str],
         characteristic_detection: CharacteristicDetection,
         axis_change: AxisChange,
     ) -> str:
-        """Build the prompt for LLM rewriting."""
-        template = get_template(COUNTERFACTUAL_REWRITE_TEMPLATE)
+        """Build the prompt for LLM rewriting from the shared base plus the axis template."""
+        template = get_template(counterfactual_rewrite_template_name(axis_change.axis))
         custom_instructions = getattr(axis_change, "instructions", None)
 
         return template.render(
@@ -140,6 +171,6 @@ class CounterfactualRewriter:
             axis=axis_change.axis,
             original_value=axis_change.original_value,
             target_value=axis_change.target_value,
-            evidence_spans=characteristic_detection.evidence_spans,
+            evidence_spans=self._unique_evidence_spans_for_prompt(characteristic_detection.evidence_spans),
             custom_instructions=custom_instructions,
         )

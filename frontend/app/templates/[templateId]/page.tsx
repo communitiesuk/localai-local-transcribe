@@ -55,9 +55,10 @@ export default function EditTemplatePage(props: {
         defaultValues={{
           name: template.name,
           description: template.description,
+          content: template.content,
+          heading: template.heading,
           questions: template.questions,
           type: template.type,
-          content: template.content,
         }}
       />
     </>
