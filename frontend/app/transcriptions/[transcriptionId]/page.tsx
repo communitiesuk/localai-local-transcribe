@@ -4,6 +4,7 @@ import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { BannerNotification } from '@/components/banner-notification'
 import { DownloadButton } from '@/components/download-button'
 import {
   GovukBackLink,
@@ -140,6 +141,7 @@ export default function TranscriptionPage(props: {
       <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
         Back
       </GovukBackLink>
+      <BannerNotification />
       {lineEditError && (
         <div
           className="govuk-error-summary"

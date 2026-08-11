@@ -215,7 +215,7 @@ export function TranscriptionTab({
   const [selectedLineOriginalText, setSelectedLineOriginalText] = useState('')
   const [lineEditInProgress, setLineEditInProgress] = useState(false)
 
-  const { setBanner } = useBannerStore()
+  const { setBanner, clearBanner } = useBannerStore()
 
   const setError = useCallback(
     (error: string | null) => {
@@ -328,6 +328,7 @@ export function TranscriptionTab({
     setSelectedLineOriginalText('')
     setLineEditInProgress(false)
     setError(null)
+    clearBanner()
     onEditModeChange?.(false)
   }
 

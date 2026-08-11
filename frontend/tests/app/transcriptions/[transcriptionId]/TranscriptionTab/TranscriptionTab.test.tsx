@@ -12,6 +12,7 @@ import { DialogueEntry } from '@/lib/client'
 const updateDialogueEntryTextMock = vi.fn()
 const updateDialogueEntrySpeakerMock = vi.fn()
 const setBannerMock = vi.fn()
+const clearBannerMock = vi.fn()
 const onLineEditErrorMock = vi.fn()
 
 vi.mock('@/hooks/use-update-transcription-speakers', () => ({
@@ -53,7 +54,10 @@ vi.mock('@/components/ui/copy-button', () => ({
 }))
 
 vi.mock('@/stores/use-banner-store', () => ({
-  useBannerStore: () => ({ setBanner: setBannerMock }),
+  useBannerStore: () => ({
+    setBanner: setBannerMock,
+    clearBanner: clearBannerMock,
+  }),
 }))
 
 vi.mock('posthog-js', () => ({
@@ -424,5 +428,50 @@ describe('TranscriptionTab single speaker rename', () => {
         expected_end_time: 1,
       })
     })
+  })
+})
+
+describe('TranscriptionTab full edit flow', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('disables action buttons on entering edit mode, shows banner on save, and clears it on finish editing', async () => {
+    updateDialogueEntryTextMock.mockResolvedValue(undefined)
+    renderTab(transcription)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
+
+    expect(
+      screen.getByRole('button', { name: 'Speaker editor' })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Edit transcript' })
+    ).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Download transcript' })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Save line edit' })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Cancel line edit' })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Finish editing' })
+    ).not.toBeDisabled()
+
+    fireEvent.input(screen.getByText('Original text'))
+    fireEvent.click(screen.getByRole('button', { name: 'Save line edit' }))
+
+    await waitFor(() => {
+      expect(setBannerMock).toHaveBeenCalledWith({
+        variant: 'success',
+        title: 'Success',
+        message: 'Line edit saved',
+      })
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Finish editing' }))
+    expect(clearBannerMock).toHaveBeenCalled()
   })
 })
