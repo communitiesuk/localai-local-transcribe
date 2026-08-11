@@ -1,10 +1,5 @@
 'use client'
 
-import { ExampleTemplatesDialog } from '@/app/templates/components/example-templates-dialog'
-import {
-  exampleDocumentTemplates,
-  exampleFormTemplates,
-} from '@/app/templates/data/example-templates'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -13,22 +8,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
-import { GovukButton, GovukButtonLink } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukButtonLink,
+  GovukHeading,
+  GovukTable,
+  GovukTableBody,
+  GovukTableCell,
+  GovukTableHead,
+  GovukTableHeaderCell,
+  GovukTableRow,
+} from '@/components/govuk'
 import { TemplateResponse } from '@/lib/client'
-import { useBannerStore } from '@/stores/use-banner-store'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
   getUserTemplatesUserTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { useBannerStore } from '@/stores/use-banner-store'
+import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileWarning, Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { FileSpreadsheet, FileType, FileWarning, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import posthog from 'posthog-js'
-import { useMemo } from 'react'
-import { FileSpreadsheet, FileType } from 'lucide-react'
 
 export const UserTemplatesList = () => {
   const {
@@ -36,22 +39,15 @@ export const UserTemplatesList = () => {
     isLoading,
     isError,
   } = useQuery(getUserTemplatesUserTemplatesGetOptions())
-  const [documentTemplates, formTemplates] = useMemo(() => {
-    const docs = []
-    const forms = []
-    for (const template of templates) {
-      if (template.type == 'document') {
-        docs.push(template)
-      } else {
-        forms.push(template)
-      }
-    }
-    return [docs, forms]
-  }, [templates])
-  const router = useRouter()
+
+  const sortedTemplates = [...templates].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
+
   if (isLoading) {
     return <Loader2 className="animate-spin" />
   }
+
   if (isError) {
     return (
       <div className="govuk-body flex items-center gap-2 text-red-600">
@@ -63,68 +59,54 @@ export const UserTemplatesList = () => {
 
   return (
     <div>
-      <div className="govuk-!-margin-bottom-4">
-        <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Document</h2>
-        <p className="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-4">
-          Customise the structure and style of your minutes.
-        </p>
-        <div className="govuk-!-margin-bottom-4 flex items-center gap-4">
-          <GovukButtonLink
-            href="/templates/new?type=document"
-            variant="secondary"
-            className="govuk-!-margin-bottom-0"
-          >
-            Create template
-          </GovukButtonLink>
-          <ExampleTemplatesDialog
-            onSelectTemplate={(example) => {
-              router.push(`/templates/new?example=${example.name}`)
-            }}
-            examples={exampleDocumentTemplates}
-          />
-        </div>
-      </div>
-      {documentTemplates.length > 0 && (
-        <div className="govuk-!-margin-bottom-8 grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {documentTemplates.map((template) => (
-            <TemplateCard template={template} key={template.id} />
-          ))}
-        </div>
-      )}
+      <GovukHeading
+        size="m"
+        as="h2"
+        className="govuk-!-margin-top-4 govuk-!-margin-bottom-1"
+      >
+        Your templates
+      </GovukHeading>
+      <p className="govuk-body govuk-!-margin-bottom-4">
+        Includes common templates and any templates you create yourself.
+      </p>
 
-      <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
-
-      <div className="govuk-!-margin-bottom-4">
-        <h2 className="govuk-heading-m govuk-!-margin-bottom-0">Form</h2>
-        <p className="govuk-hint govuk-!-margin-top-1 govuk-!-margin-bottom-4">
-          For complex summarisation of meetings into many questions and answers.
-        </p>
-        <div className="govuk-!-margin-bottom-4 flex items-baseline gap-4">
-          <GovukButtonLink
-            href="/templates/new?type=form"
-            variant="secondary"
-            className="govuk-!-margin-bottom-0"
-          >
-            Create template
-          </GovukButtonLink>
-          <ExampleTemplatesDialog
-            onSelectTemplate={(example) => {
-              router.push(`/templates/new?example=${example.name}`)
-            }}
-            examples={exampleFormTemplates}
-          />
-        </div>
-      </div>
-      {formTemplates.length > 0 && (
-        <div className="grid auto-rows-fr gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {formTemplates.map((template) => (
-            <TemplateCard template={template} key={template.id} />
+      <GovukTable>
+        <GovukTableHead>
+          <GovukTableRow>
+            <GovukTableHeaderCell scope="col">Title</GovukTableHeaderCell>
+            <GovukTableHeaderCell scope="col">
+              Last updated
+            </GovukTableHeaderCell>
+            <GovukTableHeaderCell scope="col">
+              <span className="govuk-visually-hidden">Actions</span>
+            </GovukTableHeaderCell>
+          </GovukTableRow>
+        </GovukTableHead>
+        <GovukTableBody>
+          {sortedTemplates.map((template) => (
+            <GovukTableRow key={template.id}>
+              <GovukTableCell>{template.name}</GovukTableCell>
+              <GovukTableCell>
+                {template.updated_datetime
+                  ? new Date(template.updated_datetime).toLocaleDateString(
+                      'en-GB',
+                      { day: '2-digit', month: '2-digit', year: 'numeric' }
+                    )
+                  : 'Original template'}
+              </GovukTableCell>
+              <GovukTableCell isNumeric>
+                <Link href={`/templates/${template.id}`} className="govuk-link">
+                  Edit
+                </Link>
+              </GovukTableCell>
+            </GovukTableRow>
           ))}
-        </div>
-      )}
+        </GovukTableBody>
+      </GovukTable>
     </div>
   )
 }
+
 const TemplateCard = ({ template }: { template: TemplateResponse }) => {
   const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
@@ -191,7 +173,7 @@ const TemplateCard = ({ template }: { template: TemplateResponse }) => {
           className="govuk-!-margin-bottom-0"
           onClick={() => {
             duplicationMutation.mutate({
-              path: { template_id: template.id },
+              path: { template_id: template.id! },
             })
           }}
           disabled={duplicationMutation.isPending}

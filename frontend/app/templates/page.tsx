@@ -1,5 +1,6 @@
 import { UserTemplatesList } from '@/app/templates/components/user-templates-list'
 import { BannerNotification } from '@/components/banner-notification'
+import { GovukButtonLink, GovukHeading } from '@/components/govuk'
 
 export default function TemplatesPage() {
   return (
@@ -7,17 +8,27 @@ export default function TemplatesPage() {
       {/* Next dev mode (`npm run dev`) can clear the store that triggers this banner. 
       In prod (`npm run build && npm start`) this is not an issue */}
       <BannerNotification />
-      <header className="govuk-!-margin-bottom-6">
-        <div className="flex items-center gap-3">
-          <h1 className="govuk-heading-l govuk-!-margin-bottom-0">
-            Your templates
-          </h1>
-          <strong className="govuk-tag govuk-tag--blue">Experimental</strong>
-        </div>
-        <p className="govuk-body govuk-!-margin-top-2">
-          Use templates to customise the structure and style of your minutes.
-        </p>
-      </header>
+      <GovukHeading size="l">Manage templates</GovukHeading>
+
+      <GovukHeading size="m" as="h2" className="govuk-!-margin-bottom-3">
+        Create template
+      </GovukHeading>
+      <p className="govuk-body">
+        Use templates to customise the structure and style of your summaries.
+      </p>
+
+      <div>
+        <GovukButtonLink
+          href="/templates/new"
+          variant="secondary"
+          className="!mb-0"
+        >
+          Create template
+        </GovukButtonLink>
+      </div>
+
+      <hr className="my-6 border-0 border-t border-[var(--govuk-border-colour)]" />
+
       <UserTemplatesList />
     </div>
   )
