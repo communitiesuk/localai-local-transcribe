@@ -1,5 +1,5 @@
 'use client'
-import { use, useState } from 'react'
+import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
@@ -38,6 +38,20 @@ export default function TranscriptionPage(props: {
   const { transcriptionId } = params
 
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
+  const [lineEditError, setLineEditError] = useState<string | null>(null)
+  const errorSummaryRef = useRef<HTMLDivElement | null>(null)
+
+  const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
+
+  const handleLineEditError = useCallback((error: string | null) => {
+    setLineEditError(error)
+  }, [])
+
+  useEffect(() => {
+    if (lineEditError && errorSummaryRef.current) {
+      errorSummaryRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [lineEditError])
 
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
@@ -123,6 +137,24 @@ export default function TranscriptionPage(props: {
       <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
         Back
       </GovukBackLink>
+      {lineEditError && (
+        <div
+          className="govuk-error-summary"
+          data-module="govuk-error-summary"
+          aria-labelledby="line-edit-error-title"
+          role="alert"
+          ref={errorSummaryRef}
+        >
+          <h2 className="govuk-error-summary__title" id="line-edit-error-title">
+            There is a problem
+          </h2>
+          <div className="govuk-error-summary__body">
+            <ul className="govuk-list govuk-error-summary__list">
+              <li> <a href="#line-edit-actions">{lineEditError}</a></li>
+            </ul>
+          </div>
+        </div>
+      )}
       <GovukHeading as="h1" size="xl" className="govuk-!-margin-bottom-2">
         {recordingDate}
       </GovukHeading>
@@ -132,12 +164,12 @@ export default function TranscriptionPage(props: {
       <div>
         <NewMinuteDialog
           transcriptionId={transcription.id!}
-          trigger={<GovukButton type="button">Create document</GovukButton>}
+          trigger={<GovukButton type="button" disabled={isTranscriptEditing}>Create document</GovukButton>}
         />
       </div>
       <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
         <GovukTabs.Panel id="transcript" label="Transcript">
-          <TranscriptionTab transcription={transcription} />
+          <TranscriptionTab transcription={transcription} onLineEditError={handleLineEditError} onEditModeChange={setIsTranscriptEditing} />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
           <MinuteTab transcription={transcription} />
