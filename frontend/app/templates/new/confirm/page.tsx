@@ -13,7 +13,7 @@ import * as Sentry from '@sentry/nextjs'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import posthog from 'posthog-js'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const CONFLICT_STATUS = 409
 
@@ -28,9 +28,10 @@ export default function CreateTemplateConfirmPage() {
   const clear = useTemplateCreateStore((store) => store.clear)
   const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
+  const submitInProgress = useRef(false)
   const [hasUnexpectedError, setHasUnexpectedError] = useState(false)
 
-  const { mutate, isPending, isSuccess } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: async (body: CreateUserTemplateRequest) => {
       const { response } = await createUserTemplateUserTemplatesPost({
         body,
@@ -67,18 +68,18 @@ export default function CreateTemplateConfirmPage() {
     },
   })
 
-  // Nothing to create (direct navigation or a refresh) means there's no stashed
-  // input, so return to the form. A successful create also clears the draft, but
-  // it redirects to the list itself (isSuccess), so don't bounce to the form then.
+  // Nothing to create (direct navigation or a refresh) means there's no
+  // stashed input, so return to the form as a fallback.
   useEffect(() => {
-    if (!draft && !isSuccess) router.replace('/templates/new')
-  }, [draft, isSuccess, router])
+    if (!draft && !submitInProgress.current) router.replace('/templates/new')
+  }, [draft, router])
 
   if (!draft) {
     return null
   }
 
   const handleCreate = () => {
+    submitInProgress.current = true
     setHasUnexpectedError(false)
     mutate({
       ...draft,
