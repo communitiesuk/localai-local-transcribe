@@ -49,12 +49,23 @@ export default function NewTemplatePage() {
     router.push('/templates/new/confirm')
   }
 
+  const onCancel = () => {
+    setDraft(form.getValues())
+    router.push('/templates/new/discard')
+  }
+
   const actions = (
-    <GovukButtonGroup>
-      <GovukButton type="submit" className="govuk-!-margin-bottom-0">
-        Create template
-      </GovukButton>
-    </GovukButtonGroup>
+    <div>
+      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-bottom-6" />
+      <GovukButtonGroup>
+        <GovukButton type="submit" className="govuk-!-margin-bottom-0">
+          Create template
+        </GovukButton>
+        <GovukButton variant="link" onClick={onCancel}>
+          Cancel
+        </GovukButton>
+      </GovukButtonGroup>
+    </div>
   )
 
   return (

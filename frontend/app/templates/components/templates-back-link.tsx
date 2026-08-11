@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 // save/duplicate/delete/cancel pages) are dismissed via their own Cancel button
 // rather than a back link.
 const INTERSTITIAL_ROUTE =
-  /\/templates\/[^/]+\/(save|duplicate|delete|cancel|confirm)$/
+  /\/templates\/[^/]+\/(save|duplicate|delete|cancel|confirm|discard)$/
 
 export function TemplatesBackLink() {
   const pathname = usePathname()
