@@ -1,5 +1,7 @@
 from typing import Any
 
+from sentry_sdk.integrations.logging import Event, Hint
+
 REDACTED = "[REDACTED]"
 TRANSCRIPT_KEYS = ("transcript", "dialogue_entries", "dialogue entries")
 
