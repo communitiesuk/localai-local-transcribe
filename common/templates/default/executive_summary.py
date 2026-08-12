@@ -1,6 +1,6 @@
 # flake8: noqa: E501
 from common.database.postgres_models import DialogueEntry
-from common.prompts import build_summarisation_system_message, get_transcript_messages
+from common.prompts import build_prompt_injection_aware_system_message, get_transcript_messages
 from common.templates.types import SimpleTemplate
 from common.templates.utils.template_renderer import render_template
 from common.types import AgendaUsage
@@ -19,6 +19,6 @@ class ExecutiveSummary(SimpleTemplate):
         prompt = template.render()
 
         return [
-            build_summarisation_system_message(prompt),
+            build_prompt_injection_aware_system_message(prompt),
             get_transcript_messages(transcript),
         ]

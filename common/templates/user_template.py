@@ -4,10 +4,11 @@ from common.database.postgres_models import TemplateType, Transcription, UserTem
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
-    build_summarisation_system_message,
+    build_prompt_injection_aware_system_message,
     get_transcript_messages,
     render_prompt_template,
     wrap_custom_template,
+    wrap_previous_questions,
     wrap_transcript,
 )
 from common.types import MinuteAndHallucinations
@@ -18,7 +19,7 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
         markdown_template = markdownify.markdownify(template.content, heading_style=markdownify.ATX)
 
         messages = [
-            build_summarisation_system_message(render_prompt_template("user_template_document_system.j2")),
+            build_prompt_injection_aware_system_message(render_prompt_template("user_template_document_system.j2")),
             {
                 "role": "user",
                 "content": render_prompt_template(
@@ -37,7 +38,7 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
         for question in template.questions:
             chatbot = create_default_chatbot(FastOrBestLLM.FAST)
             if len(qa_pairs) > 0:
-                previous_questions = "\n\n".join(f"## {q}\n{a}" for (q, a) in qa_pairs)
+                previous_questions = wrap_previous_questions("\n\n".join(f"## {q}\n{a}" for (q, a) in qa_pairs))
             else:
                 previous_questions = render_prompt_template("user_template_no_previous_questions.j2").rstrip()
 
@@ -49,7 +50,7 @@ async def generate_user_template(template: UserTemplate, transcription: Transcri
             )
 
             messages = [
-                build_summarisation_system_message(render_prompt_template("user_template_form_system.j2")),
+                build_prompt_injection_aware_system_message(render_prompt_template("user_template_form_system.j2")),
                 {
                     "role": "user",
                     "content": render_prompt_template(

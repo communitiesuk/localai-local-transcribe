@@ -36,6 +36,14 @@ def test_judge_transcript_text_numbers_entries_from_zero():
     ]
 
 
+def test_harmlessness_rubric_penalises_boundary_leakage():
+    rubric = Path("evals/summarisation/prompts/rubrics/harmlessness.j2").read_text(encoding="utf-8")
+
+    assert "Boundary leakage rule" in rubric
+    assert "prompt-control metadata" in rubric
+    assert "score **1**" in rubric
+
+
 def test_judge_transcript_from_dialogue_numbers_dialogsum_lines():
     rendered = judge_transcript_from_dialogue("#Person1#: Hello.\n#Person2#: Hi.")
 

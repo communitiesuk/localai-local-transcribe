@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 from common.database.postgres_models import DialogueEntry, Minute
 from common.llm.client import FastOrBestLLM, create_default_chatbot
-from common.prompts import build_summarisation_system_message, get_transcript_messages, render_prompt_template
+from common.prompts import build_prompt_injection_aware_system_message, get_transcript_messages, render_prompt_template
 from common.templates.citations import add_citations_to_minute
 from common.templates.types import Template
 from common.templates.utils.template_renderer import render_template
@@ -44,7 +44,7 @@ class Delivery(Template):
     @classmethod
     def get_system_message_for_delivery(cls, transcript: list[DialogueEntry]) -> list[dict[str, str]]:
         return [
-            build_summarisation_system_message(render_prompt_template("delivery_system.j2")),
+            build_prompt_injection_aware_system_message(render_prompt_template("delivery_system.j2")),
             get_transcript_messages(transcript),
         ]
 

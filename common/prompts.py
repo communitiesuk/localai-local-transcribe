@@ -20,15 +20,10 @@ def render_prompt_template(template_name: str, **kwargs: object) -> str:
 
 
 PROMPT_INJECTION_INSTRUCTIONS = render_prompt_template("prompt_injection_instructions.j2").rstrip()
-SUMMARISATION_PROMPT_INJECTION_INSTRUCTIONS = PROMPT_INJECTION_INSTRUCTIONS
 
 
 def build_prompt_injection_aware_system_message(content: str) -> dict[str, str]:
     return {"role": "system", "content": f"{PROMPT_INJECTION_INSTRUCTIONS}\n\n{content}"}
-
-
-def build_summarisation_system_message(content: str) -> dict[str, str]:
-    return {"role": "system", "content": f"{SUMMARISATION_PROMPT_INJECTION_INSTRUCTIONS}\n\n{content}"}
 
 
 def wrap_untrusted_input(label: str, content: str) -> str:
@@ -50,6 +45,10 @@ def wrap_agenda(agenda: str) -> str:
 
 def wrap_user_instructions(instructions: str) -> str:
     return wrap_untrusted_input("user-instructions", instructions)
+
+
+def wrap_previous_questions(previous_questions: str) -> str:
+    return wrap_untrusted_input("previously-answered-questions", previous_questions)
 
 
 def wrap_meeting_summary(summary: str) -> str:
@@ -79,7 +78,7 @@ def get_ai_edit_initial_messages(
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
     return [
-        build_summarisation_system_message(render_prompt_template("minutes_edit_system.j2")),
+        build_prompt_injection_aware_system_message(render_prompt_template("minutes_edit_system.j2")),
         get_transcript_messages(transcript),
         get_minutes_messages(minutes),
         {
@@ -108,7 +107,7 @@ def get_basic_minutes_prompt(
     as a fall back when no other summary type is suitable, due to the likelihood of hallucinations.
     """
     return [
-        build_summarisation_system_message(render_prompt_template("basic_minutes.j2")),
+        build_prompt_injection_aware_system_message(render_prompt_template("basic_minutes.j2")),
         get_transcript_messages(transcript),
     ]
 
@@ -117,14 +116,14 @@ def get_sections_from_transcript_prompt(
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
     return [
-        build_summarisation_system_message(render_prompt_template("sections_from_transcript.j2")),
+        build_prompt_injection_aware_system_message(render_prompt_template("sections_from_transcript.j2")),
         get_transcript_messages(transcript),
     ]
 
 
 def get_meeting_detection_prompt(transcript: list[DialogueEntry]) -> list[dict[str, str]]:
     return [
-        build_summarisation_system_message(render_prompt_template("meeting_detection.j2")),
+        build_prompt_injection_aware_system_message(render_prompt_template("meeting_detection.j2")),
         get_transcript_messages(transcript),
     ]
 
