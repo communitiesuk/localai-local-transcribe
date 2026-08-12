@@ -1,12 +1,7 @@
 import logging
 import re
 from collections.abc import Mapping, Sequence
-from typing import Any, ClassVar
-
-import structlog
-from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
-from i_dot_ai_utilities.logging.types.enrichment_types import ExecutionEnvironmentType
-from i_dot_ai_utilities.logging.types.log_output_format import LogOutputFormat
+from typing import ClassVar
 
 
 class SensitiveDataSanitizerFilter(logging.Filter):
@@ -49,45 +44,13 @@ def scrub_sensitive_data(value: object) -> object:
     return value
 
 
-def scrub_structlog_event(_: Any, __: str, event_dict: dict[str, Any]) -> dict[str, Any]:
-    return {k: scrub_sensitive_data(v) for k, v in event_dict.items()}
-
-
-def _register_structlog_sanitizer() -> None:
-    config = structlog.get_config()
-    processors = list(config.get("processors", []))
-
-    if scrub_structlog_event in processors:
-        return
-
-    insert_at = len(processors)
-    for idx, processor in enumerate(processors):
-        if processor.__class__.__name__ in {"JSONRenderer", "ConsoleRenderer"}:
-            insert_at = idx
-            break
-
-    processors.insert(insert_at, scrub_structlog_event)
-    structlog.configure(**{**config, "processors": processors})
-
-
 def setup_logger() -> None:
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-    logging.getLogger().addFilter(SensitiveDataSanitizerFilter())
+    for handler in logging.getLogger().handlers:
+        handler.addFilter(SensitiveDataSanitizerFilter())
 
 
-def setup_structured_logger(
-    level: str, execution_environment: ExecutionEnvironmentType, logging_format: LogOutputFormat
-) -> StructuredLogger:
-    logger = StructuredLogger(
-        level=level or "info",
-        options={
-            "execution_environment": execution_environment,
-            "log_format": logging_format,
-        },
-    )
-    _register_structlog_sanitizer()
-    return logger
