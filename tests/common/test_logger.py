@@ -14,7 +14,7 @@ class CapturingHandler(logging.Handler):
         self.records.append(record)
 
 
-@pytest.fixture()
+@pytest.fixture
 def capturing_handler():
     """Add a capturing handler to the root logger before setup_logger() is called
     so that setup_logger()'s handler loop registers the sanitizer filter on it."""
@@ -35,8 +35,8 @@ class TestSetupLoggerRegistersFilter:
 
 
 class TestSensitiveDataSanitizerFilterScrubsLogs:
-    @pytest.fixture()
-    def logger(self, capturing_handler):
+    @pytest.fixture
+    def logger(self):
         """Child logger that propagates to root so records pass through
         the capturing handler (and its registered sanitizer filter)."""
         setup_logger()

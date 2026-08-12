@@ -52,5 +52,3 @@ def setup_logger() -> None:
     )
     for handler in logging.getLogger().handlers:
         handler.addFilter(SensitiveDataSanitizerFilter())
-
-
