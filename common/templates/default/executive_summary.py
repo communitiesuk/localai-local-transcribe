@@ -14,7 +14,11 @@ class ExecutiveSummary(SimpleTemplate):
     agenda_usage = AgendaUsage.NOT_USED
 
     @classmethod
-    def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:  # noqa: ARG003
+    def prompt(
+        cls,
+        transcript: list[DialogueEntry],
+        _agenda: str | None = None,
+    ) -> list[dict[str, str]]:
         template = render_template("executive_summary.j2")
         prompt = template.render()
 

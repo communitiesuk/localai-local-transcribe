@@ -19,11 +19,26 @@ def render_prompt_template(template_name: str, **kwargs: object) -> str:
     return _env.get_template(template_name).render(**kwargs)
 
 
-PROMPT_INJECTION_INSTRUCTIONS = render_prompt_template("prompt_injection_instructions.j2").rstrip()
+def render_prompt_injection_instructions(
+    *,
+    edit_with_ai: bool = False,
+) -> str:
+    return render_prompt_template(
+        "prompt_injection_instructions.j2",
+        edit_with_ai=edit_with_ai,
+    ).rstrip()
 
 
-def build_prompt_injection_aware_system_message(content: str) -> dict[str, str]:
-    return {"role": "system", "content": f"{PROMPT_INJECTION_INSTRUCTIONS}\n\n{content}"}
+PROMPT_INJECTION_INSTRUCTIONS = render_prompt_injection_instructions()
+
+
+def build_prompt_injection_aware_system_message(
+    content: str,
+    *,
+    edit_with_ai: bool = False,
+) -> dict[str, str]:
+    instructions = render_prompt_injection_instructions(edit_with_ai=edit_with_ai)
+    return {"role": "system", "content": f"{instructions}\n\n{content}"}
 
 
 def wrap_untrusted_input(label: str, content: str) -> str:
@@ -78,7 +93,10 @@ def get_ai_edit_initial_messages(
     transcript: list[DialogueEntry],
 ) -> list[dict[str, str]]:
     return [
-        build_prompt_injection_aware_system_message(render_prompt_template("minutes_edit_system.j2")),
+        build_prompt_injection_aware_system_message(
+            render_prompt_template("minutes_edit_system.j2"),
+            edit_with_ai=True,
+        ),
         get_transcript_messages(transcript),
         get_minutes_messages(minutes),
         {

@@ -30,7 +30,11 @@ class CareAssessmentV2(SimpleTemplate):
     temperature = 0.0
 
     @classmethod
-    def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:  # noqa: ARG003
+    def prompt(
+        cls,
+        transcript: list[DialogueEntry],
+        _agenda: str | None = None,
+    ) -> list[dict[str, str]]:
         template = render_template("care_assessment_v2.j2")
         prompt_body = call_macro(template, "prompt", eligibility_criteria=ELIGIBILITY_CRITERIA)
 

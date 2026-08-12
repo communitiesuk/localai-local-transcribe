@@ -17,7 +17,11 @@ class General(SimpleTemplate):
     agenda_usage = AgendaUsage.OPTIONAL
 
     @classmethod
-    def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:
+    def prompt(
+        cls,
+        transcript: list[DialogueEntry],
+        agenda: str | None = None,
+    ) -> list[dict[str, str]]:
         template = render_template("general.j2")
         date = datetime.now(tz=ZoneInfo("Europe/London")).strftime("%d %B %Y")
         wrapped_agenda = wrap_agenda(agenda) if agenda else None

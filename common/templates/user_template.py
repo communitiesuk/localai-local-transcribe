@@ -14,7 +14,10 @@ from common.prompts import (
 from common.types import MinuteAndHallucinations
 
 
-async def generate_user_template(template: UserTemplate, transcription: Transcription) -> MinuteAndHallucinations:
+async def generate_user_template(
+    template: UserTemplate,
+    transcription: Transcription,
+) -> MinuteAndHallucinations:
     if template.type == TemplateType.DOCUMENT:
         markdown_template = markdownify.markdownify(template.content, heading_style=markdownify.ATX)
 

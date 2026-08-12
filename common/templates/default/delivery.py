@@ -42,7 +42,10 @@ class Delivery(Template):
     citations_required = True
 
     @classmethod
-    def get_system_message_for_delivery(cls, transcript: list[DialogueEntry]) -> list[dict[str, str]]:
+    def get_system_message_for_delivery(
+        cls,
+        transcript: list[DialogueEntry],
+    ) -> list[dict[str, str]]:
         return [
             build_prompt_injection_aware_system_message(render_prompt_template("delivery_system.j2")),
             get_transcript_messages(transcript),
