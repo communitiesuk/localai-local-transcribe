@@ -14,7 +14,7 @@ def _looks_like_dialogue_entries(value: Any) -> bool:
     return any(bool(dialogue_keys.intersection({str(k).lower() for k in item})) for item in value)
 
 
-def scrub_sensitive_fields(event: dict[str, Any], hint: dict[str, Any]) -> dict[str, Any]:  # noqa: ARG001
+def scrub_sensitive_fields(event: Event, hint: Hint) -> Event | None:  # noqa: ARG001
     request = event.get("request")
     if isinstance(request, dict):
         request.pop("data", None)
