@@ -21,6 +21,9 @@
 a.govuk-link,
 button.govuk-link {
   color: var(--govuk-link-colour);
+  // <button> elements default to the arrow cursor; make link-styled buttons use
+  // the pointer cursor like real links.
+  cursor: pointer;
 
   &:hover {
     color: var(--govuk-link-hover-colour);

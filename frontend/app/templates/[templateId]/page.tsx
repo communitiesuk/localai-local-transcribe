@@ -3,22 +3,15 @@
 import { DocumentTemplateEditor } from '@/app/templates/components/document-template-editor'
 import { FormTemplateEditor } from '@/app/templates/components/form-template-editor'
 import {
-  editUserTemplateUserTemplatesTemplateIdPatchMutation,
-  getUserTemplateUserTemplatesTemplateIdGetOptions,
-  getUserTemplateUserTemplatesTemplateIdGetQueryKey,
-} from '@/lib/client/@tanstack/react-query.gen'
-import { useBannerStore } from '@/stores/use-banner-store'
+  TemplateEditorActions,
+  useTemplateInterstitialActions,
+} from '@/app/templates/components/template-editor-actions'
+import { getUserTemplateUserTemplatesTemplateIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
 import { TemplateData } from '@/types/templates'
-import {
-  keepPreviousData,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import posthog from 'posthog-js'
-import { useEffect, use } from 'react'
+import { use } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 
 export default function EditTemplatePage(props: {
@@ -79,80 +72,37 @@ const TemplateEditorForm = ({
   defaultValues: TemplateData
   templateId: string
 }) => {
-  const form = useForm<TemplateData>({ defaultValues })
+  const draft = useTemplateDraftStore((store) => store.draft)
 
-  useEffect(() => {
-    if (form.formState.isSubmitSuccessful) {
-      form.reset(form.getValues(), { keepValues: true })
-    }
-  }, [form, form.formState.isSubmitSuccessful])
-
-  const router = useRouter()
-  const setBanner = useBannerStore((store) => store.setBanner)
-  const queryClient = useQueryClient()
-  const { mutate } = useMutation({
-    ...editUserTemplateUserTemplatesTemplateIdPatchMutation(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getUserTemplateUserTemplatesTemplateIdGetQueryKey({
-          path: { template_id: templateId },
-        }),
-      })
-      setBanner({
-        variant: 'success',
-        title: 'Success',
-        message: `Changes to '${form.getValues('name')}' saved`,
-      })
-      posthog.capture('template_edited')
-      router.push('/templates')
-    },
+  // Re-hydrate any unsaved edits that were stashed prior to a confirmation
+  // interstitial, so cancelling one returns here with all edits preserved.
+  const form = useForm<TemplateData>({
+    defaultValues:
+      draft?.templateId === templateId ? draft.data : defaultValues,
   })
 
-  if (defaultValues.type === 'document') {
-    return (
-      <FormProvider {...form}>
-        <DocumentTemplateEditor
-          onSubmit={(data) =>
-            mutate({
-              path: { template_id: templateId },
-              body: {
-                name: data.name,
-                description: data.description,
-                content: data.content,
-                questions: null,
-              },
-            })
-          }
-        />
-      </FormProvider>
-    )
+  return (
+    <FormProvider {...form}>
+      <EditTemplateBody templateId={templateId} type={defaultValues.type} />
+    </FormProvider>
+  )
+}
+
+const EditTemplateBody = ({
+  templateId,
+  type,
+}: {
+  templateId: string
+  type: TemplateData['type']
+}) => {
+  const { goToSave } = useTemplateInterstitialActions(templateId)
+  const actions = <TemplateEditorActions templateId={templateId} />
+
+  if (type === 'document') {
+    return <DocumentTemplateEditor onSubmit={goToSave} actions={actions} />
   }
 
-  if (defaultValues.type === 'form') {
-    return (
-      <FormProvider {...form}>
-        <FormTemplateEditor
-          submitLabel="Save changes"
-          onSubmit={(data) =>
-            mutate({
-              path: { template_id: templateId },
-              body: {
-                name: data.name,
-                description: data.description,
-                content: data.content,
-                heading: data.heading,
-                questions:
-                  data.questions?.map((q, i) => ({
-                    position: i,
-                    title: q.title,
-                    description: q.description,
-                    format_instructions: q.format_instructions,
-                  })) || null,
-              },
-            })
-          }
-        />
-      </FormProvider>
-    )
+  if (type === 'form') {
+    return <FormTemplateEditor onSubmit={goToSave} actions={actions} />
   }
 }
