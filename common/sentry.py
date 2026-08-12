@@ -1,6 +1,8 @@
 from typing import Any
+from sentry_sdk.hub import Hub
+from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.types import Event, Hint
 
-from sentry_sdk.integrations.logging import Event, Hint
 
 REDACTED = "[REDACTED]"
 TRANSCRIPT_KEYS = ("transcript", "dialogue_entries", "dialogue entries")
