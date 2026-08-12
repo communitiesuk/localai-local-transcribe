@@ -8,6 +8,7 @@ import { DownloadButton } from '@/components/download-button'
 import {
   GovukBackLink,
   GovukButton,
+  GovukButtonGroup,
   GovukDateInput,
   GovukDetails,
   GovukFormGroup,
@@ -28,7 +29,7 @@ import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
-import { redirect } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -127,7 +128,10 @@ export default function TranscriptionPage(props: {
         {recordingDate}
       </GovukHeading>
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
-      <RecordingDetails dateTimeLabel={dateTimeLabel} />
+      <RecordingDetails
+        dateTimeLabel={dateTimeLabel}
+        transcription={transcription}
+      />
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
       <div>
         <NewMinuteDialog
@@ -152,8 +156,15 @@ export default function TranscriptionPage(props: {
   )
 }
 
-const RecordingDetails = ({ dateTimeLabel }: { dateTimeLabel: string }) => {
+const RecordingDetails = ({
+  dateTimeLabel,
+  transcription,
+}: {
+  dateTimeLabel: string
+  transcription: TranscriptionGetResponse
+}) => {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
   return (
     <>
       <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
@@ -181,14 +192,24 @@ const RecordingDetails = ({ dateTimeLabel }: { dateTimeLabel: string }) => {
           id="client-dob"
           legend="Client date of birth (optional)"
         />
-        <GovukButton
-          type="button"
-          variant="secondary"
-          disabled
-          className="govuk-!-margin-bottom-2"
-        >
-          Update details
-        </GovukButton>
+        <GovukButtonGroup>
+          <GovukButton
+            type="button"
+            variant="secondary"
+            disabled
+            className="govuk-!-margin-bottom-2"
+          >
+            Update details
+          </GovukButton>
+          <GovukButton
+            type="button"
+            variant="warning"
+            className="govuk-!-margin-bottom-0"
+            onClick={() => router.push(`${transcription.id}/delete`)}
+          >
+            Delete recording
+          </GovukButton>
+        </GovukButtonGroup>
       </GovukDetails>
     </>
   )
