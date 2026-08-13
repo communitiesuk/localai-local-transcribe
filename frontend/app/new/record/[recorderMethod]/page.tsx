@@ -9,8 +9,10 @@ import {
   type RecordingState,
   type RecordingUiStore,
 } from '@/stores/use-recording-ui-store'
+import { notFound } from 'next/navigation'
 
 type RecorderMethod = 'in-person' | 'online'
+const recorderMethods: RecorderMethod[] = ['in-person', 'online']
 
 const titleMapper: Record<RecordingState, string | boolean> = {
   idle: 'Select a microphone',
@@ -30,6 +32,10 @@ export default function RecordPage() {
 
   const recorderForm =
     recorderMethod === 'in-person' ? <MicRecorderForm /> : <TabRecorderForm />
+
+  if (!recorderMethods.includes(recorderMethod)) {
+    notFound()
+  }
 
   return (
     <div>
