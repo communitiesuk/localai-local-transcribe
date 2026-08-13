@@ -9,7 +9,6 @@ import {
   listUnlabelledTranscriptionsTranscriptionsUnlabelledGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
-import posthog from 'posthog-js'
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
 import { GovukWarningText } from '@/components/govuk'
 
@@ -17,7 +16,6 @@ export default function DeleteTranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
 }) {
   const { transcriptionId } = use(props.params)
-  const router = useRouter()
   const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
 
