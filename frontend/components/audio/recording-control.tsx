@@ -55,11 +55,6 @@ export default function RecordingControl({
   })
 
   useEffect(() => {
-    if (!isRecording) {
-      setRecordingState('idle')
-      return
-    }
-
     setRecordingState(isPaused ? 'paused' : 'recording')
   }, [isRecording, isPaused, setRecordingState])
 
@@ -313,6 +308,7 @@ export default function RecordingControl({
   }
 
   const confirmStop = () => {
+    setRecordingState('stopped')
     onStopRecording()
     setShowStopConfirm(false)
   }

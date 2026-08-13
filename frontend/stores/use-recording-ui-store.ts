@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
-export type RecordingState = 'idle' | 'starting' | 'recording' | 'paused'
+export type RecordingState =
+  'idle' | 'starting' | 'recording' | 'paused' | 'stopped'
 
 export type RecordingUiStore = {
   recordingState: RecordingState

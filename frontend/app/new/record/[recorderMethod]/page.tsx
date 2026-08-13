@@ -12,11 +12,12 @@ import {
 
 type RecorderMethod = 'in-person' | 'online'
 
-const titleMapper: Record<RecordingState, string> = {
+const titleMapper: Record<RecordingState, string | boolean> = {
   idle: 'Select a microphone',
-  starting: '',
+  starting: false,
   recording: 'Recording in progress',
   paused: 'Recording paused',
+  stopped: false,
 }
 
 export default function RecordPage() {
@@ -33,7 +34,9 @@ export default function RecordPage() {
   return (
     <div>
       {recordingState !== 'starting' && <GovukBackLink href="/" />}
-      <GovukHeading>{titleMapper[recordingState]}</GovukHeading>
+      {titleMapper[recordingState] && (
+        <GovukHeading>{titleMapper[recordingState]}</GovukHeading>
+      )}
       {recorderForm}
     </div>
   )

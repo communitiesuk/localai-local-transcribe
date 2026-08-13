@@ -34,6 +34,7 @@ export function RecordingLoading({
       <button
         className="govuk-link govuk-link--no-visited-state"
         onClick={onCancel}
+        type="button"
       >
         Cancel
       </button>
