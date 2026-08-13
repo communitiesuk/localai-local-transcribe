@@ -42,8 +42,12 @@ vi.mock('@/components/download-button', () => ({
   DownloadButton: () => <div>Download</div>,
 }))
 
-vi.mock('@/components/ui/copy-button', () => ({
-  default: () => <button type="button">Copy</button>,
+vi.mock('@/components/ui/copy-transcript-button', () => ({
+  CopyTranscriptButton: () => <button type="button">Copy transcript</button>,
+}))
+
+vi.mock('@/components/ui/download-transcript-button', () => ({
+  DownloadTranscriptButton: () => <button type="button">Download transcript</button>,
 }))
 
 vi.mock('posthog-js', () => ({
@@ -130,7 +134,13 @@ describe('TranscriptionTab text edit rollback', () => {
   it('rolls back the text to previous value when update request fails', async () => {
     updateDialogueEntryTextMock.mockRejectedValueOnce(new Error('Conflict'))
 
-    render(<TranscriptionTab transcription={transcription} />)
+    render(
+      <TranscriptionTab
+        transcription={transcription}
+        onTranscriptCopied={() => {}}
+        onDismissBanner={() => {}}
+      />
+    )
 
     // Transcript is read-only until put into edit mode
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
@@ -164,7 +174,13 @@ describe('TranscriptionTab single speaker rename', () => {
   })
 
   it('sends the original speaker name as expected_speaker, not the optimistically updated one', async () => {
-    render(<TranscriptionTab transcription={transcription} />)
+    render(
+      <TranscriptionTab
+        transcription={transcription}
+        onTranscriptCopied={() => {}}
+        onDismissBanner={() => {}}
+      />
+    )
 
     // Speaker names are only editable in edit mode
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))

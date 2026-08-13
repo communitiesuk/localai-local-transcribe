@@ -2,14 +2,14 @@ import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/Transcript
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
-import CopyButton from '@/components/ui/copy-button'
+import { CopyTranscriptButton } from '@/components/ui/copy-transcript-button'
+import { DownloadTranscriptButton } from '@/components/ui/download-transcript-button'
 import {
   useUpdateTranscription,
   useUpdateTranscriptionSpeakers,
 } from '@/hooks/use-update-transcription-speakers'
 import { DialogueEntry, TranscriptionGetResponse } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { downloadTranscriptDoc } from '@/lib/download-word-doc'
 import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { Play } from 'lucide-react'
@@ -42,8 +42,12 @@ export function buildTranscriptionHtml(
 
 export function TranscriptionTab({
   transcription,
+  onTranscriptCopied,
+  onDismissBanner,
 }: {
   transcription: TranscriptionGetResponse
+  onTranscriptCopied: () => void
+  onDismissBanner: () => void
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
@@ -203,9 +207,6 @@ export function TranscriptionTab({
   const [time, setTime] = useState(0)
   const [isEditing, setIsEditing] = useState(false)
 
-  const handleDownloadTranscript = () =>
-    downloadTranscriptDoc(getValues('entries'))
-
   const scrollToPlaying = () => {
     if (playingRef.current) {
       playingRef.current.scrollIntoView({
@@ -224,7 +225,10 @@ export function TranscriptionTab({
     <div>
       <FormProvider {...methods}>
         <form>
-          <GovukButtonGroup className="govuk-!-margin-bottom-4">
+          <GovukButtonGroup
+            className="govuk-!-margin-bottom-4"
+            onClick={onDismissBanner}
+          >
             <SpeakerEditor
               src={hasRecordings ? recordings[0].url : undefined}
               onSaveSpeaker={handleRenameSpeakerEverywhere}
@@ -238,20 +242,14 @@ export function TranscriptionTab({
             >
               {isEditing ? 'Stop editing' : 'Edit transcript'}
             </GovukButton>
-            <CopyButton
+            <CopyTranscriptButton
               textToCopy={transcriptionString}
-              posthogEvent="transcript_content_copied"
-              label="Copy transcript"
+              onSuccess={onTranscriptCopied}
             />
             {fields.length > 0 && (
-              <GovukButton
-                type="button"
-                variant="secondary"
-                className="govuk-!-margin-bottom-0"
-                onClick={handleDownloadTranscript}
-              >
-                Download transcript
-              </GovukButton>
+              <DownloadTranscriptButton
+                getEntries={() => getValues('entries')}
+              />
             )}
           </GovukButtonGroup>
           {hasRecordings && (

@@ -37,6 +37,8 @@ export default function TranscriptionPage(props: {
 
   const { transcriptionId } = params
 
+  const [transcriptCopied, setTranscriptCopied] = useState(false)
+
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
 
   const { data: transcription, isLoading } = useQuery({
@@ -120,6 +122,13 @@ export default function TranscriptionPage(props: {
   }
   return (
     <div className="flex w-full flex-col">
+      {transcriptCopied && (
+        <GovukNotificationBanner variant="success" title="Success">
+          <p className="govuk-notification-banner__heading">
+            Transcript copied to clipboard.
+          </p>
+        </GovukNotificationBanner>
+      )}
       <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
         Back
       </GovukBackLink>
@@ -137,7 +146,11 @@ export default function TranscriptionPage(props: {
       </div>
       <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
         <GovukTabs.Panel id="transcript" label="Transcript">
-          <TranscriptionTab transcription={transcription} />
+          <TranscriptionTab
+            transcription={transcription}
+            onTranscriptCopied={() => setTranscriptCopied(true)}
+            onDismissBanner={() => setTranscriptCopied(false)}
+          />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
           <MinuteTab transcription={transcription} />
