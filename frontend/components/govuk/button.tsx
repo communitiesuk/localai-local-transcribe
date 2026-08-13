@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 
-type Variant = 'primary' | 'secondary' | 'warning' | 'inverse'
+type Variant = 'primary' | 'secondary' | 'warning' | 'inverse' | 'link'
 
 type CommonProps = {
   variant?: Variant
@@ -49,7 +49,10 @@ function useButtonClasses(
   isStartButton?: boolean,
   className?: string
 ) {
-  const variantClass: Record<Variant, string | undefined> = {
+  if (variant === 'link') {
+    return cn('govuk-link', className)
+  }
+  const variantClass: Record<Exclude<Variant, 'link'>, string | undefined> = {
     primary: undefined,
     secondary: 'govuk-button--secondary',
     warning: 'govuk-button--warning',
@@ -74,17 +77,18 @@ export function GovukButton({
 }: ButtonProps) {
   const classes = useButtonClasses(variant, isStartButton, className)
   const isDisabled = Boolean(disabled)
+  const isLink = variant === 'link'
 
   return (
     <button
       {...rest}
-      type={type ?? 'submit'}
+      type={type ?? (isLink ? 'button' : 'submit')}
       disabled={isDisabled}
       className={classes}
-      data-module="govuk-button"
+      data-module={isLink ? undefined : 'govuk-button'}
     >
       {children}
-      {isStartButton && <StartIcon />}
+      {isStartButton && !isLink && <StartIcon />}
     </button>
   )
 }

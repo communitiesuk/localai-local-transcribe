@@ -80,9 +80,13 @@ export default function UserManagementClient() {
 
       <div className="flex items-baseline gap-4">
         <GovukHeading>User Management</GovukHeading>
-        <GovukTag className="relative -top-px" colour="grey">
-          System Admin
-        </GovukTag>
+        {isSystemAdmin ? (
+          <GovukTag className="relative -top-px" colour="grey">
+            System Admin
+          </GovukTag>
+        ) : (
+          <GovukTag className="relative -top-px">LA Admin</GovukTag>
+        )}
       </div>
 
       {isSystemAdmin && (
