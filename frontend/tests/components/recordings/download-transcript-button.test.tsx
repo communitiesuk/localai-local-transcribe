@@ -29,14 +29,24 @@ describe('<DownloadTranscriptButton />', () => {
 
   describe('trigger button', () => {
     it('renders the Download transcript button', () => {
-      render(<DownloadTranscriptButton getEntries={() => entries} />)
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => entries}
+          onSuccess={vi.fn()}
+        />
+      )
       expect(
         screen.getByRole('button', { name: 'Download transcript' })
       ).toBeInTheDocument()
     })
 
     it('opens the review modal when clicked', () => {
-      render(<DownloadTranscriptButton getEntries={() => entries} />)
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => entries}
+          onSuccess={vi.fn()}
+        />
+      )
       openModal()
       expect(screen.getByText('Confirm review')).toBeInTheDocument()
     })
@@ -44,7 +54,12 @@ describe('<DownloadTranscriptButton />', () => {
 
   describe('confirm flow', () => {
     it('calls downloadTranscriptDoc with the entries returned by getEntries on confirm', async () => {
-      render(<DownloadTranscriptButton getEntries={() => entries} />)
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => entries}
+          onSuccess={vi.fn()}
+        />
+      )
       openModal()
       checkReviewCheckbox()
       fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
@@ -54,9 +69,31 @@ describe('<DownloadTranscriptButton />', () => {
       })
     })
 
+    it('calls onSuccess after the download completes', async () => {
+      const onSuccess = vi.fn()
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => entries}
+          onSuccess={onSuccess}
+        />
+      )
+      openModal()
+      checkReviewCheckbox()
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
+
+      await waitFor(() => {
+        expect(onSuccess).toHaveBeenCalledOnce()
+      })
+    })
+
     it('uses the latest entries from getEntries at the time of confirm', async () => {
       let currentEntries = entries
-      render(<DownloadTranscriptButton getEntries={() => currentEntries} />)
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => currentEntries}
+          onSuccess={vi.fn()}
+        />
+      )
 
       openModal()
       // Simulate entries changing after modal opens
@@ -74,7 +111,12 @@ describe('<DownloadTranscriptButton />', () => {
     })
 
     it('closes the modal after a successful confirm', async () => {
-      render(<DownloadTranscriptButton getEntries={() => entries} />)
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => entries}
+          onSuccess={vi.fn()}
+        />
+      )
       openModal()
       checkReviewCheckbox()
       fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
@@ -87,21 +129,36 @@ describe('<DownloadTranscriptButton />', () => {
 
   describe('cancel / dismiss flow', () => {
     it('does not call downloadTranscriptDoc when Cancel is clicked', () => {
-      render(<DownloadTranscriptButton getEntries={() => entries} />)
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => entries}
+          onSuccess={vi.fn()}
+        />
+      )
       openModal()
       fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
       expect(downloadTranscriptDocMock).not.toHaveBeenCalled()
     })
 
     it('does not call downloadTranscriptDoc when the close button is clicked', () => {
-      render(<DownloadTranscriptButton getEntries={() => entries} />)
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => entries}
+          onSuccess={vi.fn()}
+        />
+      )
       openModal()
       fireEvent.click(screen.getByRole('button', { name: 'Close' }))
       expect(downloadTranscriptDocMock).not.toHaveBeenCalled()
     })
 
     it('dismisses the modal when Cancel is clicked', () => {
-      render(<DownloadTranscriptButton getEntries={() => entries} />)
+      render(
+        <DownloadTranscriptButton
+          getEntries={() => entries}
+          onSuccess={vi.fn()}
+        />
+      )
       openModal()
       fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
       expect(screen.queryByText('Confirm review')).not.toBeInTheDocument()

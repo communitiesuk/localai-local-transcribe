@@ -43,10 +43,12 @@ export function buildTranscriptionHtml(
 export function TranscriptionTab({
   transcription,
   onTranscriptCopied,
+  onTranscriptDownloaded,
   onDismissBanner,
 }: {
   transcription: TranscriptionGetResponse
   onTranscriptCopied: () => void
+  onTranscriptDownloaded: () => void
   onDismissBanner: () => void
 }) {
   const methods = useForm<DialogueEntryForm>({
@@ -249,6 +251,7 @@ export function TranscriptionTab({
             {fields.length > 0 && (
               <DownloadTranscriptButton
                 getEntries={() => getValues('entries')}
+                onSuccess={onTranscriptDownloaded}
               />
             )}
           </GovukButtonGroup>

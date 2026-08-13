@@ -140,6 +140,7 @@ describe('TranscriptionTab text edit rollback', () => {
       <TranscriptionTab
         transcription={transcription}
         onTranscriptCopied={() => {}}
+        onTranscriptDownloaded={() => {}}
         onDismissBanner={() => {}}
       />
     )
@@ -180,6 +181,7 @@ describe('TranscriptionTab single speaker rename', () => {
       <TranscriptionTab
         transcription={transcription}
         onTranscriptCopied={() => {}}
+        onTranscriptDownloaded={() => {}}
         onDismissBanner={() => {}}
       />
     )

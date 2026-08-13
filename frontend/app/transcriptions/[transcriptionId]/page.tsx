@@ -37,7 +37,7 @@ export default function TranscriptionPage(props: {
 
   const { transcriptionId } = params
 
-  const [transcriptCopied, setTranscriptCopied] = useState(false)
+  const [bannerMessage, setBannerMessage] = useState<string | null>(null)
 
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
 
@@ -122,11 +122,9 @@ export default function TranscriptionPage(props: {
   }
   return (
     <div className="flex w-full flex-col">
-      {transcriptCopied && (
+      {bannerMessage && (
         <GovukNotificationBanner variant="success" title="Success">
-          <p className="govuk-notification-banner__heading">
-            Transcript copied to clipboard.
-          </p>
+          <p className="govuk-notification-banner__heading">{bannerMessage}</p>
         </GovukNotificationBanner>
       )}
       <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
@@ -148,8 +146,13 @@ export default function TranscriptionPage(props: {
         <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab
             transcription={transcription}
-            onTranscriptCopied={() => setTranscriptCopied(true)}
-            onDismissBanner={() => setTranscriptCopied(false)}
+            onTranscriptCopied={() =>
+              setBannerMessage('Transcript copied to clipboard.')
+            }
+            onTranscriptDownloaded={() =>
+              setBannerMessage('Transcript downloaded.')
+            }
+            onDismissBanner={() => setBannerMessage(null)}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">

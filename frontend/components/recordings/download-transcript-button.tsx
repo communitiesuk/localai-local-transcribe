@@ -8,16 +8,19 @@ import { useState } from 'react'
 
 interface DownloadTranscriptButtonProps {
   getEntries: () => DialogueEntry[]
+  onSuccess: () => void
 }
 
 export function DownloadTranscriptButton({
   getEntries,
+  onSuccess,
 }: DownloadTranscriptButtonProps) {
   const [modalOpen, setModalOpen] = useState(false)
 
   const handleConfirm = async () => {
     setModalOpen(false)
     await downloadTranscriptDoc(getEntries())
+    onSuccess()
   }
 
   return (
