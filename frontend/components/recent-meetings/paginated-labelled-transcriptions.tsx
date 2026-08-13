@@ -136,6 +136,7 @@ export const PaginatedLabelledTranscriptions = () => {
                       transcription.date_of_recording ??
                         transcription.created_datetime
                     )}
+
                   </GovukTableCell>
                   <GovukTableCell>
                     <Link
