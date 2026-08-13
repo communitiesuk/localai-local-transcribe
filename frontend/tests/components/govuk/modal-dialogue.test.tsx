@@ -58,10 +58,7 @@ describe('<GovukModalDialogue />', () => {
 
     it('labels the dialog description with the descriptionId', () => {
       render(
-        <GovukModalDialogue
-          {...defaultProps}
-          descriptionId="test-modal-desc"
-        />
+        <GovukModalDialogue {...defaultProps} descriptionId="test-modal-desc" />
       )
       expect(screen.getByRole('dialog')).toHaveAttribute(
         'aria-describedby',
@@ -101,7 +98,9 @@ describe('<GovukModalDialogue />', () => {
 
     it('does not call onClose when Escape is pressed and modal is closed', () => {
       const onClose = vi.fn()
-      render(<GovukModalDialogue {...defaultProps} open={false} onClose={onClose} />)
+      render(
+        <GovukModalDialogue {...defaultProps} open={false} onClose={onClose} />
+      )
       fireEvent.keyDown(document, { key: 'Escape' })
       expect(onClose).not.toHaveBeenCalled()
     })

@@ -42,12 +42,14 @@ vi.mock('@/components/download-button', () => ({
   DownloadButton: () => <div>Download</div>,
 }))
 
-vi.mock('@/components/ui/copy-transcript-button', () => ({
+vi.mock('@/components/recordings/copy-transcript-button', () => ({
   CopyTranscriptButton: () => <button type="button">Copy transcript</button>,
 }))
 
-vi.mock('@/components/ui/download-transcript-button', () => ({
-  DownloadTranscriptButton: () => <button type="button">Download transcript</button>,
+vi.mock('@/components/recordings/download-transcript-button', () => ({
+  DownloadTranscriptButton: () => (
+    <button type="button">Download transcript</button>
+  ),
 }))
 
 vi.mock('posthog-js', () => ({

@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { useState } from 'react'
-import { TranscriptReviewModal } from '@/components/ui/transcript-review-modal'
+import { TranscriptReviewModal } from '@/components/recordings/transcript-review-modal'
 
 const defaultProps = {
   open: true,
@@ -38,7 +38,9 @@ describe('<TranscriptReviewModal />', () => {
     it('shows the review requirement message', () => {
       render(<TranscriptReviewModal {...defaultProps} />)
       expect(
-        screen.getByText(/you must confirm that you've reviewed the transcript/i)
+        screen.getByText(
+          /you must confirm that you've reviewed the transcript/i
+        )
       ).toBeInTheDocument()
     })
 

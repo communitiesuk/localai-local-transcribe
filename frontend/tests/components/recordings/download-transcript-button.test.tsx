@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { DownloadTranscriptButton } from '@/components/ui/download-transcript-button'
+import { DownloadTranscriptButton } from '@/components/recordings/download-transcript-button'
 import type { DialogueEntry } from '@/lib/client'
 
 const downloadTranscriptDocMock = vi.hoisted(() => vi.fn())

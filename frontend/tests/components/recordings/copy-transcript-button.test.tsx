@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { CopyTranscriptButton } from '@/components/ui/copy-transcript-button'
+import { CopyTranscriptButton } from '@/components/recordings/copy-transcript-button'
 
 const clipboardWriteMock = vi.fn()
 const clipboardWriteTextMock = vi.fn()
@@ -39,14 +39,18 @@ describe('<CopyTranscriptButton />', () => {
 
   describe('trigger button', () => {
     it('renders the Copy transcript button', () => {
-      render(<CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />)
+      render(
+        <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
+      )
       expect(
         screen.getByRole('button', { name: 'Copy transcript' })
       ).toBeInTheDocument()
     })
 
     it('opens the review modal when clicked', () => {
-      render(<CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />)
+      render(
+        <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
+      )
       openModal()
       expect(screen.getByText('Confirm review')).toBeInTheDocument()
     })
@@ -54,7 +58,9 @@ describe('<CopyTranscriptButton />', () => {
 
   describe('confirm flow', () => {
     it('copies to clipboard and calls onSuccess after confirming with checkbox checked', async () => {
-      render(<CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />)
+      render(
+        <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
+      )
       openModal()
       checkReviewCheckbox()
       fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
@@ -66,7 +72,9 @@ describe('<CopyTranscriptButton />', () => {
     })
 
     it('closes the modal after a successful confirm', async () => {
-      render(<CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />)
+      render(
+        <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
+      )
       openModal()
       checkReviewCheckbox()
       fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
@@ -79,7 +87,9 @@ describe('<CopyTranscriptButton />', () => {
 
   describe('cancel / dismiss flow', () => {
     it('does not copy or call onSuccess when Cancel is clicked', () => {
-      render(<CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />)
+      render(
+        <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
+      )
       openModal()
       fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
 
@@ -89,7 +99,9 @@ describe('<CopyTranscriptButton />', () => {
     })
 
     it('does not copy or call onSuccess when the close button is clicked', () => {
-      render(<CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />)
+      render(
+        <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
+      )
       openModal()
       fireEvent.click(screen.getByRole('button', { name: 'Close' }))
 
@@ -99,7 +111,9 @@ describe('<CopyTranscriptButton />', () => {
     })
 
     it('dismisses the modal when Cancel is clicked', () => {
-      render(<CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />)
+      render(
+        <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
+      )
       openModal()
       fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
       expect(screen.queryByText('Confirm review')).not.toBeInTheDocument()

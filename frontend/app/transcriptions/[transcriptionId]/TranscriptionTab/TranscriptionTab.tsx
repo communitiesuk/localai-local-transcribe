@@ -2,8 +2,8 @@ import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/Transcript
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
-import { CopyTranscriptButton } from '@/components/ui/copy-transcript-button'
-import { DownloadTranscriptButton } from '@/components/ui/download-transcript-button'
+import { CopyTranscriptButton } from '@/components/recordings/copy-transcript-button'
+import { DownloadTranscriptButton } from '@/components/recordings/download-transcript-button'
 import {
   useUpdateTranscription,
   useUpdateTranscriptionSpeakers,

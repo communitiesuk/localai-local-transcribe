@@ -1,7 +1,7 @@
 'use client'
 
 import { GovukButton } from '@/components/govuk'
-import { TranscriptReviewModal } from '@/components/ui/transcript-review-modal'
+import { TranscriptReviewModal } from '@/components/recordings/transcript-review-modal'
 import posthog from 'posthog-js'
 import { useState } from 'react'
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { GovukButton } from '@/components/govuk'
-import { TranscriptReviewModal } from '@/components/ui/transcript-review-modal'
+import { TranscriptReviewModal } from '@/components/recordings/transcript-review-modal'
 import { DialogueEntry } from '@/lib/client'
 import { downloadTranscriptDoc } from '@/lib/download-word-doc'
 import { useState } from 'react'
