@@ -1,6 +1,8 @@
 name: build-validation
 
 on:
+  merge_group:
+
   pull_request:
     branches:
       - development
@@ -31,5 +33,4 @@ jobs:
           push: false
           cache-from: type=gha,scope=${{ github.workflow }}-${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ github.workflow }}-${{ matrix.service }}
-
 

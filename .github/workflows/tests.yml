@@ -6,6 +6,8 @@ env:
   DOCKER_BUILDKIT: 1
 
 on:
+  merge_group:
+
   push:
     paths:
       - backend/**
@@ -41,5 +43,4 @@ jobs:
   frontend_tests:
     uses: ./.github/workflows/frontend-tests.yml
     secrets: inherit
-
 
