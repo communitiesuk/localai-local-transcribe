@@ -9,11 +9,7 @@ export function OrganisationHeading() {
     getOrganisationNameUsersMeOrganisationGetOptions()
   )
 
-  if (isLoading) {
-    return <GovukHeading>Loading organisation...</GovukHeading>
-  }
-
-  if (isError || !data) {
+  if (isLoading || isError || !data) {
     return <GovukHeading>Local Transcribe</GovukHeading>
   }
 
