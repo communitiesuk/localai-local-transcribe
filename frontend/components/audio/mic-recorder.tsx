@@ -227,17 +227,13 @@ function MicRecorderComponent({
     startCountdown()
   }
 
-  if (isStartingRecording) {
+  if (isStartingRecording || isPreparingRecording) {
     return (
       <RecordingLoading
         onComplete={handleLoadingComplete}
         onCancel={handleLoadingCancel}
       />
     )
-  }
-
-  if (isPreparingRecording) {
-    return null
   }
 
   if (!permissionGranted || !audioDevices.length) {
