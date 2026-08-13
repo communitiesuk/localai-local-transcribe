@@ -20,6 +20,7 @@ import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from '../audio-player'
 import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
+import { useCountdown } from '@/hooks/use-countdown'
 
 export const TabRecorderForm = () => {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -77,8 +78,6 @@ function TabRecorder({
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
-  const [isStartingRecording, setIsStartingRecording] = useState(false)
-  const [isPreparingRecording, setIsPreparingRecording] = useState(false)
 
   const setRecordingUIState = useRecordingUiStore(
     (state) => state.setRecordingState
@@ -128,6 +127,7 @@ function TabRecorder({
       stopRecording()
     }
   }, [stopRecording])
+
   useEffect(() => {
     return () => {
       if (audioContext.current) {
@@ -148,7 +148,6 @@ function TabRecorder({
   }, [])
 
   const startRecording = useCallback(async () => {
-    setIsPreparingRecording(true)
     setError(null)
     mediaChunksRef.current = []
 
@@ -248,8 +247,6 @@ function TabRecorder({
         error instanceof Error ? error.message : 'An unknown error occurred'
       )
       stopAllTracks()
-    } finally {
-      setIsPreparingRecording(false)
     }
   }, [
     addRecording,
@@ -260,6 +257,22 @@ function TabRecorder({
     stopAllTracks,
     updateRecording,
   ])
+
+  const handleCountdownCancel = () => {
+    stopAllTracks()
+    setRecordingUIState('idle')
+  }
+
+  const {
+    isStartingRecording,
+    isPreparingRecording,
+    startCountdown,
+    handleLoadingComplete,
+    handleLoadingCancel,
+  } = useCountdown({
+    onComplete: startRecording,
+    onCancel: handleCountdownCancel,
+  })
 
   async function handleStartRecording() {
     setError(null)
@@ -287,7 +300,7 @@ function TabRecorder({
 
       screenStreamRef.current = screenStream
       setStream(screenStream)
-      setIsStartingRecording(true)
+      startCountdown()
     } catch (error) {
       setRecordingUIState('idle')
       setError(
@@ -295,17 +308,6 @@ function TabRecorder({
       )
     }
   }
-
-  const handleLoadingComplete = useCallback(() => {
-    setIsStartingRecording(false)
-    startRecording()
-  }, [startRecording])
-
-  const handleLoadingCancel = useCallback(() => {
-    setIsStartingRecording(false)
-    stopAllTracks()
-    setRecordingUIState('idle')
-  }, [setRecordingUIState, stopAllTracks])
 
   if (isStartingRecording) {
     return (

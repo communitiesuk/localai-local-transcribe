@@ -18,6 +18,7 @@ import AudioPlayerComponent from './audio-player'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
 import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
+import { useCountdown } from '@/hooks/use-countdown'
 
 export function MicRecorderForm() {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -65,8 +66,6 @@ function MicRecorderComponent({
   const micStreamRef = useRef<MediaStream | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
   const [isRecording, setIsRecording] = useState(false)
-  const [isStartingRecording, setIsStartingRecording] = useState(false)
-  const [isPreparingRecording, setIsPreparingRecording] = useState(false)
 
   const setRecordingUIState = useRecordingUiStore(
     (state) => state.setRecordingState
@@ -85,8 +84,6 @@ function MicRecorderComponent({
   }, [releaseWakeLock])
 
   const startRecording = useCallback(async () => {
-    setIsPreparingRecording(true)
-
     try {
       setError(null)
       mediaChunksRef.current = []
@@ -152,8 +149,6 @@ function MicRecorderComponent({
       setIsRecording(true)
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
-    } finally {
-      setIsPreparingRecording(false)
     }
     // Create a media recorder from the composed stream
   }, [
@@ -210,22 +205,27 @@ function MicRecorderComponent({
 
   useTabCloseWarning(!!recordedAudio || isRecording)
 
-  const handleStartRecordingClick = useCallback(() => {
+  const handleCountdownCancel = () => {
+    setRecordingUIState('idle')
+  }
+
+  const {
+    isStartingRecording,
+    isPreparingRecording,
+    startCountdown,
+    handleLoadingComplete,
+    handleLoadingCancel,
+  } = useCountdown({
+    onComplete: startRecording,
+    onCancel: handleCountdownCancel,
+  })
+
+  const handleStartRecordingClick = () => {
     setError(null)
     setRecordedAudio(null)
-    setIsStartingRecording(true)
     setRecordingUIState('starting')
-  }, [setRecordedAudio, setRecordingUIState])
-
-  const handleLoadingComplete = useCallback(() => {
-    setIsStartingRecording(false)
-    startRecording()
-  }, [startRecording])
-
-  const handleLoadingCancel = useCallback(() => {
-    setIsStartingRecording(false)
-    setRecordingUIState('idle')
-  }, [setRecordingUIState])
+    startCountdown()
+  }
 
   if (isStartingRecording) {
     return (
