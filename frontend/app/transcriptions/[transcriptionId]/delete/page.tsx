@@ -36,10 +36,7 @@ export default function DeleteTranscriptionPage(props: {
         title: 'Recording deleted',
         message: 'Your recording has been deleted',
       })
-      posthog.capture('deleted_transcript', {
-        transcriptionId: transcriptionId,
-      })
-      router.push('/transcriptions')
+      // TODO AIILG-497: add event for deleting transcription
     },
   })
 
