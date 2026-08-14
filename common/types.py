@@ -79,6 +79,11 @@ class TranscriptionCreateRequest(BaseModel):
     title: str | None = None
 
 
+class TranscriptionOnlyCreateRequest(BaseModel):
+    recording_id: uuid.UUID
+    title: str | None = None
+
+
 class RecordingCreateRequest(BaseModel):
     file_extension: str
 
@@ -282,6 +287,7 @@ class TaskType(IntEnum):
     MINUTE = 2
     EDIT = 3
     INTERACTIVE = 4
+    TRANSCRIPTION_ONLY = 5
 
 
 class EditMessageData(BaseModel):

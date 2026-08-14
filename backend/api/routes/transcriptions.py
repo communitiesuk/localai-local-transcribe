@@ -29,6 +29,7 @@ from common.types import (
     SingleRecording,
     TaskType,
     TranscriptionCreateRequest,
+    TranscriptionOnlyCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
     TranscriptionSortOrder,
@@ -222,6 +223,33 @@ async def create_recording(
     presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
     await session.refresh(recording)
     return RecordingCreateResponse(id=recording.id, upload_url=presigned_url)
+
+
+@transcriptions_router.post("/transcriptions-only", response_model=TranscriptionCreateResponse, status_code=201)
+async def create_transcription_only(
+    request: TranscriptionOnlyCreateRequest,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> TranscriptionCreateResponse:
+    """transcription without creating an associated Minute"""
+    recording = await session.get(Recording, request.recording_id)
+    if not recording or recording.user_id != current_user.id:
+        raise HTTPException(404, detail="Recording not found")
+    transcription = Transcription(user_id=current_user.id, title=request.title)
+
+    if not await storage_service.check_object_exists(recording.s3_file_key):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Recording file not found in S3: {recording.s3_file_key}",
+        )
+
+    session.add(transcription)
+    recording.transcription_id = transcription.id
+    await session.commit()
+    await session.refresh(transcription)
+    transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION_ONLY))
+
+    return TranscriptionCreateResponse(id=transcription.id)
 
 
 @transcriptions_router.post("/transcriptions", response_model=TranscriptionCreateResponse, status_code=201)

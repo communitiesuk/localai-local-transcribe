@@ -1,8 +1,7 @@
 'use client'
 
-import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { GovukButton, GovukFormGroup, GovukHint } from '@/components/govuk'
-import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { useStartTranscriptionOnly } from '@/hooks/use-start-transcription-only'
 import {
   MAX_UPLOAD_FILE_SIZE_BYTES,
   MAX_UPLOAD_FILE_SIZE_LABEL,
@@ -13,7 +12,7 @@ import Dropzone, { type FileRejection } from 'react-dropzone'
 import { Controller, FormProvider } from 'react-hook-form'
 
 export const AudioUploadForm = () => {
-  const { isPending, onSubmit, form } = useStartTranscription()
+  const { isPending, onSubmit, form } = useStartTranscriptionOnly()
   const file = form.watch('file')
   const [fileError, setFileError] = useState<string | null>(null)
 
@@ -99,12 +98,9 @@ export const AudioUploadForm = () => {
             )}
           />
         </GovukFormGroup>
-        <StartTranscriptionSection isShowing={!!file} isPending={isPending} />
-        {!file && (
-          <GovukButton type="submit" disabled>
-            Continue
-          </GovukButton>
-        )}
+        <GovukButton type="submit" disabled={!file || isPending}>
+          Upload
+        </GovukButton>
       </form>
     </FormProvider>
   )
