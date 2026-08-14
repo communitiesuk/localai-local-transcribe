@@ -189,7 +189,6 @@ class TranscriptionHandlerService:
         else:
             return transcription_job
 
-
     @classmethod
     async def process_transcription_only(
         cls,
