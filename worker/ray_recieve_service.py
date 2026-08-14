@@ -82,7 +82,9 @@ class _RayTranscriptionService:
                         logger.info("Transcription complete for minute id %s complete", message.id)
                         # create a default minute with the general template after every transcription
                         if message.type == TaskType.TRANSCRIPTION:
-                            minute_version = await MinuteHandlerService.get_only_minute_version_for_minute_id(message.id)
+                            minute_version = await MinuteHandlerService.get_only_minute_version_for_minute_id(
+                                message.id
+                            )
                             self.llm_queue_service.publish_message(
                                 WorkerMessage(id=minute_version.id, type=TaskType.MINUTE)
                             )
