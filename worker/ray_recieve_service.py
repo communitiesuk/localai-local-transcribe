@@ -81,6 +81,7 @@ class _RayTranscriptionService:
                     if transcription_job.transcript:
                         logger.info("Transcription complete for minute id %s complete", message.id)
                         # create a default minute with the general template after every transcription
+                        # (unless transcription only)
                         if message.type == TaskType.TRANSCRIPTION:
                             minute_version = await MinuteHandlerService.get_only_minute_version_for_minute_id(
                                 message.id
@@ -91,7 +92,7 @@ class _RayTranscriptionService:
                     else:
                         logger.info("Async transcription job not ready yet. Re-queueing minute id: %s", message.id)
                         self.transcription_queue_service.publish_message(
-                            WorkerMessage(id=message.id, type=TaskType.TRANSCRIPTION, data=transcription_job)
+                            WorkerMessage(id=message.id, type=message.type, data=transcription_job)
                         )
                 # Delete the message to prevent repeated processing
                 self.transcription_queue_service.complete_message(receipt_handle)
