@@ -152,7 +152,9 @@ export function TranscriptionTab({
 
   const handleRenameSpeakerEverywhere = useCallback(
     async (originalSpeaker: string, newSpeaker: string) => {
-      if (originalSpeaker === newSpeaker) return
+      if (originalSpeaker === newSpeaker) {
+        return
+      }
 
       const indices = getValues('entries')
         .map((entry, index) => (entry.speaker === originalSpeaker ? index : -1))
@@ -214,6 +216,7 @@ export function TranscriptionTab({
   )
   const [selectedLineOriginalText, setSelectedLineOriginalText] = useState('')
   const [lineEditInProgress, setLineEditInProgress] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   const { setBanner, clearBanner } = useBannerStore()
 
@@ -242,6 +245,10 @@ export function TranscriptionTab({
     new Promise((resolve) => setTimeout(resolve, 100)).then(scrollToPlaying)
 
   const enterLineEditMode = () => {
+    if (!fields.length) {
+      setError('No lines available to edit.')
+      return
+    }
     editSnapshotRef.current = cloneEntries(getValues('entries'))
     setIsLineEditMode(true)
     setSelectedLineIndex(0)
@@ -263,6 +270,7 @@ export function TranscriptionTab({
     }
 
     setError(null)
+    clearBanner()
     setSelectedLineIndex(index)
     setSelectedLineOriginalText(
       getValues(`entries.${index}.text` as const) ?? ''
@@ -275,7 +283,10 @@ export function TranscriptionTab({
   }
 
   const saveLineEdit = async () => {
-    if (selectedLineIndex == null) return
+    if (selectedLineIndex == null) {
+      return
+    }
+    setIsSaving(true)
     const newText =
       getValues(`entries.${selectedLineIndex}.text` as const) ?? ''
     try {
@@ -298,8 +309,13 @@ export function TranscriptionTab({
       setLineEditInProgress(false)
       setError(null)
     } catch {
+      setLineEditInProgress(false)
+      setSelectedLineIndex(null)
+      setError('Failed to save line edit. Please try again.')
       // Error is handled in handleUpdateEntryText but a visual banner
       //isn't provided to relay to the user. Issue raised with the UCD team.
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -406,7 +422,9 @@ export function TranscriptionTab({
                 type="button"
                 variant="primary"
                 onClick={saveLineEdit}
-                disabled={!lineEditInProgress || selectedLineIndex == null}
+                disabled={
+                  !lineEditInProgress || selectedLineIndex == null || isSaving
+                }
               >
                 Save line edit
               </GovukButton>
@@ -414,7 +432,7 @@ export function TranscriptionTab({
                 type="button"
                 variant="warning"
                 onClick={cancelLineEdit}
-                disabled={!lineEditInProgress}
+                disabled={!lineEditInProgress || isSaving}
               >
                 Cancel line edit
               </GovukButton>

@@ -11,6 +11,7 @@ import {
   GovukButton,
   GovukDateInput,
   GovukDetails,
+  GovukErrorSummary,
   GovukFormGroup,
   GovukHeading,
   GovukInput,
@@ -66,6 +67,7 @@ export default function TranscriptionPage(props: {
       ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
+    refetchOnWindowFocus: false,
   })
 
   if (!transcription && !isLoading) {
@@ -143,25 +145,10 @@ export default function TranscriptionPage(props: {
       </GovukBackLink>
       <BannerNotification />
       {lineEditError && (
-        <div
-          className="govuk-error-summary"
-          data-module="govuk-error-summary"
-          aria-labelledby="line-edit-error-title"
-          role="alert"
+        <GovukErrorSummary
           ref={errorSummaryRef}
-        >
-          <h2 className="govuk-error-summary__title" id="line-edit-error-title">
-            There is a problem
-          </h2>
-          <div className="govuk-error-summary__body">
-            <ul className="govuk-list govuk-error-summary__list">
-              <li>
-                {' '}
-                <a href="#line-edit-actions">{lineEditError}</a>
-              </li>
-            </ul>
-          </div>
-        </div>
+          errorList={[{ href: '#line-edit-actions', text: lineEditError }]}
+        />
       )}
       <GovukHeading as="h1" size="xl" className="govuk-!-margin-bottom-2">
         {recordingDate}
