@@ -23,7 +23,7 @@ class CitationResult(BaseModel):
 
 
 async def extract_claims(draft: str) -> list[str]:
-    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+    chatbot = create_default_chatbot(FastOrBestLLM.BEST)
     result = await chatbot.structured_chat(
         messages=get_extract_claims_prompt(draft),
         response_format=ClaimsList,
@@ -36,7 +36,7 @@ async def cite_claims(
     claims: list[str],
     transcript: list[DialogueEntry],
 ) -> CitationResult:
-    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+    chatbot = create_default_chatbot(FastOrBestLLM.BEST)
     return await chatbot.structured_chat(
         messages=get_cite_claims_prompt(draft, claims, transcript),
         response_format=CitationResult,
