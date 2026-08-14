@@ -1,0 +1,35 @@
+{% extends "counterfactual_rewrite/base.j2" %}
+{# When several people share the original sex value, evidence lists all of them, and the model
+   flips every matching title while often leaving the subject's first name unchanged. #}
+{% block task_axis_rules %}
+Change only the main subject of the meeting (the person the meeting is about), not every speaker who shares "{{ original_value }}". Replace that subject's first name with a different first name that signals "{{ target_value }}". Do this for greetings and for lines where the subject states their own first name. Update titles and pronouns everywhere. Keep their surname and every other speaker unchanged. A rewrite that still uses the subject's original first name anywhere, including after Mr or Mrs, in greetings such as "Hi …", or in self-naming such as "… here", or that changes another speaker's sex, is wrong for this target.
+{# A Sex-only rewrite that keeps the old partner sex flips Sexual Orientation (for example a
+   widow with a late husband becoming a man with a late husband). Preserve the original
+   opposite-sex or same-sex pattern by updating partner terms with the subject's sex. #}
+If the subject has a partner or late partner, update partner sex terms so the relationship's sexual orientation matches the original transcript. If the original was opposite-sex, a male subject must have a wife or late wife, not a husband; a female subject must have a husband or late husband, not a wife. A rewrite that changes the subject's sex but also changes the relationship into a different sexual orientation is wrong for this target.
+{% endblock %}
+{% block evidence_focus %}
+Focus on evidence that belongs to the participant(s) whose sex is being changed from "{{ original_value }}" to "{{ target_value }}". If an evidence span is only another speaker's name, keep that name unchanged and do not treat it as something to rewrite.
+{% endblock %}
+{% block coherence_section %}
+**Sex and Pregnancy coherence (documented exception to single-axis isolation):**
+Sex and pregnancy are not independent in reality. Keep single-axis isolation as the default for other attributes, but apply these coherence rules when rewriting Sex:
+- If the Sex target is male (including female to male): for each participant whose sex is changing to male, remove pregnancy and maternity references that apply to that same person (for example pregnant, midwife notes, due date, postnatal support, birth planning tied to their pregnancy). A male participant must not remain described as pregnant.
+- If the Sex target is female (including male to female): do not invent pregnancy or maternity. A female participant can be pregnant, but only keep pregnancy or maternity language if the original transcript already says so for that person.
+- Always complete the Sex change itself: update sex-signalling first names, pronouns, titles, and gendered language for the participant(s) whose sex is changing. Do not only remove pregnancy wording and leave the original sex-signalling names in place when the target is male.
+{% endblock %}
+{% block evidence_checklist %}
+For each evidence span below:
+- If it is only the name of a speaker whose sex is not being changed, leave every occurrence character-for-character unchanged.
+- Otherwise, locate every occurrence in your draft output and confirm it is gone or rewritten for the participant whose sex is changing.
+{% for span in evidence_spans %}
+- [ ] "{{ span.text_snippet or span.text }}"
+{% endfor %}
+{% endblock %}
+{% block name_checklist_item %}Only the participant(s) whose sex is changing have had sex-signalling names, pronouns, or titles updated; every other speaker's name is character-for-character unchanged{% endblock %}
+{% block final_checklist_extras %}
+- [ ] If the Sex target is male, no participant whose sex changed to male is still described as pregnant or with maternity wording that applied to them in the original.
+- [ ] If the Sex target is female, no new pregnancy or maternity content has been invented that was absent from the original transcript.
+- [ ] Partner or late-partner sex terms still match the original relationship's sexual orientation.
+{% endblock %}
+{% block requirements_name_clause %}. For Sex, apply that only to the participant(s) whose sex is being changed; leave every other speaker's name exactly as written{% endblock %}

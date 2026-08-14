@@ -50,6 +50,17 @@
             "description": "Number of items per page"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TranscriptionSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
+          {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
@@ -88,6 +99,17 @@
         "description": "Get metadata for unlabelled transcriptions for the current user.",
         "operationId": "list_unlabelled_transcriptions_transcriptions_unlabelled_get",
         "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TranscriptionSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
@@ -2235,7 +2257,12 @@
         "properties": {
           "position": { "type": "integer", "title": "Position" },
           "title": { "type": "string", "title": "Title" },
-          "description": { "type": "string", "title": "Description" }
+          "description": { "type": "string", "title": "Description" },
+          "format_instructions": {
+            "type": "string",
+            "title": "Format Instructions",
+            "default": ""
+          }
         },
         "type": "object",
         "required": ["position", "title", "description"],
@@ -2245,6 +2272,7 @@
         "properties": {
           "name": { "type": "string", "title": "Name" },
           "content": { "type": "string", "title": "Content" },
+          "heading": { "type": "string", "title": "Heading", "default": "" },
           "description": { "type": "string", "title": "Description" },
           "type": { "$ref": "#/components/schemas/TemplateType" },
           "questions": {
@@ -2262,7 +2290,7 @@
         "required": ["name", "content", "description", "type"],
         "title": "CreateUserTemplateRequest"
       },
-      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30, 90] },
+      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30] },
       "DataRetentionUpdateResponse": {
         "properties": {
           "data_retention_days": {
@@ -2650,7 +2678,10 @@
             "description": "Optional id of user template"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Agenda",
             "description": "The agenda for the meeting"
           }
@@ -2751,6 +2782,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Content"
           },
+          "heading": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Heading"
+          },
           "description": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Description"
@@ -2779,6 +2814,11 @@
           "position": { "type": "integer", "title": "Position" },
           "title": { "type": "string", "title": "Title" },
           "description": { "type": "string", "title": "Description" },
+          "format_instructions": {
+            "type": "string",
+            "title": "Format Instructions",
+            "default": ""
+          },
           "id": { "type": "string", "format": "uuid", "title": "Id" }
         },
         "type": "object",
@@ -2842,6 +2882,7 @@
           },
           "name": { "type": "string", "title": "Name" },
           "content": { "type": "string", "title": "Content" },
+          "heading": { "type": "string", "title": "Heading" },
           "description": { "type": "string", "title": "Description" },
           "type": { "$ref": "#/components/schemas/TemplateType" },
           "questions": {
@@ -2861,6 +2902,7 @@
           "updated_datetime",
           "name",
           "content",
+          "heading",
           "description",
           "type",
           "questions"
@@ -2888,7 +2930,10 @@
             "title": "Template Id"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Agenda"
           },
           "title": {
@@ -2941,6 +2986,11 @@
           "created_datetime"
         ],
         "title": "TranscriptionGetResponse"
+      },
+      "TranscriptionSortOrder": {
+        "type": "string",
+        "enum": ["newest", "oldest"],
+        "title": "TranscriptionSortOrder"
       },
       "UnlabelledTranscriptionMetadata": {
         "properties": {

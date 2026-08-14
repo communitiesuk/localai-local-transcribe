@@ -1,4 +1,4 @@
-import { GovukBackLink } from '@/components/govuk'
+import { TemplatesBackLink } from '@/app/templates/components/templates-back-link'
 import { ReactNode } from 'react'
 
 export default async function TemplatesLayout({
@@ -8,7 +8,7 @@ export default async function TemplatesLayout({
 }) {
   return (
     <div className="p-6 pt-1">
-      <GovukBackLink />
+      <TemplatesBackLink />
       {children}
     </div>
   )

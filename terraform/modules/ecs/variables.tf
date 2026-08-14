@@ -48,19 +48,14 @@ variable "database_name" {
   type        = string
 }
 
+variable "database_username" {
+  description = "The username for the database"
+  type        = string
+}
+
 variable "database_port" {
   description = "The port for the database"
   type        = number
-}
-
-variable "database_user" {
-  description = "Database username"
-  type        = string
-}
-
-variable "database_password_secret_arn" {
-  description = "ARN of the Secrets Manager secret containing the database password"
-  type        = string
 }
 
 variable "lb_target_group_arn" {
@@ -254,3 +249,5 @@ variable "data_s3_bucket_name" {
   description = "name of the S3 bucket for data storage"
   type        = string
 }
+
+

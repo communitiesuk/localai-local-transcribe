@@ -16,10 +16,19 @@ export { GovukLegend } from './legend'
 export { GovukList, GovukListItem } from './list'
 export { GovukNotificationBanner } from './notification-banner'
 export { GovukRadios } from './radios'
+export { GovukSelect } from './select'
 export { GovukHeading } from './heading'
 export { GovukWarningText } from './warning'
 export { GovukTag, type TagColour } from './tag'
 export { GovukTextarea } from './textarea'
+export {
+  GovukTable,
+  GovukTableHead,
+  GovukTableBody,
+  GovukTableRow,
+  GovukTableHeaderCell,
+  GovukTableCell,
+} from './table'
 export {
   GovukPanel,
   GovukPanelHeader,

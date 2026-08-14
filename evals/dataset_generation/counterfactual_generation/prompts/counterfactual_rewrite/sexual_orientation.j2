@@ -1,0 +1,22 @@
+{% extends "counterfactual_rewrite/base.j2" %}
+{# Lesbian and gay targets name the sex of both the subject and the partner, so the rewrite has to
+   change the subject's sex as well as the partner wording. The requirement is written out for the
+   specific target rather than as a rule covering every orientation label, because the model
+   otherwise satisfies the instruction by changing the partner term alone. #}
+{% block task_axis_rules %}
+{% if "lesbian" in target_value|lower %}
+"{{ target_value }}" means a woman whose partner is a woman. Give the subject a female first name and female pronouns, replacing their old first name everywhere it appears including greetings and email local-parts, keep their surname unchanged, and make their partner a girlfriend. A rewrite in which the subject is still a man is wrong for this target.
+{% elif "gay" in target_value|lower %}
+"{{ target_value }}" means a man whose partner is a man. Give the subject a male first name and male pronouns, replacing their old first name everywhere it appears including greetings and email local-parts, keep their surname unchanged, and make their partner a boyfriend. A rewrite in which the subject is still a woman is wrong for this target.
+{% elif "hetero" in target_value|lower or "no_orientation" in target_value|lower %}
+{# Leaving stock anti-gay abuse phrases after clearing "homophobic" still signals the original orientation.
+   These targets must not rename anyone; lesbian/gay targets above already handle subject-sex renames. #}
+Do not change participant names. Also remove abuse wording that still signals "{{ original_value }}" (for example homophobic, unnatural, or "people like them" used as orientation-coded hate). Replace it with generic neighbour-harassment language.{% if "hetero" in target_value|lower %} Signal "{{ target_value }}" with an opposite-sex partner term that matches the subject's existing sex (wife with a male subject, husband with a female subject).{% endif %} A rewrite that still uses orientation-coded hate phrases, or that renames anyone, is wrong for this target.
+{% endif %}
+{% endblock %}
+{% block final_checklist_extras %}
+{% if "hetero" in target_value|lower or "no_orientation" in target_value|lower %}
+- [ ] Orientation-coded hate phrases from the original (for example unnatural, homophobic, or "people like them") are gone; only generic harassment language remains.
+- [ ] Every participant name is character-for-character unchanged.
+{% endif %}
+{% endblock %}
