@@ -3,12 +3,14 @@ import { PaginatedLabelledTranscriptions } from '@/components/recent-meetings/pa
 import { Loader2, Plus } from 'lucide-react'
 import { GovukButtonLink } from '@/components/govuk'
 import { Suspense } from 'react'
+import { BannerNotification } from '@/components/banner-notification'
 
 export default function Home() {
   return (
     <div className="govuk-grid-row flex justify-center">
       <PosthogBanner />
       <div className="govuk-grid-column-three-quarters">
+        <BannerNotification />
         <h1 className="govuk-heading-l govuk-!-margin-bottom-3">
           AI transcription and drafting service
         </h1>

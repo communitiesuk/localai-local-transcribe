@@ -21,6 +21,11 @@ export function BannerNotification() {
     <>
       <GovukNotificationBanner title={banner.title} variant={banner.variant}>
         {banner.message}
+        {banner.link && (
+          <a href={banner.link.href} className="govuk-link">
+            {banner.link.text}
+          </a>
+        )}
       </GovukNotificationBanner>
     </>
   )

@@ -7,6 +7,7 @@ import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { useForm } from 'react-hook-form'
 
 export type TranscriptionOnlyForm = {
@@ -17,6 +18,7 @@ export type TranscriptionOnlyForm = {
 
 export const useStartTranscriptionOnly = () => {
   const router = useRouter()
+  const setBanner = useBannerStore((store) => store.setBanner)
   const { removeRecording } = useRecordingDb()
 
   const { mutateAsync: createTranscriptionOnly, isPending: isCreating } =
@@ -82,7 +84,16 @@ export const useStartTranscriptionOnly = () => {
         await removeRecording(recordingId)
       }
 
-      router.push(`/transcriptions/${transcriptionData.id}`)
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: `Recording saved - `,
+        link: {
+          text: 'click to view',
+          href: `/transcriptions/${transcriptionData.id}`,
+        },
+      })
+      router.push(`/`)
     },
     [
       createRecording,
