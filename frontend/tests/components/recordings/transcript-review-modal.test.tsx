@@ -90,7 +90,7 @@ describe('<TranscriptReviewModal />', () => {
     it('calls onClose when Cancel is clicked', () => {
       const onClose = vi.fn()
       render(<TranscriptReviewModal {...defaultProps} onClose={onClose} />)
-      fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
       expect(onClose).toHaveBeenCalledOnce()
     })
 
@@ -128,7 +128,7 @@ describe('<TranscriptReviewModal />', () => {
         screen.getByRole('checkbox', { name: /i've reviewed the transcript/i })
       ).toBeChecked()
 
-      fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
       fireEvent.click(screen.getByRole('button', { name: 'Reopen' }))
 

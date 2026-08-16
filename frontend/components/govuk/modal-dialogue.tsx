@@ -1,10 +1,11 @@
 'use client'
 // Based on the MoJ's design system
-//https://design-patterns.service.justice.gov.uk/components/modal-dialog/#code-tab
+//https://design-patterns.service.justice.gov.uk/components/modal-dialog
 
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
+import { XCloseSVG } from '@/components/icons/x-close-button'
 
 type Props = {
   open: boolean
@@ -26,12 +27,7 @@ export function GovukModalDialogue({
   children,
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-
-  useEffect(() => {
-    if (open) {
-      dialogRef.current?.focus()
-    }
-  }, [open])
+  const previouslyFocusedElement = useRef<Element | null>(null)
 
   // Toggle inert on the page content container so background content is
   // inaccessible to keyboard and assistive technology while the modal is open.
@@ -40,15 +36,20 @@ export function GovukModalDialogue({
     const container = document.querySelector<HTMLElement>(
       '.govuk-modal-dialogue-inert-container'
     )
-    if (!container) return
+
     if (open) {
-      container.setAttribute('inert', '')
+      previouslyFocusedElement.current = document.activeElement
+      dialogRef.current?.focus()
+      container?.setAttribute('inert', '')
     } else {
-      container.removeAttribute('inert')
+      container?.removeAttribute('inert')
+      if (previouslyFocusedElement.current instanceof HTMLElement) {
+        previouslyFocusedElement.current.focus()
+        previouslyFocusedElement.current = null
+      }
     }
-    return () => {
-      container.removeAttribute('inert')
-    }
+
+    return () => container?.removeAttribute('inert')
   }, [open])
 
   useEffect(() => {
@@ -85,7 +86,8 @@ export function GovukModalDialogue({
               aria-label="Close"
               onClick={onClose}
             >
-              ✕
+              <XCloseSVG />
+              <span className="govuk-visually-hidden">Close</span>
             </button>
           </div>
           <div className="govuk-modal-dialogue__content">

@@ -85,16 +85,10 @@ export function TranscriptReviewModal({
         >
           Confirm
         </GovukButton>
-        <a
-          className="govuk-link"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault()
-            handleClose()
-          }}
-        >
+
+        <GovukButton type="button" variant="link" onClick={handleClose}>
           Cancel
-        </a>
+        </GovukButton>
       </GovukModalDialogueActions>
     </GovukModalDialogue>
   )

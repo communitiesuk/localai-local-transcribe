@@ -91,7 +91,7 @@ describe('<CopyTranscriptButton />', () => {
         <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
       )
       openModal()
-      fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
 
       expect(clipboardWriteMock).not.toHaveBeenCalled()
       expect(clipboardWriteTextMock).not.toHaveBeenCalled()
@@ -115,7 +115,7 @@ describe('<CopyTranscriptButton />', () => {
         <CopyTranscriptButton textToCopy={textToCopy} onSuccess={onSuccess} />
       )
       openModal()
-      fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
       expect(screen.queryByText('Confirm review')).not.toBeInTheDocument()
     })
   })

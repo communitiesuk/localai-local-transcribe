@@ -18,8 +18,14 @@ export function DownloadTranscriptButton({
   const [modalOpen, setModalOpen] = useState(false)
 
   const handleConfirm = async () => {
+    const currentDate = new Date()
+      .toLocaleDateString('en-GB')
+      .replaceAll('/', '-')
+
+    const fileName = `transcript-${currentDate}.docx`
+
     setModalOpen(false)
-    await downloadTranscriptDoc(getEntries())
+    await downloadTranscriptDoc(getEntries(), fileName)
     onSuccess()
   }
 

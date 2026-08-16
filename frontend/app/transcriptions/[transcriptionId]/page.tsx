@@ -1,5 +1,7 @@
 'use client'
 import { use, useState } from 'react'
+import { BannerNotification } from '@/components/banner-notification'
+import { useBannerStore } from '@/stores/use-banner-store'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
@@ -37,7 +39,7 @@ export default function TranscriptionPage(props: {
 
   const { transcriptionId } = params
 
-  const [bannerMessage, setBannerMessage] = useState<string | null>(null)
+  const { setBanner, clearBanner } = useBannerStore()
 
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
 
@@ -122,11 +124,7 @@ export default function TranscriptionPage(props: {
   }
   return (
     <div className="flex w-full flex-col">
-      {bannerMessage && (
-        <GovukNotificationBanner variant="success" title="Success">
-          <p className="govuk-notification-banner__heading">{bannerMessage}</p>
-        </GovukNotificationBanner>
-      )}
+      <BannerNotification />
       <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
         Back
       </GovukBackLink>
@@ -147,12 +145,20 @@ export default function TranscriptionPage(props: {
           <TranscriptionTab
             transcription={transcription}
             onTranscriptCopied={() =>
-              setBannerMessage('Transcript copied to clipboard.')
+              setBanner({
+                variant: 'success',
+                title: 'Success',
+                message: 'Transcript copied to clipboard.',
+              })
             }
             onTranscriptDownloaded={() =>
-              setBannerMessage('Transcript downloaded.')
+              setBanner({
+                variant: 'success',
+                title: 'Success',
+                message: 'Transcript downloaded.',
+              })
             }
-            onDismissBanner={() => setBannerMessage(null)}
+            onDismissBanner={clearBanner}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">

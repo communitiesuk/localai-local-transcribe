@@ -3,6 +3,7 @@
 import { GovukButton } from '@/components/govuk'
 import { TranscriptReviewModal } from '@/components/recordings/transcript-review-modal'
 import posthog from 'posthog-js'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { useState } from 'react'
 
 interface CopyTranscriptButtonProps {
@@ -15,6 +16,7 @@ export function CopyTranscriptButton({
   onSuccess,
 }: CopyTranscriptButtonProps) {
   const [modalOpen, setModalOpen] = useState(false)
+  const { setBanner } = useBannerStore()
 
   const stripHtmlTags = (html: string) => {
     const tmp = document.createElement('DIV')
@@ -33,7 +35,17 @@ export function CopyTranscriptButton({
         }),
       ])
     } catch {
-      await navigator.clipboard.writeText(stripHtmlTags(textToCopy))
+      try {
+        await navigator.clipboard.writeText(stripHtmlTags(textToCopy))
+      } catch {
+        setModalOpen(false)
+        setBanner({
+          variant: 'important',
+          title: 'Error',
+          message: 'Error copying transcript.',
+        })
+        return
+      }
     }
 
     posthog.capture('transcript_content_copied', {

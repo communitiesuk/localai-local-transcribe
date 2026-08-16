@@ -65,7 +65,10 @@ describe('<DownloadTranscriptButton />', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
 
       await waitFor(() => {
-        expect(downloadTranscriptDocMock).toHaveBeenCalledWith(entries)
+        expect(downloadTranscriptDocMock).toHaveBeenCalledWith(
+          entries,
+          expect.stringMatching(/^transcript-.*\.docx$/)
+        )
       })
     })
 
@@ -106,7 +109,10 @@ describe('<DownloadTranscriptButton />', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Confirm' }))
 
       await waitFor(() => {
-        expect(downloadTranscriptDocMock).toHaveBeenCalledWith(updatedEntries)
+        expect(downloadTranscriptDocMock).toHaveBeenCalledWith(
+          updatedEntries,
+          expect.stringMatching(/^transcript-.*\.docx$/)
+        )
       })
     })
 
@@ -136,7 +142,7 @@ describe('<DownloadTranscriptButton />', () => {
         />
       )
       openModal()
-      fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
       expect(downloadTranscriptDocMock).not.toHaveBeenCalled()
     })
 
@@ -160,7 +166,7 @@ describe('<DownloadTranscriptButton />', () => {
         />
       )
       openModal()
-      fireEvent.click(screen.getByRole('link', { name: 'Cancel' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
       expect(screen.queryByText('Confirm review')).not.toBeInTheDocument()
     })
   })
