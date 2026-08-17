@@ -100,6 +100,7 @@ export const useStartTranscriptionOnly = () => {
       createTranscriptionOnly,
       removeRecording,
       router,
+      setBanner,
       uploadBlob,
     ]
   )
