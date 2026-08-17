@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from common.llm.client import FastOrBestLLM
 from common.templates.citations import (
     CitationResult,
     ClaimCitation,
@@ -54,6 +55,18 @@ async def test_extract_claims_returns_list_from_structured_chat():
 
 
 @pytest.mark.asyncio
+async def test_extract_claims_uses_best_llm():
+    with patch("common.templates.citations.create_default_chatbot") as mock_create:
+        mock_chatbot = AsyncMock()
+        mock_chatbot.structured_chat = AsyncMock(return_value=ClaimsList(claims=[]))
+        mock_create.return_value = mock_chatbot
+
+        await extract_claims("<p>The meeting took place.</p>")
+
+    mock_create.assert_called_once_with(FastOrBestLLM.BEST)
+
+
+@pytest.mark.asyncio
 async def test_extract_claims_returns_empty_list_when_no_claims():
     draft = "<p>The meeting took place.</p>"
 
@@ -88,6 +101,20 @@ async def test_cite_claims_returns_citation_result():
         result = await cite_claims(draft, claims, transcript)
 
     assert result == expected
+
+
+@pytest.mark.asyncio
+async def test_cite_claims_uses_best_llm():
+    expected = CitationResult(cited_summary="<p>The budget is £1m[1].</p>", claim_citations=[])
+
+    with patch("common.templates.citations.create_default_chatbot") as mock_create:
+        mock_chatbot = AsyncMock()
+        mock_chatbot.structured_chat = AsyncMock(return_value=expected)
+        mock_create.return_value = mock_chatbot
+
+        await cite_claims("<p>The budget is £1m.</p>", ["The budget is £1m"], [])
+
+    mock_create.assert_called_once_with(FastOrBestLLM.BEST)
 
 
 @pytest.mark.asyncio
