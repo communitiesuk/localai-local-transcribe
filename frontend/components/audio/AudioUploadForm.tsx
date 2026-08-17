@@ -7,14 +7,18 @@ import {
   MAX_UPLOAD_FILE_SIZE_LABEL,
 } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Dropzone, { type FileRejection } from 'react-dropzone'
+import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { Controller, FormProvider } from 'react-hook-form'
 
 export const AudioUploadForm = () => {
+  const router = useRouter()
   const { isPending, onSubmit, form } = useStartTranscriptionOnly()
   const file = form.watch('file')
   const [fileError, setFileError] = useState<string | null>(null)
+  const startUpload = useUploadRecordingStore((store) => store.startUpload)
 
   const handleDropRejected = (rejections: FileRejection[]) => {
     const isTooLarge = rejections.some((rejection) =>
@@ -27,9 +31,14 @@ export const AudioUploadForm = () => {
     )
   }
 
+  const handleSubmit = form.handleSubmit((formValues) => {
+    startUpload(formValues, onSubmit)
+    router.push('/new/uploading')
+  })
+
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={handleSubmit} noValidate>
         <GovukFormGroup hasError={!!fileError}>
           <GovukHint>Maximum file size: {MAX_UPLOAD_FILE_SIZE_LABEL}</GovukHint>
           {fileError && (

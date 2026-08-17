@@ -57,7 +57,7 @@ export const useStartTranscriptionOnly = () => {
   const onSubmit = useCallback(
     async ({ file, recordingId, title }: TranscriptionOnlyForm) => {
       if (!file) {
-        return
+        return null
       }
 
       const isFile = file instanceof File
@@ -84,16 +84,7 @@ export const useStartTranscriptionOnly = () => {
         await removeRecording(recordingId)
       }
 
-      setBanner({
-        variant: 'success',
-        title: 'Success',
-        message: `Recording saved - `,
-        link: {
-          text: 'click to view',
-          href: `/transcriptions/${transcriptionData.id}`,
-        },
-      })
-      router.push(`/`)
+      return transcriptionData.id
     },
     [
       createRecording,
