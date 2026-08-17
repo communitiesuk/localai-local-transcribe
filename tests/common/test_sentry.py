@@ -3,14 +3,26 @@ from sentry_sdk.types import Event, Hint
 from common.sentry import scrub_sensitive_fields
 
 
-def test_scrub_sensitive_fields_removes_dialogue_entries_shaped_extra_payload() -> None:
+def test_scrub_sensitive_fields_removes_request_data_and_cookies() -> None:
+    event: Event = {"request": {"data": {"password": "secret"}, "cookies": {"session": "abc"}, "url": "/upload"}}
+    hint: Hint = {}
+
+    scrubbed = scrub_sensitive_fields(event, hint)
+
+    assert scrubbed is not None
+    assert "data" not in scrubbed["request"]
+    assert "cookies" not in scrubbed["request"]
+    assert scrubbed["request"]["url"] == "/upload"
+
+
+def test_scrub_sensitive_fields_redacts_cookie_headers() -> None:
     event: Event = {
-        "extra": {
-            "model_output": [
-                {"speaker": "Agent", "text": "Hello there", "start": 0.0, "end": 1.2},
-                {"speaker": "User", "text": "Hi", "start": 1.3, "end": 1.6},
-            ],
-            "safe_value": "kept",
+        "request": {
+            "headers": {
+                "Cookie": "session=abc",
+                "Set-Cookie": "session=xyz",
+                "Content-Type": "application/json",
+            }
         }
     }
     hint: Hint = {}
@@ -18,5 +30,16 @@ def test_scrub_sensitive_fields_removes_dialogue_entries_shaped_extra_payload() 
     scrubbed = scrub_sensitive_fields(event, hint)
 
     assert scrubbed is not None
-    assert "model_output" not in scrubbed["extra"]
-    assert scrubbed["extra"]["safe_value"] == "kept"
+    headers = scrubbed["request"]["headers"]
+    assert headers["Cookie"] == "[REDACTED]"
+    assert headers["Set-Cookie"] == "[REDACTED]"
+    assert headers["Content-Type"] == "application/json"
+
+
+def test_scrub_sensitive_fields_returns_event_unchanged_when_no_request() -> None:
+    event: Event = {"level": "error"}
+    hint: Hint = {}
+
+    scrubbed = scrub_sensitive_fields(event, hint)
+
+    assert scrubbed == {"level": "error"}
