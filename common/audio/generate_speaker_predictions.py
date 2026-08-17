@@ -2,6 +2,7 @@ import logging
 
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
+from common.prompts import build_prompt_injection_aware_system_message, render_prompt_template, wrap_transcript
 from common.types import DialogueEntry, SpeakerPredictionOutput
 
 logger = logging.getLogger(__name__)
@@ -17,26 +18,14 @@ async def generate_speaker_predictions(dialogue_entries: list[DialogueEntry]) ->
     Returns:
         Dictionary mapping original speaker labels to predicted names
     """
-    # Create a system message that explains the task
-    system_message = """You are an expert at analysing conversation transcripts and identifying speakers.
-Based on the conversation content, identify the names of the speakers.
-Only make high-confidence identifications, otherwise keep the original speaker label. Pay careful attention to whether the speaker is saying their own name or referring to another speaker.
-Do not use any names that are not in the transcript.
-For each speaker, provide:
-- The original speaker label
-- Your identified name (this will be the original speaker label if you are not confident)"""  # noqa: E501
-
-    # Create the user message
-    user_message = f"""Please analyse this conversation and suggest real names for speakers currently labeled as 'Speaker 1', 'Speaker 2', etc. Only suggest changes if you're confident.
-
-Conversation:
-{transcript_as_speaker_and_utterance(dialogue_entries)}
-    """  # noqa: E501
+    transcript = transcript_as_speaker_and_utterance(dialogue_entries)
+    system_message = render_prompt_template("speaker_prediction_system.j2")
+    user_message = render_prompt_template("speaker_prediction_user.j2", transcript=wrap_transcript(transcript))
 
     try:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         messages = [
-            {"role": "system", "content": system_message},
+            build_prompt_injection_aware_system_message(system_message),
             {"role": "user", "content": user_message},
         ]
 
