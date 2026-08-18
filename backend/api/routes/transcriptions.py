@@ -273,6 +273,7 @@ async def get_transcription(
         dialogue_entries=transcription.dialogue_entries,
         title=transcription.title,
         created_datetime=transcription.created_datetime,
+        date_of_recording=transcription.date_of_recording,
     )
 
 

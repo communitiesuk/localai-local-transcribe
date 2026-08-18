@@ -188,6 +188,7 @@ class TranscriptionGetResponse(BaseModel):
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime
+    date_of_recording: datetime | None = None
 
 
 class SingleRecording(BaseModel):
