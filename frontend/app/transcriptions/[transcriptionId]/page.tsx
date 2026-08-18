@@ -28,12 +28,16 @@ import { TranscriptionGetResponse } from '@/lib/client'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
+  getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
+  updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPatchMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { FeatureFlags } from '@/lib/feature-flags'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { redirect, useRouter } from 'next/navigation'
+import { TranscriptionDetailsData } from '@/types/transcriptions'
+import { FormProvider, useForm } from 'react-hook-form'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -221,6 +225,63 @@ const RecordingDetails = ({
 }) => {
   const [open, setOpen] = useState(false)
   const router = useRouter()
+
+  const clientDateOfBirth = new Date(transcription.client_date_of_birth)
+
+  const form = useForm<TranscriptionDetailsData>({
+    defaultValues: {
+      clientName: transcription.client_name || undefined,
+      caseId: transcription.case_id || undefined,
+      subject: transcription.title || undefined,
+      clientDateOfBirth: {
+        day: clientDateOfBirth?.getDate().toString(),
+        month: clientDateOfBirth
+          ? (clientDateOfBirth.getMonth() + 1).toString()
+          : undefined,
+        year: clientDateOfBirth?.getFullYear().toString(),
+      },
+    },
+  })
+
+  const queryClient = useQueryClient()
+
+  const { mutate, isPending } = useMutation({
+    ...updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPatchMutation(),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
+          path: { transcription_id: transcription.id },
+        }),
+      })
+    },
+  })
+
+  const handleSave = (data: TranscriptionDetailsData) => {
+    let dateOfBirth = undefined
+    if (
+      data.clientDateOfBirth.day &&
+      data.clientDateOfBirth.month &&
+      data.clientDateOfBirth.year
+    ) {
+      dateOfBirth = new Date(
+        parseInt(data.clientDateOfBirth.year),
+        parseInt(data.clientDateOfBirth.month) - 1,
+        parseInt(data.clientDateOfBirth.day)
+      )
+    }
+
+    mutate({
+      path: { transcription_id: transcription.id },
+      body: {
+        client_name: data.clientName,
+        case_id: data.caseId,
+        subject: data.subject,
+        client_date_of_birth: dateOfBirth?.toISOString(),
+      },
+    })
+    form.reset(data)
+  }
+
   return (
     <>
       <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
@@ -232,40 +293,49 @@ const RecordingDetails = ({
       >
         <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
         <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
-        <GovukFormGroup>
-          <GovukLabel htmlFor="client-name">Client name (optional)</GovukLabel>
-          <GovukInput id="client-name" />
-        </GovukFormGroup>
-        <GovukFormGroup>
-          <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
-          <GovukInput id="case-id" />
-        </GovukFormGroup>
-        <GovukFormGroup>
-          <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
-          <GovukInput id="subject" />
-        </GovukFormGroup>
-        <GovukDateInput
-          id="client-dob"
-          legend="Client date of birth (optional)"
-        />
-        <GovukButtonGroup>
-          <GovukButton
-            type="button"
-            variant="secondary"
-            disabled
-            className="govuk-!-margin-bottom-2"
-          >
-            Update details
-          </GovukButton>
-          <GovukButton
-            type="button"
-            variant="warning"
-            className="govuk-!-margin-bottom-0"
-            onClick={() => router.push(`${transcription.id}/delete`)}
-          >
-            Delete recording
-          </GovukButton>
-        </GovukButtonGroup>
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleSave)} noValidate>
+            <GovukFormGroup>
+              <GovukLabel htmlFor="client-name">
+                Client name (optional)
+              </GovukLabel>
+              <GovukInput id="client-name" {...form.register('clientName')} />
+            </GovukFormGroup>
+            <GovukFormGroup>
+              <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
+              <GovukInput id="case-id" {...form.register('caseId')} />
+            </GovukFormGroup>
+            <GovukFormGroup>
+              <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
+              <GovukInput id="subject" {...form.register('subject')} />
+            </GovukFormGroup>
+            <GovukDateInput
+              id="client-dob"
+              legend="Client date of birth (optional)"
+              day={form.register('clientDateOfBirth.day')}
+              month={form.register('clientDateOfBirth.month')}
+              year={form.register('clientDateOfBirth.year')}
+            />
+            <GovukButtonGroup>
+                <GovukButton
+                  type="submit"
+                  variant="secondary"
+                  className="govuk-!-margin-bottom-2"
+                  disabled={!form.formState.isDirty}
+                >
+                  Update details
+                </GovukButton>
+                <GovukButton
+                  type="button"
+                  variant="warning"
+                  className="govuk-!-margin-bottom-0"
+                  onClick={() => router.push(`${transcription.id}/delete`)}
+                >
+                  Delete recording
+                </GovukButton>
+            </GovukButtonGroup>
+          </form>
+        </FormProvider>
       </GovukDetails>
     </>
   )
