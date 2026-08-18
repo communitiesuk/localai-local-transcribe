@@ -2827,7 +2827,8 @@
       },
       "RecordingCreateRequest": {
         "properties": {
-          "file_extension": { "type": "string", "title": "File Extension" }
+          "file_extension": { "type": "string", "title": "File Extension" },
+          "file_created_at": { "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }], "title": "File Created At" }
         },
         "type": "object",
         "required": ["file_extension"],

@@ -82,6 +82,7 @@ class TranscriptionCreateRequest(BaseModel):
 
 class RecordingCreateRequest(BaseModel):
     file_extension: str
+    file_created_at: datetime | None = None
 
 
 class RecordingCreateResponse(BaseModel):

@@ -3,7 +3,7 @@
 # Function to run database migrations
 run_migrations() {
     echo "Running database migrations..."
-    alembic upgrade head
+    alembic upgrade heads
     if [ $? -ne 0 ]; then
         echo "Database migration failed!"
         exit 1
