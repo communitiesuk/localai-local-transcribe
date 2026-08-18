@@ -2982,6 +2982,13 @@
             "type": "string",
             "format": "date-time",
             "title": "Created Datetime"
+          },
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
           }
         },
         "type": "object",
