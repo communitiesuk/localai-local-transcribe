@@ -1,10 +1,6 @@
 'use client'
 
 import { Extension } from '@tiptap/core'
-import Document from '@tiptap/extension-document'
-import HardBreak from '@tiptap/extension-hard-break'
-import Paragraph from '@tiptap/extension-paragraph'
-import Text from '@tiptap/extension-text'
 import type { Editor } from '@tiptap/react'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
