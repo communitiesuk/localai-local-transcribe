@@ -237,10 +237,11 @@ const ControlledEditor = ({
   hasError?: boolean
 }) => {
   const editor = useEditor({
-    extensions: [StarterKit, Document, Paragraph, Text, HardBreak],
+    extensions: [StarterKit],
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
     },
+    immediatelyRender: false,
     content: value,
   })
 

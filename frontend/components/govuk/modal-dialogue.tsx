@@ -12,7 +12,7 @@ type Props = {
   onClose: () => void
   titleId?: string
   descriptionId?: string
-  title: string
+  title?: string
   className?: string
   children?: React.ReactNode
 }
@@ -73,7 +73,7 @@ export function GovukModalDialogue({
         <dialog
           ref={dialogRef}
           className={cn('govuk-modal-dialogue__box', className)}
-          aria-labelledby={titleId}
+          aria-labelledby={title ? titleId : undefined}
           aria-describedby={descriptionId}
           aria-modal="true"
           tabIndex={-1}
@@ -91,12 +91,14 @@ export function GovukModalDialogue({
             </button>
           </div>
           <div className="govuk-modal-dialogue__content">
-            <h2
-              className="govuk-modal-dialogue__heading govuk-heading-l"
-              id={titleId}
-            >
-              {title}
-            </h2>
+            {title && (
+              <h2
+                className="govuk-modal-dialogue__heading govuk-heading-l"
+                id={titleId}
+              >
+                {title}
+              </h2>
+            )}
             <div
               className="govuk-modal-dialogue__description govuk-body"
               id={descriptionId}

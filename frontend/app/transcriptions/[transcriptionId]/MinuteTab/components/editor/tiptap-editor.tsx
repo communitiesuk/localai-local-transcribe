@@ -117,15 +117,12 @@ function SimpleEditor({
   const editorObject = useEditor({
     extensions: [
       StarterKit,
-      Document,
-      Paragraph,
-      Text,
       CitationExtension,
-      HardBreak,
     ],
     onUpdate: ({ editor }) => {
       onContentChange(editor.getHTML())
     },
+    immediatelyRender: false,
     content: initialContent,
   }) as Editor
 
