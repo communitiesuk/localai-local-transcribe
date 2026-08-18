@@ -83,21 +83,21 @@ def test_from_account_url_falls_back_to_env():
 
 
 def test_from_account_urls_routes_containers_to_separate_accounts(tmp_path):
-    restricted_service = _FakeService(blobs={("input", "summarisation/standard/data.jsonl"): b"line\n"})
-    shared_service = _FakeService()
+    sensitive_service = _FakeService(blobs={("input", "summarisation/standard/data.jsonl"): b"line\n"})
+    results_service = _FakeService()
     src = tmp_path / "summary.json"
     src.write_bytes(b"{}")
 
     with (
         patch(
             "evals.shared.blob_storage.BlobServiceClient",
-            side_effect=[restricted_service, shared_service],
+            side_effect=[sensitive_service, results_service],
         ) as mock_client,
         patch("evals.shared.blob_storage.DefaultAzureCredential"),
     ):
         blob = EvalBlobStorage.from_account_urls(
-            restricted_account_url="https://restricted.blob.core.windows.net",
-            shared_account_url="https://shared.blob.core.windows.net",
+            sensitive_account_url="https://sensitive.blob.core.windows.net",
+            results_account_url="https://results.blob.core.windows.net",
         )
         blob.download_blob("input", "summarisation/standard/data.jsonl", tmp_path / "data.jsonl")
         blob.upload_file("debug", "summarisation/standard/run1/results.jsonl", src)
@@ -105,11 +105,11 @@ def test_from_account_urls_routes_containers_to_separate_accounts(tmp_path):
 
     account_urls = [call.kwargs["account_url"] for call in mock_client.call_args_list]
     assert account_urls == [
-        "https://restricted.blob.core.windows.net",
-        "https://shared.blob.core.windows.net",
+        "https://sensitive.blob.core.windows.net",
+        "https://results.blob.core.windows.net",
     ]
-    assert restricted_service.uploaded[("debug", "summarisation/standard/run1/results.jsonl")] == b"{}"
-    assert shared_service.uploaded[("output", "summarisation/standard/run1/summary.json")] == b"{}"
+    assert sensitive_service.uploaded[("debug", "summarisation/standard/run1/results.jsonl")] == b"{}"
+    assert results_service.uploaded[("output", "summarisation/standard/run1/summary.json")] == b"{}"
 
 
 def test_from_account_urls_falls_back_to_split_env():
@@ -117,10 +117,10 @@ def test_from_account_urls_falls_back_to_split_env():
         patch.dict(
             "os.environ",
             {
-                "AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL": "https://restricted-env.blob.core.windows.net",
-                "AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL": "https://shared-env.blob.core.windows.net",
+                "AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL": "https://sensitive-env.blob.core.windows.net",
+                "AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL": "https://results-env.blob.core.windows.net",
             },
-            clear=False,
+            clear=True,
         ),
         patch("evals.shared.blob_storage.BlobServiceClient") as mock_client,
         patch("evals.shared.blob_storage.DefaultAzureCredential"),
@@ -129,8 +129,8 @@ def test_from_account_urls_falls_back_to_split_env():
 
     account_urls = [call.kwargs["account_url"] for call in mock_client.call_args_list]
     assert account_urls == [
-        "https://restricted-env.blob.core.windows.net",
-        "https://shared-env.blob.core.windows.net",
+        "https://sensitive-env.blob.core.windows.net",
+        "https://results-env.blob.core.windows.net",
     ]
 
 
@@ -138,7 +138,7 @@ def test_from_account_url_raises_without_account_url():
     with (
         patch.dict("os.environ", {"AZURE_EVALS_STORAGE_ACCOUNT_URL": ""}, clear=False),
         patch("evals.shared.blob_storage.DefaultAzureCredential"),
-        pytest.raises(ValueError, match="restricted_account_url"),
+        pytest.raises(ValueError, match="sensitive_account_url"),
     ):
         EvalBlobStorage.from_account_url(None)
 

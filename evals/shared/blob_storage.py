@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Shared blob-layout conventions for the evals storage accounts.
+# Common blob-layout conventions for the evals storage accounts.
 INPUT_CONTAINER = "input"
 RESULTS_CONTAINER = "output"
 DEBUG_CONTAINER = "debug"
 
-RESTRICTED_ACCOUNT_ENV_VAR = "AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL"
-SHARED_ACCOUNT_ENV_VAR = "AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL"
+SENSITIVE_ACCOUNT_ENV_VAR = "AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL"
+RESULTS_ACCOUNT_ENV_VAR = "AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL"
 LEGACY_ACCOUNT_ENV_VAR = "AZURE_EVALS_STORAGE_ACCOUNT_URL"
 
 
@@ -35,24 +35,24 @@ class EvalBlobStorage:
         self,
         account_url: str | None = None,
         *,
-        restricted_account_url: str | None = None,
-        shared_account_url: str | None = None,
+        sensitive_account_url: str | None = None,
+        results_account_url: str | None = None,
         credential: TokenCredential | None = None,
     ) -> None:
         if account_url is not None:
-            restricted_account_url = restricted_account_url or account_url
-            shared_account_url = shared_account_url or account_url
-        if restricted_account_url is None or shared_account_url is None:
-            msg = "Set both restricted_account_url and shared_account_url, or set account_url for single-account mode."
+            sensitive_account_url = sensitive_account_url or account_url
+            results_account_url = results_account_url or account_url
+        if sensitive_account_url is None or results_account_url is None:
+            msg = "Set both sensitive_account_url and results_account_url, or set account_url for single-account mode."
             raise ValueError(msg)
 
         credential = credential or DefaultAzureCredential()
-        self._restricted_service = BlobServiceClient(
-            account_url=restricted_account_url,
+        self._sensitive_service = BlobServiceClient(
+            account_url=sensitive_account_url,
             credential=credential,
         )
-        self._shared_service = BlobServiceClient(
-            account_url=shared_account_url,
+        self._results_service = BlobServiceClient(
+            account_url=results_account_url,
             credential=credential,
         )
 
@@ -61,25 +61,25 @@ class EvalBlobStorage:
         cls,
         account_url: str | None = None,
         *,
-        restricted_account_url: str | None = None,
-        shared_account_url: str | None = None,
+        sensitive_account_url: str | None = None,
+        results_account_url: str | None = None,
         credential: TokenCredential | None = None,
     ) -> EvalBlobStorage:
         account_url = _non_empty(account_url) or _non_empty(os.getenv(LEGACY_ACCOUNT_ENV_VAR))
-        restricted_account_url = _non_empty(restricted_account_url) or _non_empty(os.getenv(RESTRICTED_ACCOUNT_ENV_VAR))
-        shared_account_url = _non_empty(shared_account_url) or _non_empty(os.getenv(SHARED_ACCOUNT_ENV_VAR))
+        sensitive_account_url = _non_empty(sensitive_account_url) or _non_empty(os.getenv(SENSITIVE_ACCOUNT_ENV_VAR))
+        results_account_url = _non_empty(results_account_url) or _non_empty(os.getenv(RESULTS_ACCOUNT_ENV_VAR))
 
-        if account_url is None and (restricted_account_url is None or shared_account_url is None):
+        if account_url is None and (sensitive_account_url is None or results_account_url is None):
             msg = (
-                "Set blob.restricted_account_url and blob.shared_account_url in the config, "
-                f"or {RESTRICTED_ACCOUNT_ENV_VAR} and {SHARED_ACCOUNT_ENV_VAR}. "
+                "Set blob.sensitive_account_url and blob.results_account_url in the config, "
+                f"or {SENSITIVE_ACCOUNT_ENV_VAR} and {RESULTS_ACCOUNT_ENV_VAR}. "
                 f"For single-account mode, set blob.account_url or {LEGACY_ACCOUNT_ENV_VAR}."
             )
             raise ValueError(msg)
         return cls(
             account_url,
-            restricted_account_url=restricted_account_url,
-            shared_account_url=shared_account_url,
+            sensitive_account_url=sensitive_account_url,
+            results_account_url=results_account_url,
             credential=credential,
         )
 
@@ -93,9 +93,9 @@ class EvalBlobStorage:
 
     def _service_for(self, container: str) -> BlobServiceClient:
         if container in {INPUT_CONTAINER, DEBUG_CONTAINER}:
-            return self._restricted_service
+            return self._sensitive_service
         if container == RESULTS_CONTAINER:
-            return self._shared_service
+            return self._results_service
         msg = f"Unknown eval blob container: {container}"
         raise ValueError(msg)
 

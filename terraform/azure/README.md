@@ -52,8 +52,8 @@ az storage blob upload-batch --account-name <account> --auth-mode login \
 ## 3. Run locally
 
 ```bash
-export AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL="https://<restricted-account>.blob.core.windows.net"
-export AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL="https://<shared-account>.blob.core.windows.net"
+export AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL="https://<sensitive-account>.blob.core.windows.net"
+export AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL="https://<results-account>.blob.core.windows.net"
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
 ```
 
@@ -80,8 +80,8 @@ registrations). Wire it to a service connection in two Terraform passes:
 4. Back in ADO → **Verify and save**.
 5. Pipeline **Summarisation Evals** → **Variables** → add:
    ```text
-   AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL=https://<restricted-account>.blob.core.windows.net
-   AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL=https://<shared-account>.blob.core.windows.net
+   AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL=https://<sensitive-account>.blob.core.windows.net
+   AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL=https://<results-account>.blob.core.windows.net
    ```
 6. **Run** the pipeline (manual trigger); approve the connection on first run.
 

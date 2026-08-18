@@ -39,8 +39,8 @@ def _write_config(tmp_path: Path) -> Path:
         "prompts": {"judge_template_path": "evals/summarisation/prompts/judge.j2"},
         "blob": {
             "enabled": True,
-            "restricted_account_url": "https://restricted.blob.core.windows.net",
-            "shared_account_url": "https://shared.blob.core.windows.net",
+            "sensitive_account_url": "https://sensitive.blob.core.windows.net",
+            "results_account_url": "https://results.blob.core.windows.net",
         },
     }
     path = tmp_path / "cfg.yaml"
@@ -108,8 +108,8 @@ def test_standard_eval_publishes_split_outputs(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     make_blob.assert_called_once_with(
         None,
-        restricted_account_url="https://restricted.blob.core.windows.net",
-        shared_account_url="https://shared.blob.core.windows.net",
+        sensitive_account_url="https://sensitive.blob.core.windows.net",
+        results_account_url="https://results.blob.core.windows.net",
     )
 
     # Dataset was staged from the input container.

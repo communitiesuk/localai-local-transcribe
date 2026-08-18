@@ -1,16 +1,16 @@
 # Example variable values for a Softwire sandbox apply.
-# Copy to terraform.tfvars (do not commit real subscription IDs if your team treats them as sensitive).
+# Copy to terraform.tfvars (do not commit real subscription IDs, IPs, or object IDs).
 #
 # Storage account names must be globally unique across all of Azure:
 # 3 to 24 characters, lowercase letters and digits only.
-# Optional vars (account_replication_type, soft_delete_retention_days, sas_expiration_period)
-# have defaults and may be omitted.
+# Every variable not listed here has a default; see variables.tf.
 
-subscription_id      = "00000000-0000-0000-0000-000000000000"
-resource_group_name  = "rg-evals-sandbox"
-location             = "uksouth"
-storage_account_name = "myevalsdata001"
-environment_name     = "sandbox"
+subscription_id                 = "00000000-0000-0000-0000-000000000000"
+resource_group_name             = "rg-evals-sandbox"
+location                        = "uksouth"
+sensitive_storage_account_name  = "ltevalssensitive001"
+results_storage_account_name    = "ltevalsresults001"
+environment_name                = "sandbox"
 
 # Azure DevOps pipeline identity (managed identity + blob role). pipeline_identity_name is optional.
 # Leave the two federation values commented on the first apply; after creating the ADO service
@@ -18,3 +18,26 @@ environment_name     = "sandbox"
 # pipeline_identity_name = "evals-blob-id"
 # ado_federation_issuer  = "https://vstoken.dev.azure.com/<org-guid>"
 # ado_federation_subject = "sc://<org>/<project>/evals-blob"
+
+# Network access. Leave empty until the real addresses are confirmed with ADAPT; empty means
+# denied, which is the safe state. mhclg_ip_rules must never contain ADAPT-only addresses and
+# vice versa, as the two lists are what separates results from input and debug.
+# adapt_ip_rules = []
+# mhclg_ip_rules = []
+
+# Set once ADAPT confirms the private endpoint works. Makes the private endpoint the only
+# route into the input/debug account.
+# sensitive_public_network_access_enabled = false
+
+# Private endpoint. Only set private_endpoint_subnet_id if the ADAPT VNet is in this
+# subscription; otherwise the ADAPT team creates the endpoints and we approve them.
+# If private_dns_zone_ids is omitted, this stack creates privatelink.blob.core.windows.net
+# and links it to the endpoint VNet.
+# private_endpoint_subnet_id            = "/subscriptions/.../subnets/snet-adapt"
+# private_endpoint_is_manual_connection = false
+# private_dns_zone_ids                  = ["/subscriptions/.../privateDnsZones/privatelink.blob.core.windows.net"]
+
+# Team RBAC. Entra ID object IDs; prefer group object IDs over individual users.
+# input_writer_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
+# debug_reader_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
+# results_reader_principal_ids = ["00000000-0000-0000-0000-000000000000"]

@@ -39,8 +39,8 @@ prompts:
   judge_template_path: prompts/judge.j2
 blob:
   enabled: true
-  restricted_account_url: https://restricted.blob.core.windows.net
-  shared_account_url: https://shared.blob.core.windows.net
+  sensitive_account_url: https://sensitive.blob.core.windows.net
+  results_account_url: https://results.blob.core.windows.net
   output_prefix: summ-out
 """,
         encoding="utf-8",
@@ -49,8 +49,8 @@ blob:
     cfg = load_config(config_path)
 
     assert cfg.blob.enabled is True
-    assert cfg.blob.restricted_account_url == "https://restricted.blob.core.windows.net"
-    assert cfg.blob.shared_account_url == "https://shared.blob.core.windows.net"
+    assert cfg.blob.sensitive_account_url == "https://sensitive.blob.core.windows.net"
+    assert cfg.blob.results_account_url == "https://results.blob.core.windows.net"
     assert cfg.dataset.source == "blob"
     assert cfg.dataset.blob_path == "summarisation/standard/dialogues.jsonl"
 
@@ -59,5 +59,5 @@ def test_blob_storage_config_standalone_defaults():
     cfg = BlobStorageConfig()
     assert cfg.enabled is False
     assert cfg.account_url is None
-    assert cfg.restricted_account_url is None
-    assert cfg.shared_account_url is None
+    assert cfg.sensitive_account_url is None
+    assert cfg.results_account_url is None
