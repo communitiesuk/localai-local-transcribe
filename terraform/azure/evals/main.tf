@@ -1,16 +1,21 @@
-# Evals Azure Blob Storage: storage account plus input, debug, and output containers.
+# Evals Azure Blob Storage: two storage accounts split by who is allowed to reach them.
+#
+# Why two accounts: Azure storage firewall rules (network ACLs and private endpoints) are
+# scoped to the storage account, not the container. The access requirement differs per
+# container - input and debug must be reachable only from ADAPT, results must also be
+# readable from MHCLG devices - so a single account cannot express it at the network layer.
+#
+#   restricted account -> input, debug   (ADAPT IPs and private endpoint only)
+#   shared account     -> output         (ADAPT IPs, MHCLG IPs, private endpoint)
 #
 # Softwire sandbox vs assured Azure environment:
-# - Transferable: three private containers named input, debug, and output; storage account
-#   shape; versioning; soft delete; SAS expiry; auth defaults; remote state via azurerm
-#   backend; manual plan/apply from Cloud Shell.
-# - Must adapt: tenant, subscription_id, resource_group_name, location, storage_account_name,
-#   environment_name, and backend -backend-config values. Assured may be a different tenant.
-# - Uncertain: final naming conventions, whether containers need Azure metadata beyond
-#   names, and whether the storage account must sit in a platform-owned resource group.
-# - Out of scope for the original ticket: private endpoints, RBAC, network restrictions,
-#   and populating containers with data. Soft delete and SAS expiry are included here as
-#   low-regret hardening ahead of the assured environment.
+# - Transferable: the two-account split, container names, hardening defaults, private
+#   endpoint and RBAC shape, remote state via azurerm backend, manual plan/apply.
+# - Must adapt: tenant, subscription_id, resource_group_name, location, both storage
+#   account names, environment_name, all IP allowlists, the private endpoint subnet and
+#   DNS zones, all principal IDs, and backend -backend-config values.
+# - Uncertain: whether ADAPT owns the private endpoint (see network.tf), and whether the
+#   platform mandates a naming prefix or a platform-owned resource group.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -30,21 +35,70 @@ terraform {
 provider "azurerm" {
   features {}
   subscription_id = var.subscription_id
+
+  # Both accounts disable shared access keys, so the provider must use Entra ID for any
+  # data plane call it makes.
+  storage_use_azuread = true
+}
+
+locals {
+  # Per-account settings. Hardening common to both is set once on the resource below so the
+  # two accounts cannot drift apart.
+  accounts = {
+    restricted = {
+      name                          = var.restricted_storage_account_name
+      purpose                       = "evals-input-and-debug"
+      ip_rules                      = var.adapt_ip_rules
+      public_network_access_enabled = var.restricted_public_network_access_enabled
+    }
+    shared = {
+      name                          = var.shared_storage_account_name
+      purpose                       = "evals-results"
+      ip_rules                      = concat(var.adapt_ip_rules, var.mhclg_ip_rules)
+      public_network_access_enabled = true
+    }
+  }
+
+  # Container name -> the account key in local.accounts that holds it.
+  containers = {
+    input  = "restricted"
+    debug  = "restricted"
+    output = "shared"
+  }
 }
 
 resource "azurerm_storage_account" "evals" {
-  name                     = var.storage_account_name
+  for_each = local.accounts
+
+  name                     = each.value.name
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
   account_replication_type = var.account_replication_type
 
-  # Harden defaults that do not require network lockdown, RBAC, or private endpoints.
   allow_nested_items_to_be_public = false
   local_user_enabled              = false
   default_to_oauth_authentication = true
 
-  # Cap how long a newly created SAS token may remain valid.
+  # Shared access keys are the main way to bypass RBAC from the portal or a SAS token.
+  # With them disabled every data plane call must present an Entra ID token, so the role
+  # assignments in rbac.tf are the only route to the data.
+  shared_access_key_enabled = false
+
+  # When false the IP allowlist is ignored and only the private endpoint can reach the
+  # account. Flip the restricted account to false once ADAPT confirms the endpoint works.
+  public_network_access_enabled = each.value.public_network_access_enabled
+
+  # Deny by default. With both allowlists empty this leaves the account reachable only via
+  # the private endpoint, which is the safe state while the ADAPT IPs are still unknown.
+  network_rules {
+    default_action = "Deny"
+    bypass         = var.network_rules_bypass
+    ip_rules       = each.value.ip_rules
+  }
+
+  # Cap how long a newly created SAS token may remain valid. With shared keys disabled only
+  # user delegation SAS is possible, and that is still bound by RBAC and the firewall.
   sas_policy {
     expiration_period = var.sas_expiration_period
     expiration_action = "Block"
@@ -64,40 +118,23 @@ resource "azurerm_storage_account" "evals" {
   }
 
   tags = {
-    purpose     = "evals-pipeline-data"
+    purpose     = each.value.purpose
     workload    = "evals"
     environment = var.environment_name
   }
 }
 
-# Azure does not support resource tags on blob containers. Container identity is the
-# name; purpose is also recorded as blob metadata for inspection in the portal.
-resource "azurerm_storage_container" "input" {
-  name                  = "input"
-  storage_account_id    = azurerm_storage_account.evals.id
+# Azure does not support resource tags on blob containers. Container identity is the name;
+# purpose is also recorded as blob metadata for inspection in the portal. These are managed
+# through the resource manager API, so container creation is not blocked by the firewall.
+resource "azurerm_storage_container" "evals" {
+  for_each = local.containers
+
+  name                  = each.key
+  storage_account_id    = azurerm_storage_account.evals[each.value].id
   container_access_type = "private"
 
   metadata = {
-    purpose = "input"
-  }
-}
-
-resource "azurerm_storage_container" "debug" {
-  name                  = "debug"
-  storage_account_id    = azurerm_storage_account.evals.id
-  container_access_type = "private"
-
-  metadata = {
-    purpose = "debug"
-  }
-}
-
-resource "azurerm_storage_container" "output" {
-  name                  = "output"
-  storage_account_id    = azurerm_storage_account.evals.id
-  container_access_type = "private"
-
-  metadata = {
-    purpose = "output"
+    purpose = each.key
   }
 }

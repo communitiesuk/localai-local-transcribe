@@ -1,13 +1,35 @@
 # Example variable values for a Softwire sandbox apply.
-# Copy to terraform.tfvars (do not commit real subscription IDs if your team treats them as sensitive).
+# Copy to terraform.tfvars (do not commit real subscription IDs, IPs, or object IDs).
 #
 # Storage account names must be globally unique across all of Azure:
 # 3 to 24 characters, lowercase letters and digits only.
-# Optional vars (account_replication_type, soft_delete_retention_days, sas_expiration_period)
-# have defaults and may be omitted.
+# Every variable not listed here has a default; see variables.tf.
 
-subscription_id      = "00000000-0000-0000-0000-000000000000"
-resource_group_name  = "rg-evals-sandbox"
-location             = "uksouth"
-storage_account_name = "ltevalssandbox001"
-environment_name     = "sandbox"
+subscription_id                 = "00000000-0000-0000-0000-000000000000"
+resource_group_name             = "rg-evals-sandbox"
+location                        = "uksouth"
+restricted_storage_account_name = "ltevalsrestricted001"
+shared_storage_account_name     = "ltevalsshared001"
+environment_name                = "sandbox"
+
+# Network access. Leave empty until the real addresses are confirmed with ADAPT; empty means
+# denied, which is the safe state. mhclg_ip_rules must never contain ADAPT-only addresses and
+# vice versa, as the two lists are what separates results from input and debug.
+# adapt_ip_rules = ["203.0.113.10", "203.0.113.11"]
+# mhclg_ip_rules = ["198.51.100.0/24"]
+
+# Set once ADAPT confirms the private endpoint works. Makes the private endpoint the only
+# route into the input/debug account.
+# restricted_public_network_access_enabled = false
+
+# Private endpoint. Only set these if the ADAPT VNet is in this subscription; otherwise the
+# ADAPT team creates the endpoints and we approve them.
+# private_endpoint_subnet_id            = "/subscriptions/.../subnets/snet-adapt"
+# private_endpoint_is_manual_connection = false
+# private_dns_zone_ids                  = ["/subscriptions/.../privateDnsZones/privatelink.blob.core.windows.net"]
+
+# RBAC. Entra ID object IDs; prefer group object IDs over individual users.
+# azure_devops_principal_id    = "00000000-0000-0000-0000-000000000000"
+# input_writer_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
+# debug_reader_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
+# results_reader_principal_ids = ["00000000-0000-0000-0000-000000000000"]

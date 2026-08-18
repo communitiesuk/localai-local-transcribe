@@ -2,27 +2,32 @@
 
 variable "subscription_id" {
   type        = string
-  description = "Azure subscription ID that will own the evals storage account."
+  description = "Azure subscription ID that will own the evals storage accounts."
 }
 
 variable "resource_group_name" {
   type        = string
-  description = "Existing resource group that will hold the evals storage account. Must already exist."
+  description = "Existing resource group that will hold the evals storage accounts. Must already exist."
 }
 
 variable "location" {
   type        = string
-  description = "Azure region for the evals storage account, for example uksouth."
+  description = "Azure region for the evals storage accounts, for example uksouth."
 }
 
-variable "storage_account_name" {
+variable "restricted_storage_account_name" {
   type        = string
-  description = "Globally unique storage account name for evals data. 3 to 24 lowercase letters and digits only. Must differ from the Terraform state storage account name."
+  description = "Globally unique name for the account holding the input and debug containers. Reachable from ADAPT only. 3 to 24 lowercase letters and digits."
+}
+
+variable "shared_storage_account_name" {
+  type        = string
+  description = "Globally unique name for the account holding the output (results) container. Reachable from ADAPT and MHCLG devices. 3 to 24 lowercase letters and digits."
 }
 
 variable "environment_name" {
   type        = string
-  description = "Short environment label used in tags, for example Softwire sandbox or assured."
+  description = "Short environment label used in tags, for example sandbox or assured."
 }
 
 variable "account_replication_type" {
@@ -41,4 +46,91 @@ variable "sas_expiration_period" {
   type        = string
   description = "Maximum lifetime for newly created shared access signatures, as DD.HH:MM:SS."
   default     = "07.00:00:00"
+}
+
+# Network access
+#
+# IP rules take public IPv4 addresses or CIDR ranges. Azure rejects private ranges and /31
+# and /32 suffixes, so give ADAPT's public NAT egress addresses as plain IPs. Leaving a list
+# empty denies that route, which is the intended state until the real addresses are known.
+#
+# There is deliberately no break-glass allowlist for the machine running Terraform. Terraform
+# manages these accounts and containers through the resource manager API, which the storage
+# firewall does not gate, so it never needs a data plane exemption. Anyone who needs to read
+# blobs by hand should do so from ADAPT.
+
+variable "adapt_ip_rules" {
+  type        = list(string)
+  description = "Public egress IPs or CIDR ranges for ADAPT. Allowed on both accounts. Unknown at time of writing; ZScaler rules may be needed so ADAPT traffic actually egresses from these addresses."
+  default     = []
+}
+
+variable "mhclg_ip_rules" {
+  type        = list(string)
+  description = "Public egress IPs or CIDR ranges for MHCLG devices. Allowed on the shared (results) account only. Must never be added to adapt_ip_rules, as that would expose input and debug."
+  default     = []
+}
+
+variable "network_rules_bypass" {
+  type        = list(string)
+  description = "Storage firewall bypass exemptions. None by default so no traffic skips the allowlist. Set [\"AzureServices\"] only if a trusted Azure service is later shown to need it."
+  default     = ["None"]
+}
+
+variable "restricted_public_network_access_enabled" {
+  type        = bool
+  description = "Whether the input/debug account keeps a public endpoint. Set false once ADAPT confirms the private endpoint works, which makes the private endpoint the only route in and ignores adapt_ip_rules."
+  default     = true
+}
+
+# Private endpoint
+#
+# Leave private_endpoint_subnet_id null when the ADAPT team creates the endpoint from their
+# own subscription. See network.tf.
+
+variable "private_endpoint_subnet_id" {
+  type        = string
+  description = "Resource ID of the ADAPT subnet to place the blob private endpoints in. Null means this stack creates no endpoint."
+  default     = null
+}
+
+variable "private_endpoint_is_manual_connection" {
+  type        = bool
+  description = "True when the subnet and the storage accounts have different owners, leaving the connection pending ADAPT approval."
+  default     = false
+}
+
+variable "private_dns_zone_ids" {
+  type        = list(string)
+  description = "Resource IDs of the privatelink.blob.core.windows.net private DNS zones to register the endpoints in. Empty if the platform manages DNS centrally."
+  default     = []
+}
+
+# RBAC
+#
+# All values are Entra ID object IDs. Prefer a group object ID over individual users so
+# membership changes do not need a terraform apply.
+
+variable "azure_devops_principal_id" {
+  type        = string
+  description = "Object ID of the Azure DevOps pipeline identity. Gets read on input and write on debug and output. Null skips all pipeline assignments."
+  default     = null
+}
+
+variable "input_writer_principal_ids" {
+  type        = set(string)
+  description = "Object IDs allowed to upload and manage eval test data in the input container. Keep to the people who curate that data."
+  default     = []
+}
+
+variable "debug_reader_principal_ids" {
+  type        = set(string)
+  description = "Object IDs allowed to read the debug container when diagnosing eval runs."
+  default     = []
+}
+
+variable "results_reader_principal_ids" {
+  type        = set(string)
+  description = "Object IDs allowed to read the output (results) container."
+  default     = []
 }
