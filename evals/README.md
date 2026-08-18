@@ -43,15 +43,21 @@ storage (`input` / `debug` / `output` containers) instead of local disk, using s
 containers are provisioned by `terraform/azure/evals/` — see its
 [README](../terraform/azure/evals/README.md) for setup.
 
-To use it: set `AZURE_EVALS_STORAGE_ACCOUNT_URL` (or `blob.account_url` in the config), enable the
-config's `blob:` block, and set `dataset.source: blob` with a `dataset.blob_path`. See
-`evals/summarisation/configs/blob-smoke-test.yaml`. With `blob.enabled: false` (the default) the
-pipeline reads and writes local disk as before.
+To use it: set the restricted and shared account URLs, enable the config's `blob:` block, and set
+`dataset.source: blob` with a `dataset.blob_path`. The restricted account holds `input` and `debug`;
+the shared account holds `output`. See `evals/summarisation/configs/blob-smoke-test.yaml`. With
+`blob.enabled: false` (the default) the pipeline reads and writes local disk as before.
 
 ```bash
-export AZURE_EVALS_STORAGE_ACCOUNT_URL="https://<evals-account>.blob.core.windows.net"
+export AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL="https://<restricted-account>.blob.core.windows.net"
+export AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL="https://<shared-account>.blob.core.windows.net"
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
 ```
+
+For local compatibility with an older single-account sandbox, `AZURE_EVALS_STORAGE_ACCOUNT_URL` or
+`blob.account_url` still routes all three containers through one account.
+
+Uploading the sample data is covered in `evals/summarisation/sample_data/README.md`.
 
 ## Running a new experiment
 

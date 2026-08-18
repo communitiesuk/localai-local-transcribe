@@ -42,7 +42,13 @@ def _resolve_io_dirs(cfg: AppConfig, mode: str) -> tuple[Path, Path]:
 
 
 def _make_blob(cfg: AppConfig) -> EvalBlobStorage | None:
-    return EvalBlobStorage.from_account_url(cfg.blob.account_url) if cfg.blob.enabled else None
+    if not cfg.blob.enabled:
+        return None
+    return EvalBlobStorage.from_account_urls(
+        cfg.blob.account_url,
+        restricted_account_url=cfg.blob.restricted_account_url,
+        shared_account_url=cfg.blob.shared_account_url,
+    )
 
 
 def _staged_output_dir(blob: EvalBlobStorage | None, cfg: AppConfig, staging_dir: Path) -> Path:

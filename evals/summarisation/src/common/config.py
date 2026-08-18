@@ -65,6 +65,8 @@ class BlobStorageConfig(BaseModel):
 
     enabled: bool = False
     account_url: str | None = None
+    restricted_account_url: str | None = None
+    shared_account_url: str | None = None
     output_prefix: str = "summarisation"
 
 
