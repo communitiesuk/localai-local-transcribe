@@ -5,8 +5,8 @@ from pathlib import Path
 
 import sentry_sdk
 
-from common.audio.ffmpeg import convert_to_mp3, get_duration, is_audio_ready_for_transcription
 from common.audio.audio_metadata import get_recording_time
+from common.audio.ffmpeg import convert_to_mp3, get_duration, is_audio_ready_for_transcription
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Recording, Transcription

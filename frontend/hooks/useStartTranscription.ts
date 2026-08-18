@@ -58,9 +58,10 @@ export const useStartTranscription = (
           ? 'upload'
           : 'recording'
       const file_extension = isFile ? getFileExtension(file.name) : 'webm'
-      const file_created_at = isFile && file.lastModified
-        ? new Date(file.lastModified).toISOString()
-        : undefined
+      const file_created_at =
+        isFile && file.lastModified
+          ? new Date(file.lastModified).toISOString()
+          : undefined
       posthog.capture('transcription_started', {
         file_type: file.type || '',
         source,
