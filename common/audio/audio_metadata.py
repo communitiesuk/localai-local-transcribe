@@ -1,13 +1,12 @@
 import logging
 from pathlib import Path
-from typing import Union
 
 import mutagen
 
 logger = logging.getLogger(__name__)
 
 
-def get_recording_time(file_path: Union[str, Path]) -> str | None:
+def get_recording_time(file_path: str | Path) -> str | None:
     """
     Extracts the recording timestamp or creation date from various audio formats
     using Mutagen. Returns a string timestamp/date or None if not found.

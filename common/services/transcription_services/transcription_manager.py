@@ -5,7 +5,6 @@ from pathlib import Path
 
 import sentry_sdk
 
-from common.audio.audio_metadata import get_recording_time
 from common.audio.ffmpeg import convert_to_mp3, get_duration, is_audio_ready_for_transcription
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
@@ -80,8 +79,7 @@ class TranscriptionServiceManager:
         with tempfile.TemporaryDirectory() as tempdir:
             temp_file_path = Path(tempdir) / Path(recording.s3_file_key).name
             await storage_service.download(recording.s3_file_key, temp_file_path)
-            recorded_at = get_recording_time(str(temp_file_path))
-            date_for_db = recorded_at if recorded_at is None else recording.file_created_at or recording.created_datetime
+            date_for_db = recording.file_created_at or recording.created_datetime
             if date_for_db is not None:
                 with SessionLocal() as session:
                     db_transcription = session.get(Transcription, transcription.id)
