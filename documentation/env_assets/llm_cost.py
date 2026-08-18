@@ -1,3 +1,4 @@
+# ruff: noqa: T201
 """Per-meeting LLM token usage and GBP cost for the production model pairing.
 
 Companion to llm_inference.py, which models output tokens only (all EcoLogits needs).
@@ -8,6 +9,10 @@ Headline figures are the usage-weighted average over the production template sha
 assumptions.yaml. Call graphs traced from common/prompts.py, common/templates/ and
 common/llm/client.py; prompt sizes counted from the live prompt files, not the Appendix B
 figures in env-impact.md, which have drifted (general.j2 is 579 words now, not 345).
+
+The "citations BEST" scenario models only extract_claims and cite_claims moving from
+FAST to BEST for templates that currently require citations. Prompt text, token sizes
+and every other call keep their existing assumptions.
 """
 
 from dataclasses import dataclass
@@ -122,22 +127,24 @@ def _common(m: Meeting, minute_tokens: float) -> list[Inv]:
     ]
 
 
-def _citations(m: Meeting, draft: float, claims: float) -> list[Inv]:
-    """extract_claims + cite_claims (both FAST, both fresh conversations). cite_claims
-    echoes every claim back in claim_citations, so its output is the cited draft plus
-    the claim list again."""
+def _citations(m: Meeting, draft: float, claims: float, *, tier: str) -> list[Inv]:
+    """extract_claims + cite_claims, both fresh conversations.
+
+    cite_claims echoes every claim back in claim_citations, so its output is the cited
+    draft plus the claim list again.
+    """
     return [
-        Inv("extract_claims", "fast", P_EXTRACT + draft, 0, claims),
-        Inv("cite_claims", "fast", P_CITE + m.t_idx + claims + draft, 0, draft * 1.05 + claims + 300),
+        Inv("extract_claims", tier, P_EXTRACT + draft, 0, claims),
+        Inv("cite_claims", tier, P_CITE + m.t_idx + claims + draft, 0, draft * 1.05 + claims + 300),
     ]
 
 
-def general(m: Meeting) -> list[Inv]:
+def general(m: Meeting, *, citation_tier: str = "fast") -> list[Inv]:
     """General / Care Assessment / Care Assessment V2 — SimpleTemplate with citations."""
     draft, claims = 0.5 * m.xt, 0.1 * m.xt
     return [
         Inv("minutes", "best", P_GENERAL + m.t, 0, draft),
-        *_citations(m, draft, claims),
+        *_citations(m, draft, claims, tier=citation_tier),
         *_common(m, draft * 1.05),
     ]
 
@@ -151,7 +158,7 @@ def executive_summary(m: Meeting) -> list[Inv]:
     ]
 
 
-def delivery(m: Meeting) -> list[Inv]:
+def delivery(m: Meeting, *, citation_tier: str = "fast") -> list[Inv]:
     """Delivery — sections then attendees, then citations.
 
     ChatBot.structured_chat sends only the messages handed to it (unlike ChatBot.chat, it
@@ -163,7 +170,7 @@ def delivery(m: Meeting) -> list[Inv]:
     return [
         Inv("delivery_sections", "best", P_DELIVERY_SYS + m.t + P_DELIVERY_STYLE, 0, sections_out),
         Inv("delivery_attendees", "best", 20, 0, 300),
-        *_citations(m, draft, 0.08 * m.xt),
+        *_citations(m, draft, 0.08 * m.xt, tier=citation_tier),
         *_common(m, draft * 1.05),
     ]
 
@@ -182,7 +189,8 @@ def section_template(m: Meeting) -> list[Inv]:
     ChatBot.chat conversation, so each call after the first replays the previous request
     verbatim and the transcript is paid for at full price once. No concrete
     implementation survives in common/templates, so the system prompt is assumed to be
-    general.j2-sized.
+    general.j2-sized. The pending citation-tier change is a no-op here because the
+    currently live citing templates are General, Care Assessment V2 and Delivery.
     """
     per_section = 0.3 * m.xt / Y
     first_request = P_GENERAL + m.t + P_SECTION_FOR
@@ -197,9 +205,7 @@ def section_template(m: Meeting) -> list[Inv]:
         new_in = per_section + P_SECTION_FOR
         invs.append(Inv(f"section_{k}", "best", new_in, request_len, per_section))
         request_len += new_in
-    draft = 0.3 * m.xt
-    invs += _citations(m, draft, 0.06 * m.xt)
-    invs += _common(m, draft * 1.05)
+    invs += _common(m, 0.3 * m.xt * 1.05)
     return invs
 
 
@@ -259,12 +265,21 @@ def _derive(agg: dict[str, float]) -> dict[str, float]:
     return agg
 
 
-def weighted(m: Meeting) -> dict[str, float]:
+def template_tokens(name: str, m: Meeting, *, citation_tier: str = "fast") -> dict[str, float]:
+    """Billable tokens for a template under the requested citation tier."""
+    if name == "General":
+        return tokens(general(m, citation_tier=citation_tier))
+    if name == "Delivery":
+        return tokens(delivery(m, citation_tier=citation_tier))
+    return tokens(TEMPLATES[name](m))
+
+
+def weighted(m: Meeting, *, citation_tier: str = "fast") -> dict[str, float]:
     """Usage-weighted average across the production templates."""
     keys = [f"{t}_{k}" for t in ("fast", "best") for k in ("calls", "new_in", "cacheable_in", "out")]
     agg = dict.fromkeys([*keys, "calls"], 0.0)
     for name, share in SHARES.items():
-        tk = tokens(TEMPLATES[name](m))
+        tk = template_tokens(name, m, citation_tier=citation_tier)
         for k in agg:
             agg[k] += share * tk[k]
     return _derive(agg)
@@ -307,8 +322,8 @@ def display() -> None:
         f" {'Out BEST':>9} {'GBP FAST':>9} {'GBP BEST':>9} {'GBP total':>10} {'GBP no cache':>13}"
     )
     print("-" * 118)
-    rows = {name: tokens(fn(one_hour)) for name, fn in TEMPLATES.items()}
-    rows["Usage-weighted"] = weighted(one_hour)
+    rows = {name: template_tokens(name, one_hour, citation_tier="best") for name in TEMPLATES}
+    rows["Usage-weighted"] = weighted(one_hour, citation_tier="best")
     for name, tk in rows.items():
         if name == "Usage-weighted":
             print("-" * 118)
@@ -321,7 +336,23 @@ def display() -> None:
 
     wt = rows["Usage-weighted"]
     c_cached, c_none = cost(wt), cost(wt, caching=False)
-    print("\n\nHeadline: usage-weighted average meeting, split by tier")
+    current = weighted(one_hour, citation_tier="fast")
+    print("\n\nScenario comparison: usage-weighted average meeting")
+    print("=" * 100)
+    print(f"  {'Scenario':<34} {'GBP FAST':>12} {'GBP BEST':>12} {'GBP total':>12} {'Delta':>12}")
+    print("  " + "-" * 82)
+    current_total = cost(current)
+    for label, tk in [
+        ("Current production", current),
+        ("Citations BEST", wt),
+    ]:
+        total = cost(tk)
+        print(
+            f"  {label:<34} {cost(tk, only='fast'):>12.4f} {cost(tk, only='best'):>12.4f}"
+            f" {total:>12.4f} {total - current_total:>+12.4f}"
+        )
+
+    print("\n\nHeadline: citations BEST, split by tier")
     print("=" * 100)
     print(f"  {'':<44} {'FAST':>14} {'BEST':>14} {'Total':>14}")
     print("  " + "-" * 88)
