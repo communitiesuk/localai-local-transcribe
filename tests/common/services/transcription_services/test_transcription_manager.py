@@ -1,6 +1,7 @@
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
+from uuid import uuid4
 
 import pytest
 
@@ -105,6 +106,7 @@ def manager(mock_settings, mock_adapters):  # noqa: ARG001
 def mock_recording():
     """Create mock recording for testing."""
     recording = Mock(spec=Recording)
+    recording.id = uuid4()
     recording.s3_file_key = "test_file.mp3"
     return recording
 
@@ -113,6 +115,7 @@ def mock_recording():
 def mock_transcription(mock_recording):
     """Create mock transcription for testing."""
     transcription = Mock(spec=Transcription)
+    transcription.id = uuid4()
     transcription.recordings = [mock_recording]
     return transcription
 
@@ -224,7 +227,14 @@ class TestTranscriptionServiceManager:
         with (
             tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file,
             patch.object(manager, "get_recording_to_process") as mock_get_recording,
+            patch("common.services.transcription_services.transcription_manager.SessionLocal") as mock_session_local,
         ):
+            # Setup database session mock
+            mock_session = Mock()
+            mock_session_local.return_value.__enter__ = Mock(return_value=mock_session)
+            mock_session_local.return_value.__exit__ = Mock(return_value=False)
+            mock_session.get.return_value = mock_transcription
+
             # Setup mocks
             mock_duration = 1500.0
             mock_get_recording.return_value = (mock_recording, Path(temp_file.name), mock_duration)
@@ -256,7 +266,14 @@ class TestTranscriptionServiceManager:
             tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file,
             patch.object(manager, "get_recording_to_process") as mock_get_recording,
             patch.object(manager, "check_transcription") as mock_check_transcription,
+            patch("common.services.transcription_services.transcription_manager.SessionLocal") as mock_session_local,
         ):
+            # Setup database session mock
+            mock_session = Mock()
+            mock_session_local.return_value.__enter__ = Mock(return_value=mock_session)
+            mock_session_local.return_value.__exit__ = Mock(return_value=False)
+            mock_session.get.return_value = mock_transcription
+
             # Setup mocks
             mock_duration = 3500.0  # Should trigger async adapter
             mock_get_recording.return_value = (mock_recording, Path(temp_file.name), mock_duration)
@@ -294,7 +311,14 @@ class TestTranscriptionServiceManager:
             tempfile.NamedTemporaryFile(suffix=".mp3") as temp_file,
             patch.object(manager, "get_recording_to_process") as mock_get_recording,
             patch.object(manager, "select_adaptor") as mock_select_adaptor,
+            patch("common.services.transcription_services.transcription_manager.SessionLocal") as mock_session_local,
         ):
+            # Setup database session mock
+            mock_session = Mock()
+            mock_session_local.return_value.__enter__ = Mock(return_value=mock_session)
+            mock_session_local.return_value.__exit__ = Mock(return_value=False)
+            mock_session.get.return_value = mock_transcription
+
             # Setup mocks
             mock_get_recording.return_value = (mock_recording, Path(temp_file.name), 1500)
 
