@@ -2,12 +2,16 @@
 
 import { cn } from '@/lib/utils'
 import React from 'react'
+import { UseFormRegisterReturn } from 'react-hook-form'
 
 type DateInputProps = {
   id: string
   legend: React.ReactNode
   hint?: React.ReactNode
   className?: string
+  day?: UseFormRegisterReturn
+  month?: UseFormRegisterReturn
+  year?: UseFormRegisterReturn
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'id'>
 
 const items = [
@@ -21,9 +25,13 @@ export function GovukDateInput({
   legend,
   hint,
   className,
+  day,
+  month,
+  year,
   ...rest
 }: DateInputProps) {
   const hintId = hint ? `${id}-hint` : undefined
+  const fields = { day, month, year }
 
   return (
     <div className={cn('govuk-form-group', className)}>
@@ -57,6 +65,7 @@ export function GovukDateInput({
                   name={`${id}-${item.name}`}
                   type="text"
                   inputMode="numeric"
+                  {...fields[item.name]}
                 />
               </div>
             </div>
