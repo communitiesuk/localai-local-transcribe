@@ -243,7 +243,17 @@ const SpeakerEditorModal = ({
       ) : (
         <ModalConfirmationInterstitial
           title="Discard changes?"
-          body="If you continue, your changes will not be saved."
+          body={
+            <div className="govuk-warning-text">
+              <span className="govuk-warning-text__icon" aria-hidden="true">
+                !
+              </span>
+              <strong className="govuk-warning-text__text">
+                <span className="govuk-visually-hidden">Warning</span>
+                If you continue, your changes will not be saved.
+              </strong>
+            </div>
+          }
           confirmLabel="Discard changes"
           onConfirm={() => {
             setEditInitialValue(

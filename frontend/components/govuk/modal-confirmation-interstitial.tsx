@@ -2,7 +2,7 @@ import { GovukButton, GovukButtonGroup } from '@/components/govuk'
 
 interface ModalConfirmationInterstitialProps {
   title: string
-  body: string
+  body: React.ReactNode
   confirmLabel: string
   cancelLabel?: string
   onConfirm: () => void
@@ -20,7 +20,7 @@ export function ModalConfirmationInterstitial({
   return (
     <div>
       <h2 className="govuk-heading-l">{title}</h2>
-      <p className="govuk-body">{body}</p>
+      {body}
       <GovukButtonGroup className="govuk-!-margin-top-4">
         <GovukButton type="button" variant="warning" onClick={onConfirm}>
           {confirmLabel}

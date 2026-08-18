@@ -115,10 +115,7 @@ function SimpleEditor({
   })
 
   const editorObject = useEditor({
-    extensions: [
-      StarterKit,
-      CitationExtension,
-    ],
+    extensions: [StarterKit, CitationExtension],
     onUpdate: ({ editor }) => {
       onContentChange(editor.getHTML())
     },
