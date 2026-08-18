@@ -194,6 +194,11 @@ variable "azure_apim_tenant_id_arn" {
   type        = string
 }
 
+variable "azure_apim_url" {
+  description = "Base URL for Azure APIM"
+  type        = string
+}
+
 variable "azure_apim_client_id_arn" {
   description = "ARN of the SSM parameter containing the Azure APIM client ID"
   type        = string
@@ -249,5 +254,4 @@ variable "data_s3_bucket_name" {
   description = "name of the S3 bucket for data storage"
   type        = string
 }
-
 
