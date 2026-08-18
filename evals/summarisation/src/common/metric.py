@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import secrets
 from collections.abc import Iterable
 from dataclasses import dataclass
 
 import dspy
 from pydantic import BaseModel, ConfigDict, Field
 
+from common.canaries import generate_marker_hash
 from common.services.template_manager import TemplateManager
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
 from evals.summarisation.src.common.config import AppConfig
@@ -26,7 +26,7 @@ CITATION_DIMENSION = "auditability"
 # boundary from one mimicked by injected text. Drawn once per process rather than per call: it sits
 # in the shared prefix of every judge prompt, so re-drawing it would cost every call its prompt
 # cache, and a hash the summariser never saw is unguessable however long it lives.
-MARKER_HASH = secrets.token_hex(4)
+MARKER_HASH = generate_marker_hash()
 
 
 def template_supports_citations(template_name: str | None) -> bool:
