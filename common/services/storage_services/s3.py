@@ -77,6 +77,6 @@ class S3StorageService(StorageService):
                 return True
 
     @classmethod
-    async def delete_object(cls, key: str) -> None:
+    async def delete(cls, key: str) -> None:
         async with _create_boto3_s3_client() as session:
-            session.delete_object(Bucket=settings.DATA_S3_BUCKET, Key=key)
+            await session.delete_object(Bucket=settings.DATA_S3_BUCKET, Key=key)
