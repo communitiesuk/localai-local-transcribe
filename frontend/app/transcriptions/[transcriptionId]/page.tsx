@@ -312,9 +312,8 @@ const RecordingDetails = ({
             <GovukDateInput
               id="client-dob"
               legend="Client date of birth (optional)"
-              day={form.register('clientDateOfBirth.day')}
-              month={form.register('clientDateOfBirth.month')}
-              year={form.register('clientDateOfBirth.year')}
+              control={form.control}
+              name={'clientDateOfBirth'}
             />
             <GovukButtonGroup>
                 <GovukButton
