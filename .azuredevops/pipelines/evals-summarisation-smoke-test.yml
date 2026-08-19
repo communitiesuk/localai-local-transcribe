@@ -45,6 +45,9 @@ steps:
   - script: cp .env.example .env
     displayName: 'Copy env file'
 
+  - script: curl -fsS https://api.ipify.org && echo
+    displayName: 'Show agent public IP'
+
   - task: AzureCLI@2
     displayName: 'Run summarisation smoke test (blob)'
     inputs:
