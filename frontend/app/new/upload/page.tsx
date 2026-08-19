@@ -4,7 +4,7 @@ import { GovukBackLink } from '@/components/govuk'
 export default function Upload() {
   return (
     <div>
-      <GovukBackLink href="/" />
+      <GovukBackLink href="/new" />
       <h1 className="govuk-heading-xl">Upload a file</h1>
       <AudioUploadForm />
     </div>
