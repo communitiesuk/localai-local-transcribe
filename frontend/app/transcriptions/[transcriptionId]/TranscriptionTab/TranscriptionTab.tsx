@@ -252,6 +252,7 @@ export function TranscriptionTab({
               <DownloadTranscriptButton
                 getEntries={() => getValues('entries')}
                 onSuccess={onTranscriptDownloaded}
+                createdDatetime={recordings?.[0]?.created_datetime}
               />
             )}
           </GovukButtonGroup>

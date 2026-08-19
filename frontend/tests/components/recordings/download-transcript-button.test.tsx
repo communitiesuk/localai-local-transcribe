@@ -58,6 +58,7 @@ describe('<DownloadTranscriptButton />', () => {
         <DownloadTranscriptButton
           getEntries={() => entries}
           onSuccess={vi.fn()}
+          createdDatetime="2024-01-15T10:00:00Z"
         />
       )
       openModal()
@@ -95,6 +96,7 @@ describe('<DownloadTranscriptButton />', () => {
         <DownloadTranscriptButton
           getEntries={() => currentEntries}
           onSuccess={vi.fn()}
+          createdDatetime="2024-01-15T10:00:00Z"
         />
       )
 
