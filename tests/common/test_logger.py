@@ -37,12 +37,11 @@ class TestSetupLoggerRegistersFilter:
 class TestSensitiveDataSanitizerFilterScrubsLogs:
     @pytest.fixture
     def logger(self):
-        """Child logger that propagates to root so records pass through
+        """Child logger that propagates to root (by default) so records pass through
         the capturing handler (and its registered sanitizer filter)."""
         setup_logger()
         child = logging.getLogger("test.scrub")
         child.setLevel(logging.DEBUG)
-        child.propagate = True
         return child
 
     def test_email_in_message_is_redacted(self, logger, capturing_handler):
