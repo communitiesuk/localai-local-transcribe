@@ -1,16 +1,13 @@
 export const metadata = {
-  title: 'Privacy notice for Local Transcribe',
+  title: 'Privacy notice for Local Transcribe (service users)',
 }
 
-export default function PrivacyPage() {
+export default function EndServiceUserPrivacyPage() {
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-two-thirds">
         <h1 className="govuk-heading-l">Privacy notice for Local Transcribe</h1>
-        <p className="govuk-body-l">
-          Version for local council employees, local council personnel, team
-          managers and frontline workers
-        </p>
+        <p className="govuk-body-l">Version for local council service users</p>
 
         <p className="govuk-body">This privacy notice:</p>
         <ul className="govuk-list govuk-list--bullet">
@@ -99,8 +96,7 @@ export default function PrivacyPage() {
             <strong>Collection:</strong> When we ask you for information, we
             will keep to the law, including the Data Protection Act 2018 and UK
             General Data Protection Regulation. Personal Data will be gathered
-            during user research and engagement activities, Local Transcribe as
-            a live product and Local Transcribe evaluation.
+            during the use of Local Transcribe.
           </li>
           <li>
             <strong>Storage:</strong>
@@ -108,25 +104,8 @@ export default function PrivacyPage() {
               <li>
                 All Personal Data will be securely stored. Personal Data from
                 activities between MHCLG and Local Transcribe Partner Councils
-                during user research and engagement activities, Local Transcribe
-                as a live product and Local Transcribe evaluation will be stored
-                in line with GDPR, ICO guidance, user research ethics, and
-                governance.
-              </li>
-              <li>
-                Your Personal Data from user research and engagement activities
-                will be stored in the third-party software used by the MHCLG
-                Department, such as SharePoint.
-              </li>
-              <li>
-                Any artefacts with Personally Identifiable Information from user
-                research and engagement activities between frontline workers and
-                team members from Local Transcribe such as recordings of
-                meetings, will be stored in a password protected folder.
-              </li>
-              <li>
-                Information will be aggregated and anonymised and outcome
-                artefacts will have Personally Identifiable Information removed.
+                related to the use of Local Transcribe will be stored in line
+                with GDPR, ICO guidance, user research ethics, and governance.
               </li>
               <li>
                 Personal Data within Local Transcribe will be securely stored.
@@ -171,18 +150,6 @@ export default function PrivacyPage() {
         </h2>
         <ul className="govuk-list govuk-list--bullet">
           <li>
-            The following Personal Data from local council personnel, local
-            council employees, team managers, frontline workers is being
-            collected for the described purpose:
-            <ul className="govuk-list govuk-list--bullet">
-              <li>Full name</li>
-              <li>Role</li>
-              <li>Local authority</li>
-              <li>Local council department</li>
-              <li>Email address</li>
-            </ul>
-          </li>
-          <li>
             Personal Data within Audio Data
             <ul className="govuk-list govuk-list--bullet">
               <li>
@@ -192,8 +159,8 @@ export default function PrivacyPage() {
               </li>
               <li>
                 Audio data shared by Local Transcribe Partner Councils when they
-                agree to share this data, for the purpose of Local Transcribe
-                evaluation
+                agree to share this data, for the purpose of testing and
+                evaluating Local Transcribe
               </li>
               <li>
                 This includes audio data from meetings between frontline workers
@@ -211,7 +178,7 @@ export default function PrivacyPage() {
               <li>
                 Data from case management systems or surveys shared by Local
                 Transcribe Partner Councils when they agree to share this data,
-                for the purpose of Local Transcribe evaluation
+                for the purpose of testing and evaluating Local Transcribe
               </li>
               <li>
                 This may include case note data from case management systems,
@@ -226,17 +193,6 @@ export default function PrivacyPage() {
             applicable Data Protection Legislation in respect of their
             processing of Personal Data as a Joint Controller of data as part of
             their delivery of a service to service uses.
-          </li>
-        </ul>
-
-        <h2 className="govuk-heading-m">
-          What non-Personal Data is being collected
-        </h2>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>
-            Information shared by Local Transcribe Partner Councils as part of
-            user research and engagement activities e.g. ways of working, end to
-            end activities carried out by frontline workers for service delivery
           </li>
         </ul>
 
@@ -262,7 +218,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             Both MHCLG and Local Transcribe Partner Councils remain responsible
-            as Joint Controllers for instructing their own Data Processors to
+            as a Joint Controller for instructing their own Data Processors to
             comply with the applicable Data Protection Legislation in respect of
             their processing of Personal Data.
           </li>
@@ -286,10 +242,9 @@ export default function PrivacyPage() {
             interest.
           </li>
           <li>
-            We will only use your Personal Data for the purposes of user
-            research and engagement activities, Local Transcribe as a live
-            product, Local Transcribe evaluation, and in line with our legal
-            responsibilities under data protection law.
+            We will only use your Personal Data for the purposes of Local
+            Transcribe as a live product and Local Transcribe evaluation, and in
+            line with our legal responsibilities under data protection law.
           </li>
         </ul>
 
@@ -331,12 +286,6 @@ export default function PrivacyPage() {
 
         <h2 className="govuk-heading-m">Duration of the processing</h2>
         <p className="govuk-body">
-          The processing of Personal Data begins from the start of the
-          activities of Local Transcribe Partner Councils and MHCLG during user
-          research and engagement activities, Local Transcribe as a live product
-          and Local Transcribe evaluation.
-        </p>
-        <p className="govuk-body">
           Processing of Personal Data from audio data begins when personnel from
           Local Transcribe Partner Councils, local council employees, team
           managers and frontline workers use Local Transcribe to record meetings
@@ -355,19 +304,10 @@ export default function PrivacyPage() {
         </p>
         <p className="govuk-body">
           Processing of Personal Data shall continue for the duration of Local
-          Transcribe Partner Councils, participation in user research and
-          engagement activities, Local Transcribe as a live product and Local
-          Transcribe evaluation, and only for so long as such processing remains
-          necessary and proportionate to the purposes set out in this privacy
-          notice.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data shall cease when a Local Transcribe
-          Partner Council ceases participation in user research and engagement
-          activities, when Local Transcribe Partner Councils requests to have
-          their data deleted, when a service user requests to have their data
-          deleted, or when 6 months has elapsed from the start of data
-          processing.
+          Transcribe Partner Councils, participation in Local Transcribe as a
+          live product and Local Transcribe evaluation, and only for so long as
+          such processing remains necessary and proportionate to the purposes
+          set out in this privacy notice.
         </p>
         <p className="govuk-body">
           Processing of Personal Data from audio data ceases based on the
@@ -396,7 +336,7 @@ export default function PrivacyPage() {
         </p>
         <p className="govuk-body">
           Processing of Personal Data from case management systems or surveys
-          ceases after 14 months or when a Local Transcribe Partner Council
+          ceases after 14 months or when a Local Transcribe Partner Councils
           requests to have their audio data deleted.
         </p>
 
