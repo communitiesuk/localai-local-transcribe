@@ -1,4 +1,6 @@
 'use client'
+
+import { useBannerStore } from '@/stores/use-banner-store'
 import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
@@ -39,6 +41,8 @@ export default function TranscriptionPage(props: {
   const params = use(props.params)
 
   const { transcriptionId } = params
+
+  const { setBanner, clearBanner } = useBannerStore()
 
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
   const [lineEditError, setLineEditError] = useState<string | null>(null)
@@ -174,6 +178,21 @@ export default function TranscriptionPage(props: {
         <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab
             transcription={transcription}
+            onTranscriptCopied={() =>
+              setBanner({
+                variant: 'success',
+                title: 'Success',
+                message: 'Transcript copied to clipboard.',
+              })
+            }
+            onTranscriptDownloaded={() =>
+              setBanner({
+                variant: 'success',
+                title: 'Success',
+                message: 'Transcript downloaded.',
+              })
+            }
+            onDismissBanner={clearBanner}
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
           />

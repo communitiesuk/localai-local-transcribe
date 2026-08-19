@@ -2,14 +2,14 @@ import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/Transcript
 import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
-import CopyButton from '@/components/ui/copy-button'
+import { CopyTranscriptButton } from '@/components/recordings/copy-transcript-button'
+import { DownloadTranscriptButton } from '@/components/recordings/download-transcript-button'
 import {
   useUpdateTranscription,
   useUpdateTranscriptionSpeakers,
 } from '@/hooks/use-update-transcription-speakers'
 import { DialogueEntry, TranscriptionGetResponse } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { downloadTranscriptDoc } from '@/lib/download-word-doc'
 import { cn } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
@@ -49,12 +49,18 @@ const cloneEntries = (entries: DialogueEntry[]) =>
 
 export function TranscriptionTab({
   transcription,
+  onTranscriptCopied,
+  onTranscriptDownloaded,
+  onDismissBanner,
   onLineEditError,
   onEditModeChange,
 }: {
   transcription: TranscriptionGetResponse
   onLineEditError: (error: string | null) => void
   onEditModeChange?: (isEditing: boolean) => void
+  onTranscriptCopied: () => void
+  onTranscriptDownloaded: () => void
+  onDismissBanner: () => void
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
@@ -227,9 +233,6 @@ export function TranscriptionTab({
     [onLineEditError]
   )
 
-  const handleDownloadTranscript = () =>
-    downloadTranscriptDoc(getValues('entries'))
-
   const scrollToPlaying = () => {
     if (playingRef.current) {
       playingRef.current.scrollIntoView({
@@ -357,7 +360,10 @@ export function TranscriptionTab({
     <div>
       <FormProvider {...methods}>
         <form>
-          <GovukButtonGroup className="govuk-!-margin-bottom-4">
+          <GovukButtonGroup
+            className="govuk-!-margin-bottom-4"
+            onClick={onDismissBanner}
+          >
             <SpeakerEditor
               src={hasRecordings ? recordings[0].url : undefined}
               onSaveSpeaker={handleRenameSpeakerEverywhere}
@@ -374,25 +380,19 @@ export function TranscriptionTab({
             >
               Edit transcript
             </GovukButton>
-
-            <CopyButton
+            <CopyTranscriptButton
               textToCopy={transcriptionString}
-              posthogEvent="transcript_content_copied"
-              label="Copy transcript"
+              onSuccess={onTranscriptCopied}
               disabled={isLineEditMode}
             />
 
             {fields.length > 0 && (
-              <GovukButton
-                type="button"
-                variant="secondary"
-                className="govuk-!-margin-bottom-0"
-
-                onClick={handleDownloadTranscript}
+              <DownloadTranscriptButton
+                getEntries={() => getValues('entries')}
+                onSuccess={onTranscriptDownloaded}
+                createdDatetime={recordings?.[0]?.created_datetime}
                 disabled={isLineEditMode}
-              >
-                Download transcript
-              </GovukButton>
+              />
             )}
           </GovukButtonGroup>
 
