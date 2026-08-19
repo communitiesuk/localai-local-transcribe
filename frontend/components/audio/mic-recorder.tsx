@@ -149,6 +149,9 @@ function MicRecorderComponent({
       setIsRecording(true)
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
+      setError('Error occurred starting audio recording. Please try again.')
+      setRecordingUIState('idle')
+      stopAllTracks()
     }
     // Create a media recorder from the composed stream
   }, [
@@ -157,6 +160,7 @@ function MicRecorderComponent({
     requestWakeLock,
     selectedDeviceId,
     setRecordedAudio,
+    setRecordingUIState,
     stopAllTracks,
     updateRecording,
   ])

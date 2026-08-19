@@ -246,6 +246,7 @@ function TabRecorder({
       setError(
         error instanceof Error ? error.message : 'An unknown error occurred'
       )
+      setRecordingUIState('idle')
       stopAllTracks()
     }
   }, [
@@ -254,6 +255,7 @@ function TabRecorder({
     requestWakeLock,
     selectedDeviceId,
     setRecordedAudio,
+    setRecordingUIState,
     stopAllTracks,
     updateRecording,
   ])
