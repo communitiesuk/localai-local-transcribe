@@ -12,12 +12,14 @@ interface DownloadTranscriptButtonProps {
   getEntries: () => DialogueEntry[]
   onSuccess: () => void
   createdDatetime?: string
+  disabled?: boolean
 }
 
 export function DownloadTranscriptButton({
   getEntries,
   onSuccess,
   createdDatetime,
+  disabled,
 }: DownloadTranscriptButtonProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const { setBanner } = useBannerStore()
@@ -50,6 +52,7 @@ export function DownloadTranscriptButton({
         variant="secondary"
         onClick={() => setModalOpen(true)}
         className="govuk-!-margin-bottom-0"
+        disabled={disabled}
       >
         Download transcript
       </GovukButton>

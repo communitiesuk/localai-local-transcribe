@@ -20,9 +20,11 @@ import { FormProvider, useFormContext, useWatch } from 'react-hook-form'
 export const SpeakerEditor = ({
   src,
   onSaveSpeaker,
+  disabled = false,
 }: {
   src?: string
   onSaveSpeaker: (originalSpeaker: string, newSpeaker: string) => Promise<void>
+  disabled?: boolean
 }) => {
   const form = useFormContext<DialogueEntryForm>()
   const entries = useWatch({ control: form.control, name: 'entries' })
@@ -56,6 +58,7 @@ export const SpeakerEditor = ({
           type="button"
           variant="secondary"
           className="govuk-!-margin-bottom-0"
+          disabled={disabled}
         >
           Edit speaker names
         </GovukButton>

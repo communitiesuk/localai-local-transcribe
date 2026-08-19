@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
     ContentSource,
@@ -309,6 +310,9 @@ class MinuteAndHallucinations:
     text: str
     total_claims: int
     hallucinations: list[LLMHallucination]
+
+    def __post_init__(self) -> None:
+        self.text = strip_boundary_metadata(self.text)
 
 
 class MeetingType(StrEnum):
