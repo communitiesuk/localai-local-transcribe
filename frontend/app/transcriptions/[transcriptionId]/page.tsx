@@ -1,15 +1,18 @@
 'use client'
-import { use, useState } from 'react'
+import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { BannerNotification } from '@/components/banner-notification'
 import { DownloadButton } from '@/components/download-button'
 import {
   GovukBackLink,
   GovukButton,
+  GovukButtonGroup,
   GovukDateInput,
   GovukDetails,
+  GovukErrorSummary,
   GovukFormGroup,
   GovukHeading,
   GovukInput,
@@ -28,7 +31,7 @@ import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
-import { redirect } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -38,6 +41,23 @@ export default function TranscriptionPage(props: {
   const { transcriptionId } = params
 
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
+  const [lineEditError, setLineEditError] = useState<string | null>(null)
+  const errorSummaryRef = useRef<HTMLDivElement | null>(null)
+
+  const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
+
+  const handleLineEditError = useCallback((error: string | null) => {
+    setLineEditError(error)
+  }, [])
+
+  useEffect(() => {
+    if (lineEditError && errorSummaryRef.current) {
+      errorSummaryRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }
+  }, [lineEditError])
 
   const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
@@ -48,6 +68,7 @@ export default function TranscriptionPage(props: {
       ['awaiting_start', 'in_progress'].includes(query.state.data.status)
         ? 2000
         : false,
+    refetchOnWindowFocus: false,
   })
 
   if (!transcription && !isLoading) {
@@ -125,21 +146,39 @@ export default function TranscriptionPage(props: {
       <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
         Back
       </GovukBackLink>
+      <BannerNotification />
+      {lineEditError && (
+        <GovukErrorSummary
+          ref={errorSummaryRef}
+          errorList={[{ href: '#line-edit-actions', text: lineEditError }]}
+        />
+      )}
       <GovukHeading as="h1" size="xl" className="govuk-!-margin-bottom-2">
         {recordingDate}
       </GovukHeading>
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
-      <RecordingDetails dateTimeLabel={dateTimeLabel} />
+      <RecordingDetails
+        dateTimeLabel={dateTimeLabel}
+        transcription={transcription}
+      />
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
       <div>
         <NewMinuteDialog
           transcriptionId={transcription.id!}
-          trigger={<GovukButton type="button">Create document</GovukButton>}
+          trigger={
+            <GovukButton type="button" disabled={isTranscriptEditing}>
+              Create document
+            </GovukButton>
+          }
         />
       </div>
       <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
         <GovukTabs.Panel id="transcript" label="Transcript">
-          <TranscriptionTab transcription={transcription} />
+          <TranscriptionTab
+            transcription={transcription}
+            onLineEditError={handleLineEditError}
+            onEditModeChange={setIsTranscriptEditing}
+          />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
           <MinuteTab transcription={transcription} />
@@ -154,8 +193,15 @@ export default function TranscriptionPage(props: {
   )
 }
 
-const RecordingDetails = ({ dateTimeLabel }: { dateTimeLabel: string }) => {
+const RecordingDetails = ({
+  dateTimeLabel,
+  transcription,
+}: {
+  dateTimeLabel: string
+  transcription: TranscriptionGetResponse
+}) => {
   const [open, setOpen] = useState(false)
+  const router = useRouter()
   return (
     <>
       <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
@@ -183,14 +229,24 @@ const RecordingDetails = ({ dateTimeLabel }: { dateTimeLabel: string }) => {
           id="client-dob"
           legend="Client date of birth (optional)"
         />
-        <GovukButton
-          type="button"
-          variant="secondary"
-          disabled
-          className="govuk-!-margin-bottom-2"
-        >
-          Update details
-        </GovukButton>
+        <GovukButtonGroup>
+          <GovukButton
+            type="button"
+            variant="secondary"
+            disabled
+            className="govuk-!-margin-bottom-2"
+          >
+            Update details
+          </GovukButton>
+          <GovukButton
+            type="button"
+            variant="warning"
+            className="govuk-!-margin-bottom-0"
+            onClick={() => router.push(`${transcription.id}/delete`)}
+          >
+            Delete recording
+          </GovukButton>
+        </GovukButtonGroup>
       </GovukDetails>
     </>
   )
