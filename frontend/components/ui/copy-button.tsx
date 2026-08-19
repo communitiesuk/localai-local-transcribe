@@ -6,12 +6,14 @@ interface CopyButtonProps {
   textToCopy: string
   posthogEvent: string
   label?: string
+  disabled?: boolean
 }
 
 function CopyButton({
   textToCopy,
   posthogEvent,
   label = 'Copy',
+  disabled = false,
 }: CopyButtonProps) {
   const [showCopied, setShowCopied] = useState(false)
 
@@ -51,6 +53,7 @@ function CopyButton({
       variant="secondary"
       onClick={handleCopy}
       className="govuk-!-margin-bottom-0"
+      disabled={disabled}
     >
       {showCopied ? 'Copied!' : label}
     </GovukButton>

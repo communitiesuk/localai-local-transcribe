@@ -3,7 +3,6 @@ import { useCallback } from 'react'
 
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
-  listLabelledTranscriptionsTranscriptionsLabelledGetOptions,
   listLabelledTranscriptionsTranscriptionsLabelledGetQueryKey,
   listUnlabelledTranscriptionsTranscriptionsUnlabelledGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
