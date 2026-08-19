@@ -1,3 +1,5 @@
+import { GovukHeading, GovukList, GovukListItem } from '@/components/govuk'
+
 export const metadata = {
   title: 'Privacy notice for Local Transcribe (service users)',
 }
@@ -6,19 +8,22 @@ export default function EndServiceUserPrivacyPage() {
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-two-thirds">
-        <h1 className="govuk-heading-l">Privacy notice for Local Transcribe</h1>
-        <p className="govuk-body-l">Version for local council service users</p>
+        <GovukHeading as="h1" size="l">
+          Privacy notice for Local Transcribe
+        </GovukHeading>
 
         <p className="govuk-body">This privacy notice:</p>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>explains your rights</li>
-          <li>
+        <GovukList type="bullet">
+          <GovukListItem>explains your rights</GovukListItem>
+          <GovukListItem>
             provides the information you’re entitled to under UK data protection
             legislation
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
 
-        <h2 className="govuk-heading-m">What Local Transcribe is</h2>
+        <GovukHeading as="h2" size="m">
+          What Local Transcribe is
+        </GovukHeading>
         <p className="govuk-body">
           Local Transcribe is an AI transcription and summarisation tool. It
           uses audio recordings of conversations to generate transcripts and
@@ -30,7 +35,9 @@ export default function EndServiceUserPrivacyPage() {
           government departments.
         </p>
 
-        <h2 className="govuk-heading-m">Who we are</h2>
+        <GovukHeading as="h2" size="m">
+          Who we are
+        </GovukHeading>
         <p className="govuk-body">
           Local Transcribe is owned and operated by the Local AI programme in
           the Ministry for Housing, Communities and Local Government (MHCLG).
@@ -41,14 +48,14 @@ export default function EndServiceUserPrivacyPage() {
           controllers.
         </p>
         <p className="govuk-body">You can contact the:</p>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>
+        <GovukList type="bullet">
+          <GovukListItem>
             Local Transcribe team:{' '}
             <a className="govuk-link" href="mailto:localai@communities.gov.uk">
               localai@communities.gov.uk
             </a>
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             MHCLG data protection officer:{' '}
             <a
               className="govuk-link"
@@ -56,61 +63,63 @@ export default function EndServiceUserPrivacyPage() {
             >
               dataprotection@communities.gov.uk
             </a>
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
 
-        <h2 className="govuk-heading-m">
+        <GovukHeading as="h2" size="m">
           Why we collect your personal information
-        </h2>
+        </GovukHeading>
         <p className="govuk-body">
           We process your personal data while you’re using the Local Transcribe
           product, and during activities that support the product.
         </p>
         <p className="govuk-body">This includes, but is not limited to:</p>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>testing and collecting user feedback</li>
-          <li>user research and design</li>
-          <li>
+        <GovukList type="bullet">
+          <GovukListItem>testing and collecting user feedback</GovukListItem>
+          <GovukListItem>user research and design</GovukListItem>
+          <GovukListItem>
             engaging with your council’s employees, personnel, team managers and
             frontline workers
-          </li>
-          <li>onboarding users</li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>onboarding users</GovukListItem>
+          <GovukListItem>
             sharing audio data, survey data or data from council case management
             systems between your council and MHCLG – for example, to support
             operational testing or evaluate the accuracy of Local Transcribe’s
             AI outputs
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             service improvement metrics, value benefit metrics and analytics
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             Local Transcribe team members accessing data within the tool to help
             them support users
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
 
-        <h2 className="govuk-heading-m">Nature of processing</h2>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>
+        <GovukHeading as="h2" size="m">
+          Nature of processing
+        </GovukHeading>
+        <GovukList type="bullet">
+          <GovukListItem>
             <strong>Collection:</strong> When we ask you for information, we
             will keep to the law, including the Data Protection Act 2018 and UK
             General Data Protection Regulation. Personal Data will be gathered
             during the use of Local Transcribe.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             <strong>Storage:</strong>
-            <ul className="govuk-list govuk-list--bullet">
-              <li>
+            <GovukList type="bullet">
+              <GovukListItem>
                 All Personal Data will be securely stored. Personal Data from
                 activities between MHCLG and Local Transcribe Partner Councils
                 related to the use of Local Transcribe will be stored in line
                 with GDPR, ICO guidance, user research ethics, and governance.
-              </li>
-              <li>
+              </GovukListItem>
+              <GovukListItem>
                 Personal Data within Local Transcribe will be securely stored.
-              </li>
-              <li>
+              </GovukListItem>
+              <GovukListItem>
                 Our technical team will take protective measures to ensure the
                 appropriate technical and organisational measures are in place
                 which may include pseudonymising and encrypting Personal Data,
@@ -119,14 +128,14 @@ export default function EndServiceUserPrivacyPage() {
                 access to Personal Data can be restored in a timely manner after
                 an incident, and regularly assessing and evaluating the
                 effectiveness of such measures.
-              </li>
-            </ul>
-          </li>
-          <li>
+              </GovukListItem>
+            </GovukList>
+          </GovukListItem>
+          <GovukListItem>
             <strong>Organisation:</strong> Personal Data will be saved in a
             structured and organised manner to aid retrieval and analysis.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             <strong>Use:</strong> Personal Data from engagement activities will
             be used to understand the workflow and activities of Local
             Transcribe Partner Councils personnel, local council employees, team
@@ -142,113 +151,115 @@ export default function EndServiceUserPrivacyPage() {
             and frontline workers, for the purpose of transcription within Local
             Transcribe will be processed for the purpose of transcription and
             generating summaries within Local Transcribe.
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
 
-        <h2 className="govuk-heading-m">
+        <GovukHeading as="h2" size="m">
           What Personal Data is being collected
-        </h2>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>
+        </GovukHeading>
+        <GovukList type="bullet">
+          <GovukListItem>
             Personal Data within Audio Data
-            <ul className="govuk-list govuk-list--bullet">
-              <li>
+            <GovukList type="bullet">
+              <GovukListItem>
                 Audio data shared by Local Transcribe Partner Councils
                 personnel, local council employees, team managers, frontline
                 workers when they use Local Transcribe
-              </li>
-              <li>
+              </GovukListItem>
+              <GovukListItem>
                 Audio data shared by Local Transcribe Partner Councils when they
                 agree to share this data, for the purpose of testing and
                 evaluating Local Transcribe
-              </li>
-              <li>
+              </GovukListItem>
+              <GovukListItem>
                 This includes audio data from meetings between frontline workers
                 and service users, and for the avoidance of doubt this means
                 that audio data may contain, or will contain Personal Data from
                 service users and depending on what’s discussed during meetings
                 between frontline workers and service users the audio data may
                 contain special category and criminal offence data
-              </li>
-            </ul>
-          </li>
-          <li>
+              </GovukListItem>
+            </GovukList>
+          </GovukListItem>
+          <GovukListItem>
             Personal Data within case management system data and survey data
-            <ul className="govuk-list govuk-list--bullet">
-              <li>
+            <GovukList type="bullet">
+              <GovukListItem>
                 Data from case management systems or surveys shared by Local
                 Transcribe Partner Councils when they agree to share this data,
                 for the purpose of testing and evaluating Local Transcribe
-              </li>
-              <li>
+              </GovukListItem>
+              <GovukListItem>
                 This may include case note data from case management systems,
                 and for the avoidance of doubt this means that case management
                 data may contain, or will contain personal data from service
                 users
-              </li>
-            </ul>
-          </li>
-          <li>
+              </GovukListItem>
+            </GovukList>
+          </GovukListItem>
+          <GovukListItem>
             Local Transcribe Partner Councils undertakes to comply with the
             applicable Data Protection Legislation in respect of their
             processing of Personal Data as a Joint Controller of data as part of
             their delivery of a service to service uses.
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
 
-        <h2 className="govuk-heading-m">
+        <GovukHeading as="h2" size="m">
           Special category and criminal offence data
-        </h2>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>
+        </GovukHeading>
+        <GovukList type="bullet">
+          <GovukListItem>
             Any special category and criminal offence data shared by Local
             Transcribe Partner Councils personnel, local council employees, team
             managers, frontline workers, will be the responsibility of Local
             Transcribe Partner Councils to handle in line with GDPR, and ICO
             guidance.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             Data within Local Transcribe, shared by the local authority, will be
             processed by Local Transcribe in line with GDPR, and ICO guidance.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             Both MHCLG and Local Transcribe Partner Councils undertake to comply
             with the applicable Data Protection Legislation in respect of their
             processing of Personal Data as a Joint Controller.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             Both MHCLG and Local Transcribe Partner Councils remain responsible
             as a Joint Controller for instructing their own Data Processors to
             comply with the applicable Data Protection Legislation in respect of
             their processing of Personal Data.
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
 
-        <h2 className="govuk-heading-m">
+        <GovukHeading as="h2" size="m">
           Lawful basis for processing the data
-        </h2>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>
+        </GovukHeading>
+        <GovukList type="bullet">
+          <GovukListItem>
             Data protection legislation sets out when we are lawfully allowed to
             process your data.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             The lawful basis for Local Transcribe is Article 6(1)(e) of the UK
             General Data Protection Regulation (UK GDPR) – Public Task.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             Public task means we are processing your Personal Data because it is
             necessary for us to carry out our official functions in the public
             interest.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             We will only use your Personal Data for the purposes of Local
             Transcribe as a live product and Local Transcribe evaluation, and in
             line with our legal responsibilities under data protection law.
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
 
-        <h2 className="govuk-heading-m">Privacy Notice</h2>
+        <GovukHeading as="h2" size="m">
+          Privacy Notice
+        </GovukHeading>
         <p className="govuk-body">
           This privacy notice explains how and why we use your personal
           information. It sets out what data we collect, what we use it for, how
@@ -263,28 +274,30 @@ export default function EndServiceUserPrivacyPage() {
           transparency information.
         </p>
 
-        <h2 className="govuk-heading-m">
+        <GovukHeading as="h2" size="m">
           With whom we will be sharing the data
-        </h2>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>
+        </GovukHeading>
+        <GovukList type="bullet">
+          <GovukListItem>
             The data will be able to be accessed by those employed by MHCLG, and
             the Local Transcribe team.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             This includes third-party contractors from Softwire and Sparta
             Global, which support the delivery of Local Transcribe process
             personal data on MHCLG’s instruction.
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             Audio data and associated transcripts may also be processed by
             service providers acting on MHCLG’s instructions for secure hosting,
             speech-to-text transcription, summarisation, product analytics,
             performance monitoring and error tracking.
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
 
-        <h2 className="govuk-heading-m">Duration of the processing</h2>
+        <GovukHeading as="h2" size="m">
+          Duration of the processing
+        </GovukHeading>
         <p className="govuk-body">
           Processing of Personal Data from audio data begins when personnel from
           Local Transcribe Partner Councils, local council employees, team
@@ -340,27 +353,29 @@ export default function EndServiceUserPrivacyPage() {
           requests to have their audio data deleted.
         </p>
 
-        <h2 className="govuk-heading-m">
+        <GovukHeading as="h2" size="m">
           Your rights, e.g. access, rectification, erasure
-        </h2>
+        </GovukHeading>
         <p className="govuk-body">
           The data we are collecting is your Personal Data, and you have rights
           that affect what happens to it. You have the right to:
         </p>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>know that we are using your Personal Data</li>
-          <li>see what data we have about you</li>
-          <li>
+        <GovukList type="bullet">
+          <GovukListItem>
+            know that we are using your Personal Data
+          </GovukListItem>
+          <GovukListItem>see what data we have about you</GovukListItem>
+          <GovukListItem>
             ask to have your data corrected, and to ask how we check the
             information we hold is accurate
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             ask to restrict how we use personal data or object to certain
             processing
-          </li>
-          <li>ask for your data to be deleted</li>
-          <li>complain to the ICO (see below)</li>
-        </ul>
+          </GovukListItem>
+          <GovukListItem>ask for your data to be deleted</GovukListItem>
+          <GovukListItem>complain to the ICO (see below)</GovukListItem>
+        </GovukList>
         <p className="govuk-body">
           You may ask us to delete your personal information or stop using it.
           We will consider your request in accordance with data protection law.
@@ -370,7 +385,9 @@ export default function EndServiceUserPrivacyPage() {
           decision.
         </p>
 
-        <h2 className="govuk-heading-m">Sending data overseas</h2>
+        <GovukHeading as="h2" size="m">
+          Sending data overseas
+        </GovukHeading>
         <p className="govuk-body">
           Data will be transferred to the European Economic Area (Sweden and
           Germany) for processing by speech-to-text and LLM services, product
@@ -381,24 +398,28 @@ export default function EndServiceUserPrivacyPage() {
           only.
         </p>
 
-        <h2 className="govuk-heading-m">Automated decision making</h2>
+        <GovukHeading as="h2" size="m">
+          Automated decision making
+        </GovukHeading>
         <p className="govuk-body">
           No automated decision making will take place using the data collected.
         </p>
 
-        <h2 className="govuk-heading-m">Complaints</h2>
+        <GovukHeading as="h2" size="m">
+          Complaints
+        </GovukHeading>
         <p className="govuk-body">
           If you are unhappy with the way the MHCLG Department has acted, you
           can make a complaint.
         </p>
-        <ul className="govuk-list govuk-list--bullet">
-          <li>
+        <GovukList type="bullet">
+          <GovukListItem>
             The Local Transcribe team can be contacted at{' '}
             <a className="govuk-link" href="mailto:localai@communities.gov.uk">
               localai@communities.gov.uk
             </a>
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             The Data Protection Officer at MHCLG can be contacted at{' '}
             <a
               className="govuk-link"
@@ -406,8 +427,8 @@ export default function EndServiceUserPrivacyPage() {
             >
               dataprotection@communities.gov.uk
             </a>
-          </li>
-          <li>
+          </GovukListItem>
+          <GovukListItem>
             If you want to make a Subject Access Request, another request in
             relation to your rights, or if you are not happy with how we are
             using your Personal Data, you can contact{' '}
@@ -417,8 +438,8 @@ export default function EndServiceUserPrivacyPage() {
             >
               dataprotection@communities.gov.uk
             </a>
-          </li>
-        </ul>
+          </GovukListItem>
+        </GovukList>
         <p className="govuk-body">
           If you are still not happy, or for independent advice about data
           protection, privacy and data sharing, you can contact:
