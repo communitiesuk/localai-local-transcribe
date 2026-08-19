@@ -24,6 +24,14 @@ export { GovukTag, type TagColour } from './tag'
 export { GovukTextarea } from './textarea'
 export { GovukSectionBreak } from './section-break'
 export {
+  GovukTable,
+  GovukTableHead,
+  GovukTableBody,
+  GovukTableRow,
+  GovukTableHeaderCell,
+  GovukTableCell,
+} from './table'
+export {
   GovukPanel,
   GovukPanelHeader,
   GovukPanelTitle,

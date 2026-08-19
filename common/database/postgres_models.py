@@ -219,6 +219,7 @@ class TemplateQuestion(BaseTableMixin, table=True):
     position: int
     title: str
     description: str
+    format_instructions: str = Field(default="", sa_column_kwargs={"server_default": ""})
 
     user_template_id: UUID = Field(foreign_key="user_template.id", ondelete="CASCADE")
     user_template: "UserTemplate" = Relationship(back_populates="questions")
@@ -232,6 +233,7 @@ class UserTemplate(BaseTableMixin, table=True):
     name: str
     content: str
     description: str = ""
+    heading: str = Field(default="", sa_column_kwargs={"server_default": ""})
 
     type: TemplateType = Field(
         default=TemplateType.DOCUMENT,

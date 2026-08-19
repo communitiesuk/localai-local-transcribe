@@ -2296,7 +2296,12 @@
         "properties": {
           "position": { "type": "integer", "title": "Position" },
           "title": { "type": "string", "title": "Title" },
-          "description": { "type": "string", "title": "Description" }
+          "description": { "type": "string", "title": "Description" },
+          "format_instructions": {
+            "type": "string",
+            "title": "Format Instructions",
+            "default": ""
+          }
         },
         "type": "object",
         "required": ["position", "title", "description"],
@@ -2306,6 +2311,7 @@
         "properties": {
           "name": { "type": "string", "title": "Name" },
           "content": { "type": "string", "title": "Content" },
+          "heading": { "type": "string", "title": "Heading", "default": "" },
           "description": { "type": "string", "title": "Description" },
           "type": { "$ref": "#/components/schemas/TemplateType" },
           "questions": {
@@ -2815,6 +2821,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Content"
           },
+          "heading": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Heading"
+          },
           "description": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Description"
@@ -2843,6 +2853,11 @@
           "position": { "type": "integer", "title": "Position" },
           "title": { "type": "string", "title": "Title" },
           "description": { "type": "string", "title": "Description" },
+          "format_instructions": {
+            "type": "string",
+            "title": "Format Instructions",
+            "default": ""
+          },
           "id": { "type": "string", "format": "uuid", "title": "Id" }
         },
         "type": "object",
@@ -2906,6 +2921,7 @@
           },
           "name": { "type": "string", "title": "Name" },
           "content": { "type": "string", "title": "Content" },
+          "heading": { "type": "string", "title": "Heading" },
           "description": { "type": "string", "title": "Description" },
           "type": { "$ref": "#/components/schemas/TemplateType" },
           "questions": {
@@ -2925,6 +2941,7 @@
           "updated_datetime",
           "name",
           "content",
+          "heading",
           "description",
           "type",
           "questions"

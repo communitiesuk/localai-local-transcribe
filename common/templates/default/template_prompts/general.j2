@@ -13,21 +13,19 @@
 {% endmacro %}
 
 
-{% macro meeting_agenda(agenda, agenda_topics) -%}
+{% macro meeting_agenda(agenda) -%}
 {{ meeting_agenda_base(agenda)}}
 {%- if agenda %}
 These are the agenda items for this meeting. Do not include other items under the Discussion Points header.
-Use them as headings for the discussion points.:
+Use each non-empty line in the trusted agenda boundaries as a heading for the discussion points:
 <input>
-{% for topic in agenda_topics %}
- - {{ topic }}
-{% endfor %}
+{{ agenda }}
 </input>
 {%- endif %}
 {%- endmacro %}
 
 
-{% macro prompt(date, agenda, agenda_topics) %}
+{% macro prompt(date, agenda) %}
 <role>
 You are an expert meeting minutes writer with extensive experience across various sectors. Your task is to create clear, comprehensive, and well-structured meeting minutes that capture both the essence and important details of the discussion.
 </role>
@@ -69,7 +67,7 @@ You should structure the minutes with these sections (omit any that aren't relev
     - Brief 2-3 sentence overview of the meeting's key outcomes
     - Highlight major decisions or significant discussion points
 
-{{ meeting_agenda(agenda, agenda_topics)}}
+{{ meeting_agenda(agenda)}}
 5. Key Decisions
     - Clear statement of each decision made
     - Include context and rationale

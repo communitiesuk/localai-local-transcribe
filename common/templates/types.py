@@ -73,7 +73,11 @@ class SimpleTemplate(Template, Protocol):
     citations_required: bool
 
     @classmethod
-    def prompt(cls, transcript: list[DialogueEntry], agenda: str | None = None) -> list[dict[str, str]]:
+    def prompt(
+        cls,
+        transcript: list[DialogueEntry],
+        agenda: str | None = None,
+    ) -> list[dict[str, str]]:
         """
         Generates a formatted prompt based on a transcript of dialogue entries and an agenda.
 

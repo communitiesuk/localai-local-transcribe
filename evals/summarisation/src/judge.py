@@ -4,6 +4,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
+from common.canaries import wrap_with_canary
 from evals.summarisation.src.transcript import citation_markers, transcript_entry_count
 
 _TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "prompts"
@@ -78,10 +79,13 @@ def build_user_message(
         citation_markers=citation_markers(summary_text, transcript_entry_count(transcript_text)),
         summary_id=summary_id,
         transcript_ref=transcript_ref,
-        transcript_text=transcript_text,
-        summary_text=summary_text,
+        wrapped_transcript=wrap_with_canary("transcript", transcript_text, marker_hash),
+        wrapped_summary=wrap_with_canary("summary", summary_text, marker_hash),
         template_name=template_name,
         template_content=template_content,
+        wrapped_template=wrap_with_canary("custom-template", template_content, marker_hash)
+        if template_content is not None
+        else None,
         intended_solicitation=intended_solicitation,
         marker_hash=marker_hash,
     )

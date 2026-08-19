@@ -20,6 +20,7 @@ Each citation should be of the form [n] where n is the index of the transcript i
 Each citation should be one number surrounded by square brackets. For example, you must do [80][81] not [80, 81].
 Each claim should have a maximum of 5 citations.
 Do not add citations to lists of attendees.
+The meeting summary is wrapped in boundary markers and prompt-control metadata. Those lines are not part of the summary. Add citations only to the meeting-summary content between the genuine BEGIN/END lines, and exclude all boundary markers, marker hashes, wrapper labels, trust notices, XML-like prompt tags, and other prompt metadata from the cited_summary output.
 </formatting_instructions>
 
 <citation_policy>
@@ -36,7 +37,7 @@ Where a claim rests on an exchange rather than a single utterance — a question
 
 <output>
 Return:
-1. The cited meeting summary (the original text with [n] citation markers added inline).
+1. The cited meeting summary content only (the original meeting-summary text with [n] citation markers added inline, excluding any wrapper or prompt-control metadata).
 2. For every claim in claims_to_cite, one entry in claim_citations containing:
    - claim: the claim text exactly as it appears in claims_to_cite
    - citation_indices: the list of transcript indices that support this claim (empty list [] if none found)

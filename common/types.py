@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
     ContentSource,
@@ -309,6 +310,9 @@ class MinuteAndHallucinations:
     total_claims: int
     hallucinations: list[LLMHallucination]
 
+    def __post_init__(self) -> None:
+        self.text = strip_boundary_metadata(self.text)
+
 
 class MeetingType(StrEnum):
     too_short = auto()
@@ -338,6 +342,7 @@ class CreateQuestion(BaseModel):
     position: int
     title: str
     description: str
+    format_instructions: str = ""
 
 
 class Question(CreateQuestion):
@@ -347,6 +352,7 @@ class Question(CreateQuestion):
 class PatchUserTemplateRequest(BaseModel):
     name: str | None = None
     content: str | None = None
+    heading: str | None = None
     description: str | None = None
     questions: list[CreateQuestion | Question] | None = None
 
@@ -356,6 +362,7 @@ class TemplateResponse(BaseModel):
     updated_datetime: datetime
     name: str
     content: str
+    heading: str
     description: str
     type: TemplateType
     questions: list[Question] | None
@@ -364,6 +371,7 @@ class TemplateResponse(BaseModel):
 class CreateUserTemplateRequest(BaseModel):
     name: str
     content: str
+    heading: str = ""
     description: str
     type: TemplateType
     questions: list[CreateQuestion] | None = None
