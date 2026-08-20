@@ -194,7 +194,7 @@
       "post": {
         "tags": ["Transcriptions"],
         "summary": "Create Transcription Only",
-        "description": "Start a transcription job without creating a minute/summary.",
+        "description": "transcription without creating an associated Minute",
         "operationId": "create_transcription_only_transcriptions_only_post",
         "parameters": [
           {

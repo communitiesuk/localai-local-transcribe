@@ -1,8 +1,6 @@
 import { PosthogBanner } from '@/components/posthog-banner'
-import { PaginatedLabelledTranscriptions } from '@/components/recent-meetings/paginated-labelled-transcriptions'
-import { Loader2, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { GovukButtonLink } from '@/components/govuk'
-import { Suspense } from 'react'
 import { BannerNotification } from '@/components/banner-notification'
 
 export default function Home() {

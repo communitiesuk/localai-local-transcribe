@@ -86,14 +86,7 @@ export const useStartTranscriptionOnly = () => {
 
       return transcriptionData.id
     },
-    [
-      createRecording,
-      createTranscriptionOnly,
-      removeRecording,
-      router,
-      setBanner,
-      uploadBlob,
-    ]
+    [createRecording, createTranscriptionOnly, removeRecording, uploadBlob]
   )
 
   const form = useForm<TranscriptionOnlyForm>({
