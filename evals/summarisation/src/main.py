@@ -120,6 +120,19 @@ def _fail_pipeline_if_threshold_failed(review_path: Path) -> None:
         raise typer.Exit(code=1)
 
 
+def _fail_pipeline_if_citation_gate_failed(summary_path: Path) -> None:
+    with summary_path.open("rb") as f:
+        outcomes = orjson.loads(f.read())["citation_outcomes"]
+
+    typer.echo(f"Citation outcomes: {outcomes}")
+    if outcomes["fail"] > 0:
+        typer.echo(
+            f"Citation gate: {outcomes['fail']} summary/summaries failed the claim citation rate threshold.",
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+
 async def _drain_pending_tasks() -> None:
     """Await any background tasks the eval left running so they finish before the process exits."""
     tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
@@ -251,6 +264,7 @@ def run(
 
         if cfg.hallucination.enabled:
             from evals.summarisation.src.hallucination import run_hallucination_eval
+            from evals.summarisation.src.hallucination.constants import SUMMARY_FILENAME
 
             output_dir = _staged_output_dir(blob, cfg, staging_dir)
             h_run_id, h_results = run_hallucination_eval(
@@ -262,6 +276,7 @@ def run(
             typer.echo(f"Hallucination results: {h_results}")
 
             _publish(blob, cfg, h_results.parent, h_run_id, subtype="hallucination")
+            _fail_pipeline_if_citation_gate_failed(h_results.parent / SUMMARY_FILENAME)
 
 
 if __name__ == "__main__":

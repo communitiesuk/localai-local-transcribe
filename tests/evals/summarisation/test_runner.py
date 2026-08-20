@@ -247,6 +247,7 @@ def test_build_run_summary_records_errors():
         split="test",
         devset=[],
         metrics_summary={},
+        skipped_dimensions=[],
         summarize_ms_values=[],
         judge_ms_values=[],
         errors=errors,
@@ -260,6 +261,7 @@ def test_build_run_summary_defaults_errors_to_empty():
         split="test",
         devset=[],
         metrics_summary={},
+        skipped_dimensions=[],
         summarize_ms_values=[],
         judge_ms_values=[],
     )
