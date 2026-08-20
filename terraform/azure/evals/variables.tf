@@ -90,8 +90,8 @@ variable "mhclg_ip_rules" {
 
 variable "network_rules_bypass" {
   type        = list(string)
-  description = "Storage firewall bypass exemptions. Keep as None unless a named trusted Azure service needs access."
-  default     = ["None"]
+  description = "Storage firewall bypass exemptions. Keep empty unless a named trusted Azure service needs access."
+  default     = []
 }
 
 variable "sensitive_public_network_access_enabled" {
