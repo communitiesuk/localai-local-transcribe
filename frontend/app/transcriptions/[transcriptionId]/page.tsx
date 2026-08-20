@@ -38,6 +38,7 @@ import { TranscriptionDetailsData } from '@/types/transcriptions'
 import { FormProvider, useForm } from 'react-hook-form'
 import { BannerNotification } from '@/components/banner-notification'
 import { useBannerStore } from '@/stores/use-banner-store'
+import { useTranscriptionDetailsDraftStore } from '@/stores/use-transcription-details-draft-store'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -223,7 +224,10 @@ const RecordingDetails = ({
   dateTimeLabel: string
   transcription: TranscriptionGetResponse
 }) => {
-  const [open, setOpen] = useState(false)
+  const { draft, setDraft, clearDraft } = useTranscriptionDetailsDraftStore()
+  const [open, setOpen] = useState(
+    (draft?.transcriptionId === transcription.id && draft?.isOpen) ?? false
+  )
   const router = useRouter()
 
   let clientDateOfBirth: Date | null = null
@@ -246,6 +250,12 @@ const RecordingDetails = ({
       },
     },
   })
+
+  useEffect(() => {
+    if (draft?.transcriptionId === transcription.id) {
+      form.reset(draft.data, { keepDefaultValues: true })
+    }
+  }, [draft, transcription.id, form])
 
   const { errors, isSubmitted } = form.formState
   const errorList = [
@@ -272,6 +282,7 @@ const RecordingDetails = ({
         title: 'Success',
         message: 'Recording details updated',
       })
+      clearDraft()
     },
   })
 
@@ -307,6 +318,7 @@ const RecordingDetails = ({
         Recording details
       </GovukHeading>
       <GovukDetails
+        open={open}
         summary={open ? 'Hide' : 'Show'}
         onToggle={(e) => setOpen(e.currentTarget.open)}
       >
@@ -352,7 +364,14 @@ const RecordingDetails = ({
                 type="button"
                 variant="warning"
                 className="govuk-!-margin-bottom-0"
-                onClick={() => router.push(`${transcription.id}/delete`)}
+                onClick={() => {
+                  setDraft({
+                    transcriptionId: transcription.id,
+                    data: form.getValues(),
+                    isOpen: open,
+                  })
+                  router.push(`${transcription.id}/delete`)
+                }}
               >
                 Delete recording
               </GovukButton>
