@@ -29,6 +29,7 @@ export {
   GovukTableHeaderCell,
   GovukTableCell,
 } from './table'
+export { GovukModalDialogue, GovukModalDialogueActions } from './modal-dialogue'
 export {
   GovukPanel,
   GovukPanelHeader,

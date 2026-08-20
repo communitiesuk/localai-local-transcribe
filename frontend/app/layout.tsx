@@ -40,21 +40,23 @@ export default function RootLayout({
           <PosthogProvider>
             <LockNavigationProvider>
               <RecordingDbProvider>
-                <Header />
-                <ServiceNav />
-                <div className="govuk-width-container">
-                  <PhaseBanner />
-                </div>
+                <div className="govuk-modal-dialogue-inert-container">
+                  <Header />
+                  <ServiceNav />
+                  <div className="govuk-width-container">
+                    <PhaseBanner />
+                  </div>
 
-                <div className="govuk-width-container">
-                  <main id="main-content" className="govuk-main-wrapper">
-                    {children}
-                  </main>
-                </div>
+                  <div className="govuk-width-container">
+                    <main id="main-content" className="govuk-main-wrapper">
+                      {children}
+                    </main>
+                  </div>
 
-                <Footer />
-                <Toaster />
-                <GovukInit />
+                  <Footer />
+                  <Toaster />
+                  <GovukInit />
+                </div>
               </RecordingDbProvider>
             </LockNavigationProvider>
           </PosthogProvider>

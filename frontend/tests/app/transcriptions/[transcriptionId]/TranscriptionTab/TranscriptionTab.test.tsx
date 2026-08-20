@@ -53,6 +53,22 @@ vi.mock('@/components/ui/copy-button', () => ({
   ),
 }))
 
+vi.mock('@/components/recordings/copy-transcript-button', () => ({
+  CopyTranscriptButton: ({ disabled }: { disabled?: boolean }) => (
+    <button type="button" disabled={disabled}>
+      Copy transcript
+    </button>
+  ),
+}))
+
+vi.mock('@/components/recordings/download-transcript-button', () => ({
+  DownloadTranscriptButton: ({ disabled }: { disabled?: boolean }) => (
+    <button type="button" disabled={disabled}>
+      Download transcript
+    </button>
+  ),
+}))
+
 vi.mock('@/stores/use-banner-store', () => ({
   useBannerStore: () => ({
     setBanner: setBannerMock,
@@ -69,6 +85,9 @@ const renderTab = (transcription: TranscriptionGetResponse) =>
     <TranscriptionTab
       transcription={transcription}
       onLineEditError={onLineEditErrorMock}
+      onTranscriptCopied={() => {}}
+      onTranscriptDownloaded={() => {}}
+      onDismissBanner={() => {}}
     />
   )
 
@@ -158,7 +177,9 @@ describe('TranscriptionTab default view', () => {
     expect(
       screen.getByRole('button', { name: 'Edit transcript' })
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Copy transcript' })
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Download transcript' })
     ).toBeInTheDocument()
@@ -196,7 +217,9 @@ describe('TranscriptionTab entering line edit mode', () => {
     expect(
       screen.getByRole('button', { name: 'Edit transcript' })
     ).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Copy transcript' })
+    ).toBeDisabled()
     expect(
       screen.getByRole('button', { name: 'Download transcript' })
     ).toBeDisabled()
@@ -446,7 +469,9 @@ describe('TranscriptionTab full edit flow', () => {
     expect(
       screen.getByRole('button', { name: 'Edit transcript' })
     ).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Copy transcript' })
+    ).toBeDisabled()
     expect(
       screen.getByRole('button', { name: 'Download transcript' })
     ).toBeDisabled()

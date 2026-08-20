@@ -303,7 +303,14 @@ async def get_recordings_for_transcription(
         presigned_url = await storage_service.generate_presigned_url_get_object(
             recording.s3_file_key, filename, 60 * 60 * 12
         )
-        signed_recordings.append(SingleRecording(id=recording.id, url=presigned_url, extension=key_path.suffix))
+        signed_recordings.append(
+            SingleRecording(
+                id=recording.id,
+                url=presigned_url,
+                extension=key_path.suffix,
+                created_datetime=recording.created_datetime,
+            )
+        )
 
     return signed_recordings
 

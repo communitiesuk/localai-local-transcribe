@@ -2862,10 +2862,15 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "url": { "type": "string", "title": "Url" },
-          "extension": { "type": "string", "title": "Extension" }
+          "extension": { "type": "string", "title": "Extension" },
+          "created_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created Datetime"
+          }
         },
         "type": "object",
-        "required": ["id", "url", "extension"],
+        "required": ["id", "url", "extension", "created_datetime"],
         "title": "SingleRecording"
       },
       "TemplateMetadata": {

@@ -59,3 +59,12 @@ export function formatCurrentDateTime() {
 
   return `${time} on ${date}`
 }
+
+/**
+ *
+ * @param date - The date to be formatted to string
+ * @returns Returns the date using "dd-mm-yyyy" format
+ */
+export function formatDate(date: string): string {
+  return new Date(date).toLocaleDateString('en-GB').replaceAll('/', '-')
+}
