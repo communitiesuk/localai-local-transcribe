@@ -325,22 +325,22 @@ const RecordingDetails = ({
               description={"client's date of birth"}
             />
             <GovukButtonGroup>
-                <GovukButton
-                  type="submit"
-                  variant="secondary"
-                  className="govuk-!-margin-bottom-2"
-                  disabled={!form.formState.isDirty}
-                >
-                  Update details
-                </GovukButton>
-                <GovukButton
-                  type="button"
-                  variant="warning"
-                  className="govuk-!-margin-bottom-0"
-                  onClick={() => router.push(`${transcription.id}/delete`)}
-                >
-                  Delete recording
-                </GovukButton>
+              <GovukButton
+                type="submit"
+                variant="secondary"
+                className="govuk-!-margin-bottom-2"
+                disabled={!form.formState.isDirty}
+              >
+                Update details
+              </GovukButton>
+              <GovukButton
+                type="button"
+                variant="warning"
+                className="govuk-!-margin-bottom-0"
+                onClick={() => router.push(`${transcription.id}/delete`)}
+              >
+                Delete recording
+              </GovukButton>
             </GovukButtonGroup>
           </form>
         </FormProvider>
