@@ -36,6 +36,23 @@ The evaluation type is determined by the `eval_type` field in the config file.
 
 Outputs are written to `evals/summarisation/output/<run_id>/results.jsonl` and `evals/summarisation/output/<run_id>/summary.json`.
 
+## Blob storage integration (standard eval)
+
+The standard summarisation eval can optionally read input from, and write output to, Azure blob
+storage (`input` / `debug` / `output` containers) instead of local disk, using safe proxy data. The
+containers are provisioned by `terraform/azure/evals/` — see its
+[README](../terraform/azure/evals/README.md) for setup.
+
+To use it: set `AZURE_EVALS_STORAGE_ACCOUNT_URL` (or `blob.account_url` in the config), enable the
+config's `blob:` block, and set `dataset.source: blob` with a `dataset.blob_path`. See
+`evals/summarisation/configs/blob-smoke-test.yaml`. With `blob.enabled: false` (the default) the
+pipeline reads and writes local disk as before.
+
+```bash
+export AZURE_EVALS_STORAGE_ACCOUNT_URL="https://<evals-account>.blob.core.windows.net"
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
+```
+
 ## Running a new experiment
 
 An experiment is defined by:

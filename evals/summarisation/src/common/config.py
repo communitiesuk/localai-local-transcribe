@@ -56,6 +56,16 @@ class DatasetConfig(BaseModel):
     config: str | None = None
     dialogue_field: str = "dialogue"
     reference_summary_field: str = "summary"
+    source: Literal["huggingface", "blob"] = "huggingface"
+    blob_path: str | None = None
+
+
+class BlobStorageConfig(BaseModel):
+    """Blob storage for the standard eval. Disabled by default (local disk); Entra ID auth."""
+
+    enabled: bool = False
+    account_url: str | None = None
+    output_prefix: str = "summarisation"
 
 
 class JudgeConfig(BaseModel):
@@ -86,6 +96,7 @@ class AppConfig(BaseModel):
     metrics: list[MetricName] = Field(default_factory=default_criteria)
     prompts: PromptConfig
     hallucination: HallucinationConfig = Field(default_factory=HallucinationConfig)
+    blob: BlobStorageConfig = Field(default_factory=BlobStorageConfig)
 
 
 def load_config(path: str | Path) -> AppConfig:

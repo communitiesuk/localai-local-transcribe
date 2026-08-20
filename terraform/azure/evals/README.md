@@ -14,6 +14,23 @@ Both the state and evals storage accounts also set low-regret defaults: no publi
 
 Deployment is manual. There is no pipeline for this stack yet.
 
+## Azure DevOps pipeline identity
+
+`pipeline_identity.tf` also provisions the identity the summarisation eval pipeline uses to reach the
+blobs — a **user-assigned managed identity** with **Storage Blob Data Contributor** on the evals
+account, federated to an Azure DevOps service connection. A managed identity is used rather than an
+Entra app registration because the sandbox tenant blocks app creation for most users.
+
+Federation needs the Issuer and Subject that Azure DevOps generates for the service connection, so
+apply in two passes:
+
+1. First apply (leave `ado_federation_issuer` / `ado_federation_subject` unset) creates the identity
+   and role. Note the `pipeline_identity_client_id` output.
+2. Create the ADO service connection (**Workload identity federation (manual)**) using that client id;
+   copy its Issuer and Subject into `terraform.tfvars` and apply again to add the federated credential.
+
+Creating the role assignment needs Owner or User Access Administrator on the account's scope.
+
 ## Layout
 
 | Path               | Role                                                                 |
@@ -34,7 +51,7 @@ Deployment is manual. There is no pipeline for this stack yet.
 | Manual Cloud Shell apply                             | Process yes        | Auth method if Cloud Shell is unavailable                                | Org policy on who may apply                                |
 | Tenant, subscription, and variable values            | No                 | Always                                                                   | Naming convention                                          |
 
-Out of scope here: private endpoints, RBAC, network restrictions, blocking shared key access, customer-managed keys, and loading data into containers.
+Out of scope here: private endpoints, network restrictions, blocking shared key access, customer-managed keys, and loading data into containers.
 
 ## Prerequisites
 

@@ -9,5 +9,12 @@
 subscription_id      = "00000000-0000-0000-0000-000000000000"
 resource_group_name  = "rg-evals-sandbox"
 location             = "uksouth"
-storage_account_name = "ltevalssandbox001"
+storage_account_name = "myevalsdata001"
 environment_name     = "sandbox"
+
+# Azure DevOps pipeline identity (managed identity + blob role). pipeline_identity_name is optional.
+# Leave the two federation values commented on the first apply; after creating the ADO service
+# connection, paste its Issuer and Subject here and apply again to create the federated credential.
+# pipeline_identity_name = "evals-blob-id"
+# ado_federation_issuer  = "https://vstoken.dev.azure.com/<org-guid>"
+# ado_federation_subject = "sc://<org>/<project>/evals-blob"

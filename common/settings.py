@@ -137,7 +137,6 @@ class Settings(BaseSettings):
         "this.",
         default=None,
     )
-
     QUEUE_SERVICE_NAME: str = Field(
         description="Queue service type to communicate with worker. Currently supported are: sqs, azure-service-bus",
         default="sqs",

@@ -42,3 +42,21 @@ variable "sas_expiration_period" {
   description = "Maximum lifetime for newly created shared access signatures, as DD.HH:MM:SS."
   default     = "07.00:00:00"
 }
+
+variable "pipeline_identity_name" {
+  type        = string
+  description = "Name of the user-assigned managed identity the Azure DevOps summarisation pipeline federates to."
+  default     = "evals-blob-id"
+}
+
+variable "ado_federation_issuer" {
+  type        = string
+  description = "Issuer URL from the Azure DevOps workload-identity service connection. Set on the second apply to create the federated credential; leave null on the first apply."
+  default     = null
+}
+
+variable "ado_federation_subject" {
+  type        = string
+  description = "Subject identifier from the Azure DevOps workload-identity service connection. Set alongside ado_federation_issuer."
+  default     = null
+}
