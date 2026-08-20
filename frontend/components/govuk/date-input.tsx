@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import React from 'react'
+import React, { useState } from 'react'
 import { FieldValues, useController, UseControllerProps } from 'react-hook-form'
 import { GovukInput } from '@/components/govuk/input'
 import { GovukFormGroup } from '@/components/govuk/form-group'
@@ -49,8 +49,8 @@ export function validateDateEntry(
   description: string = 'date'
 ): { message: string; fields: ('day' | 'month' | 'year')[] } | null {
   const missingFields = Object.entries(value)
-    .filter(([_, v]) => !v)
-    .map(([field, _]) => field) as ('day' | 'month' | 'year')[]
+    .filter(([, v]) => !v)
+    .map(([field]) => field) as ('day' | 'month' | 'year')[]
 
   if (missingFields.length === 3) {
     return null
@@ -106,7 +106,9 @@ export function GovukDateInput<T extends FieldValues>({
   rules,
   ...rest
 }: DateInputProps<T>) {
-  const errorFieldsRef = React.useRef<('day' | 'month' | 'year')[]>([])
+  const [errorFields, setErrorFields] = useState<('day' | 'month' | 'year')[]>(
+    []
+  )
 
   const { field, fieldState } = useController({
     name,
@@ -119,7 +121,7 @@ export function GovukDateInput<T extends FieldValues>({
           mustBePastOrFuture,
           description
         )
-        errorFieldsRef.current = validationResult?.fields ?? []
+        setErrorFields(validationResult?.fields ?? [])
         return validationResult ? validationResult.message : true
       },
     },
@@ -130,8 +132,6 @@ export function GovukDateInput<T extends FieldValues>({
   const hintId = hint ? `${id}-hint` : undefined
 
   const hasError = !!fieldState.error
-
-  const errorFields = hasError ? errorFieldsRef.current : []
 
   return (
     <GovukFormGroup className={className} hasError={hasError}>
