@@ -225,13 +225,9 @@ async def test_update_transcription_metadata_success(mock_session, mock_user, mo
 
 
 @pytest.mark.asyncio
-async def test_update_transcription_metadata_null_fields_preserve_existing_values(
+async def test_update_transcription_metadata_null_fields_clear_existing_values(
     mock_session, mock_user, mock_transcription
 ):
-    original_title = mock_transcription.title
-    original_case_id = mock_transcription.case_id
-    original_client_name = mock_transcription.client_name
-    original_client_date_of_birth = mock_transcription.client_date_of_birth
     original_updated_datetime = mock_transcription.updated_datetime
     mock_session.get = AsyncMock(return_value=mock_transcription)
 
@@ -247,10 +243,10 @@ async def test_update_transcription_metadata_null_fields_preserve_existing_value
         mock_user,
     )
 
-    assert mock_transcription.title == original_title
-    assert mock_transcription.case_id == original_case_id
-    assert mock_transcription.client_name == original_client_name
-    assert mock_transcription.client_date_of_birth == original_client_date_of_birth
+    assert mock_transcription.title is None
+    assert mock_transcription.case_id is None
+    assert mock_transcription.client_name is None
+    assert mock_transcription.client_date_of_birth is None
     assert mock_transcription.updated_datetime > original_updated_datetime
     mock_session.commit.assert_awaited_once()
 
@@ -262,7 +258,12 @@ async def test_update_transcription_metadata_not_found(mock_session, mock_user):
     with pytest.raises(HTTPException) as exc:
         await update_transcription_metadata(
             uuid.uuid4(),
-            UpdateTranscriptionMetadataRequest(client_name="Jane Smith"),
+            UpdateTranscriptionMetadataRequest(
+                case_id=None,
+                client_name="Jane Smith",
+                client_date_of_birth=None,
+                subject=None,
+            ),
             mock_session,
             mock_user,
         )
@@ -279,7 +280,12 @@ async def test_update_transcription_metadata_unauthorized(mock_session, mock_use
     with pytest.raises(HTTPException) as exc:
         await update_transcription_metadata(
             mock_transcription.id,
-            UpdateTranscriptionMetadataRequest(client_name="Jane Smith"),
+            UpdateTranscriptionMetadataRequest(
+                case_id=None,
+                client_name="Jane Smith",
+                client_date_of_birth=None,
+                subject=None,
+            ),
             mock_session,
             mock_user,
         )

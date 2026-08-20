@@ -362,7 +362,7 @@ async def update_transcription_title(
         await session.commit()
 
 
-@transcriptions_router.patch("/transcriptions/{transcription_id}/details", status_code=204)
+@transcriptions_router.put("/transcriptions/{transcription_id}/details", status_code=204)
 async def update_transcription_metadata(
     transcription_id: uuid.UUID,
     request: UpdateTranscriptionMetadataRequest,
@@ -371,14 +371,12 @@ async def update_transcription_metadata(
 ) -> None:
     """Update a transcription's metadata."""
     transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
-    if request.case_id is not None:
-        transcription.case_id = request.case_id
-    if request.client_name is not None:
-        transcription.client_name = request.client_name
-    if request.client_date_of_birth is not None:
-        transcription.client_date_of_birth = request.client_date_of_birth.replace(tzinfo=None)
-    if request.subject is not None:
-        transcription.title = request.subject
+    transcription.case_id = request.case_id
+    transcription.client_name = request.client_name
+    transcription.client_date_of_birth = (
+        request.client_date_of_birth.replace(tzinfo=None) if request.client_date_of_birth is not None else None
+    )
+    transcription.title = request.subject
 
     transcription.updated_datetime = datetime.datetime.now(tz=datetime.UTC)
     await session.commit()

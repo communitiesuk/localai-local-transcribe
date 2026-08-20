@@ -108,10 +108,10 @@ class UpdateTranscriptionTitleRequest(BaseModel):
 
 
 class UpdateTranscriptionMetadataRequest(BaseModel):
-    client_name: str | None = None
-    case_id: str | None = None
-    subject: str | None = None
-    client_date_of_birth: datetime | None = None
+    client_name: str | None
+    case_id: str | None
+    subject: str | None
+    client_date_of_birth: datetime | None
 
 
 class RenameSpeakerRequest(BaseModel):

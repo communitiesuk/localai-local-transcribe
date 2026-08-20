@@ -27,7 +27,7 @@ import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
-  updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPatchMutation,
+  updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { FeatureFlags } from '@/lib/feature-flags'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -270,7 +270,7 @@ const RecordingDetails = ({
   const queryClient = useQueryClient()
 
   const { mutate } = useMutation({
-    ...updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPatchMutation(),
+    ...updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
@@ -287,7 +287,7 @@ const RecordingDetails = ({
   })
 
   const handleSave = (data: TranscriptionDetailsData) => {
-    let dateOfBirth = undefined
+    let dateOfBirth: Date | null = null
     if (
       data.clientDateOfBirth.day &&
       data.clientDateOfBirth.month &&
@@ -303,10 +303,10 @@ const RecordingDetails = ({
     mutate({
       path: { transcription_id: transcription.id },
       body: {
-        client_name: data.clientName,
-        case_id: data.caseId,
-        subject: data.subject,
-        client_date_of_birth: dateOfBirth?.toISOString(),
+        client_name: data.clientName || null,
+        case_id: data.caseId || null,
+        subject: data.subject || null,
+        client_date_of_birth: dateOfBirth ? dateOfBirth.toISOString() : null,
       },
     })
     form.reset(data)
