@@ -69,9 +69,9 @@ export const PaginatedLabelledTranscriptions = () => {
   const formatRecordedDate = (date: string | null | undefined) =>
     date ? (
       <div>
-        {new Date(date).toLocaleDateString()}
+        {new Date(date).toLocaleDateString('en-GB')}
         <br />
-        {new Date(date).toLocaleTimeString()}
+        {new Date(date).toLocaleTimeString('en-GB')}
       </div>
     ) : (
       '—'
