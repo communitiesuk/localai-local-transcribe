@@ -216,7 +216,7 @@ async def create_recording(
     recording_id = uuid.uuid4()
     file_name = f"{recording_id}.{request.file_extension}"
     user_upload_s3_file_key = get_file_s3_key(user.email, file_name)
-    recording = Recording(user_id=user.id, s3_file_key=user_upload_s3_file_key)
+    recording = Recording(user_id=user.id, s3_file_key=user_upload_s3_file_key, file_created_at=request.file_created_at)
     session.add(recording)
     await session.commit()
     presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
@@ -273,6 +273,7 @@ async def get_transcription(
         dialogue_entries=transcription.dialogue_entries,
         title=transcription.title,
         created_datetime=transcription.created_datetime,
+        date_of_recording=transcription.date_of_recording,
     )
 
 
