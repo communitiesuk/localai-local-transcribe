@@ -17,6 +17,8 @@ type DateInputProps<T extends FieldValues> = {
   legend: React.ReactNode
   hint?: React.ReactNode
   className?: string
+  mustBePastOrFuture?: 'past' | 'future'
+  description?: string
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'id'> &
   UseControllerProps<T>
 
@@ -42,7 +44,9 @@ function dateIsReal(date: DateValue): boolean {
 }
 
 function validateDateEntry(
-  value: DateValue
+  value: DateValue,
+  pastOrFuture?: 'past' | 'future',
+  description: string = 'date'
 ): { message: string; fields: ('day' | 'month' | 'year')[] } | null {
   const missingFields = Object.entries(value)
     .filter(([_, v]) => !v)
@@ -51,7 +55,7 @@ function validateDateEntry(
   if (missingFields.length > 0) {
     return {
       message:
-        "The client's date of birth must include a " +
+        `The ${description} must include a ` +
         new Intl.ListFormat('en').format(missingFields),
       fields: missingFields,
     }
@@ -59,7 +63,27 @@ function validateDateEntry(
 
   if (!dateIsReal(value)) {
     return {
-      message: "The client's date of birth must be a real date",
+      message: `The ${description} must be a real date`,
+      fields: ['day', 'month', 'year'],
+    }
+  }
+
+  const date = new Date(
+    Number(value.year),
+    Number(value.month) - 1,
+    Number(value.day)
+  )
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) // ignore time
+
+  if (date > today && pastOrFuture === 'past') {
+    return {
+      message: `The ${description} must be in the past`,
+      fields: ['day', 'month', 'year'],
+    }
+  } else if (date < today && pastOrFuture === 'future') {
+    return {
+      message: `The ${description} must be in the future`,
       fields: ['day', 'month', 'year'],
     }
   }
@@ -73,6 +97,8 @@ export function GovukDateInput<T extends FieldValues>({
   hint,
   className,
   control,
+  mustBePastOrFuture,
+  description = 'date',
   ...rest
 }: DateInputProps<T>) {
   const { field, fieldState } = useController({
@@ -84,7 +110,11 @@ export function GovukDateInput<T extends FieldValues>({
 
   const hintId = hint ? `${id}-hint` : undefined
 
-  const validationResult = validateDateEntry(value)
+  const validationResult = validateDateEntry(
+    value,
+    mustBePastOrFuture,
+    description
+  )
   const hasError = !!fieldState.error || !!validationResult
 
   return (

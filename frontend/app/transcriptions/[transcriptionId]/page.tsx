@@ -314,6 +314,8 @@ const RecordingDetails = ({
               legend="Client date of birth (optional)"
               control={form.control}
               name={'clientDateOfBirth'}
+              mustBePastOrFuture={'past'}
+              description={"client's date of birth"}
             />
             <GovukButtonGroup>
                 <GovukButton
