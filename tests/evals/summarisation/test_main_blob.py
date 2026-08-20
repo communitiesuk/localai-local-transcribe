@@ -120,3 +120,22 @@ def test_halted_run_publishes_then_fails_pipeline(tmp_path):
     # ...but the summary explaining the failure was published to blob first.
     dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
     assert dests["output"] == "summarisation/standard/run1/summary.json"
+
+
+def test_results_artifact_contains_only_summary_when_blob_upload_fails(tmp_path):
+    config = _write_config(tmp_path)
+    artifact_dir = tmp_path / "artifact"
+    fake_blob = MagicMock()
+    fake_blob.upload_file.side_effect = RuntimeError("upload failed")
+
+    with (
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_url", return_value=fake_blob),
+        patch("evals.summarisation.src.optimisation.run_eval", side_effect=_fake_run_eval),
+    ):
+        result = runner.invoke(app, ["--config", str(config), "--results-artifact-dir", str(artifact_dir)])
+
+    assert result.exit_code != 0
+    assert (artifact_dir / "standard" / "run1" / "summary.json").read_text(encoding="utf-8") == "{}"
+    assert not (artifact_dir / "standard" / "run1" / "results.jsonl").exists()
+    assert not (artifact_dir / "standard" / "run1" / "hallucination_inputs.json").exists()
+    assert not (artifact_dir / "standard" / "run1" / "threshold_review.json").exists()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import shutil
 import sys
 import tempfile
 from pathlib import Path
@@ -22,6 +23,14 @@ RESULTS_RELATIVE_PATHS = frozenset({"summary.json"})
 app = typer.Typer()
 
 config_path_arg = typer.Option(DEFAULT_CONFIG, "--config", exists=True, dir_okay=False, readable=True)
+results_artifact_dir_arg = typer.Option(
+    None,
+    "--results-artifact-dir",
+    file_okay=False,
+    dir_okay=True,
+    writable=True,
+    help="Directory for non-sensitive result files safe to publish as a short-retention pipeline artifact.",
+)
 
 
 def _resolve_io_dirs(cfg: AppConfig, mode: str) -> tuple[Path, Path]:
@@ -61,6 +70,28 @@ def _publish(
     typer.echo("Published outputs to blob storage:")
     for name, dest in published.items():
         typer.echo(f"  {name} -> {dest}")
+
+
+def _stage_results_artifact(
+    run_output_dir: Path,
+    results_artifact_dir: Path | None,
+    run_id: str,
+    eval_type: str,
+    results_relative_paths: frozenset[str],
+) -> None:
+    """Copy only non-sensitive result files to the pipeline artifact staging directory."""
+    if results_artifact_dir is None:
+        return
+
+    artifact_run_dir = results_artifact_dir / eval_type / run_id
+    for relative in sorted(results_relative_paths):
+        src = run_output_dir / relative
+        if not src.is_file():
+            msg = f"Expected non-sensitive result file does not exist: {src}"
+            raise FileNotFoundError(msg)
+        dest = artifact_run_dir / relative
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
 
 
 def _fail_pipeline_if_halted(summary_path: Path) -> None:
@@ -124,7 +155,12 @@ async def run_security_eval(cfg: AppConfig) -> None:
     await _drain_pending_tasks()
 
 
-def run_standard_eval(cfg: AppConfig, blob: EvalBlobStorage | None, staging_dir: Path) -> list[HallucinationInput]:
+def run_standard_eval(
+    cfg: AppConfig,
+    blob: EvalBlobStorage | None,
+    staging_dir: Path,
+    results_artifact_dir: Path | None,
+) -> list[HallucinationInput]:
     from evals.summarisation.src.optimisation import run_eval
 
     dataset_path = None
@@ -146,6 +182,12 @@ def run_standard_eval(cfg: AppConfig, blob: EvalBlobStorage | None, staging_dir:
     typer.echo(f"Summary: {summary_path}")
     typer.echo(f"Hallucination inputs: {hallucination_inputs_path}")
 
+    # Stage the non-sensitive result before blob upload. If upload fails, the pipeline can
+    # still publish this short-retention artifact without exposing debug files.
+    _stage_results_artifact(
+        results_path.parent, results_artifact_dir, run_id, cfg.run.eval_type, RESULTS_RELATIVE_PATHS
+    )
+
     # Publish before the failure decision so a halted run's artifacts (summary.json with the
     # error list that explains the halt) survive the staging temp-dir teardown.
     _publish(blob, cfg, results_path.parent, run_id)
@@ -159,6 +201,7 @@ def run_standard_eval(cfg: AppConfig, blob: EvalBlobStorage | None, staging_dir:
 @app.callback(invoke_without_command=True)
 def run(
     config: Path = config_path_arg,
+    results_artifact_dir: Path | None = results_artifact_dir_arg,
 ) -> None:
     cfg = load_config(config)
 
@@ -194,7 +237,7 @@ def run(
     with tempfile.TemporaryDirectory(prefix="evals-summarisation-") as staging:
         staging_dir = Path(staging)
 
-        hallucination_inputs = run_standard_eval(cfg, blob, staging_dir)
+        hallucination_inputs = run_standard_eval(cfg, blob, staging_dir, results_artifact_dir)
 
         if cfg.hallucination.enabled:
             from evals.summarisation.src.hallucination import run_hallucination_eval
