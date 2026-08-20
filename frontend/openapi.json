@@ -190,6 +190,55 @@
         }
       }
     },
+    "/transcriptions-only": {
+      "post": {
+        "tags": ["Transcriptions"],
+        "summary": "Create Transcription Only",
+        "description": "transcription without creating an associated Minute",
+        "operationId": "create_transcription_only_transcriptions_only_post",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscriptionOnlyCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/transcriptions": {
       "post": {
         "tags": ["Transcriptions"],
@@ -3044,6 +3093,22 @@
           "created_datetime"
         ],
         "title": "TranscriptionGetResponse"
+      },
+      "TranscriptionOnlyCreateRequest": {
+        "properties": {
+          "recording_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recording Id"
+          },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": ["recording_id"],
+        "title": "TranscriptionOnlyCreateRequest"
       },
       "TranscriptionSortOrder": {
         "type": "string",

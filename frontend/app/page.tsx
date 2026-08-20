@@ -1,4 +1,5 @@
 import { PosthogBanner } from '@/components/posthog-banner'
+import { BannerNotification } from '@/components/banner-notification'
 import {
   GovukBody,
   GovukButtonLink,
@@ -13,6 +14,7 @@ export default function Home() {
     <div className="govuk-grid-row flex justify-center">
       <PosthogBanner />
       <div className="govuk-grid-column-three-quarters">
+        <BannerNotification />
         <OrganisationHeading />
         <GovukBody>Suitable up to OFFICIAL SENSITIVE.</GovukBody>
         <GovukHeading size="m">Record a conversation</GovukHeading>
