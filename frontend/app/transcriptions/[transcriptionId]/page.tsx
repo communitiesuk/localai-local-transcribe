@@ -38,6 +38,8 @@ import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { redirect, useRouter } from 'next/navigation'
 import { TranscriptionDetailsData } from '@/types/transcriptions'
 import { FormProvider, useForm } from 'react-hook-form'
+import { BannerNotification } from '@/components/banner-notification'
+import { useBannerStore } from '@/stores/use-banner-store'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -243,6 +245,8 @@ const RecordingDetails = ({
     },
   })
 
+  const setBanner = useBannerStore((store) => store.setBanner)
+
   const queryClient = useQueryClient()
 
   const { mutate } = useMutation({
@@ -252,6 +256,11 @@ const RecordingDetails = ({
         queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
           path: { transcription_id: transcription.id },
         }),
+      })
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: 'Recording details updated',
       })
     },
   })
