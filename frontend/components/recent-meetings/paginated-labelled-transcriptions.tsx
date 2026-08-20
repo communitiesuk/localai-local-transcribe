@@ -66,6 +66,17 @@ export const PaginatedLabelledTranscriptions = () => {
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
 
+  const formatRecordedDate = (date: string | null | undefined) =>
+    date ? (
+      <div>
+        {new Date(date).toLocaleDateString('en-GB')}
+        <br />
+        {new Date(date).toLocaleTimeString('en-GB')}
+      </div>
+    ) : (
+      '—'
+    )
+
   return (
     <div>
       <GovukHeading as="h2" size="m">
@@ -121,7 +132,10 @@ export const PaginatedLabelledTranscriptions = () => {
                     {transcription.client_date_of_birth}
                   </GovukTableCell>
                   <GovukTableCell>
-                    {transcription.date_of_recording}
+                    {formatRecordedDate(
+                      transcription.date_of_recording ??
+                        transcription.created_datetime
+                    )}
                   </GovukTableCell>
                   <GovukTableCell>
                     <Link

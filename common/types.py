@@ -87,6 +87,7 @@ class TranscriptionOnlyCreateRequest(BaseModel):
 
 class RecordingCreateRequest(BaseModel):
     file_extension: str
+    file_created_at: datetime | None = None
 
 
 class RecordingCreateResponse(BaseModel):
@@ -192,6 +193,7 @@ class TranscriptionGetResponse(BaseModel):
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime
+    date_of_recording: datetime | None = None
 
 
 class SingleRecording(BaseModel):

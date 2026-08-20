@@ -2915,7 +2915,14 @@
       },
       "RecordingCreateRequest": {
         "properties": {
-          "file_extension": { "type": "string", "title": "File Extension" }
+          "file_extension": { "type": "string", "title": "File Extension" },
+          "file_created_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "File Created At"
+          }
         },
         "type": "object",
         "required": ["file_extension"],
@@ -3068,6 +3075,13 @@
             "type": "string",
             "format": "date-time",
             "title": "Created Datetime"
+          },
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
           }
         },
         "type": "object",
