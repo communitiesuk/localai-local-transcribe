@@ -5,18 +5,16 @@ import { useState, useId } from 'react'
 
 interface InlineEditFormProps {
   name: string
-  defaultValue?: string
   onUpdate: (newName: string) => void
-  onCancel: (currentValue: string) => void
+  onCancel: () => void
 }
 
 export function InLineEditForm({
   name,
-  defaultValue,
   onUpdate,
   onCancel,
 }: InlineEditFormProps) {
-  const [value, setValue] = useState(defaultValue ?? name)
+  const [value, setValue] = useState(name)
   const [initialValue] = useState(name)
   const id = useId()
 
@@ -36,11 +34,7 @@ export function InLineEditForm({
         >
           Update
         </GovukButton>
-        <GovukButton
-          type="button"
-          variant="link"
-          onClick={() => onCancel(value)}
-        >
+        <GovukButton type="button" variant="link" onClick={() => onCancel()}>
           Cancel
         </GovukButton>
       </div>

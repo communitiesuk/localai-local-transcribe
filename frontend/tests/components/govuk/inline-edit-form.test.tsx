@@ -42,19 +42,19 @@ describe('<InLineEditForm />', () => {
     expect(defaultProps.onUpdate).toHaveBeenCalledWith('Bob')
   })
 
-  it('calls onCancel with the current value when Cancel is clicked', () => {
+  it('calls onCancel when Cancel is clicked', () => {
     render(<InLineEditForm {...defaultProps} />)
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Charlie' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(defaultProps.onCancel).toHaveBeenCalledWith('Charlie')
+    expect(defaultProps.onCancel).toHaveBeenCalledOnce()
   })
 
-  it('calls onCancel with the original value when nothing has been typed', () => {
+  it('calls onCancel when Cancel is clicked with no changes', () => {
     render(<InLineEditForm {...defaultProps} />)
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(defaultProps.onCancel).toHaveBeenCalledWith('Alice')
+    expect(defaultProps.onCancel).toHaveBeenCalledOnce()
   })
 
   it('re-initialises with a new name when remounted via key change', () => {

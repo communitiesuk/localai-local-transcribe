@@ -95,7 +95,6 @@ const SpeakerEditorModal = ({
   const [view, setView] = useState<'list' | 'edit' | 'confirm-discard'>('list')
   const [editingSpeaker, setEditingSpeaker] = useState<string | undefined>()
   const [editInitialValue, setEditInitialValue] = useState('')
-  const [discardedValue, setDiscardedValue] = useState('')
   const [pendingChanges, setPendingChanges] = useState<Map<string, string>>(
     new Map()
   )
@@ -108,7 +107,6 @@ const SpeakerEditorModal = ({
       const initialValue = pendingChanges.get(speaker) ?? speaker
       setEditingSpeaker(speaker)
       setEditInitialValue(initialValue)
-      setDiscardedValue('')
       setView('edit')
     },
     [pendingChanges]
@@ -149,7 +147,6 @@ const SpeakerEditorModal = ({
   const handleClose = () => {
     setPendingChanges(new Map())
     setEditingSpeaker(undefined)
-    setDiscardedValue('')
     setView('list')
     onClose()
   }
@@ -157,12 +154,23 @@ const SpeakerEditorModal = ({
   return (
     <GovukModalDialogue
       open={open}
-      onClose={view === 'confirm-discard' ? () => setView('edit') : handleClose}
-      title={
+      onClose={
         view === 'confirm-discard'
-          ? ''
+          ? () => setView('list')
           : view === 'edit'
-            ? `Edit ${editInitialValue}`
+            ? () => {
+                setEditingSpeaker(undefined)
+                setView('list')
+              }
+            : pendingChanges.size > 0
+              ? () => setView('confirm-discard')
+              : handleClose
+      }
+      title={
+        view === 'edit'
+          ? `Edit ${editInitialValue}`
+          : view === 'confirm-discard'
+            ? ''
             : 'Edit speaker names'
       }
     >
@@ -225,7 +233,15 @@ const SpeakerEditorModal = ({
               Done
             </GovukButton>
 
-            <GovukButton type="button" variant="link" onClick={handleClose}>
+            <GovukButton
+              type="button"
+              variant="link"
+              onClick={
+                pendingChanges.size > 0
+                  ? () => setView('confirm-discard')
+                  : handleClose
+              }
+            >
               Cancel
             </GovukButton>
           </GovukModalDialogueActions>
@@ -234,16 +250,10 @@ const SpeakerEditorModal = ({
         <InLineEditForm
           key={editInitialValue}
           name={editInitialValue}
-          defaultValue={discardedValue || undefined}
           onUpdate={handleUpdate}
-          onCancel={(currentValue) => {
-            if (currentValue === editInitialValue) {
-              setEditingSpeaker(undefined)
-              setView('list')
-            } else {
-              setDiscardedValue(currentValue)
-              setView('confirm-discard')
-            }
+          onCancel={() => {
+            setEditingSpeaker(undefined)
+            setView('list')
           }}
         />
       ) : (
@@ -262,15 +272,10 @@ const SpeakerEditorModal = ({
           }
           confirmLabel="Discard changes"
           onConfirm={() => {
-            setDiscardedValue('')
-            setEditInitialValue(
-              pendingChanges.get(editingSpeaker ?? '') ?? editingSpeaker ?? ''
-            )
-            setView('edit')
+            setPendingChanges(new Map())
+            setView('list')
           }}
-          onCancel={() => {
-            setView('edit')
-          }}
+          onCancel={() => setView('list')}
         />
       )}
     </GovukModalDialogue>

@@ -63,11 +63,53 @@ describe('<SpeakerEditor />', () => {
     expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
   })
 
-  it('Cancel on list view closes the modal', () => {
+  it('Cancel on list view with no pending changes closes the modal', () => {
     const { openModal } = setup()
     openModal()
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('Cancel on list view with pending changes shows the confirm-discard view', () => {
+    const { openModal } = setup()
+    openModal()
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Alicia' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(
+      screen.getByRole('heading', { name: 'Discard changes?' })
+    ).toBeInTheDocument()
+  })
+
+  it('"Cancel" on the interstitial returns to list view with pending changes intact', () => {
+    const { openModal } = setup()
+    openModal()
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Alicia' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByText('Alicia')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Done' })).toBeEnabled()
+  })
+
+  it('"Discard changes" on the interstitial returns to list view with original values restored', () => {
+    const { openModal } = setup()
+    openModal()
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
+    fireEvent.change(screen.getByRole('textbox'), {
+      target: { value: 'Alicia' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+    expect(screen.getByText('Alice')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
   })
 
   it('clicking Edit opens edit view with correct speaker name and title', () => {
@@ -142,7 +184,7 @@ describe('<SpeakerEditor />', () => {
     ).toBeInTheDocument()
   })
 
-  it('Cancel with unsaved changes shows the confirm-discard view', () => {
+  it('Cancel with unsaved changes returns to list without saving', () => {
     const { openModal } = setup()
     openModal()
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
@@ -150,34 +192,11 @@ describe('<SpeakerEditor />', () => {
       target: { value: 'Alicia' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Discard changes?' })
+      screen.getByRole('heading', { name: 'Edit speaker names' })
     ).toBeInTheDocument()
-  })
-
-  it('"Discard changes" returns to edit view with the original value', () => {
-    const { openModal } = setup()
-    openModal()
-    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
-    fireEvent.change(screen.getByRole('textbox'), {
-      target: { value: 'Alicia' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
-    expect(screen.getByRole('textbox')).toHaveValue('Alice')
-  })
-
-  it('"Cancel" on the interstitial returns to edit view with the typed value and Update enabled', () => {
-    const { openModal } = setup()
-    openModal()
-    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
-    fireEvent.change(screen.getByRole('textbox'), {
-      target: { value: 'Alicia' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    expect(screen.getByRole('textbox')).toHaveValue('Alicia')
-    expect(screen.getByRole('button', { name: 'Update' })).toBeEnabled()
+    expect(screen.getByText('Alice')).toBeInTheDocument()
   })
 
   it('the trigger button is disabled when disabled prop is true', () => {
