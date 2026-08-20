@@ -18,6 +18,9 @@ import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from '../audio-player'
+import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
+import { RecordingLoading } from '@/components/recording-loading'
+import { useCountdown } from '@/hooks/use-countdown'
 
 export const TabRecorderForm = () => {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -71,14 +74,21 @@ function TabRecorder({
   }
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
+  const isStartingRecordingRef = useRef(false)
   const streamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
 
+  const setRecordingUIState = useRecordingUiStore(
+    (state) => state.setRecordingState
+  )
+
   useTabCloseWarning(isRecording || !!recordedAudio)
 
   const stopAllTracks = useCallback(() => {
+    isStartingRecordingRef.current = false
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
         track.stop()
@@ -91,6 +101,7 @@ function TabRecorder({
       micStreamRef.current.getTracks().forEach((track) => track.stop())
     }
     streamRef.current = null
+    screenStreamRef.current = null
     micStreamRef.current = null
     mediaRecorderRef.current = null
     setStream(null)
@@ -119,6 +130,7 @@ function TabRecorder({
       stopRecording()
     }
   }, [stopRecording])
+
   useEffect(() => {
     return () => {
       if (audioContext.current) {
@@ -139,29 +151,26 @@ function TabRecorder({
   }, [])
 
   const startRecording = useCallback(async () => {
+    // prevent start recording triggering multiple times if recording has already started
+    if (
+      isStartingRecordingRef.current ||
+      mediaRecorderRef.current?.state === 'recording' ||
+      mediaRecorderRef.current?.state === 'paused'
+    ) {
+      return
+    }
+
+    isStartingRecordingRef.current = true
+
     setError(null)
     mediaChunksRef.current = []
 
     try {
-      if (!navigator.mediaDevices?.getDisplayMedia) {
-        throw new Error(
-          'Screen capture is not supported in this browser. Please use Chrome or Edge.'
-        )
-      }
+      const screenStream = screenStreamRef.current
 
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
-      })
-
-      if (!screenStream.getAudioTracks().length) {
-        screenStream.getTracks().forEach((track) => track.stop())
-        throw new Error(
-          "No audio track available from the tab. When sharing, please switch on 'Share audio' in the dialog."
-        )
+      if (!screenStream) {
+        throw new Error('No tab or window was selected for recording.')
       }
-      screenStreamRef.current = screenStream
-      setStream(screenStream)
 
       const newAudioContext = new AudioContext()
       const destination = newAudioContext.createMediaStreamDestination()
@@ -251,7 +260,10 @@ function TabRecorder({
       setError(
         error instanceof Error ? error.message : 'An unknown error occurred'
       )
-      setIsRecording(false)
+      setRecordingUIState('idle')
+      stopAllTracks()
+    } finally {
+      isStartingRecordingRef.current = false
     }
   }, [
     addRecording,
@@ -259,9 +271,70 @@ function TabRecorder({
     requestWakeLock,
     selectedDeviceId,
     setRecordedAudio,
+    setRecordingUIState,
     stopAllTracks,
     updateRecording,
   ])
+
+  const handleCountdownCancel = () => {
+    stopAllTracks()
+    setRecordingUIState('idle')
+  }
+
+  const {
+    isStartingRecording,
+    isPreparingRecording,
+    startCountdown,
+    handleLoadingComplete,
+    handleLoadingCancel,
+  } = useCountdown({
+    onComplete: startRecording,
+    onCancel: handleCountdownCancel,
+  })
+
+  async function handleStartRecording() {
+    setError(null)
+    setRecordedAudio(null)
+    setRecordingUIState('starting')
+
+    try {
+      if (!navigator.mediaDevices?.getDisplayMedia) {
+        throw new Error(
+          'Screen capture is not supported in this browser. Please use Chrome or Edge.'
+        )
+      }
+
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true,
+      })
+
+      if (!screenStream.getAudioTracks().length) {
+        screenStream.getTracks().forEach((track) => track.stop())
+        throw new Error(
+          "No audio track available from the tab. When sharing, please switch on 'Share audio' in the dialog."
+        )
+      }
+
+      screenStreamRef.current = screenStream
+      setStream(screenStream)
+      startCountdown()
+    } catch (error) {
+      setRecordingUIState('idle')
+      setError(
+        error instanceof Error ? error.message : 'An unknown error occurred'
+      )
+    }
+  }
+
+  if (isStartingRecording || isPreparingRecording) {
+    return (
+      <RecordingLoading
+        onComplete={handleLoadingComplete}
+        onCancel={handleLoadingCancel}
+      />
+    )
+  }
 
   if (!permissionGranted || !audioDevices.length) {
     return (
@@ -323,7 +396,7 @@ function TabRecorder({
                 </p>
                 <GovukButton
                   type="button"
-                  onClick={startRecording}
+                  onClick={handleStartRecording}
                   className="govuk-!-margin-bottom-0"
                 >
                   Start recording
