@@ -43,7 +43,7 @@ function dateIsReal(date: DateValue): boolean {
   return d >= 1 && d <= daysInMonth
 }
 
-function validateDateEntry(
+export function validateDateEntry(
   value: DateValue,
   pastOrFuture?: 'past' | 'future',
   description: string = 'date'
