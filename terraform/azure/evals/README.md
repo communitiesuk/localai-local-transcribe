@@ -61,7 +61,7 @@ Creating the role assignment needs Owner or User Access Administrator on the acc
 ADAPT, temporary Azure DevOps, and MHCLG egress addresses, the private endpoint subnet, any existing private DNS zones, and principal IDs are variables. Empty values deny that route except trusted Azure services using strong authentication.
 
 IP allowlists support public IPv4 CIDR ranges. Use plain IPs for single-host entries.
-TODO: Replace `ado_ip_rules` with private endpoint/private networking.
+TODO: Replace `ado_ip_rules` with private endpoint/private networking; the private endpoint should make this useless.
 
 ## Private endpoint ownership
 

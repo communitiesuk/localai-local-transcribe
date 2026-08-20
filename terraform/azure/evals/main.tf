@@ -43,6 +43,7 @@ provider "azurerm" {
 
 locals {
   adapt_ip_rules = distinct(var.adapt_ip_rules)
+  # TODO: Remove Azure DevOps IP allowlists once private endpoint/private networking is in place; the private endpoint should make this useless.
   ado_ip_rules   = distinct(var.ado_ip_rules)
   mhclg_ip_rules = distinct(var.mhclg_ip_rules)
 
@@ -52,12 +53,14 @@ locals {
     sensitive = {
       name                          = var.sensitive_storage_account_name
       purpose                       = "evals-input-and-debug"
+      # TODO: Remove Azure DevOps IP allowlists once private endpoint/private networking is in place; the private endpoint should make this useless.
       ip_rules                      = concat(local.adapt_ip_rules, local.ado_ip_rules)
       public_network_access_enabled = var.sensitive_public_network_access_enabled
     }
     results = {
       name                          = var.results_storage_account_name
       purpose                       = "evals-results"
+      # TODO: Remove Azure DevOps IP allowlists once private endpoint/private networking is in place; the private endpoint should make this useless.
       ip_rules                      = concat(local.adapt_ip_rules, local.mhclg_ip_rules, local.ado_ip_rules)
       public_network_access_enabled = true
     }
