@@ -60,8 +60,8 @@ steps:
     env:
       ENVIRONMENT: test
       # Blob endpoints of the evals storage accounts, set as pipeline variables.
-      AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
-      AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL)
+      AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
+      AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL)
       # These are set as pipeline variables directly in ADO (secret variables must be
       # mapped explicitly).
       # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
