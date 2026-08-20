@@ -33,7 +33,13 @@ function DateInputProvider({
   })
   onReady?.(methods)
 
-  return <FormProvider {...methods}>{children}</FormProvider>
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={methods.handleSubmit(() => undefined)} noValidate>
+        {children}
+      </form>
+    </FormProvider>
+  )
 }
 
 describe('<GovukDateInput />', () => {
@@ -131,7 +137,7 @@ describe('<GovukDateInput />', () => {
     })
   })
 
-  it('shows validation errors for missing date fields', () => {
+  it('shows validation errors for missing date fields', async () => {
     render(
       <DateInputProvider
         defaultValues={{
@@ -139,11 +145,14 @@ describe('<GovukDateInput />', () => {
         }}
       >
         <GovukDateInput<Form> id="dob" name="date" legend="Date of birth" />
+        <button type="submit">Submit</button>
       </DateInputProvider>
     )
 
+    await userEvent.click(screen.getByRole('button', { name: 'Submit' }))
+
     expect(
-      screen.getByText('The date must include a day and month')
+      await screen.findByText('The date must include a day and month')
     ).toHaveClass('govuk-error-message')
     expect(screen.getByLabelText('Day')).toHaveAttribute('aria-invalid', 'true')
     expect(screen.getByLabelText('Month')).toHaveAttribute(
