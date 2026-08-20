@@ -218,6 +218,7 @@ module "ecs" {
   lb_listener_exists          = var.ssl_certs_created
 
   azure_apim_tenant_id_arn        = module.secrets.azure_apim_tenant_id_arn
+  azure_apim_url                  = "https://api.azc.test.communities.gov.uk/localtranscribe/"
   azure_apim_client_id_arn        = module.secrets.azure_apim_client_id_arn
   azure_apim_client_secret_arn    = module.secrets.azure_apim_client_secret_arn
   azure_apim_scope_arn            = module.secrets.azure_apim_scope_arn
