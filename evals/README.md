@@ -54,7 +54,8 @@ export AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL="https://<shared-account>.blob.cor
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
 ```
 
-Uploading the sample data is covered in `evals/summarisation/sample_data/README.md`.
+Upload the sample data from `evals/summarisation/sample_data/standard/` to the `input`
+container under the `summarisation/standard/` prefix before running the blob smoke test.
 
 ## Running a new experiment
 

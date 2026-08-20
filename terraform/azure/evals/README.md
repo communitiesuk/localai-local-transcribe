@@ -54,7 +54,6 @@ Creating the role assignment needs Owner or User Access Administrator on the acc
 | `network.tf`       | Blob private endpoints                                             |
 | `rbac.tf`          | Container-scoped role assignments                                  |
 | `variables.tf`     | Input variables (required values plus optional hardening defaults) |
-| `ACCESS_TESTS.md`  | Access matrix and the test scenarios a reviewer must run           |
 | `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally         |
 
 ## Unknowns left as variables
@@ -157,7 +156,7 @@ terraform plan
 terraform apply
 ```
 
-Cloud Shell egresses from an unpredictable IP, so blob data plane commands run there are denied once the firewall is on. This does not block Terraform: accounts, containers, and role assignments are all managed through the resource manager API, which the storage firewall does not gate. There is no allowlist entry for the applying machine, by design — read blobs from ADAPT instead. If you must check by hand in the sandbox, add the address to `adapt_ip_rules` so the exemption is visible in the diff, and remove it before running `ACCESS_TESTS.md`.
+Cloud Shell egresses from an unpredictable IP, so blob data plane commands run there are denied once the firewall is on. This does not block Terraform: accounts, containers, and role assignments are all managed through the resource manager API, which the storage firewall does not gate. There is no allowlist entry for the applying machine, by design — read blobs from ADAPT instead. If you must check by hand in the sandbox, add the address to `adapt_ip_rules` so the exemption is visible in the diff, and remove it before reviewing access.
 
 ### Step 3: Verify
 
@@ -168,7 +167,7 @@ az storage container list --account-name "<results-account-name>" --auth-mode lo
 
 You should see `input` and `debug` on the sensitive account, and `output` on the results one.
 
-Then work through `ACCESS_TESTS.md` and record the outcome of every scenario.
+Then review the expected access matrix above: ADAPT should reach `input`, `debug`, and `output`; MHCLG devices should reach only `output`; and identities without the container-scoped RBAC grants should be denied.
 
 ## Assured Azure environment
 
