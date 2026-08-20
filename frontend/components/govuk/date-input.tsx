@@ -103,23 +103,35 @@ export function GovukDateInput<T extends FieldValues>({
   control,
   mustBePastOrFuture,
   description = 'date',
+  rules,
   ...rest
 }: DateInputProps<T>) {
+  const errorFieldsRef = React.useRef<('day' | 'month' | 'year')[]>([])
+
   const { field, fieldState } = useController({
     name,
     control,
+    rules: {
+      ...rules,
+      validate: (value: DateValue) => {
+        const validationResult = validateDateEntry(
+          value,
+          mustBePastOrFuture,
+          description
+        )
+        errorFieldsRef.current = validationResult?.fields ?? []
+        return validationResult ? validationResult.message : true
+      },
+    },
   })
 
   const value = (field.value as DateValue) || { day: '', month: '', year: '' }
 
   const hintId = hint ? `${id}-hint` : undefined
 
-  const validationResult = validateDateEntry(
-    value,
-    mustBePastOrFuture,
-    description
-  )
-  const hasError = !!fieldState.error || !!validationResult
+  const hasError = !!fieldState.error
+
+  const errorFields = hasError ? errorFieldsRef.current : []
 
   return (
     <GovukFormGroup className={className} hasError={hasError}>
@@ -137,7 +149,7 @@ export function GovukDateInput<T extends FieldValues>({
         {hasError && (
           <p id="date-input-error" className="govuk-error-message">
             <span className="govuk-visually-hidden">Error:</span>{' '}
-            {fieldState.error?.message || validationResult?.message}
+            {fieldState.error?.message}
           </p>
         )}
         <div {...rest} className="govuk-date-input" id={id}>
@@ -164,9 +176,7 @@ export function GovukDateInput<T extends FieldValues>({
                     })
                   }}
                   aria-invalid={
-                    validationResult?.fields.includes(item.name)
-                      ? 'true'
-                      : undefined
+                    errorFields.includes(item.name) ? 'true' : undefined
                   }
                 />
               </div>

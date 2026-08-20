@@ -232,6 +232,7 @@ const RecordingDetails = ({
   }
 
   const form = useForm<TranscriptionDetailsData>({
+    reValidateMode: 'onSubmit',
     defaultValues: {
       clientName: transcription.client_name || '',
       caseId: transcription.case_id || '',
