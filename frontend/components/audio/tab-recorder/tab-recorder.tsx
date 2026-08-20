@@ -74,6 +74,7 @@ function TabRecorder({
   }
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
+  const isStartingRecordingRef = useRef(false)
   const streamRef = useRef<MediaStream | null>(null)
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
@@ -86,6 +87,8 @@ function TabRecorder({
   useTabCloseWarning(isRecording || !!recordedAudio)
 
   const stopAllTracks = useCallback(() => {
+    isStartingRecordingRef.current = false
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
         track.stop()
@@ -148,6 +151,16 @@ function TabRecorder({
   }, [])
 
   const startRecording = useCallback(async () => {
+    if (
+      isStartingRecordingRef.current ||
+      mediaRecorderRef.current?.state === 'recording' ||
+      mediaRecorderRef.current?.state === 'paused'
+    ) {
+      return
+    }
+
+    isStartingRecordingRef.current = true
+
     setError(null)
     mediaChunksRef.current = []
 
@@ -248,6 +261,8 @@ function TabRecorder({
       )
       setRecordingUIState('idle')
       stopAllTracks()
+    } finally {
+      isStartingRecordingRef.current = false
     }
   }, [
     addRecording,

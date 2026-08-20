@@ -28,7 +28,7 @@ export function RecordingLoading({
 
   return (
     <div className="govuk-!-text-align-centre">
-      <GovukBody size="l">Recording starts in...</GovukBody>
+      <GovukBody size="l">Recording starts in&hellip;</GovukBody>
       <p className="mb-7 text-5xl font-bold">{countdown}</p>
       {/* presenting this button as a link */}
       <button

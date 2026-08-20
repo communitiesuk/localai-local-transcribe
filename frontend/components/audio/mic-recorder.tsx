@@ -65,6 +65,7 @@ function MicRecorderComponent({
     useState<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
+  const isStartingRecordingRef = useRef(false)
   const [isRecording, setIsRecording] = useState(false)
 
   const setRecordingUIState = useRecordingUiStore(
@@ -72,6 +73,8 @@ function MicRecorderComponent({
   )
 
   const stopAllTracks = useCallback(() => {
+    isStartingRecordingRef.current = false
+
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach((track) => track.stop())
     }
@@ -84,6 +87,17 @@ function MicRecorderComponent({
   }, [releaseWakeLock])
 
   const startRecording = useCallback(async () => {
+    // prevent start recording triggering multiple times if recording has already started
+    if (
+      isStartingRecordingRef.current ||
+      mediaRecorderRef.current?.state === 'recording' ||
+      mediaRecorderRef.current?.state === 'paused'
+    ) {
+      return
+    }
+
+    isStartingRecordingRef.current = true
+
     try {
       setError(null)
       mediaChunksRef.current = []
@@ -94,6 +108,7 @@ function MicRecorderComponent({
           echoCancellation: false,
         },
       })
+      micStreamRef.current = micStream
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(micStream, options)
       mediaRecorderRef.current = mediaRecorder
@@ -152,6 +167,8 @@ function MicRecorderComponent({
       setError('Error occurred starting audio recording. Please try again.')
       setRecordingUIState('idle')
       stopAllTracks()
+    } finally {
+      isStartingRecordingRef.current = false
     }
     // Create a media recorder from the composed stream
   }, [
