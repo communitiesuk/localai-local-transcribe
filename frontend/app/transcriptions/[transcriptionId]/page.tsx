@@ -226,19 +226,22 @@ const RecordingDetails = ({
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  const clientDateOfBirth = new Date(transcription.client_date_of_birth)
+  let clientDateOfBirth: Date | null = null
+  if (transcription.client_date_of_birth) {
+    clientDateOfBirth = new Date(transcription.client_date_of_birth)
+  }
 
   const form = useForm<TranscriptionDetailsData>({
     defaultValues: {
-      clientName: transcription.client_name || undefined,
-      caseId: transcription.case_id || undefined,
-      subject: transcription.title || undefined,
+      clientName: transcription.client_name || '',
+      caseId: transcription.case_id || '',
+      subject: transcription.title || '',
       clientDateOfBirth: {
-        day: clientDateOfBirth?.getDate().toString(),
+        day: clientDateOfBirth?.getDate().toString() || '',
         month: clientDateOfBirth
           ? (clientDateOfBirth.getMonth() + 1).toString()
-          : undefined,
-        year: clientDateOfBirth?.getFullYear().toString(),
+          : '',
+        year: clientDateOfBirth?.getFullYear().toString() || '',
       },
     },
   })

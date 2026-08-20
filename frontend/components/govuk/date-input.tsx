@@ -52,6 +52,10 @@ export function validateDateEntry(
     .filter(([_, v]) => !v)
     .map(([field, _]) => field) as ('day' | 'month' | 'year')[]
 
+  if (missingFields.length === 3) {
+    return null
+  }
+
   if (missingFields.length > 0) {
     return {
       message:
@@ -152,7 +156,7 @@ export function GovukDateInput<T extends FieldValues>({
                   name={`${id}-${item.name}`}
                   type="text"
                   inputMode="numeric"
-                  value={value?.[item.name] || ''}
+                  value={value[item.name]}
                   onChange={(e) => {
                     field.onChange({
                       ...field.value,
