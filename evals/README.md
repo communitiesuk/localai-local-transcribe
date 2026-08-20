@@ -53,8 +53,6 @@ export AZURE_EVALS_STORAGE_ACCOUNT_URL="https://<evals-account>.blob.core.window
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
 ```
 
-Uploading the sample data is covered in `evals/summarisation/sample_data/README.md`.
-
 ## Running a new experiment
 
 An experiment is defined by:

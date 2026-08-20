@@ -51,7 +51,7 @@ Creating the role assignment needs Owner or User Access Administrator on the acc
 | Manual Cloud Shell apply                             | Process yes        | Auth method if Cloud Shell is unavailable                                | Org policy on who may apply                                |
 | Tenant, subscription, and variable values            | No                 | Always                                                                   | Naming convention                                          |
 
-Out of scope here: private endpoints, RBAC, network restrictions, blocking shared key access, customer-managed keys, and loading data into containers.
+Out of scope here: private endpoints, network restrictions, blocking shared key access, customer-managed keys, and loading data into containers.
 
 ## Prerequisites
 
