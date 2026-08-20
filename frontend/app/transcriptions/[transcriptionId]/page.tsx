@@ -247,6 +247,14 @@ const RecordingDetails = ({
     },
   })
 
+  const { errors, isSubmitted } = form.formState
+  const errorList = [
+    errors.clientDateOfBirth?.message && {
+      href: '#client-dob-day',
+      text: errors.clientDateOfBirth.message,
+    },
+  ].filter(Boolean) as { href: string; text: string }[]
+
   const setBanner = useBannerStore((store) => store.setBanner)
 
   const queryClient = useQueryClient()
@@ -302,6 +310,9 @@ const RecordingDetails = ({
         summary={open ? 'Hide' : 'Show'}
         onToggle={(e) => setOpen(e.currentTarget.open)}
       >
+        {isSubmitted && errorList.length > 0 && (
+          <GovukErrorSummary errorList={errorList} />
+        )}
         <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
         <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
         <FormProvider {...form}>
