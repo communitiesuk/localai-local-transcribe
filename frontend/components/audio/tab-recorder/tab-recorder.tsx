@@ -151,6 +151,7 @@ function TabRecorder({
   }, [])
 
   const startRecording = useCallback(async () => {
+    // prevent start recording triggering multiple times if recording has already started
     if (
       isStartingRecordingRef.current ||
       mediaRecorderRef.current?.state === 'recording' ||
