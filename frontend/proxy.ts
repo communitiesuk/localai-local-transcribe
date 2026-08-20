@@ -60,10 +60,6 @@ export async function proxy(req: NextRequest) {
           console.error(`User is not authorised to access ${pathname}`)
           return redirectTo(req, '/unauthorised')
         }
-
-        console.info(
-          `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
-        )
       }
       backendAuthResponse = await fetch(
         `${process.env.BACKEND_HOST}/users/me`,

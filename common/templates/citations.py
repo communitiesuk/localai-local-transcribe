@@ -2,6 +2,7 @@ import re
 
 from pydantic import BaseModel
 
+from common.canaries import strip_boundary_metadata
 from common.database.postgres_models import DialogueEntry
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_cite_claims_prompt, get_extract_claims_prompt
@@ -23,7 +24,7 @@ class CitationResult(BaseModel):
 
 
 async def extract_claims(draft: str) -> list[str]:
-    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
+    chatbot = create_default_chatbot(FastOrBestLLM.BEST)
     result = await chatbot.structured_chat(
         messages=get_extract_claims_prompt(draft),
         response_format=ClaimsList,
@@ -36,11 +37,13 @@ async def cite_claims(
     claims: list[str],
     transcript: list[DialogueEntry],
 ) -> CitationResult:
-    chatbot = create_default_chatbot(FastOrBestLLM.FAST)
-    return await chatbot.structured_chat(
+    chatbot = create_default_chatbot(FastOrBestLLM.BEST)
+    result = await chatbot.structured_chat(
         messages=get_cite_claims_prompt(draft, claims, transcript),
         response_format=CitationResult,
     )
+    result.cited_summary = strip_boundary_metadata(result.cited_summary)
+    return result
 
 
 async def add_citations_to_minute(
@@ -51,7 +54,7 @@ async def add_citations_to_minute(
     total_claims = len(claims)
     citation_result = await cite_claims(initial_draft, claims, transcript)
 
-    minute = combine_consecutive_citations(citation_result.cited_summary)
+    minute = combine_consecutive_citations(strip_boundary_metadata(citation_result.cited_summary))
 
     uncited_hallucinations = [
         LLMHallucination(

@@ -49,6 +49,18 @@ async def accept_terms_of_use(
     return to_user_response(user)
 
 
+@users_router.get("/me/organisation")
+async def get_organisation_name(user: UserDep, session: SQLSessionDep) -> str:
+    if not user.organisation_id:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    organisation = await session.get(Organisation, user.organisation_id)
+    if organisation is None:
+        raise HTTPException(status_code=404, detail="Organisation not found")
+
+    return organisation.name
+
+
 @users_router.patch("/data-retention", response_model=GetUserResponse)
 async def update_data_retention(
     data: DataRetentionUpdateResponse,

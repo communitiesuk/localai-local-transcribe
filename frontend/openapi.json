@@ -704,6 +704,45 @@
         }
       }
     },
+    "/users/me/organisation": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get Organisation Name",
+        "operationId": "get_organisation_name_users_me_organisation_get",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "title": "Response Get Organisation Name Users Me Organisation Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/data-retention": {
       "patch": {
         "tags": ["Users"],
@@ -2904,10 +2943,15 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "url": { "type": "string", "title": "Url" },
-          "extension": { "type": "string", "title": "Extension" }
+          "extension": { "type": "string", "title": "Extension" },
+          "created_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created Datetime"
+          }
         },
         "type": "object",
-        "required": ["id", "url", "extension"],
+        "required": ["id", "url", "extension", "created_datetime"],
         "title": "SingleRecording"
       },
       "TemplateMetadata": {

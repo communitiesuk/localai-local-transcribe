@@ -7,6 +7,8 @@ export const TranscriptionTextArea = ({
   control,
   onSaveText,
   editing,
+  lineEditMode = false,
+  onTextInput,
 }: {
   index: number
   control: Control<DialogueEntryForm>
@@ -16,6 +18,8 @@ export const TranscriptionTextArea = ({
     previousText: string
   ) => Promise<void>
   editing: boolean
+  lineEditMode?: boolean
+  onTextInput?: () => void
 }) => {
   return (
     <div className="flex-1">
@@ -31,10 +35,20 @@ export const TranscriptionTextArea = ({
                   target.focus()
                 }
               }}
+              onInput={() => {
+                if (lineEditMode) onTextInput?.()
+              }}
               onBlur={(e) => {
                 const target = e.target as HTMLParagraphElement
                 target.setAttribute('contenteditable', 'false')
                 const newText = target.innerText.trim()
+
+                if (lineEditMode) {
+                  if (newText !== field.value) {
+                    field.onChange(newText)
+                  }
+                  return
+                }
 
                 if (newText !== field.value) {
                   // Rollback is handled in the parent callback; prevent unhandled rejections from blur events.

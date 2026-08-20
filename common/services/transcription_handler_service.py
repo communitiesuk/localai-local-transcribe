@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from common.audio.speakers import process_speakers_and_dialogue_entries
+from common.canaries import strip_boundary_metadata
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Chat, JobStatus, Minute, Transcription
 from common.generate_meeting_title import generate_meeting_title
@@ -83,6 +84,7 @@ class TranscriptionHandlerService:
                         )
 
                 chat_response = await chatbot.chat(messages=chat_history)
+                chat_response = strip_boundary_metadata(chat_response)
                 chat_response = combine_consecutive_citations(chat_response)
                 chat.assistant_content = chat_response
                 chat.status = JobStatus.COMPLETED

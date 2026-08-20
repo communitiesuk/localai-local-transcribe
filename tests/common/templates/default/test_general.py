@@ -19,7 +19,10 @@ def test_prompt_with_agenda():
     assert "4. Discussion Points" in prompt_body
     assert "- Err on the side of including more detail rather than less" in prompt_body
     assert "- Present in chronological order" not in prompt_body
+    assert "1. Discuss project\n2. Plan next steps" in prompt_body
     assert "2. Plan next steps" in prompt_body
+    assert prompt_body.count("BEGIN agenda ") == 1
+    assert " - Trusted agenda boundary marker hash:" not in prompt_body
     assert "- List any pending items for future discussion" in prompt_body
     assert "Hello" in transcript_messages["content"]
     assert "Here is the meeting transcript" in transcript_messages["content"]
