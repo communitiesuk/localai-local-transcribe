@@ -111,6 +111,15 @@ def _fail_pipeline_if_halted(summary_path: Path) -> None:
         raise typer.Exit(code=1)
 
 
+def _fail_pipeline_if_threshold_failed(review_path: Path) -> None:
+    with review_path.open("rb") as f:
+        review = orjson.loads(f.read())
+
+    if not review.get("overall_passed", False):
+        typer.echo("Eval thresholds breached (see threshold_review.json).", err=True)
+        raise typer.Exit(code=1)
+
+
 async def _drain_pending_tasks() -> None:
     """Await any background tasks the eval left running so they finish before the process exits."""
     tasks = [task for task in asyncio.all_tasks() if task is not asyncio.current_task()]
@@ -193,6 +202,7 @@ def run_standard_eval(
     _publish(blob, cfg, results_path.parent, run_id)
 
     _fail_pipeline_if_halted(summary_path)
+    _fail_pipeline_if_threshold_failed(results_path.parent / "threshold_review.json")
 
     with hallucination_inputs_path.open("rb") as f:
         return [HallucinationInput.model_validate(item) for item in orjson.loads(f.read())]
