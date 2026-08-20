@@ -245,9 +245,9 @@ const RecordingDetails = ({
 
   const queryClient = useQueryClient()
 
-  const { mutate, isPending } = useMutation({
+  const { mutate } = useMutation({
     ...updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPatchMutation(),
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
           path: { transcription_id: transcription.id },
