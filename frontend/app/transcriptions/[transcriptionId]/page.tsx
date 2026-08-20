@@ -1,12 +1,10 @@
 'use client'
 
-import { useBannerStore } from '@/stores/use-banner-store'
 import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import { BannerNotification } from '@/components/banner-notification'
 import { DownloadButton } from '@/components/download-button'
 import {
   GovukBackLink,
