@@ -193,6 +193,7 @@ class SingleRecording(BaseModel):
     id: uuid.UUID
     url: str
     extension: str
+    created_datetime: datetime
 
 
 class MinuteListItem(BaseModel):

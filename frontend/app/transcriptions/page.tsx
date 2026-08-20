@@ -4,10 +4,12 @@ import { Suspense } from 'react'
 import { OfflineRecordings } from '@/components/recent-meetings/offline-recordings'
 import { RecordingsSort } from '@/components/recent-meetings/recordings-sort'
 import { UnlabelledTranscriptions } from '@/components/recent-meetings/unlabelled-transcriptions'
+import { BannerNotification } from '@/components/banner-notification'
 
 export default function TranscriptionsPage() {
   return (
     <div className="mx-auto max-w-3xl">
+      <BannerNotification />
       <Suspense
         fallback={
           <div className="flex w-full items-center justify-center">

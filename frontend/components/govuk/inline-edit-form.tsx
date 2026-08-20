@@ -5,16 +5,18 @@ import { useState, useId } from 'react'
 
 interface InlineEditFormProps {
   name: string
+  defaultValue?: string
   onUpdate: (newName: string) => void
   onCancel: (currentValue: string) => void
 }
 
 export function InLineEditForm({
   name,
+  defaultValue,
   onUpdate,
   onCancel,
 }: InlineEditFormProps) {
-  const [value, setValue] = useState(name)
+  const [value, setValue] = useState(defaultValue ?? name)
   const [initialValue] = useState(name)
   const id = useId()
 

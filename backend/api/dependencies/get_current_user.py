@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -8,11 +9,11 @@ from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
 from common.database.postgres_models import User
 from common.services.exceptions import MissingAuthTokenError
-from common.settings import get_settings, get_structured_logger
+from common.settings import get_settings
 
 settings = get_settings()
 
-logger = get_structured_logger()
+logger = logging.getLogger(__name__)
 
 
 async def get_current_user(
@@ -42,7 +43,7 @@ async def get_current_user(
         )
 
         if not user_auth_info.is_authorised:
-            logger.info("User {email} does not have the required permissions", email=email)
+            logger.info("User %s does not have the required permissions", email)
             raise unauthorised_error
 
         statement = select(User).where(User.subject_id == subject_id)

@@ -9,11 +9,13 @@ import { useState } from 'react'
 interface CopyTranscriptButtonProps {
   textToCopy: string
   onSuccess: () => void
+  disabled?: boolean
 }
 
 export function CopyTranscriptButton({
   textToCopy,
   onSuccess,
+  disabled = false,
 }: CopyTranscriptButtonProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const { setBanner } = useBannerStore()
@@ -63,6 +65,7 @@ export function CopyTranscriptButton({
         variant="secondary"
         onClick={() => setModalOpen(true)}
         className="govuk-!-margin-bottom-0"
+        disabled={disabled}
       >
         Copy transcript
       </GovukButton>

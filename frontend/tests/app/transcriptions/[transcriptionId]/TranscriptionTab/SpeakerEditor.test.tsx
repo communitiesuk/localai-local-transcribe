@@ -167,7 +167,7 @@ describe('<SpeakerEditor />', () => {
     expect(screen.getByRole('textbox')).toHaveValue('Alice')
   })
 
-  it('"Cancel" on the interstitial returns to edit view with the typed value', () => {
+  it('"Cancel" on the interstitial returns to edit view with the typed value and Update enabled', () => {
     const { openModal } = setup()
     openModal()
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
@@ -177,6 +177,18 @@ describe('<SpeakerEditor />', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(screen.getByRole('textbox')).toHaveValue('Alicia')
+    expect(screen.getByRole('button', { name: 'Update' })).toBeEnabled()
+  })
+
+  it('the trigger button is disabled when disabled prop is true', () => {
+    vi.mocked(useFormContext).mockReturnValue({ control: {} } as ReturnType<
+      typeof useFormContext
+    >)
+    vi.mocked(useWatch).mockReturnValue(mockEntries)
+    render(<SpeakerEditor onSaveSpeaker={vi.fn()} disabled={true} />)
+    expect(
+      screen.getByRole('button', { name: 'Edit speaker names' })
+    ).toBeDisabled()
   })
 
   it('Done calls onSaveSpeaker for each pending change and shows a success banner', async () => {

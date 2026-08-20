@@ -11,6 +11,7 @@ import {
 import { DialogueEntry, TranscriptionGetResponse } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { cn } from '@/lib/utils'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
 import { Play } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -19,6 +20,9 @@ import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
 export type DialogueEntryForm = {
   entries: DialogueEntry[]
 }
+
+const LINE_EDIT_ERROR =
+  'You must save or cancel your line edit to finish editing'
 
 export function isEntryPlaying(
   time: number,
@@ -40,13 +44,20 @@ export function buildTranscriptionHtml(
     .join('\n\n')
 }
 
+const cloneEntries = (entries: DialogueEntry[]) =>
+  entries.map((e) => ({ ...e }))
+
 export function TranscriptionTab({
   transcription,
   onTranscriptCopied,
   onTranscriptDownloaded,
   onDismissBanner,
+  onLineEditError,
+  onEditModeChange,
 }: {
   transcription: TranscriptionGetResponse
+  onLineEditError: (error: string | null) => void
+  onEditModeChange?: (isEditing: boolean) => void
   onTranscriptCopied: () => void
   onTranscriptDownloaded: () => void
   onDismissBanner: () => void
@@ -155,9 +166,7 @@ export function TranscriptionTab({
         .map((entry, index) => (entry.speaker === originalSpeaker ? index : -1))
         .filter((index) => index >= 0)
 
-      if (!indices.length) {
-        return
-      }
+      if (!indices.length) return
 
       await applySpeakerNameChange({
         indices,
@@ -175,9 +184,7 @@ export function TranscriptionTab({
   const handleRenameSingleSpeaker = useCallback(
     async (index: number, newSpeaker: string) => {
       const entry = getValues(`entries.${index}` as const)
-      if (!entry || entry.speaker === newSpeaker) {
-        return
-      }
+      if (!entry || entry.speaker === newSpeaker) return
 
       // Capture the original speaker before making any changes, so we can use it in the persist function
       // (entry is captured by the closure, but the speaker property might change before the persist function is called)
@@ -206,8 +213,25 @@ export function TranscriptionTab({
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playingRef = useRef<HTMLDivElement | null>(null)
+  const editSnapshotRef = useRef<DialogueEntry[]>([])
   const [time, setTime] = useState(0)
-  const [isEditing, setIsEditing] = useState(false)
+
+  const [isLineEditMode, setIsLineEditMode] = useState(false)
+  const [selectedLineIndex, setSelectedLineIndex] = useState<number | null>(
+    null
+  )
+  const [selectedLineOriginalText, setSelectedLineOriginalText] = useState('')
+  const [lineEditInProgress, setLineEditInProgress] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const { setBanner, clearBanner } = useBannerStore()
+
+  const setError = useCallback(
+    (error: string | null) => {
+      onLineEditError(error)
+    },
+    [onLineEditError]
+  )
 
   const scrollToPlaying = () => {
     if (playingRef.current) {
@@ -223,6 +247,115 @@ export function TranscriptionTab({
   const delayedScroll = () =>
     new Promise((resolve) => setTimeout(resolve, 100)).then(scrollToPlaying)
 
+  const enterLineEditMode = () => {
+    if (!fields.length) {
+      setError('No lines available to edit.')
+      return
+    }
+    editSnapshotRef.current = cloneEntries(getValues('entries'))
+    setIsLineEditMode(true)
+    setSelectedLineIndex(0)
+    setSelectedLineOriginalText(getValues('entries.0.text' as const) ?? '')
+    setLineEditInProgress(false)
+    setError(null)
+    onEditModeChange?.(true)
+
+    const startTime = getValues('entries.0.start_time' as const)
+    if (audioRef.current && startTime != null) {
+      audioRef.current.currentTime = startTime
+    }
+  }
+
+  const selectLineForEdit = (index: number) => {
+    if (lineEditInProgress && selectedLineIndex !== index) {
+      setError(LINE_EDIT_ERROR)
+      return
+    }
+
+    setError(null)
+    clearBanner()
+    setSelectedLineIndex(index)
+    setSelectedLineOriginalText(
+      getValues(`entries.${index}.text` as const) ?? ''
+    )
+
+    const startTime = getValues(`entries.${index}.start_time` as const)
+    if (audioRef.current && startTime != null) {
+      audioRef.current.currentTime = startTime
+    }
+  }
+
+  const saveLineEdit = async () => {
+    if (selectedLineIndex == null) {
+      return
+    }
+    setIsSaving(true)
+    const newText =
+      getValues(`entries.${selectedLineIndex}.text` as const) ?? ''
+    try {
+      await handleUpdateEntryText(
+        selectedLineIndex,
+        newText,
+        selectedLineOriginalText
+      )
+      editSnapshotRef.current[selectedLineIndex] = {
+        ...editSnapshotRef.current[selectedLineIndex],
+        text: newText,
+      }
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: 'Line edit saved',
+      })
+      setSelectedLineIndex(null)
+      setSelectedLineOriginalText('')
+      setLineEditInProgress(false)
+      setError(null)
+    } catch {
+      setLineEditInProgress(false)
+      setSelectedLineIndex(null)
+      setError('Failed to save line edit. Please try again.')
+      // Error is handled in handleUpdateEntryText but a visual banner
+      //isn't provided to relay to the user. Issue raised with the UCD team.
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const cancelLineEdit = () => {
+    if (selectedLineIndex != null) {
+      setValue(
+        `entries.${selectedLineIndex}.text` as const,
+        editSnapshotRef.current[selectedLineIndex]?.text ?? '',
+        { shouldDirty: false }
+      )
+    }
+    setSelectedLineIndex(null)
+    setSelectedLineOriginalText('')
+    setLineEditInProgress(false)
+    setError(null)
+    clearBanner()
+  }
+
+  const handleTextInput = useCallback(() => {
+    setLineEditInProgress(true)
+  }, [])
+
+  const finishEditing = () => {
+    if (lineEditInProgress) {
+      setError(LINE_EDIT_ERROR)
+      return
+    }
+
+    setIsLineEditMode(false)
+    setSelectedLineIndex(null)
+    setSelectedLineOriginalText('')
+    setLineEditInProgress(false)
+    setError(null)
+    clearBanner()
+    onEditModeChange?.(false)
+  }
+
   return (
     <div>
       <FormProvider {...methods}>
@@ -234,27 +367,35 @@ export function TranscriptionTab({
             <SpeakerEditor
               src={hasRecordings ? recordings[0].url : undefined}
               onSaveSpeaker={handleRenameSpeakerEverywhere}
+              disabled={isLineEditMode}
             />
+
             <GovukButton
               type="button"
               variant="secondary"
               className="govuk-!-margin-bottom-0"
-              aria-pressed={isEditing}
-              onClick={() => setIsEditing((editing) => !editing)}
+              onClick={enterLineEditMode}
+              disabled={isLineEditMode}
+              aria-pressed={isLineEditMode}
             >
-              {isEditing ? 'Stop editing' : 'Edit transcript'}
+              Edit transcript
             </GovukButton>
             <CopyTranscriptButton
               textToCopy={transcriptionString}
               onSuccess={onTranscriptCopied}
+              disabled={isLineEditMode}
             />
+
             {fields.length > 0 && (
               <DownloadTranscriptButton
                 getEntries={() => getValues('entries')}
                 onSuccess={onTranscriptDownloaded}
+                createdDatetime={recordings?.[0]?.created_datetime}
+                disabled={isLineEditMode}
               />
             )}
           </GovukButtonGroup>
+
           {hasRecordings && (
             <div className="govuk-!-margin-bottom-2 sticky top-0 bg-[var(--govuk-body-background-colour)] py-2">
               <audio
@@ -271,7 +412,42 @@ export function TranscriptionTab({
               />
             </div>
           )}
+
+          {isLineEditMode && (
+            <GovukButtonGroup
+              className="govuk-!-margin-bottom-4 [scroll-margin-top:5rem]"
+              id="line-edit-actions"
+            >
+              <GovukButton
+                type="button"
+                variant="primary"
+                onClick={saveLineEdit}
+                disabled={
+                  !lineEditInProgress || selectedLineIndex == null || isSaving
+                }
+              >
+                Save line edit
+              </GovukButton>
+              <GovukButton
+                type="button"
+                variant="warning"
+                onClick={cancelLineEdit}
+                disabled={!lineEditInProgress || isSaving}
+              >
+                Cancel line edit
+              </GovukButton>
+              <GovukButton
+                type="button"
+                onClick={finishEditing}
+                variant="secondary"
+              >
+                Finish editing
+              </GovukButton>
+            </GovukButtonGroup>
+          )}
+
           <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
+
           <div className="flex flex-col gap-6">
             {fields.map((field, index) => {
               const entry = watchedEntries?.[index] ?? field
@@ -280,6 +456,8 @@ export function TranscriptionTab({
                 entry.start_time,
                 watchedEntries?.[index + 1]?.start_time
               )
+              const isSelectedForEdit = selectedLineIndex === index
+
               return (
                 <div
                   className={cn('flex items-start gap-2', {
@@ -288,7 +466,7 @@ export function TranscriptionTab({
                   key={field.id}
                   ref={isPlaying ? playingRef : null}
                 >
-                  {hasRecordings && (
+                  {hasRecordings && !isLineEditMode && (
                     <button
                       type="button"
                       aria-label="Play from here"
@@ -305,18 +483,33 @@ export function TranscriptionTab({
                       <Play size={12} fill="currentColor" aria-hidden="true" />
                     </button>
                   )}
+
+                  {isLineEditMode && (
+                    <input
+                      type="radio"
+                      id={`line-edit-${field.id}`}
+                      name="line-edit-selector"
+                      checked={isSelectedForEdit}
+                      onChange={() => selectLineForEdit(index)}
+                      aria-label={`Select line ${index + 1} to edit`}
+                      className="mt-1.5 shrink-0 cursor-pointer"
+                    />
+                  )}
+
                   <SpeakerNamePopover
                     entry={entry}
                     index={index}
                     onUpdateAll={handleRenameSpeakerEverywhere}
                     onUpdateSingle={handleRenameSingleSpeaker}
-                    editing={isEditing}
+                    editing={isLineEditMode}
                   />
                   <TranscriptionTextArea
                     control={control}
                     index={index}
                     onSaveText={handleUpdateEntryText}
-                    editing={isEditing}
+                    editing={isLineEditMode ? isSelectedForEdit : false}
+                    lineEditMode={isLineEditMode}
+                    onTextInput={handleTextInput}
                   />
                 </div>
               )

@@ -25,9 +25,11 @@ import { useBannerStore } from '@/stores/use-banner-store'
 export const SpeakerEditor = ({
   src,
   onSaveSpeaker,
+  disabled = false,
 }: {
   src?: string
   onSaveSpeaker: (originalSpeaker: string, newSpeaker: string) => Promise<void>
+  disabled?: boolean
 }) => {
   const form = useFormContext<DialogueEntryForm>()
   const entries = useWatch({ control: form.control, name: 'entries' })
@@ -58,6 +60,7 @@ export const SpeakerEditor = ({
         variant="secondary"
         className="govuk-!-margin-bottom-0"
         onClick={() => setOpen(true)}
+        disabled={disabled}
       >
         Edit speaker names
       </GovukButton>
@@ -105,6 +108,7 @@ const SpeakerEditorModal = ({
       const initialValue = pendingChanges.get(speaker) ?? speaker
       setEditingSpeaker(speaker)
       setEditInitialValue(initialValue)
+      setDiscardedValue('')
       setView('edit')
     },
     [pendingChanges]
@@ -145,6 +149,7 @@ const SpeakerEditorModal = ({
   const handleClose = () => {
     setPendingChanges(new Map())
     setEditingSpeaker(undefined)
+    setDiscardedValue('')
     setView('list')
     onClose()
   }
@@ -229,6 +234,7 @@ const SpeakerEditorModal = ({
         <InLineEditForm
           key={editInitialValue}
           name={editInitialValue}
+          defaultValue={discardedValue || undefined}
           onUpdate={handleUpdate}
           onCancel={(currentValue) => {
             if (currentValue === editInitialValue) {
@@ -256,13 +262,13 @@ const SpeakerEditorModal = ({
           }
           confirmLabel="Discard changes"
           onConfirm={() => {
+            setDiscardedValue('')
             setEditInitialValue(
               pendingChanges.get(editingSpeaker ?? '') ?? editingSpeaker ?? ''
             )
             setView('edit')
           }}
           onCancel={() => {
-            setEditInitialValue(discardedValue)
             setView('edit')
           }}
         />
