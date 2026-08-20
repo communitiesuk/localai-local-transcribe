@@ -45,7 +45,6 @@ def _make_blob(cfg: AppConfig) -> EvalBlobStorage | None:
     if not cfg.blob.enabled:
         return None
     return EvalBlobStorage.from_account_urls(
-        cfg.blob.account_url,
         restricted_account_url=cfg.blob.restricted_account_url,
         shared_account_url=cfg.blob.shared_account_url,
     )

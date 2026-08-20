@@ -10,7 +10,7 @@ Provisions two storage accounts holding three private blob containers for pipeli
 
 ## Why two accounts
 
-Azure storage firewall rules — IP allowlists and private endpoints — are scoped to the storage account, not the container. AIILG-649 requires `input` and `debug` to be unreachable from MHCLG devices while `output` stays readable from them, at the network layer. A single account cannot express that, so the containers are split across two accounts that differ only in their IP allowlist.
+Azure storage firewall rules — IP allowlists and private endpoints — are scoped to the storage account, not the container. AIILG-649 requires `input` and `debug` to be unreachable from MHCLG devices while `output` stays readable from them, at the network layer. The containers are therefore split across two accounts that differ only in their IP allowlist.
 
 ## Controls
 
@@ -95,26 +95,6 @@ Still out of scope: customer-managed keys, diagnostic logging to a SIEM, and loa
 - Three globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one sensitive, one results
 - **Storage Blob Data Contributor** on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init` / `plan` / `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
 - **User Access Administrator** (or Owner) on the resource group for the applying identity, because `rbac.tf` creates role assignments
-
-## Migrating from the single-account version
-
-AIILG-644 created one account with all three containers, at the Terraform address `azurerm_storage_account.evals`. This configuration replaces it with `azurerm_storage_account.evals["sensitive"]` and `["results"]`, so a plain `terraform apply` plans to **destroy the existing account and every blob in it**. Soft delete does not help: deleting the account removes the container soft-delete scope with it.
-
-Read the plan before approving it. If it shows a `destroy` of a storage account, stop.
-
-The safe sequence is to detach the old account from state, leaving the real resource untouched for manual review, then apply:
-
-```bash
-terraform state rm 'azurerm_storage_account.evals'
-terraform state rm 'azurerm_storage_container.input'
-terraform state rm 'azurerm_storage_container.debug'
-terraform state rm 'azurerm_storage_container.output'
-
-terraform plan   # must now show creates only, no destroys
-terraform apply
-```
-
-Copy any data across with `az storage blob copy start-batch` once both accounts exist, then delete the old account by hand when you are satisfied nothing is left on it. In the sandbox nothing of value is stored yet, so deleting it outright is fine.
 
 ## Cloud Shell apply (Softwire sandbox)
 

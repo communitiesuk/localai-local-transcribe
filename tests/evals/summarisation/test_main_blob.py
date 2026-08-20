@@ -107,7 +107,6 @@ def test_standard_eval_publishes_split_outputs(tmp_path: Path) -> None:
 
     assert result.exit_code == 0, result.output
     make_blob.assert_called_once_with(
-        None,
         restricted_account_url="https://restricted.blob.core.windows.net",
         shared_account_url="https://shared.blob.core.windows.net",
     )

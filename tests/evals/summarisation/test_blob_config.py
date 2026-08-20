@@ -58,6 +58,5 @@ blob:
 def test_blob_storage_config_standalone_defaults():
     cfg = BlobStorageConfig()
     assert cfg.enabled is False
-    assert cfg.account_url is None
     assert cfg.restricted_account_url is None
     assert cfg.shared_account_url is None

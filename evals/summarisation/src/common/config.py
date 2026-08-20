@@ -64,7 +64,6 @@ class BlobStorageConfig(BaseModel):
     """Blob storage for the standard eval. Disabled by default (local disk); Entra ID auth."""
 
     enabled: bool = False
-    account_url: str | None = None
     restricted_account_url: str | None = None
     shared_account_url: str | None = None
     output_prefix: str = "summarisation"

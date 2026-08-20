@@ -3,7 +3,7 @@
 # Why two accounts: Azure storage firewall rules (network ACLs and private endpoints) are
 # scoped to the storage account, not the container. The access requirement differs per
 # container - input and debug must be reachable only from ADAPT, results must also be
-# readable from MHCLG devices - so a single account cannot express it at the network layer.
+# readable from MHCLG devices.
 #
 #   sensitive account -> input, debug   (ADAPT IPs and private endpoint only)
 #   results account   -> output         (ADAPT IPs, MHCLG IPs, private endpoint)

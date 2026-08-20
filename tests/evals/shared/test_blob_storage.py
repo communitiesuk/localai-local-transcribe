@@ -41,7 +41,10 @@ def test_download_blob_writes_file(tmp_path):
     service, patcher = _make_service(blobs={("input", "summarisation/standard/data.jsonl"): b"line1\nline2\n"})
     dest = tmp_path / "nested" / "data.jsonl"
     with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
-        blob = EvalBlobStorage("https://acct.blob.core.windows.net")
+        blob = EvalBlobStorage(
+            restricted_account_url="https://restricted.blob.core.windows.net",
+            shared_account_url="https://shared.blob.core.windows.net",
+        )
         result = blob.download_blob("input", "summarisation/standard/data.jsonl", dest)
 
     assert result == dest
@@ -53,33 +56,13 @@ def test_upload_file(tmp_path):
     src.write_bytes(b'{"overall": 4.2}')
     service, patcher = _make_service()
     with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
-        blob = EvalBlobStorage("https://acct.blob.core.windows.net")
+        blob = EvalBlobStorage(
+            restricted_account_url="https://restricted.blob.core.windows.net",
+            shared_account_url="https://shared.blob.core.windows.net",
+        )
         blob.upload_file("output", "summarisation/standard/run1/summary.json", src)
 
     assert service.uploaded[("output", "summarisation/standard/run1/summary.json")] == b'{"overall": 4.2}'
-
-
-def test_from_account_url_uses_given_url():
-    with (
-        patch("evals.shared.blob_storage.BlobServiceClient") as mock_client,
-        patch("evals.shared.blob_storage.DefaultAzureCredential"),
-    ):
-        EvalBlobStorage.from_account_url("https://cfg.blob.core.windows.net")
-
-    _, kwargs = mock_client.call_args
-    assert kwargs["account_url"] == "https://cfg.blob.core.windows.net"
-
-
-def test_from_account_url_falls_back_to_env():
-    with (
-        patch.dict("os.environ", {"AZURE_EVALS_STORAGE_ACCOUNT_URL": "https://env.blob.core.windows.net"}, clear=False),
-        patch("evals.shared.blob_storage.BlobServiceClient") as mock_client,
-        patch("evals.shared.blob_storage.DefaultAzureCredential"),
-    ):
-        EvalBlobStorage.from_account_url(None)
-
-    _, kwargs = mock_client.call_args
-    assert kwargs["account_url"] == "https://env.blob.core.windows.net"
 
 
 def test_from_account_urls_routes_containers_to_separate_accounts(tmp_path):
@@ -125,7 +108,7 @@ def test_from_account_urls_falls_back_to_split_env():
         patch("evals.shared.blob_storage.BlobServiceClient") as mock_client,
         patch("evals.shared.blob_storage.DefaultAzureCredential"),
     ):
-        EvalBlobStorage.from_account_urls(None)
+        EvalBlobStorage.from_account_urls()
 
     account_urls = [call.kwargs["account_url"] for call in mock_client.call_args_list]
     assert account_urls == [
@@ -134,13 +117,20 @@ def test_from_account_urls_falls_back_to_split_env():
     ]
 
 
-def test_from_account_url_raises_without_account_url():
+def test_from_account_urls_raises_without_both_account_urls():
     with (
-        patch.dict("os.environ", {"AZURE_EVALS_STORAGE_ACCOUNT_URL": ""}, clear=False),
+        patch.dict(
+            "os.environ",
+            {
+                "AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL": "",
+                "AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL": "",
+            },
+            clear=False,
+        ),
         patch("evals.shared.blob_storage.DefaultAzureCredential"),
-        pytest.raises(ValueError, match="restricted_account_url"),
+        pytest.raises(ValueError, match="restricted_account_url.*shared_account_url"),
     ):
-        EvalBlobStorage.from_account_url(None)
+        EvalBlobStorage.from_account_urls()
 
 
 def test_unknown_container_is_rejected(tmp_path):
@@ -148,7 +138,10 @@ def test_unknown_container_is_rejected(tmp_path):
         patch("evals.shared.blob_storage.BlobServiceClient"),
         patch("evals.shared.blob_storage.DefaultAzureCredential"),
     ):
-        blob = EvalBlobStorage("https://acct.blob.core.windows.net")
+        blob = EvalBlobStorage(
+            restricted_account_url="https://restricted.blob.core.windows.net",
+            shared_account_url="https://shared.blob.core.windows.net",
+        )
 
     with pytest.raises(ValueError, match="Unknown eval blob container"):
         blob.upload_file("other", "blob.txt", tmp_path / "blob.txt")

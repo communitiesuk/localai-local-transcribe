@@ -54,9 +54,6 @@ export AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL="https://<shared-account>.blob.cor
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
 ```
 
-For local compatibility with an older single-account sandbox, `AZURE_EVALS_STORAGE_ACCOUNT_URL` or
-`blob.account_url` still routes all three containers through one account.
-
 Uploading the sample data is covered in `evals/summarisation/sample_data/README.md`.
 
 ## Running a new experiment
