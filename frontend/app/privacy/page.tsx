@@ -1,7 +1,7 @@
 import { GovukHeading, GovukList, GovukListItem } from '@/components/govuk'
 
 export const metadata = {
-  title: 'Privacy notice for Local Transcribe',
+  title: 'Local Transcribe User Privacy Notice',
 }
 
 export default function PrivacyPage() {
@@ -228,10 +228,10 @@ export default function PrivacyPage() {
             </GovukList>
           </GovukListItem>
           <GovukListItem>
-            Local Transcribe Partner Councils undertakes to comply with the
+            Local Transcribe Partner Councils undertake to comply with the
             applicable Data Protection Legislation in respect of their
             processing of Personal Data as a Joint Controller of data as part of
-            their delivery of a service to service uses.
+            their delivery of a service to service users.
           </GovukListItem>
         </GovukList>
 
@@ -326,7 +326,7 @@ export default function PrivacyPage() {
           </GovukListItem>
           <GovukListItem>
             This includes third-party contractors from Softwire and Sparta
-            Global, which support the delivery of Local Transcribe process
+            Global, who support the delivery of Local Transcribe, processing
             personal data on MHCLG’s instruction.
           </GovukListItem>
           <GovukListItem>
@@ -374,7 +374,7 @@ export default function PrivacyPage() {
         <p className="govuk-body">
           Processing of Personal Data shall cease when a Local Transcribe
           Partner Council ceases participation in user research and engagement
-          activities, when Local Transcribe Partner Councils requests to have
+          activities, when Local Transcribe Partner Councils request to have
           their data deleted, when a service user requests to have their data
           deleted, or when 6 months has elapsed from the start of data
           processing.
@@ -383,7 +383,7 @@ export default function PrivacyPage() {
           Processing of Personal Data from audio data ceases based on the
           deletion date set within Local Transcribe by Local Transcribe Partner
           Councils personnel, local council employees, team managers, and
-          frontline worker. This defaults to 7 days but is configurable between
+          frontline workers. This defaults to 7 days but is configurable between
           1 and 30 days by the user. Alternatively, processing will cease when a
           Local Transcribe Partner Council requests to have their audio data
           deleted, or if a service user requests to have their audio data
