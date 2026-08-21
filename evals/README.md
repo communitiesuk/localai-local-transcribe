@@ -36,17 +36,18 @@ The evaluation type is determined by the `eval_type` field in the config file.
 
 Outputs are written to `evals/summarisation/output/<run_id>/results.jsonl` and `evals/summarisation/output/<run_id>/summary.json`.
 
-## Blob storage integration (standard eval)
+## Blob storage integration (standard and bias evals)
 
-The standard summarisation eval can optionally read input from, and write output to, Azure blob
-storage (`input` / `debug` / `output` containers) instead of local disk, using safe proxy data. The
-containers are provisioned by `terraform/azure/evals/` — see its
+The standard summarisation and bias evals can optionally read input from, and write output to, Azure
+blob storage (`input` / `debug` / `output` containers) instead of local disk, using safe proxy data.
+The containers are provisioned by `terraform/azure/evals/` — see its
 [README](../terraform/azure/evals/README.md) for setup.
 
 To use it: set the restricted and shared account URLs, enable the config's `blob:` block, and set
 `dataset.source: blob` with a `dataset.blob_path`. The restricted account holds `input` and `debug`;
-the shared account holds `output`. See `evals/summarisation/configs/blob-smoke-test.yaml`. With
-`blob.enabled: false` (the default) the pipeline reads and writes local disk as before.
+the shared account holds `output`. See `evals/summarisation/configs/blob-smoke-test.yaml` and
+`evals/summarisation/configs/bias-blob-smoke-test.yaml`. With `blob.enabled: false` (the default)
+the pipeline reads and writes local disk as before.
 
 ```bash
 export AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL="https://<restricted-account>.blob.core.windows.net"
@@ -89,6 +90,9 @@ poetry install --with evals-summarisation
 ```bash
 # Run bias evaluation using unified entry point
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/counterfactual.yaml
+
+# Run the blob-backed CPU smoke test used by the Azure DevOps manual pipeline
+poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/bias-blob-smoke-test.yaml
 ```
 
 **Note:** The unified entry point (`src/main.py`) automatically determines whether to run standard or bias evaluation based on the `eval_type` field in the config.
