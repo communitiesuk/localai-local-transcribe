@@ -111,6 +111,12 @@ variable "private_endpoint_subnet_id" {
   default     = null
 }
 
+variable "private_endpoint_vnet_id" {
+  type        = string
+  description = "Resource ID of the ADAPT VNet to link to a new private DNS zone. Required when creating private endpoints without private_dns_zone_ids."
+  default     = null
+}
+
 variable "private_endpoint_is_manual_connection" {
   type        = bool
   description = "True when the subnet and the storage accounts have different owners, leaving the connection pending ADAPT approval."

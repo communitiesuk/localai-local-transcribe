@@ -61,16 +61,17 @@ Creating the role assignment needs Owner or User Access Administrator on the acc
 ADAPT, temporary Azure DevOps, and MHCLG egress addresses, the private endpoint subnet, any existing private DNS zones, and principal IDs are variables. Empty values deny that route except trusted Azure services using strong authentication.
 
 IP allowlists support public IPv4 CIDR ranges. Use plain IPs for single-host entries.
-TODO(AIILG-649): Replace `ado_ip_rules` with private endpoint/private networking; the private endpoint should make this useless.
+
+TODO(AIILG-649): Private endpoints are blocked on the new Azure environment; this currently uses storage network IP restrictions instead.
 
 ## Private endpoint ownership
 
 Where the endpoint is created depends on where the ADAPT VNet lives.
 
-- Same subscription as this stack: set `private_endpoint_subnet_id` and Terraform creates both endpoints.
+- Same subscription as this stack: set `private_endpoint_subnet_id` and Terraform creates both endpoints. Also set `private_endpoint_vnet_id` if Terraform should create and link the private DNS zone.
 - ADAPT-owned subscription or tenant: leave `private_endpoint_subnet_id` null. Give the ADAPT team the `storage_account_ids` output; they create the endpoints in their VNet, and we approve the pending connections in the portal under Networking → Private endpoint connections, or with `az network private-endpoint-connection approve`.
 
-Either way the endpoint only resolves privately once `privatelink.blob.core.windows.net` is linked to the ADAPT VNet. If this stack creates the endpoint and `private_dns_zone_ids` is empty, it creates and links that private DNS zone automatically. Pass `private_dns_zone_ids` to use an existing platform-managed zone instead. If ADAPT creates the endpoint in its own subscription, ask ADAPT to configure equivalent private DNS records.
+Either way the endpoint only resolves privately once `privatelink.blob.core.windows.net` is linked to the ADAPT VNet. If this stack creates the endpoint and `private_dns_zone_ids` is empty, it creates and links that private DNS zone automatically using `private_endpoint_vnet_id`. Pass `private_dns_zone_ids` to use an existing platform-managed zone instead. If ADAPT creates the endpoint in its own subscription, ask ADAPT to configure equivalent private DNS records.
 
 ## Softwire Sandbox vs assured Azure environment
 
