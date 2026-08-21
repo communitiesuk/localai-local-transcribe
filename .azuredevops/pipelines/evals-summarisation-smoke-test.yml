@@ -51,8 +51,7 @@ steps:
       inlineScript: |
         results_artifact_dir="$(Build.ArtifactStagingDirectory)/${{ parameters.resultsArtifactName }}"
         mkdir -p "${results_artifact_dir}"
-        poetry run dotenv -f .env.example run --no-override -- \
-          python -m evals.summarisation.src.main \
+        poetry run python -c "import dotenv, runpy; dotenv.load_dotenv('.env.example', override=False); runpy.run_module('evals.summarisation.src.main', run_name='__main__')" \
           --config ${{ parameters.config }} \
           --results-artifact-dir "${results_artifact_dir}"
     env:
