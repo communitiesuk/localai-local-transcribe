@@ -132,13 +132,17 @@ export function GovukDateInput<T extends FieldValues>({
   const hintId = hint ? `${id}-hint` : undefined
 
   const hasError = !!fieldState.error
+  const errorId = hasError ? `${id}-error` : undefined
 
   return (
     <GovukFormGroup className={className} hasError={hasError}>
       <fieldset
         className="govuk-fieldset"
         role="group"
-        aria-describedby={hintId}
+        aria-describedby={
+          [hintId, errorId].filter((id) => id != undefined).join(' ') ||
+          undefined
+        }
       >
         <legend className="govuk-fieldset__legend">{legend}</legend>
         {hint && (
@@ -147,7 +151,7 @@ export function GovukDateInput<T extends FieldValues>({
           </div>
         )}
         {hasError && (
-          <p id="date-input-error" className="govuk-error-message">
+          <p id={errorId} className="govuk-error-message">
             <span className="govuk-visually-hidden">Error:</span>{' '}
             {fieldState.error?.message}
           </p>
