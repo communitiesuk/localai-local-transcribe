@@ -242,11 +242,11 @@ const RecordingDetails = ({
       caseId: transcription.case_id || '',
       subject: transcription.title || '',
       clientDateOfBirth: {
-        day: clientDateOfBirth?.getDate().toString() || '',
+        day: clientDateOfBirth?.getUTCDate().toString() || '',
         month: clientDateOfBirth
-          ? (clientDateOfBirth.getMonth() + 1).toString()
+          ? (clientDateOfBirth.getUTCMonth() + 1).toString()
           : '',
-        year: clientDateOfBirth?.getFullYear().toString() || '',
+        year: clientDateOfBirth?.getUTCFullYear().toString() || '',
       },
     },
   })
@@ -294,9 +294,11 @@ const RecordingDetails = ({
       data.clientDateOfBirth.year
     ) {
       dateOfBirth = new Date(
-        parseInt(data.clientDateOfBirth.year),
-        parseInt(data.clientDateOfBirth.month) - 1,
-        parseInt(data.clientDateOfBirth.day)
+        Date.UTC(
+          parseInt(data.clientDateOfBirth.year),
+          parseInt(data.clientDateOfBirth.month) - 1,
+          parseInt(data.clientDateOfBirth.day)
+        )
       )
     }
 
