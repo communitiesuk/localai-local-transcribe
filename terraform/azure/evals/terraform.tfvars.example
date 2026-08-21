@@ -17,7 +17,7 @@ environment_name                = "sandbox"
 # adapt_ip_rules = []
 # mhclg_ip_rules = []
 
-# Set once ADAPT confirms the private endpoint works.
+# TODO(AIILG-649): Confirm once the private endpoint setup is known in the Azure environment.
 # sensitive_public_network_access_enabled = false
 
 # Private endpoint.
@@ -26,7 +26,7 @@ environment_name                = "sandbox"
 # private_dns_zone_ids                  = ["/subscriptions/.../privateDnsZones/privatelink.blob.core.windows.net"]
 
 # Team RBAC.
-# TODO: Spike what we can do via Entra groups to make these less hardcoded.
+# TODO(AIILG-649): Spike what we can do via Entra groups to make these less hardcoded.
 # input_writer_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
 # debug_reader_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
 # results_reader_principal_ids = ["00000000-0000-0000-0000-000000000000"]

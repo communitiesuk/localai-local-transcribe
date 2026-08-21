@@ -96,7 +96,7 @@ variable "network_rules_bypass" {
 
 variable "sensitive_public_network_access_enabled" {
   type        = bool
-  description = "Whether the input/debug account keeps a public endpoint. Set false once ADAPT confirms the private endpoint works, which makes the private endpoint the only route in and ignores adapt_ip_rules."
+  description = "Whether the input/debug account keeps a public endpoint. TODO(AIILG-649): confirm the final private endpoint setup in the Azure environment before setting false."
   default     = true
 }
 

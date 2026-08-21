@@ -5,8 +5,8 @@
 # container - input and debug must be reachable only from ADAPT, results must also be
 # readable from MHCLG devices.
 #
-#   sensitive account -> input, debug   (ADAPT IPs and private endpoint only)
-#   results account   -> output         (ADAPT IPs, MHCLG IPs, private endpoint)
+#   sensitive account -> input, debug   (ADAPT IPs; private endpoint approach TBD)
+#   results account   -> output         (ADAPT IPs, MHCLG IPs; private endpoint approach TBD)
 #
 # Softwire sandbox vs assured Azure environment:
 # - Transferable: the two-account split, container names, hardening defaults, private
@@ -43,7 +43,9 @@ provider "azurerm" {
 
 locals {
   adapt_ip_rules = distinct(var.adapt_ip_rules)
-  # TODO: Remove Azure DevOps IP allowlists once private endpoint/private networking is in place; the private endpoint should make this useless.
+  # TODO(AIILG-649): Confirm the Azure DevOps network route once we can test this in the
+  # Azure environment, then remove any allowlist entries that private networking makes
+  # unnecessary.
   ado_ip_rules   = distinct(var.ado_ip_rules)
   mhclg_ip_rules = distinct(var.mhclg_ip_rules)
 
@@ -53,15 +55,20 @@ locals {
     sensitive = {
       name    = var.sensitive_storage_account_name
       purpose = "evals-input-and-debug"
-      # TODO: Remove Azure DevOps IP allowlists once private endpoint/private networking is in place; the private endpoint should make this useless.
-      ip_rules                      = concat(local.adapt_ip_rules, local.ado_ip_rules)
+      # TODO(AIILG-649): Confirm whether these temporary Azure DevOps IP rules are still
+      # needed once the private networking shape is known in the Azure environment.
+      ip_rules = concat(local.adapt_ip_rules, local.ado_ip_rules)
+      # TODO(AIILG-649): Confirm when this can be disabled once the private endpoint
+      # configuration is known and tested in the Azure environment.
       public_network_access_enabled = var.sensitive_public_network_access_enabled
     }
     results = {
       name    = var.results_storage_account_name
       purpose = "evals-results"
-      # TODO: Remove Azure DevOps IP allowlists once private endpoint/private networking is in place; the private endpoint should make this useless.
-      ip_rules                      = concat(local.adapt_ip_rules, local.mhclg_ip_rules, local.ado_ip_rules)
+      # TODO(AIILG-649): Confirm whether these temporary Azure DevOps IP rules are still
+      # needed once the private networking shape is known in the Azure environment.
+      ip_rules = concat(local.adapt_ip_rules, local.mhclg_ip_rules, local.ado_ip_rules)
+      # Results intentionally keep public network access so approved MHCLG devices can read them.
       public_network_access_enabled = true
     }
   }
@@ -92,12 +99,13 @@ resource "azurerm_storage_account" "evals" {
   # assignments in rbac.tf are the only route to the data.
   shared_access_key_enabled = false
 
-  # When false the IP allowlist is ignored and only the private endpoint can reach the
-  # account. Flip the restricted account to false once ADAPT confirms the endpoint works.
+  # TODO(AIILG-649): Keep this configurable until the Azure environment confirms what the
+  # private endpoint setup looks like. When set false, the public IP allowlist no longer
+  # provides access to the account.
   public_network_access_enabled = each.value.public_network_access_enabled
 
-  # Deny by default. With both allowlists empty this leaves the account reachable only via
-  # the private endpoint, which is the safe state while the ADAPT IPs are still unknown.
+  # Deny by default. With both allowlists empty, public network access is denied while the
+  # final private networking approach is still to be confirmed in the Azure environment.
   network_rules {
     default_action = "Deny"
     bypass         = var.network_rules_bypass
