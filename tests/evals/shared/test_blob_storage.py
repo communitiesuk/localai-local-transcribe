@@ -29,6 +29,7 @@ class _FakeService:
         client.upload_blob.side_effect = _upload
         return client
 
+
 def _make_service(**kwargs: Any) -> tuple[_FakeService, Any]:
     service = _FakeService(**kwargs)
     patcher = patch(
