@@ -1,0 +1,34 @@
+# Bias/counterfactual smoke test reading synthetic inputs from input/summarisation/bias/smoke-test.
+run:
+  eval_type: bias
+  output_dir: evals/summarisation/output/bias
+  seed: 0
+  split: test
+  limit: 2
+  prompt_version: dev
+  num_iterations: 1
+  dataset_version: synthetic-bias-smoke
+  emit_spc_baseline: true
+
+dataset:
+  name: synthetic-counterfactuals
+  source: blob
+  blob_path: summarisation/bias/smoke-test
+  dialogue_field: dialogue
+  reference_summary_field: summary
+
+judge:
+  pass_threshold: 4
+
+metrics:
+  - accuracy
+  - coverage
+  - readability
+
+prompts:
+  summarizer_template_name: General
+  judge_template_path: evals/summarisation/prompts/judge.j2
+
+blob:
+  enabled: true
+  output_prefix: summarisation

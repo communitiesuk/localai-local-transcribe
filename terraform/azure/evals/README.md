@@ -30,10 +30,10 @@ Deployment is manual. There is no pipeline for this stack yet.
 
 ## Azure DevOps pipeline identity
 
-`pipeline_identity.tf` also provisions the identity the summarisation eval pipeline uses to reach the
-blobs — a **user-assigned managed identity** with **Storage Blob Data Contributor** on the evals
-account, federated to an Azure DevOps service connection. A managed identity is used rather than an
-Entra app registration because the sandbox tenant blocks app creation for most users.
+`pipeline_identity.tf` also provisions the identity the summarisation and bias eval pipelines use to
+reach the blobs — a **user-assigned managed identity** with **Storage Blob Data Contributor** on the
+evals account, federated to an Azure DevOps service connection. A managed identity is used rather
+than an Entra app registration because the sandbox tenant blocks app creation for most users.
 
 Federation needs the Issuer and Subject that Azure DevOps generates for the service connection, so
 apply in two passes:

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -14,21 +17,30 @@ class _FakeService:
         self._blobs = blobs or {}
         self.uploaded: dict[tuple[str, str], bytes] = {}
 
-    def get_blob_client(self, container: str, blob: str):
+    def get_blob_client(self, container: str, blob: str) -> MagicMock:
         client = MagicMock()
         content = self._blobs.get((container, blob), b"")
         stream = MagicMock()
         stream.readall.return_value = content
         client.download_blob.return_value = stream
 
-        def _upload(data, overwrite=False):  # noqa: ARG001
+        def _upload(data: Any, overwrite: bool = False) -> None:  # noqa: ARG001
             self.uploaded[(container, blob)] = data.read()
 
         client.upload_blob.side_effect = _upload
         return client
 
+    def get_container_client(self, container: str) -> MagicMock:
+        client = MagicMock()
+        client.list_blobs.side_effect = lambda name_starts_with: [
+            SimpleNamespace(name=name)
+            for blob_container, name in self._blobs
+            if blob_container == container and name.startswith(name_starts_with)
+        ]
+        return client
 
-def _make_service(**kwargs):
+
+def _make_service(**kwargs: Any) -> tuple[_FakeService, Any]:
     service = _FakeService(**kwargs)
     patcher = patch(
         "evals.shared.blob_storage.BlobServiceClient",
@@ -37,7 +49,7 @@ def _make_service(**kwargs):
     return service, patcher
 
 
-def test_download_blob_writes_file(tmp_path):
+def test_download_blob_writes_file(tmp_path: Path) -> None:
     service, patcher = _make_service(blobs={("input", "summarisation/standard/data.jsonl"): b"line1\nline2\n"})
     dest = tmp_path / "nested" / "data.jsonl"
     with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
@@ -51,7 +63,7 @@ def test_download_blob_writes_file(tmp_path):
     assert dest.read_bytes() == b"line1\nline2\n"
 
 
-def test_upload_file(tmp_path):
+def test_upload_file(tmp_path: Path) -> None:
     src = tmp_path / "summary.json"
     src.write_bytes(b'{"overall": 4.2}')
     service, patcher = _make_service()
@@ -65,7 +77,28 @@ def test_upload_file(tmp_path):
     assert service.uploaded[("output", "summarisation/standard/run1/summary.json")] == b'{"overall": 4.2}'
 
 
-def test_from_account_urls_routes_containers_to_separate_accounts(tmp_path):
+def test_list_blob_names_filters_by_prefix() -> None:
+    service, patcher = _make_service(
+        blobs={
+            ("input", "summarisation/bias/smoke-test/a.json"): b"{}",
+            ("input", "summarisation/bias/smoke-test/nested/b.json"): b"{}",
+            ("input", "summarisation/standard/data.jsonl"): b"{}\n",
+        }
+    )
+    with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
+        blob = EvalBlobStorage(
+            restricted_account_url="https://restricted.blob.core.windows.net",
+            shared_account_url="https://shared.blob.core.windows.net",
+        )
+        names = blob.list_blob_names("input", "summarisation/bias/smoke-test")
+
+    assert names == [
+        "summarisation/bias/smoke-test/a.json",
+        "summarisation/bias/smoke-test/nested/b.json",
+    ]
+
+
+def test_from_account_urls_routes_containers_to_separate_accounts(tmp_path: Path) -> None:
     restricted_service = _FakeService(blobs={("input", "summarisation/standard/data.jsonl"): b"line\n"})
     shared_service = _FakeService()
     src = tmp_path / "summary.json"
@@ -95,7 +128,7 @@ def test_from_account_urls_routes_containers_to_separate_accounts(tmp_path):
     assert shared_service.uploaded[("output", "summarisation/standard/run1/summary.json")] == b"{}"
 
 
-def test_from_account_urls_falls_back_to_split_env():
+def test_from_account_urls_falls_back_to_split_env() -> None:
     with (
         patch.dict(
             "os.environ",
@@ -117,7 +150,7 @@ def test_from_account_urls_falls_back_to_split_env():
     ]
 
 
-def test_from_account_urls_raises_without_both_account_urls():
+def test_from_account_urls_raises_without_both_account_urls() -> None:
     with (
         patch.dict(
             "os.environ",
@@ -133,7 +166,7 @@ def test_from_account_urls_raises_without_both_account_urls():
         EvalBlobStorage.from_account_urls()
 
 
-def test_unknown_container_is_rejected(tmp_path):
+def test_unknown_container_is_rejected(tmp_path: Path) -> None:
     with (
         patch("evals.shared.blob_storage.BlobServiceClient"),
         patch("evals.shared.blob_storage.DefaultAzureCredential"),

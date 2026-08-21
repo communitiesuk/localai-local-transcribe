@@ -1,0 +1,94 @@
+# Bias eval smoke test - manual-run only.
+# CPU-first path: the eval's transformer models auto-select CUDA/MPS when present and otherwise run on CPU.
+name: Bias Evals
+
+trigger: none
+pr: none
+
+parameters:
+  - name: pythonVersion
+    displayName: 'Python version'
+    type: string
+    default: '3.12'
+  - name: poetryVersion
+    displayName: 'Poetry version'
+    type: string
+    default: '2.4.1'
+  - name: azureServiceConnection
+    displayName: 'Azure service connection (workload identity) with container-scoped blob access'
+    type: string
+    default: 'evals-blob'
+  - name: config
+    displayName: 'Eval config'
+    type: string
+    default: 'evals/summarisation/configs/bias-blob-smoke-test.yaml'
+  - name: resultsArtifactName
+    displayName: 'Short-retention non-sensitive results artifact name'
+    type: string
+    default: 'bias-eval-results'
+
+jobs:
+  - job: bias_smoke_test
+    displayName: 'Bias eval smoke test'
+    timeoutInMinutes: 60
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - checkout: self
+
+      - template: ../templates/setup-python-poetry.yml
+        parameters:
+          pythonVersion: ${{ parameters.pythonVersion }}
+          poetryVersion: ${{ parameters.poetryVersion }}
+
+      - script: poetry sync --no-root --no-ansi --with evals-summarisation
+        displayName: 'Install dependencies'
+
+      - script: |
+          poetry run python - <<'PY'
+          import torch
+
+          print(f"torch={torch.__version__}")
+          print(f"cuda_available={torch.cuda.is_available()}")
+          if torch.cuda.is_available():
+              print(f"cuda_device={torch.cuda.get_device_name(0)}")
+              print(f"cuda_memory_gb={torch.cuda.get_device_properties(0).total_memory / (1024 ** 3):.2f}")
+          PY
+        displayName: 'Report compute backend'
+
+      - task: AzureCLI@2
+        displayName: 'Run bias smoke test (blob)'
+        inputs:
+          azureSubscription: ${{ parameters.azureServiceConnection }}
+          scriptType: bash
+          scriptLocation: inlineScript
+          inlineScript: |
+            results_artifact_dir="$(Build.ArtifactStagingDirectory)/${{ parameters.resultsArtifactName }}"
+            mkdir -p "${results_artifact_dir}"
+            poetry run python -m evals.summarisation.src.main \
+              --config ${{ parameters.config }} \
+              --results-artifact-dir "${results_artifact_dir}"
+        env:
+          ENVIRONMENT: test
+          # Blob endpoints of the evals storage accounts, set as pipeline variables.
+          AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
+          AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL)
+          # These are set as pipeline variables directly in ADO (secret variables must be
+          # mapped explicitly).
+          # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
+          # to client_secret auth. It will need revisiting, due to it's short expiry.
+          AZURE_APIM_AUTH_METHOD: static_token
+          AZURE_APIM_URL: $(AZURE_APIM_URL)
+          AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
+          AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
+          AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
+
+      # Azure DevOps retention is configured at run/pipeline level, not per artifact. Keep this
+      # pipeline's run retention short; the artifact contains only summary.json, never debug files.
+      - task: PublishPipelineArtifact@1
+        displayName: 'Publish non-sensitive eval results artifact'
+        condition: succeededOrFailed()
+        inputs:
+          targetPath: '$(Build.ArtifactStagingDirectory)/${{ parameters.resultsArtifactName }}'
+          artifact: ${{ parameters.resultsArtifactName }}
+          publishLocation: 'pipeline'

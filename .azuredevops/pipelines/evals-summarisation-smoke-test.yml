@@ -42,9 +42,6 @@ steps:
   - script: poetry sync --no-root --no-ansi --with evals-summarisation
     displayName: 'Install dependencies'
 
-  - script: cp .env.example .env
-    displayName: 'Copy env file'
-
   - task: AzureCLI@2
     displayName: 'Run summarisation smoke test (blob)'
     inputs:

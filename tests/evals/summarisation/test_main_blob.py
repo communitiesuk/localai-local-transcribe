@@ -48,6 +48,40 @@ def _write_config(tmp_path: Path) -> Path:
     return path
 
 
+def _write_bias_config(tmp_path: Path) -> Path:
+    cfg = {
+        "run": {
+            "eval_type": "bias",
+            "output_dir": str(tmp_path / "local-out"),
+            "prompt_version": "dev",
+            "num_iterations": 1,
+            "dataset_version": "synthetic",
+            "emit_spc_baseline": True,
+        },
+        "dataset": {
+            "name": "synthetic-counterfactuals",
+            "source": "blob",
+            "blob_path": "summarisation/bias/smoke-test",
+            "dialogue_field": "dialogue",
+            "reference_summary_field": "summary",
+        },
+        "judge": {"pass_threshold": 4},
+        "metrics": ["accuracy"],
+        "prompts": {
+            "summarizer_template_name": "General",
+            "judge_template_path": "evals/summarisation/prompts/judge.j2",
+        },
+        "blob": {
+            "enabled": True,
+            "restricted_account_url": "https://restricted.blob.core.windows.net",
+            "shared_account_url": "https://shared.blob.core.windows.net",
+        },
+    }
+    path = tmp_path / "bias-cfg.yaml"
+    path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    return path
+
+
 def _make_fake_run_eval(
     summary: dict[str, Any],
     threshold_review: dict[str, Any] | None = None,
@@ -75,6 +109,30 @@ def _make_fake_run_eval(
 
 
 _fake_run_eval = _make_fake_run_eval({})
+
+
+async def _fake_run_bias_eval(cfg: Any, input_dir: Path, output_dir: Path) -> tuple[str, Path]:  # noqa: ARG001
+    run_id = "biasrun1"
+    run_dir = Path(output_dir) / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "results.jsonl").write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "timestamp": "t",
+                "dataset_version": "synthetic",
+                "engine_version": "e",
+                "prompt_version": "dev",
+                "num_iterations": 1,
+                "comparisons": [],
+                "four_fifths": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (run_dir / "summary.json").write_text(json.dumps({"run_id": run_id}), encoding="utf-8")
+    (run_dir / "spc_baseline.yaml").write_text("metrics: {}\n", encoding="utf-8")
+    return run_id, run_dir / "results.jsonl"
 
 
 def test_blob_source_without_blob_enabled_is_rejected(tmp_path: Path) -> None:
@@ -123,6 +181,45 @@ def test_standard_eval_publishes_split_outputs(tmp_path: Path) -> None:
     assert "summarisation/standard/run1/hallucination_inputs.json" in debug_blobs
     # The threshold-based review lands in the debug bucket alongside the per-entry data.
     assert "summarisation/standard/run1/threshold_review.json" in debug_blobs
+
+
+def test_bias_eval_stages_prefix_and_publishes_split_outputs(tmp_path: Path) -> None:
+    config = _write_bias_config(tmp_path)
+    artifact_dir = tmp_path / "artifact"
+    fake_blob = MagicMock()
+    fake_blob.list_blob_names.return_value = [
+        "summarisation/bias/smoke-test/case-a.json",
+        "summarisation/bias/smoke-test/case-b.json",
+    ]
+
+    with (
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_urls", return_value=fake_blob) as make_blob,
+        patch("evals.summarisation.src.bias.run_counterfactual_eval", side_effect=_fake_run_bias_eval),
+    ):
+        result = runner.invoke(app, ["--config", str(config), "--results-artifact-dir", str(artifact_dir)])
+
+    assert result.exit_code == 0, result.output
+    make_blob.assert_called_once_with(
+        restricted_account_url="https://restricted.blob.core.windows.net",
+        shared_account_url="https://shared.blob.core.windows.net",
+    )
+
+    fake_blob.list_blob_names.assert_called_once_with("input", "summarisation/bias/smoke-test/")
+    staged_names = [call.args[1] for call in fake_blob.download_blob.call_args_list]
+    assert staged_names == [
+        "summarisation/bias/smoke-test/case-a.json",
+        "summarisation/bias/smoke-test/case-b.json",
+    ]
+
+    dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
+    assert dests["output"] == "summarisation/bias/biasrun1/summary.json"
+    debug_blobs = {call.args[1] for call in fake_blob.upload_file.call_args_list if call.args[0] == "debug"}
+    assert "summarisation/bias/biasrun1/results.jsonl" in debug_blobs
+    assert "summarisation/bias/biasrun1/spc_baseline.yaml" in debug_blobs
+
+    assert (artifact_dir / "bias" / "biasrun1" / "summary.json").read_text(encoding="utf-8") == (
+        '{"run_id": "biasrun1"}'
+    )
 
 
 def test_halted_run_publishes_then_fails_pipeline(tmp_path: Path) -> None:

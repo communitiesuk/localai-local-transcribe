@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING
 
 from evals.shared.blob_storage import DEBUG_CONTAINER, INPUT_CONTAINER, RESULTS_CONTAINER
@@ -28,6 +28,24 @@ def stage_dataset(blob: EvalBlobStorage, blob_path: str | None, dest_dir: Path) 
         raise ValueError(msg)
     dest_path = dest_dir / Path(blob_path).name
     return blob.download_blob(INPUT_CONTAINER, blob_path, dest_path)
+
+
+def stage_dataset_prefix(blob: EvalBlobStorage, blob_prefix: str | None, dest_dir: Path) -> Path:
+    if not blob_prefix:
+        msg = "dataset.blob_path must be set to an input prefix when dataset.source is 'blob'"
+        raise ValueError(msg)
+
+    prefix = f"{blob_prefix.rstrip('/')}/"
+    names = [name for name in blob.list_blob_names(INPUT_CONTAINER, prefix) if not name.endswith("/")]
+    if not names:
+        msg = f"No input blobs found under input/{prefix}"
+        raise ValueError(msg)
+
+    for name in names:
+        relative = PurePosixPath(name).relative_to(PurePosixPath(prefix))
+        blob.download_blob(INPUT_CONTAINER, name, dest_dir / Path(relative.as_posix()))
+
+    return dest_dir
 
 
 def publish_run_outputs(

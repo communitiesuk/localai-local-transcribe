@@ -89,6 +89,10 @@ class EvalBlobStorage:
         logger.info("Downloaded %s/%s to %s", container, blob_name, dest_path)
         return dest_path
 
+    def list_blob_names(self, container: str, name_starts_with: str) -> list[str]:
+        container_client = self._service_for(container).get_container_client(container)
+        return [blob.name for blob in container_client.list_blobs(name_starts_with=name_starts_with)]
+
     def upload_file(self, container: str, blob_name: str, src_path: Path) -> None:
         blob_client = self._service_for(container).get_blob_client(container=container, blob=blob_name)
         with src_path.open("rb") as f:
