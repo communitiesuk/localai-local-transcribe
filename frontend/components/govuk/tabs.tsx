@@ -1,14 +1,16 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import React from 'react'
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 type TabsProps = {
   id: string
   title?: string
   className?: string
   children: React.ReactNode
+  activeTab?: string
+  defaultTab?: string
+  onTabChange?: (id: string) => void
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'children' | 'id'>
 
 type PanelProps = {
@@ -16,16 +18,16 @@ type PanelProps = {
   label: React.ReactNode
   className?: string
   children: React.ReactNode
-  _index?: number
+  isActive?: boolean
 }
 
-function Panel({ id, className, children, _index }: PanelProps) {
+function Panel({ id, className, children, isActive }: PanelProps) {
   return (
     <div
       id={id}
       className={cn(
         'govuk-tabs__panel',
-        _index !== 0 && 'govuk-tabs__panel--hidden',
+        !isActive && 'govuk-tabs__panel--hidden',
         className
       )}
     >
@@ -39,57 +41,82 @@ function GovukTabsBase({
   title = 'Contents',
   className,
   children,
+  activeTab: controlledTab,
+  defaultTab,
+  onTabChange,
   ...rest
 }: TabsProps) {
-  const wrappedRef = useRef<HTMLDivElement>(null)
+  const panels = React.Children.toArray(children).filter(
+    (child): child is React.ReactElement<PanelProps> =>
+      React.isValidElement(child) && child.type === Panel
+  )
+
+  const panelIds = panels.map((p) => p.props.id)
+
+  const isControlled = controlledTab !== undefined
+
+  const [internalTab, setInternalTab] = useState<string>(() => {
+    if (defaultTab && panelIds.includes(defaultTab)) return defaultTab;
+    return panelIds[0] ?? ''
+  })
+
+  const currentTab = isControlled ? controlledTab : internalTab
+
+  const stableActiveTab = panelIds.includes(currentTab)
+    ? currentTab
+    : (panelIds[0] ?? '')
 
   useEffect(() => {
-    let cancelled = false
-    import('govuk-frontend')
-      .then(({ initAll }) => {
-        if (!cancelled && wrappedRef.current) {
-          initAll(wrappedRef.current)
-        }
-      })
-      .catch((error) => {
-        console.error('Error loading govuk-frontend:', error)
-      })
-    return () => {
-      cancelled = true
+    if (panelIds.length === 0) {
+      return
     }
-  }, [])
+    if (!panelIds.includes(currentTab)) {
+      const fallback = panelIds[0]
+      if (!isControlled) setInternalTab(fallback)
+      onTabChange?.(fallback)
+    }
+  }, [panelIds.join('*'), currentTab, isControlled, onTabChange])
 
-  const panels = React.Children.toArray(children).filter(
-    React.isValidElement
-  ) as React.ReactElement<PanelProps>[]
+  const handleTabChange = (id: string) => {
+    if (!isControlled) setInternalTab(id);
+    onTabChange?.(id);
+  }
 
   return (
-    <div ref={wrappedRef}>
-      <div
-        {...rest}
-        id={id}
-        className={cn('govuk-tabs', className)}
-        data-module="govuk-tabs"
-      >
-        <h2 className="govuk-tabs__title">{title}</h2>
-        <ul className="govuk-tabs__list">
-          {panels.map((panel, index) => (
-            <li
-              key={panel.props.id}
-              className={cn('govuk-tabs__list-item', {
-                'govuk-tabs__list-item--selected': index === 0,
-              })}
+    <div
+      {...rest}
+      id={id}
+      data-module="govuk-tabs"
+      className={cn('govuk-tabs', className)}
+    >
+      <h2 className="govuk-tabs__title">{title}</h2>
+      <ul className="govuk-tabs__list">
+        {panels.map((panel) => (
+          <li
+            key={panel.props.id}
+            className={cn('govuk-tabs__list-item', {
+              'govuk-tabs__list-item--selected':
+                panel.props.id === stableActiveTab,
+            })}
+          >
+            <a
+              className="govuk-tabs__tab"
+              href={`#${panel.props.id}`}
+              onClick={(e) => {
+                e.preventDefault()
+                handleTabChange(panel.props.id)
+              }}
             >
-              <a className="govuk-tabs__tab" href={`#${panel.props.id}`}>
-                {panel.props.label}
-              </a>
-            </li>
-          ))}
-        </ul>
-        {panels.map((panel, index) =>
-          React.cloneElement(panel, { _index: index })
-        )}
-      </div>
+              {panel.props.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+      {panels.map((panel) =>
+        React.cloneElement(panel, {
+          isActive: panel.props.id === stableActiveTab,
+        })
+      )}
     </div>
   )
 }
