@@ -289,7 +289,7 @@ const RecordingDetails = ({
       setBanner({
         variant: 'important',
         title: 'There is a problem',
-        message: 'Failed to update recording details',
+        message: 'Failed to update recording details, please try again.',
       })
     },
   })
