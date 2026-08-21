@@ -6,12 +6,12 @@ process, start to finish. Detailed reference: [`evals/README.md`](./evals/README
 stack) and [`../../evals/README.md`](../../evals/README.md) (running the eval).
 
 Replace the placeholders below with your environment's values: `<subscription-id>`,
-`<resource-group>`, and `<account>` (the evals data storage account).
+`<resource-group>`, `<sensitive-account>`, and `<results-account>`.
 
 ## 1. Deploy the storage (Terraform)
 
 Two stacks under `terraform/azure/evals/`: `backend/` bootstraps remote state; the root stack creates
-the storage account, the three containers, and the Azure DevOps pipeline identity.
+the sensitive and results storage accounts, the three containers, and the Azure DevOps pipeline identity.
 
 ```bash
 cd terraform/azure/evals
@@ -26,33 +26,35 @@ terraform init \
   -backend-config="key=evals-blob-containers.tfstate" \
   -backend-config="use_azuread_auth=true"
 
-cp terraform.tfvars.example terraform.tfvars   # edit to match the deployed account
+cp terraform.tfvars.example terraform.tfvars   # edit to match the deployed accounts
 terraform plan     # expect only additions + no destroys
 terraform apply
 ```
 
-`terraform.tfvars` must match the live account or `plan` will try to replace it:
+`terraform.tfvars` must match the live accounts or `plan` will try to replace them:
 
 ```hcl
-subscription_id      = "<your-subscription-id>"
-resource_group_name  = "<resource-group>"
-location             = "uksouth"
-storage_account_name = "<account>"
-environment_name     = "sandbox"
+subscription_id                 = "<your-subscription-id>"
+resource_group_name             = "<resource-group>"
+location                        = "uksouth"
+sensitive_storage_account_name  = "<sensitive-account>"
+results_storage_account_name    = "<results-account>"
+environment_name                = "sandbox"
 ```
 
 ## 2. Upload synthetic input data
 
 ```bash
-az login   # your identity needs Storage Blob Data Contributor on the data account
-az storage blob upload-batch --account-name <account> --auth-mode login \
+az login   # your identity needs Storage Blob Data Contributor on the sensitive account
+az storage blob upload-batch --account-name <sensitive-account> --auth-mode login \
   --destination input --destination-path summarisation --source evals/summarisation/sample_data
 ```
 
 ## 3. Run locally
 
 ```bash
-export AZURE_EVALS_STORAGE_ACCOUNT_URL="https://<account>.blob.core.windows.net"
+export AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL="https://<restricted-account>.blob.core.windows.net"
+export AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL="https://<shared-account>.blob.core.windows.net"
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/blob-smoke-test.yaml
 ```
 
@@ -77,8 +79,11 @@ registrations). Wire it to a service connection in two Terraform passes:
    terraform apply
    ```
 4. Back in ADO → **Verify and save**.
-5. Pipeline **Summarisation Evals** → **Variables** → add `AZURE_EVALS_STORAGE_ACCOUNT_URL` =
-   `https://<account>.blob.core.windows.net`.
+5. Pipeline **Summarisation Evals** → **Variables** → add:
+   ```text
+   AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL=https://<restricted-account>.blob.core.windows.net
+   AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL=https://<shared-account>.blob.core.windows.net
+   ```
 6. **Run** the pipeline (manual trigger); approve the connection on first run.
 
 ## Permissions cheat-sheet
@@ -86,5 +91,6 @@ registrations). Wire it to a service connection in two Terraform passes:
 | Action                                    | Role needed                              |
 | ----------------------------------------- | ---------------------------------------- |
 | `terraform init` against remote state     | Storage Blob Data Contributor on **state** account |
-| Upload data / run eval / pipeline read+write | Storage Blob Data Contributor on **data** account |
-| `terraform apply` of the role assignment  | Owner or User Access Administrator on the account |
+| Upload input data                            | Storage Blob Data Contributor on **sensitive** account |
+| Run eval / pipeline read+write               | Storage Blob Data Contributor on both **sensitive** and **results** accounts |
+| `terraform apply` of the role assignment     | Owner or User Access Administrator on both evals accounts |

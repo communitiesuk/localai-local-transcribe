@@ -37,7 +37,11 @@ def _write_config(tmp_path: Path) -> Path:
         "judge": {"pass_threshold": 4},
         "metrics": ["accuracy"],
         "prompts": {"judge_template_path": "evals/summarisation/prompts/judge.j2"},
-        "blob": {"enabled": True, "account_url": "https://acct.blob.core.windows.net"},
+        "blob": {
+            "enabled": True,
+            "restricted_account_url": "https://restricted.blob.core.windows.net",
+            "shared_account_url": "https://shared.blob.core.windows.net",
+        },
     }
     path = tmp_path / "cfg.yaml"
     path.write_text(yaml.safe_dump(cfg), encoding="utf-8")
@@ -96,12 +100,16 @@ def test_standard_eval_publishes_split_outputs(tmp_path: Path) -> None:
     fake_blob = MagicMock()
 
     with (
-        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_url", return_value=fake_blob),
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_urls", return_value=fake_blob) as make_blob,
         patch("evals.summarisation.src.optimisation.run_eval", side_effect=_fake_run_eval),
     ):
         result = runner.invoke(app, ["--config", str(config)])
 
     assert result.exit_code == 0, result.output
+    make_blob.assert_called_once_with(
+        restricted_account_url="https://restricted.blob.core.windows.net",
+        shared_account_url="https://shared.blob.core.windows.net",
+    )
 
     # Dataset was staged from the input container.
     fake_blob.download_blob.assert_called_once()
@@ -124,7 +132,7 @@ def test_halted_run_publishes_then_fails_pipeline(tmp_path: Path) -> None:
     halted_summary = {"errors": [{"stage": "evaluate", "error": "halted before completion: RuntimeError: 401"}]}
 
     with (
-        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_url", return_value=fake_blob),
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_urls", return_value=fake_blob),
         patch("evals.summarisation.src.optimisation.run_eval", side_effect=_make_fake_run_eval(halted_summary)),
     ):
         result = runner.invoke(app, ["--config", str(config)])
@@ -142,7 +150,7 @@ def test_threshold_failure_publishes_then_fails_pipeline(tmp_path: Path) -> None
     threshold_review = {"overall_passed": False}
 
     with (
-        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_url", return_value=fake_blob),
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_urls", return_value=fake_blob),
         patch(
             "evals.summarisation.src.optimisation.run_eval",
             side_effect=_make_fake_run_eval({}, threshold_review),
@@ -165,7 +173,7 @@ def test_results_artifact_contains_only_summary_when_blob_upload_fails(tmp_path:
     fake_blob.upload_file.side_effect = RuntimeError("upload failed")
 
     with (
-        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_url", return_value=fake_blob),
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_urls", return_value=fake_blob),
         patch("evals.summarisation.src.optimisation.run_eval", side_effect=_fake_run_eval),
     ):
         result = runner.invoke(app, ["--config", str(config), "--results-artifact-dir", str(artifact_dir)])

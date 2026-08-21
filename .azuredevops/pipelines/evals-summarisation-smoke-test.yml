@@ -16,7 +16,7 @@ parameters:
     type: string
     default: '2.4.1'
   - name: azureServiceConnection
-    displayName: 'Azure service connection (workload identity) with Storage Blob Data Contributor on the evals storage account'
+    displayName: 'Azure service connection (workload identity) with container-scoped blob access'
     type: string
     default: 'evals-blob'
   - name: config
@@ -59,8 +59,9 @@ steps:
           --results-artifact-dir "${results_artifact_dir}"
     env:
       ENVIRONMENT: test
-      # Blob endpoint of the evals storage account, set as a pipeline variable.
-      AZURE_EVALS_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_STORAGE_ACCOUNT_URL)
+      # Blob endpoints of the evals storage accounts, set as pipeline variables.
+      AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
+      AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL)
       # These are set as pipeline variables directly in ADO (secret variables must be
       # mapped explicitly).
       # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference

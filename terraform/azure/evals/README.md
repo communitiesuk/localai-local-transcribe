@@ -1,16 +1,30 @@
-# Azure Terraform for evals blob storage (AIILG-644)
+# Azure Terraform for evals blob storage (AIILG-644, AIILG-649)
 
-Provisions a storage account with three private blob containers for pipeline data:
+Provisions two storage accounts holding three private blob containers for pipeline data:
 
-| Container | Purpose metadata |
-| --------- | ---------------- |
-| `input`   | `purpose=input`  |
-| `debug`   | `purpose=debug`  |
-| `output`  | `purpose=output` |
+| Container | Account      | Purpose metadata | Reachable from            |
+| --------- | ------------ | ---------------- | ------------------------- |
+| `input`   | sensitive    | `purpose=input`  | ADAPT only                |
+| `debug`   | sensitive    | `purpose=debug`  | ADAPT only                |
+| `output`  | results      | `purpose=output` | ADAPT and MHCLG devices   |
 
-Azure does not support resource tags on blob containers. Names are the primary identity. `purpose` is also set as container metadata. The storage account carries resource tags.
+## Why two accounts
 
-Both the state and evals storage accounts also set low-regret defaults: no public nested items, local users off, portal prefers Entra ID auth, blob versioning, soft delete (14 days), and a SAS expiration policy (7 days). Replication defaults to `LRS` via `account_replication_type`.
+Azure storage firewall rules — IP allowlists and private endpoints — are scoped to the storage account, not the container. AIILG-649 requires `input` and `debug` to be unreachable from MHCLG devices while `output` stays readable from them, at the network layer. The containers are therefore split across two accounts that differ only in their IP allowlist.
+
+## Controls
+
+| Control                                        | Where                                          |
+| ---------------------------------------------- | ---------------------------------------------- |
+| Deny by default, explicit IP allowlists        | `network_rules` in `main.tf`                   |
+| Private endpoint and private DNS for ADAPT      | `network.tf`                                   |
+| Shared access keys disabled                    | `shared_access_key_enabled = false`, `main.tf` |
+| Entra ID required for all data plane calls     | Follows from disabling shared keys             |
+| Per-container RBAC, least privilege            | `rbac.tf`                                      |
+| No public blobs, no local users, SAS expiry cap | `main.tf`                                      |
+| Versioning, blob and container soft delete      | `main.tf`                                      |
+
+Disabling shared access keys is what closes the Azure console bypass: with no account keys there is no account SAS and no "Access key" auth in the portal blob browser, so every read and write is an Entra ID call subject to the role assignments. This holds only while nobody has Owner, Contributor, or Storage Account Contributor on the resource group — those roles can re-enable keys. Keep them off it.
 
 Deployment is manual. There is no pipeline for this stack yet.
 
@@ -33,35 +47,54 @@ Creating the role assignment needs Owner or User Access Administrator on the acc
 
 ## Layout
 
-| Path               | Role                                                                 |
-| ------------------ | -------------------------------------------------------------------- |
-| `backend/`         | One-time bootstrap of remote Terraform state storage                 |
-| `main.tf`          | Evals storage account and the three containers                       |
-| `variables.tf`     | Input variables (required values plus optional hardening defaults)   |
-| `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally           |
+| Path               | Role                                                               |
+| ------------------ | ------------------------------------------------------------------ |
+| `backend/`         | One-time bootstrap of remote Terraform state storage               |
+| `main.tf`          | Both storage accounts, the three containers, firewall rules        |
+| `network.tf`       | Blob private endpoints                                             |
+| `rbac.tf`          | Container-scoped role assignments                                  |
+| `variables.tf`     | Input variables (required values plus optional hardening defaults) |
+| `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally         |
+
+## Unknowns left as variables
+
+ADAPT, temporary Azure DevOps, and MHCLG egress addresses, the private endpoint subnet, any existing private DNS zones, and principal IDs are variables. Empty values deny that route except trusted Azure services using strong authentication.
+
+IP allowlists support public IPv4 CIDR ranges. Use plain IPs for single-host entries.
+
+TODO(AIILG-649): Private endpoints are blocked on the new Azure environment; this currently uses storage network IP restrictions instead.
+
+## Private endpoint ownership
+
+Where the endpoint is created depends on where the ADAPT VNet lives.
+
+- Same subscription as this stack: set `private_endpoint_subnet_id` and Terraform creates both endpoints. Also set `private_endpoint_vnet_id` if Terraform should create and link the private DNS zone.
+- ADAPT-owned subscription or tenant: leave `private_endpoint_subnet_id` null. Give the ADAPT team the `storage_account_ids` output; they create the endpoints in their VNet, and we approve the pending connections in the portal under Networking → Private endpoint connections, or with `az network private-endpoint-connection approve`.
+
+Either way the endpoint only resolves privately once `privatelink.blob.core.windows.net` is linked to the ADAPT VNet. If this stack creates the endpoint and `private_dns_zone_ids` is empty, it creates and links that private DNS zone automatically using `private_endpoint_vnet_id`. Pass `private_dns_zone_ids` to use an existing platform-managed zone instead. If ADAPT creates the endpoint in its own subscription, ask ADAPT to configure equivalent private DNS records.
 
 ## Softwire Sandbox vs assured Azure environment
 
-| Topic                                                | Transferable as-is | Must adapt later                                                         | Uncertain until assured env exists                         |
-| ---------------------------------------------------- | ------------------ | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| Three containers `input` / `debug` / `output`        | Yes                | Names only if platform mandates a prefix                                 | Whether metadata is required beyond names                  |
-| Storage account shape (Standard, private containers) | Yes                | Tier / replication via `account_replication_type` if policy requires GRS | Final SKU and region                                       |
-| Soft delete, SAS expiry, versioning, auth defaults   | Yes                | Retention days / SAS period if platform mandates different values        | Key rotation reminder (not exposed by azurerm yet)         |
-| Remote state via `azurerm` backend                   | Pattern yes        | Resource group, state account name, key                                  | Whether state lives in this subscription or a platform one |
-| Manual Cloud Shell apply                             | Process yes        | Auth method if Cloud Shell is unavailable                                | Org policy on who may apply                                |
-| Tenant, subscription, and variable values            | No                 | Always                                                                   | Naming convention                                          |
+| Topic                                                | Transferable as-is | Must adapt later                                        | Uncertain until assured env exists          |
+| ---------------------------------------------------- | ------------------ | ------------------------------------------------------- | ------------------------------------------- |
+| Two-account split and container names                | Yes                | Names only if platform mandates a prefix                | Whether metadata is required beyond names   |
+| Storage account shape (Standard, private containers) | Yes                | Replication via `account_replication_type`              | Final SKU and region                        |
+| Firewall, key disablement, SAS expiry, versioning    | Yes                | Retention days and SAS period if platform mandates other | Whether platform policy also enforces these |
+| Private endpoint shape                               | Yes                | Subnet, DNS zones, and who creates the endpoint         | Whether ADAPT owns the VNet                 |
+| RBAC role choices and container scoping              | Yes                | Every principal ID                                      | Whether groups exist to assign to           |
+| Remote state via `azurerm` backend                   | Pattern yes        | Resource group, state account name, key                 | Whether state lives in a platform sub       |
+| Tenant, subscription, IPs, and variable values       | No                 | Always                                                  | Naming convention                           |
 
-Out of scope here: private endpoints, network restrictions, blocking shared key access, customer-managed keys, and loading data into containers.
+Still out of scope: customer-managed keys, diagnostic logging to a SIEM, and loading data into containers.
 
 ## Prerequisites
 
 - Access to the target Azure tenant and subscription (Softwire sandbox now; assured Azure environment later, which may be a different tenant)
 - An **existing** resource group you are allowed to create storage accounts in
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
-- Two globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one for evals data
+- Three globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one sensitive, one results
 - **Storage Blob Data Contributor** on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init` / `plan` / `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
-
-Optional variables (`account_replication_type`, `soft_delete_retention_days`, `sas_expiration_period`) have defaults and need not appear in `terraform.tfvars` unless you want to override them.
+- **User Access Administrator** (or Owner) on the resource group for the applying identity, because `rbac.tf` creates role assignments
 
 ## Cloud Shell apply (Softwire sandbox)
 
@@ -105,13 +138,14 @@ terraform apply
 
 Note the outputs: `resource_group_name`, `storage_account_name`, `container_name`.
 
-### Step 2: Apply the evals containers stack
+### Step 2: Apply the evals stack
 
 ```bash
 cd ..
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars: same subscription and resource group.
-# A DIFFERENT storage_account_name for evals data
+# Edit terraform.tfvars: same subscription and resource group, two DIFFERENT
+# storage account names for sensitive and results, plus whichever IPs and
+# principal IDs are known. Leave the rest commented out.
 nano terraform.tfvars
 
 # Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
@@ -123,19 +157,19 @@ terraform plan
 terraform apply
 ```
 
-### Step 3: Verify in the portal or CLI
+Cloud Shell egresses from an unpredictable IP, so blob data plane commands run there are denied once the firewall is on. This does not block Terraform: accounts, containers, and role assignments are all managed through the resource manager API, which the storage firewall does not gate. There is no allowlist entry for the applying machine, by design — read blobs from ADAPT instead. If you must check by hand in the sandbox, add the address to `adapt_ip_rules` so the exemption is visible in the diff, and remove it before reviewing access.
+
+### Step 3: Verify
 
 ```bash
-az storage container list \
-  --account-name "<evals-storage-account-name>" \
-  --auth-mode login \
-  -o table
+az storage container list --account-name "<sensitive-account-name>" --auth-mode login -o table
+az storage container list --account-name "<results-account-name>" --auth-mode login -o table
 ```
 
-You should see `input`, `debug`, and `output`.
+You should see `input` and `debug` on the sensitive account, and `output` on the results one.
 
-Confirm account settings under the storage account **Data management** → **Data protection** (versioning, soft delete) and **Settings** → **Configuration** (public access, Entra default, SAS policy) if needed.
+Then review the expected access matrix above: ADAPT should reach `input`, `debug`, and `output`; MHCLG devices should reach only `output`; and identities without the container-scoped RBAC grants should be denied.
 
 ## Assured Azure environment
 
-Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including two new globally unique storage account names. The applying identity still needs **Storage Blob Data Contributor** on the state storage for `use_azuread_auth=true`.
+Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including three new globally unique storage account names, the real ADAPT and MHCLG addresses, and the real principal IDs. The applying identity still needs **Storage Blob Data Contributor** on the state storage for `use_azuread_auth=true`, plus rights to create role assignments.

@@ -28,19 +28,12 @@ resource "azurerm_user_assigned_identity" "pipeline" {
   }
 }
 
-resource "azurerm_role_assignment" "pipeline_blob" {
-  scope                = azurerm_storage_account.evals.id
-  role_definition_name = "Storage Blob Data Contributor"
-  principal_id         = azurerm_user_assigned_identity.pipeline.principal_id
-}
-
 resource "azurerm_federated_identity_credential" "ado" {
   count = var.ado_federation_issuer != null && var.ado_federation_subject != null ? 1 : 0
 
-  name                = "evals-blob-ado"
-  resource_group_name = var.resource_group_name
-  parent_id           = azurerm_user_assigned_identity.pipeline.id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = var.ado_federation_issuer
-  subject             = var.ado_federation_subject
+  name                      = "evals-blob-ado"
+  user_assigned_identity_id = azurerm_user_assigned_identity.pipeline.id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = var.ado_federation_issuer
+  subject                   = var.ado_federation_subject
 }
