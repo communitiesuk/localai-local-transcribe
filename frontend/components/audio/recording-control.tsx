@@ -1,8 +1,15 @@
 'use client'
 
-import { GovukButton, GovukButtonGroup } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukButtonGroup,
+  GovukWarningText,
+} from '@/components/govuk'
 import { useEffect, useRef, useState } from 'react'
-import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
+import {
+  useRecordingUiStore,
+  type RecordingState,
+} from '@/stores/use-recording-ui-store'
 import { useRecordingTimer } from '@/hooks/use-recording-timer'
 
 interface RecordingControlProps {
@@ -40,13 +47,12 @@ export default function RecordingControl({
   const analyserRef = useRef<AnalyserNode | null>(null)
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
+  const preStopConfirmState = useRef<RecordingState>('idle')
   const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [localIsPaused, setLocalIsPaused] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
 
-  const setRecordingState = useRecordingUiStore(
-    (state) => state.setRecordingState
-  )
+  const { recordingState, setRecordingState } = useRecordingUiStore()
 
   const mediaTracks = stream ? stream.getAudioTracks() : []
   const isPaused =
@@ -60,9 +66,18 @@ export default function RecordingControl({
     setMeetingDuration((meetingDuration) => meetingDuration + elapsedMs)
   })
 
+  // sync local pause/resume/stop states with the UI store
   useEffect(() => {
+    if (showStopConfirm) {
+      preStopConfirmState.current = recordingState
+      setRecordingState('stopConfirm')
+    }
+  }, [showStopConfirm, recordingState, setRecordingState])
+
+  useEffect(() => {
+    if (!isRecording || showStopConfirm) return
     setRecordingState(isPaused ? 'paused' : 'recording')
-  }, [isRecording, isPaused, setRecordingState])
+  }, [isRecording, isPaused, showStopConfirm, setRecordingState])
 
   useEffect(() => {
     const isValidStream =
@@ -313,71 +328,78 @@ export default function RecordingControl({
     setShowStopConfirm(true)
   }
 
-  const confirmStop = () => {
+  const handleConfirmStop = () => {
     setRecordingState('stopped')
     onStopRecording()
     setShowStopConfirm(false)
   }
 
+  const handleCancelStop = () => {
+    setShowStopConfirm(false)
+    setRecordingState(preStopConfirmState.current)
+  }
+
   return (
     <div className="space-y-4">
-      <p>Recording length: {formattedRecordingDuration}</p>
-
-      <div
-        ref={containerRef}
-        className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
-      >
-        <canvas ref={canvasRef} className="size-full" />
-        {!isRecording && (
-          <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
-            Audio visualization will appear here when recording
-          </div>
-        )}
-        {isRecording && !stream && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 text-sm text-gray-500 dark:bg-gray-800/80 dark:text-gray-400">
-            Connecting to audio stream...
-          </div>
-        )}
-      </div>
       {isRecording && !showStopConfirm && (
-        <GovukButtonGroup>
-          <GovukButton
-            type="button"
-            onClick={togglePause}
-            variant="secondary"
-            className="min-w-36"
+        <>
+          <p>Recording length: {formattedRecordingDuration}</p>
+
+          <div
+            ref={containerRef}
+            className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
           >
-            {isPaused ? 'Resume' : 'Pause'}
-          </GovukButton>
-          <GovukButton
-            type="button"
-            onClick={handleStopRecording}
-            variant="warning"
-            className="min-w-36"
-          >
-            Stop
-          </GovukButton>
-        </GovukButtonGroup>
-      )}
-      {showStopConfirm && (
-        <div className="govuk-inset-text">
-          <p className="govuk-body">
-            Are you sure you want to stop recording? You won&apos;t be able to
-            resume recording after stopping.
-          </p>
-          <div className="flex gap-2">
-            <GovukButton type="button" onClick={confirmStop} variant="warning">
-              Stop Recording
+            <canvas ref={canvasRef} className="size-full" />
+            {isRecording && !stream && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 text-sm text-gray-500 dark:bg-gray-800/80 dark:text-gray-400">
+                Connecting to audio stream...
+              </div>
+            )}
+          </div>
+
+          <GovukButtonGroup>
+            <GovukButton
+              type="button"
+              onClick={togglePause}
+              variant="secondary"
+              className="min-w-36"
+            >
+              {isPaused ? 'Resume' : 'Pause'}
             </GovukButton>
             <GovukButton
               type="button"
-              onClick={() => setShowStopConfirm(false)}
-              variant="secondary"
+              onClick={handleStopRecording}
+              variant="warning"
+              className="min-w-36"
+            >
+              Stop
+            </GovukButton>
+          </GovukButtonGroup>
+        </>
+      )}
+      {showStopConfirm && (
+        <>
+          <GovukWarningText>
+            You will not be able to resume your recording if you proceed.
+          </GovukWarningText>
+          <GovukButtonGroup>
+            <GovukButton
+              type="button"
+              onClick={handleConfirmStop}
+              variant="warning"
+            >
+              Stop Recording
+            </GovukButton>
+            {/* presenting this button as a link */}
+            <button
+              className="govuk-link govuk-link--no-visited-state"
+              onClick={handleCancelStop}
+              type="button"
             >
               Cancel
-            </GovukButton>
-          </div>
-        </div>
+            </button>
+          </GovukButtonGroup>
+        </>
       )}
     </div>
   )

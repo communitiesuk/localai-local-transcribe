@@ -5,9 +5,7 @@ import {
 import { getFileExtension } from '@/lib/getFileExtension'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useMutation } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
-import { useBannerStore } from '@/stores/use-banner-store'
 import { useForm } from 'react-hook-form'
 
 export type TranscriptionOnlyForm = {
@@ -17,8 +15,6 @@ export type TranscriptionOnlyForm = {
 }
 
 export const useStartTranscriptionOnly = () => {
-  const router = useRouter()
-  const setBanner = useBannerStore((store) => store.setBanner)
   const { removeRecording } = useRecordingDb()
 
   const { mutateAsync: createTranscriptionOnly, isPending: isCreating } =

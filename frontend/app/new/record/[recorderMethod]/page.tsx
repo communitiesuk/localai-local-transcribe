@@ -19,8 +19,16 @@ const titleMapper: Record<RecordingState, string | boolean> = {
   starting: false,
   recording: 'Recording in progress',
   paused: 'Recording paused',
+  stopConfirm: 'Are you sure you want to stop recording?',
   stopped: false,
 }
+
+const showBackLink: RecordingState[] = [
+  'idle',
+  'recording',
+  'paused',
+  'stopped',
+]
 
 export default function RecordPage() {
   const params = useParams<{ recorderMethod: RecorderMethod }>()
@@ -39,7 +47,7 @@ export default function RecordPage() {
 
   return (
     <div>
-      {recordingState !== 'starting' && <GovukBackLink href="/" />}
+      {showBackLink.includes(recordingState) && <GovukBackLink href="/" />}
       {titleMapper[recordingState] && (
         <GovukHeading>{titleMapper[recordingState]}</GovukHeading>
       )}

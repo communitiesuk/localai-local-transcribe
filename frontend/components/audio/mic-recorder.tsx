@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import RecordingControl from './recording-control'
@@ -12,6 +13,8 @@ import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { useStartTranscriptionOnly } from '@/hooks/use-start-transcription-only'
+import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from './audio-player'
@@ -21,11 +24,23 @@ import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
 
 export function MicRecorderForm() {
+  // const router = useRouter()
+
   const { isPending, onSubmit, form } = useStartTranscription()
   const watchBlob = form.watch('file')
+
+  // const { isPending, onSubmit, form } = useStartTranscriptionOnly()
+  // const startUpload = useUploadRecordingStore((store) => store.startUpload)
+
+  // const handleSubmit = form.handleSubmit((formValues) => {
+  //   startUpload(formValues, onSubmit)
+  //   router.push('/new/uploading')
+  // })
+
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
+        {/* <form onSubmit={handleSubmit}> */}
         <Controller
           name="file"
           control={form.control}
@@ -40,6 +55,9 @@ export function MicRecorderForm() {
           isShowing={!!watchBlob}
           isPending={isPending}
         />
+        {/* <GovukButton type="submit" disabled={isPending}>
+          Upload
+        </GovukButton> */}
       </form>
     </FormProvider>
   )
