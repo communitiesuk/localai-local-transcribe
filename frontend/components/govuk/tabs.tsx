@@ -56,7 +56,7 @@ function GovukTabsBase({
   const isControlled = controlledTab !== undefined
 
   const [internalTab, setInternalTab] = useState<string>(() => {
-    if (defaultTab && panelIds.includes(defaultTab)) return defaultTab;
+    if (defaultTab && panelIds.includes(defaultTab)) return defaultTab
     return panelIds[0] ?? ''
   })
 
@@ -78,8 +78,8 @@ function GovukTabsBase({
   }, [panelIds.join('*'), currentTab, isControlled, onTabChange])
 
   const handleTabChange = (id: string) => {
-    if (!isControlled) setInternalTab(id);
-    onTabChange?.(id);
+    if (!isControlled) setInternalTab(id)
+    onTabChange?.(id)
   }
 
   return (
