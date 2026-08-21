@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 type TabsProps = {
   id: string
@@ -56,7 +56,9 @@ function GovukTabsBase({
   const isControlled = controlledTab !== undefined
 
   const [internalTab, setInternalTab] = useState<string>(() => {
-    if (defaultTab && panelIds.includes(defaultTab)) return defaultTab
+    if (defaultTab && panelIds.includes(defaultTab)) {
+      return defaultTab
+    }
     return panelIds[0] ?? ''
   })
 
@@ -66,16 +68,13 @@ function GovukTabsBase({
     ? currentTab
     : (panelIds[0] ?? '')
 
+  const panelIdsString = panelIds.join('*')
+
   useEffect(() => {
-    if (panelIds.length === 0) {
-      return
+    if (panelIds.length === 0 && !panelIds.includes(currentTab)) {
+      onTabChange?.(panelIds[0])
     }
-    if (!panelIds.includes(currentTab)) {
-      const fallback = panelIds[0]
-      if (!isControlled) setInternalTab(fallback)
-      onTabChange?.(fallback)
-    }
-  }, [panelIds.join('*'), currentTab, isControlled, onTabChange])
+  }, [panelIdsString, currentTab, onTabChange])
 
   const handleTabChange = (id: string) => {
     if (!isControlled) setInternalTab(id)
