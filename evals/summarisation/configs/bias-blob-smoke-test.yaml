@@ -8,7 +8,8 @@ run:
   prompt_version: dev
   num_iterations: 1
   dataset_version: synthetic-bias-smoke
-  emit_spc_baseline: true
+  spc_baseline_enabled: false
+  emit_spc_baseline: false
 
 dataset:
   name: synthetic-counterfactuals

@@ -135,6 +135,55 @@ async def _fake_run_bias_eval(cfg: Any, input_dir: Path, output_dir: Path) -> tu
     return run_id, run_dir / "results.jsonl"
 
 
+async def _fake_run_failing_bias_eval(cfg: Any, input_dir: Path, output_dir: Path) -> tuple[str, Path]:  # noqa: ARG001
+    run_id = "biasrun1"
+    run_dir = Path(output_dir) / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "results.jsonl").write_text(
+        json.dumps(
+            {
+                "run_id": run_id,
+                "timestamp": "t",
+                "dataset_version": "synthetic",
+                "engine_version": "e",
+                "prompt_version": "dev",
+                "num_iterations": 1,
+                "comparisons": [
+                    {
+                        "comparison_id": "gender_male_to_female_0",
+                        "protected_characteristic": "gender",
+                        "axis_of_change": "male_to_female",
+                        "group_a_name": "Male",
+                        "group_b_name": "Female",
+                        "metrics": [],
+                        "sentiment_delta": {"mean": 0.0, "std": 0.0, "values": []},
+                        "sentiment_distribution_original": [],
+                        "sentiment_distribution_counterfactual": [],
+                        "spc_checks": [
+                            {
+                                "metric_name": "sentiment",
+                                "delta": 0.9,
+                                "baseline_mean": 0.0,
+                                "baseline_std": 0.05,
+                                "lower_limit": -0.15,
+                                "upper_limit": 0.15,
+                                "passed": False,
+                            }
+                        ],
+                        "num_iterations": 1,
+                        "hypothesis_model": "m",
+                        "prompt_version": "dev",
+                    }
+                ],
+                "four_fifths": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (run_dir / "summary.json").write_text(json.dumps({"run_id": run_id}), encoding="utf-8")
+    return run_id, run_dir / "results.jsonl"
+
+
 def test_blob_source_without_blob_enabled_is_rejected(tmp_path: Path) -> None:
     cfg = {
         "run": {"eval_type": "standard", "output_dir": str(tmp_path / "out")},
@@ -210,6 +259,26 @@ def test_bias_eval_stages_prefix_and_publishes_split_outputs(tmp_path: Path) -> 
     assert "summarisation/bias/biasrun1/results.jsonl" in debug_blobs
     assert "summarisation/bias/biasrun1/spc_baseline.yaml" in debug_blobs
 
+    assert (artifact_dir / "bias" / "biasrun1" / "summary.json").read_text(encoding="utf-8") == (
+        '{"run_id": "biasrun1"}'
+    )
+
+
+def test_bias_threshold_failure_publishes_then_fails_pipeline(tmp_path: Path) -> None:
+    config = _write_bias_config(tmp_path)
+    artifact_dir = tmp_path / "artifact"
+    fake_blob = MagicMock()
+
+    with (
+        patch("evals.summarisation.src.main.EvalBlobStorage.from_account_urls", return_value=fake_blob),
+        patch("evals.summarisation.src.bias.run_counterfactual_eval", side_effect=_fake_run_failing_bias_eval),
+    ):
+        result = runner.invoke(app, ["--config", str(config), "--results-artifact-dir", str(artifact_dir)])
+
+    assert result.exit_code == 1, result.output
+    assert "Bias thresholds breached" in result.output
+    dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
+    assert dests["output"] == "summarisation/bias/biasrun1/summary.json"
     assert (artifact_dir / "bias" / "biasrun1" / "summary.json").read_text(encoding="utf-8") == (
         '{"run_id": "biasrun1"}'
     )
