@@ -13,7 +13,7 @@ run:
 dataset:
   name: synthetic-counterfactuals
   source: blob
-  blob_path: summarisation/bias/smoke-test
+  blob_path: summarisation/bias/smoke-test/gender_facilitator_to_chair.json
   dialogue_field: dialogue
   reference_summary_field: summary
 

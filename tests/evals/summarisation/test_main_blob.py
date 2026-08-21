@@ -61,7 +61,7 @@ def _write_bias_config(tmp_path: Path) -> Path:
         "dataset": {
             "name": "synthetic-counterfactuals",
             "source": "blob",
-            "blob_path": "summarisation/bias/smoke-test",
+            "blob_path": "summarisation/bias/smoke-test/case-a.json",
             "dialogue_field": "dialogue",
             "reference_summary_field": "summary",
         },
@@ -187,10 +187,6 @@ def test_bias_eval_stages_prefix_and_publishes_split_outputs(tmp_path: Path) -> 
     config = _write_bias_config(tmp_path)
     artifact_dir = tmp_path / "artifact"
     fake_blob = MagicMock()
-    fake_blob.list_blob_names.return_value = [
-        "summarisation/bias/smoke-test/case-a.json",
-        "summarisation/bias/smoke-test/case-b.json",
-    ]
 
     with (
         patch("evals.summarisation.src.main.EvalBlobStorage.from_account_urls", return_value=fake_blob) as make_blob,
@@ -204,12 +200,9 @@ def test_bias_eval_stages_prefix_and_publishes_split_outputs(tmp_path: Path) -> 
         shared_account_url="https://shared.blob.core.windows.net",
     )
 
-    fake_blob.list_blob_names.assert_called_once_with("input", "summarisation/bias/smoke-test/")
-    staged_names = [call.args[1] for call in fake_blob.download_blob.call_args_list]
-    assert staged_names == [
-        "summarisation/bias/smoke-test/case-a.json",
-        "summarisation/bias/smoke-test/case-b.json",
-    ]
+    fake_blob.download_blob.assert_called_once()
+    assert fake_blob.download_blob.call_args.args[0] == "input"
+    assert fake_blob.download_blob.call_args.args[1] == "summarisation/bias/smoke-test/case-a.json"
 
     dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
     assert dests["output"] == "summarisation/bias/biasrun1/summary.json"

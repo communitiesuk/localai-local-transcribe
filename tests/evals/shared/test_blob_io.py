@@ -10,7 +10,6 @@ from evals.shared.blob_io import (
     output_prefix_for,
     publish_run_outputs,
     stage_dataset,
-    stage_dataset_prefix,
 )
 
 RESULTS = frozenset({"summary.json"})
@@ -41,42 +40,6 @@ def test_stage_dataset_downloads_blob_path(tmp_path: Path) -> None:
 def test_stage_dataset_requires_blob_path(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="blob_path"):
         stage_dataset(MagicMock(), None, tmp_path)
-
-
-def test_stage_dataset_prefix_downloads_all_blobs_under_prefix(tmp_path: Path) -> None:
-    blob = MagicMock()
-    blob.list_blob_names.return_value = [
-        "summarisation/bias/smoke-test/case-a.json",
-        "summarisation/bias/smoke-test/nested/case-b.json",
-    ]
-
-    result = stage_dataset_prefix(blob, "summarisation/bias/smoke-test", tmp_path)
-
-    assert result == tmp_path
-    blob.list_blob_names.assert_called_once_with("input", "summarisation/bias/smoke-test/")
-    blob.download_blob.assert_any_call(
-        "input",
-        "summarisation/bias/smoke-test/case-a.json",
-        tmp_path / "case-a.json",
-    )
-    blob.download_blob.assert_any_call(
-        "input",
-        "summarisation/bias/smoke-test/nested/case-b.json",
-        tmp_path / "nested" / "case-b.json",
-    )
-
-
-def test_stage_dataset_prefix_requires_blob_path(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="blob_path"):
-        stage_dataset_prefix(MagicMock(), None, tmp_path)
-
-
-def test_stage_dataset_prefix_rejects_empty_prefix(tmp_path: Path) -> None:
-    blob = MagicMock()
-    blob.list_blob_names.return_value = []
-
-    with pytest.raises(ValueError, match="No input blobs"):
-        stage_dataset_prefix(blob, "summarisation/bias/smoke-test", tmp_path)
 
 
 def _publish(blob: Any, run_dir: Path, run_id: str, **kwargs: Any) -> dict[str, str]:

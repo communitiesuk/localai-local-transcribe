@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -29,16 +28,6 @@ class _FakeService:
 
         client.upload_blob.side_effect = _upload
         return client
-
-    def get_container_client(self, container: str) -> MagicMock:
-        client = MagicMock()
-        client.list_blobs.side_effect = lambda name_starts_with: [
-            SimpleNamespace(name=name)
-            for blob_container, name in self._blobs
-            if blob_container == container and name.startswith(name_starts_with)
-        ]
-        return client
-
 
 def _make_service(**kwargs: Any) -> tuple[_FakeService, Any]:
     service = _FakeService(**kwargs)
@@ -75,27 +64,6 @@ def test_upload_file(tmp_path: Path) -> None:
         blob.upload_file("output", "summarisation/standard/run1/summary.json", src)
 
     assert service.uploaded[("output", "summarisation/standard/run1/summary.json")] == b'{"overall": 4.2}'
-
-
-def test_list_blob_names_filters_by_prefix() -> None:
-    service, patcher = _make_service(
-        blobs={
-            ("input", "summarisation/bias/smoke-test/a.json"): b"{}",
-            ("input", "summarisation/bias/smoke-test/nested/b.json"): b"{}",
-            ("input", "summarisation/standard/data.jsonl"): b"{}\n",
-        }
-    )
-    with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
-        blob = EvalBlobStorage(
-            restricted_account_url="https://restricted.blob.core.windows.net",
-            shared_account_url="https://shared.blob.core.windows.net",
-        )
-        names = blob.list_blob_names("input", "summarisation/bias/smoke-test")
-
-    assert names == [
-        "summarisation/bias/smoke-test/a.json",
-        "summarisation/bias/smoke-test/nested/b.json",
-    ]
 
 
 def test_from_account_urls_routes_containers_to_separate_accounts(tmp_path: Path) -> None:

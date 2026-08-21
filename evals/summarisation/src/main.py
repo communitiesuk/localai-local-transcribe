@@ -9,7 +9,7 @@ from pathlib import Path
 import orjson
 import typer
 
-from evals.shared.blob_io import publish_run_outputs, stage_dataset, stage_dataset_prefix
+from evals.shared.blob_io import publish_run_outputs, stage_dataset
 from evals.shared.blob_storage import EvalBlobStorage
 from evals.summarisation.src.common import AppConfig, RunSummary, load_config, run_halted
 from evals.summarisation.src.hallucination.types import HallucinationInput
@@ -156,7 +156,7 @@ async def run_bias_eval(
     from evals.summarisation.src.bias.thresholds import has_threshold_failures
 
     if blob is not None and cfg.dataset.source == "blob":
-        input_dir = stage_dataset_prefix(blob, cfg.dataset.blob_path, staging_dir / "input" / "bias")
+        input_dir = stage_dataset(blob, cfg.dataset.blob_path, staging_dir / "input" / "bias").parent
     else:
         input_dir, _output_dir = _resolve_io_dirs(cfg, "bias")
 
