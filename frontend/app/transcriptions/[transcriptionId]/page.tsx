@@ -283,6 +283,14 @@ const RecordingDetails = ({
         message: 'Recording details updated',
       })
       clearDraft()
+      form.reset(form.getValues())
+    },
+    onError: () => {
+      setBanner({
+        variant: 'important',
+        title: 'There is a problem',
+        message: 'Failed to update recording details',
+      })
     },
   })
 
@@ -311,7 +319,6 @@ const RecordingDetails = ({
         client_date_of_birth: dateOfBirth ? dateOfBirth.toISOString() : null,
       },
     })
-    form.reset(data)
   }
 
   return (
