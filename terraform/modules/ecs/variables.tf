@@ -136,13 +136,13 @@ variable "llm_deadletter_queue_name" {
 variable "frontend_task_cpu" {
   description = "CPU units for the frontend ECS task definition"
   type        = number
-  default     = 512
+  default     = 256
 }
 
 variable "backend_task_cpu" {
   description = "CPU units for the backend ECS task definition"
   type        = number
-  default     = 512
+  default     = 256
 }
 
 variable "worker_task_cpu" {
