@@ -80,8 +80,14 @@ class TranscriptionCreateRequest(BaseModel):
     title: str | None = None
 
 
+class TranscriptionOnlyCreateRequest(BaseModel):
+    recording_id: uuid.UUID
+    title: str | None = None
+
+
 class RecordingCreateRequest(BaseModel):
     file_extension: str
+    file_created_at: datetime | None = None
 
 
 class RecordingCreateResponse(BaseModel):
@@ -187,12 +193,14 @@ class TranscriptionGetResponse(BaseModel):
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime
+    date_of_recording: datetime | None = None
 
 
 class SingleRecording(BaseModel):
     id: uuid.UUID
     url: str
     extension: str
+    created_datetime: datetime
 
 
 class MinuteListItem(BaseModel):
@@ -283,6 +291,7 @@ class TaskType(IntEnum):
     MINUTE = 2
     EDIT = 3
     INTERACTIVE = 4
+    TRANSCRIPTION_ONLY = 5
 
 
 class EditMessageData(BaseModel):

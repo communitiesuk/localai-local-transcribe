@@ -51,12 +51,13 @@ async def generate_speaker_predictions(dialogue_entries: list[DialogueEntry]) ->
         ):
             # Log the content filter error but continue with original speaker labels
             logger.warning(
-                "Content filter detected in transcript. Continuing with original speaker labels: %s", error_message
+                "Content filter detected in transcript. Continuing with original speaker labels: %s",
+                type(e).__name__,
             )
 
             # Return original speaker labels
             return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}
         else:
             # For other errors, log and return original speaker labels
-            logger.error("Error predicting speaker names: %s", error_message)
+            logger.error("Error predicting speaker names: %s", type(e).__name__)
             return {entry["speaker"]: entry["speaker"] for entry in dialogue_entries}

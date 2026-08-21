@@ -2384,31 +2384,6 @@ torch = ["safetensors[torch]", "torch"]
 typing = ["types-PyYAML", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)"]
 
 [[package]]
-name = "i-dot-ai-utilities"
-version = "0.4.4"
-description = "Utilities for i.ai to use"
-optional = false
-python-versions = "<4.0,>=3.10"
-groups = ["main"]
-files = [
-    {file = "i_dot_ai_utilities-0.4.4-py3-none-any.whl", hash = "sha256:2034c96673836399873b00b76c689dd19d663f8e610f167da39070b229076006"},
-    {file = "i_dot_ai_utilities-0.4.4.tar.gz", hash = "sha256:03fb7cf8bcda5b61ce3224d9a10a4834b095f355ae78a172d43fea9a8147aaa0"},
-]
-
-[package.dependencies]
-pydantic = ">=2.11.9"
-pydantic-settings = ">=2.10.1"
-structlog = ">=25.4.0"
-typing-extensions = ">=4.0.0"
-
-[package.extras]
-all = ["azure-core (>=1.35.1)", "azure-storage-blob (>=12.26.0)", "boto3 (>=1.40.41)", "boto3-stubs[s3] (>=1.40.41)", "ecologits (>=0.8.2)", "google-cloud-storage (>=3.3.1)", "langfuse (>=3.4.0)", "litellm (>=1.77.1)", "minio (>=7.2.15)", "rapidfuzz (>=3.14.1)", "requests (>=2.32.3)"]
-auth = ["requests (>=2.32.3)"]
-dev = ["mypy (>=1.15.0)", "pytest (>=8.3.5)", "pytest-cov (>=6.1.1)", "ruff (>=0.12.2)"]
-file-store = ["azure-core (>=1.35.1)", "azure-storage-blob (>=12.26.0)", "boto3 (>=1.40.41)", "boto3-stubs[s3] (>=1.40.41)", "google-cloud-storage (>=3.3.1)", "grpcio-status (>=1.76.0)", "minio (>=7.2.15)"]
-litellm = ["ecologits (>=0.8.2)", "langfuse (>=3.4.0)", "litellm (>=1.79.0)", "opentelemetry-api (>=1.37.0)", "opentelemetry-exporter-otlp (>=1.37.0)", "opentelemetry-sdk (>=1.37.0)", "rapidfuzz (>=3.14.1)", "requests (>=2.32.3)"]
-
-[[package]]
 name = "identify"
 version = "2.6.19"
 description = "File identification library for Python"
@@ -7202,18 +7177,6 @@ files = [
 ]
 
 [[package]]
-name = "structlog"
-version = "25.5.0"
-description = "Structured Logging for Python"
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-files = [
-    {file = "structlog-25.5.0-py3-none-any.whl", hash = "sha256:a8453e9b9e636ec59bd9e79bbd4a72f025981b3ba0f5837aebf48f02f37a7f9f"},
-    {file = "structlog-25.5.0.tar.gz", hash = "sha256:098522a3bebed9153d4570c6d0288abf80a031dfdb2048d59a49e9dc2190fc98"},
-]
-
-[[package]]
 name = "sympy"
 version = "1.14.0"
 description = "Computer algebra system (CAS) in Python"
@@ -10187,4 +10150,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.13"
-content-hash = "79864f27bcb21638d11918f568b31f163a08d00015deb7c434e87c95cfa42f77"
+content-hash = "b5d7bc0ec56bd62f540c32e46253e3914d0c2b266dc6b82885141aceeb0c04cd"
