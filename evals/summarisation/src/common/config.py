@@ -39,13 +39,12 @@ class RunConfig(BaseModel):
     output_dir: str = "runs"
     input_dir: str | None = None
     seed: int = 0
-    split: str = "test"
+    split: str | None = None
     limit: int | None = None
     prompt_version: str = "dev"
     num_iterations: int | None = None
     dataset_version: str = "unspecified"
-    # When true (bias eval only), derive an SPC baseline from this run's deltas and write it
-    # instead of loading an existing baseline and applying threshold checks.
+    spc_baseline_enabled: bool = True
     emit_spc_baseline: bool = False
 
 
