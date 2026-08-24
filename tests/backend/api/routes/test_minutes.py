@@ -47,7 +47,7 @@ async def test_list_minutes_for_transcription_not_found(mock_session, mock_user)
 
 @pytest.mark.asyncio
 async def test_create_minute_success(mocker, mock_session, mock_minute, mock_minute_version, mock_user):
-    """Test creating a minute successfully creates the minute and minute version."""
+    """Test creating a minute successfully creates the minute, minute version, and return their ids."""
 
     transcription = Mock()
     transcription.user_id = mock_user.id
@@ -63,7 +63,7 @@ async def test_create_minute_success(mocker, mock_session, mock_minute, mock_min
 
     request = SimpleNamespace(template_name="T", template_id=None, agenda="A")
 
-    await create_minute(
+    result = await create_minute(
         transcription_id=minute.id,
         request=request,
         session=mock_session,
@@ -74,6 +74,8 @@ async def test_create_minute_success(mocker, mock_session, mock_minute, mock_min
     mock_session.add.assert_any_call(minute_version)
     mock_session.commit.assert_awaited()
     llm.publish_message.assert_called()
+    assert result.minute_id == minute.id
+    assert result.id == minute_version.id
 
 
 @pytest.mark.asyncio

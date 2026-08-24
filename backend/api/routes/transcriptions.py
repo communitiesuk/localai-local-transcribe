@@ -1,3 +1,4 @@
+import datetime
 import logging
 import math
 import uuid
@@ -37,6 +38,7 @@ from common.types import (
     UnlabelledTranscriptionsResponse,
     UpdateDialogueEntrySpeakerRequest,
     UpdateDialogueEntryTextRequest,
+    UpdateTranscriptionMetadataRequest,
     UpdateTranscriptionTitleRequest,
     WorkerMessage,
 )
@@ -307,6 +309,9 @@ async def get_transcription(
         created_datetime=transcription.created_datetime,
         date_of_recording=transcription.date_of_recording,
         is_upload=is_upload,
+        client_name=transcription.client_name,
+        case_id=transcription.case_id,
+        client_date_of_birth=transcription.client_date_of_birth,
     )
 
 
@@ -360,6 +365,26 @@ async def update_transcription_title(
     if request.title is not None:
         transcription.title = request.title
         await session.commit()
+
+
+@transcriptions_router.put("/transcriptions/{transcription_id}/details", status_code=204)
+async def update_transcription_metadata(
+    transcription_id: uuid.UUID,
+    request: UpdateTranscriptionMetadataRequest,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> None:
+    """Update a transcription's metadata."""
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
+    transcription.case_id = request.case_id
+    transcription.client_name = request.client_name
+    transcription.client_date_of_birth = (
+        request.client_date_of_birth.replace(tzinfo=None) if request.client_date_of_birth is not None else None
+    )
+    transcription.title = request.subject
+
+    transcription.updated_datetime = datetime.datetime.now(tz=datetime.UTC)
+    await session.commit()
 
 
 @transcriptions_router.patch("/transcriptions/{transcription_id}/speakers", status_code=204)
