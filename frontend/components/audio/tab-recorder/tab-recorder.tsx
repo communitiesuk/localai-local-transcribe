@@ -4,17 +4,18 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
-
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import {
   AudioDevice,
   MicrophonePermission,
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
-import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
-import { useStartTranscription } from '@/hooks/use-start-transcription'
+import {
+  useStartTranscription,
+  type TranscriptionForm,
+} from '@/hooks/use-start-transcription'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
