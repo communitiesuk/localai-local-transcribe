@@ -13,7 +13,15 @@ export default function GovFooter() {
             <ul className="govuk-footer__inline-list">
               <li className="govuk-footer__inline-list-item">
                 <a className="govuk-footer__link" href="/privacy">
-                  Privacy
+                  Local Transcribe User Privacy Notice
+                </a>
+              </li>
+              <li className="govuk-footer__inline-list-item">
+                <a
+                  className="govuk-footer__link"
+                  href="/privacy/end-service-user"
+                >
+                  End Service User Privacy Notice
                 </a>
               </li>
               <li className="govuk-footer__inline-list-item">

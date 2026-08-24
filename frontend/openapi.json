@@ -190,6 +190,55 @@
         }
       }
     },
+    "/transcriptions-only": {
+      "post": {
+        "tags": ["Transcriptions"],
+        "summary": "Create Transcription Only",
+        "description": "transcription without creating an associated Minute",
+        "operationId": "create_transcription_only_transcriptions_only_post",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscriptionOnlyCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/transcriptions": {
       "post": {
         "tags": ["Transcriptions"],
@@ -641,6 +690,45 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/organisation": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get Organisation Name",
+        "operationId": "get_organisation_name_users_me_organisation_get",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "title": "Response Get Organisation Name Users Me Organisation Get"
+                }
               }
             }
           },
@@ -2827,7 +2915,14 @@
       },
       "RecordingCreateRequest": {
         "properties": {
-          "file_extension": { "type": "string", "title": "File Extension" }
+          "file_extension": { "type": "string", "title": "File Extension" },
+          "file_created_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "File Created At"
+          }
         },
         "type": "object",
         "required": ["file_extension"],
@@ -2980,6 +3075,13 @@
             "type": "string",
             "format": "date-time",
             "title": "Created Datetime"
+          },
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
           }
         },
         "type": "object",
@@ -2991,6 +3093,22 @@
           "created_datetime"
         ],
         "title": "TranscriptionGetResponse"
+      },
+      "TranscriptionOnlyCreateRequest": {
+        "properties": {
+          "recording_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recording Id"
+          },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": ["recording_id"],
+        "title": "TranscriptionOnlyCreateRequest"
       },
       "TranscriptionSortOrder": {
         "type": "string",

@@ -79,6 +79,14 @@ class TranscriptionServiceManager:
         with tempfile.TemporaryDirectory() as tempdir:
             temp_file_path = Path(tempdir) / Path(recording.s3_file_key).name
             await storage_service.download(recording.s3_file_key, temp_file_path)
+            date_for_db = recording.file_created_at or recording.created_datetime
+            if date_for_db is not None:
+                with SessionLocal() as session:
+                    db_transcription = session.get(Transcription, transcription.id)
+                    if db_transcription:
+                        db_transcription.date_of_recording = date_for_db
+                        session.add(db_transcription)
+                        session.commit()
             recording, file_path, duration_seconds = await self.get_recording_to_process(
                 recording=recording, temp_file_path=temp_file_path, file_extension=file_extension
             )

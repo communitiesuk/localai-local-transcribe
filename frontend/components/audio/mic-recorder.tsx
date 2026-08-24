@@ -16,6 +16,9 @@ import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from './audio-player'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
+import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
+import { RecordingLoading } from '@/components/recording-loading'
+import { useCountdown } from '@/hooks/use-countdown'
 
 export function MicRecorderForm() {
   const { isPending, onSubmit, form } = useStartTranscription()
@@ -62,9 +65,16 @@ function MicRecorderComponent({
     useState<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
+  const isStartingRecordingRef = useRef(false)
   const [isRecording, setIsRecording] = useState(false)
 
+  const setRecordingUIState = useRecordingUiStore(
+    (state) => state.setRecordingState
+  )
+
   const stopAllTracks = useCallback(() => {
+    isStartingRecordingRef.current = false
+
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach((track) => track.stop())
     }
@@ -77,6 +87,17 @@ function MicRecorderComponent({
   }, [releaseWakeLock])
 
   const startRecording = useCallback(async () => {
+    // prevent start recording triggering multiple times if recording has already started
+    if (
+      isStartingRecordingRef.current ||
+      mediaRecorderRef.current?.state === 'recording' ||
+      mediaRecorderRef.current?.state === 'paused'
+    ) {
+      return
+    }
+
+    isStartingRecordingRef.current = true
+
     try {
       setError(null)
       mediaChunksRef.current = []
@@ -87,6 +108,7 @@ function MicRecorderComponent({
           echoCancellation: false,
         },
       })
+      micStreamRef.current = micStream
       const options = { mimeType: 'audio/webm' }
       const mediaRecorder = new MediaRecorder(micStream, options)
       mediaRecorderRef.current = mediaRecorder
@@ -142,6 +164,11 @@ function MicRecorderComponent({
       setIsRecording(true)
     } catch (micError) {
       console.warn('Error occurred starting audio recording.', micError)
+      setError('Error occurred starting audio recording. Please try again.')
+      setRecordingUIState('idle')
+      stopAllTracks()
+    } finally {
+      isStartingRecordingRef.current = false
     }
     // Create a media recorder from the composed stream
   }, [
@@ -150,6 +177,7 @@ function MicRecorderComponent({
     requestWakeLock,
     selectedDeviceId,
     setRecordedAudio,
+    setRecordingUIState,
     stopAllTracks,
     updateRecording,
   ])
@@ -197,6 +225,37 @@ function MicRecorderComponent({
   }
 
   useTabCloseWarning(!!recordedAudio || isRecording)
+
+  const handleCountdownCancel = () => {
+    setRecordingUIState('idle')
+  }
+
+  const {
+    isStartingRecording,
+    isPreparingRecording,
+    startCountdown,
+    handleLoadingComplete,
+    handleLoadingCancel,
+  } = useCountdown({
+    onComplete: startRecording,
+    onCancel: handleCountdownCancel,
+  })
+
+  const handleStartRecordingClick = () => {
+    setError(null)
+    setRecordedAudio(null)
+    setRecordingUIState('starting')
+    startCountdown()
+  }
+
+  if (isStartingRecording || isPreparingRecording) {
+    return (
+      <RecordingLoading
+        onComplete={handleLoadingComplete}
+        onCancel={handleLoadingCancel}
+      />
+    )
+  }
 
   if (!permissionGranted || !audioDevices.length) {
     return (
@@ -256,7 +315,7 @@ function MicRecorderComponent({
             </p>
             <GovukButton
               type="button"
-              onClick={startRecording}
+              onClick={handleStartRecordingClick}
               className="govuk-!-margin-bottom-0"
             >
               Start recording

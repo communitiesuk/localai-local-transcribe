@@ -100,7 +100,9 @@ export default function TranscriptionPage(props: {
     )
   }
 
-  const date = new Date(transcription.created_datetime)
+  const dateString =
+    transcription.date_of_recording ?? transcription.created_datetime
+  const date = new Date(dateString)
   const dateLabel = `${date.toDateString()} at ${date.toLocaleTimeString()}`
   const recordingDate = date.toLocaleDateString('en-GB')
   const dateTimeLabel = `${date.toLocaleDateString('en-GB')} at ${date.toLocaleTimeString('en-GB')}`
