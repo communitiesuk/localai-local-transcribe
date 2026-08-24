@@ -1,7 +1,7 @@
 'use client'
 
 import { GovukButton, GovukFormGroup, GovukHint } from '@/components/govuk'
-import { useStartTranscriptionOnly } from '@/hooks/use-start-transcription-only'
+import { useStartTranscription } from '@/hooks/use-start-transcription'
 import {
   MAX_UPLOAD_FILE_SIZE_BYTES,
   MAX_UPLOAD_FILE_SIZE_LABEL,
@@ -15,7 +15,7 @@ import { Controller, FormProvider } from 'react-hook-form'
 
 export const AudioUploadForm = () => {
   const router = useRouter()
-  const { isPending, onSubmit, form } = useStartTranscriptionOnly()
+  const { isPending, onSubmit, form } = useStartTranscription()
   const file = form.watch('file')
   const [fileError, setFileError] = useState<string | null>(null)
   const startUpload = useUploadRecordingStore((store) => store.startUpload)

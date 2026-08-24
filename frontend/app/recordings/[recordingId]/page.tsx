@@ -1,10 +1,16 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { use } from 'react'
 
 import AudioPlayerComponent from '@/components/audio/audio-player'
 import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
-import { GovukHeading, GovukNotificationBanner } from '@/components/govuk'
-import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
+import {
+  GovukHeading,
+  GovukNotificationBanner,
+  GovukButton,
+} from '@/components/govuk'
+import { useStartTranscription } from '@/hooks/use-start-transcription'
 import {
   RecordingDbItem,
   useRecordingDb,
@@ -66,16 +72,26 @@ export default function RecordingPage(props: {
 }
 
 function RecordingUploadForm({ recording }: { recording: RecordingDbItem }) {
+  const router = useRouter()
+  const startUpload = useUploadRecordingStore((store) => store.startUpload)
+
   const { form, isPending, onSubmit } = useStartTranscription({
     file: recording.blob,
     recordingId: recording.recording_id,
   })
 
+  const handleSubmit = form.handleSubmit((formValues) => {
+    startUpload(formValues, onSubmit)
+    router.push('/new/uploading')
+  })
+
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit}>
         <AudioPlayerComponent audioBlob={recording.blob} />
-        <StartTranscriptionSection isPending={isPending} isShowing={true} />
+        <GovukButton type="submit" disabled={isPending}>
+          Upload
+        </GovukButton>
       </form>
     </FormProvider>
   )

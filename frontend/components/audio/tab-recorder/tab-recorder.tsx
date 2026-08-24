@@ -14,7 +14,7 @@ import RecordingControl from '@/components/audio/recording-control'
 import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
-import { useStartTranscriptionOnly } from '@/hooks/use-start-transcription-only'
+import { useStartTranscription } from '@/hooks/use-start-transcription'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
@@ -27,7 +27,7 @@ export const TabRecorderForm = () => {
   const router = useRouter()
 
   const [triggerUpload, setTriggerUpload] = useState(false)
-  const { isPending, onSubmit, form } = useStartTranscriptionOnly()
+  const { isPending, onSubmit, form } = useStartTranscription()
   const startUpload = useUploadRecordingStore((store) => store.startUpload)
 
   const handleSubmit = form.handleSubmit((formValues) => {

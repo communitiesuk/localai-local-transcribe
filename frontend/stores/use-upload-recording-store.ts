@@ -1,4 +1,4 @@
-import type { TranscriptionOnlyForm } from '@/hooks/use-start-transcription-only'
+import type { TranscriptionForm } from '@/hooks/use-start-transcription'
 import { create } from 'zustand'
 
 type UploadRecordingStatus = 'idle' | 'pending' | 'success' | 'error'
@@ -8,8 +8,8 @@ type UploadRecordingStore = {
   transcriptionId: string | null
   error: string | null
   startUpload: (
-    values: TranscriptionOnlyForm,
-    submit: (values: TranscriptionOnlyForm) => Promise<string | null>
+    values: TranscriptionForm,
+    submit: (values: TranscriptionForm) => Promise<string | null>
   ) => Promise<void>
   reset: () => void
 }
