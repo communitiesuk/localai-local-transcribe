@@ -64,7 +64,6 @@ def test_publish_run_outputs_splits_results_from_debug(tmp_path: Path) -> None:
     blob = MagicMock()
     published = _publish(blob, run_dir, "run1")
 
-    # summary.json -> results container; everything else -> debug container.
     assert published["summary.json"] == "output/summarisation/standard/run1/summary.json"
     assert published["results.jsonl"] == "debug/summarisation/standard/run1/results.jsonl"
     assert published["hallucination_inputs.json"] == "debug/summarisation/standard/run1/hallucination_inputs.json"
@@ -74,7 +73,6 @@ def test_publish_run_outputs_splits_results_from_debug(tmp_path: Path) -> None:
 
 
 def test_publish_run_outputs_nested_summary_goes_to_debug(tmp_path: Path) -> None:
-    # Only the top-level summary.json is the aggregate; a nested one is per-entry debug data.
     run_dir = tmp_path / "run1"
     (run_dir / "sub").mkdir(parents=True)
     (run_dir / "summary.json").write_text("{}", encoding="utf-8")

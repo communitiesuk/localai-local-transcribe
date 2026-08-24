@@ -17,7 +17,6 @@ from evals.summarisation.src.hallucination.types import HallucinationInput
 WORKDIR = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG = WORKDIR / "configs" / "smoke-test.yaml"
 
-# Only summary.json is a headline result; everything else the run writes is per-entry debug output.
 RESULTS_RELATIVE_PATHS = frozenset({"summary.json"})
 
 app = typer.Typer()
@@ -100,11 +99,7 @@ def _stage_results_artifact(
 
 
 def _fail_pipeline_if_halted(summary_path: Path) -> None:
-    """Fail the standard-eval pipeline when the run halted before completing.
-
-    Called only after outputs are published, so the summary.json explaining the failure is
-    preserved even though the CLI exits non-zero.
-    """
+    """Fail the standard-eval pipeline when the run halted before completing."""
     with summary_path.open("rb") as f:
         summary: RunSummary = orjson.loads(f.read())
 

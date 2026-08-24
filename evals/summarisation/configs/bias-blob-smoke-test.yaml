@@ -1,4 +1,3 @@
-# Bias/counterfactual smoke test reading synthetic inputs from input/summarisation/bias/smoke-test.
 run:
   eval_type: bias
   output_dir: evals/summarisation/output/bias

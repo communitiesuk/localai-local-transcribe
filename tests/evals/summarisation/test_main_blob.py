@@ -218,17 +218,14 @@ def test_standard_eval_publishes_split_outputs(tmp_path: Path) -> None:
         shared_account_url="https://shared.blob.core.windows.net",
     )
 
-    # Dataset was staged from the input container.
     fake_blob.download_blob.assert_called_once()
     assert fake_blob.download_blob.call_args.args[0] == "input"
 
-    # Outputs published with the results/debug split.
     dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
     assert dests["output"] == "summarisation/standard/run1/summary.json"
     debug_blobs = {call.args[1] for call in fake_blob.upload_file.call_args_list if call.args[0] == "debug"}
     assert "summarisation/standard/run1/results.jsonl" in debug_blobs
     assert "summarisation/standard/run1/hallucination_inputs.json" in debug_blobs
-    # The threshold-based review lands in the debug bucket alongside the per-entry data.
     assert "summarisation/standard/run1/threshold_review.json" in debug_blobs
 
 
@@ -296,9 +293,7 @@ def test_halted_run_publishes_then_fails_pipeline(tmp_path: Path) -> None:
     ):
         result = runner.invoke(app, ["--config", str(config)])
 
-    # Pipeline fails...
     assert result.exit_code == 1, result.output
-    # ...but the summary explaining the failure was published to blob first.
     dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
     assert dests["output"] == "summarisation/standard/run1/summary.json"
 

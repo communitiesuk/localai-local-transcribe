@@ -1,5 +1,3 @@
-# Bias eval smoke test - manual-run only.
-# CPU-first path: the eval's transformer models auto-select CUDA/MPS when present and otherwise run on CPU.
 name: Bias Evals
 
 trigger: none
@@ -58,21 +56,15 @@ jobs:
               --results-artifact-dir "${results_artifact_dir}"
         env:
           ENVIRONMENT: test
-          # Blob endpoints of the evals storage accounts, set as pipeline variables.
           AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
           AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL)
-          # These are set as pipeline variables directly in ADO (secret variables must be
-          # mapped explicitly).
-          # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
-          # to client_secret auth. It will need revisiting, due to it's short expiry.
+          # TODO: To be replaced with client_secret auth in future
           AZURE_APIM_AUTH_METHOD: static_token
           AZURE_APIM_URL: $(AZURE_APIM_URL)
           AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
           AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
           AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
 
-      # Azure DevOps retention is configured at run/pipeline level, not per artifact. Keep this
-      # pipeline's run retention short; the artifact contains only summary.json, never debug files.
       - task: PublishPipelineArtifact@1
         displayName: 'Publish non-sensitive eval results artifact'
         condition: succeededOrFailed()

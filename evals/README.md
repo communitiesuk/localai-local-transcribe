@@ -91,7 +91,6 @@ poetry install --with evals-summarisation
 # Run bias evaluation using unified entry point
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/counterfactual.yaml
 
-# Run the blob-backed CPU smoke test used by the Azure DevOps manual pipeline
 poetry run python -m evals.summarisation.src.main --config evals/summarisation/configs/bias-blob-smoke-test.yaml
 ```
 

@@ -28,8 +28,6 @@ async def run_counterfactual_eval(
     """
     Runs counterfactual bias evaluation on dataset and generates results and summary.
     """
-    # In emit mode we derive the baseline from this run, so there is nothing to load; otherwise
-    # validate the required baseline up front (fail fast before models load or dirs are created).
     emit_spc_baseline = cfg.run.emit_spc_baseline
     spc_baseline = None if emit_spc_baseline or not cfg.run.spc_baseline_enabled else load_spc_baseline(input_dir)
 

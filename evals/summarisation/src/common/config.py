@@ -44,10 +44,7 @@ class RunConfig(BaseModel):
     prompt_version: str = "dev"
     num_iterations: int | None = None
     dataset_version: str = "unspecified"
-    # When false (bias eval only), skip SPC baseline generation/loading and SPC threshold checks.
     spc_baseline_enabled: bool = True
-    # When true (bias eval only), derive an SPC baseline from this run's deltas and write it
-    # instead of loading an existing baseline and applying threshold checks.
     emit_spc_baseline: bool = False
 
 
