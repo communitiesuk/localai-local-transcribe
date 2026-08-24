@@ -176,6 +176,7 @@ poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test
 
 Uses the same `input` / `debug` / `output` split as summarisation.
 Input must be synthetic/public audio with `.txt` sidecars under `input/transcription/`.
+`prepare_only` is for local dataset setup only and must not be used with blob-enabled runs.
 
 ```bash
 poetry run python evals/transcription/src/evaluate.py --config evals/transcription/configs/blob-smoke-test.yaml

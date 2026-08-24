@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 import yaml
 
@@ -47,6 +48,7 @@ class EvaluationRunOutcome:
 def run_evaluation_with_outputs(
     num_samples: int | None = None,
     sample_duration_fraction: float | None = None,
+    dataset_loader: str = "ami",
     prepare_only: bool = False,
     max_workers: int | None = None,
     adapter_names: list[str] | None = None,
@@ -58,8 +60,8 @@ def run_evaluation_with_outputs(
 ) -> EvaluationRunOutcome:
     """Run eval and return output paths."""
     output_root = output_dir if output_dir is not None else WORKDIR / "output"
-    timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
-    run_id = f"eval_{timestamp}"
+    timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S_%f")
+    run_id = f"eval_{timestamp}_{uuid4().hex[:8]}"
     run_output_dir = output_root / run_id if structured_output else output_root
     detailed_results_path = run_output_dir / "results.json"
     if not structured_output:
@@ -68,7 +70,7 @@ def run_evaluation_with_outputs(
 
     logger.info("Loading dataset...")
     if dataset is None:
-        dataset = _load_dataset("ami", None, num_samples, sample_duration_fraction)
+        dataset = _load_dataset(dataset_loader, None, num_samples, sample_duration_fraction)
 
     indices = list(range(len(dataset)))
     logger.info("Loaded %d samples from the dataset", len(indices))
@@ -84,7 +86,7 @@ def run_evaluation_with_outputs(
             summary_path=summary_path,
         )
 
-    if adapter_names is None:
+    if not adapter_names:
         msg = "adapter_names is required when prepare_only is False"
         raise ValueError(msg)
 
@@ -136,6 +138,7 @@ def run_evaluation_with_outputs(
 def run_evaluation(
     num_samples: int | None = None,
     sample_duration_fraction: float | None = None,
+    dataset_loader: str = "ami",
     prepare_only: bool = False,
     max_workers: int | None = None,
     adapter_names: list[str] | None = None,
@@ -145,6 +148,7 @@ def run_evaluation(
     return run_evaluation_with_outputs(
         num_samples=num_samples,
         sample_duration_fraction=sample_duration_fraction,
+        dataset_loader=dataset_loader,
         prepare_only=prepare_only,
         max_workers=max_workers,
         adapter_names=adapter_names,
@@ -248,6 +252,7 @@ def _run_from_config(
     return run_evaluation_with_outputs(
         num_samples=config.num_samples,
         sample_duration_fraction=config.sample_duration_fraction,
+        dataset_loader=config.dataset_loader or "ami",
         prepare_only=config.prepare_only,
         max_workers=config.max_workers,
         adapter_names=config.adapters,

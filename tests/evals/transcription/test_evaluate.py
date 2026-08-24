@@ -3,8 +3,15 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import ValidationError
 
-from evals.transcription.src.evaluate import EvaluationRunOutcome, _run_blob_evaluation, run_evaluation
+from evals.transcription.src.evaluate import (
+    EvaluationRunOutcome,
+    _run_blob_evaluation,
+    _run_from_config,
+    run_evaluation,
+    run_evaluation_with_outputs,
+)
 from evals.transcription.src.models import EvaluationConfig
 
 
@@ -60,6 +67,90 @@ def test_run_evaluation(tmp_path, monkeypatch, kwargs, dataset_len, expected_loa
         assert len(mock_run.call_args.kwargs["adapters"]) == 1
         assert mock_run.call_args.kwargs["indices"] == list(range(dataset_len))
         mock_save.assert_called_once()
+
+
+def test_run_evaluation_requires_at_least_one_adapter(tmp_path, monkeypatch):
+    monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", tmp_path)
+
+    mock_dataset = MagicMock()
+    mock_dataset.__len__ = MagicMock(return_value=1)
+    mock_dataset.dataset_version = "test_v1"
+    mock_dataset.dataset_split = "test"
+
+    with (
+        patch("evals.transcription.src.evaluate._load_dataset", return_value=mock_dataset),
+        pytest.raises(ValueError, match="adapter_names is required"),
+    ):
+        run_evaluation_with_outputs(adapter_names=[])
+
+
+def test_evaluation_config_requires_adapters_unless_prepare_only():
+    with pytest.raises(ValidationError, match="adapters must contain at least one adapter"):
+        EvaluationConfig.model_validate({"prepare_only": False})
+
+    config = EvaluationConfig.model_validate({"prepare_only": True})
+
+    assert config.adapters == []
+
+
+def test_evaluation_config_rejects_prepare_only_with_blob():
+    with pytest.raises(ValidationError, match="prepare_only is for local dataset setup only"):
+        EvaluationConfig.model_validate(
+            {
+                "prepare_only": True,
+                "blob": {
+                    "enabled": True,
+                    "input_prefix": "transcription/smoke-test/audio",
+                },
+            }
+        )
+
+
+def test_run_from_config_uses_configured_dataset_loader(tmp_path):
+    config = EvaluationConfig.model_validate(
+        {
+            "dataset_loader": "audio_files",
+            "adapters": ["azure"],
+        }
+    )
+    mock_dataset = MagicMock()
+    mock_dataset.__len__ = MagicMock(return_value=1)
+    mock_dataset.dataset_version = "test_v1"
+    mock_dataset.dataset_split = "test"
+
+    with (
+        patch("evals.transcription.src.evaluate._load_dataset", return_value=mock_dataset) as mock_load,
+        patch("evals.transcription.src.evaluate.run_engines_parallel", return_value=[]),
+        patch("evals.transcription.src.evaluate.save_results"),
+        patch("evals.transcription.src.evaluate.save_summary_results"),
+        patch("evals.transcription.src.evaluate.prepare_audio_for_transcription"),
+        patch("evals.transcription.src.evaluate.get_duration", return_value=1.0),
+    ):
+        _run_from_config(config, output_dir=tmp_path)
+
+    mock_load.assert_called_once_with("audio_files", None, None, None)
+
+
+def test_run_ids_are_unique_within_same_second(tmp_path, monkeypatch):
+    monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", tmp_path)
+
+    mock_dataset = MagicMock()
+    mock_dataset.__len__ = MagicMock(return_value=1)
+    mock_dataset.dataset_version = "test_v1"
+    mock_dataset.dataset_split = "test"
+
+    with (
+        patch("evals.transcription.src.evaluate._load_dataset", return_value=mock_dataset),
+        patch("evals.transcription.src.evaluate.run_engines_parallel", return_value=[]),
+        patch("evals.transcription.src.evaluate.save_results"),
+        patch("evals.transcription.src.evaluate.save_summary_results"),
+        patch("evals.transcription.src.evaluate.prepare_audio_for_transcription"),
+        patch("evals.transcription.src.evaluate.get_duration", return_value=1.0),
+    ):
+        first = run_evaluation_with_outputs(adapter_names=["azure"])
+        second = run_evaluation_with_outputs(adapter_names=["azure"])
+
+    assert first.run_id != second.run_id
 
 
 def test_blob_evaluation_stages_transcription_prefix_and_publishes_split_outputs(tmp_path):

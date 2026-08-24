@@ -221,6 +221,16 @@ class EvaluationConfig(BaseModel):
     adapters: list[str] = Field(default_factory=list)
     blob: BlobConfig = Field(default_factory=BlobConfig)
 
+    @model_validator(mode="after")
+    def require_adapters_for_execution(self) -> Self:
+        if self.prepare_only and self.blob.enabled:
+            msg = "prepare_only is for local dataset setup only and cannot be used when blob.enabled is true"
+            raise ValueError(msg)
+        if not self.prepare_only and not self.adapters:
+            msg = "adapters must contain at least one adapter unless prepare_only is true"
+            raise ValueError(msg)
+        return self
+
 
 class MeetingSegment(BaseModel):
     """
