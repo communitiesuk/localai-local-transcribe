@@ -144,10 +144,6 @@ const SpeakerEditorModal = ({
       try {
         await onSaveSpeaker(original, updated)
       } catch (error) {
-        console.error(
-          `Error saving speaker name change from ${original} to ${updated}:`,
-          error
-        )
         setBanner({
           message: `One or more speaker names could not be updated, please try again.`,
           variant: 'important',
