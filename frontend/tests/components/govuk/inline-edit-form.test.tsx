@@ -64,4 +64,10 @@ describe('<InLineEditForm />', () => {
     rerender(<InLineEditForm {...defaultProps} name="Bob" key="Bob" />)
     expect(screen.getByRole('textbox')).toHaveValue('Bob')
   })
+
+  it('disables Update when the value is empty or whitespace only', () => {
+    render(<InLineEditForm {...defaultProps} />)
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '   ' } })
+    expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled()
+  })
 })

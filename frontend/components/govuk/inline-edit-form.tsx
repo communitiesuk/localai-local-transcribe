@@ -30,7 +30,7 @@ export function InLineEditForm({
         <GovukButton
           type="button"
           onClick={() => onUpdate(value)}
-          disabled={value === initialValue}
+          disabled={value === initialValue || !value?.trim()}
         >
           Update
         </GovukButton>

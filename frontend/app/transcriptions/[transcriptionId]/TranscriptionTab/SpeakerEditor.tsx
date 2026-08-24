@@ -98,9 +98,17 @@ const SpeakerEditorModal = ({
   const [pendingChanges, setPendingChanges] = useState<Map<string, string>>(
     new Map()
   )
+  const [inFlightRequest, setInFlightRequest] = useState(false)
+
   const activeAudioRef = useRef<HTMLAudioElement | null>(null)
 
-  const tableHeaders = ['Name', "Hear speaker's voice", '']
+  const tableHeaders: React.ReactNode[] = [
+    'Name',
+    "Hear speaker's voice",
+    <span key="actions" className="govuk-visually-hidden">
+      Actions
+    </span>,
+  ]
 
   const handleEdit = useCallback(
     (speaker: string) => {
@@ -131,9 +139,25 @@ const SpeakerEditorModal = ({
   )
 
   const handleDone = async () => {
+    setInFlightRequest(true)
     for (const [original, updated] of pendingChanges.entries()) {
-      await onSaveSpeaker(original, updated)
+      try {
+        await onSaveSpeaker(original, updated)
+      } catch (error) {
+        console.error(
+          `Error saving speaker name change from ${original} to ${updated}:`,
+          error
+        )
+        setBanner({
+          message: `One or more speaker names could not be updated, please try again.`,
+          variant: 'important',
+          title: 'Error',
+        })
+        setInFlightRequest(false)
+        return
+      }
     }
+    setInFlightRequest(false)
     setPendingChanges(new Map())
     setView('list')
     setBanner({
@@ -182,8 +206,8 @@ const SpeakerEditorModal = ({
           <table className="govuk-table">
             <thead className="govuk-table__head">
               <tr className="govuk-table__row">
-                {tableHeaders.map((header) => (
-                  <th key={header} scope="col" className="govuk-table__header">
+                {tableHeaders.map((header, index) => (
+                  <th key={index} scope="col" className="govuk-table__header">
                     {header}
                   </th>
                 ))}
@@ -228,7 +252,7 @@ const SpeakerEditorModal = ({
             <GovukButton
               type="button"
               onClick={handleDone}
-              disabled={pendingChanges.size === 0}
+              disabled={pendingChanges.size === 0 || inFlightRequest}
             >
               Done
             </GovukButton>
@@ -274,6 +298,7 @@ const SpeakerEditorModal = ({
           onConfirm={() => {
             setPendingChanges(new Map())
             setView('list')
+            handleClose()
           }}
           onCancel={() => setView('list')}
         />

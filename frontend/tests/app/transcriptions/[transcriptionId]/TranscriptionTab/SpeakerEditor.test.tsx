@@ -98,7 +98,7 @@ describe('<SpeakerEditor />', () => {
     expect(screen.getByRole('button', { name: 'Done' })).toBeEnabled()
   })
 
-  it('"Discard changes" on the interstitial returns to list view with original values restored', () => {
+  it('"Discard changes" on the interstitial closes the modal', () => {
     const { openModal } = setup()
     openModal()
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
@@ -108,8 +108,7 @@ describe('<SpeakerEditor />', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Update' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
-    expect(screen.getByText('Alice')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('clicking Edit opens edit view with correct speaker name and title', () => {
