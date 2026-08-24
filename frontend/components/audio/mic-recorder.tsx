@@ -8,11 +8,9 @@ import RecordingControl from './recording-control'
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
-import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
-import { useStartTranscription } from '@/hooks/useStartTranscription'
 import { useStartTranscriptionOnly } from '@/hooks/use-start-transcription-only'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
@@ -24,41 +22,38 @@ import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
 
 export function MicRecorderForm() {
-  // const router = useRouter()
+  const router = useRouter()
 
-  const { isPending, onSubmit, form } = useStartTranscription()
+  const [triggerUpload, setTriggerUpload] = useState(false)
+  const { isPending, onSubmit, form } = useStartTranscriptionOnly()
+  const startUpload = useUploadRecordingStore((store) => store.startUpload)
+
+  const handleSubmit = form.handleSubmit((formValues) => {
+    startUpload(formValues, onSubmit)
+    router.push('/new/uploading')
+  })
+
   const watchBlob = form.watch('file')
 
-  // const { isPending, onSubmit, form } = useStartTranscriptionOnly()
-  // const startUpload = useUploadRecordingStore((store) => store.startUpload)
-
-  // const handleSubmit = form.handleSubmit((formValues) => {
-  //   startUpload(formValues, onSubmit)
-  //   router.push('/new/uploading')
-  // })
+  useEffect(() => {
+    if (!triggerUpload || !watchBlob) return
+    handleSubmit()
+    setTriggerUpload(false)
+  }, [triggerUpload, watchBlob, handleSubmit])
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        {/* <form onSubmit={handleSubmit}> */}
-        <Controller
-          name="file"
-          control={form.control}
-          render={({ field: { value, onChange } }) => (
-            <MicRecorderComponent
-              recordedAudio={value}
-              setRecordedAudio={onChange}
-            />
-          )}
-        />
-        <StartTranscriptionSection
-          isShowing={!!watchBlob}
-          isPending={isPending}
-        />
-        {/* <GovukButton type="submit" disabled={isPending}>
-          Upload
-        </GovukButton> */}
-      </form>
+      <Controller
+        name="file"
+        control={form.control}
+        render={({ field: { value, onChange } }) => (
+          <MicRecorderComponent
+            recordedAudio={value}
+            setRecordedAudio={onChange}
+            onStopRecording={() => setTriggerUpload(true)}
+          />
+        )}
+      />
     </FormProvider>
   )
 }
@@ -66,9 +61,11 @@ export function MicRecorderForm() {
 function MicRecorderComponent({
   recordedAudio,
   setRecordedAudio,
+  onStopRecording,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
+  onStopRecording: () => void
 }) {
   const { releaseWakeLock, requestWakeLock } = useWakeLock()
   const [error, setError] = useState<string | null>(null)
@@ -292,20 +289,7 @@ function MicRecorderComponent({
   }
   return (
     <div className="space-y-4">
-      {recordedAudio ? (
-        <div className="govuk-!-margin-top-4 space-y-3">
-          <AudioPlayerComponent audioBlob={recordedAudio} />
-          <div className="flex justify-end">
-            <GovukButton
-              type="button"
-              onClick={() => setIsDialogOpen(true)}
-              variant="secondary"
-            >
-              Discard Recording
-            </GovukButton>
-          </div>
-        </div>
-      ) : !isRecording ? (
+      {!isRecording ? (
         <div className="flex flex-col space-y-4">
           <GovukFormGroup>
             <GovukLabel htmlFor="microphone-select">
@@ -345,7 +329,10 @@ function MicRecorderComponent({
           <RecordingControl
             stream={mediaRecorderStream}
             isRecording={isRecording}
-            onStopRecording={stopRecording}
+            onStopRecording={() => {
+              stopRecording()
+              onStopRecording()
+            }}
             onPauseStateChange={handlePauseStateChange}
           />
         </div>
