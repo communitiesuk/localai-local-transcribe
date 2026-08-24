@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
@@ -10,11 +11,11 @@ import {
   MicrophonePermission,
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
-import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
-import { useStartTranscription } from '@/hooks/useStartTranscription'
+import { useStartTranscriptionOnly } from '@/hooks/use-start-transcription-only'
+import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import AudioPlayerComponent from '../audio-player'
@@ -23,27 +24,38 @@ import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
 
 export const TabRecorderForm = () => {
-  const { isPending, onSubmit, form } = useStartTranscription()
+  const router = useRouter()
+
+  const [triggerUpload, setTriggerUpload] = useState(false)
+  const { isPending, onSubmit, form } = useStartTranscriptionOnly()
+  const startUpload = useUploadRecordingStore((store) => store.startUpload)
+
+  const handleSubmit = form.handleSubmit((formValues) => {
+    startUpload(formValues, onSubmit)
+    router.push('/new/uploading')
+  })
+
   const watchBlob = form.watch('file')
+
+  useEffect(() => {
+    if (!triggerUpload || !watchBlob) return
+    handleSubmit()
+    setTriggerUpload(false)
+  }, [triggerUpload, watchBlob, handleSubmit])
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Controller
-          control={form.control}
-          name="file"
-          render={({ field: { onChange, value } }) => (
-            <TabRecorder
-              recordedAudio={value}
-              setRecordedAudio={(blob) => onChange(blob)}
-            />
-          )}
-        />
-        <StartTranscriptionSection
-          isShowing={!!watchBlob}
-          isPending={isPending}
-        />
-      </form>
+      <Controller
+        name="file"
+        control={form.control}
+        render={({ field: { value, onChange } }) => (
+          <TabRecorder
+            recordedAudio={value}
+            setRecordedAudio={(blob) => onChange(blob)}
+            onStopRecording={() => setTriggerUpload(true)}
+          />
+        )}
+      />
     </FormProvider>
   )
 }
@@ -51,9 +63,11 @@ export const TabRecorderForm = () => {
 function TabRecorder({
   setRecordedAudio,
   recordedAudio,
+  onStopRecording,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
+  onStopRecording: () => void
 }) {
   const { requestWakeLock, releaseWakeLock } = useWakeLock()
   const { updateRecording, addRecording, removeRecording } = useRecordingDb()
@@ -408,7 +422,10 @@ function TabRecorder({
               <RecordingControl
                 stream={stream}
                 isRecording={isRecording}
-                onStopRecording={stopRecording}
+                onStopRecording={() => {
+                  stopRecording()
+                  onStopRecording()
+                }}
                 onPauseStateChange={handlePauseStateChange}
               />
             </div>
