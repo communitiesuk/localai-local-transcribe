@@ -146,7 +146,10 @@ export default function RecordingControl({
         if (!ctx) return
 
         const { width, height } = canvas
-        if (width === 0 || height === 0) return
+        if (width === 0 || height === 0) {
+          animationRef.current = requestAnimationFrame(draw)
+          return
+        }
 
         if (!isRecording || !analyserRef.current || !dataArrayRef.current) {
           ctx.clearRect(0, 0, width, height)
@@ -340,8 +343,8 @@ export default function RecordingControl({
 
   return (
     <div className="space-y-4">
-      {/* css to toggle canvas visiblity when not on stopConfimration page
-      this prevents mounting/unmounting canvas which loses context of mediastream */}
+      {/* css to toggle canvas visibility when not on stop confimration page
+      so canvas never unmounts and can resume if user cancels stop */}
       <div className={!showStopConfirm ? 'block' : 'hidden'}>
         <p>Recording length: {formattedRecordingDuration}</p>
 
