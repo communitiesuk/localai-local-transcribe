@@ -1205,7 +1205,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinuteVersionResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
