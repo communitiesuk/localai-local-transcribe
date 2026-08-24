@@ -403,9 +403,23 @@ async def test_list_unlabelled_transcriptions(mock_session, mock_user, mock_unla
 @pytest.mark.asyncio
 async def test_get_transcription_success(mock_session, mock_user, mock_transcription):
     mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_session.exec = AsyncMock(return_value=Mock(all=Mock(return_value=[datetime.now(UTC)])))
     response = await get_transcription(mock_transcription.id, mock_session, mock_user)
     assert response.id == mock_transcription.id
     assert response.title == mock_transcription.title
+    assert response.is_upload is True
+
+
+@pytest.mark.asyncio
+async def test_get_transcription_sets_is_upload_false_when_file_created_at_missing(
+    mock_session, mock_user, mock_transcription
+):
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_session.exec = AsyncMock(return_value=Mock(all=Mock(return_value=[None])))
+
+    response = await get_transcription(mock_transcription.id, mock_session, mock_user)
+
+    assert response.is_upload is False
 
 
 @pytest.mark.asyncio

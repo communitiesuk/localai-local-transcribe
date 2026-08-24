@@ -194,6 +194,7 @@ class TranscriptionGetResponse(BaseModel):
     status: JobStatus
     created_datetime: datetime
     date_of_recording: datetime | None = None
+    is_upload: bool = False
 
 
 class SingleRecording(BaseModel):

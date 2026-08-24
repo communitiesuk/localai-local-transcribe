@@ -3082,6 +3082,11 @@
               { "type": "null" }
             ],
             "title": "Date Of Recording"
+          },
+          "is_upload": {
+            "type": "boolean",
+            "title": "Is Upload",
+            "default": false
           }
         },
         "type": "object",

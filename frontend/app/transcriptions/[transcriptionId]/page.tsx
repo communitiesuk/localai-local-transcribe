@@ -221,6 +221,7 @@ const RecordingDetails = ({
 }) => {
   const [open, setOpen] = useState(false)
   const router = useRouter()
+  const isUpload = transcription.is_upload === true
   return (
     <>
       <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
@@ -230,8 +231,19 @@ const RecordingDetails = ({
         summary={open ? 'Hide' : 'Show'}
         onToggle={(e) => setOpen(e.currentTarget.open)}
       >
-        <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
-        <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
+        {isUpload ? (
+          <GovukFormGroup>
+            <GovukLabel htmlFor="date-recorded">Date recorded</GovukLabel>
+            <GovukInput id="date-recorded" defaultValue={dateTimeLabel} />
+          </GovukFormGroup>
+        ) : (
+          <>
+            <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
+            <p className="govuk-body govuk-!-font-weight-bold">
+              {dateTimeLabel}
+            </p>
+          </>
+        )}
         <GovukFormGroup>
           <GovukLabel htmlFor="client-name">Client name (optional)</GovukLabel>
           <GovukInput id="client-name" />
