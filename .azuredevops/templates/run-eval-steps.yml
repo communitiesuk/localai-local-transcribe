@@ -47,9 +47,13 @@ steps:
           --results-artifact-dir "${results_artifact_dir}"
     env:
       ENVIRONMENT: test
+      # Blob endpoints of the evals storage accounts, set as pipeline variables.
       AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
       AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL)
-      # TODO: To be replaced with client_secret auth in future
+      # These are set as pipeline variables directly in ADO (secret variables must be
+      # mapped explicitly).
+      # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
+      # to client_secret auth. It will need revisiting, due to its short expiry.
       AZURE_APIM_AUTH_METHOD: static_token
       AZURE_APIM_URL: $(AZURE_APIM_URL)
       AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
