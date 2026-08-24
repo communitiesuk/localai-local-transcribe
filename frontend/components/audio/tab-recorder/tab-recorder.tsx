@@ -19,8 +19,7 @@ import {
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
-import AudioPlayerComponent from '../audio-player'
-import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
+import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
 
@@ -94,10 +93,7 @@ function TabRecorder({
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
-
-  const setRecordingUIState = useRecordingUiStore(
-    (state) => state.setRecordingState
-  )
+  const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
 
   useTabCloseWarning(isRecording || !!recordedAudio)
 
@@ -247,6 +243,7 @@ function TabRecorder({
 
       mediaRecorder.onerror = () => {
         setError('Recording error occurred. Please try again.')
+        setRecordingUIState('idle')
         stopAllTracks()
       }
 
@@ -264,6 +261,7 @@ function TabRecorder({
           setError(
             'No audio data was recorded. Please try again and ensure audio is shared.'
           )
+          setRecordingUIState('idle')
         }
         stopAllTracks()
       }
@@ -362,78 +360,61 @@ function TabRecorder({
 
   return (
     <div className="space-y-4">
-      {recordedAudio ? (
-        <div className="govuk-!-margin-top-4 space-y-3">
-          <AudioPlayerComponent audioBlob={recordedAudio} />
-          <div className="flex justify-end">
-            <GovukButton
-              type="button"
-              onClick={() => setDiscardDialogOpen(true)}
-              variant="secondary"
-            >
-              Discard Recording
-            </GovukButton>
-          </div>
-        </div>
-      ) : (
-        <div className="flex flex-col space-y-4">
-          {!isRecording ? (
-            <>
-              <GovukFormGroup>
-                <GovukLabel htmlFor="virtual-microphone-select">
-                  Choose microphone
-                </GovukLabel>
-                <select
-                  className="govuk-select w-full"
-                  id="virtual-microphone-select"
-                  value={selectedDeviceId}
-                  onChange={(e) => setSelectedDeviceId(e.target.value)}
-                  disabled={isRecording}
-                >
-                  {audioDevices.map((device) => (
-                    <option key={device.deviceId} value={device.deviceId}>
-                      {device.label}
-                    </option>
-                  ))}
-                </select>
-              </GovukFormGroup>
+      <div className="flex flex-col space-y-4">
+        {!isRecording && recordingUIState !== 'stopping' ? (
+          <>
+            <GovukFormGroup>
+              <GovukLabel htmlFor="virtual-microphone-select">
+                Choose microphone
+              </GovukLabel>
+              <select
+                className="govuk-select w-full"
+                id="virtual-microphone-select"
+                value={selectedDeviceId}
+                onChange={(e) => setSelectedDeviceId(e.target.value)}
+                disabled={isRecording}
+              >
+                {audioDevices.map((device) => (
+                  <option key={device.deviceId} value={device.deviceId}>
+                    {device.label}
+                  </option>
+                ))}
+              </select>
+            </GovukFormGroup>
 
-              <div className="govuk-inset-text govuk-!-margin-top-0">
-                <p className="govuk-body">
-                  Open your virtual meeting in another tab, then start recording
-                  below. When prompted to share, turn on &quot;Share
-                  audio&quot;.
-                </p>
-                <p className="govuk-body">
-                  On Windows, share your entire screen, as sharing a single
-                  tab&apos;s audio is not supported. On Mac, you can share just
-                  the meeting tab.
-                </p>
-                <GovukButton
-                  type="button"
-                  onClick={handleStartRecording}
-                  className="govuk-!-margin-bottom-0"
-                >
-                  Start recording
-                </GovukButton>
-              </div>
-            </>
-          ) : (
-            <div className="space-y-4">
-              <RecordingControl
-                stream={stream}
-                isRecording={isRecording}
-                onStopRecording={() => {
-                  stopRecording()
-                  onStopRecording()
-                }}
-                onPauseStateChange={handlePauseStateChange}
-              />
+            <div className="govuk-inset-text govuk-!-margin-top-0">
+              <p className="govuk-body">
+                Open your virtual meeting in another tab, then start recording
+                below. When prompted to share, turn on &quot;Share audio&quot;.
+              </p>
+              <p className="govuk-body">
+                On Windows, share your entire screen, as sharing a single
+                tab&apos;s audio is not supported. On Mac, you can share just
+                the meeting tab.
+              </p>
+              <GovukButton
+                type="button"
+                onClick={handleStartRecording}
+                className="govuk-!-margin-bottom-0"
+              >
+                Start recording
+              </GovukButton>
             </div>
-          )}
-        </div>
-      )}
-
+          </>
+        ) : (
+          <div className="space-y-4">
+            <RecordingControl
+              stream={stream}
+              isRecording={isRecording}
+              onStopRecording={() => {
+                stopRecording()
+                onStopRecording()
+              }}
+              onPauseStateChange={handlePauseStateChange}
+            />
+          </div>
+        )}
+      </div>
       {err && (
         <p className="govuk-error-message" role="alert">
           <span className="govuk-visually-hidden">Error:</span> {err}

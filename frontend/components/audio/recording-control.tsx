@@ -7,7 +7,7 @@ import {
 } from '@/components/govuk'
 import { useEffect, useRef, useState } from 'react'
 import {
-  useRecordingUiStore,
+  useRecordingUIStore,
   type RecordingState,
 } from '@/stores/use-recording-ui-store'
 import { useRecordingTimer } from '@/hooks/use-recording-timer'
@@ -48,11 +48,13 @@ export default function RecordingControl({
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const preStopConfirmState = useRef<RecordingState>('idle')
-  const [showStopConfirm, setShowStopConfirm] = useState(false)
   const [localIsPaused, setLocalIsPaused] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
 
-  const { recordingState, setRecordingState } = useRecordingUiStore()
+  const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
+  const showStopConfirm =
+    recordingUIState === 'stopConfirm' || recordingUIState === 'stopping'
+  const isStopping = recordingUIState === 'stopping'
 
   const mediaTracks = stream ? stream.getAudioTracks() : []
   const isPaused =
@@ -66,18 +68,16 @@ export default function RecordingControl({
     setMeetingDuration((meetingDuration) => meetingDuration + elapsedMs)
   })
 
-  // sync local pause/resume/stop states with the UI store
   useEffect(() => {
-    if (showStopConfirm) {
-      preStopConfirmState.current = recordingState
-      setRecordingState('stopConfirm')
-    }
-  }, [showStopConfirm, recordingState, setRecordingState])
+    if (
+      !isRecording ||
+      recordingUIState === 'stopConfirm' ||
+      recordingUIState === 'stopping'
+    )
+      return
 
-  useEffect(() => {
-    if (!isRecording || showStopConfirm) return
-    setRecordingState(isPaused ? 'paused' : 'recording')
-  }, [isRecording, isPaused, showStopConfirm, setRecordingState])
+    setRecordingUIState(isPaused ? 'paused' : 'recording')
+  }, [isRecording, isPaused, recordingUIState, setRecordingUIState])
 
   useEffect(() => {
     const isValidStream =
@@ -325,18 +325,17 @@ export default function RecordingControl({
   }
 
   const handleStopRecording = () => {
-    setShowStopConfirm(true)
+    preStopConfirmState.current = recordingUIState
+    setRecordingUIState('stopConfirm')
   }
 
   const handleConfirmStop = () => {
-    setRecordingState('stopped')
+    setRecordingUIState('stopping')
     onStopRecording()
-    setShowStopConfirm(false)
   }
 
   const handleCancelStop = () => {
-    setShowStopConfirm(false)
-    setRecordingState(preStopConfirmState.current)
+    setRecordingUIState(preStopConfirmState.current)
   }
 
   return (
@@ -387,6 +386,7 @@ export default function RecordingControl({
               type="button"
               onClick={handleConfirmStop}
               variant="warning"
+              disabled={isStopping}
             >
               Stop Recording
             </GovukButton>
@@ -395,6 +395,7 @@ export default function RecordingControl({
               className="govuk-link govuk-link--no-visited-state"
               onClick={handleCancelStop}
               type="button"
+              disabled={isStopping}
             >
               Cancel
             </button>

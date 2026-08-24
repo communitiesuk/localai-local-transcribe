@@ -16,7 +16,7 @@ import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
-import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
+import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
 
@@ -81,10 +81,7 @@ function MicRecorderComponent({
   const mediaChunksRef = useRef<Blob[]>([])
   const isStartingRecordingRef = useRef(false)
   const [isRecording, setIsRecording] = useState(false)
-
-  const setRecordingUIState = useRecordingUiStore(
-    (state) => state.setRecordingState
-  )
+  const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
 
   const stopAllTracks = useCallback(() => {
     isStartingRecordingRef.current = false
@@ -148,6 +145,7 @@ function MicRecorderComponent({
 
       mediaRecorder.onerror = () => {
         setError('Recording error occurred. Please try again.')
+        setRecordingUIState('idle')
         // Don't call stopRecording here as it might cause a loop
         // Just clean up manually if needed
         stopAllTracks()
@@ -167,6 +165,7 @@ function MicRecorderComponent({
           setError(
             'No audio data was recorded. Please try again and ensure audio is shared.'
           )
+          setRecordingUIState('idle')
         }
         stopAllTracks()
       }
@@ -288,7 +287,7 @@ function MicRecorderComponent({
   }
   return (
     <div className="space-y-4">
-      {!isRecording ? (
+      {!isRecording && recordingUIState !== 'stopping' ? (
         <div className="flex flex-col space-y-4">
           <GovukFormGroup>
             <GovukLabel htmlFor="microphone-select">

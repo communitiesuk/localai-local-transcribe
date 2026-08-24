@@ -5,9 +5,8 @@ import { MicRecorderForm } from '@/components/audio/mic-recorder'
 import { TabRecorderForm } from '@/components/audio/tab-recorder/tab-recorder'
 import { GovukBackLink, GovukHeading } from '@/components/govuk'
 import {
-  useRecordingUiStore,
+  useRecordingUIStore,
   type RecordingState,
-  type RecordingUiStore,
 } from '@/stores/use-recording-ui-store'
 import { notFound } from 'next/navigation'
 
@@ -20,6 +19,7 @@ const titleMapper: Record<RecordingState, string | boolean> = {
   recording: 'Recording in progress',
   paused: 'Recording paused',
   stopConfirm: 'Are you sure you want to stop recording?',
+  stopping: 'Are you sure you want to stop recording?',
   stopped: false,
 }
 
@@ -33,10 +33,7 @@ const showBackLink: RecordingState[] = [
 export default function RecordPage() {
   const params = useParams<{ recorderMethod: RecorderMethod }>()
   const recorderMethod = params.recorderMethod
-
-  const recordingState = useRecordingUiStore(
-    (state: RecordingUiStore) => state.recordingState
-  )
+  const { recordingUIState } = useRecordingUIStore()
 
   const recorderForm =
     recorderMethod === 'in-person' ? <MicRecorderForm /> : <TabRecorderForm />
@@ -47,9 +44,9 @@ export default function RecordPage() {
 
   return (
     <div>
-      {showBackLink.includes(recordingState) && <GovukBackLink href="/" />}
-      {titleMapper[recordingState] && (
-        <GovukHeading>{titleMapper[recordingState]}</GovukHeading>
+      {showBackLink.includes(recordingUIState) && <GovukBackLink href="/" />}
+      {titleMapper[recordingUIState] && (
+        <GovukHeading>{titleMapper[recordingUIState]}</GovukHeading>
       )}
       {recorderForm}
     </div>
