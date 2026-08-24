@@ -22,6 +22,7 @@ class _FakeService:
         content = self._blobs.get((container, blob), b"")
         stream = MagicMock()
         stream.readall.return_value = content
+        stream.chunks.return_value = [content]
         client.download_blob.return_value = stream
 
         def _upload(data: Any, overwrite: bool = False) -> None:  # noqa: ARG001
@@ -39,7 +40,9 @@ class _FakeService:
 
         def _download(blob_name: str):
             stream = MagicMock()
-            stream.readall.return_value = self._blobs[(container, blob_name)]
+            content = self._blobs[(container, blob_name)]
+            stream.readall.return_value = content
+            stream.chunks.return_value = [content]
             return stream
 
         client.download_blob.side_effect = _download
@@ -186,3 +189,20 @@ def test_download_prefix_writes_relative_files(tmp_path):
     assert (tmp_path / "ami" / "meeting_metadata.json").read_bytes() == b"{}"
     assert (tmp_path / "ami" / "processed" / "sample.mp3").read_bytes() == b"audio"
     assert not service.uploaded
+
+
+def test_download_prefix_rejects_paths_outside_destination(tmp_path):
+    service, patcher = _make_service(
+        blobs={
+            ("input", "transcription/smoke-test/ami/../../escape.txt"): b"bad",
+        }
+    )
+    with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
+        blob = EvalBlobStorage(
+            restricted_account_url="https://restricted.blob.core.windows.net",
+            shared_account_url="https://shared.blob.core.windows.net",
+        )
+        with pytest.raises(ValueError, match="Unsafe blob path outside destination"):
+            blob.download_prefix("input", "transcription/smoke-test/ami", tmp_path / "ami")
+
+    assert not (tmp_path / "escape.txt").exists()

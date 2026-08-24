@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from azure.core.credentials import TokenCredential
+    from azure.storage.blob import StorageStreamDownloader
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,21 @@ SHARED_ACCOUNT_ENV_VAR = "AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL"
 
 def _non_empty(value: str | None) -> str | None:
     return value or None
+
+
+def _safe_destination_path(dest_dir: Path, relative: str, blob_name: str) -> Path:
+    base = dest_dir.resolve()
+    candidate = (dest_dir / relative).resolve()
+    if not candidate.is_relative_to(base) or candidate == base:
+        msg = f"Unsafe blob path outside destination: {blob_name}"
+        raise ValueError(msg)
+    return candidate
+
+
+def _download_to_path(downloader: StorageStreamDownloader, dest_path: Path) -> None:
+    with dest_path.open("wb") as f:
+        for chunk in downloader.chunks():
+            f.write(chunk)
 
 
 class EvalBlobStorage:
@@ -84,8 +100,7 @@ class EvalBlobStorage:
     def download_blob(self, container: str, blob_name: str, dest_path: Path) -> Path:
         dest_path.parent.mkdir(parents=True, exist_ok=True)
         blob_client = self._service_for(container).get_blob_client(container=container, blob=blob_name)
-        with dest_path.open("wb") as f:
-            f.write(blob_client.download_blob().readall())
+        _download_to_path(blob_client.download_blob(), dest_path)
         logger.info("Downloaded %s/%s to %s", container, blob_name, dest_path)
         return dest_path
 
@@ -103,10 +118,9 @@ class EvalBlobStorage:
             if not relative or relative.endswith("/"):
                 continue
 
-            dest_path = dest_dir / relative
+            dest_path = _safe_destination_path(dest_dir, relative, blob_name)
             dest_path.parent.mkdir(parents=True, exist_ok=True)
-            with dest_path.open("wb") as f:
-                f.write(container_client.download_blob(blob_name).readall())
+            _download_to_path(container_client.download_blob(blob_name), dest_path)
             downloaded.append(dest_path)
 
         if not downloaded:
