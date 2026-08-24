@@ -1,4 +1,5 @@
 import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
+import { EditSpeakerIcon } from '@/components/icons/edit-speaker-icon'
 import { GovukButton, GovukInput } from '@/components/govuk'
 import {
   Popover,
@@ -63,7 +64,7 @@ export const SpeakerNamePopover = ({
     }
   }
 
-  if (!editing) {
+  if (editing) {
     return (
       <span className="govuk-!-font-weight-bold max-w-[200px] min-w-[100px] break-words">
         {entry.speaker}:
@@ -72,56 +73,62 @@ export const SpeakerNamePopover = ({
   }
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="govuk-link max-w-[200px] min-w-[100px] cursor-pointer text-left font-bold break-words"
-        >
-          {entry.speaker}:
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="grid gap-4">
-          <div>
-            <h4 className="govuk-heading-s govuk-!-margin-bottom-1">
-              Edit speaker name
-            </h4>
-            <label
-              className="govuk-hint govuk-!-margin-bottom-2"
-              htmlFor={inputId}
-            >
-              Update either this occurrence or all occurrences of &apos;
-              {entry.speaker}&apos;:
-            </label>
-          </div>
-          <div className="grid gap-2">
-            <GovukInput
-              id={inputId}
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <div className="flex flex-col items-start">
-              <GovukButton
-                type="button"
-                variant="secondary"
-                onClick={handleUpdateSingle(index)}
-                disabled={isSaving}
+    <span className="flex items-center gap-1">
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label={`Edit speaker name ${entry.speaker}`}
+            className="flex shrink-0 cursor-pointer items-center text-[var(--govuk-text-colour)] hover:text-[var(--govuk-link-colour)]"
+          >
+            <EditSpeakerIcon width={16} height={18} />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <div className="grid gap-4">
+            <div>
+              <h4 className="govuk-heading-s govuk-!-margin-bottom-1">
+                Edit speaker name
+              </h4>
+              <label
+                className="govuk-hint govuk-!-margin-bottom-2"
+                htmlFor={inputId}
               >
-                Update this occurrence
-              </GovukButton>
-              <GovukButton
-                type="button"
-                className="govuk-!-margin-bottom-0"
-                onClick={handleUpdateAll}
-                disabled={isSaving}
-              >
-                Update all occurrences
-              </GovukButton>
+                Update either this occurrence or all occurrences of &apos;
+                {entry.speaker}&apos;:
+              </label>
+            </div>
+            <div className="grid gap-2">
+              <GovukInput
+                id={inputId}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+              />
+              <div className="flex flex-col items-start">
+                <GovukButton
+                  type="button"
+                  variant="secondary"
+                  onClick={handleUpdateSingle(index)}
+                  disabled={isSaving}
+                >
+                  Update this occurrence
+                </GovukButton>
+                <GovukButton
+                  type="button"
+                  className="govuk-!-margin-bottom-0"
+                  onClick={handleUpdateAll}
+                  disabled={isSaving}
+                >
+                  Update all occurrences
+                </GovukButton>
+              </div>
             </div>
           </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+      <span className="govuk-!-font-weight-bold max-w-[200px] min-w-[100px] break-words">
+        {entry.speaker}:
+      </span>
+    </span>
   )
 }

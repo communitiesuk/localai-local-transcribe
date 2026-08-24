@@ -13,7 +13,7 @@ import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet
 import { cn } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
-import { Play } from 'lucide-react'
+import { PlayButton } from '@/components/icons/play-button'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
 
@@ -478,9 +478,9 @@ export function TranscriptionTab({
                           }
                         }
                       }}
-                      className="govuk-!-margin-top-1 flex shrink-0 items-center text-[var(--govuk-text-colour)] hover:text-[var(--govuk-link-colour)] focus:bg-[var(--govuk-focus-colour)] focus:text-[var(--govuk-focus-text-colour)] focus:shadow-[0_2px_0_var(--govuk-focus-text-colour)] focus:[outline:3px_solid_transparent]"
+                      className="govuk-!-margin-top-1 flex shrink-0 cursor-pointer items-center text-[var(--govuk-text-colour)] hover:text-[var(--govuk-link-colour)] focus:bg-[var(--govuk-focus-colour)] focus:text-[var(--govuk-focus-text-colour)] focus:shadow-[0_2px_0_var(--govuk-focus-text-colour)] focus:[outline:3px_solid_transparent]"
                     >
-                      <Play size={12} fill="currentColor" aria-hidden="true" />
+                      <PlayButton width={18} height={18} />
                     </button>
                   )}
 
