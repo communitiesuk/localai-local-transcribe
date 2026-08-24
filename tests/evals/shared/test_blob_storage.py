@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -27,6 +28,21 @@ class _FakeService:
             self.uploaded[(container, blob)] = data.read()
 
         client.upload_blob.side_effect = _upload
+        return client
+
+    def get_container_client(self, container: str):
+        client = MagicMock()
+        blob_names = [blob for blob_container, blob in self._blobs if blob_container == container]
+        client.list_blobs.side_effect = lambda name_starts_with: [
+            SimpleNamespace(name=blob_name) for blob_name in blob_names if blob_name.startswith(name_starts_with)
+        ]
+
+        def _download(blob_name: str):
+            stream = MagicMock()
+            stream.readall.return_value = self._blobs[(container, blob_name)]
+            return stream
+
+        client.download_blob.side_effect = _download
         return client
 
 
@@ -147,3 +163,26 @@ def test_unknown_container_is_rejected(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="Unknown eval blob container"):
         blob.upload_file("other", "blob.txt", tmp_path / "blob.txt")
+
+
+def test_download_prefix_writes_relative_files(tmp_path):
+    service, patcher = _make_service(
+        blobs={
+            ("input", "transcription/smoke-test/ami/meeting_metadata.json"): b"{}",
+            ("input", "transcription/smoke-test/ami/processed/sample.mp3"): b"audio",
+        }
+    )
+    with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
+        blob = EvalBlobStorage(
+            restricted_account_url="https://restricted.blob.core.windows.net",
+            shared_account_url="https://shared.blob.core.windows.net",
+        )
+        downloaded = blob.download_prefix("input", "transcription/smoke-test/ami", tmp_path / "ami")
+
+    assert downloaded == [
+        tmp_path / "ami" / "meeting_metadata.json",
+        tmp_path / "ami" / "processed" / "sample.mp3",
+    ]
+    assert (tmp_path / "ami" / "meeting_metadata.json").read_bytes() == b"{}"
+    assert (tmp_path / "ami" / "processed" / "sample.mp3").read_bytes() == b"audio"
+    assert not service.uploaded

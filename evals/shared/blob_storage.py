@@ -89,6 +89,32 @@ class EvalBlobStorage:
         logger.info("Downloaded %s/%s to %s", container, blob_name, dest_path)
         return dest_path
 
+    def download_prefix(self, container: str, prefix: str, dest_dir: Path) -> list[Path]:
+        normalized_prefix = prefix.strip("/")
+        if not normalized_prefix:
+            msg = "prefix must not be empty"
+            raise ValueError(msg)
+
+        container_client = self._service_for(container).get_container_client(container)
+        downloaded: list[Path] = []
+        for blob_properties in container_client.list_blobs(name_starts_with=f"{normalized_prefix}/"):
+            blob_name = blob_properties.name
+            relative = blob_name.removeprefix(f"{normalized_prefix}/")
+            if not relative or relative.endswith("/"):
+                continue
+
+            dest_path = dest_dir / relative
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            with dest_path.open("wb") as f:
+                f.write(container_client.download_blob(blob_name).readall())
+            downloaded.append(dest_path)
+
+        if not downloaded:
+            msg = f"No blobs found under {container}/{normalized_prefix}/"
+            raise ValueError(msg)
+        logger.info("Downloaded %d blobs from %s/%s to %s", len(downloaded), container, normalized_prefix, dest_dir)
+        return downloaded
+
     def upload_file(self, container: str, blob_name: str, src_path: Path) -> None:
         blob_client = self._service_for(container).get_blob_client(container=container, blob=blob_name)
         with src_path.open("rb") as f:

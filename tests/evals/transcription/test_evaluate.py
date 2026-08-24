@@ -4,7 +4,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from evals.transcription.src.evaluate import run_evaluation
+from evals.transcription.src.evaluate import EvaluationRunOutcome, _run_blob_evaluation, run_evaluation
+from evals.transcription.src.models import EvaluationConfig
 
 
 @pytest.mark.parametrize(
@@ -37,7 +38,7 @@ def test_run_evaluation(tmp_path, monkeypatch, kwargs, dataset_len, expected_loa
     mock_dataset.dataset_split = "test"
 
     with (
-        patch("evals.transcription.src.evaluate.load_benchmark_dataset", return_value=mock_dataset) as mock_load,
+        patch("evals.transcription.src.evaluate._load_dataset", return_value=mock_dataset) as mock_load,
         patch("evals.transcription.src.evaluate.run_engines_parallel", return_value=[]) as mock_run,
         patch("evals.transcription.src.evaluate.save_results") as mock_save,
         patch(
@@ -49,8 +50,70 @@ def test_run_evaluation(tmp_path, monkeypatch, kwargs, dataset_len, expected_loa
         result = run_evaluation(**kwargs)
 
         assert result == 0
-        mock_load.assert_called_once_with(**expected_load_call)
+        mock_load.assert_called_once_with(
+            "ami",
+            None,
+            expected_load_call["num_samples"],
+            expected_load_call["sample_duration_fraction"],
+        )
         mock_run.assert_called_once()
         assert len(mock_run.call_args.kwargs["adapters"]) == 1
         assert mock_run.call_args.kwargs["indices"] == list(range(dataset_len))
         mock_save.assert_called_once()
+
+
+def test_blob_evaluation_stages_transcription_prefix_and_publishes_split_outputs(tmp_path):
+    config = EvaluationConfig.model_validate(
+        {
+            "num_samples": 1,
+            "dataset_loader": "audio_files",
+            "max_workers": 1,
+            "prepare_only": False,
+            "adapters": ["azure"],
+            "blob": {
+                "enabled": True,
+                "input_prefix": "transcription/smoke-test/audio",
+                "output_prefix": "",
+                "restricted_account_url": "https://restricted.blob.core.windows.net",
+                "shared_account_url": "https://shared.blob.core.windows.net",
+            },
+        }
+    )
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "summary.json").write_text("{}", encoding="utf-8")
+    (run_dir / "results.json").write_text('{"engines": {}}', encoding="utf-8")
+    (run_dir / "words.json").write_text("[]", encoding="utf-8")
+    outcome = EvaluationRunOutcome(
+        exit_code=0,
+        run_id="eval_run1",
+        run_output_dir=run_dir,
+        detailed_results_path=run_dir / "results.json",
+        summary_path=run_dir / "summary.json",
+    )
+    artifact_dir = tmp_path / "artifact"
+    fake_blob = MagicMock()
+
+    with (
+        patch("evals.transcription.src.evaluate.EvalBlobStorage.from_account_urls", return_value=fake_blob),
+        patch(
+            "evals.transcription.src.evaluate.stage_dataset_prefix",
+            return_value=tmp_path / "input",
+        ) as stage,
+        patch("evals.transcription.src.evaluate._load_dataset", return_value=MagicMock()) as load_dataset,
+        patch("evals.transcription.src.evaluate._run_from_config", return_value=outcome) as run_from_config,
+    ):
+        exit_code = _run_blob_evaluation(config, artifact_dir)
+
+    assert exit_code == 0
+    stage.assert_called_once()
+    assert stage.call_args.args[1] == "transcription/smoke-test/audio"
+    load_dataset.assert_called_once_with("audio_files", tmp_path / "input", 1, None)
+    run_from_config.assert_called_once()
+
+    dests = {call.args[0]: call.args[1] for call in fake_blob.upload_file.call_args_list}
+    assert dests["output"] == "transcription/eval_run1/summary.json"
+    debug_blobs = {call.args[1] for call in fake_blob.upload_file.call_args_list if call.args[0] == "debug"}
+    assert "transcription/eval_run1/results.json" in debug_blobs
+    assert "transcription/eval_run1/words.json" in debug_blobs
+    assert (artifact_dir / "transcription" / "eval_run1" / "summary.json").read_text(encoding="utf-8") == "{}"
