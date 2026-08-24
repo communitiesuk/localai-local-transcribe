@@ -341,42 +341,42 @@ export default function RecordingControl({
 
   return (
     <div className="space-y-4">
-      {isRecording && !showStopConfirm && (
-        <>
-          <p>Recording length: {formattedRecordingDuration}</p>
+      {/* css to toggle canvas visiblity when not on stopConfimration page
+      this prevents mounting/unmounting canvas which loses context of mediastream */}
+      <div className={!showStopConfirm ? 'block' : 'hidden'}>
+        <p>Recording length: {formattedRecordingDuration}</p>
 
-          <div
-            ref={containerRef}
-            className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
+        <div
+          ref={containerRef}
+          className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
+        >
+          <canvas ref={canvasRef} className="size-full" />
+          {isRecording && !stream && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 text-sm text-gray-500 dark:bg-gray-800/80 dark:text-gray-400">
+              Connecting to audio stream...
+            </div>
+          )}
+        </div>
+
+        <GovukButtonGroup className="mt-7">
+          <GovukButton
+            type="button"
+            onClick={togglePause}
+            variant="secondary"
+            className="min-w-36"
           >
-            <canvas ref={canvasRef} className="size-full" />
-            {isRecording && !stream && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 text-sm text-gray-500 dark:bg-gray-800/80 dark:text-gray-400">
-                Connecting to audio stream...
-              </div>
-            )}
-          </div>
-
-          <GovukButtonGroup>
-            <GovukButton
-              type="button"
-              onClick={togglePause}
-              variant="secondary"
-              className="min-w-36"
-            >
-              {isPaused ? 'Resume' : 'Pause'}
-            </GovukButton>
-            <GovukButton
-              type="button"
-              onClick={handleStopRecording}
-              variant="warning"
-              className="min-w-36"
-            >
-              Stop
-            </GovukButton>
-          </GovukButtonGroup>
-        </>
-      )}
+            {isPaused ? 'Resume' : 'Pause'}
+          </GovukButton>
+          <GovukButton
+            type="button"
+            onClick={handleStopRecording}
+            variant="warning"
+            className="min-w-36"
+          >
+            Stop
+          </GovukButton>
+        </GovukButtonGroup>
+      </div>
       {showStopConfirm && (
         <>
           <GovukWarningText>

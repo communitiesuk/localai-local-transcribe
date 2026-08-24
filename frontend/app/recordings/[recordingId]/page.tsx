@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation'
 import { use } from 'react'
 
 import AudioPlayerComponent from '@/components/audio/audio-player'
-import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import {
   GovukHeading,

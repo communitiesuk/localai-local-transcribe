@@ -24,7 +24,7 @@ export function MicRecorderForm() {
   const router = useRouter()
 
   const [triggerUpload, setTriggerUpload] = useState(false)
-  const { isPending, onSubmit, form } = useStartTranscription()
+  const { onSubmit, form } = useStartTranscription()
   const startUpload = useUploadRecordingStore((store) => store.startUpload)
 
   const handleSubmit = form.handleSubmit((formValues) => {
