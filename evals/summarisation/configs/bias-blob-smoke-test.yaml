@@ -1,9 +1,5 @@
 run:
   eval_type: bias
-  output_dir: evals/summarisation/output/bias
-  seed: 0
-  split: test
-  limit: 2
   prompt_version: dev
   num_iterations: 1
   dataset_version: synthetic-bias-smoke

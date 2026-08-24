@@ -65,7 +65,9 @@ An experiment is defined by:
 - A config file in `evals/summarisation/configs/` (dataset, model/judge settings, run parameters like split/limit/prompt_version, and which prompt templates to use).
 - Prompt templates in `evals/summarisation/prompts/` (how we ask the model to summarise, and how we ask the judge to score).
 
-All run parameters (`split`, `limit`, `prompt_version`) are now configured in the YAML file under the `run:` section, not as CLI flags.
+Run parameters (`split`, `limit`, `prompt_version`) are configured in the YAML file under the
+`run:` section, not as CLI flags. `split` is only needed for HuggingFace-backed standard evals; blob
+datasets and bias evals do not use dataset splits.
 
 ## Counterfactual Bias Evaluation
 

@@ -32,43 +32,13 @@ jobs:
     pool:
       vmImage: ubuntu-latest
     steps:
-      - checkout: self
-
-      - template: ../templates/setup-python-poetry.yml
+      - template: ../templates/run-eval-steps.yml
         parameters:
           pythonVersion: ${{ parameters.pythonVersion }}
           poetryVersion: ${{ parameters.poetryVersion }}
-
-      - script: poetry sync --no-root --no-ansi --with evals-summarisation
-        displayName: 'Install dependencies'
-
-      - task: AzureCLI@2
-        displayName: 'Run bias smoke test (blob)'
-        inputs:
-          azureSubscription: ${{ parameters.azureServiceConnection }}
-          scriptType: bash
-          scriptLocation: inlineScript
-          inlineScript: |
-            results_artifact_dir="$(Build.ArtifactStagingDirectory)/${{ parameters.resultsArtifactName }}"
-            mkdir -p "${results_artifact_dir}"
-            poetry run python -c "import dotenv, runpy; dotenv.load_dotenv('.env.example', override=False); runpy.run_module('evals.summarisation.src.main', run_name='__main__')" \
-              --config ${{ parameters.config }} \
-              --results-artifact-dir "${results_artifact_dir}"
-        env:
-          ENVIRONMENT: test
-          AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
-          AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL)
-          # TODO: To be replaced with client_secret auth in future
-          AZURE_APIM_AUTH_METHOD: static_token
-          AZURE_APIM_URL: $(AZURE_APIM_URL)
-          AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
-          AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
-          AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
-
-      - task: PublishPipelineArtifact@1
-        displayName: 'Publish non-sensitive eval results artifact'
-        condition: succeededOrFailed()
-        inputs:
-          targetPath: '$(Build.ArtifactStagingDirectory)/${{ parameters.resultsArtifactName }}'
-          artifact: ${{ parameters.resultsArtifactName }}
-          publishLocation: 'pipeline'
+          poetryDependencyGroup: evals-summarisation
+          evalModule: evals.summarisation.src.main
+          azureServiceConnection: ${{ parameters.azureServiceConnection }}
+          config: ${{ parameters.config }}
+          resultsArtifactName: ${{ parameters.resultsArtifactName }}
+          runDisplayName: 'Run bias smoke test (blob)'

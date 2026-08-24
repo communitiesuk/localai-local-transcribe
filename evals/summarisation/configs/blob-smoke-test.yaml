@@ -2,7 +2,6 @@
 run:
   eval_type: standard
   seed: 0
-  split: test
   limit: 2
   prompt_version: dev
 

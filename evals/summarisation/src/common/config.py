@@ -39,7 +39,7 @@ class RunConfig(BaseModel):
     output_dir: str = "runs"
     input_dir: str | None = None
     seed: int = 0
-    split: str = "test"
+    split: str | None = None
     limit: int | None = None
     prompt_version: str = "dev"
     num_iterations: int | None = None

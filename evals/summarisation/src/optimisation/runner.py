@@ -132,7 +132,7 @@ def _load_rows_from_jsonl(path: Path, limit: int | None) -> list[dict[str, Any]]
 
 def load_dspy_devset(
     cfg: AppConfig,
-    split: str,
+    split: str | None,
     limit: int | None,
     dataset_path: Path | None = None,
 ) -> list[dspy.Example]:
@@ -145,6 +145,9 @@ def load_dspy_devset(
             msg = f"No rows loaded from blob dataset {dataset_path}; the input file is empty or malformed"
             raise ValueError(msg)
     else:
+        if split is None:
+            msg = "run.split must be specified when dataset.source is 'huggingface'"
+            raise ValueError(msg)
         ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
         split_rows = ds[split]
         if limit is not None:
@@ -174,7 +177,7 @@ class EvalRun:
         self,
         cfg: AppConfig,
         *,
-        split: str,
+        split: str | None,
         limit: int | None,
         prompt_version: str,
         output_dir: str | Path | None = None,
@@ -465,7 +468,7 @@ def _build_run_summary(
 def run_eval(
     cfg: AppConfig,
     *,
-    split: str,
+    split: str | None,
     limit: int | None,
     prompt_version: str,
     output_dir: str | Path | None = None,
