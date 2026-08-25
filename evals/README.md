@@ -172,6 +172,18 @@ poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test
 
 **Results:** `evals/transcription/output/`
 
+## Blob storage integration (transcription eval)
+
+Uses the same `input` / `debug` / `output` split as summarisation.
+Input must be synthetic/public audio with `.txt` sidecars under `input/transcription/`.
+`prepare_only` is for local dataset setup only and must not be used with blob-enabled runs.
+
+```bash
+poetry run python evals/transcription/src/evaluate.py --config evals/transcription/configs/blob-smoke-test.yaml
+```
+
+`summary.json` goes to `output`; detailed files go to `debug`.
+
 # Dataset Generation
 
 End-to-end pipeline for generating synthetic conversational transcripts with controlled variations.

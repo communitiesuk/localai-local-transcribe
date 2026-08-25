@@ -30,6 +30,14 @@ def stage_dataset(blob: EvalBlobStorage, blob_path: str | None, dest_dir: Path) 
     return blob.download_blob(INPUT_CONTAINER, blob_path, dest_path)
 
 
+def stage_dataset_prefix(blob: EvalBlobStorage, blob_prefix: str | None, dest_dir: Path) -> Path:
+    if not blob_prefix:
+        msg = "blob.input_prefix must be set when a blob dataset contains multiple files"
+        raise ValueError(msg)
+    blob.download_prefix(INPUT_CONTAINER, blob_prefix, dest_dir)
+    return dest_dir
+
+
 def publish_run_outputs(
     blob: EvalBlobStorage,
     run_output_dir: Path,
