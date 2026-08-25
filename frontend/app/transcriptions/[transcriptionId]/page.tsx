@@ -337,9 +337,7 @@ const RecordingDetails = ({
         client_date_of_birth: dateOfBirth ? dateOfBirth.toISOString() : null,
         date_of_recording:
           isUpload && dirtyFields.dateOfRecording
-            ? data.dateOfRecording
-              ? new Date(data.dateOfRecording).toISOString()
-              : null
+            ? data.dateOfRecording || null
             : (transcription.date_of_recording ?? null),
       },
     })
