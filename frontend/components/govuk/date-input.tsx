@@ -1,14 +1,26 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import React from 'react'
+import React, { useState } from 'react'
+import { FieldValues, useController, UseControllerProps } from 'react-hook-form'
+import { GovukInput } from '@/components/govuk/input'
+import { GovukFormGroup } from '@/components/govuk/form-group'
 
-type DateInputProps = {
+type DateValue = {
+  day: string
+  month: string
+  year: string
+}
+
+type DateInputProps<T extends FieldValues> = {
   id: string
   legend: React.ReactNode
   hint?: React.ReactNode
   className?: string
-} & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'id'>
+  mustBePastOrFuture?: 'past' | 'future'
+  description?: string
+} & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'id'> &
+  UseControllerProps<T>
 
 const items = [
   { name: 'day', label: 'Day', width: 'govuk-input--width-2' },
@@ -16,27 +28,133 @@ const items = [
   { name: 'year', label: 'Year', width: 'govuk-input--width-4' },
 ] as const
 
-export function GovukDateInput({
+function dateIsReal(date: DateValue): boolean {
+  const { day, month, year } = date
+
+  if (![day, month, year].every((s) => /^\d+$/.test(s))) return false
+
+  const d = Number(day)
+  const m = Number(month)
+  const y = Number(year)
+
+  if (m < 1 || m > 12) return false
+
+  const daysInMonth = new Date(y, m, 0).getDate() // day 0 of next month = last day of this one
+  return d >= 1 && d <= daysInMonth
+}
+
+export function validateDateEntry(
+  value: DateValue,
+  pastOrFuture?: 'past' | 'future',
+  description: string = 'date'
+): { message: string; fields: ('day' | 'month' | 'year')[] } | null {
+  const missingFields = Object.entries(value)
+    .filter(([, v]) => !v)
+    .map(([field]) => field) as ('day' | 'month' | 'year')[]
+
+  if (missingFields.length === 3) {
+    return null
+  }
+
+  if (missingFields.length > 0) {
+    return {
+      message:
+        `The ${description} must include a ` +
+        new Intl.ListFormat('en').format(missingFields),
+      fields: missingFields,
+    }
+  }
+
+  if (!dateIsReal(value)) {
+    return {
+      message: `The ${description} must be a real date`,
+      fields: ['day', 'month', 'year'],
+    }
+  }
+
+  const date = new Date(
+    Number(value.year),
+    Number(value.month) - 1,
+    Number(value.day)
+  )
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) // ignore time
+
+  if (date > today && pastOrFuture === 'past') {
+    return {
+      message: `The ${description} must be in the past`,
+      fields: ['day', 'month', 'year'],
+    }
+  } else if (date < today && pastOrFuture === 'future') {
+    return {
+      message: `The ${description} must be in the future`,
+      fields: ['day', 'month', 'year'],
+    }
+  }
+  return null
+}
+
+export function GovukDateInput<T extends FieldValues>({
   id,
+  name,
   legend,
   hint,
   className,
+  control,
+  mustBePastOrFuture,
+  description = 'date',
+  rules,
   ...rest
-}: DateInputProps) {
+}: DateInputProps<T>) {
+  const [errorFields, setErrorFields] = useState<('day' | 'month' | 'year')[]>(
+    []
+  )
+
+  const { field, fieldState } = useController({
+    name,
+    control,
+    rules: {
+      ...rules,
+      validate: (value: DateValue) => {
+        const validationResult = validateDateEntry(
+          value,
+          mustBePastOrFuture,
+          description
+        )
+        setErrorFields(validationResult?.fields ?? [])
+        return validationResult ? validationResult.message : true
+      },
+    },
+  })
+
+  const value = (field.value as DateValue) || { day: '', month: '', year: '' }
+
   const hintId = hint ? `${id}-hint` : undefined
 
+  const hasError = !!fieldState.error
+  const errorId = hasError ? `${id}-error` : undefined
+
   return (
-    <div className={cn('govuk-form-group', className)}>
+    <GovukFormGroup className={className} hasError={hasError}>
       <fieldset
         className="govuk-fieldset"
         role="group"
-        aria-describedby={hintId}
+        aria-describedby={
+          [hintId, errorId].filter((id) => id != undefined).join(' ') ||
+          undefined
+        }
       >
         <legend className="govuk-fieldset__legend">{legend}</legend>
         {hint && (
           <div id={hintId} className="govuk-hint">
             {hint}
           </div>
+        )}
+        {hasError && (
+          <p id={errorId} className="govuk-error-message">
+            <span className="govuk-visually-hidden">Error:</span>{' '}
+            {fieldState.error?.message}
+          </p>
         )}
         <div {...rest} className="govuk-date-input" id={id}>
           {items.map((item) => (
@@ -48,21 +166,28 @@ export function GovukDateInput({
                 >
                   {item.label}
                 </label>
-                <input
-                  className={cn(
-                    'govuk-input govuk-date-input__input',
-                    item.width
-                  )}
+                <GovukInput
+                  className={cn('govuk-date-input__input', item.width)}
                   id={`${id}-${item.name}`}
                   name={`${id}-${item.name}`}
                   type="text"
                   inputMode="numeric"
+                  value={value[item.name]}
+                  onChange={(e) => {
+                    field.onChange({
+                      ...field.value,
+                      [item.name]: e.target.value,
+                    })
+                  }}
+                  aria-invalid={
+                    errorFields.includes(item.name) ? 'true' : undefined
+                  }
                 />
               </div>
             </div>
           ))}
         </div>
       </fieldset>
-    </div>
+    </GovukFormGroup>
   )
 }
