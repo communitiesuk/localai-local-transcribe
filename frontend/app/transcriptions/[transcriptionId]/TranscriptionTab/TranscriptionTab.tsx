@@ -1,5 +1,5 @@
 import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
-import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
+import { SpeakerNameInlineEditor } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNameInlineEditor'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
 import { CopyTranscriptButton } from '@/components/recordings/copy-transcript-button'
@@ -478,9 +478,9 @@ export function TranscriptionTab({
                           }
                         }
                       }}
-                      className="govuk-!-margin-top-1 flex shrink-0 cursor-pointer items-center text-[var(--govuk-text-colour)] hover:text-[var(--govuk-link-colour)] focus:bg-[var(--govuk-focus-colour)] focus:text-[var(--govuk-focus-text-colour)] focus:shadow-[0_2px_0_var(--govuk-focus-text-colour)] focus:[outline:3px_solid_transparent]"
+                      className="govuk-link govuk-link--no-visited-state mt-0.5 flex shrink-0 cursor-pointer items-center"
                     >
-                      <PlayButton width={18} height={18} />
+                      <PlayButton width={20} height={20} />
                     </button>
                   )}
 
@@ -496,12 +496,13 @@ export function TranscriptionTab({
                     />
                   )}
 
-                  <SpeakerNamePopover
+                  <SpeakerNameInlineEditor
                     entry={entry}
                     index={index}
                     onUpdateAll={handleRenameSpeakerEverywhere}
                     onUpdateSingle={handleRenameSingleSpeaker}
                     editing={isLineEditMode}
+                    onOpen={onDismissBanner}
                   />
                   <TranscriptionTextArea
                     control={control}

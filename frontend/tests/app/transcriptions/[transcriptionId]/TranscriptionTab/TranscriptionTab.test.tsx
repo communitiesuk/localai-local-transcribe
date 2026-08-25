@@ -11,6 +11,7 @@ import { DialogueEntry } from '@/lib/client'
 
 const updateDialogueEntryTextMock = vi.fn()
 const updateDialogueEntrySpeakerMock = vi.fn()
+const renameSpeakerEverywhereMock = vi.fn()
 const setBannerMock = vi.fn()
 const clearBannerMock = vi.fn()
 const onLineEditErrorMock = vi.fn()
@@ -21,7 +22,7 @@ vi.mock('@/hooks/use-update-transcription-speakers', () => ({
     updateTitle: vi.fn(),
   }),
   useUpdateTranscriptionSpeakers: () => ({
-    renameSpeakerEverywhere: vi.fn(),
+    renameSpeakerEverywhere: renameSpeakerEverywhereMock,
     updateDialogueEntrySpeaker: updateDialogueEntrySpeakerMock,
   }),
 }))
@@ -88,6 +89,20 @@ const renderTab = (transcription: TranscriptionGetResponse) =>
       onTranscriptCopied={() => {}}
       onTranscriptDownloaded={() => {}}
       onDismissBanner={() => {}}
+    />
+  )
+
+const renderTabWithDismissBanner = (
+  transcription: TranscriptionGetResponse,
+  onDismissBanner: () => void
+) =>
+  render(
+    <TranscriptionTab
+      transcription={transcription}
+      onLineEditError={onLineEditErrorMock}
+      onTranscriptCopied={() => {}}
+      onTranscriptDownloaded={() => {}}
+      onDismissBanner={onDismissBanner}
     />
   )
 
@@ -439,12 +454,15 @@ describe('TranscriptionTab single speaker rename', () => {
   it('sends the original speaker name as expected_speaker, not the optimistically updated one', async () => {
     renderTab(transcription)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
-    fireEvent.click(screen.getByText('Alice:'))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
 
     const input = screen.getByRole('textbox')
     fireEvent.change(input, { target: { value: 'Bob' } })
-    fireEvent.click(screen.getByText('Update this occurrence'))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update this occurrence' })
+    )
 
     await waitFor(() => {
       expect(updateDialogueEntrySpeakerMock).toHaveBeenCalledWith(0, {
@@ -454,6 +472,114 @@ describe('TranscriptionTab single speaker rename', () => {
         expected_end_time: 1,
       })
     })
+  })
+
+  it('clears existing banners when opening the speaker edit modal', () => {
+    const onDismissBanner = vi.fn()
+    renderTabWithDismissBanner(transcription, onDismissBanner)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+
+    expect(onDismissBanner).toHaveBeenCalledOnce()
+  })
+
+  it('closes the speaker edit modal when cancelling with no changes', () => {
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('shows discard confirmation when cancelling with pending speaker changes', () => {
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(
+      screen.getByRole('heading', { name: 'Discard changes?' })
+    ).toBeInTheDocument()
+  })
+
+  it('returns to speaker edit modal with pending changes intact when discard confirmation is cancelled', () => {
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.getByRole('textbox')).toHaveValue('Bob')
+  })
+
+  it('discards pending speaker changes and closes the modal', () => {
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('shows an error banner and keeps the speaker edit modal open when updating one occurrence fails', async () => {
+    updateDialogueEntrySpeakerMock.mockRejectedValueOnce(new Error('Conflict'))
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update this occurrence' })
+    )
+
+    await waitFor(() => {
+      expect(setBannerMock).toHaveBeenCalledWith({
+        message: `One or more speaker names could not be updated, please try again.`,
+        variant: 'important',
+        title: 'Error',
+      })
+    })
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('textbox')).toHaveValue('Bob')
+  })
+
+  it('shows an error banner and keeps the speaker edit modal open when updating all occurrences fails', async () => {
+    renameSpeakerEverywhereMock.mockRejectedValueOnce(new Error('Conflict'))
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
+
+    await waitFor(() => {
+      expect(setBannerMock).toHaveBeenCalledWith({
+        message: `One or more speaker names could not be updated, please try again.`,
+        variant: 'important',
+        title: 'Error',
+      })
+    })
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('textbox')).toHaveValue('Bob')
   })
 })
 
