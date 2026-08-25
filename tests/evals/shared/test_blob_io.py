@@ -53,7 +53,7 @@ def test_stage_dataset_prefix_downloads_blob_prefix(tmp_path: Path) -> None:
 
 
 def test_stage_dataset_prefix_requires_blob_prefix(tmp_path: Path) -> None:
-    with pytest.raises(ValueError, match="blob_prefix"):
+    with pytest.raises(ValueError, match="input_prefix"):
         stage_dataset_prefix(MagicMock(), None, tmp_path)
 
 
