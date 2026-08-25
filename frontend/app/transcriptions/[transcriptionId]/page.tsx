@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
+import { NewDocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/NewDocumentTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import { DownloadButton } from '@/components/download-button'
 import {
@@ -54,6 +54,10 @@ export default function TranscriptionPage(props: {
   const errorSummaryRef = useRef<HTMLDivElement | null>(null)
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
+
+  const [activeTab, setActiveTab] = useState('transcript')
+  const [documentTabs, setDocumentTabs] = useState<string[]>([])
+  const documentCounter = useRef(0)
 
   const handleLineEditError = useCallback((error: string | null) => {
     setLineEditError(error)
@@ -150,6 +154,27 @@ export default function TranscriptionPage(props: {
       </div>
     )
   }
+  const handleCreateDocument = () => {
+    const id = `new-document-${documentCounter.current++}`
+    setDocumentTabs((prev) => [...prev, id])
+    setActiveTab(id)
+  }
+
+  const removeDocumentTab = (id: string) => {
+    setDocumentTabs((prev) => prev.filter((tab) => tab !== id))
+    setActiveTab('transcript')
+  }
+
+  const handleDocumentCreated = (id: string) => {
+    setDocumentTabs((prev) => prev.filter((tab) => tab !== id))
+    setActiveTab('meeting-summary')
+    setBanner({
+      variant: 'success',
+      title: 'Success',
+      message: 'Document created.',
+    })
+  }
+
   return (
     <div className="flex w-full flex-col">
       <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
@@ -172,16 +197,20 @@ export default function TranscriptionPage(props: {
       />
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
       <div>
-        <NewMinuteDialog
-          transcriptionId={transcription.id!}
-          trigger={
-            <GovukButton type="button" disabled={isTranscriptEditing}>
-              Create document
-            </GovukButton>
-          }
-        />
+        <GovukButton
+          type="button"
+          disabled={isTranscriptEditing}
+          onClick={handleCreateDocument}
+        >
+          Create document
+        </GovukButton>
       </div>
-      <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
+      <GovukTabs
+        id="transcription-tabs"
+        className="govuk-!-margin-top-4"
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      >
         <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab
             transcription={transcription}
@@ -212,6 +241,15 @@ export default function TranscriptionPage(props: {
             <ChatTab transcription={transcription} />
           </GovukTabs.Panel>
         )}
+        {documentTabs.map((id) => (
+          <GovukTabs.Panel key={id} id={id} label="New document">
+            <NewDocumentTab
+              transcriptionId={transcription.id!}
+              onCancel={() => removeDocumentTab(id)}
+              onCreated={() => handleDocumentCreated(id)}
+            />
+          </GovukTabs.Panel>
+        ))}
       </GovukTabs>
     </div>
   )
