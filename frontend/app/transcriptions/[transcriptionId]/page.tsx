@@ -372,7 +372,8 @@ const RecordingDetails = ({
           isUpload && dirtyFields.dateOfRecording
             ? formatRecordingDateForSave(
                 data.dateOfRecording,
-                transcription.date_of_recording ?? transcription.created_datetime
+                transcription.date_of_recording ??
+                  transcription.created_datetime
               )
             : (transcription.date_of_recording ?? null),
       },
@@ -410,9 +411,7 @@ const RecordingDetails = ({
           (isUpload &&
             !!dirtyFields.dateOfRecording &&
             !!errors.dateOfRecording)) &&
-          errorList.length > 0 && (
-          <GovukErrorSummary errorList={errorList} />
-        )}
+          errorList.length > 0 && <GovukErrorSummary errorList={errorList} />}
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(handleSave)} noValidate>
             <GovukFormGroup>
