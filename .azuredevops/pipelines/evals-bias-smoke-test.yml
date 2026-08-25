@@ -3,6 +3,16 @@ name: Bias Evals
 trigger: none
 pr: none
 
+schedules:
+  # Runs weekly at 21:00 UTC on Sundays; fortnightly cadence is enforced by the gate job.
+  # During British Summer Time, this is 22:00 local time.
+  - cron: '0 21 * * Sun'
+    displayName: 'Fortnightly Sunday 21:00 UTC'
+    branches:
+      include:
+        - development
+    always: true
+
 parameters:
   - name: pythonVersion
     displayName: 'Python version'
@@ -24,10 +34,29 @@ parameters:
     displayName: 'Short-retention non-sensitive results artifact name'
     type: string
     default: 'bias-eval-results'
+  - name: scheduledRunsEnabled
+    displayName: 'Enable scheduled runs'
+    type: string
+    # Set to 'true' when scheduled runs should begin.
+    default: 'false'
+    values:
+      - 'true'
+      - 'false'
+  - name: fortnightlyStartSunday
+    displayName: 'First scheduled Sunday to run'
+    type: string
+    default: '2026-08-30'
 
 jobs:
+  - template: ../templates/fortnightly-schedule-gate-job.yml
+    parameters:
+      scheduledRunsEnabled: ${{ parameters.scheduledRunsEnabled }}
+      referenceSunday: ${{ parameters.fortnightlyStartSunday }}
+
   - job: bias_smoke_test
     displayName: 'Bias eval smoke test'
+    dependsOn: fortnightly_schedule_gate
+    condition: and(succeeded(), eq(dependencies.fortnightly_schedule_gate.outputs['set_schedule_gate.shouldRun'], 'true'))
     timeoutInMinutes: 60
     pool:
       vmImage: ubuntu-latest
