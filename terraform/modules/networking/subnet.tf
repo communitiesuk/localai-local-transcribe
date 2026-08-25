@@ -1,9 +1,8 @@
 locals {
-  nat_gateway_cidr_10 = cidrsubnet(aws_vpc.main.cidr_block, 6, 0) # 0.0/22 - public
-  public_cidr_10      = cidrsubnet(aws_vpc.main.cidr_block, 6, 1) # 4.0/22 - for alb listeners
-  firewall_cidr_10    = cidrsubnet(aws_vpc.main.cidr_block, 6, 2) # 8.0/22
-  private_cidr_10     = cidrsubnet(aws_vpc.main.cidr_block, 6, 3) # 12.0/22- ecs and bastion host
-  isolated_cidr_10    = cidrsubnet(aws_vpc.main.cidr_block, 6, 4) # 16.0/22
+  public_cidr_10   = cidrsubnet(aws_vpc.main.cidr_block, 6, 1) # 4.0/22 - for alb listeners
+  firewall_cidr_10 = cidrsubnet(aws_vpc.main.cidr_block, 6, 2) # 8.0/22
+  private_cidr_10  = cidrsubnet(aws_vpc.main.cidr_block, 6, 3) # 12.0/22- ecs and bastion host
+  isolated_cidr_10 = cidrsubnet(aws_vpc.main.cidr_block, 6, 4) # 16.0/22
 }
 
 # tfsec:ignore:aws-ec2-no-public-ip-subnet
