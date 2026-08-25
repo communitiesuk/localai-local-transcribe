@@ -9,7 +9,6 @@ interface InlineEditFormProps {
   onCancel: () => void
   value?: string
   onValueChange?: (value: string) => void
-  updateLabel?: string
   secondaryUpdate?: {
     label: string
     onUpdate: (newName: string) => void
@@ -23,7 +22,6 @@ export function InLineEditForm({
   onCancel,
   value: controlledValue,
   onValueChange,
-  updateLabel = 'Update all occurrences',
   secondaryUpdate,
   disabled = false,
 }: InlineEditFormProps) {
@@ -53,7 +51,7 @@ export function InLineEditForm({
           onClick={() => onUpdate(value)}
           disabled={disabled || value === initialValue || !value?.trim()}
         >
-          {updateLabel}
+          Update all occurrences
         </GovukButton>
         {secondaryUpdate && (
           <GovukButton
