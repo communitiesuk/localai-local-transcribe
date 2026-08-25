@@ -25,6 +25,10 @@ terraform {
 provider "azurerm" {
   features {}
   subscription_id = var.subscription_id
+
+  # The state account disables shared access keys, so the provider must use Entra ID for
+  # any storage data plane calls it makes.
+  storage_use_azuread = true
 }
 
 resource "azurerm_storage_account" "terraform_state" {
@@ -38,6 +42,7 @@ resource "azurerm_storage_account" "terraform_state" {
   allow_nested_items_to_be_public = false
   local_user_enabled              = false
   default_to_oauth_authentication = true
+  shared_access_key_enabled       = false
 
   # Cap how long a newly created SAS token may remain valid. Block over-long SAS on the state
   # account too — it holds Terraform state, which can contain sensitive values.
