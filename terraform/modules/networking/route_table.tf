@@ -30,7 +30,7 @@ resource "aws_route_table" "to_nat_gateway" {
 resource "aws_route" "to_nat_gateway" {
   route_table_id         = aws_route_table.to_nat_gateway.id
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.nat_gateway.id
+  nat_gateway_id         = aws_nat_gateway.regional_nat_gateway.id
 }
 
 resource "aws_route_table_association" "private" {

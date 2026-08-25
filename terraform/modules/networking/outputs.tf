@@ -4,7 +4,7 @@ output "vpc" {
 }
 
 output "nat_gateway_ips" {
-  value       = aws_eip.nat_gateway[*].public_ip
+  value       = { for k, v in aws_eip.nat_gateway : k => v.public_ip }
   description = "The IP address of the NAT gateway"
 }
 
