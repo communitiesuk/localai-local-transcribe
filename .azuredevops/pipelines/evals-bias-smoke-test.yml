@@ -5,6 +5,7 @@ pr: none
 
 schedules:
   # Runs weekly at 21:00 UTC on Sundays; fortnightly cadence is enforced by the gate job.
+  # During British Summer Time, this is 22:00 local time.
   - cron: '0 21 * * Sun'
     displayName: 'Fortnightly Sunday 21:00 UTC'
     branches:
@@ -36,6 +37,7 @@ parameters:
   - name: scheduledRunsEnabled
     displayName: 'Enable scheduled runs'
     type: string
+    # Set to 'true' when scheduled runs should begin.
     default: 'false'
     values:
       - 'true'
