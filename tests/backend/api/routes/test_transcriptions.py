@@ -200,6 +200,7 @@ async def test_update_transcription_title_unauthorized(mock_session, mock_user, 
 
 @pytest.mark.asyncio
 async def test_update_transcription_metadata_success(mock_session, mock_user, mock_transcription):
+    original_created_datetime = mock_transcription.created_datetime
     original_updated_datetime = mock_transcription.updated_datetime
     client_date_of_birth = datetime(1985, 4, 12, tzinfo=UTC)
     date_of_recording = datetime(2024, 6, 3, 14, 30, tzinfo=UTC)
@@ -223,6 +224,7 @@ async def test_update_transcription_metadata_success(mock_session, mock_user, mo
     assert mock_transcription.client_date_of_birth == client_date_of_birth.replace(tzinfo=None)
     assert mock_transcription.date_of_recording == date_of_recording.replace(tzinfo=None)
     assert mock_transcription.title == "Updated subject"
+    assert mock_transcription.created_datetime == original_created_datetime
     assert mock_transcription.updated_datetime > original_updated_datetime
     mock_session.commit.assert_awaited_once()
 
@@ -231,6 +233,7 @@ async def test_update_transcription_metadata_success(mock_session, mock_user, mo
 async def test_update_transcription_metadata_null_fields_clear_existing_values(
     mock_session, mock_user, mock_transcription
 ):
+    original_created_datetime = mock_transcription.created_datetime
     original_updated_datetime = mock_transcription.updated_datetime
     mock_session.get = AsyncMock(return_value=mock_transcription)
 
@@ -252,6 +255,7 @@ async def test_update_transcription_metadata_null_fields_clear_existing_values(
     assert mock_transcription.client_name is None
     assert mock_transcription.client_date_of_birth is None
     assert mock_transcription.date_of_recording is None
+    assert mock_transcription.created_datetime == original_created_datetime
     assert mock_transcription.updated_datetime > original_updated_datetime
     mock_session.commit.assert_awaited_once()
 

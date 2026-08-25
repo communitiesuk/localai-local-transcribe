@@ -271,7 +271,7 @@ const RecordingDetails = ({
     }
   }, [draft, transcription.id, form])
 
-  const { errors, isSubmitted } = form.formState
+  const { dirtyFields, errors, isSubmitted } = form.formState
   const errorList = [
     errors.dateOfRecording?.message && {
       href: '#date-recorded',
@@ -336,8 +336,10 @@ const RecordingDetails = ({
         subject: data.subject || null,
         client_date_of_birth: dateOfBirth ? dateOfBirth.toISOString() : null,
         date_of_recording:
-          isUpload && data.dateOfRecording
-            ? new Date(data.dateOfRecording).toISOString()
+          isUpload && dirtyFields.dateOfRecording
+            ? data.dateOfRecording
+              ? new Date(data.dateOfRecording).toISOString()
+              : null
             : (transcription.date_of_recording ?? null),
       },
     })
