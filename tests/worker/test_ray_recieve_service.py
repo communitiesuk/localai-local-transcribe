@@ -108,6 +108,7 @@ async def test_process_transcript_failed(transcription_service, transcription_qu
     transcription_queue.publish_message.assert_not_called()
     transcription_queue.complete_message.assert_called_once_with(RECEIPT_HANDLE)
 
+
 @pytest.mark.asyncio
 async def test_process_minute_task_success(llm_queue, llm_service, monkeypatch):
     llm_queue.receive_message.return_value = [(MINUTE_MESSAGE, RECEIPT_HANDLE)]

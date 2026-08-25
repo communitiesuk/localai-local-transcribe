@@ -75,7 +75,9 @@ class _RayTranscriptionService:
                     if transcription_job.transcript:
                         logger.info("Transcription complete for transcription id %s complete", message.id)
                     else:
-                        logger.info("Async transcription job not ready yet. Re-queueing transcription id: %s", message.id)
+                        logger.info(
+                            "Async transcription job not ready yet. Re-queueing transcription id: %s", message.id
+                        )
                         self.transcription_queue_service.publish_message(
                             WorkerMessage(id=message.id, type=message.type, data=transcription_job)
                         )
