@@ -230,7 +230,7 @@ async def create_transcription(
     session: SQLSessionDep,
     current_user: UserDep,
 ) -> TranscriptionCreateResponse:
-    """Start a transcription job"""
+    """Start a transcription job."""
     recording = await session.get(Recording, request.recording_id)
     if not recording or recording.user_id != current_user.id:
         raise HTTPException(404, detail="Recording not found")
@@ -245,7 +245,6 @@ async def create_transcription(
     session.add(transcription)
     recording.transcription_id = transcription.id
     await session.commit()
-    await session.refresh(transcription)
     transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION))
 
     return TranscriptionCreateResponse(id=transcription.id)
