@@ -50,6 +50,17 @@
             "description": "Number of items per page"
           },
           {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TranscriptionSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
+          {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
@@ -88,6 +99,17 @@
         "description": "Get metadata for unlabelled transcriptions for the current user.",
         "operationId": "list_unlabelled_transcriptions_transcriptions_unlabelled_get",
         "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TranscriptionSortOrder",
+              "description": "Sort order for date recorded",
+              "default": "newest"
+            },
+            "description": "Sort order for date recorded"
+          },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
@@ -153,6 +175,55 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecordingCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transcriptions-only": {
+      "post": {
+        "tags": ["Transcriptions"],
+        "summary": "Create Transcription Only",
+        "description": "transcription without creating an associated Minute",
+        "operationId": "create_transcription_only_transcriptions_only_post",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscriptionOnlyCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionCreateResponse"
                 }
               }
             }
@@ -404,6 +475,56 @@
         }
       }
     },
+    "/transcriptions/{transcription_id}/details": {
+      "put": {
+        "tags": ["Transcriptions"],
+        "summary": "Update Transcription Metadata",
+        "description": "Update a transcription's metadata.",
+        "operationId": "update_transcription_metadata_transcriptions__transcription_id__details_put",
+        "parameters": [
+          {
+            "name": "transcription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Transcription Id"
+            }
+          },
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTranscriptionMetadataRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/transcriptions/{transcription_id}/speakers": {
       "patch": {
         "tags": ["Transcriptions"],
@@ -619,6 +740,45 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/organisation": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get Organisation Name",
+        "operationId": "get_organisation_name_users_me_organisation_get",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "title": "Response Get Organisation Name Users Me Organisation Get"
+                }
               }
             }
           },
@@ -1045,7 +1205,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinuteVersionResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -2235,7 +2401,12 @@
         "properties": {
           "position": { "type": "integer", "title": "Position" },
           "title": { "type": "string", "title": "Title" },
-          "description": { "type": "string", "title": "Description" }
+          "description": { "type": "string", "title": "Description" },
+          "format_instructions": {
+            "type": "string",
+            "title": "Format Instructions",
+            "default": ""
+          }
         },
         "type": "object",
         "required": ["position", "title", "description"],
@@ -2245,6 +2416,7 @@
         "properties": {
           "name": { "type": "string", "title": "Name" },
           "content": { "type": "string", "title": "Content" },
+          "heading": { "type": "string", "title": "Heading", "default": "" },
           "description": { "type": "string", "title": "Description" },
           "type": { "$ref": "#/components/schemas/TemplateType" },
           "questions": {
@@ -2262,7 +2434,7 @@
         "required": ["name", "content", "description", "type"],
         "title": "CreateUserTemplateRequest"
       },
-      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30, 90] },
+      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30] },
       "DataRetentionUpdateResponse": {
         "properties": {
           "data_retention_days": {
@@ -2650,7 +2822,10 @@
             "description": "Optional id of user template"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Agenda",
             "description": "The agenda for the meeting"
           }
@@ -2751,6 +2926,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Content"
           },
+          "heading": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Heading"
+          },
           "description": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Description"
@@ -2779,6 +2958,11 @@
           "position": { "type": "integer", "title": "Position" },
           "title": { "type": "string", "title": "Title" },
           "description": { "type": "string", "title": "Description" },
+          "format_instructions": {
+            "type": "string",
+            "title": "Format Instructions",
+            "default": ""
+          },
           "id": { "type": "string", "format": "uuid", "title": "Id" }
         },
         "type": "object",
@@ -2787,7 +2971,14 @@
       },
       "RecordingCreateRequest": {
         "properties": {
-          "file_extension": { "type": "string", "title": "File Extension" }
+          "file_extension": { "type": "string", "title": "File Extension" },
+          "file_created_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "File Created At"
+          }
         },
         "type": "object",
         "required": ["file_extension"],
@@ -2815,10 +3006,15 @@
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
           "url": { "type": "string", "title": "Url" },
-          "extension": { "type": "string", "title": "Extension" }
+          "extension": { "type": "string", "title": "Extension" },
+          "created_datetime": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created Datetime"
+          }
         },
         "type": "object",
-        "required": ["id", "url", "extension"],
+        "required": ["id", "url", "extension", "created_datetime"],
         "title": "SingleRecording"
       },
       "TemplateMetadata": {
@@ -2842,6 +3038,7 @@
           },
           "name": { "type": "string", "title": "Name" },
           "content": { "type": "string", "title": "Content" },
+          "heading": { "type": "string", "title": "Heading" },
           "description": { "type": "string", "title": "Description" },
           "type": { "$ref": "#/components/schemas/TemplateType" },
           "questions": {
@@ -2861,6 +3058,7 @@
           "updated_datetime",
           "name",
           "content",
+          "heading",
           "description",
           "type",
           "questions"
@@ -2888,7 +3086,10 @@
             "title": "Template Id"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              { "type": "string", "maxLength": 500 },
+              { "type": "null" }
+            ],
             "title": "Agenda"
           },
           "title": {
@@ -2930,6 +3131,28 @@
             "type": "string",
             "format": "date-time",
             "title": "Created Datetime"
+          },
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
+          },
+          "client_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Client Name"
+          },
+          "case_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Id"
+          },
+          "client_date_of_birth": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Client Date Of Birth"
           }
         },
         "type": "object",
@@ -2938,9 +3161,33 @@
           "title",
           "dialogue_entries",
           "status",
-          "created_datetime"
+          "created_datetime",
+          "client_name",
+          "case_id",
+          "client_date_of_birth"
         ],
         "title": "TranscriptionGetResponse"
+      },
+      "TranscriptionOnlyCreateRequest": {
+        "properties": {
+          "recording_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recording Id"
+          },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": ["recording_id"],
+        "title": "TranscriptionOnlyCreateRequest"
+      },
+      "TranscriptionSortOrder": {
+        "type": "string",
+        "enum": ["newest", "oldest"],
+        "title": "TranscriptionSortOrder"
       },
       "UnlabelledTranscriptionMetadata": {
         "properties": {
@@ -3023,6 +3270,37 @@
         "type": "object",
         "required": ["new_text"],
         "title": "UpdateDialogueEntryTextRequest"
+      },
+      "UpdateTranscriptionMetadataRequest": {
+        "properties": {
+          "client_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Client Name"
+          },
+          "case_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Id"
+          },
+          "subject": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Subject"
+          },
+          "client_date_of_birth": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Client Date Of Birth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_name",
+          "case_id",
+          "subject",
+          "client_date_of_birth"
+        ],
+        "title": "UpdateTranscriptionMetadataRequest"
       },
       "UpdateTranscriptionTitleRequest": {
         "properties": {

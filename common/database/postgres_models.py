@@ -152,6 +152,7 @@ class Recording(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
     s3_file_key: str
+    file_created_at: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
     transcription: "Transcription" = Relationship(back_populates="recordings")
 
@@ -219,6 +220,7 @@ class TemplateQuestion(BaseTableMixin, table=True):
     position: int
     title: str
     description: str
+    format_instructions: str = Field(default="", sa_column_kwargs={"server_default": ""})
 
     user_template_id: UUID = Field(foreign_key="user_template.id", ondelete="CASCADE")
     user_template: "UserTemplate" = Relationship(back_populates="questions")
@@ -232,6 +234,7 @@ class UserTemplate(BaseTableMixin, table=True):
     name: str
     content: str
     description: str = ""
+    heading: str = Field(default="", sa_column_kwargs={"server_default": ""})
 
     type: TemplateType = Field(
         default=TemplateType.DOCUMENT,

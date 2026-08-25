@@ -1,5 +1,5 @@
 output "database_password" {
-  description = "Randomly generated password for database"
+  description = "Randomly generated password for the database user"
   value       = random_password.database_password
   sensitive   = true
 }

@@ -1,3 +1,4 @@
+export { GovukBody } from './body'
 export { GovukAccordion } from './accordion'
 export {GovukAccordionSection} from './accordion'
 export { GovukBackLink } from './back-link'
@@ -17,10 +18,21 @@ export { GovukLegend } from './legend'
 export { GovukList, GovukListItem } from './list'
 export { GovukNotificationBanner } from './notification-banner'
 export { GovukRadios } from './radios'
+export { GovukSelect } from './select'
 export { GovukHeading } from './heading'
 export { GovukWarningText } from './warning'
 export { GovukTag, type TagColour } from './tag'
 export { GovukTextarea } from './textarea'
+export { GovukSectionBreak } from './section-break'
+export {
+  GovukTable,
+  GovukTableHead,
+  GovukTableBody,
+  GovukTableRow,
+  GovukTableHeaderCell,
+  GovukTableCell,
+} from './table'
+export { GovukModalDialogue, GovukModalDialogueActions } from './modal-dialogue'
 export {
   GovukPanel,
   GovukPanelHeader,

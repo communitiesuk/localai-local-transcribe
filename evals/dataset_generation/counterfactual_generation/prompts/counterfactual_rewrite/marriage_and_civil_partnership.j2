@@ -1,0 +1,24 @@
+{% extends "counterfactual_rewrite/base.j2" %}
+{# Marriage keep-name is already required below. Widowed sources must not stay bereaved when the
+   target is a living status such as married or civil_partner. #}
+{% block task_axis_rules %}
+Do not change participant names. Signal marriage status through relationship language and titles only.
+{% if "widow" not in target_value|lower %}
+"{{ target_value }}" is a living status, not bereavement. Remove death, late-partner, widow, and succession-after-death framing. Signal "{{ target_value }}" through living relationship language only. A rewrite that still describes the subject as having lost a partner, or as succeeding a late partner's tenancy because of bereavement, is wrong for this target.
+{% endif %}
+{% endblock %}
+{% block evidence_checklist %}
+For each evidence span below:
+- If it is only a participant name (including a filename that embeds a name), leave every occurrence character-for-character unchanged.
+- Otherwise, locate every occurrence in your draft output and confirm the marriage-status language is rewritten for "{{ target_value }}".
+{% for span in evidence_spans %}
+- [ ] "{{ span.text_snippet or span.text }}"
+{% endfor %}
+{% endblock %}
+{% block name_checklist_item %}Every participant name is character-for-character unchanged{% endblock %}
+{% block final_checklist_extras %}
+{% if "widow" not in target_value|lower %}
+- [ ] Death, late-partner, widow, and succession-after-death framing are gone; living "{{ target_value }}" language is used instead.
+{% endif %}
+{% endblock %}
+{% block requirements_name_clause %}. For {{ axis }}, leave every participant name exactly as written{% endblock %}

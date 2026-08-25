@@ -40,13 +40,14 @@ export const PaginatedLabelledTranscriptions = () => {
   const router = useRouter()
   const currentPage = Number(searchParams.get('page')) || 1
   const pageSize = 10
+  const sort = searchParams.get('sort') === 'oldest' ? 'oldest' : 'newest'
   const {
     data: paginatedResponse,
     isLoading,
     error,
   } = useQuery({
     ...listLabelledTranscriptionsTranscriptionsLabelledGetOptions({
-      query: { page: currentPage, page_size: pageSize },
+      query: { page: currentPage, page_size: pageSize, sort },
     }),
     refetchInterval: (query) =>
       !!query.state.data &&
@@ -64,6 +65,17 @@ export const PaginatedLabelledTranscriptions = () => {
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
   const totalCount = paginatedResponse?.total_count || 0
+
+  const formatRecordedDate = (date: string | null | undefined) =>
+    date ? (
+      <div>
+        {new Date(date).toLocaleDateString('en-GB')}
+        <br />
+        {new Date(date).toLocaleTimeString('en-GB')}
+      </div>
+    ) : (
+      '—'
+    )
 
   return (
     <div>
@@ -120,7 +132,10 @@ export const PaginatedLabelledTranscriptions = () => {
                     {transcription.client_date_of_birth}
                   </GovukTableCell>
                   <GovukTableCell>
-                    {transcription.date_of_recording}
+                    {formatRecordedDate(
+                      transcription.date_of_recording ??
+                        transcription.created_datetime
+                    )}
                   </GovukTableCell>
                   <GovukTableCell>
                     <Link

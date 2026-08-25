@@ -7,6 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
     ContentSource,
@@ -79,8 +80,14 @@ class TranscriptionCreateRequest(BaseModel):
     title: str | None = None
 
 
+class TranscriptionOnlyCreateRequest(BaseModel):
+    recording_id: uuid.UUID
+    title: str | None = None
+
+
 class RecordingCreateRequest(BaseModel):
     file_extension: str
+    file_created_at: datetime | None = None
 
 
 class RecordingCreateResponse(BaseModel):
@@ -98,6 +105,13 @@ class TranscriptionConfirmResponse(BaseModel):
 
 class UpdateTranscriptionTitleRequest(BaseModel):
     title: str | None = None
+
+
+class UpdateTranscriptionMetadataRequest(BaseModel):
+    client_name: str | None
+    case_id: str | None
+    subject: str | None
+    client_date_of_birth: datetime | None
 
 
 class RenameSpeakerRequest(BaseModel):
@@ -173,7 +187,7 @@ class PaginatedUsersResponse(BaseModel):
     total_pages: int
 
 
-type DataRetentionOptions = Literal[1, 7, 30, 90]
+type DataRetentionOptions = Literal[1, 7, 30]
 
 
 class DataRetentionUpdateResponse(BaseModel):
@@ -186,12 +200,17 @@ class TranscriptionGetResponse(BaseModel):
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime
+    date_of_recording: datetime | None = None
+    client_name: str | None
+    case_id: str | None
+    client_date_of_birth: datetime | None
 
 
 class SingleRecording(BaseModel):
     id: uuid.UUID
     url: str
     extension: str
+    created_datetime: datetime
 
 
 class MinuteListItem(BaseModel):
@@ -282,6 +301,7 @@ class TaskType(IntEnum):
     MINUTE = 2
     EDIT = 3
     INTERACTIVE = 4
+    TRANSCRIPTION_ONLY = 5
 
 
 class EditMessageData(BaseModel):
@@ -309,6 +329,9 @@ class MinuteAndHallucinations:
     total_claims: int
     hallucinations: list[LLMHallucination]
 
+    def __post_init__(self) -> None:
+        self.text = strip_boundary_metadata(self.text)
+
 
 class MeetingType(StrEnum):
     too_short = auto()
@@ -322,6 +345,11 @@ class AgendaUsage(StrEnum):
     REQUIRED = auto()
 
 
+class TranscriptionSortOrder(StrEnum):
+    newest = auto()
+    oldest = auto()
+
+
 class TemplateMetadata(BaseModel):
     name: str
     description: str
@@ -333,6 +361,7 @@ class CreateQuestion(BaseModel):
     position: int
     title: str
     description: str
+    format_instructions: str = ""
 
 
 class Question(CreateQuestion):
@@ -342,6 +371,7 @@ class Question(CreateQuestion):
 class PatchUserTemplateRequest(BaseModel):
     name: str | None = None
     content: str | None = None
+    heading: str | None = None
     description: str | None = None
     questions: list[CreateQuestion | Question] | None = None
 
@@ -351,6 +381,7 @@ class TemplateResponse(BaseModel):
     updated_datetime: datetime
     name: str
     content: str
+    heading: str
     description: str
     type: TemplateType
     questions: list[Question] | None
@@ -359,6 +390,7 @@ class TemplateResponse(BaseModel):
 class CreateUserTemplateRequest(BaseModel):
     name: str
     content: str
+    heading: str = ""
     description: str
     type: TemplateType
     questions: list[CreateQuestion] | None = None

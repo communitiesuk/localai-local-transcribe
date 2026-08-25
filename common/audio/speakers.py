@@ -137,6 +137,6 @@ async def process_speakers_and_dialogue_entries(
 
         return predicted_entries
     except Exception as e:  # noqa: BLE001 # flagged by ruff - investigate when we have time.
-        logger.error("Error predicting speaker names: %s", str(e))
+        logger.error("Error predicting speaker names: %s", type(e).__name__)
         # Return the labeled entries if prediction fails
         return labelled_dialogue_entries

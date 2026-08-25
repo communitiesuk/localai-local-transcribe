@@ -28,6 +28,7 @@ resource "aws_security_group" "worker" {
   }
 }
 
+
 resource "aws_vpc_security_group_ingress_rule" "frontend_ingress_from_bastion" {
   description                  = "Allow frontend ingress on port ${var.frontend_port} from the bastion"
   ip_protocol                  = "tcp"
@@ -162,3 +163,4 @@ resource "aws_vpc_security_group_egress_rule" "worker_https_egress" {
   to_port           = 443
   security_group_id = aws_security_group.worker.id
 }
+

@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   '/privacy',
   '/support',
   '/signout',
+  '/assets', // Bypass middleware for static asset files
 ]
 
 const TOU_PATH = '/terms-of-use'
@@ -59,10 +60,6 @@ export async function proxy(req: NextRequest) {
           console.error(`User is not authorised to access ${pathname}`)
           return redirectTo(req, '/unauthorised')
         }
-
-        console.info(
-          `User ${authResult.email} authorisation result: ${authResult.isAuthorised}`
-        )
       }
       backendAuthResponse = await fetch(
         `${process.env.BACKEND_HOST}/users/me`,
@@ -105,9 +102,5 @@ function redirectTo(req: NextRequest, page: string) {
 
 // Configure which paths this middleware should run on
 export const config = {
-  matcher: [
-    // Match all paths except those starting with excluded paths
-    // You can customize this as needed
-    '/((?!_next/static|_next/image|favicon.ico|api/health).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/health).*)'],
 }

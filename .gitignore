@@ -126,9 +126,18 @@ evals/**/results/
 evals/**/datasets/
 evals/**/input/
 evals/**/output/
+evals/dataset_generation/counterfactual_generation/output_unedited/
 **/*.wav
 **/*.mp3
 **/*.m4a
+
+# AIILG-792 bias July artefacts (dataset on SharePoint). Track only the eval-pack README.
+evals/dataset_generation/counterfactual_generation/bias_july_counterfactuals_for_eval/*
+!evals/dataset_generation/counterfactual_generation/bias_july_counterfactuals_for_eval/README.md
+evals/dataset_generation/counterfactual_generation/bias_july_dataset/
+evals/dataset_generation/characteristics/configs/bias_july_*.yaml
+evals/dataset_generation/counterfactual_generation/notes_from_bias_dataset_generation.md
+final_july_set_report.md
 
 frontend/public/assets/govuk.coverage
 

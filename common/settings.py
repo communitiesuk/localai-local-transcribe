@@ -1,15 +1,11 @@
 import logging
-from functools import lru_cache
 from typing import Literal
 
 import dotenv
-from i_dot_ai_utilities.logging.structured_logger import StructuredLogger
-from i_dot_ai_utilities.logging.types.enrichment_types import ExecutionEnvironmentType
-from i_dot_ai_utilities.logging.types.log_output_format import LogOutputFormat
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from common.logger import setup_logger, setup_structured_logger
+from common.logger import setup_logger
 
 setup_logger()
 logger = logging.getLogger(__name__)
@@ -27,8 +23,15 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = Field(description="PostgreSQL database host")
     POSTGRES_PORT: int = Field(description="PostgreSQL database port")
     POSTGRES_DB: str = Field(description="PostgreSQL database name")
-    POSTGRES_USER: str = Field(description="PostgreSQL database user")
-    POSTGRES_PASSWORD: str = Field(description="PostgreSQL database password")
+    POSTGRES_USER: str | None = Field(description="PostgreSQL database user", default=None)
+    POSTGRES_PASSWORD: str | None = Field(description="PostgreSQL database password", default=None)
+    RDS_CA_BUNDLE_PATH: str = Field(
+        description="Path to the Amazon RDS CA certificate bundle",
+        default="/app/config/rds-ca-bundle.pem",
+    )
+    DB_SECRET_ARN: str | None = Field(
+        description="Arn of secret which contains the current database credentials", default=None
+    )
 
     APP_URL: str = Field(description="used for CORS origin validation")
 
@@ -43,13 +46,6 @@ class Settings(BaseSettings):
 
     ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
-
-    # Structured logger setup
-    EXECUTION_ENVIRONMENT: ExecutionEnvironmentType = (
-        ExecutionEnvironmentType.LOCAL if ENVIRONMENT.lower() == "local" else ExecutionEnvironmentType.FARGATE
-    )
-    LOGGING_FORMAT: LogOutputFormat = LogOutputFormat.TEXT if ENVIRONMENT.lower() == "local" else LogOutputFormat.JSON
-    LOG_LEVEL: str = Field(description="The level at which to emit structured logs", default="info")
 
     TRANSCRIPTION_QUEUE_NAME: str = Field(description="queue name to use for SQS/Azure Service Bus queues")
     TRANSCRIPTION_DEADLETTER_QUEUE_NAME: str = Field(
@@ -216,12 +212,3 @@ class Settings(BaseSettings):
 
 def get_settings() -> Settings:
     return Settings()  # type: ignore  # noqa: PGH003
-
-
-@lru_cache
-def get_structured_logger() -> StructuredLogger:
-    return setup_structured_logger(
-        level=get_settings().LOG_LEVEL or "info",
-        execution_environment=get_settings().EXECUTION_ENVIRONMENT,
-        logging_format=get_settings().LOGGING_FORMAT,
-    )

@@ -1,0 +1,28 @@
+{% extends "counterfactual_rewrite/base.j2" %}
+{# Gender Reassignment evidence often includes the subject's full name, so the model may change the
+   surname and thereby move Race. A no-transition target also fails if deed-poll / old-name framing
+   is left in place, because that still reads as a transition case. #}
+{% block task_axis_rules %}
+Keep the subject's surname character-for-character unchanged.
+{% if "no_transition" in target_value|lower %}
+"{{ target_value }}" means no gender transition appears in the transcript. Do not rename the subject: keep their first name, surname, title, and pronouns exactly as in the original. Delete every mention of deed poll, name-change certificate, preferred name, old name, and transition. A rewrite that still mentions a deed poll, or that changes the subject's name, is wrong for this target.
+{% else %}
+Update the subject's first name, title, and pronouns to match "{{ target_value }}", replacing the old first name everywhere it appears. Keep the surname unchanged.
+{% endif %}
+{% endblock %}
+{% block evidence_checklist %}
+{% if "no_transition" in target_value|lower %}
+{# Evidence for this axis often includes the subject's name. The generic "must not appear" checklist
+   would force a rename and fight the keep-name rule above, so names are carved out here. #}
+For each evidence span below:
+- If it is only a participant name, leave every occurrence character-for-character unchanged.
+- Otherwise, confirm the transition language is removed from the rewrite.
+{% for span in evidence_spans %}
+- [ ] "{{ span.text_snippet or span.text }}"
+{% endfor %}
+Also confirm no deed poll or name-change certificate remains anywhere in the rewrite.
+{% else %}
+{{ super() }}
+{% endif %}
+{% endblock %}
+{% block name_checklist_item %}{% if "no_transition" in target_value|lower %}Every participant name is character-for-character unchanged{% else %}First name, title, and pronouns match "{{ target_value }}"; surname unchanged{% endif %}{% endblock %}

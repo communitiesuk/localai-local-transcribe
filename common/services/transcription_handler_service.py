@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from common.audio.speakers import process_speakers_and_dialogue_entries
+from common.canaries import strip_boundary_metadata
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import Chat, JobStatus, Minute, Transcription
 from common.generate_meeting_title import generate_meeting_title
@@ -83,6 +84,7 @@ class TranscriptionHandlerService:
                         )
 
                 chat_response = await chatbot.chat(messages=chat_history)
+                chat_response = strip_boundary_metadata(chat_response)
                 chat_response = combine_consecutive_citations(chat_response)
                 chat.assistant_content = chat_response
                 chat.status = JobStatus.COMPLETED
@@ -156,6 +158,48 @@ class TranscriptionHandlerService:
         """Process a transcription job and save results. Returns True if job is complete, False otherwise."""
         try:
             transcription = cls.get_transcription_from_minute_id(minute_id)
+        except Exception as e:
+            raise TranscriptionFailedError from e
+
+        try:
+            if async_transcription_message_data:
+                transcription_job = await transcription_manager.check_transcription(
+                    adapter_name=async_transcription_message_data.transcription_service,
+                    async_transcription_message_data=async_transcription_message_data,
+                )
+            else:
+                # it's a new transcription job
+                cls.update_transcription(transcription.id, JobStatus.IN_PROGRESS)
+                transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
+
+            if transcription_job.transcript:
+                dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
+                meeting_title = await generate_meeting_title(transcript=dialogue_entries)
+                cls.update_transcription(
+                    transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
+                )
+
+        except Exception as e:
+            msg = f"Transcription failed: {e!s}"
+            logger.exception(msg)
+            try:
+                cls.update_transcription(transcription.id, status=JobStatus.FAILED, error=msg)
+            except Exception:
+                logger.exception("Error updating transcription status. Maybe it doesn't exist?")
+
+            raise TranscriptionFailedError from e
+        else:
+            return transcription_job
+
+    @classmethod
+    async def process_transcription_only(
+        cls,
+        transcription_id: UUID,
+        async_transcription_message_data: TranscriptionJobMessageData | None = None,
+    ) -> TranscriptionJobMessageData:
+        """Process a transcription job and save results. Returns True if job is complete, False otherwise."""
+        try:
+            transcription = cls.get_transcription(transcription_id)
         except Exception as e:
             raise TranscriptionFailedError from e
 
