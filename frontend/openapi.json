@@ -190,6 +190,55 @@
         }
       }
     },
+    "/transcriptions-only": {
+      "post": {
+        "tags": ["Transcriptions"],
+        "summary": "Create Transcription Only",
+        "description": "transcription without creating an associated Minute",
+        "operationId": "create_transcription_only_transcriptions_only_post",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscriptionOnlyCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptionCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/transcriptions": {
       "post": {
         "tags": ["Transcriptions"],
@@ -426,6 +475,56 @@
         }
       }
     },
+    "/transcriptions/{transcription_id}/details": {
+      "put": {
+        "tags": ["Transcriptions"],
+        "summary": "Update Transcription Metadata",
+        "description": "Update a transcription's metadata.",
+        "operationId": "update_transcription_metadata_transcriptions__transcription_id__details_put",
+        "parameters": [
+          {
+            "name": "transcription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Transcription Id"
+            }
+          },
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTranscriptionMetadataRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/transcriptions/{transcription_id}/speakers": {
       "patch": {
         "tags": ["Transcriptions"],
@@ -641,6 +740,45 @@
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/me/organisation": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get Organisation Name",
+        "operationId": "get_organisation_name_users_me_organisation_get",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "title": "Response Get Organisation Name Users Me Organisation Get"
+                }
               }
             }
           },
@@ -1067,7 +1205,13 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MinuteVersionResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -2827,7 +2971,14 @@
       },
       "RecordingCreateRequest": {
         "properties": {
-          "file_extension": { "type": "string", "title": "File Extension" }
+          "file_extension": { "type": "string", "title": "File Extension" },
+          "file_created_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "File Created At"
+          }
         },
         "type": "object",
         "required": ["file_extension"],
@@ -2980,6 +3131,28 @@
             "type": "string",
             "format": "date-time",
             "title": "Created Datetime"
+          },
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
+          },
+          "client_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Client Name"
+          },
+          "case_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Id"
+          },
+          "client_date_of_birth": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Client Date Of Birth"
           }
         },
         "type": "object",
@@ -2988,9 +3161,28 @@
           "title",
           "dialogue_entries",
           "status",
-          "created_datetime"
+          "created_datetime",
+          "client_name",
+          "case_id",
+          "client_date_of_birth"
         ],
         "title": "TranscriptionGetResponse"
+      },
+      "TranscriptionOnlyCreateRequest": {
+        "properties": {
+          "recording_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recording Id"
+          },
+          "title": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": ["recording_id"],
+        "title": "TranscriptionOnlyCreateRequest"
       },
       "TranscriptionSortOrder": {
         "type": "string",
@@ -3078,6 +3270,37 @@
         "type": "object",
         "required": ["new_text"],
         "title": "UpdateDialogueEntryTextRequest"
+      },
+      "UpdateTranscriptionMetadataRequest": {
+        "properties": {
+          "client_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Client Name"
+          },
+          "case_id": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Id"
+          },
+          "subject": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Subject"
+          },
+          "client_date_of_birth": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Client Date Of Birth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_name",
+          "case_id",
+          "subject",
+          "client_date_of_birth"
+        ],
+        "title": "UpdateTranscriptionMetadataRequest"
       },
       "UpdateTranscriptionTitleRequest": {
         "properties": {

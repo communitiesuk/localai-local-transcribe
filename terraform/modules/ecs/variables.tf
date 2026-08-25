@@ -136,37 +136,37 @@ variable "llm_deadletter_queue_name" {
 variable "frontend_task_cpu" {
   description = "CPU units for the frontend ECS task definition"
   type        = number
-  default     = 2048
+  default     = 256
 }
 
 variable "backend_task_cpu" {
   description = "CPU units for the backend ECS task definition"
   type        = number
-  default     = 2048
+  default     = 256
 }
 
 variable "worker_task_cpu" {
   description = "CPU units for the worker ECS task definition"
   type        = number
-  default     = 4096
+  default     = 2048
 }
 
 variable "frontend_task_memory" {
   description = "Memory for the frontend ECS task definition"
   type        = number
-  default     = 4096
+  default     = 512
 }
 
 variable "backend_task_memory" {
   description = "Memory for the backend ECS task definition"
   type        = number
-  default     = 4096
+  default     = 512
 }
 
 variable "worker_task_memory" {
   description = "Memory for the worker ECS task definition"
   type        = number
-  default     = 8192
+  default     = 4096
 }
 
 variable "alb_arn" {
@@ -191,6 +191,11 @@ variable "aws_region" {
 
 variable "azure_apim_tenant_id_arn" {
   description = "ARN of the SSM parameter containing the Azure APIM tenant ID"
+  type        = string
+}
+
+variable "azure_apim_url" {
+  description = "Base URL for Azure APIM"
   type        = string
 }
 
@@ -249,5 +254,4 @@ variable "data_s3_bucket_name" {
   description = "name of the S3 bucket for data storage"
   type        = string
 }
-
 

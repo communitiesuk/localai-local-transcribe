@@ -80,8 +80,14 @@ class TranscriptionCreateRequest(BaseModel):
     title: str | None = None
 
 
+class TranscriptionOnlyCreateRequest(BaseModel):
+    recording_id: uuid.UUID
+    title: str | None = None
+
+
 class RecordingCreateRequest(BaseModel):
     file_extension: str
+    file_created_at: datetime | None = None
 
 
 class RecordingCreateResponse(BaseModel):
@@ -99,6 +105,13 @@ class TranscriptionConfirmResponse(BaseModel):
 
 class UpdateTranscriptionTitleRequest(BaseModel):
     title: str | None = None
+
+
+class UpdateTranscriptionMetadataRequest(BaseModel):
+    client_name: str | None
+    case_id: str | None
+    subject: str | None
+    client_date_of_birth: datetime | None
 
 
 class RenameSpeakerRequest(BaseModel):
@@ -187,6 +200,10 @@ class TranscriptionGetResponse(BaseModel):
     dialogue_entries: list[DialogueEntry] | None
     status: JobStatus
     created_datetime: datetime
+    date_of_recording: datetime | None = None
+    client_name: str | None
+    case_id: str | None
+    client_date_of_birth: datetime | None
 
 
 class SingleRecording(BaseModel):
@@ -284,6 +301,7 @@ class TaskType(IntEnum):
     MINUTE = 2
     EDIT = 3
     INTERACTIVE = 4
+    TRANSCRIPTION_ONLY = 5
 
 
 class EditMessageData(BaseModel):

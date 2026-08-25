@@ -39,7 +39,7 @@ vi.mock(
   () => ({
     SpeakerEditor: ({ disabled }: { disabled?: boolean }) => (
       <button type="button" disabled={disabled}>
-        Speaker editor
+        Edit speaker names
       </button>
     ),
   })
@@ -156,6 +156,9 @@ const transcription: TranscriptionGetResponse = {
   ],
   status: 'completed',
   created_datetime: '2024-01-01T00:00:00Z',
+  case_id: 'case-1',
+  client_name: 'Test Client',
+  client_date_of_birth: '1990-01-01',
 }
 
 const twoEntryTranscription: TranscriptionGetResponse = {
@@ -172,7 +175,7 @@ describe('TranscriptionTab default view', () => {
   it('renders the four action buttons', () => {
     renderTab(transcription)
     expect(
-      screen.getByRole('button', { name: 'Speaker editor' })
+      screen.getByRole('button', { name: 'Edit speaker names' })
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Edit transcript' })
@@ -212,7 +215,7 @@ describe('TranscriptionTab entering line edit mode', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
 
     expect(
-      screen.getByRole('button', { name: 'Speaker editor' })
+      screen.getByRole('button', { name: 'Edit speaker names' })
     ).toBeDisabled()
     expect(
       screen.getByRole('button', { name: 'Edit transcript' })
@@ -464,7 +467,7 @@ describe('TranscriptionTab full edit flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
 
     expect(
-      screen.getByRole('button', { name: 'Speaker editor' })
+      screen.getByRole('button', { name: 'Edit speaker names' })
     ).toBeDisabled()
     expect(
       screen.getByRole('button', { name: 'Edit transcript' })

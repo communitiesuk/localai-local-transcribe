@@ -1,3 +1,4 @@
+import datetime
 import logging
 import math
 import uuid
@@ -31,11 +32,13 @@ from common.types import (
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
+    TranscriptionOnlyCreateRequest,
     TranscriptionSortOrder,
     UnlabelledTranscriptionMetadata,
     UnlabelledTranscriptionsResponse,
     UpdateDialogueEntrySpeakerRequest,
     UpdateDialogueEntryTextRequest,
+    UpdateTranscriptionMetadataRequest,
     UpdateTranscriptionTitleRequest,
     WorkerMessage,
 )
@@ -216,12 +219,39 @@ async def create_recording(
     recording_id = uuid.uuid4()
     file_name = f"{recording_id}.{request.file_extension}"
     user_upload_s3_file_key = get_file_s3_key(user.email, file_name)
-    recording = Recording(user_id=user.id, s3_file_key=user_upload_s3_file_key)
+    recording = Recording(user_id=user.id, s3_file_key=user_upload_s3_file_key, file_created_at=request.file_created_at)
     session.add(recording)
     await session.commit()
     presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
     await session.refresh(recording)
     return RecordingCreateResponse(id=recording.id, upload_url=presigned_url)
+
+
+@transcriptions_router.post("/transcriptions-only", response_model=TranscriptionCreateResponse, status_code=201)
+async def create_transcription_only(
+    request: TranscriptionOnlyCreateRequest,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> TranscriptionCreateResponse:
+    """transcription without creating an associated Minute"""
+    recording = await session.get(Recording, request.recording_id)
+    if not recording or recording.user_id != current_user.id:
+        raise HTTPException(404, detail="Recording not found")
+    transcription = Transcription(user_id=current_user.id, title=request.title)
+
+    if not await storage_service.check_object_exists(recording.s3_file_key):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Recording file not found in S3: {recording.s3_file_key}",
+        )
+
+    session.add(transcription)
+    recording.transcription_id = transcription.id
+    await session.commit()
+    await session.refresh(transcription)
+    transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION_ONLY))
+
+    return TranscriptionCreateResponse(id=transcription.id)
 
 
 @transcriptions_router.post("/transcriptions", response_model=TranscriptionCreateResponse, status_code=201)
@@ -273,6 +303,10 @@ async def get_transcription(
         dialogue_entries=transcription.dialogue_entries,
         title=transcription.title,
         created_datetime=transcription.created_datetime,
+        date_of_recording=transcription.date_of_recording,
+        client_name=transcription.client_name,
+        case_id=transcription.case_id,
+        client_date_of_birth=transcription.client_date_of_birth,
     )
 
 
@@ -326,6 +360,26 @@ async def update_transcription_title(
     if request.title is not None:
         transcription.title = request.title
         await session.commit()
+
+
+@transcriptions_router.put("/transcriptions/{transcription_id}/details", status_code=204)
+async def update_transcription_metadata(
+    transcription_id: uuid.UUID,
+    request: UpdateTranscriptionMetadataRequest,
+    session: SQLSessionDep,
+    current_user: UserDep,
+) -> None:
+    """Update a transcription's metadata."""
+    transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
+    transcription.case_id = request.case_id
+    transcription.client_name = request.client_name
+    transcription.client_date_of_birth = (
+        request.client_date_of_birth.replace(tzinfo=None) if request.client_date_of_birth is not None else None
+    )
+    transcription.title = request.subject
+
+    transcription.updated_datetime = datetime.datetime.now(tz=datetime.UTC)
+    await session.commit()
 
 
 @transcriptions_router.patch("/transcriptions/{transcription_id}/speakers", status_code=204)
