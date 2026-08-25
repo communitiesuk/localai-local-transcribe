@@ -47,7 +47,7 @@ def llm_service(llm_queue, stopped):
 
 
 @pytest.mark.asyncio
-async def test_process_transcript_complete(transcription_service, transcription_queue, monkeypatch):
+async def test_process_with_transcript_complete(transcription_service, transcription_queue, monkeypatch):
     transcription_queue.receive_message.return_value = [(TRANSCRIPTION_MESSAGE, RECEIPT_HANDLE)]
 
     transcription_job = TranscriptionJobMessageData(
@@ -72,7 +72,7 @@ async def test_process_transcript_complete(transcription_service, transcription_
 
 
 @pytest.mark.asyncio
-async def test_process_transcript_requeue(transcription_service, transcription_queue, llm_queue, monkeypatch):
+async def test_process_without_transcript_requeue(transcription_service, transcription_queue, llm_queue, monkeypatch):
     transcription_queue.receive_message.return_value = [(TRANSCRIPTION_MESSAGE, RECEIPT_HANDLE)]
 
     transcription_job = TranscriptionJobMessageData(

@@ -23,7 +23,7 @@ import { useCountdown } from '@/hooks/use-countdown'
 export function MicRecorderForm() {
   const router = useRouter()
 
-  const [triggerUpload, setTriggerUpload] = useState(false)
+  const uploadRef = useRef(false)
   const { onSubmit, form } = useStartTranscription()
   const startUpload = useUploadRecordingStore((store) => store.startUpload)
 
@@ -35,10 +35,10 @@ export function MicRecorderForm() {
   const watchBlob = form.watch('file')
 
   useEffect(() => {
-    if (!triggerUpload || !watchBlob) return
+    if (!uploadRef.current || !watchBlob) return
     handleSubmit()
-    setTriggerUpload(false)
-  }, [triggerUpload, watchBlob, handleSubmit])
+    uploadRef.current = false
+  }, [watchBlob, handleSubmit])
 
   return (
     <FormProvider {...form}>
@@ -49,7 +49,7 @@ export function MicRecorderForm() {
           <MicRecorderComponent
             recordedAudio={value}
             setRecordedAudio={onChange}
-            onStopRecording={() => setTriggerUpload(true)}
+            onStopRecording={() => (uploadRef.current = true)}
           />
         )}
       />
@@ -328,8 +328,8 @@ function MicRecorderComponent({
             stream={mediaRecorderStream}
             isRecording={isRecording}
             onStopRecording={() => {
-              stopRecording()
               onStopRecording()
+              stopRecording()
             }}
             onPauseStateChange={handlePauseStateChange}
           />

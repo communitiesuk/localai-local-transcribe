@@ -26,7 +26,7 @@ import { useCountdown } from '@/hooks/use-countdown'
 export const TabRecorderForm = () => {
   const router = useRouter()
 
-  const [triggerUpload, setTriggerUpload] = useState(false)
+  const uploadRef = useRef(false)
   const { onSubmit, form } = useStartTranscription()
   const startUpload = useUploadRecordingStore((store) => store.startUpload)
 
@@ -38,10 +38,10 @@ export const TabRecorderForm = () => {
   const watchBlob = form.watch('file')
 
   useEffect(() => {
-    if (!triggerUpload || !watchBlob) return
+    if (!uploadRef.current || !watchBlob) return
     handleSubmit()
-    setTriggerUpload(false)
-  }, [triggerUpload, watchBlob, handleSubmit])
+    uploadRef.current = false
+  }, [watchBlob, handleSubmit])
 
   return (
     <FormProvider {...form}>
@@ -52,7 +52,7 @@ export const TabRecorderForm = () => {
           <TabRecorder
             recordedAudio={value}
             setRecordedAudio={(blob) => onChange(blob)}
-            onStopRecording={() => setTriggerUpload(true)}
+            onStopRecording={() => (uploadRef.current = true)}
           />
         )}
       />
@@ -407,8 +407,8 @@ function TabRecorder({
               stream={stream}
               isRecording={isRecording}
               onStopRecording={() => {
-                stopRecording()
                 onStopRecording()
+                stopRecording()
               }}
               onPauseStateChange={handlePauseStateChange}
             />
