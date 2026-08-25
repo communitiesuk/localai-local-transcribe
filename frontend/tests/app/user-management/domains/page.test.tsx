@@ -4,9 +4,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import EditApprovedDomainsPage, {
   DomainsUpdateConflictError,
 } from '@/app/user-management/organisations/[organisationId]/domains/page'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { QueryClient, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
+import { GetUserResponse, OrganisationResponse } from '@/lib/client'
 import { getOrganisationOrganisationsOrganisationIdGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
 
@@ -65,55 +66,57 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
   }
 })
 
+const mockCurrentUser: GetUserResponse = {
+  id: 'user-1',
+  created_datetime: '2025-01-01T00:00:00Z',
+  updated_datetime: '2025-01-01T00:00:00Z',
+  accepted_tou: true,
+  last_login: '2025-01-01T00:00:00Z',
+  is_active: true,
+  name: 'Test User',
+  email: 'test.user@maidstone.gov.uk',
+  data_retention_days: 30,
+  roles: ['local_authority_admin'],
+  organisation_id: 'org-1',
+}
+
+const buildOrganisation = (organisationId: string): OrganisationResponse => ({
+  id: organisationId,
+  name:
+    organisationId === 'org-1'
+      ? 'Maidstone Borough Council'
+      : 'Different Council',
+  allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
+  created_datetime: '2025-01-01T00:00:00Z',
+  updated_datetime: '2025-01-01T00:00:00Z',
+})
+
+const mockOrganisationQuery = (
+  data: OrganisationResponse | undefined,
+  isLoading = false
+) => ({ data, isLoading }) as ReturnType<typeof useOrganisation>
+
 describe('<EditApprovedDomainsPage />', () => {
   const mockMutateAsync = vi.fn()
-  const mockInvalidateQueries = vi.fn()
-  const mockSetQueryData = vi.fn()
-  let currentOrganisationId = 'org-1'
+  const queryClient = new QueryClient()
+  const mockInvalidateQueries = vi.spyOn(queryClient, 'invalidateQueries')
+  const mockSetQueryData = vi.spyOn(queryClient, 'setQueryData')
 
   beforeEach(() => {
     vi.clearAllMocks()
     useBannerStore.getState().clearBanner()
-    currentOrganisationId = 'org-1'
 
-    vi.mocked(useAuthorisedUser).mockImplementation(
-      (options?: { organisationId?: string }) => {
-        const organisationId = options?.organisationId || currentOrganisationId
+    vi.mocked(useQueryClient).mockReturnValue(queryClient)
 
-        return {
-          currentUser: {
-            id: 'user-1',
-            organisation_id: 'org-1',
-            roles: ['local_authority_admin'],
-          },
-          isAllowed: organisationId === 'org-1',
-          isLoading: false,
-          isError: false,
-        } as unknown as ReturnType<typeof useAuthorisedUser>
-      }
-    )
+    vi.mocked(useAuthorisedUser).mockReturnValue({
+      currentUser: mockCurrentUser,
+      isAllowed: true,
+      isLoading: false,
+      isError: false,
+    })
 
-    vi.mocked(useOrganisation).mockImplementation(
-      (param?: string | { organisationId?: string }) => {
-        const organisationId =
-          typeof param === 'string'
-            ? param
-            : param?.organisationId || currentOrganisationId
-
-        return {
-          data: {
-            id: organisationId,
-            name:
-              organisationId === 'org-1'
-                ? 'Maidstone Borough Council'
-                : 'Different Council',
-            allowed_domains: ['maidstone.gov.uk', 'communities.gov.uk'],
-            created_datetime: '2025-01-01T00:00:00Z',
-            updated_datetime: '2025-01-01T00:00:00Z',
-          },
-          isLoading: false,
-        } as unknown as ReturnType<typeof useOrganisation>
-      }
+    vi.mocked(useOrganisation).mockImplementation((organisationId) =>
+      mockOrganisationQuery(buildOrganisation(organisationId))
     )
 
     // Transparently forward mutation callbacks defined both in useMutation options
@@ -137,7 +140,10 @@ describe('<EditApprovedDomainsPage />', () => {
             'onSuccess' in mutationOptions &&
             typeof mutationOptions.onSuccess === 'function'
           ) {
-            mutationOptions.onSuccess(data, variables, undefined)
+            mutationOptions.onSuccess(data, variables, undefined, {
+              client: queryClient,
+              meta: undefined,
+            })
           }
           if (callOptions?.onSuccess) {
             callOptions.onSuccess(data, variables, undefined)
@@ -149,7 +155,10 @@ describe('<EditApprovedDomainsPage />', () => {
             'onError' in mutationOptions &&
             typeof mutationOptions.onError === 'function'
           ) {
-            mutationOptions.onError(error as Error, variables, undefined)
+            mutationOptions.onError(error as Error, variables, undefined, {
+              client: queryClient,
+              meta: undefined,
+            })
           }
           if (callOptions?.onError) {
             callOptions.onError(error as Error, variables, undefined)
@@ -163,16 +172,10 @@ describe('<EditApprovedDomainsPage />', () => {
         isPending: false,
       } as unknown as ReturnType<typeof useMutation>
     })
-
-    vi.mocked(useQueryClient).mockReturnValue({
-      invalidateQueries: mockInvalidateQueries,
-      setQueryData: mockSetQueryData,
-    } as unknown as ReturnType<typeof useQueryClient>)
   })
 
   // Synchronous page renderer using the synchronous `use` hook override
   const renderPage = (params = { organisationId: 'org-1' }) => {
-    currentOrganisationId = params.organisationId
     mockParams.mockReturnValue(params)
 
     const paramsPromise = Promise.resolve(params) as Promise<{
@@ -184,10 +187,9 @@ describe('<EditApprovedDomainsPage />', () => {
   }
 
   it('renders a loading state while the user or organisation is loading', () => {
-    vi.mocked(useOrganisation).mockReturnValue({
-      data: undefined,
-      isLoading: true,
-    } as unknown as ReturnType<typeof useOrganisation>)
+    vi.mocked(useOrganisation).mockReturnValue(
+      mockOrganisationQuery(undefined, true)
+    )
 
     renderPage()
     expect(screen.getByText('Loading...')).toBeInTheDocument()

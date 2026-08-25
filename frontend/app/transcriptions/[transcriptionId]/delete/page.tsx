@@ -16,6 +16,7 @@ export default function DeleteTranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
 }) {
   const { transcriptionId } = use(props.params)
+  const router = useRouter()
   const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
 
@@ -35,6 +36,7 @@ export default function DeleteTranscriptionPage(props: {
         message: 'Your recording has been deleted',
       })
       // TODO AIILG-497: add event for deleting transcription
+      router.push('/transcriptions')
     },
   })
 
