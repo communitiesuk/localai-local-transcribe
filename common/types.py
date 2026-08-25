@@ -112,6 +112,7 @@ class UpdateTranscriptionMetadataRequest(BaseModel):
     case_id: str | None
     subject: str | None
     client_date_of_birth: datetime | None
+    date_of_recording: datetime | None
 
 
 class RenameSpeakerRequest(BaseModel):

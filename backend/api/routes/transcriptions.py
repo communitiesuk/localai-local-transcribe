@@ -381,6 +381,9 @@ async def update_transcription_metadata(
     transcription.client_date_of_birth = (
         request.client_date_of_birth.replace(tzinfo=None) if request.client_date_of_birth is not None else None
     )
+    transcription.date_of_recording = (
+        request.date_of_recording.replace(tzinfo=None) if request.date_of_recording is not None else None
+    )
     transcription.title = request.subject
 
     transcription.updated_datetime = datetime.datetime.now(tz=datetime.UTC)

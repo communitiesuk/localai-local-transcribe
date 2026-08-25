@@ -217,6 +217,16 @@ export default function TranscriptionPage(props: {
   )
 }
 
+const formatDateTimeLocalValue = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const timezoneOffsetMs = date.getTimezoneOffset() * 60_000
+  return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 19)
+}
+
 const RecordingDetails = ({
   dateTimeLabel,
   transcription,
@@ -239,6 +249,9 @@ const RecordingDetails = ({
   const form = useForm<TranscriptionDetailsData>({
     reValidateMode: 'onSubmit',
     defaultValues: {
+      dateOfRecording: formatDateTimeLocalValue(
+        transcription.date_of_recording ?? transcription.created_datetime
+      ),
       clientName: transcription.client_name || '',
       caseId: transcription.case_id || '',
       subject: transcription.title || '',
@@ -260,6 +273,10 @@ const RecordingDetails = ({
 
   const { errors, isSubmitted } = form.formState
   const errorList = [
+    errors.dateOfRecording?.message && {
+      href: '#date-recorded',
+      text: errors.dateOfRecording.message,
+    },
     errors.clientDateOfBirth?.message && {
       href: '#client-dob-day',
       text: errors.clientDateOfBirth.message,
@@ -318,6 +335,10 @@ const RecordingDetails = ({
         case_id: data.caseId || null,
         subject: data.subject || null,
         client_date_of_birth: dateOfBirth ? dateOfBirth.toISOString() : null,
+        date_of_recording:
+          isUpload && data.dateOfRecording
+            ? new Date(data.dateOfRecording).toISOString()
+            : (transcription.date_of_recording ?? null),
       },
     })
   }
@@ -334,7 +355,29 @@ const RecordingDetails = ({
         {isUpload ? (
           <GovukFormGroup>
             <GovukLabel htmlFor="date-recorded">Date recorded</GovukLabel>
-            <GovukInput id="date-recorded" defaultValue={dateTimeLabel} />
+            {errors.dateOfRecording?.message && (
+              <p id="date-recorded-error" className="govuk-error-message">
+                <span className="govuk-visually-hidden">Error:</span>{' '}
+                {errors.dateOfRecording.message}
+              </p>
+            )}
+            <GovukInput
+              id="date-recorded"
+              type="datetime-local"
+              step={1}
+              aria-describedby={
+                errors.dateOfRecording?.message
+                  ? 'date-recorded-error'
+                  : undefined
+              }
+              aria-invalid={errors.dateOfRecording ? 'true' : undefined}
+              {...form.register('dateOfRecording', {
+                validate: (value) =>
+                  !value ||
+                  !Number.isNaN(new Date(value).getTime()) ||
+                  'Enter a real date and time for the recording',
+              })}
+            />
           </GovukFormGroup>
         ) : (
           <>
