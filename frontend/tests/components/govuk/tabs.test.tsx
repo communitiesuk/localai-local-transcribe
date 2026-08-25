@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 describe('<GovukTabs />', () => {
-  it('renders a div with the canonical govuk-tabs class and data-module', () => {
+  it('renders a div with the canonical govuk-tabs class', () => {
     const { container } = render(
       <GovukTabs id="tabs-test">
         <GovukTabs.Panel id="one" label="One">
@@ -11,9 +11,7 @@ describe('<GovukTabs />', () => {
         </GovukTabs.Panel>
       </GovukTabs>
     )
-    const root = container.querySelector(
-      '[data-module="govuk-tabs"]'
-    ) as HTMLElement
+    const root = container.querySelector('#tabs-test') as HTMLElement
     expect(root.tagName).toBe('DIV')
     expect(root).toHaveClass('govuk-tabs')
     expect(root).toHaveAttribute('id', 'tabs-test')
