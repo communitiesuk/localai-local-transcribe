@@ -19,9 +19,10 @@ type PanelProps = {
   className?: string
   children: React.ReactNode
   isActive?: boolean
+  labelledBy?: string
 }
 
-function Panel({ id, className, children, isActive }: PanelProps) {
+function Panel({ id, className, children, isActive, labelledBy }: PanelProps) {
   return (
     <div
       id={id}
@@ -30,6 +31,8 @@ function Panel({ id, className, children, isActive }: PanelProps) {
         !isActive && 'govuk-tabs__panel--hidden',
         className
       )}
+      role="tabpanel"
+      aria-labelledby={labelledBy}
     >
       {children}
     </div>
@@ -81,6 +84,52 @@ function GovukTabsBase({
     onTabChange?.(id)
   }
 
+  const focusTab = (tabId: string) => {
+    document.getElementById(`${id}-${tabId}-tab`)?.focus()
+  }
+
+  const selectTab = (tabId: string) => {
+    handleTabChange(tabId)
+    focusTab(tabId)
+  }
+
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLAnchorElement>) => {
+    const currentIndex = panelIds.indexOf(stableActiveTab)
+
+    if (currentIndex === -1) {
+      return
+    }
+
+    const previousIndex =
+      currentIndex === 0 ? panelIds.length - 1 : currentIndex - 1
+    const nextIndex =
+      currentIndex === panelIds.length - 1 ? 0 : currentIndex + 1
+
+    switch (event.key) {
+      case 'ArrowLeft':
+        event.preventDefault()
+        selectTab(panelIds[previousIndex])
+        break
+      case 'ArrowRight':
+        event.preventDefault()
+        selectTab(panelIds[nextIndex])
+        break
+      case 'Home':
+        event.preventDefault()
+        selectTab(panelIds[0])
+        break
+      case 'End':
+        event.preventDefault()
+        selectTab(panelIds[panelIds.length - 1])
+        break
+      case ' ':
+      case 'Enter':
+        event.preventDefault()
+        selectTab(stableActiveTab)
+        break
+    }
+  }
+
   return (
     <div
       {...rest}
@@ -89,7 +138,7 @@ function GovukTabsBase({
       className={cn('govuk-tabs', className)}
     >
       <h2 className="govuk-tabs__title">{title}</h2>
-      <ul className="govuk-tabs__list">
+      <ul role="tablist" className="govuk-tabs__list">
         {panels.map((panel) => (
           <li
             key={panel.props.id}
@@ -99,12 +148,18 @@ function GovukTabsBase({
             })}
           >
             <a
+              id={`${id}-${panel.props.id}-tab`}
               className="govuk-tabs__tab"
               href={`#${panel.props.id}`}
               onClick={(e) => {
                 e.preventDefault()
                 handleTabChange(panel.props.id)
               }}
+              onKeyDown={handleTabKeyDown}
+              role="tab"
+              aria-selected={panel.props.id === stableActiveTab}
+              aria-controls={panel.props.id}
+              tabIndex={panel.props.id === stableActiveTab ? 0 : -1}
             >
               {panel.props.label}
             </a>
@@ -114,6 +169,7 @@ function GovukTabsBase({
       {panels.map((panel) =>
         React.cloneElement(panel, {
           isActive: panel.props.id === stableActiveTab,
+          labelledBy: `${id}-${panel.props.id}-tab`,
         })
       )}
     </div>

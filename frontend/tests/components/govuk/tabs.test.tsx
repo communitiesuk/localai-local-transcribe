@@ -1,5 +1,5 @@
 import { GovukTabs } from '@/components/govuk/tabs'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 describe('<GovukTabs />', () => {
@@ -51,6 +51,86 @@ describe('<GovukTabs />', () => {
     const items = container.querySelectorAll('.govuk-tabs__list-item')
     expect(items[0]).toHaveClass('govuk-tabs__list-item--selected')
     expect(items[1]).not.toHaveClass('govuk-tabs__list-item--selected')
+  })
+
+  it('supports arrow key navigation between tabs', () => {
+    render(
+      <GovukTabs id="tabs-test">
+        <GovukTabs.Panel id="one" label="One">
+          <p>A</p>
+        </GovukTabs.Panel>
+        <GovukTabs.Panel id="two" label="Two">
+          <p>B</p>
+        </GovukTabs.Panel>
+        <GovukTabs.Panel id="three" label="Three">
+          <p>C</p>
+        </GovukTabs.Panel>
+      </GovukTabs>
+    )
+
+    const one = screen.getByRole('tab', { name: 'One' })
+    const two = screen.getByRole('tab', { name: 'Two' })
+    const three = screen.getByRole('tab', { name: 'Three' })
+
+    fireEvent.keyDown(one, { key: 'ArrowRight' })
+    expect(two).toHaveAttribute('aria-selected', 'true')
+    expect(two).toHaveFocus()
+
+    fireEvent.keyDown(two, { key: 'ArrowLeft' })
+    expect(one).toHaveAttribute('aria-selected', 'true')
+    expect(one).toHaveFocus()
+
+    fireEvent.keyDown(one, { key: 'ArrowLeft' })
+    expect(three).toHaveAttribute('aria-selected', 'true')
+    expect(three).toHaveFocus()
+  })
+
+  it('supports Home and End keyboard navigation', () => {
+    render(
+      <GovukTabs id="tabs-test">
+        <GovukTabs.Panel id="one" label="One">
+          <p>A</p>
+        </GovukTabs.Panel>
+        <GovukTabs.Panel id="two" label="Two">
+          <p>B</p>
+        </GovukTabs.Panel>
+        <GovukTabs.Panel id="three" label="Three">
+          <p>C</p>
+        </GovukTabs.Panel>
+      </GovukTabs>
+    )
+
+    const one = screen.getByRole('tab', { name: 'One' })
+    const three = screen.getByRole('tab', { name: 'Three' })
+
+    fireEvent.keyDown(one, { key: 'End' })
+    expect(three).toHaveAttribute('aria-selected', 'true')
+    expect(three).toHaveFocus()
+
+    fireEvent.keyDown(three, { key: 'Home' })
+    expect(one).toHaveAttribute('aria-selected', 'true')
+    expect(one).toHaveFocus()
+  })
+
+  it('keeps Enter and Space selecting the active tab', () => {
+    render(
+      <GovukTabs id="tabs-test">
+        <GovukTabs.Panel id="one" label="One">
+          <p>A</p>
+        </GovukTabs.Panel>
+        <GovukTabs.Panel id="two" label="Two">
+          <p>B</p>
+        </GovukTabs.Panel>
+      </GovukTabs>
+    )
+
+    const one = screen.getByRole('tab', { name: 'One' })
+
+    fireEvent.keyDown(one, { key: 'Enter' })
+    expect(one).toHaveAttribute('aria-selected', 'true')
+
+    fireEvent.keyDown(one, { key: ' ' })
+    expect(one).toHaveAttribute('aria-selected', 'true')
   })
 
   it('renders each panel with its id and hides all but the first', () => {
