@@ -156,6 +156,9 @@ const transcription: TranscriptionGetResponse = {
   ],
   status: 'completed',
   created_datetime: '2024-01-01T00:00:00Z',
+  case_id: 'case-1',
+  client_name: 'Test Client',
+  client_date_of_birth: '1990-01-01',
 }
 
 const twoEntryTranscription: TranscriptionGetResponse = {

@@ -99,6 +99,13 @@ class UpdateTranscriptionTitleRequest(BaseModel):
     title: str | None = None
 
 
+class UpdateTranscriptionMetadataRequest(BaseModel):
+    client_name: str | None
+    case_id: str | None
+    subject: str | None
+    client_date_of_birth: datetime | None
+
+
 class RenameSpeakerRequest(BaseModel):
     original_speaker: str
     new_speaker: str
@@ -186,6 +193,9 @@ class TranscriptionGetResponse(BaseModel):
     status: JobStatus
     created_datetime: datetime
     date_of_recording: datetime | None = None
+    client_name: str | None
+    case_id: str | None
+    client_date_of_birth: datetime | None
 
 
 class SingleRecording(BaseModel):

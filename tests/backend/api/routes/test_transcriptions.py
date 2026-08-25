@@ -16,6 +16,7 @@ from backend.api.routes.transcriptions import (
     rename_speaker_everywhere,
     update_dialogue_entry_speaker,
     update_dialogue_entry_text,
+    update_transcription_metadata,
     update_transcription_title,
 )
 from common.database.postgres_models import JobStatus
@@ -24,6 +25,7 @@ from common.types import (
     RenameSpeakerRequest,
     UpdateDialogueEntrySpeakerRequest,
     UpdateDialogueEntryTextRequest,
+    UpdateTranscriptionMetadataRequest,
     UpdateTranscriptionTitleRequest,
 )
 
@@ -182,6 +184,102 @@ async def test_update_transcription_title_unauthorized(mock_session, mock_user, 
         await update_transcription_title(
             mock_transcription.id,
             UpdateTranscriptionTitleRequest(title="Updated title"),
+            mock_session,
+            mock_user,
+        )
+
+    assert exc.value.status_code == 404
+    mock_session.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_transcription_metadata_success(mock_session, mock_user, mock_transcription):
+    original_updated_datetime = mock_transcription.updated_datetime
+    client_date_of_birth = datetime(1985, 4, 12, tzinfo=UTC)
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+
+    await update_transcription_metadata(
+        mock_transcription.id,
+        UpdateTranscriptionMetadataRequest(
+            case_id="XYZ987654",
+            client_name="Jane Smith",
+            client_date_of_birth=client_date_of_birth,
+            subject="Updated subject",
+        ),
+        mock_session,
+        mock_user,
+    )
+
+    assert mock_transcription.case_id == "XYZ987654"
+    assert mock_transcription.client_name == "Jane Smith"
+    assert mock_transcription.client_date_of_birth == client_date_of_birth.replace(tzinfo=None)
+    assert mock_transcription.title == "Updated subject"
+    assert mock_transcription.updated_datetime > original_updated_datetime
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_transcription_metadata_null_fields_clear_existing_values(
+    mock_session, mock_user, mock_transcription
+):
+    original_updated_datetime = mock_transcription.updated_datetime
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+
+    await update_transcription_metadata(
+        mock_transcription.id,
+        UpdateTranscriptionMetadataRequest(
+            case_id=None,
+            client_name=None,
+            client_date_of_birth=None,
+            subject=None,
+        ),
+        mock_session,
+        mock_user,
+    )
+
+    assert mock_transcription.title is None
+    assert mock_transcription.case_id is None
+    assert mock_transcription.client_name is None
+    assert mock_transcription.client_date_of_birth is None
+    assert mock_transcription.updated_datetime > original_updated_datetime
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_transcription_metadata_not_found(mock_session, mock_user):
+    mock_session.get = AsyncMock(return_value=None)
+
+    with pytest.raises(HTTPException) as exc:
+        await update_transcription_metadata(
+            uuid.uuid4(),
+            UpdateTranscriptionMetadataRequest(
+                case_id=None,
+                client_name="Jane Smith",
+                client_date_of_birth=None,
+                subject=None,
+            ),
+            mock_session,
+            mock_user,
+        )
+
+    assert exc.value.status_code == 404
+    mock_session.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_transcription_metadata_unauthorized(mock_session, mock_user, mock_transcription):
+    mock_transcription.user_id = uuid.uuid4()
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+
+    with pytest.raises(HTTPException) as exc:
+        await update_transcription_metadata(
+            mock_transcription.id,
+            UpdateTranscriptionMetadataRequest(
+                case_id=None,
+                client_name="Jane Smith",
+                client_date_of_birth=None,
+                subject=None,
+            ),
             mock_session,
             mock_user,
         )

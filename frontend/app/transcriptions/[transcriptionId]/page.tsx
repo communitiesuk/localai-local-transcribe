@@ -1,12 +1,10 @@
 'use client'
 
-import { useBannerStore } from '@/stores/use-banner-store'
 import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import { BannerNotification } from '@/components/banner-notification'
 import { DownloadButton } from '@/components/download-button'
 import {
   GovukBackLink,
@@ -28,12 +26,19 @@ import { TranscriptionGetResponse } from '@/lib/client'
 import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
+  getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
+  updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { FeatureFlags } from '@/lib/feature-flags'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { redirect, useRouter } from 'next/navigation'
+import { TranscriptionDetailsData } from '@/types/transcriptions'
+import { FormProvider, useForm } from 'react-hook-form'
+import { BannerNotification } from '@/components/banner-notification'
+import { useBannerStore } from '@/stores/use-banner-store'
+import { useTranscriptionDetailsDraftStore } from '@/stores/use-transcription-details-draft-store'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -219,53 +224,169 @@ const RecordingDetails = ({
   dateTimeLabel: string
   transcription: TranscriptionGetResponse
 }) => {
-  const [open, setOpen] = useState(false)
+  const { draft, setDraft, clearDraft } = useTranscriptionDetailsDraftStore()
+  const [open, setOpen] = useState(
+    (draft?.transcriptionId === transcription.id && draft?.isOpen) ?? false
+  )
   const router = useRouter()
+
+  let clientDateOfBirth: Date | null = null
+  if (transcription.client_date_of_birth) {
+    clientDateOfBirth = new Date(transcription.client_date_of_birth)
+  }
+
+  const form = useForm<TranscriptionDetailsData>({
+    reValidateMode: 'onSubmit',
+    defaultValues: {
+      clientName: transcription.client_name || '',
+      caseId: transcription.case_id || '',
+      subject: transcription.title || '',
+      clientDateOfBirth: {
+        day: clientDateOfBirth?.getUTCDate().toString() || '',
+        month: clientDateOfBirth
+          ? (clientDateOfBirth.getUTCMonth() + 1).toString()
+          : '',
+        year: clientDateOfBirth?.getUTCFullYear().toString() || '',
+      },
+    },
+  })
+
+  useEffect(() => {
+    if (draft?.transcriptionId === transcription.id) {
+      form.reset(draft.data, { keepDefaultValues: true })
+    }
+  }, [draft, transcription.id, form])
+
+  const { errors, isSubmitted } = form.formState
+  const errorList = [
+    errors.clientDateOfBirth?.message && {
+      href: '#client-dob-day',
+      text: errors.clientDateOfBirth.message,
+    },
+  ].filter(Boolean) as { href: string; text: string }[]
+
+  const setBanner = useBannerStore((store) => store.setBanner)
+
+  const queryClient = useQueryClient()
+
+  const { mutate } = useMutation({
+    ...updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
+          path: { transcription_id: transcription.id },
+        }),
+      })
+      setBanner({
+        variant: 'success',
+        title: 'Success',
+        message: 'Recording details updated',
+      })
+      clearDraft()
+      form.reset(form.getValues())
+    },
+    onError: () => {
+      setBanner({
+        variant: 'important',
+        title: 'There is a problem',
+        message: 'Failed to update recording details, please try again.',
+      })
+    },
+  })
+
+  const handleSave = (data: TranscriptionDetailsData) => {
+    let dateOfBirth: Date | null = null
+    if (
+      data.clientDateOfBirth.day &&
+      data.clientDateOfBirth.month &&
+      data.clientDateOfBirth.year
+    ) {
+      dateOfBirth = new Date(
+        Date.UTC(
+          parseInt(data.clientDateOfBirth.year),
+          parseInt(data.clientDateOfBirth.month) - 1,
+          parseInt(data.clientDateOfBirth.day)
+        )
+      )
+    }
+
+    mutate({
+      path: { transcription_id: transcription.id },
+      body: {
+        client_name: data.clientName || null,
+        case_id: data.caseId || null,
+        subject: data.subject || null,
+        client_date_of_birth: dateOfBirth ? dateOfBirth.toISOString() : null,
+      },
+    })
+  }
+
   return (
     <>
       <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
         Recording details
       </GovukHeading>
       <GovukDetails
+        open={open}
         summary={open ? 'Hide' : 'Show'}
         onToggle={(e) => setOpen(e.currentTarget.open)}
       >
+        {isSubmitted && errorList.length > 0 && (
+          <GovukErrorSummary errorList={errorList} />
+        )}
         <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
         <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
-        <GovukFormGroup>
-          <GovukLabel htmlFor="client-name">Client name (optional)</GovukLabel>
-          <GovukInput id="client-name" />
-        </GovukFormGroup>
-        <GovukFormGroup>
-          <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
-          <GovukInput id="case-id" />
-        </GovukFormGroup>
-        <GovukFormGroup>
-          <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
-          <GovukInput id="subject" />
-        </GovukFormGroup>
-        <GovukDateInput
-          id="client-dob"
-          legend="Client date of birth (optional)"
-        />
-        <GovukButtonGroup>
-          <GovukButton
-            type="button"
-            variant="secondary"
-            disabled
-            className="govuk-!-margin-bottom-2"
-          >
-            Update details
-          </GovukButton>
-          <GovukButton
-            type="button"
-            variant="warning"
-            className="govuk-!-margin-bottom-0"
-            onClick={() => router.push(`${transcription.id}/delete`)}
-          >
-            Delete recording
-          </GovukButton>
-        </GovukButtonGroup>
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleSave)} noValidate>
+            <GovukFormGroup>
+              <GovukLabel htmlFor="client-name">
+                Client name (optional)
+              </GovukLabel>
+              <GovukInput id="client-name" {...form.register('clientName')} />
+            </GovukFormGroup>
+            <GovukFormGroup>
+              <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
+              <GovukInput id="case-id" {...form.register('caseId')} />
+            </GovukFormGroup>
+            <GovukFormGroup>
+              <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
+              <GovukInput id="subject" {...form.register('subject')} />
+            </GovukFormGroup>
+            <GovukDateInput
+              id="client-dob"
+              legend="Client date of birth (optional)"
+              control={form.control}
+              name={'clientDateOfBirth'}
+              mustBePastOrFuture={'past'}
+              description={"client's date of birth"}
+            />
+            <GovukButtonGroup>
+              <GovukButton
+                type="submit"
+                variant="secondary"
+                className="govuk-!-margin-bottom-2"
+                disabled={!form.formState.isDirty}
+              >
+                Update details
+              </GovukButton>
+              <GovukButton
+                type="button"
+                variant="warning"
+                className="govuk-!-margin-bottom-0"
+                onClick={() => {
+                  setDraft({
+                    transcriptionId: transcription.id,
+                    data: form.getValues(),
+                    isOpen: open,
+                  })
+                  router.push(`${transcription.id}/delete`)
+                }}
+              >
+                Delete recording
+              </GovukButton>
+            </GovukButtonGroup>
+          </form>
+        </FormProvider>
       </GovukDetails>
     </>
   )
