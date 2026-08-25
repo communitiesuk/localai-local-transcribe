@@ -297,9 +297,7 @@ async def get_transcription(
 ) -> TranscriptionGetResponse:
     """Get a specific transcription by ID."""
     transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
-    result = await session.exec(
-        select(Recording.file_created_at).where(Recording.transcription_id == transcription.id)
-    )
+    result = await session.exec(select(Recording.file_created_at).where(Recording.transcription_id == transcription.id))
     is_upload = any(file_created_at is not None for file_created_at in result.all())
     return TranscriptionGetResponse(
         id=transcription.id,
