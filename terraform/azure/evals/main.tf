@@ -132,6 +132,15 @@ resource "azurerm_storage_account" "evals" {
     }
   }
 
+  # The workload uses blobs, not Azure Files. Azure still exposes the File service on a
+  # standard account, and the default SMB settings allow versions 2.1 and 3.0. Restricting
+  # to 3.1.1 is the File-protocol floor Wiz requires; it does not create a file share.
+  share_properties {
+    smb {
+      versions = ["SMB3.1.1"]
+    }
+  }
+
   tags = {
     purpose     = each.value.purpose
     workload    = "evals"
