@@ -1,14 +1,17 @@
 'use client'
 
+import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import {
   GovukButton,
   GovukButtonGroup,
   GovukHeading,
   GovukRadios,
 } from '@/components/govuk'
+import { TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   getUserTemplatesUserTemplatesGetOptions,
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -17,14 +20,17 @@ import posthog from 'posthog-js'
 import { useState } from 'react'
 
 export const NewDocumentTab = ({
-  transcriptionId,
+  transcription,
   onCancel,
   onCreated,
 }: {
-  transcriptionId: string
+  transcription: TranscriptionGetResponse
   onCancel: () => void
-  onCreated: () => void
+  onCreated: (templateName: string) => void
 }) => {
+  const [selectedValue, setSelectedValue] = useState('')
+  const [createdMinuteId, setCreatedMinuteId] = useState<string | null>(null)
+
   const {
     data: templates = [],
     isLoading,
@@ -32,19 +38,35 @@ export const NewDocumentTab = ({
     refetch,
   } = useQuery(getUserTemplatesUserTemplatesGetOptions())
 
-  const [selectedValue, setSelectedValue] = useState('')
+  const { data: minutes = [] } = useQuery({
+    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
+      {
+        path: { transcription_id: transcription.id! },
+      }
+    ),
+    enabled: createdMinuteId !== null,
+  })
 
   const queryClient = useQueryClient()
   const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
 
-  const sortedTemplates = [...templates].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  )
   const selectedTemplate = templates.find(
     (t) => (t.id ?? t.name) === selectedValue
   )
+
+  if (createdMinuteId) {
+    const createdMinute = minutes.find((m) => m.id === createdMinuteId)
+    if (!createdMinute) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <LoaderCircle className="animate-spin" aria-hidden="true" />
+        </div>
+      )
+    }
+    return <MinuteEditor transcription={transcription} minute={createdMinute} />
+  }
 
   if (isPending) {
     return (
@@ -82,22 +104,26 @@ export const NewDocumentTab = ({
     )
   }
 
+  const sortedTemplates = [...templates].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
+
   const handleCreate = () => {
     if (!selectedTemplate) return
     createMinute(
       {
-        path: { transcription_id: transcriptionId },
+        path: { transcription_id: transcription.id! },
         body: {
           template_name: selectedTemplate.name,
           template_id: selectedTemplate.id,
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
           queryClient.invalidateQueries({
             queryKey:
               listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
-                { path: { transcription_id: transcriptionId } }
+                { path: { transcription_id: transcription.id! } }
               ),
           })
           posthog.capture('generate_ai_minutes_started', {
@@ -105,7 +131,8 @@ export const NewDocumentTab = ({
               ? 'User generated'
               : selectedTemplate.name,
           })
-          onCreated()
+          setCreatedMinuteId(data.minute_id)
+          onCreated(selectedTemplate.name)
         },
       }
     )

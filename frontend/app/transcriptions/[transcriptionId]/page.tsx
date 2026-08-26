@@ -56,7 +56,9 @@ export default function TranscriptionPage(props: {
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
 
   const [activeTab, setActiveTab] = useState('transcript')
-  const [documentTabs, setDocumentTabs] = useState<string[]>([])
+  const [documentTabs, setDocumentTabs] = useState<
+    { id: string; label: string }[]
+  >([])
   const documentCounter = useRef(0)
 
   const handleLineEditError = useCallback((error: string | null) => {
@@ -156,23 +158,19 @@ export default function TranscriptionPage(props: {
   }
   const handleCreateDocument = () => {
     const id = `new-document-${documentCounter.current++}`
-    setDocumentTabs((prev) => [...prev, id])
+    setDocumentTabs((prev) => [...prev, { id, label: 'New document' }])
     setActiveTab(id)
   }
 
   const removeDocumentTab = (id: string) => {
-    setDocumentTabs((prev) => prev.filter((tab) => tab !== id))
+    setDocumentTabs((prev) => prev.filter((tab) => tab.id !== id))
     setActiveTab('transcript')
   }
 
-  const handleDocumentCreated = (id: string) => {
-    setDocumentTabs((prev) => prev.filter((tab) => tab !== id))
-    setActiveTab('meeting-summary')
-    setBanner({
-      variant: 'success',
-      title: 'Success',
-      message: 'Document created.',
-    })
+  const handleDocumentCreated = (id: string, templateName: string) => {
+    setDocumentTabs((prev) =>
+      prev.map((tab) => (tab.id === id ? { ...tab, label: templateName } : tab))
+    )
   }
 
   return (
@@ -241,12 +239,14 @@ export default function TranscriptionPage(props: {
             <ChatTab transcription={transcription} />
           </GovukTabs.Panel>
         )}
-        {documentTabs.map((id) => (
-          <GovukTabs.Panel key={id} id={id} label="New document">
+        {documentTabs.map((tab) => (
+          <GovukTabs.Panel key={tab.id} id={tab.id} label={tab.label}>
             <NewDocumentTab
-              transcriptionId={transcription.id!}
-              onCancel={() => removeDocumentTab(id)}
-              onCreated={() => handleDocumentCreated(id)}
+              transcription={transcription}
+              onCancel={() => removeDocumentTab(tab.id)}
+              onCreated={(templateName) =>
+                handleDocumentCreated(tab.id, templateName)
+              }
             />
           </GovukTabs.Panel>
         ))}
