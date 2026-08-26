@@ -8,7 +8,7 @@ import aiofiles
 from azure.storage.blob import BlobSasPermissions, generate_blob_sas
 from azure.storage.blob.aio import ContainerClient
 
-from common.services.storage_services.base import StorageService
+from common.services.storage_services.base import StorageService, build_content_disposition
 from common.settings import get_settings
 
 settings = get_settings()
@@ -73,7 +73,7 @@ class AzureBlobStorageService(StorageService):
                 account_key=container_client.credential.account_key,
                 permission=BlobSasPermissions(read=True),
                 expiry=expiry_time,
-                content_disposition=f"attachment; filename={filename}",
+                content_disposition=build_content_disposition(filename),
             )
             return f"{container_client.url}?{sas_token}"
 
