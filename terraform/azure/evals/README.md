@@ -94,6 +94,7 @@ Still out of scope: customer-managed keys, diagnostic logging to a SIEM, and loa
 - An **existing** resource group you are allowed to create storage accounts in
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Three globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one sensitive, one results
+- MHCLG public egress IPs or CIDR ranges for machines that run `terraform init` / `plan` / `apply` against the state backend
 - **Storage Blob Data Contributor** on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init` / `plan` / `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
 - **User Access Administrator** (or Owner) on the resource group for the applying identity, because `rbac.tf` creates role assignments
 
@@ -129,7 +130,7 @@ If Cloud Shell home storage was reset, clone again and recreate `terraform.tfvar
 cd backend
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars: subscription_id, resource_group_name, location,
-# storage_account_name (state account), environment_name
+# storage_account_name (state account), environment_name, mhclg_ip_rules
 nano terraform.tfvars
 
 terraform init
@@ -151,7 +152,8 @@ nano terraform.tfvars
 
 # Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
 # use_azuread_auth=true requires Storage Blob Data Contributor on the state storage
-# account or tfstate container for the applying identity; without that role, init fails.
+# account or tfstate container for the applying identity, and the caller must connect
+# from an IP listed in backend/mhclg_ip_rules; without both, init fails.
 terraform init -backend-config="resource_group_name=<from-backend-output>" -backend-config="storage_account_name=<from-backend-output>" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate" -backend-config="use_azuread_auth=true"
 
 terraform plan
