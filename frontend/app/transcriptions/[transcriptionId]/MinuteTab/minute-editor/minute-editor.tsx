@@ -1,13 +1,10 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
-import { RatingButton } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/rating-dialog/rating-dialog'
-import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import { GuardrailResponseComponent } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/guardrail-response-component'
 import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-version-select'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { Button } from '@/components/ui/button'
-import CopyButton from '@/components/ui/copy-button'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
   MinuteListItem,
@@ -22,27 +19,11 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  Download,
-  Edit,
-  Eye,
-  EyeOff,
-  FilePenLine,
-  FileQuestion,
-  FileX2,
-  Loader2,
-  Save,
-  Undo,
-} from 'lucide-react'
+import { FilePenLine, FileQuestion, FileX2, Loader2, Undo } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
-import {
-  GovukButton,
-  GovukButtonGroup,
-  GovukLabel,
-  GovukSelect,
-} from '@/components/govuk'
+import { GovukButton, GovukButtonGroup } from '@/components/govuk'
 
 type MinuteEditorForm = {
   html: string
@@ -55,7 +36,7 @@ export function MinuteEditor({
   transcription: TranscriptionGetResponse
   minute: MinuteListItem
 }) {
-  const [version, setVersion] = useState(0)
+  const [version, setVersion] = useState<string | undefined>(undefined)
   const [hideCitations, setHideCitations] = useState(false)
   const { data: minuteVersions = [], isLoading } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
@@ -65,15 +46,17 @@ export function MinuteEditor({
       query.state.data &&
       query.state.data.length > 0 &&
       ['awaiting_start', 'in_progress'].includes(
-        query.state.data[version].status
+        query.state.data.find((v) => v.id === version)?.status ?? ''
       )
         ? 1000
         : false,
   })
-  const minuteVersion = useMemo(
-    () => (minuteVersions.length > 0 ? minuteVersions[version] : undefined),
-    [minuteVersions, version]
-  )
+
+  const minuteVersion =
+    minuteVersions.length > 0
+      ? (minuteVersions.find((v) => v.id === version) ?? minuteVersions[0])
+      : undefined
+
   const isGenerating = useMemo(
     () =>
       ['awaiting_start', 'in_progress'].includes(minuteVersion?.status || ''),
@@ -106,7 +89,7 @@ export function MinuteEditor({
 
   const onSuccess = useCallback(() => {
     setIsEditable(false)
-    setVersion(0)
+    setVersion(undefined)
     queryClient.invalidateQueries({
       queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
         path: { minute_id: minute.id! },
@@ -236,82 +219,12 @@ export function MinuteEditor({
         <GovukButton variant="secondary">Copy document</GovukButton>
         <GovukButton variant="secondary">Show quotes</GovukButton>
       </GovukButtonGroup>
-      <div>
-        <GovukLabel htmlFor="version-select">Version history</GovukLabel>
-        <GovukSelect id="version-select" name="version-select"></GovukSelect>
-      </div>
-      <div className="mb-2 flex flex-wrap justify-between gap-y-2">
-        <div className="flex flex-wrap gap-2">
-          <MinuteVersionSelect
-            minuteVersions={minuteVersions}
-            version={version}
-            setVersion={setVersion}
-          />
-          <AiEditPopover
-            disabled={isEditable}
-            minuteId={minute.id!}
-            minuteVersionId={minuteVersion.id}
-            onSuccess={onSuccess}
-          />
-          {isEditable ? (
-            <Button
-              className="bg-blue-600 hover:bg-blue-800 active:bg-yellow-500"
-              onClick={form.handleSubmit(onSubmit)}
-            >
-              <Save /> Save Changes
-            </Button>
-          ) : (
-            <Button
-              className="bg-blue-600 hover:bg-blue-800 active:bg-yellow-500"
-              onClick={() => setIsEditable(true)}
-              type="button"
-            >
-              <Edit />
-              Edit Manually
-            </Button>
-          )}
-          <Button
-            type="button"
-            className="bg-green-600 text-white hover:bg-green-700 active:bg-yellow-500"
-            onClick={handleWordDocDownload}
-          >
-            <Download />
-            Download
-          </Button>
-          <CopyButton
-            textToCopy={contentToCopy}
-            posthogEvent="editor_content_copied"
-          />
-          {hasCitations && (
-            <Button
-              variant="outline"
-              onClick={() => setHideCitations((h) => !h)}
-              disabled={isEditable}
-            >
-              {isEditable ? (
-                'Citations shown when editing'
-              ) : hideCitations ? (
-                <>
-                  <Eye /> Show Citations
-                </>
-              ) : (
-                <>
-                  <EyeOff />
-                  Hide Citations
-                </>
-              )}
-            </Button>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <RatingButton
-            minuteVersionId={minuteVersion.id}
-            minutes={minuteVersion.html_content}
-            transcript={transcription.dialogue_entries!}
-          />
-        </div>
-      </div>
-
+      <MinuteVersionSelect
+        version={minuteVersion.id}
+        setVersion={setVersion}
+        minuteVersions={minuteVersions}
+      />
+      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-6 govuk-!-margin-bottom-6" />
       {!minuteVersion.too_short && minuteVersion.guardrail_results && (
         <GuardrailResponseComponent
           guardrailResults={minuteVersion.guardrail_results}
