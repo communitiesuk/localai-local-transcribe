@@ -240,16 +240,26 @@ const formatDateInputValue = (dateString: string | null | undefined) => {
   }
 }
 
+const formatTimeInputValue = (dateString: string | null | undefined) => {
+  const dateTimeValue = formatDateTimeLocalValue(dateString)
+  if (!dateTimeValue) return ''
+  return dateTimeValue.split('T')[1].slice(0, 5)
+}
+
 const formatRecordingDateForSave = (
   dateValue: { day: string; month: string; year: string },
+  timeValue: string,
   existingDateString: string | null | undefined
 ) => {
   if (!dateValue.day && !dateValue.month && !dateValue.year) return null
 
   const existingTime =
     formatDateTimeLocalValue(existingDateString).split('T')[1] ?? '00:00:00'
+  const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeValue)
+    ? `${timeValue}:00`
+    : existingTime
 
-  return `${dateValue.year.padStart(4, '0')}-${dateValue.month.padStart(2, '0')}-${dateValue.day.padStart(2, '0')}T${existingTime}`
+  return `${dateValue.year.padStart(4, '0')}-${dateValue.month.padStart(2, '0')}-${dateValue.day.padStart(2, '0')}T${time}`
 }
 
 const RecordingDetails = ({
@@ -278,6 +288,9 @@ const RecordingDetails = ({
       dateOfRecording: formatDateInputValue(
         transcription.date_of_recording ?? transcription.created_datetime
       ),
+      dateOfRecordingTime: formatTimeInputValue(
+        transcription.date_of_recording ?? transcription.created_datetime
+      ),
       clientName: transcription.client_name || '',
       caseId: transcription.case_id || '',
       subject: transcription.title || '',
@@ -294,7 +307,6 @@ const RecordingDetails = ({
     control: form.control,
     name: 'dateOfRecording',
   })
-
   useEffect(() => {
     if (draft?.transcriptionId === transcription.id) {
       form.reset(draft.data, { keepDefaultValues: true })
@@ -309,6 +321,10 @@ const RecordingDetails = ({
     errors.dateOfRecording?.message && {
       href: '#date-recorded-day',
       text: errors.dateOfRecording.message,
+    },
+    errors.dateOfRecordingTime?.message && {
+      href: '#time-recorded',
+      text: errors.dateOfRecordingTime.message,
     },
     errors.clientDateOfBirth?.message && {
       href: '#client-dob-day',
@@ -369,9 +385,11 @@ const RecordingDetails = ({
         subject: data.subject || null,
         client_date_of_birth: dateOfBirth ? dateOfBirth.toISOString() : null,
         date_of_recording:
-          isUpload && dirtyFields.dateOfRecording
+          isUpload &&
+          (dirtyFields.dateOfRecording || dirtyFields.dateOfRecordingTime)
             ? formatRecordingDateForSave(
                 data.dateOfRecording,
+                data.dateOfRecordingTime,
                 transcription.date_of_recording ??
                   transcription.created_datetime
               )
@@ -390,15 +408,44 @@ const RecordingDetails = ({
         onToggle={(e) => setOpen(e.currentTarget.open)}
       >
         {isUpload ? (
-          <GovukDateInput
-            id="date-recorded"
-            legend="Date recorded"
-            control={form.control}
-            name={'dateOfRecording'}
-            mustBePastOrFuture={'past'}
-            description="date recorded"
-            required
-          />
+          <>
+            <GovukDateInput
+              id="date-recorded"
+              legend="Date recorded"
+              control={form.control}
+              name={'dateOfRecording'}
+              mustBePastOrFuture={'past'}
+              description="date recorded"
+              required
+            />
+            <GovukFormGroup hasError={!!errors.dateOfRecordingTime}>
+              <GovukLabel htmlFor="time-recorded">Time recorded</GovukLabel>
+              {errors.dateOfRecordingTime?.message && (
+                <p className="govuk-error-message">
+                  <span className="govuk-visually-hidden">Error:</span>{' '}
+                  {errors.dateOfRecordingTime.message}
+                </p>
+              )}
+              <GovukInput
+                id="time-recorded"
+                className="govuk-input--width-5"
+                inputMode="numeric"
+                placeholder="HH:MM"
+                {...form.register('dateOfRecordingTime', {
+                  validate: (value) => {
+                    if (!isUpload) return true
+                    if (!value.trim()) {
+                      return 'The time recorded must include hours and minutes'
+                    }
+                    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+                      return 'The time recorded must be in the format HH:MM'
+                    }
+                    return true
+                  },
+                })}
+              />
+            </GovukFormGroup>
+          </>
         ) : (
           <>
             <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
@@ -409,8 +456,9 @@ const RecordingDetails = ({
         )}
         {(isSubmitted ||
           (isUpload &&
-            !!dirtyFields.dateOfRecording &&
-            !!errors.dateOfRecording)) &&
+            (!!dirtyFields.dateOfRecording ||
+              !!dirtyFields.dateOfRecordingTime) &&
+            (!!errors.dateOfRecording || !!errors.dateOfRecordingTime))) &&
           errorList.length > 0 && <GovukErrorSummary errorList={errorList} />}
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(handleSave)} noValidate>
@@ -441,7 +489,11 @@ const RecordingDetails = ({
                 type="submit"
                 variant="secondary"
                 className="govuk-!-margin-bottom-2"
-                disabled={!form.formState.isDirty || !!dateOfRecordingError}
+                disabled={
+                  !form.formState.isDirty ||
+                  !!dateOfRecordingError ||
+                  !!errors.dateOfRecordingTime
+                }
               >
                 Update details
               </GovukButton>
