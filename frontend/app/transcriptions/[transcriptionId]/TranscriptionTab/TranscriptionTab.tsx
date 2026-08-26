@@ -2,20 +2,21 @@ import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/Transcript
 import { SpeakerNameInlineEditor } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNameInlineEditor'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
-import { CopyTranscriptButton } from '@/components/recordings/copy-transcript-button'
-import { DownloadTranscriptButton } from '@/components/recordings/download-transcript-button'
+import { ReviewGuardButton } from '@/components/review-guard/review-guard-button'
+import { downloadTranscriptDoc } from '@/lib/download-word-doc'
 import {
   useUpdateTranscription,
   useUpdateTranscriptionSpeakers,
 } from '@/hooks/use-update-transcription-speakers'
 import { DialogueEntry, TranscriptionGetResponse } from '@/lib/client'
 import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions } from '@/lib/client/@tanstack/react-query.gen'
-import { cn } from '@/lib/utils'
+import { cn, formatDate, copyHTML } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
 import { PlayButton } from '@/components/icons/play-button'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
+import posthog from 'posthog-js'
 
 export type DialogueEntryForm = {
   entries: DialogueEntry[]
@@ -49,23 +50,19 @@ const cloneEntries = (entries: DialogueEntry[]) =>
 
 export function TranscriptionTab({
   transcription,
-  onTranscriptCopied,
-  onTranscriptDownloaded,
-  onDismissBanner,
   onLineEditError,
   onEditModeChange,
 }: {
   transcription: TranscriptionGetResponse
   onLineEditError: (error: string | null) => void
   onEditModeChange?: (isEditing: boolean) => void
-  onTranscriptCopied: () => void
-  onTranscriptDownloaded: () => void
-  onDismissBanner: () => void
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
     mode: 'onBlur',
   })
+  const { setBanner, clearBanner } = useBannerStore()
+
   const { control, reset, resetField, setValue, getValues } = methods
   const watchedEntries = useWatch({ control, name: 'entries' })
 
@@ -158,6 +155,7 @@ export function TranscriptionTab({
 
   const handleRenameSpeakerEverywhere = useCallback(
     async (originalSpeaker: string, newSpeaker: string) => {
+      clearBanner()
       if (originalSpeaker === newSpeaker) {
         return
       }
@@ -224,8 +222,6 @@ export function TranscriptionTab({
   const [lineEditInProgress, setLineEditInProgress] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const { setBanner, clearBanner } = useBannerStore()
-
   const setError = useCallback(
     (error: string | null) => {
       onLineEditError(error)
@@ -248,6 +244,7 @@ export function TranscriptionTab({
     new Promise((resolve) => setTimeout(resolve, 100)).then(scrollToPlaying)
 
   const enterLineEditMode = () => {
+    clearBanner()
     if (!fields.length) {
       setError('No lines available to edit.')
       return
@@ -356,14 +353,20 @@ export function TranscriptionTab({
     onEditModeChange?.(false)
   }
 
+  const handleDownloadTranscript = async (entries: DialogueEntry[]) => {
+    const createdDatetime = recordings?.[0]?.created_datetime
+    const formatted = createdDatetime ? formatDate(createdDatetime) : null
+    const timeStamp = formatted ? `-${formatted}` : ''
+    const fileName = `transcript${timeStamp}.docx`
+
+    return await downloadTranscriptDoc(entries, fileName)
+  }
+
   return (
     <div>
       <FormProvider {...methods}>
         <form>
-          <GovukButtonGroup
-            className="govuk-!-margin-bottom-4"
-            onClick={onDismissBanner}
-          >
+          <GovukButtonGroup className="govuk-!-margin-bottom-4">
             <SpeakerEditor
               src={hasRecordings ? recordings[0].url : undefined}
               onSaveSpeaker={handleRenameSpeakerEverywhere}
@@ -380,18 +383,38 @@ export function TranscriptionTab({
             >
               Edit transcript
             </GovukButton>
-            <CopyTranscriptButton
-              textToCopy={transcriptionString}
-              onSuccess={onTranscriptCopied}
+            <ReviewGuardButton
+              onConfirm={async () => await copyHTML(transcriptionString)}
+              onSuccess={() => {
+                setBanner({
+                  variant: 'success',
+                  title: 'Success',
+                  message: `'${transcription.title}' copied to clipboard`,
+                })
+                posthog.capture('editor_content_copied', {
+                  contentLength: transcriptionString.length,
+                })
+              }}
               disabled={isLineEditMode}
+              action="copy"
+              subject="transcript"
             />
 
             {fields.length > 0 && (
-              <DownloadTranscriptButton
-                getEntries={() => getValues('entries')}
-                onSuccess={onTranscriptDownloaded}
-                createdDatetime={recordings?.[0]?.created_datetime}
+              <ReviewGuardButton
+                onConfirm={async () =>
+                  await handleDownloadTranscript(getValues('entries'))
+                }
+                onSuccess={() => {
+                  setBanner({
+                    variant: 'success',
+                    title: 'Success',
+                    message: 'Transcript downloaded',
+                  })
+                }}
                 disabled={isLineEditMode}
+                action="download"
+                subject="transcript"
               />
             )}
           </GovukButtonGroup>
