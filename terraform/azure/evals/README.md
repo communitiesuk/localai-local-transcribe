@@ -55,7 +55,7 @@ Creating the role assignments needs Owner or User Access Administrator on the re
 | `network.tf`       | Blob private endpoints                                             |
 | `rbac.tf`          | Container-scoped role assignments                                  |
 | `variables.tf`     | Input variables (required values plus optional hardening defaults) |
-| `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally         |
+| `terraform.tfvars.example` | Example variable file for both Terraform roots             |
 
 ## Unknowns left as variables
 
@@ -122,20 +122,26 @@ git clone https://github.com/communitiesuk/localai-local-transcribe
 cd localai-local-transcribe/terraform/azure/evals
 ```
 
-If Cloud Shell home storage was reset, clone again and recreate `terraform.tfvars` from the examples. The evals stack remote state still lives in Azure; the backend stack uses local state, so a wiped shell may need `terraform import` of the existing state storage account and `tfstate` container before a further backend apply.
+If Cloud Shell home storage was reset, clone again and recreate `terraform.tfvars` from the example. The evals stack remote state still lives in Azure; the backend stack uses local state, so a wiped shell may need `terraform import` of the existing state storage account and `tfstate` container before a further backend apply.
+
+Create one local var file for both Terraform roots:
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars: subscription_id, resource_group_name, location,
+# environment_name, terraform_state_storage_account_name, storage account names,
+# IP allowlists, and principal IDs.
+nano terraform.tfvars
+```
 
 ### Step 1: Bootstrap remote state
 
 ```bash
 cd backend
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars: subscription_id, resource_group_name, location,
-# storage_account_name (state account), environment_name, mhclg_ip_rules
-nano terraform.tfvars
 
 terraform init
-terraform plan
-terraform apply
+terraform plan -var-file=../terraform.tfvars
+terraform apply -var-file=../terraform.tfvars
 ```
 
 Note the outputs: `resource_group_name`, `storage_account_name`, `container_name`.
@@ -144,11 +150,6 @@ Note the outputs: `resource_group_name`, `storage_account_name`, `container_name
 
 ```bash
 cd ..
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars: same subscription and resource group, two DIFFERENT
-# storage account names for sensitive and results, plus whichever IPs and
-# principal IDs are known. Leave the rest commented out.
-nano terraform.tfvars
 
 # Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
 # use_azuread_auth=true requires Storage Blob Data Contributor on the state storage

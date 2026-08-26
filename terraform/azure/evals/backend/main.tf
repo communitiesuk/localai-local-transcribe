@@ -4,8 +4,9 @@
 # Softwire sandbox vs assured Azure environment:
 # - Transferable: storage account plus tfstate container; versioning; soft delete; SAS expiry;
 #   auth defaults; manual plan/apply from Cloud Shell.
-# - Must adapt: tenant, subscription_id, resource_group_name, location, storage_account_name,
-#   environment_name. Assured may be a different tenant; use a new state storage account name.
+# - Must adapt: tenant, subscription_id, resource_group_name, location,
+#   terraform_state_storage_account_name, environment_name. Assured may be a different tenant;
+#   use a new state storage account name.
 # - Uncertain until assured env exists: whether a dedicated resource group is provided,
 #   naming conventions, and whether state must live in a central platform subscription.
 # - Local terraform.tfstate for this bootstrap is gitignored. If Cloud Shell home is wiped,
@@ -32,7 +33,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_storage_account" "terraform_state" {
-  name                     = var.storage_account_name
+  name                     = var.terraform_state_storage_account_name
   resource_group_name      = var.resource_group_name
   location                 = var.location
   account_tier             = "Standard"
