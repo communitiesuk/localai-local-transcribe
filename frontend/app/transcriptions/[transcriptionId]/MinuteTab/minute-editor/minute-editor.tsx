@@ -37,6 +37,12 @@ import {
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
+import {
+  GovukButton,
+  GovukButtonGroup,
+  GovukLabel,
+  GovukSelect,
+} from '@/components/govuk'
 
 type MinuteEditorForm = {
   html: string
@@ -223,6 +229,17 @@ export function MinuteEditor({
 
   return (
     <div className="pt-2">
+      <GovukButtonGroup>
+        <GovukButton variant="secondary">AI edit</GovukButton>
+        <GovukButton variant="secondary">Manual edit</GovukButton>
+        <GovukButton variant="secondary">Download document</GovukButton>
+        <GovukButton variant="secondary">Copy document</GovukButton>
+        <GovukButton variant="secondary">Show quotes</GovukButton>
+      </GovukButtonGroup>
+      <div>
+        <GovukLabel htmlFor="version-select">Version history</GovukLabel>
+        <GovukSelect id="version-select" name="version-select"></GovukSelect>
+      </div>
       <div className="mb-2 flex flex-wrap justify-between gap-y-2">
         <div className="flex flex-wrap gap-2">
           <MinuteVersionSelect
