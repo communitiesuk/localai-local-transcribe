@@ -1,5 +1,23 @@
+import re
+import unicodedata
 from pathlib import Path
 from typing import Protocol
+from urllib.parse import quote
+
+_UNSAFE_FILENAME_CHARS = re.compile(r'[\x00-\x1f\x7f"\\/]')
+_FALLBACK_FILENAME = "download"
+
+
+def build_content_disposition(filename: str) -> str:
+    """Build an RFC 6266 attachment header.
+
+    S3 rejects header values it cannot represent in ISO-8859-1, so non-ASCII
+    characters are carried by `filename*` and stripped from the plain fallback (`filename`)
+    """
+    cleaned = _UNSAFE_FILENAME_CHARS.sub("", filename).strip() or _FALLBACK_FILENAME
+    ascii_filename = unicodedata.normalize("NFKD", cleaned).encode("ascii", "ignore").decode().strip()
+    ascii_filename = re.sub(r"\s+", " ", ascii_filename) or _FALLBACK_FILENAME
+    return f"attachment; filename=\"{ascii_filename}\"; filename*=UTF-8''{quote(cleaned, safe='')}"
 
 
 class StorageService(Protocol):
