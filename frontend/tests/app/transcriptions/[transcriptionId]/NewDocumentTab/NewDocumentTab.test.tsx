@@ -6,15 +6,6 @@ import type { TranscriptionGetResponse } from '@/lib/client'
 
 vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }))
 
-vi.mock(
-  '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor',
-  () => ({
-    MinuteEditor: ({ minute }: { minute: { template_name: string } }) => (
-      <div>Document view: {minute.template_name}</div>
-    ),
-  })
-)
-
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   getUserTemplatesUserTemplatesGetOptions: () => ({ queryKey: ['templates'] }),
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions:
@@ -144,13 +135,10 @@ describe('<NewDocumentTab />', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('creates the minute and renders the document view on success', () => {
+  it('creates the minute, calls onCreated and shows the placeholder on success', () => {
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
-    configureQueries({
-      minutes: { data: [{ id: 'm1', template_name: 'General summary' }] },
-    })
     const onCreated = vi.fn()
     renderTab({ onCreated })
 
@@ -166,7 +154,7 @@ describe('<NewDocumentTab />', () => {
     )
     expect(onCreated).toHaveBeenCalledWith('General summary')
     expect(
-      screen.getByText('Document view: General summary')
+      screen.getByText('Your document is being created.')
     ).toBeInTheDocument()
   })
 })

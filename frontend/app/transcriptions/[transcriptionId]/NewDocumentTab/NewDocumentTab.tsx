@@ -1,6 +1,5 @@
 'use client'
 
-import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import {
   GovukButton,
   GovukButtonGroup,
@@ -11,7 +10,6 @@ import { TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   getUserTemplatesUserTemplatesGetOptions,
-  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -38,15 +36,6 @@ export const NewDocumentTab = ({
     refetch,
   } = useQuery(getUserTemplatesUserTemplatesGetOptions())
 
-  const { data: minutes = [] } = useQuery({
-    ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
-      {
-        path: { transcription_id: transcription.id! },
-      }
-    ),
-    enabled: createdMinuteId !== null,
-  })
-
   const queryClient = useQueryClient()
   const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
@@ -57,15 +46,8 @@ export const NewDocumentTab = ({
   )
 
   if (createdMinuteId) {
-    const createdMinute = minutes.find((m) => m.id === createdMinuteId)
-    if (!createdMinute) {
-      return (
-        <div className="flex items-center justify-center py-8">
-          <LoaderCircle className="animate-spin" aria-hidden="true" />
-        </div>
-      )
-    }
-    return <MinuteEditor transcription={transcription} minute={createdMinute} />
+    // TODO(AIILG-866): show the creating spinner and completion, then the document view (AIILG-867).
+    return <p className="govuk-body">Your document is being created.</p>
   }
 
   if (isPending) {
@@ -165,13 +147,9 @@ export const NewDocumentTab = ({
         >
           Create
         </GovukButton>
-        <button
-          type="button"
-          className="govuk-link cursor-pointer border-0 bg-transparent p-0"
-          onClick={onCancel}
-        >
+        <GovukButton variant="link" onClick={onCancel}>
           Cancel
-        </button>
+        </GovukButton>
       </GovukButtonGroup>
     </div>
   )
