@@ -7,6 +7,7 @@ location                        = "uksouth"
 sensitive_storage_account_name  = "ltevalssensitive001"
 results_storage_account_name    = "ltevalsresults001"
 environment_name                = "sandbox"
+log_analytics_workspace_id      = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-evals-sandbox/providers/Microsoft.OperationalInsights/workspaces/law-evals-sandbox"
 
 # Azure DevOps pipeline identity.
 # pipeline_identity_name = "evals-blob-id"

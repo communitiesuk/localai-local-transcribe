@@ -129,6 +129,16 @@ variable "private_dns_zone_ids" {
   default     = []
 }
 
+# Logging
+#
+# Pass the resource ID of a workspace this stack does not own, in the same way private DNS
+# zone IDs are passed. Do not create a workspace in this folder.
+
+variable "log_analytics_workspace_id" {
+  type        = string
+  description = "Resource ID of an existing Log Analytics workspace that receives File service logs from both evals storage accounts. This stack does not create the workspace."
+}
+
 # Team RBAC
 #
 # All values are Entra ID object IDs. Prefer a group object ID over individual users so

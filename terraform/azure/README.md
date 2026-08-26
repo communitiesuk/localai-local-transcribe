@@ -6,7 +6,8 @@ process, start to finish. Detailed reference: [`evals/README.md`](./evals/README
 stack) and [`../../evals/README.md`](../../evals/README.md) (running the eval).
 
 Replace the placeholders below with your environment's values: `<subscription-id>`,
-`<resource-group>`, `<sensitive-account>`, and `<results-account>`.
+`<resource-group>`, `<sensitive-account>`, `<results-account>`, and
+`<log-analytics-workspace-id>`.
 
 ## 1. Deploy the storage (Terraform)
 
@@ -40,6 +41,7 @@ location                        = "uksouth"
 sensitive_storage_account_name  = "<sensitive-account>"
 results_storage_account_name    = "<results-account>"
 environment_name                = "sandbox"
+log_analytics_workspace_id      = "<log-analytics-workspace-id>"
 ```
 
 ## 2. Upload synthetic input data
