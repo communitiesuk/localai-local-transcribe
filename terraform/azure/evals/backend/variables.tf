@@ -42,3 +42,13 @@ variable "sas_expiration_period" {
   description = "Maximum lifetime for newly created shared access signatures, as DD.HH:MM:SS."
   default     = "07.00:00:00"
 }
+
+variable "mhclg_ip_rules" {
+  type        = list(string)
+  description = "Public egress IPs or CIDR ranges for MHCLG devices allowed to reach the Terraform state backend."
+
+  validation {
+    condition     = length(var.mhclg_ip_rules) > 0 && !contains(var.mhclg_ip_rules, "0.0.0.0/0")
+    error_message = "Set mhclg_ip_rules to at least one specific MHCLG public IP or CIDR range; do not use 0.0.0.0/0."
+  }
+}

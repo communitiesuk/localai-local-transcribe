@@ -38,7 +38,15 @@ resource "azurerm_storage_account" "terraform_state" {
   account_tier             = "Standard"
   account_replication_type = var.account_replication_type
 
-  # Harden defaults that do not require network lockdown, RBAC, or private endpoints.
+  public_network_access_enabled = true
+
+  network_rules {
+    default_action = "Deny"
+    bypass         = ["AzureServices"]
+    ip_rules       = distinct(var.mhclg_ip_rules)
+  }
+
+  # Harden defaults that do not require private endpoints.
   allow_nested_items_to_be_public = false
   local_user_enabled              = false
   default_to_oauth_authentication = true
