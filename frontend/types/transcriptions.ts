@@ -1,4 +1,6 @@
 export type TranscriptionDetailsData = {
+  dateOfRecording: { day: string; month: string; year: string }
+  dateOfRecordingTime: string
   clientName: string
   caseId: string
   subject: string

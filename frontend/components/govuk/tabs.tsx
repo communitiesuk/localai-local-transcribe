@@ -131,12 +131,7 @@ function GovukTabsBase({
   }
 
   return (
-    <div
-      {...rest}
-      id={id}
-      data-module="govuk-tabs"
-      className={cn('govuk-tabs', className)}
-    >
+    <div {...rest} id={id} className={cn('govuk-tabs', className)}>
       <h2 className="govuk-tabs__title">{title}</h2>
       <ul role="tablist" className="govuk-tabs__list">
         {panels.map((panel) => (
