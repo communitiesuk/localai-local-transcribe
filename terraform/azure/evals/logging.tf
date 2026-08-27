@@ -11,6 +11,10 @@
 # This stack creates the Log Analytics workspace so apply does not need a workspace ID in
 # terraform.tfvars. The name is law-evals-<environment_name>. If a workspace with that name
 # already exists in the resource group, import it rather than creating a second one.
+#
+# Public internet ingestion and query are disabled to satisfy Wiz. After apply, File logs
+# may not reach the workspace and the portal or Cloud Shell cannot query it until Azure
+# Monitor private link (AMPLS) exists. This stack does not create that private link.
 
 resource "azurerm_log_analytics_workspace" "evals" {
   name                = "law-evals-${var.environment_name}"
@@ -18,6 +22,12 @@ resource "azurerm_log_analytics_workspace" "evals" {
   resource_group_name = var.resource_group_name
   sku                 = "PerGB2018"
   retention_in_days   = 30
+
+  # Wiz requires both of these false. Azure defaults them to true (public). With them false,
+  # diagnostic settings and log queries need Azure Monitor private link, which this stack
+  # does not provision. IaC scans pass; live send and query stay blocked until that link exists.
+  internet_ingestion_enabled = false
+  internet_query_enabled     = false
 
   tags = {
     purpose     = "evals-file-service-logs"
