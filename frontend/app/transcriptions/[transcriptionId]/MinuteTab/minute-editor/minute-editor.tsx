@@ -24,6 +24,8 @@ import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
+import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
+import CopyButton from '@/components/ui/copy-button'
 
 type MinuteEditorForm = {
   html: string
@@ -213,11 +215,45 @@ export function MinuteEditor({
   return (
     <div className="pt-2">
       <GovukButtonGroup>
-        <GovukButton variant="secondary">AI edit</GovukButton>
-        <GovukButton variant="secondary">Manual edit</GovukButton>
-        <GovukButton variant="secondary">Download document</GovukButton>
-        <GovukButton variant="secondary">Copy document</GovukButton>
-        <GovukButton variant="secondary">Show quotes</GovukButton>
+        <AiEditPopover
+          disabled={isEditable}
+          minuteId={minute.id!}
+          minuteVersionId={minuteVersion.id}
+          onSuccess={onSuccess}
+        />
+        {isEditable ? (
+          <GovukButton
+            onClick={form.handleSubmit(onSubmit)}
+            variant="secondary"
+          >
+            Save Changes
+          </GovukButton>
+        ) : (
+          <GovukButton variant="secondary" onClick={() => setIsEditable(true)}>
+            Manual edit
+          </GovukButton>
+        )}
+        <GovukButton onClick={handleWordDocDownload} variant="secondary">
+          Download document
+        </GovukButton>
+        <CopyButton
+          textToCopy={contentToCopy}
+          posthogEvent={'editor_content_copied'}
+          label="Copy document"
+        />
+        {hasCitations && (
+          <GovukButton
+            variant="secondary"
+            onClick={() => setHideCitations((h) => !h)}
+            disabled={isEditable}
+          >
+            {isEditable
+              ? 'Quotes shown when editing'
+              : hideCitations
+                ? 'Show quotes'
+                : 'Hide quotes'}
+          </GovukButton>
+        )}
       </GovukButtonGroup>
       <MinuteVersionSelect
         version={minuteVersion.id}

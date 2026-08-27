@@ -5,6 +5,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverAnchor,
 } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
 import { createMinuteVersionMinutesMinuteIdVersionsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
@@ -12,6 +13,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Wand2Icon } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { GovukButton } from '@/components/govuk'
 
 type AIEditFormData = { instruction: string }
 
@@ -54,17 +56,12 @@ export const AiEditPopover = ({
   )
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <Button
-        className="bg-indigo-700 hover:bg-indigo-800 active:bg-yellow-500"
-        type="button"
-        disabled={disabled}
-        asChild
-      >
-        <PopoverTrigger>
-          <Wand2Icon />
-          AI Edit
-        </PopoverTrigger>
-      </Button>
+      <PopoverTrigger asChild>
+        <GovukButton variant="secondary" disabled={disabled}>
+          AI edit
+        </GovukButton>
+      </PopoverTrigger>
+      <PopoverAnchor />
       <PopoverContent className="w-xl max-w-screen">
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Textarea
