@@ -19,6 +19,7 @@ type DateInputProps<T extends FieldValues> = {
   className?: string
   mustBePastOrFuture?: 'past' | 'future'
   description?: string
+  required?: boolean
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'id'> &
   UseControllerProps<T>
 
@@ -27,6 +28,8 @@ const items = [
   { name: 'month', label: 'Month', width: 'govuk-input--width-2' },
   { name: 'year', label: 'Year', width: 'govuk-input--width-4' },
 ] as const
+
+const MIN_YEAR = 1920
 
 function dateIsReal(date: DateValue): boolean {
   const { day, month, year } = date
@@ -44,15 +47,25 @@ function dateIsReal(date: DateValue): boolean {
 }
 
 export function validateDateEntry(
-  value: DateValue,
+  value: DateValue | undefined,
   pastOrFuture?: 'past' | 'future',
-  description: string = 'date'
+  description: string = 'date',
+  required: boolean = false
 ): { message: string; fields: ('day' | 'month' | 'year')[] } | null {
-  const missingFields = Object.entries(value)
+  const dateValue = value ?? { day: '', month: '', year: '' }
+  const missingFields = Object.entries(dateValue)
     .filter(([, v]) => !v)
     .map(([field]) => field) as ('day' | 'month' | 'year')[]
 
   if (missingFields.length === 3) {
+    if (required) {
+      return {
+        message:
+          `The ${description} must include a ` +
+          new Intl.ListFormat('en').format(missingFields),
+        fields: missingFields,
+      }
+    }
     return null
   }
 
@@ -65,7 +78,7 @@ export function validateDateEntry(
     }
   }
 
-  if (!dateIsReal(value)) {
+  if (!dateIsReal(dateValue)) {
     return {
       message: `The ${description} must be a real date`,
       fields: ['day', 'month', 'year'],
@@ -73,16 +86,24 @@ export function validateDateEntry(
   }
 
   const date = new Date(
-    Number(value.year),
-    Number(value.month) - 1,
-    Number(value.day)
+    Number(dateValue.year),
+    Number(dateValue.month) - 1,
+    Number(dateValue.day)
   )
   const today = new Date()
   today.setHours(0, 0, 0, 0) // ignore time
+  const year = Number(dateValue.year)
+
+  if (year < MIN_YEAR || year > today.getFullYear()) {
+    return {
+      message: `The ${description} must be between 1 January ${MIN_YEAR} and today`,
+      fields: ['day', 'month', 'year'],
+    }
+  }
 
   if (date > today && pastOrFuture === 'past') {
     return {
-      message: `The ${description} must be in the past`,
+      message: `The ${description} must be today or in the past`,
       fields: ['day', 'month', 'year'],
     }
   } else if (date < today && pastOrFuture === 'future') {
@@ -103,6 +124,7 @@ export function GovukDateInput<T extends FieldValues>({
   control,
   mustBePastOrFuture,
   description = 'date',
+  required = false,
   rules,
   ...rest
 }: DateInputProps<T>) {
@@ -119,7 +141,8 @@ export function GovukDateInput<T extends FieldValues>({
         const validationResult = validateDateEntry(
           value,
           mustBePastOrFuture,
-          description
+          description,
+          required
         )
         setErrorFields(validationResult?.fields ?? [])
         return validationResult ? validationResult.message : true

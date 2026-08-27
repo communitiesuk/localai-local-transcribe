@@ -3075,6 +3075,11 @@
             ],
             "title": "Date Of Recording"
           },
+          "is_upload": {
+            "type": "boolean",
+            "title": "Is Upload",
+            "default": false
+          },
           "client_name": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Client Name"
@@ -3211,6 +3216,13 @@
               { "type": "null" }
             ],
             "title": "Client Date Of Birth"
+          },
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
           }
         },
         "type": "object",
@@ -3218,7 +3230,8 @@
           "client_name",
           "case_id",
           "subject",
-          "client_date_of_birth"
+          "client_date_of_birth",
+          "date_of_recording"
         ],
         "title": "UpdateTranscriptionMetadataRequest"
       },

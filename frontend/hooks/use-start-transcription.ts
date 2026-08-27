@@ -61,9 +61,13 @@ export const useStartTranscription = (
       const isFile = file instanceof File
 
       const file_extension = isFile ? getFileExtension(file.name) : 'webm'
+      const file_created_at =
+        isFile && file.lastModified
+          ? new Date(file.lastModified).toISOString()
+          : undefined
 
       const recordingData = await createRecording({
-        body: { file_extension },
+        body: { file_extension, file_created_at },
       })
 
       await uploadBlob({

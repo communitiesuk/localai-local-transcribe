@@ -194,8 +194,10 @@ async def test_update_transcription_title_unauthorized(mock_session, mock_user, 
 
 @pytest.mark.asyncio
 async def test_update_transcription_metadata_success(mock_session, mock_user, mock_transcription):
+    original_created_datetime = mock_transcription.created_datetime
     original_updated_datetime = mock_transcription.updated_datetime
     client_date_of_birth = datetime(1985, 4, 12, tzinfo=UTC)
+    date_of_recording = datetime(2024, 6, 3, 14, 30, tzinfo=UTC)
     mock_session.get = AsyncMock(return_value=mock_transcription)
 
     await update_transcription_metadata(
@@ -204,6 +206,7 @@ async def test_update_transcription_metadata_success(mock_session, mock_user, mo
             case_id="XYZ987654",
             client_name="Jane Smith",
             client_date_of_birth=client_date_of_birth,
+            date_of_recording=date_of_recording,
             subject="Updated subject",
         ),
         mock_session,
@@ -213,7 +216,9 @@ async def test_update_transcription_metadata_success(mock_session, mock_user, mo
     assert mock_transcription.case_id == "XYZ987654"
     assert mock_transcription.client_name == "Jane Smith"
     assert mock_transcription.client_date_of_birth == client_date_of_birth.replace(tzinfo=None)
+    assert mock_transcription.date_of_recording == date_of_recording.replace(tzinfo=None)
     assert mock_transcription.title == "Updated subject"
+    assert mock_transcription.created_datetime == original_created_datetime
     assert mock_transcription.updated_datetime > original_updated_datetime
     mock_session.commit.assert_awaited_once()
 
@@ -222,6 +227,7 @@ async def test_update_transcription_metadata_success(mock_session, mock_user, mo
 async def test_update_transcription_metadata_null_fields_clear_existing_values(
     mock_session, mock_user, mock_transcription
 ):
+    original_created_datetime = mock_transcription.created_datetime
     original_updated_datetime = mock_transcription.updated_datetime
     mock_session.get = AsyncMock(return_value=mock_transcription)
 
@@ -231,6 +237,7 @@ async def test_update_transcription_metadata_null_fields_clear_existing_values(
             case_id=None,
             client_name=None,
             client_date_of_birth=None,
+            date_of_recording=None,
             subject=None,
         ),
         mock_session,
@@ -241,6 +248,8 @@ async def test_update_transcription_metadata_null_fields_clear_existing_values(
     assert mock_transcription.case_id is None
     assert mock_transcription.client_name is None
     assert mock_transcription.client_date_of_birth is None
+    assert mock_transcription.date_of_recording is None
+    assert mock_transcription.created_datetime == original_created_datetime
     assert mock_transcription.updated_datetime > original_updated_datetime
     mock_session.commit.assert_awaited_once()
 
@@ -256,6 +265,7 @@ async def test_update_transcription_metadata_not_found(mock_session, mock_user):
                 case_id=None,
                 client_name="Jane Smith",
                 client_date_of_birth=None,
+                date_of_recording=None,
                 subject=None,
             ),
             mock_session,
@@ -278,6 +288,7 @@ async def test_update_transcription_metadata_unauthorized(mock_session, mock_use
                 case_id=None,
                 client_name="Jane Smith",
                 client_date_of_birth=None,
+                date_of_recording=None,
                 subject=None,
             ),
             mock_session,
@@ -495,9 +506,23 @@ async def test_list_unlabelled_transcriptions(mock_session, mock_user, mock_unla
 @pytest.mark.asyncio
 async def test_get_transcription_success(mock_session, mock_user, mock_transcription):
     mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_session.exec = AsyncMock(return_value=Mock(all=Mock(return_value=[datetime.now(UTC)])))
     response = await get_transcription(mock_transcription.id, mock_session, mock_user)
     assert response.id == mock_transcription.id
     assert response.title == mock_transcription.title
+    assert response.is_upload is True
+
+
+@pytest.mark.asyncio
+async def test_get_transcription_sets_is_upload_false_when_file_created_at_missing(
+    mock_session, mock_user, mock_transcription
+):
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_session.exec = AsyncMock(return_value=Mock(all=Mock(return_value=[None])))
+
+    response = await get_transcription(mock_transcription.id, mock_session, mock_user)
+
+    assert response.is_upload is False
 
 
 @pytest.mark.asyncio
