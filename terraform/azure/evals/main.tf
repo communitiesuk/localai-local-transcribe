@@ -132,6 +132,19 @@ resource "azurerm_storage_account" "evals" {
     }
   }
 
+  # The workload uses blobs rather than Azure Files. Azure still exposes the File service on a
+  # standard account. Defaults still allow SMB 2.1 and 3.0, NTLMv2, and AES-128 channel
+  # encryption. These settings are the File-protocol floor Wiz requires. They do not create
+  # a file share. Kerberos ticket encryption is set to AES-256 so RC4 is not left as a default.
+  share_properties {
+    smb {
+      versions                        = ["SMB3.1.1"]
+      authentication_types            = ["Kerberos"]
+      channel_encryption_type         = ["AES-256-GCM"]
+      kerberos_ticket_encryption_type = ["AES-256"]
+    }
+  }
+
   tags = {
     purpose     = each.value.purpose
     workload    = "evals"
