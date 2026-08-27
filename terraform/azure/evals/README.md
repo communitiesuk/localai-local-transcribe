@@ -134,14 +134,16 @@ cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars
 ```
 
+Each root declares only the variables it uses, so each ignores the other's values and says so in a warning. `-compact-warnings` reduces that to a single summary line.
+
 ### Step 1: Bootstrap remote state
 
 ```bash
 cd backend
 
 terraform init
-terraform plan -var-file=../terraform.tfvars
-terraform apply -var-file=../terraform.tfvars
+terraform plan -compact-warnings -var-file=../terraform.tfvars
+terraform apply -compact-warnings -var-file=../terraform.tfvars
 ```
 
 Note the outputs: `resource_group_name`, `storage_account_name`, `container_name`.
@@ -157,8 +159,8 @@ cd ..
 # from an IP listed in backend/mhclg_ip_rules; without both, init fails.
 terraform init -backend-config="resource_group_name=<from-backend-output>" -backend-config="storage_account_name=<from-backend-output>" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate" -backend-config="use_azuread_auth=true"
 
-terraform plan
-terraform apply
+terraform plan -compact-warnings
+terraform apply -compact-warnings
 ```
 
 Cloud Shell egresses from an unpredictable IP, so blob data plane commands run there are denied once the firewall is on. This does not block Terraform: accounts, containers, and role assignments are all managed through the resource manager API, which the storage firewall does not gate. There is no allowlist entry for the applying machine, by design — read blobs from ADAPT instead. If you must check by hand in the sandbox, add the address to `adapt_ip_rules` so the exemption is visible in the diff, and remove it before reviewing access.
