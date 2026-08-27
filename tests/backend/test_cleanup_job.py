@@ -9,9 +9,9 @@ from backend.cleanup_job import (
     cleanup_failed_records,
     cleanup_jobs,
     cleanup_old_records,
-    delete_orphan_records,
     init_cleanup_scheduler,
 )
+from common.services.storage_services.audio_deletion import delete_recording_file_and_row
 
 
 @pytest.fixture
@@ -86,15 +86,42 @@ async def test_cleanup_failed_records_uses_correct_cutoff(mock_session, mock_ses
 
 
 @pytest.mark.asyncio
-async def test_cleanup_old_records_deletes_expired_transcriptions(mock_session, mock_session_ctx, mock_transcription):
-    exec_result = Mock()
-    exec_result.all.return_value = [mock_transcription]
-    mock_session.exec.return_value = exec_result
+async def test_cleanup_old_records_deletes_recordings_before_expired_transcription(
+    mock_session, mock_session_ctx, mock_transcription, mock_recording, mocker
+):
+    transcription_result = Mock()
+    transcription_result.all.return_value = [mock_transcription]
+    recordings_result = Mock()
+    recordings_result.all.return_value = [mock_recording]
+    mock_session.exec.side_effect = [transcription_result, recordings_result]
+    mock_delete_recording = mocker.patch(
+        "backend.cleanup_job.delete_recording_file_and_row",
+        AsyncMock(return_value=True),
+    )
 
     with patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx):
         await cleanup_old_records()
 
-    mock_session.delete.assert_awaited_once_with(mock_transcription)
+    mock_delete_recording.assert_awaited_once_with(mock_session, mock_recording)
+    assert mock_session.delete.await_args_list[-1].args == (mock_transcription,)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_cleanup_old_records_skips_expired_transcription_when_recording_delete_fails(
+    mock_session, mock_session_ctx, mock_transcription, mock_recording, mocker
+):
+    transcription_result = Mock()
+    transcription_result.all.return_value = [mock_transcription]
+    recordings_result = Mock()
+    recordings_result.all.return_value = [mock_recording]
+    mock_session.exec.side_effect = [transcription_result, recordings_result]
+    mocker.patch("backend.cleanup_job.delete_recording_file_and_row", AsyncMock(return_value=False))
+
+    with patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx):
+        await cleanup_old_records()
+
+    mock_session.delete.assert_not_awaited()
     mock_session.commit.assert_awaited_once()
 
 
@@ -112,80 +139,49 @@ async def test_cleanup_old_records_no_transcriptions(mock_session, mock_session_
 
 
 @pytest.mark.asyncio
-async def test_delete_orphan_records_deletes_from_storage_and_db(
-    mock_session, mock_session_ctx, mock_recording, mock_storage_service
-):
-    exec_result = Mock()
-    exec_result.all.return_value = [mock_recording]
-    mock_session.exec.return_value = exec_result
-
-    with patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx):
-        await delete_orphan_records()
-
-    mock_storage_service.check_object_exists.assert_awaited_once_with(mock_recording.s3_file_key)
-    mock_storage_service.delete.assert_awaited_with(mock_recording.s3_file_key)
-    mock_session.delete.assert_awaited_once_with(mock_recording)
-    mock_session.commit.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_delete_orphan_records_skips_db_delete_on_storage_error(
-    mock_session, mock_session_ctx, mock_recording, mock_storage_service
-):
-    exec_result = Mock()
-    exec_result.all.return_value = [mock_recording]
-    mock_session.exec.return_value = exec_result
-    mock_storage_service.check_object_exists.side_effect = Exception("S3 error")
-
-    with patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx):
-        await delete_orphan_records()
-
-    mock_session.delete.assert_not_awaited()
-    mock_session.commit.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_delete_orphan_records_no_orphans(mock_session, mock_session_ctx, mock_storage_service):
-    exec_result = Mock()
-    exec_result.all.return_value = []
-    mock_session.exec.return_value = exec_result
-
-    with patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx):
-        await delete_orphan_records()
-
-    mock_storage_service.check_object_exists.assert_not_awaited()
-    mock_session.delete.assert_not_awaited()
-    mock_session.commit.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_delete_orphan_records_exists_false(mock_session, mock_session_ctx, mock_storage_service, mock_recording):
-    exec_result = Mock()
-    exec_result.all.return_value = [mock_recording]
-    mock_session.exec.return_value = exec_result
-
-    mock_storage_service.check_object_exists.return_value = False
-
-    with patch("backend.cleanup_job.AsyncSession", return_value=mock_session_ctx):
-        await delete_orphan_records()
-
-    mock_storage_service.check_object_exists.assert_awaited_once_with(mock_recording.s3_file_key)
-    mock_storage_service.delete.assert_not_awaited()
-    mock_session.delete.assert_awaited_once_with(mock_recording)
-    mock_session.commit.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_cleanup_jobs_calls_all_three(mocker):
+async def test_cleanup_jobs_calls_cleanup_old_and_failed(mocker):
     mock_cleanup_old = mocker.patch("backend.cleanup_job.cleanup_old_records", AsyncMock())
-    mock_delete_orphan = mocker.patch("backend.cleanup_job.delete_orphan_records", AsyncMock())
     mock_cleanup_failed = mocker.patch("backend.cleanup_job.cleanup_failed_records", AsyncMock())
 
     await cleanup_jobs()
 
     mock_cleanup_old.assert_awaited_once()
-    mock_delete_orphan.assert_awaited_once()
     mock_cleanup_failed.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_recording_file_and_row_deletes_storage_and_db(mock_session, mock_recording, mock_storage_service):
+    result = await delete_recording_file_and_row(mock_session, mock_recording)
+
+    assert result is True
+    mock_storage_service.check_object_exists.assert_awaited_once_with(mock_recording.s3_file_key)
+    mock_storage_service.delete.assert_awaited_once_with(mock_recording.s3_file_key)
+    mock_session.delete.assert_awaited_once_with(mock_recording)
+
+
+@pytest.mark.asyncio
+async def test_delete_recording_file_and_row_keeps_db_row_on_storage_error(
+    mock_session, mock_recording, mock_storage_service
+):
+    mock_storage_service.check_object_exists.side_effect = Exception("S3 error")
+
+    result = await delete_recording_file_and_row(mock_session, mock_recording)
+
+    assert result is False
+    mock_session.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_delete_recording_file_and_row_deletes_db_row_when_storage_object_missing(
+    mock_session, mock_recording, mock_storage_service
+):
+    mock_storage_service.check_object_exists.return_value = False
+
+    result = await delete_recording_file_and_row(mock_session, mock_recording)
+
+    assert result is True
+    mock_storage_service.delete.assert_not_awaited()
+    mock_session.delete.assert_awaited_once_with(mock_recording)
 
 
 @pytest.mark.asyncio

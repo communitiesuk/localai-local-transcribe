@@ -22,4 +22,3 @@ async def delete_recording_file_and_row(session: AsyncSession, recording: Record
         return False
     await session.delete(recording)
     return True
-    return True

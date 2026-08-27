@@ -484,7 +484,9 @@ async def delete_transcription(transcription_id: uuid.UUID, session: SQLSessionD
         await session.exec(select(Recording).where(Recording.transcription_id == transcription.id))
     ).all()
     for recording in recordings:
-        await delete_recording_file_and_row(session, recording)
+        deleted = await delete_recording_file_and_row(session, recording)
+        if not deleted:
+            raise HTTPException(status_code=500, detail="Could not delete recording file")
 
     await session.delete(transcription)
     await session.commit()

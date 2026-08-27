@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
-from sqlmodel import and_, col, func, select, update
+from sqlmodel import and_, func, select, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
@@ -56,26 +56,22 @@ async def cleanup_old_records() -> None:
         transcriptions = (await session.exec(statement)).all()
         logger.info("Deleting %d transcriptions.", len(transcriptions))
         for transcription in transcriptions:
+            recordings = (
+                await session.exec(select(Recording).where(Recording.transcription_id == transcription.id))
+            ).all()
+            recording_deletions = [await delete_recording_file_and_row(session, recording) for recording in recordings]
+            if not all(recording_deletions):
+                logger.error(
+                    "Skipping deletion of transcription %s because recording deletion failed",
+                    transcription.id,
+                )
+                continue
             await session.delete(transcription)
         await session.commit()
 
 
-async def delete_orphan_records() -> None:
-    logger.info("Starting recording clean up")
-    async with AsyncSession(async_engine) as session:
-        orphan_recording_query = select(Recording).where(col(Recording.transcription_id).is_(None))
-        recordings = (await session.exec(orphan_recording_query)).all()
-        logger.info("Found %d Recordings with no Transcription.", len(recordings))
-        for recording in recordings:
-            await delete_recording_file_and_row(session, recording)
-        await session.commit()
-
-    logger.info("Data retention cleanup process completed")
-
-
 async def cleanup_jobs() -> None:
     await cleanup_old_records()
-    await delete_orphan_records()
     await cleanup_failed_records()
 
 
