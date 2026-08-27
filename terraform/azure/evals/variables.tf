@@ -25,11 +25,6 @@ variable "results_storage_account_name" {
   description = "Globally unique name for the account holding the output (results) container. Reachable from ADAPT and MHCLG devices. 3 to 24 lowercase letters and digits."
 }
 
-variable "terraform_state_storage_account_name" {
-  type        = string
-  description = "Storage account name used by the backend root module. Declared here so the shared terraform.tfvars file can be used without undeclared-variable warnings."
-}
-
 variable "environment_name" {
   type        = string
   description = "Short environment label used in tags, for example sandbox or assured."

@@ -1,5 +1,6 @@
 # Example values for both evals Terraform roots.
 # Copy to terraform.tfvars in this directory; do not commit real subscription IDs, IPs, or object IDs.
+# Each root ignores the values belonging to the other and warns about them; use -compact-warnings.
 
 subscription_id     = "<azure-subscription-id>"
 resource_group_name = "<resource-group-name>"
