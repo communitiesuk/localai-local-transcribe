@@ -341,34 +341,22 @@ const RecordingDetails = ({
       },
     },
   })
+
   const dateOfRecording = useWatch({
     control: form.control,
     name: 'dateOfRecording',
   })
+
   useEffect(() => {
     if (draft?.transcriptionId === transcription.id) {
       form.reset(draft.data, { keepDefaultValues: true })
     }
   }, [draft, transcription.id, form])
 
-  const { dirtyFields, errors, isSubmitted } = form.formState
+  const { dirtyFields, errors } = form.formState
   const dateOfRecordingError = isUpload
     ? validateDateEntry(dateOfRecording, 'past', 'date recorded', true)
     : null
-  const errorList = [
-    errors.dateOfRecording?.message && {
-      href: '#date-recorded-day',
-      text: errors.dateOfRecording.message,
-    },
-    errors.dateOfRecordingTime?.message && {
-      href: '#time-recorded',
-      text: errors.dateOfRecordingTime.message,
-    },
-    errors.clientDateOfBirth?.message && {
-      href: '#client-dob-day',
-      text: errors.clientDateOfBirth.message,
-    },
-  ].filter(Boolean) as { href: string; text: string }[]
 
   const setBanner = useBannerStore((store) => store.setBanner)
 
@@ -389,13 +377,6 @@ const RecordingDetails = ({
       })
       clearDraft()
       form.reset(form.getValues())
-    },
-    onError: () => {
-      setBanner({
-        variant: 'important',
-        title: 'There is a problem',
-        message: 'Failed to update recording details, please try again.',
-      })
     },
   })
 
@@ -435,6 +416,7 @@ const RecordingDetails = ({
       },
     })
   }
+
   return (
     <>
       <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
@@ -492,12 +474,6 @@ const RecordingDetails = ({
             </p>
           </>
         )}
-        {(isSubmitted ||
-          (isUpload &&
-            (!!dirtyFields.dateOfRecording ||
-              !!dirtyFields.dateOfRecordingTime) &&
-            (!!errors.dateOfRecording || !!errors.dateOfRecordingTime))) &&
-          errorList.length > 0 && <GovukErrorSummary errorList={errorList} />}
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(handleSave)} noValidate>
             <GovukFormGroup>
