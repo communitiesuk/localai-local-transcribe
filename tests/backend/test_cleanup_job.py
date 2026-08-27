@@ -33,7 +33,7 @@ def mock_session_ctx(mock_session):
 
 @pytest.fixture
 def mock_storage_service(mocker):
-    storage = mocker.patch("backend.cleanup_job.storage_service")
+    storage = mocker.patch("common.services.storage_services.audio_deletion.storage_service")
     storage.check_object_exists = AsyncMock(return_value=True)
     storage.delete = AsyncMock()
     return storage

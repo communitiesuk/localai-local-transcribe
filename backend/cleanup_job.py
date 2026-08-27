@@ -8,15 +8,10 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
 from common.database.postgres_models import JobStatus, MinuteVersion, Recording, Transcription, User
-from common.services.storage_services import get_storage_service
-from common.settings import get_settings
+from common.services.storage_services.audio_deletion import delete_recording_file_and_row
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-settings = get_settings()
-
-storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 async def cleanup_failed_records() -> None:
@@ -72,15 +67,7 @@ async def delete_orphan_records() -> None:
         recordings = (await session.exec(orphan_recording_query)).all()
         logger.info("Found %d Recordings with no Transcription.", len(recordings))
         for recording in recordings:
-            try:
-                exists = await storage_service.check_object_exists(recording.s3_file_key)
-                if exists:
-                    await storage_service.delete(recording.s3_file_key)
-            except Exception as e:  # noqa: BLE001
-                msg = f"Error deleting recording {recording.id}. Will keep record in database: {e}"
-                logger.error(msg)
-            else:
-                await session.delete(recording)
+            await delete_recording_file_and_row(session, recording)
         await session.commit()
 
     logger.info("Data retention cleanup process completed")
