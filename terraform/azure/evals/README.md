@@ -53,7 +53,7 @@ Creating the role assignments needs Owner or User Access Administrator on the re
 | ------------------ | ------------------------------------------------------------------ |
 | `backend/`         | One-time bootstrap of remote Terraform state storage               |
 | `main.tf`          | Both storage accounts, the three containers, firewall rules        |
-| `logging.tf`       | File service diagnostic settings on both accounts                  |
+| `logging.tf`       | Log Analytics workspace and File service diagnostic settings       |
 | `network.tf`       | Blob private endpoints                                             |
 | `rbac.tf`          | Container-scoped role assignments                                  |
 | `variables.tf`     | Input variables (required values plus optional hardening defaults) |
@@ -61,7 +61,7 @@ Creating the role assignments needs Owner or User Access Administrator on the re
 
 ## Unknowns left as variables
 
-ADAPT, temporary Azure DevOps, and MHCLG egress addresses, the private endpoint subnet, any existing private DNS zones, the Log Analytics workspace ID, and principal IDs are variables. Empty network values deny that route except trusted Azure services using strong authentication. The workspace ID is required; this stack does not create a workspace.
+ADAPT, temporary Azure DevOps, and MHCLG egress addresses, the private endpoint subnet, any existing private DNS zones, and principal IDs are variables. Empty network values deny that route except trusted Azure services using strong authentication.
 
 IP allowlists support public IPv4 CIDR ranges. Use plain IPs for single-host entries.
 
@@ -86,17 +86,16 @@ Either way the endpoint only resolves privately once `privatelink.blob.core.wind
 | Private endpoint shape                               | Yes                | Subnet, DNS zones, and who creates the endpoint         | Whether ADAPT owns the VNet                 |
 | RBAC role choices and container scoping              | Yes                | Every principal ID                                      | Whether groups exist to assign to           |
 | Remote state via `azurerm` backend                   | Pattern yes        | Resource group, state account name, key                 | Whether state lives in a platform sub       |
-| File service diagnostic settings                     | Yes                | Log Analytics workspace ID                              | Which workspace platform owns               |
+| File service diagnostic settings                     | Yes                | Workspace name follows `environment_name`               | Whether platform wants a central workspace  |
 | Tenant, subscription, IPs, and variable values       | No                 | Always                                                  | Naming convention                           |
 
-Still out of scope: customer-managed keys, Blob/Queue/Table diagnostic logging, a SIEM, and loading data into containers. File service logs are sent to an existing Log Analytics workspace; this stack does not create that workspace.
+Still out of scope: customer-managed keys, Blob/Queue/Table diagnostic logging, a SIEM, and loading data into containers. File service logs go to a Log Analytics workspace this stack creates (`law-evals-<environment_name>`). If that name already exists in the resource group, import it before apply.
 
 ## Prerequisites
 
 - Access to the target Azure tenant and subscription (Softwire sandbox now; assured Azure environment later, which may be a different tenant)
 - An **existing** resource group you are allowed to create storage accounts in
-- An **existing** Log Analytics workspace, and its resource ID for `log_analytics_workspace_id`
-- Rights for the applying identity to create diagnostic settings on the storage accounts and to send logs to that workspace
+- Rights for the applying identity to create a Log Analytics workspace and diagnostic settings on the storage accounts
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Three globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one sensitive, one results
 - **Storage Blob Data Contributor** on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init` / `plan` / `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
@@ -150,8 +149,8 @@ Note the outputs: `resource_group_name`, `storage_account_name`, `container_name
 cd ..
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars: same subscription and resource group, two DIFFERENT
-# storage account names for sensitive and results, the Log Analytics workspace
-# ID, plus whichever IPs and principal IDs are known. Leave the rest commented out.
+# storage account names for sensitive and results, plus whichever IPs and
+# principal IDs are known. Leave the rest commented out.
 nano terraform.tfvars
 
 # Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
@@ -178,4 +177,4 @@ Then review the expected access matrix above: ADAPT should reach `input`, `debug
 
 ## Assured Azure environment
 
-Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including three new globally unique storage account names, the real ADAPT and MHCLG addresses, the assured Log Analytics workspace ID, and the real principal IDs. The applying identity still needs **Storage Blob Data Contributor** on the state storage for `use_azuread_auth=true`, plus rights to create role assignments.
+Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including three new globally unique storage account names, the real ADAPT and MHCLG addresses, and the real principal IDs. The applying identity still needs **Storage Blob Data Contributor** on the state storage for `use_azuread_auth=true`, plus rights to create role assignments.

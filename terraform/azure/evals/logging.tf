@@ -8,15 +8,30 @@
 # on a standard account even when no file share has been created. Blob, Queue, and Table
 # diagnostic settings are omitted until a Wiz finding asks for them.
 #
-# Logs go to an existing Log Analytics workspace. This stack does not create that workspace.
-# Sandbox and the assured environment each pass their own workspace ID via terraform.tfvars.
+# This stack creates the Log Analytics workspace so apply does not need a workspace ID in
+# terraform.tfvars. The name is law-evals-<environment_name>. If a workspace with that name
+# already exists in the resource group, import it rather than creating a second one.
+
+resource "azurerm_log_analytics_workspace" "evals" {
+  name                = "law-evals-${var.environment_name}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+
+  tags = {
+    purpose     = "evals-file-service-logs"
+    workload    = "evals"
+    environment = var.environment_name
+  }
+}
 
 resource "azurerm_monitor_diagnostic_setting" "evals_file" {
   for_each = azurerm_storage_account.evals
 
   name                       = "file-service-logging"
   target_resource_id         = "${each.value.id}/fileServices/default"
-  log_analytics_workspace_id = var.log_analytics_workspace_id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.evals.id
 
   # Dedicated writes File logs to resource-specific tables in the workspace (StorageFileLogs)
   # rather than the legacy AzureDiagnostics table. Azure Storage requires that destination type.
