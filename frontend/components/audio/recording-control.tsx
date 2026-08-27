@@ -382,7 +382,7 @@ export default function RecordingControl({
       {showStopConfirm && (
         <>
           <GovukWarningText>
-            You will not be able to resume your recording if you proceed.
+            You will not be able to resume recording if you proceed.
           </GovukWarningText>
           <GovukButtonGroup>
             <GovukButton
@@ -393,15 +393,14 @@ export default function RecordingControl({
             >
               Stop Recording
             </GovukButton>
-            {/* presenting this button as a link */}
-            <button
-              className="govuk-link govuk-link--no-visited-state"
+            <GovukButton
               onClick={handleCancelStop}
+              variant="link"
               type="button"
               disabled={isStopping}
             >
               Cancel
-            </button>
+            </GovukButton>
           </GovukButtonGroup>
         </>
       )}

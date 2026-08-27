@@ -23,7 +23,7 @@ const titleMapper: Record<RecordingState, string | boolean> = {
   stopped: false,
 }
 
-const showBackLink: RecordingState[] = [
+const statesWithBackLink: RecordingState[] = [
   'idle',
   'recording',
   'paused',
@@ -44,7 +44,9 @@ export default function RecordPage() {
 
   return (
     <div>
-      {showBackLink.includes(recordingUIState) && <GovukBackLink href="/" />}
+      {statesWithBackLink.includes(recordingUIState) && (
+        <GovukBackLink href="/" />
+      )}
       {titleMapper[recordingUIState] && (
         <GovukHeading>{titleMapper[recordingUIState]}</GovukHeading>
       )}

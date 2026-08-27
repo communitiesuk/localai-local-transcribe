@@ -80,7 +80,7 @@ function RecordingUploadForm({ recording }: { recording: RecordingDbItem }) {
   })
 
   const handleSubmit = form.handleSubmit((formValues) => {
-    startUpload(formValues, onSubmit)
+    startUpload('upload', formValues, onSubmit)
     router.push('/new/uploading')
   })
 

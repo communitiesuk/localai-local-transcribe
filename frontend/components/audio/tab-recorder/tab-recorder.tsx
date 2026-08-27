@@ -31,7 +31,7 @@ export const TabRecorderForm = () => {
   const startUpload = useUploadRecordingStore((store) => store.startUpload)
 
   const handleSubmit = form.handleSubmit((formValues) => {
-    startUpload(formValues, onSubmit)
+    startUpload('recording', formValues, onSubmit)
     router.push('/new/uploading')
   })
 
