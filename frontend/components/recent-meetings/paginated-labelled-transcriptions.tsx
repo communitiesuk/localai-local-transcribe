@@ -14,6 +14,10 @@ import {
   GovukTableRow,
 } from '@/components/govuk/table'
 import { GovukPagination } from '@/components/govuk/pagination'
+import {
+  hrefWithParams,
+  recordingSearchQueryFromSearchParams,
+} from '@/components/recent-meetings/search-recording-params'
 
 export const getPageNumbers = (
   currentPage: number,
@@ -41,13 +45,14 @@ export const PaginatedLabelledTranscriptions = () => {
   const currentPage = Number(searchParams.get('page')) || 1
   const pageSize = 10
   const sort = searchParams.get('sort') === 'oldest' ? 'oldest' : 'newest'
+  const searchQuery = recordingSearchQueryFromSearchParams(searchParams)
   const {
     data: paginatedResponse,
     isLoading,
     error,
   } = useQuery({
     ...listLabelledTranscriptionsTranscriptionsLabelledGetOptions({
-      query: { page: currentPage, page_size: pageSize, sort },
+      query: { page: currentPage, page_size: pageSize, sort, ...searchQuery },
     }),
     refetchInterval: (query) =>
       !!query.state.data &&
@@ -60,7 +65,9 @@ export const PaginatedLabelledTranscriptions = () => {
   })
 
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
-    router.replace(pathname + `?page=${paginatedResponse.total_pages}`)
+    const params = new URLSearchParams(searchParams)
+    params.set('page', String(paginatedResponse.total_pages))
+    router.replace(hrefWithParams(pathname, params))
   }
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
@@ -154,9 +161,11 @@ export const PaginatedLabelledTranscriptions = () => {
               <GovukPagination
                 currentPage={currentPage}
                 totalPages={totalPages!}
-                getHref={(pageNumber: number) =>
-                  pathname + `?page=${pageNumber}`
-                }
+                getHref={(pageNumber: number) => {
+                  const params = new URLSearchParams(searchParams)
+                  params.set('page', String(pageNumber))
+                  return hrefWithParams(pathname, params)
+                }}
               />
             </div>
           )}

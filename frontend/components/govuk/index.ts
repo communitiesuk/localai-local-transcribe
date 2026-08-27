@@ -1,6 +1,6 @@
 export { GovukBody } from './body'
 export { GovukAccordion } from './accordion'
-export {GovukAccordionSection} from './accordion'
+export { GovukAccordionSection } from './accordion'
 export { GovukBackLink } from './back-link'
 export { GovukButton, GovukButtonGroup, GovukButtonLink } from './button'
 export { GovukDateInput } from './date-input'

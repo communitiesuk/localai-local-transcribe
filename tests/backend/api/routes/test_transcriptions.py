@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy.dialects import postgresql
 
 from backend.api.routes.transcriptions import (
     create_recording,
@@ -19,6 +20,7 @@ from backend.api.routes.transcriptions import (
     update_transcription_metadata,
     update_transcription_title,
 )
+from backend.utils.transcription_search_filters import _transcription_search_filters
 from common.database.postgres_models import JobStatus
 from common.types import (
     RecordingCreateRequest,
@@ -28,6 +30,25 @@ from common.types import (
     UpdateTranscriptionMetadataRequest,
     UpdateTranscriptionTitleRequest,
 )
+
+
+def _compile_filter(expression) -> str:
+    return str(expression.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
+
+
+def _compile_statement(mock_session, call_index: int = 1) -> str:
+    statement = mock_session.exec.call_args_list[call_index].args[0]
+    return str(statement.compile(dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}))
+
+
+def test_transcription_search_filters_support_partial_recording_dates():
+    filters = _transcription_search_filters(date_of_recording_year=2026)
+
+    assert len(filters) == 1
+    compiled_filter = _compile_filter(filters[0])
+    assert "EXTRACT(year FROM transcription.date_of_recording) = 2026" in compiled_filter
+    assert "EXTRACT(year FROM transcription.created_datetime) = 2026" in compiled_filter
+    assert "transcription.date_of_recording IS NULL" in compiled_filter
 
 
 @pytest.mark.asyncio
@@ -479,6 +500,37 @@ async def test_list_labelled_transcriptions(mock_session, mock_user, mock_transc
 
 
 @pytest.mark.asyncio
+async def test_list_labelled_transcriptions_applies_search_filters(mock_session, mock_user, mock_transcription):
+    mock_session.exec = AsyncMock()
+    mock_session.exec.side_effect = [Mock(one=Mock(return_value=1)), Mock(all=Mock(return_value=[mock_transcription]))]
+    mock_transcription.dialogue_entries = [{"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0}]
+    mock_transcription.status = JobStatus.COMPLETED
+    mock_transcription.title = "Assessment"
+
+    await list_labelled_transcriptions(
+        mock_session,
+        mock_user,
+        page=1,
+        page_size=20,
+        client_name="Jane",
+        case_id="CASE-123",
+        subject="Assessment",
+        date_of_recording_year=2026,
+        client_date_of_birth=datetime(1985, 4, 12, tzinfo=UTC).date(),
+    )
+
+    compiled_statement = _compile_statement(mock_session)
+    assert "transcription.user_id" in compiled_statement
+    assert "transcription.client_name ILIKE '%%Jane%%'" in compiled_statement
+    assert "transcription.case_id ILIKE '%%CASE-123%%'" in compiled_statement
+    assert "transcription.title ILIKE '%%Assessment%%'" in compiled_statement
+    assert "EXTRACT(year FROM transcription.date_of_recording) = 2026" in compiled_statement
+    assert "EXTRACT(year FROM transcription.created_datetime) = 2026" in compiled_statement
+    assert "transcription.client_date_of_birth >= '1985-04-12 00:00:00'" in compiled_statement
+    assert "transcription.client_date_of_birth < '1985-04-13 00:00:00'" in compiled_statement
+
+
+@pytest.mark.asyncio
 async def test_list_unlabelled_transcriptions(mock_session, mock_user, mock_unlabelled_transcription):
     mock_session.exec = AsyncMock()
     mock_session.exec.side_effect = [
@@ -496,6 +548,42 @@ async def test_list_unlabelled_transcriptions(mock_session, mock_user, mock_unla
     assert result.items[0].title == mock_unlabelled_transcription.title
     assert result.items[0].status == mock_unlabelled_transcription.status
     assert result.items[0].date_of_recording == mock_unlabelled_transcription.date_of_recording
+
+
+@pytest.mark.asyncio
+async def test_list_unlabelled_transcriptions_applies_search_filters(
+    mock_session, mock_user, mock_unlabelled_transcription
+):
+    mock_session.exec = AsyncMock()
+    mock_session.exec.side_effect = [
+        Mock(one=Mock(return_value=1)),
+        Mock(all=Mock(return_value=[mock_unlabelled_transcription])),
+    ]
+    mock_unlabelled_transcription.dialogue_entries = [
+        {"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0}
+    ]
+    mock_unlabelled_transcription.status = JobStatus.COMPLETED
+
+    await list_unlabelled_transcriptions(
+        mock_session,
+        mock_user,
+        client_name="Jane",
+        case_id="CASE-123",
+        subject="Assessment",
+        date_of_recording_day=9,
+        date_of_recording_month=7,
+    )
+
+    compiled_statement = _compile_statement(mock_session)
+    assert "transcription.user_id" in compiled_statement
+    assert "NOT" in compiled_statement
+    assert "transcription.client_name ILIKE '%%Jane%%'" in compiled_statement
+    assert "transcription.case_id ILIKE '%%CASE-123%%'" in compiled_statement
+    assert "transcription.title ILIKE '%%Assessment%%'" in compiled_statement
+    assert "EXTRACT(day FROM transcription.date_of_recording) = 9" in compiled_statement
+    assert "EXTRACT(month FROM transcription.date_of_recording) = 7" in compiled_statement
+    assert "EXTRACT(day FROM transcription.created_datetime) = 9" in compiled_statement
+    assert "EXTRACT(month FROM transcription.created_datetime) = 7" in compiled_statement
 
 
 @pytest.mark.asyncio

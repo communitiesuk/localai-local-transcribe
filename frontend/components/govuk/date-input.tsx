@@ -12,6 +12,8 @@ type DateValue = {
   year: string
 }
 
+type DateValidationMode = 'full-date' | 'partial-date'
+
 type DateInputProps<T extends FieldValues> = {
   id: string
   legend: React.ReactNode
@@ -19,6 +21,7 @@ type DateInputProps<T extends FieldValues> = {
   className?: string
   mustBePastOrFuture?: 'past' | 'future'
   description?: string
+  validationMode?: DateValidationMode
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'id'> &
   UseControllerProps<T>
 
@@ -46,7 +49,8 @@ function dateIsReal(date: DateValue): boolean {
 export function validateDateEntry(
   value: DateValue,
   pastOrFuture?: 'past' | 'future',
-  description: string = 'date'
+  description: string = 'date',
+  validationMode: DateValidationMode = 'full-date'
 ): { message: string; fields: ('day' | 'month' | 'year')[] } | null {
   const missingFields = Object.entries(value)
     .filter(([, v]) => !v)
@@ -54,6 +58,37 @@ export function validateDateEntry(
 
   if (missingFields.length === 3) {
     return null
+  }
+
+  if (validationMode === 'partial-date') {
+    const invalidFields = items
+      .filter(({ name }) => value[name] && !/^\d+$/.test(value[name]))
+      .map(({ name }) => name)
+
+    const day = Number(value.day)
+    const month = Number(value.month)
+    const year = Number(value.year)
+
+    if (value.day && (day < 1 || day > 31)) {
+      invalidFields.push('day')
+    }
+    if (value.month && (month < 1 || month > 12)) {
+      invalidFields.push('month')
+    }
+    if (value.year && year < 1) {
+      invalidFields.push('year')
+    }
+
+    if (invalidFields.length > 0) {
+      return {
+        message: `The ${description} must include valid numbers`,
+        fields: invalidFields,
+      }
+    }
+
+    if (missingFields.length > 0) {
+      return null
+    }
   }
 
   if (missingFields.length > 0) {
@@ -103,6 +138,7 @@ export function GovukDateInput<T extends FieldValues>({
   control,
   mustBePastOrFuture,
   description = 'date',
+  validationMode = 'full-date',
   rules,
   ...rest
 }: DateInputProps<T>) {
@@ -119,7 +155,8 @@ export function GovukDateInput<T extends FieldValues>({
         const validationResult = validateDateEntry(
           value,
           mustBePastOrFuture,
-          description
+          description,
+          validationMode
         )
         setErrorFields(validationResult?.fields ?? [])
         return validationResult ? validationResult.message : true

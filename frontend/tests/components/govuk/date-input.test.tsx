@@ -185,6 +185,31 @@ describe('validateDateEntry', () => {
     })
   })
 
+  it('allows partial dates when partial-date validation is enabled', () => {
+    expect(
+      validateDateEntry(
+        { day: '', month: '', year: '2026' },
+        undefined,
+        'date',
+        'partial-date'
+      )
+    ).toBeNull()
+  })
+
+  it('returns an error for invalid partial date parts', () => {
+    expect(
+      validateDateEntry(
+        { day: '', month: '13', year: '' },
+        undefined,
+        'date',
+        'partial-date'
+      )
+    ).toEqual({
+      message: 'The date must include valid numbers',
+      fields: ['month'],
+    })
+  })
+
   it('uses the supplied description in validation messages', () => {
     expect(
       validateDateEntry({ day: '', month: '3', year: '2026' }, undefined, 'DOB')

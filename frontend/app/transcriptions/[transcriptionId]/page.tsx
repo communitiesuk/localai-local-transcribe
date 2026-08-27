@@ -152,9 +152,6 @@ export default function TranscriptionPage(props: {
   }
   return (
     <div className="flex w-full flex-col">
-      <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
-        Back
-      </GovukBackLink>
       <BannerNotification />
       {lineEditError && (
         <GovukErrorSummary

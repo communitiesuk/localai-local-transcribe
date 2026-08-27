@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { listUnlabelledTranscriptionsTranscriptionsUnlabelledGetOptions } from '@/lib/client/@tanstack/react-query.gen'
+import { recordingSearchQueryFromSearchParams } from '@/components/recent-meetings/search-recording-params'
 import { GovukHeading, GovukHint } from '@/components/govuk'
 import {
   GovukTable,
@@ -17,13 +18,14 @@ import { useSearchParams } from 'next/navigation'
 export const UnlabelledTranscriptions = () => {
   const searchParams = useSearchParams()
   const sort = searchParams.get('sort') === 'oldest' ? 'oldest' : 'newest'
+  const searchQuery = recordingSearchQueryFromSearchParams(searchParams)
   const {
     data: response,
     isLoading,
     error,
   } = useQuery({
     ...listUnlabelledTranscriptionsTranscriptionsUnlabelledGetOptions({
-      query: { sort },
+      query: { sort, ...searchQuery },
     }),
     placeholderData: keepPreviousData,
   })
