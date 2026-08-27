@@ -20,15 +20,9 @@ const titleMapper: Record<RecordingState, string | boolean> = {
   paused: 'Recording paused',
   stopConfirm: 'Are you sure you want to stop recording?',
   stopping: 'Are you sure you want to stop recording?',
-  stopped: false,
 }
 
-const statesWithBackLink: RecordingState[] = [
-  'idle',
-  'recording',
-  'paused',
-  'stopped',
-]
+const statesWithBackLink: RecordingState[] = ['idle', 'recording', 'paused']
 
 function RecordingIcon({ state }: { state: RecordingState }) {
   const colour =
