@@ -26,11 +26,6 @@ resource "aws_eip" "nat_gateway" {
   }
 }
 
-moved {
-  from = aws_eip.nat_gateway
-  to   = aws_eip.nat_gateway["eu-west-2a"]
-}
-
 resource "aws_nat_gateway" "regional_nat_gateway" {
   vpc_id            = aws_vpc.main.id
   availability_mode = "regional"
