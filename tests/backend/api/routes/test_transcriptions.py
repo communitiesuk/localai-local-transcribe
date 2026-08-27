@@ -547,7 +547,7 @@ async def test_delete_transcription(mock_session, mock_user, mock_transcription)
 
     await delete_transcription(mock_transcription.id, mock_session, mock_user)
 
-    mock_session.delete.assert_awaited_once_with(mock_transcription)
+    mock_session.delete.assert_called_once_with(mock_transcription)
     mock_session.commit.assert_awaited_once()
 
 
