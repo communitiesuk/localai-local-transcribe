@@ -480,9 +480,7 @@ async def delete_transcription(transcription_id: uuid.UUID, session: SQLSessionD
     # First check if the transcription exists and belongs to the user
     transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
 
-    recordings = (
-        await session.exec(select(Recording).where(Recording.transcription_id == transcription.id))
-    ).all()
+    recordings = (await session.exec(select(Recording).where(Recording.transcription_id == transcription.id))).all()
     for recording in recordings:
         deleted = await delete_recording_file_and_row(session, recording)
         if not deleted:
