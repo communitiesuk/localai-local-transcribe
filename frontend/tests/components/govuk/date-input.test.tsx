@@ -210,6 +210,21 @@ describe('validateDateEntry', () => {
     })
   })
 
+  it('returns an error for a blank required date', () => {
+    expect(
+      validateDateEntry(
+        { day: '', month: '', year: '' },
+        undefined,
+        'date recorded',
+        'full-date',
+        true
+      )
+    ).toEqual({
+      message: 'The date recorded must include a day, month, and year',
+      fields: ['day', 'month', 'year'],
+    })
+  })
+
   it('uses the supplied description in validation messages', () => {
     expect(
       validateDateEntry({ day: '', month: '3', year: '2026' }, undefined, 'DOB')
@@ -226,12 +241,44 @@ describe('validateDateEntry', () => {
     })
   })
 
+  it('returns an error when the date is before 1920', () => {
+    expect(validateDateEntry({ day: '31', month: '12', year: '1919' })).toEqual(
+      {
+        message: 'The date must be between 1 January 1920 and today',
+        fields: ['day', 'month', 'year'],
+      }
+    )
+  })
+
+  it('returns an error when the year is after the current year', () => {
+    const nextYear = new Date().getFullYear() + 1
+
+    expect(
+      validateDateEntry({ day: '1', month: '1', year: String(nextYear) })
+    ).toEqual({
+      message: 'The date must be between 1 January 1920 and today',
+      fields: ['day', 'month', 'year'],
+    })
+  })
+
+  it('returns an error when the day or month is outside the allowed range', () => {
+    expect(validateDateEntry({ day: '32', month: '1', year: '2024' })).toEqual({
+      message: 'The date must be a real date',
+      fields: ['day', 'month', 'year'],
+    })
+
+    expect(validateDateEntry({ day: '1', month: '13', year: '2024' })).toEqual({
+      message: 'The date must be a real date',
+      fields: ['day', 'month', 'year'],
+    })
+  })
+
   it('returns an error when a past date is required but the date is in the future', () => {
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
 
     expect(validateDateEntry(dateValueFromDate(tomorrow), 'past')).toEqual({
-      message: 'The date must be in the past',
+      message: 'The date must be today or in the past',
       fields: ['day', 'month', 'year'],
     })
   })

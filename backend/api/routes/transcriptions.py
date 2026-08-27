@@ -340,6 +340,8 @@ async def get_transcription(
 ) -> TranscriptionGetResponse:
     """Get a specific transcription by ID."""
     transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
+    result = await session.exec(select(Recording.file_created_at).where(Recording.transcription_id == transcription.id))
+    is_upload = any(file_created_at is not None for file_created_at in result.all())
     return TranscriptionGetResponse(
         id=transcription.id,
         status=transcription.status,
@@ -347,6 +349,7 @@ async def get_transcription(
         title=transcription.title,
         created_datetime=transcription.created_datetime,
         date_of_recording=transcription.date_of_recording,
+        is_upload=is_upload,
         client_name=transcription.client_name,
         case_id=transcription.case_id,
         client_date_of_birth=transcription.client_date_of_birth,
@@ -418,6 +421,9 @@ async def update_transcription_metadata(
     transcription.client_name = request.client_name
     transcription.client_date_of_birth = (
         request.client_date_of_birth.replace(tzinfo=None) if request.client_date_of_birth is not None else None
+    )
+    transcription.date_of_recording = (
+        request.date_of_recording.replace(tzinfo=None) if request.date_of_recording is not None else None
     )
     transcription.title = request.subject
 

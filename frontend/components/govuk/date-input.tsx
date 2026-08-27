@@ -22,6 +22,7 @@ type DateInputProps<T extends FieldValues> = {
   mustBePastOrFuture?: 'past' | 'future'
   description?: string
   validationMode?: DateValidationMode
+  required?: boolean
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'id'> &
   UseControllerProps<T>
 
@@ -30,6 +31,8 @@ const items = [
   { name: 'month', label: 'Month', width: 'govuk-input--width-2' },
   { name: 'year', label: 'Year', width: 'govuk-input--width-4' },
 ] as const
+
+const MIN_YEAR = 1920
 
 function dateIsReal(date: DateValue): boolean {
   const { day, month, year } = date
@@ -47,35 +50,45 @@ function dateIsReal(date: DateValue): boolean {
 }
 
 export function validateDateEntry(
-  value: DateValue,
+  value: DateValue | undefined,
   pastOrFuture?: 'past' | 'future',
   description: string = 'date',
-  validationMode: DateValidationMode = 'full-date'
+  validationMode: DateValidationMode = 'full-date',
+  required: boolean = false
 ): { message: string; fields: ('day' | 'month' | 'year')[] } | null {
-  const missingFields = Object.entries(value)
+  const dateValue = value ?? { day: '', month: '', year: '' }
+  const missingFields = Object.entries(dateValue)
     .filter(([, v]) => !v)
     .map(([field]) => field) as ('day' | 'month' | 'year')[]
 
   if (missingFields.length === 3) {
+    if (required) {
+      return {
+        message:
+          `The ${description} must include a ` +
+          new Intl.ListFormat('en').format(missingFields),
+        fields: missingFields,
+      }
+    }
     return null
   }
 
   if (validationMode === 'partial-date') {
     const invalidFields = items
-      .filter(({ name }) => value[name] && !/^\d+$/.test(value[name]))
+      .filter(({ name }) => dateValue[name] && !/^\d+$/.test(dateValue[name]))
       .map(({ name }) => name)
 
-    const day = Number(value.day)
-    const month = Number(value.month)
-    const year = Number(value.year)
+    const day = Number(dateValue.day)
+    const month = Number(dateValue.month)
+    const year = Number(dateValue.year)
 
-    if (value.day && (day < 1 || day > 31)) {
+    if (dateValue.day && (day < 1 || day > 31)) {
       invalidFields.push('day')
     }
-    if (value.month && (month < 1 || month > 12)) {
+    if (dateValue.month && (month < 1 || month > 12)) {
       invalidFields.push('month')
     }
-    if (value.year && year < 1) {
+    if (dateValue.year && year < 1) {
       invalidFields.push('year')
     }
 
@@ -100,7 +113,7 @@ export function validateDateEntry(
     }
   }
 
-  if (!dateIsReal(value)) {
+  if (!dateIsReal(dateValue)) {
     return {
       message: `The ${description} must be a real date`,
       fields: ['day', 'month', 'year'],
@@ -108,16 +121,24 @@ export function validateDateEntry(
   }
 
   const date = new Date(
-    Number(value.year),
-    Number(value.month) - 1,
-    Number(value.day)
+    Number(dateValue.year),
+    Number(dateValue.month) - 1,
+    Number(dateValue.day)
   )
   const today = new Date()
   today.setHours(0, 0, 0, 0) // ignore time
+  const year = Number(dateValue.year)
+
+  if (year < MIN_YEAR || year > today.getFullYear()) {
+    return {
+      message: `The ${description} must be between 1 January ${MIN_YEAR} and today`,
+      fields: ['day', 'month', 'year'],
+    }
+  }
 
   if (date > today && pastOrFuture === 'past') {
     return {
-      message: `The ${description} must be in the past`,
+      message: `The ${description} must be today or in the past`,
       fields: ['day', 'month', 'year'],
     }
   } else if (date < today && pastOrFuture === 'future') {
@@ -139,6 +160,7 @@ export function GovukDateInput<T extends FieldValues>({
   mustBePastOrFuture,
   description = 'date',
   validationMode = 'full-date',
+  required = false,
   rules,
   ...rest
 }: DateInputProps<T>) {
@@ -156,7 +178,8 @@ export function GovukDateInput<T extends FieldValues>({
           value,
           mustBePastOrFuture,
           description,
-          validationMode
+          validationMode,
+          required
         )
         setErrorFields(validationResult?.fields ?? [])
         return validationResult ? validationResult.message : true
