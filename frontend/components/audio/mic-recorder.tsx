@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import RecordingControl from './recording-control'
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
-import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import {
@@ -71,9 +70,8 @@ function MicRecorderComponent({
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const form = useFormContext<TranscriptionForm>()
-  const { removeRecording, addRecording, updateRecording } = useRecordingDb()
+  const { addRecording, updateRecording } = useRecordingDb()
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const [mediaRecorderStream, setMediaRecorderStream] =
     useState<MediaStream | null>(null)
@@ -341,19 +339,6 @@ function MicRecorderComponent({
           <span className="govuk-visually-hidden">Error:</span> {error}
         </p>
       )}
-
-      <DiscardConfirmDialog
-        open={isDialogOpen}
-        setOpen={setIsDialogOpen}
-        onClickConfirm={() => {
-          setRecordedAudio(null)
-          setIsDialogOpen(false)
-          const recordingId = form.getValues('recordingId')
-          if (recordingId) {
-            removeRecording(recordingId)
-          }
-        }}
-      />
     </div>
   )
 }

@@ -30,6 +30,30 @@ const statesWithBackLink: RecordingState[] = [
   'stopped',
 ]
 
+function RecordingIcon({ state }: { state: RecordingState }) {
+  const colour =
+    state === 'recording' ? '#D4351C' : state === 'paused' ? '#B1B4B6' : null
+
+  if (!colour) {
+    return null
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      xmlns="http://www.w3.org/2000/svg"
+      width="40"
+      height="40"
+      viewBox="0 0 40 40"
+      fill="none"
+    >
+      <circle cx="20" cy="20" r="19" stroke={colour} strokeWidth="2" />
+      <circle cx="20" cy="20" r="12" fill={colour} />
+    </svg>
+  )
+}
+
 export default function RecordPage() {
   const params = useParams<{ recorderMethod: RecorderMethod }>()
   const recorderMethod = params.recorderMethod
@@ -48,7 +72,10 @@ export default function RecordPage() {
         <GovukBackLink href="/" />
       )}
       {titleMapper[recordingUIState] && (
-        <GovukHeading>{titleMapper[recordingUIState]}</GovukHeading>
+        <div className="flex gap-2">
+          <RecordingIcon state={recordingUIState} />
+          <GovukHeading>{titleMapper[recordingUIState]}</GovukHeading>
+        </div>
       )}
       {recorderForm}
     </div>

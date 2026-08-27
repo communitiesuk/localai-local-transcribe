@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
-import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import {
   AudioDevice,
   MicrophonePermission,
@@ -70,10 +69,9 @@ function TabRecorder({
   onStopRecording: () => void
 }) {
   const { requestWakeLock, releaseWakeLock } = useWakeLock()
-  const { updateRecording, addRecording, removeRecording } = useRecordingDb()
+  const { updateRecording, addRecording } = useRecordingDb()
   const [err, setError] = useState<string | null>(null)
   const [isRecording, setIsRecording] = useState(false)
-  const [discardDialogOpen, setDiscardDialogOpen] = useState(false)
   const audioContext = useRef<AudioContext | null>(null)
   const recordingGain = useRef<GainNode | null>(null)
   const form = useFormContext<TranscriptionForm>()
@@ -420,18 +418,6 @@ function TabRecorder({
           <span className="govuk-visually-hidden">Error:</span> {err}
         </p>
       )}
-      <DiscardConfirmDialog
-        open={discardDialogOpen}
-        setOpen={setDiscardDialogOpen}
-        onClickConfirm={() => {
-          setRecordedAudio(null)
-          setDiscardDialogOpen(false)
-          const recordingId = form.getValues('recordingId')
-          if (recordingId) {
-            removeRecording(recordingId)
-          }
-        }}
-      />
     </div>
   )
 }

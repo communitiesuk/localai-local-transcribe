@@ -4,10 +4,12 @@ import { useBannerStore } from '@/stores/use-banner-store'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 
 export default function TranscriptionLoadingPage() {
   const router = useRouter()
   const setBanner = useBannerStore((store) => store.setBanner)
+  const { resetRecordingUI } = useRecordingUIStore()
 
   const { status, transcriptionId, uploadingFrom, error, reset } =
     useUploadRecordingStore()
@@ -25,6 +27,7 @@ export default function TranscriptionLoadingPage() {
       })
 
       reset()
+      resetRecordingUI()
       router.push('/')
     }
 
