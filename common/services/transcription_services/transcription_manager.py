@@ -83,7 +83,7 @@ class TranscriptionServiceManager:
             if date_for_db is not None:
                 with SessionLocal() as session:
                     db_transcription = session.get(Transcription, transcription.id)
-                    if db_transcription:
+                    if db_transcription and db_transcription.date_of_recording is None:
                         db_transcription.date_of_recording = date_for_db
                         session.add(db_transcription)
                         session.commit()
@@ -133,6 +133,7 @@ class TranscriptionServiceManager:
                 s3_file_key=new_s3_key,
                 user_id=recording.user_id,
                 transcription_id=recording.transcription_id,
+                file_created_at=recording.file_created_at,
             )
             session.add(new_recording)
             session.commit()
