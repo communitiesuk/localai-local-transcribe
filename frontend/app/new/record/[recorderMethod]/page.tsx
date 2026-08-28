@@ -56,7 +56,7 @@ export default function RecordPage() {
 
   useEffect(() => {
     resetRecordingUI()
-  }, [])
+  }, [resetRecordingUI])
 
   const recorderForm =
     recorderMethod === 'in-person' ? <MicRecorderForm /> : <TabRecorderForm />
