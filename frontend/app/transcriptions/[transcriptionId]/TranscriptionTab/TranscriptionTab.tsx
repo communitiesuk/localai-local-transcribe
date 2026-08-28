@@ -1,5 +1,5 @@
 import { SpeakerEditor } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerEditor'
-import { SpeakerNamePopover } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNamePopover'
+import { SpeakerNameInlineEditor } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/SpeakerNameInlineEditor'
 import { TranscriptionTextArea } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTextArea'
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
 import { CopyTranscriptButton } from '@/components/recordings/copy-transcript-button'
@@ -13,7 +13,7 @@ import { getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGet
 import { cn } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
-import { Play } from 'lucide-react'
+import { PlayButton } from '@/components/icons/play-button'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
 
@@ -478,9 +478,9 @@ export function TranscriptionTab({
                           }
                         }
                       }}
-                      className="govuk-!-margin-top-1 flex shrink-0 items-center text-[var(--govuk-text-colour)] hover:text-[var(--govuk-link-colour)] focus:bg-[var(--govuk-focus-colour)] focus:text-[var(--govuk-focus-text-colour)] focus:shadow-[0_2px_0_var(--govuk-focus-text-colour)] focus:[outline:3px_solid_transparent]"
+                      className="govuk-link govuk-link--no-visited-state mt-0.5 flex shrink-0 cursor-pointer items-center"
                     >
-                      <Play size={12} fill="currentColor" aria-hidden="true" />
+                      <PlayButton width={20} height={20} />
                     </button>
                   )}
 
@@ -496,12 +496,13 @@ export function TranscriptionTab({
                     />
                   )}
 
-                  <SpeakerNamePopover
+                  <SpeakerNameInlineEditor
                     entry={entry}
                     index={index}
                     onUpdateAll={handleRenameSpeakerEverywhere}
                     onUpdateSingle={handleRenameSingleSpeaker}
                     editing={isLineEditMode}
+                    onOpen={onDismissBanner}
                   />
                   <TranscriptionTextArea
                     control={control}
