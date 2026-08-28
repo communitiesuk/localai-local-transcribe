@@ -414,6 +414,13 @@ const RecordingDetails = ({
       clearDraft()
       form.reset(form.getValues())
     },
+    onError: () => {
+      setBanner({
+        variant: 'important',
+        title: 'There is a problem',
+        message: 'Failed to update recording details, please try again.',
+      })
+    },
   })
 
   const handleSave = (data: TranscriptionDetailsData) => {
