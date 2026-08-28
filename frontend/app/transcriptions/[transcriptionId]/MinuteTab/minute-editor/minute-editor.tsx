@@ -23,7 +23,11 @@ import { FilePenLine, FileQuestion, FileX2, Loader2, Undo } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
-import { GovukButton, GovukButtonGroup } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukButtonGroup,
+  GovukNotificationBanner,
+} from '@/components/govuk'
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import CopyButton from '@/components/ui/copy-button'
 
@@ -40,7 +44,12 @@ export function MinuteEditor({
 }) {
   const [version, setVersion] = useState<string | undefined>(undefined)
   const [hideCitations, setHideCitations] = useState(false)
-  const { data: minuteVersions = [], isLoading } = useQuery({
+  const {
+    data: minuteVersions = [],
+    isLoading,
+    isError: isErrorFetchingVersions,
+    refetch,
+  } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minute.id! },
     }),
@@ -144,19 +153,20 @@ export function MinuteEditor({
     )
   }
 
-  if (!minuteVersion) {
+  if (!minuteVersion || isErrorFetchingVersions) {
     return (
-      <div className="flex flex-col items-center gap-2">
-        <FileQuestion />
-        <p>
-          Nothing has been generated for this &quot;{minute.template_name}&quot;
-          minute yet. Click below to generate a minute.
-        </p>
-        <NewMinuteDialog
-          transcriptionId={transcription.id!}
-          agenda={minute.agenda ?? undefined}
-        />
-      </div>
+      <>
+        <GovukNotificationBanner
+          variant="important"
+          title="There is a problem"
+          className="govuk-!-margin-bottom-2"
+        >
+          There has been an error loading this document.
+        </GovukNotificationBanner>
+        <GovukButton variant="secondary" onClick={() => refetch()}>
+          Retry
+        </GovukButton>
+      </>
     )
   }
   if (isGenerating) {
