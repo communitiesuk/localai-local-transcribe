@@ -1,6 +1,5 @@
 import { DialogueEntryForm } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import { InLineEditForm } from '@/components/govuk/inline-edit-form'
-import { ModalConfirmationInterstitial } from '@/components/govuk/modal-confirmation-interstitial'
 import { GovukModalDialogue } from '@/components/govuk/modal-dialogue'
 import { GovukNotificationBanner } from '@/components/govuk/notification-banner'
 import { EditSpeakerIcon } from '@/components/icons/edit-speaker-icon'
@@ -25,7 +24,6 @@ export const SpeakerNameInlineEditor = ({
 }) => {
   const { setBanner } = useBannerStore()
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState<'edit' | 'confirm-discard'>('edit')
   const [draftName, setDraftName] = useState(entry.speaker)
   const [isSaving, setIsSaving] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -34,19 +32,11 @@ export const SpeakerNameInlineEditor = ({
     onOpen?.()
     setDraftName(entry.speaker)
     setErrorMessage(null)
-    setView('edit')
     setOpen(true)
   }
 
   const requestClose = () => {
     setErrorMessage(null)
-    setOpen(false)
-  }
-
-  const discardChanges = () => {
-    setDraftName(entry.speaker)
-    setErrorMessage(null)
-    setView('edit')
     setOpen(false)
   }
 
@@ -56,7 +46,6 @@ export const SpeakerNameInlineEditor = ({
       setErrorMessage(null)
       try {
         await onUpdateAll(entry.speaker, newName)
-        setView('edit')
         setOpen(false)
         setErrorMessage(null)
         setBanner({
@@ -84,7 +73,6 @@ export const SpeakerNameInlineEditor = ({
       setErrorMessage(null)
       try {
         await onUpdateSingle(index, newName)
-        setView('edit')
         setOpen(false)
         setErrorMessage(null)
         setBanner({
@@ -133,50 +121,26 @@ export const SpeakerNameInlineEditor = ({
       <GovukModalDialogue
         open={open}
         onClose={requestClose}
-        title={view === 'edit' ? `Edit '${entry.speaker}'` : undefined}
+        title={`Edit '${entry.speaker}'`}
       >
-        {view === 'edit' ? (
-          <>
-            {errorMessage && (
-              <GovukNotificationBanner title="Error" variant="important">
-                <p className="govuk-notification-banner__heading">
-                  {errorMessage}
-                </p>
-              </GovukNotificationBanner>
-            )}
-            <InLineEditForm
-              key={entry.speaker}
-              name={entry.speaker}
-              value={draftName}
-              onValueChange={setDraftName}
-              onUpdate={handleUpdateAll}
-              onCancel={requestClose}
-              secondaryUpdate={{
-                label: 'Update this occurrence',
-                onUpdate: handleUpdateSingle,
-              }}
-              disabled={isSaving}
-            />
-          </>
-        ) : (
-          <ModalConfirmationInterstitial
-            title="Discard changes?"
-            body={
-              <div className="govuk-warning-text">
-                <span className="govuk-warning-text__icon" aria-hidden="true">
-                  !
-                </span>
-                <strong className="govuk-warning-text__text">
-                  <span className="govuk-visually-hidden">Warning</span>
-                  If you continue, your changes will not be saved.
-                </strong>
-              </div>
-            }
-            confirmLabel="Discard changes"
-            onConfirm={discardChanges}
-            onCancel={() => setView('edit')}
-          />
+        {errorMessage && (
+          <GovukNotificationBanner title="Error" variant="important">
+            <p className="govuk-notification-banner__heading">{errorMessage}</p>
+          </GovukNotificationBanner>
         )}
+        <InLineEditForm
+          key={entry.speaker}
+          name={entry.speaker}
+          value={draftName}
+          onValueChange={setDraftName}
+          onUpdate={handleUpdateAll}
+          onCancel={requestClose}
+          secondaryUpdate={{
+            label: 'Update this occurrence',
+            onUpdate: handleUpdateSingle,
+          }}
+          disabled={isSaving}
+        />
       </GovukModalDialogue>
     </>
   )
