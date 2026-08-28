@@ -20,7 +20,6 @@ import {
   GovukNotificationBanner,
   GovukTabs,
 } from '@/components/govuk'
-import { validateDateEntry } from '@/components/govuk/date-input'
 import { StatusBadge } from '@/components/status-icon'
 import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
 import { TranscriptionGetResponse } from '@/lib/client'
@@ -36,7 +35,7 @@ import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { redirect, useRouter } from 'next/navigation'
 import { TranscriptionDetailsData } from '@/types/transcriptions'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 import { BannerNotification } from '@/components/banner-notification'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useTranscriptionDetailsDraftStore } from '@/stores/use-transcription-details-draft-store'
@@ -332,8 +331,8 @@ const RecordingDetails = ({
   }
 
   const form = useForm<TranscriptionDetailsData>({
-    mode: 'onChange',
-    reValidateMode: 'onChange',
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
     defaultValues: {
       dateOfRecording: formatDateInputValue(
         transcription.date_of_recording ?? transcription.created_datetime
@@ -353,10 +352,6 @@ const RecordingDetails = ({
       },
     },
   })
-  const dateOfRecording = useWatch({
-    control: form.control,
-    name: 'dateOfRecording',
-  })
   useEffect(() => {
     if (draft?.transcriptionId === transcription.id) {
       form.reset(draft.data, { keepDefaultValues: true })
@@ -364,19 +359,12 @@ const RecordingDetails = ({
   }, [draft, transcription.id, form])
 
   const { dirtyFields, errors, isSubmitted } = form.formState
-  const dateOfRecordingError = isUpload
-    ? validateDateEntry(dateOfRecording, 'past', 'date recorded', true)
-    : null
   const dateOfRecordingMessage = errors.dateOfRecording?.message
   const dateOfRecordingTimeMessage = errors.dateOfRecordingTime?.message
   const clientDateOfBirthMessage = errors.clientDateOfBirth?.message
 
   const shouldShowErrorSummary =
-    (isSubmitted ||
-      (dirtyFields.clientDateOfBirth && !!clientDateOfBirthMessage) ||
-      (isUpload &&
-        (!!dirtyFields.dateOfRecording || !!dirtyFields.dateOfRecordingTime) &&
-        (!!dateOfRecordingMessage || !!dateOfRecordingTimeMessage))) &&
+    isSubmitted &&
     (!!dateOfRecordingMessage ||
       !!dateOfRecordingTimeMessage ||
       !!clientDateOfBirthMessage)
@@ -550,11 +538,7 @@ const RecordingDetails = ({
                 type="submit"
                 variant="secondary"
                 className="govuk-!-margin-bottom-2"
-                disabled={
-                  !form.formState.isDirty ||
-                  !!dateOfRecordingError ||
-                  !!errors.dateOfRecordingTime
-                }
+                disabled={!form.formState.isDirty}
               >
                 Update details
               </GovukButton>
