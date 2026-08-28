@@ -27,6 +27,7 @@ jobs:
     uses: ./.github/workflows/terraform-plan.yml
     secrets: inherit
     permissions:
+      copilot-requests: write
       contents: read
       id-token: write
       pull-requests: write
