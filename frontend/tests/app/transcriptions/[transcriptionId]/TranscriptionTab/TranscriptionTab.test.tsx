@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -482,6 +488,9 @@ describe('TranscriptionTab single speaker rename', () => {
       screen.getByRole('button', { name: 'Edit speaker name Alice' })
     )
 
+    expect(
+      screen.getByRole('heading', { name: "Edit 'Alice'" })
+    ).toBeInTheDocument()
     expect(onDismissBanner).toHaveBeenCalledOnce()
   })
 
@@ -496,47 +505,7 @@ describe('TranscriptionTab single speaker rename', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('shows discard confirmation when cancelling with pending speaker changes', () => {
-    renderTab(transcription)
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Edit speaker name Alice' })
-    )
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-
-    expect(
-      screen.getByRole('heading', { name: 'Discard changes?' })
-    ).toBeInTheDocument()
-  })
-
-  it('returns to speaker edit modal with pending changes intact when discard confirmation is cancelled', () => {
-    renderTab(transcription)
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Edit speaker name Alice' })
-    )
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-
-    expect(screen.getByRole('textbox')).toHaveValue('Bob')
-  })
-
-  it('discards pending speaker changes and closes the modal', () => {
-    renderTab(transcription)
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Edit speaker name Alice' })
-    )
-    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-  })
-
-  it('shows an error banner and keeps the speaker edit modal open when updating one occurrence fails', async () => {
+  it('shows an error in the speaker edit modal and keeps it open when updating one occurrence fails', async () => {
     updateDialogueEntrySpeakerMock.mockRejectedValueOnce(new Error('Conflict'))
     renderTab(transcription)
 
@@ -548,18 +517,18 @@ describe('TranscriptionTab single speaker rename', () => {
       screen.getByRole('button', { name: 'Update this occurrence' })
     )
 
-    await waitFor(() => {
-      expect(setBannerMock).toHaveBeenCalledWith({
-        message: `One or more speaker names could not be updated, please try again.`,
-        variant: 'important',
-        title: 'Error',
-      })
-    })
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(
+      await within(dialog).findByText(
+        'One or more speaker names could not be updated, please try again.'
+      )
+    ).toBeInTheDocument()
+    expect(setBannerMock).not.toHaveBeenCalled()
+    expect(dialog).toBeInTheDocument()
     expect(screen.getByRole('textbox')).toHaveValue('Bob')
   })
 
-  it('shows an error banner and keeps the speaker edit modal open when updating all occurrences fails', async () => {
+  it('shows an error in the speaker edit modal and keeps it open when updating all occurrences fails', async () => {
     renameSpeakerEverywhereMock.mockRejectedValueOnce(new Error('Conflict'))
     renderTab(transcription)
 
@@ -571,15 +540,43 @@ describe('TranscriptionTab single speaker rename', () => {
       screen.getByRole('button', { name: 'Update all occurrences' })
     )
 
-    await waitFor(() => {
-      expect(setBannerMock).toHaveBeenCalledWith({
-        message: `One or more speaker names could not be updated, please try again.`,
-        variant: 'important',
-        title: 'Error',
-      })
-    })
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(
+      await within(dialog).findByText(
+        'One or more speaker names could not be updated, please try again.'
+      )
+    ).toBeInTheDocument()
+    expect(setBannerMock).not.toHaveBeenCalled()
+    expect(dialog).toBeInTheDocument()
     expect(screen.getByRole('textbox')).toHaveValue('Bob')
+  })
+
+  it('clears the speaker edit modal error when cancelling after a failed update', async () => {
+    renameSpeakerEverywhereMock.mockRejectedValueOnce(new Error('Conflict'))
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
+
+    expect(
+      await screen.findByText(
+        'One or more speaker names could not be updated, please try again.'
+      )
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(
+      screen.queryByText(
+        'One or more speaker names could not be updated, please try again.'
+      )
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
 

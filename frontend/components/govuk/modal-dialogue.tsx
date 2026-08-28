@@ -10,7 +10,7 @@ import { XCloseSVG } from '@/components/icons/x-close-button'
 type Props = {
   open: boolean
   onClose: () => void
-  titleId?: string | undefined
+  titleId?: string
   descriptionId?: string
   title?: string
   className?: string
