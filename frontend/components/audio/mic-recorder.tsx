@@ -35,9 +35,11 @@ export function MicRecorderForm() {
 
     submittedBlobRef.current = watchBlob
     setIsProcessingRecording(true)
-    void form.handleSubmit(onSubmit)().finally(() => {
-      setIsProcessingRecording(false)
-    })
+    void form
+      .handleSubmit(onSubmit)()
+      .finally(() => {
+        setIsProcessingRecording(false)
+      })
   }, [form, onSubmit, watchBlob])
 
   return (
