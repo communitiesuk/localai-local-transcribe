@@ -51,10 +51,6 @@ export const UnlabelledTranscriptions = () => {
             Error loading unlabelled recordings
           </div>
         </div>
-      ) : transcriptions.length === 0 ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">No unlabelled recordings found</div>
-        </div>
       ) : (
         <>
           <GovukTable>

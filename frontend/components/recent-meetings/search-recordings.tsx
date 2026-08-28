@@ -5,6 +5,7 @@ import {
   GovukButtonGroup,
   GovukDateInput,
   GovukDetails,
+  GovukErrorSummary,
   GovukFormGroup,
   GovukHeading,
   GovukLabel,
@@ -41,6 +42,37 @@ const hasAnySearchValue = (values: SearchRecordingsFormData): boolean =>
     values.clientDateOfBirth.year.trim()
   )
 
+const errorMessageMappings = [
+  {
+    prefix: 'The date of birth must include',
+    text: 'Date of birth must include a day, month and year',
+  },
+  {
+    prefix: 'The date of birth must be between',
+    text: 'Date of birth must be a real date',
+  },
+  {
+    prefix: 'The date of birth must be a real date',
+    text: 'Date of birth must be a real date',
+  },
+  {
+    prefix: 'The Recording date cannot be in the future',
+    text: 'The recording date cannot be in the future',
+  },
+  {
+    prefix: 'The Recording date must be today or in the past',
+    text: 'The recording date cannot be in the future',
+  },
+  {
+    prefix: 'The Recording date must be a real date',
+    text: 'Recording date must be a real date',
+  },
+]
+
+const errorSummaryText = (message: string): string =>
+  errorMessageMappings.find(({ prefix }) => message.startsWith(prefix))?.text ??
+  message
+
 export const SearchRecordings = () => {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
@@ -50,6 +82,25 @@ export const SearchRecordings = () => {
   const form = useForm<SearchRecordingsFormData>({
     defaultValues: valuesFromRecordingSearchParams(searchParams),
   })
+
+  const { errors, submitCount } = form.formState
+  const showDateofRecError = submitCount > 0 && errors.dateOfRecording
+  const showClientDobError = submitCount > 0 && errors.clientDateOfBirth
+
+  const dateOfRecordingErrorSummary =
+    typeof errors.dateOfRecording?.message === 'string'
+      ? {
+          href: '#dateOfRecording',
+          text: errorSummaryText(errors.dateOfRecording.message),
+        }
+      : null
+  const clientDateOfBirthErrorSummary =
+    typeof errors.clientDateOfBirth?.message === 'string'
+      ? {
+          href: '#clientDateOfBirth',
+          text: errorSummaryText(errors.clientDateOfBirth.message),
+        }
+      : null
 
   const watchedValues = useWatch({ control: form.control })
   const values: SearchRecordingsFormData = {
@@ -86,6 +137,19 @@ export const SearchRecordings = () => {
 
   return (
     <>
+      {showDateofRecError && dateOfRecordingErrorSummary && (
+        <GovukErrorSummary
+          title="There is a problem"
+          errorList={[dateOfRecordingErrorSummary]}
+        />
+      )}
+      {showClientDobError && clientDateOfBirthErrorSummary && (
+        <GovukErrorSummary
+          title="There is a problem"
+          errorList={[clientDateOfBirthErrorSummary]}
+        />
+      )}
+
       <GovukHeading as="h2" size="m" className="govuk-!-margin-bottom-2">
         Search
       </GovukHeading>
@@ -101,7 +165,7 @@ export const SearchRecordings = () => {
             control={form.control}
             name="dateOfRecording"
             mustBePastOrFuture="past"
-            description="date of recording"
+            description="Recording date"
             validationMode="partial-date"
           />
           <GovukFormGroup>
@@ -149,7 +213,7 @@ export const SearchRecordings = () => {
               className="govuk-!-margin-bottom-1"
               disabled={!hasSearchValue}
             >
-              Submit
+              Search
             </GovukButton>
             <GovukButton
               type="button"

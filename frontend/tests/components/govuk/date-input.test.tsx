@@ -205,8 +205,24 @@ describe('validateDateEntry', () => {
         'partial-date'
       )
     ).toEqual({
-      message: 'The date must include valid numbers',
+      message: 'date must be a real date',
       fields: ['month'],
+    })
+  })
+
+  it('returns an error for future years in partial past dates', () => {
+    const nextYear = new Date().getFullYear() + 1
+
+    expect(
+      validateDateEntry(
+        { day: '', month: '', year: String(nextYear) },
+        'past',
+        'Recording date',
+        'partial-date'
+      )
+    ).toEqual({
+      message: 'The Recording date must be between 1 January 1920 and today',
+      fields: ['year'],
     })
   })
 

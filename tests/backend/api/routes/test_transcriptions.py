@@ -51,6 +51,19 @@ def test_transcription_search_filters_support_partial_recording_dates():
     assert "transcription.date_of_recording IS NULL" in compiled_filter
 
 
+def test_transcription_search_filters_escape_like_wildcards():
+    filters = _transcription_search_filters(
+        client_name=r"Jane_%",
+        case_id=r"CASE\_%",
+        subject=r"Planning_% meeting",
+    )
+
+    assert filters[0].right.value == r"%Jane\_\%%"
+    assert filters[1].right.value == r"%CASE\\\_\%%"
+    assert filters[2].right.value == r"%Planning\_\% meeting%"
+    assert all(search_filter.modifiers["escape"] == "\\" for search_filter in filters)
+
+
 @pytest.mark.asyncio
 async def test_create_transcription_success(
     mocker,

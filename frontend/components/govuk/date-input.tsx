@@ -94,8 +94,20 @@ export function validateDateEntry(
 
     if (invalidFields.length > 0) {
       return {
-        message: `The ${description} must include valid numbers`,
+        message: `${description} must be a real date`,
         fields: invalidFields,
+      }
+    }
+
+    const today = new Date()
+    if (
+      dateValue.year &&
+      pastOrFuture === 'past' &&
+      year > today.getFullYear()
+    ) {
+      return {
+        message: `The ${description} cannot be in the future`,
+        fields: ['year'],
       }
     }
 

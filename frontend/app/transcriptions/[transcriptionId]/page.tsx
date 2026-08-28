@@ -352,7 +352,7 @@ const RecordingDetails = ({
     ? validateDateEntry(
         dateOfRecording,
         'past',
-        'date recorded',
+        'Recording date',
         'full-date',
         true
       )

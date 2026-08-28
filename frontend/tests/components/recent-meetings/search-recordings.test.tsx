@@ -28,7 +28,7 @@ describe('<SearchRecordings />', () => {
     await userEvent.click(screen.getByText('Show search fields'))
     await userEvent.type(screen.getAllByLabelText('Month')[0], '7')
     await userEvent.type(screen.getByLabelText('Client name'), 'Jane')
-    await userEvent.click(screen.getByRole('button', { name: 'Submit' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }))
 
     expect(mocks.replace).toHaveBeenCalledOnce()
 
@@ -43,15 +43,100 @@ describe('<SearchRecordings />', () => {
     expect(params.get('client_name')).toBe('Jane')
   })
 
-  it('keeps DOB full-date validation for incomplete DOB searches', async () => {
+  it('shows a mapped summary error for invalid recording dates', async () => {
+    render(<SearchRecordings />)
+
+    await userEvent.click(screen.getByText('Show search fields'))
+    await userEvent.type(screen.getAllByLabelText('Day')[0], '3')
+    await userEvent.type(screen.getAllByLabelText('Month')[0], '14')
+    await userEvent.type(screen.getAllByLabelText('Year')[0], '2021')
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(
+      await screen.findByRole('link', {
+        name: 'Recording date must be a real date',
+      })
+    ).toBeInTheDocument()
+    expect(mocks.replace).not.toHaveBeenCalled()
+  })
+
+  it('shows a mapped summary error for future full recording dates', async () => {
+    render(<SearchRecordings />)
+
+    await userEvent.click(screen.getByText('Show search fields'))
+    await userEvent.type(screen.getAllByLabelText('Day')[0], '1')
+    await userEvent.type(screen.getAllByLabelText('Month')[0], '1')
+    await userEvent.type(screen.getAllByLabelText('Year')[0], '2030')
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(
+      await screen.findByRole('link', {
+        name: 'The recording date cannot be in the future',
+      })
+    ).toBeInTheDocument()
+    expect(mocks.replace).not.toHaveBeenCalled()
+  })
+
+  it('shows a mapped summary error for future partial recording date years', async () => {
+    render(<SearchRecordings />)
+
+    await userEvent.click(screen.getByText('Show search fields'))
+    await userEvent.type(screen.getAllByLabelText('Year')[0], '2030')
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(
+      await screen.findByRole('link', {
+        name: 'The recording date cannot be in the future',
+      })
+    ).toBeInTheDocument()
+    expect(mocks.replace).not.toHaveBeenCalled()
+  })
+
+  it('shows a mapped summary error for invalid DOB dates', async () => {
+    render(<SearchRecordings />)
+
+    await userEvent.click(screen.getByText('Show search fields'))
+    await userEvent.type(screen.getAllByLabelText('Day')[1], '1')
+    await userEvent.type(screen.getAllByLabelText('Month')[1], '14')
+    await userEvent.type(screen.getAllByLabelText('Year')[1], '2020')
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(
+      await screen.findByRole('link', {
+        name: 'Date of birth must be a real date',
+      })
+    ).toBeInTheDocument()
+    expect(mocks.replace).not.toHaveBeenCalled()
+  })
+
+  it('shows a mapped summary error for missing DOB fields', async () => {
     render(<SearchRecordings />)
 
     await userEvent.click(screen.getByText('Show search fields'))
     await userEvent.type(screen.getAllByLabelText('Month')[1], '4')
-    await userEvent.click(screen.getByRole('button', { name: 'Submit' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }))
 
     expect(
-      await screen.findByText('The date of birth must include a day and year')
+      await screen.findByRole('link', {
+        name: 'Date of birth must include a day, month and year',
+      })
+    ).toBeInTheDocument()
+    expect(mocks.replace).not.toHaveBeenCalled()
+  })
+
+  it('shows a mapped summary error for future DOB dates', async () => {
+    render(<SearchRecordings />)
+
+    await userEvent.click(screen.getByText('Show search fields'))
+    await userEvent.type(screen.getAllByLabelText('Day')[1], '1')
+    await userEvent.type(screen.getAllByLabelText('Month')[1], '1')
+    await userEvent.type(screen.getAllByLabelText('Year')[1], '2030')
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(
+      await screen.findByRole('link', {
+        name: 'Date of birth must be a real date',
+      })
     ).toBeInTheDocument()
     expect(mocks.replace).not.toHaveBeenCalled()
   })

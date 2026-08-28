@@ -6,6 +6,16 @@ from sqlmodel import col, func
 
 from common.database.postgres_models import Transcription
 
+LIKE_ESCAPE_CHARACTER = "\\"
+
+
+def _escape_like_search_term(value: str) -> str:
+    return (
+        value.replace(LIKE_ESCAPE_CHARACTER, LIKE_ESCAPE_CHARACTER * 2)
+        .replace("%", f"{LIKE_ESCAPE_CHARACTER}%")
+        .replace("_", f"{LIKE_ESCAPE_CHARACTER}_")
+    )
+
 
 def _date_part_filters(
     column: ColumnElement[Any],
@@ -40,11 +50,26 @@ def _transcription_search_filters(
     filters: list[ColumnElement[Any]] = []
 
     if client_name:
-        filters.append(col(Transcription.client_name).ilike(f"%{client_name}%"))
+        filters.append(
+            col(Transcription.client_name).ilike(
+                f"%{_escape_like_search_term(client_name)}%",
+                escape=LIKE_ESCAPE_CHARACTER,
+            )
+        )
     if case_id:
-        filters.append(col(Transcription.case_id).ilike(f"%{case_id}%"))
+        filters.append(
+            col(Transcription.case_id).ilike(
+                f"%{_escape_like_search_term(case_id)}%",
+                escape=LIKE_ESCAPE_CHARACTER,
+            )
+        )
     if subject:
-        filters.append(col(Transcription.title).ilike(f"%{subject}%"))
+        filters.append(
+            col(Transcription.title).ilike(
+                f"%{_escape_like_search_term(subject)}%",
+                escape=LIKE_ESCAPE_CHARACTER,
+            )
+        )
     if date_of_recording:
         start = datetime.datetime.combine(date_of_recording, datetime.time.min)
         end = start + datetime.timedelta(days=1)

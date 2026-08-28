@@ -102,7 +102,7 @@ export const PaginatedLabelledTranscriptions = () => {
         </div>
       ) : transcriptions.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">No labelled recordings found</div>
+          <div className="text-gray-500">No recordings to display</div>
         </div>
       ) : (
         <>
