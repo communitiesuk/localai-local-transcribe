@@ -201,7 +201,7 @@ async def test_init_cleanup_scheduler_starts_cleanup_job(mocker):
     call_kwargs = mock_scheduler.add_job.call_args
     assert call_kwargs.args[0] is cleanup_jobs
     assert call_kwargs.args[1] == "interval"
-    assert call_kwargs.kwargs["days"] == 1
+    assert call_kwargs.kwargs["hours"] == 6
 
     expected_next_run = mock_run_time.replace(hour=23, minute=0, second=0, microsecond=0)
     assert call_kwargs.kwargs["next_run_time"] == expected_next_run
