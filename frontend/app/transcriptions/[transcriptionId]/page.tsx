@@ -33,7 +33,7 @@ import { FeatureFlags } from '@/lib/feature-flags'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
-import { redirect, useRouter } from 'next/navigation'
+import { redirect, useRouter, useSearchParams } from 'next/navigation'
 import { TranscriptionDetailsData } from '@/types/transcriptions'
 import { FormProvider, useForm } from 'react-hook-form'
 import { BannerNotification } from '@/components/banner-notification'
@@ -47,6 +47,10 @@ export default function TranscriptionPage(props: {
   const params = use(props.params)
 
   const { transcriptionId } = params
+  const searchParams = useSearchParams()
+  const detailsMode = searchParams.get('details')
+  const showAddDetailsStep = detailsMode === 'open'
+  const showSavedDetailsSpinner = detailsMode === 'saved'
 
   const { setBanner, clearBanner } = useBannerStore()
 
@@ -120,12 +124,43 @@ export default function TranscriptionPage(props: {
   const date = new Date(dateString)
   const dateLabel = `${date.toDateString()} at ${date.toLocaleTimeString()}`
   const recordingDate = date.toLocaleDateString('en-GB')
-  const dateTimeLabel = `${date.toLocaleDateString('en-GB')} at ${date.toLocaleTimeString('en-GB')}`
-
-  if (
+  const dateTimeLabel = `${date.toLocaleDateString('en-GB')} at ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+  const isProcessing =
     transcription.status &&
     ['awaiting_start', 'in_progress'].includes(transcription.status)
-  ) {
+
+  if (isProcessing) {
+    if (showSavedDetailsSpinner) {
+      return (
+        <div className="flex h-72 flex-col items-center justify-center gap-4">
+          <LoaderCircle size={80} className="animate-spin" aria-hidden="true" />
+          <p className="govuk-body">Processing recording...</p>
+        </div>
+      )
+    }
+
+    if (showAddDetailsStep) {
+      return (
+        <div className="govuk-grid-row">
+          <div className="govuk-grid-column-two-thirds">
+            <BannerNotification />
+            {recordingDetailsErrors.length > 0 && (
+              <GovukErrorSummary
+                ref={errorSummaryRef}
+                errorList={recordingDetailsErrors}
+              />
+            )}
+            <RecordingDetails
+              mode="standalone"
+              dateTimeLabel={dateTimeLabel}
+              transcription={transcription}
+              onErrorListChange={setRecordingDetailsErrors}
+            />
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div>
         <TranscriptionHeader
@@ -160,6 +195,11 @@ export default function TranscriptionPage(props: {
       </div>
     )
   }
+
+  if (showSavedDetailsSpinner) {
+    redirect(`/?recordingSaved=${transcription.id}`)
+  }
+
   const handleCreateDocument = () => {
     const id = `new-document-${documentCounter.current++}`
     setDocumentTabs((prev) => [...prev, { id, label: 'New document' }])
@@ -174,6 +214,28 @@ export default function TranscriptionPage(props: {
   const handleDocumentCreated = (id: string, templateName: string) => {
     setDocumentTabs((prev) =>
       prev.map((tab) => (tab.id === id ? { ...tab, label: templateName } : tab))
+    )
+  }
+
+  if (showAddDetailsStep) {
+    return (
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <BannerNotification />
+          {recordingDetailsErrors.length > 0 && (
+            <GovukErrorSummary
+              ref={errorSummaryRef}
+              errorList={recordingDetailsErrors}
+            />
+          )}
+          <RecordingDetails
+            mode="standalone"
+            dateTimeLabel={dateTimeLabel}
+            transcription={transcription}
+            onErrorListChange={setRecordingDetailsErrors}
+          />
+        </div>
+      </div>
     )
   }
 
@@ -311,19 +373,30 @@ const formatRecordingDateForSave = (
 
 const RecordingDetails = ({
   dateTimeLabel,
+  defaultOpen = false,
+  mode = 'panel',
   onErrorListChange,
   transcription,
 }: {
   dateTimeLabel: string
+  defaultOpen?: boolean
+  mode?: 'panel' | 'standalone'
   onErrorListChange: (errors: ErrorItem[]) => void
   transcription: TranscriptionGetResponse
 }) => {
   const { draft, setDraft, clearDraft } = useTranscriptionDetailsDraftStore()
   const [open, setOpen] = useState(
-    (draft?.transcriptionId === transcription.id && draft?.isOpen) ?? false
+    draft?.transcriptionId === transcription.id ? draft.isOpen : defaultOpen
   )
   const router = useRouter()
   const isUpload = transcription.is_upload === true
+  const isStandalone = mode === 'standalone'
+  const isProcessing =
+    transcription.status &&
+    ['awaiting_start', 'in_progress'].includes(transcription.status)
+  const afterDetailsHref = isProcessing
+    ? `/transcriptions/${transcription.id}?details=saved`
+    : `/?recordingSaved=${transcription.id}`
 
   let clientDateOfBirth: Date | null = null
   if (transcription.client_date_of_birth) {
@@ -413,6 +486,9 @@ const RecordingDetails = ({
       })
       clearDraft()
       form.reset(form.getValues())
+      if (isStandalone) {
+        router.push(afterDetailsHref)
+      }
     },
     onError: () => {
       setBanner({
@@ -459,96 +535,96 @@ const RecordingDetails = ({
       },
     })
   }
-  return (
+  const detailsForm = (
     <>
-      <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
-        Recording details
-      </GovukHeading>
-      <GovukDetails
-        open={open}
-        summary={open ? 'Hide' : 'Show'}
-        onToggle={(e) => setOpen(e.currentTarget.open)}
-      >
-        {isUpload ? (
-          <>
-            <GovukDateInput
-              id="date-recorded"
-              legend="Date recorded"
-              control={form.control}
-              name={'dateOfRecording'}
-              mustBePastOrFuture={'past'}
-              description="date recorded"
-              required
+      {isUpload ? (
+        <>
+          <GovukDateInput
+            id="date-recorded"
+            legend="Date recorded"
+            control={form.control}
+            name={'dateOfRecording'}
+            mustBePastOrFuture={'past'}
+            description="date recorded"
+            required
+          />
+          <GovukFormGroup hasError={!!errors.dateOfRecordingTime}>
+            <GovukLabel htmlFor="time-recorded">Time recorded</GovukLabel>
+            {errors.dateOfRecordingTime?.message && (
+              <p className="govuk-error-message">
+                <span className="govuk-visually-hidden">Error:</span>{' '}
+                {errors.dateOfRecordingTime.message}
+              </p>
+            )}
+            <GovukInput
+              id="time-recorded"
+              className="govuk-input--width-5"
+              inputMode="numeric"
+              placeholder="HH:MM"
+              {...form.register('dateOfRecordingTime', {
+                validate: (value) => {
+                  if (!isUpload) return true
+                  if (!value.trim()) {
+                    return 'The time recorded must include hours and minutes'
+                  }
+                  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+                    return 'The time recorded must be in the format HH:MM'
+                  }
+                  return true
+                },
+              })}
             />
-            <GovukFormGroup hasError={!!errors.dateOfRecordingTime}>
-              <GovukLabel htmlFor="time-recorded">Time recorded</GovukLabel>
-              {errors.dateOfRecordingTime?.message && (
-                <p className="govuk-error-message">
-                  <span className="govuk-visually-hidden">Error:</span>{' '}
-                  {errors.dateOfRecordingTime.message}
-                </p>
-              )}
-              <GovukInput
-                id="time-recorded"
-                className="govuk-input--width-5"
-                inputMode="numeric"
-                placeholder="HH:MM"
-                {...form.register('dateOfRecordingTime', {
-                  validate: (value) => {
-                    if (!isUpload) return true
-                    if (!value.trim()) {
-                      return 'The time recorded must include hours and minutes'
-                    }
-                    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
-                      return 'The time recorded must be in the format HH:MM'
-                    }
-                    return true
-                  },
-                })}
-              />
-            </GovukFormGroup>
-          </>
-        ) : (
-          <>
-            <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
-            <p className="govuk-body govuk-!-font-weight-bold">
-              {dateTimeLabel}
-            </p>
-          </>
-        )}
-        <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(handleSave)} noValidate>
-            <GovukFormGroup>
-              <GovukLabel htmlFor="client-name">
-                Client name (optional)
-              </GovukLabel>
-              <GovukInput id="client-name" {...form.register('clientName')} />
-            </GovukFormGroup>
-            <GovukFormGroup>
-              <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
-              <GovukInput id="case-id" {...form.register('caseId')} />
-            </GovukFormGroup>
-            <GovukFormGroup>
-              <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
-              <GovukInput id="subject" {...form.register('subject')} />
-            </GovukFormGroup>
-            <GovukDateInput
-              id="client-dob"
-              legend="Client date of birth (optional)"
-              control={form.control}
-              name={'clientDateOfBirth'}
-              mustBePastOrFuture={'past'}
-              description={"client's date of birth"}
-            />
-            <GovukButtonGroup>
-              <GovukButton
-                type="submit"
-                variant="secondary"
-                className="govuk-!-margin-bottom-2"
-                disabled={!form.formState.isDirty}
+          </GovukFormGroup>
+        </>
+      ) : (
+        <>
+          <p className="govuk-body govuk-!-margin-bottom-1">
+            Date recorded{isStandalone ? '' : ':'}
+          </p>
+          <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
+        </>
+      )}
+      <FormProvider {...form}>
+        <form onSubmit={form.handleSubmit(handleSave)} noValidate>
+          <GovukFormGroup>
+            <GovukLabel htmlFor="client-name">
+              Client name (optional)
+            </GovukLabel>
+            <GovukInput id="client-name" {...form.register('clientName')} />
+          </GovukFormGroup>
+          <GovukFormGroup>
+            <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
+            <GovukInput id="case-id" {...form.register('caseId')} />
+          </GovukFormGroup>
+          <GovukFormGroup>
+            <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
+            <GovukInput id="subject" {...form.register('subject')} />
+          </GovukFormGroup>
+          <GovukDateInput
+            id="client-dob"
+            legend="Client date of birth (optional)"
+            control={form.control}
+            name={'clientDateOfBirth'}
+            mustBePastOrFuture={'past'}
+            description={"client's date of birth"}
+          />
+          <GovukButtonGroup>
+            <GovukButton
+              type="submit"
+              variant={isStandalone ? 'primary' : 'secondary'}
+              className="govuk-!-margin-bottom-2"
+              disabled={!isStandalone && !form.formState.isDirty}
+            >
+              {isStandalone ? 'Add details' : 'Update details'}
+            </GovukButton>
+            {isStandalone ? (
+              <a
+                href={afterDetailsHref}
+                className="govuk-link govuk-!-margin-bottom-2"
               >
-                Update details
-              </GovukButton>
+                Skip step
+              </a>
+            ) : (
               <GovukButton
                 type="button"
                 variant="warning"
@@ -564,9 +640,38 @@ const RecordingDetails = ({
               >
                 Delete recording
               </GovukButton>
-            </GovukButtonGroup>
-          </form>
-        </FormProvider>
+            )}
+          </GovukButtonGroup>
+        </form>
+      </FormProvider>
+    </>
+  )
+
+  if (isStandalone) {
+    return (
+      <>
+        <GovukHeading as="h1" size="xl">
+          Add details
+        </GovukHeading>
+        <p className="govuk-body">
+          Enter some details to help you find the recording later
+        </p>
+        {detailsForm}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
+        Recording details
+      </GovukHeading>
+      <GovukDetails
+        open={open}
+        summary={open ? 'Hide' : 'Show'}
+        onToggle={(e) => setOpen(e.currentTarget.open)}
+      >
+        {detailsForm}
       </GovukDetails>
     </>
   )

@@ -67,8 +67,10 @@ export default function RecordingPage(props: {
 
 function RecordingUploadForm({ recording }: { recording: RecordingDbItem }) {
   const { form, isPending, onSubmit } = useStartTranscription({
-    file: recording.blob,
-    recordingId: recording.recording_id,
+    defaultValues: {
+      file: recording.blob,
+      recordingId: recording.recording_id,
+    },
   })
 
   return (

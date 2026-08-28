@@ -1,6 +1,7 @@
 import { TranscriptionForm } from '@/components/audio/types'
 import {
   createRecordingRecordingsPostMutation,
+  createTranscriptionOnlyTranscriptionsOnlyPostMutation,
   createTranscriptionTranscriptionsPostMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { getFileExtension } from '@/lib/getFileExtension'
@@ -11,15 +12,25 @@ import posthog from 'posthog-js'
 import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 
-export const useStartTranscription = (
+export const useStartTranscription = ({
+  defaultValues,
+  transcriptionOnly = false,
+}: {
   defaultValues?: Partial<TranscriptionForm>
-) => {
+  transcriptionOnly?: boolean
+} = {}) => {
   const router = useRouter()
   const { removeRecording } = useRecordingDb()
   const { mutateAsync: createTranscription, isPending: isCreating } =
     useMutation({
       ...createTranscriptionTranscriptionsPostMutation(),
     })
+  const {
+    mutateAsync: createTranscriptionOnly,
+    isPending: isCreatingTranscriptionOnly,
+  } = useMutation({
+    ...createTranscriptionOnlyTranscriptionsOnlyPostMutation(),
+  })
   const { mutateAsync: createRecording, isPending: isConfirming } = useMutation(
     {
       ...createRecordingRecordingsPostMutation(),
@@ -74,23 +85,27 @@ export const useStartTranscription = (
               { file, uploadUrl: recordingData.upload_url },
               {
                 onSuccess: async () => {
-                  createTranscription(
-                    {
-                      body: {
-                        recording_id: recordingData.id,
-                        template_id: template.id,
-                        template_name: template.name,
-                        agenda,
-                      },
-                    },
-                    {
-                      onSuccess: async (transcriptionData) => {
-                        if (recordingId) {
-                          await removeRecording(recordingId)
-                        }
-                        router.push(`/transcriptions/${transcriptionData.id}`)
-                      },
-                    }
+                  const transcriptionData = transcriptionOnly
+                    ? await createTranscriptionOnly({
+                        body: {
+                          recording_id: recordingData.id,
+                        },
+                      })
+                    : await createTranscription({
+                        body: {
+                          recording_id: recordingData.id,
+                          template_id: template.id,
+                          template_name: template.name,
+                          agenda,
+                        },
+                      })
+                  if (recordingId) {
+                    await removeRecording(recordingId)
+                  }
+                  router.push(
+                    transcriptionOnly
+                      ? `/transcriptions/${transcriptionData.id}?details=open`
+                      : `/transcriptions/${transcriptionData.id}`
                   )
                 },
               }
@@ -102,9 +117,11 @@ export const useStartTranscription = (
     [
       createRecording,
       createTranscription,
+      createTranscriptionOnly,
       defaultValues?.recordingId,
       removeRecording,
       router,
+      transcriptionOnly,
       uploadBlob,
     ]
   )
@@ -116,7 +133,8 @@ export const useStartTranscription = (
     },
   })
   return {
-    isPending: isCreating || isConfirming || isUploading,
+    isPending:
+      isCreating || isCreatingTranscriptionOnly || isConfirming || isUploading,
     onSubmit,
     form,
   }

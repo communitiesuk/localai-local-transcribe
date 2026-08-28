@@ -7,7 +7,6 @@ import RecordingControl from './recording-control'
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
 
 import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
-import { StartTranscriptionSection } from '@/components/audio/start-transcription-section'
 import { TranscriptionForm } from '@/components/audio/types'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
@@ -19,27 +18,48 @@ import { AudioDevice, MicrophonePermission } from './microphone-permission'
 import { useRecordingUiStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
+import { Loader2 } from 'lucide-react'
 
 export function MicRecorderForm() {
-  const { isPending, onSubmit, form } = useStartTranscription()
+  const { isPending, onSubmit, form } = useStartTranscription({
+    transcriptionOnly: true,
+  })
   const watchBlob = form.watch('file')
+  const submittedBlobRef = useRef<Blob | File | null>(null)
+  const [isProcessingRecording, setIsProcessingRecording] = useState(false)
+
+  useEffect(() => {
+    if (!watchBlob || submittedBlobRef.current === watchBlob) {
+      return
+    }
+
+    submittedBlobRef.current = watchBlob
+    setIsProcessingRecording(true)
+    void form.handleSubmit(onSubmit)().finally(() => {
+      setIsProcessingRecording(false)
+    })
+  }, [form, onSubmit, watchBlob])
+
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Controller
-          name="file"
-          control={form.control}
-          render={({ field: { value, onChange } }) => (
-            <MicRecorderComponent
-              recordedAudio={value}
-              setRecordedAudio={onChange}
-            />
-          )}
-        />
-        <StartTranscriptionSection
-          isShowing={!!watchBlob}
-          isPending={isPending}
-        />
+      <form>
+        {isProcessingRecording || isPending ? (
+          <div className="flex h-72 flex-col items-center justify-center gap-4">
+            <Loader2 size={80} className="animate-spin" aria-hidden="true" />
+            <p className="govuk-body">Processing recording...</p>
+          </div>
+        ) : (
+          <Controller
+            name="file"
+            control={form.control}
+            render={({ field: { value, onChange } }) => (
+              <MicRecorderComponent
+                recordedAudio={value}
+                setRecordedAudio={onChange}
+              />
+            )}
+          />
+        )}
       </form>
     </FormProvider>
   )

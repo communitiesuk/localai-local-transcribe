@@ -5,15 +5,39 @@ import {
   GovukButtonLink,
   GovukHeading,
   GovukButtonGroup,
+  GovukNotificationBanner,
   GovukSectionBreak,
 } from '@/components/govuk'
 import { OrganisationHeading } from '@/components/organisation-heading'
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Promise<{ recordingSaved?: string }>
+}) {
+  const recordingSavedId = (await searchParams)?.recordingSaved
+
   return (
     <div className="govuk-grid-row flex justify-center">
       <PosthogBanner />
       <div className="govuk-grid-column-three-quarters">
+        {recordingSavedId && (
+          <GovukNotificationBanner
+            title="Success"
+            variant="success"
+            className="govuk-!-margin-bottom-6"
+          >
+            <p className="govuk-notification-banner__heading">
+              Recording saved -{' '}
+              <a
+                href={`/transcriptions/${recordingSavedId}`}
+                className="govuk-notification-banner__link"
+              >
+                click to view
+              </a>
+            </p>
+          </GovukNotificationBanner>
+        )}
         <BannerNotification />
         <OrganisationHeading />
         <GovukBody>Suitable up to OFFICIAL SENSITIVE.</GovukBody>
