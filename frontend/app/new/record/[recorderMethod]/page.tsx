@@ -1,6 +1,7 @@
 'use client'
 
 import { useParams } from 'next/navigation'
+import { useEffect } from 'react'
 import { MicRecorderForm } from '@/components/audio/mic-recorder'
 import { TabRecorderForm } from '@/components/audio/tab-recorder/tab-recorder'
 import { GovukBackLink, GovukHeading } from '@/components/govuk'
@@ -51,7 +52,11 @@ function RecordingIcon({ state }: { state: RecordingState }) {
 export default function RecordPage() {
   const params = useParams<{ recorderMethod: RecorderMethod }>()
   const recorderMethod = params.recorderMethod
-  const { recordingUIState } = useRecordingUIStore()
+  const { recordingUIState, resetRecordingUI } = useRecordingUIStore()
+
+  useEffect(() => {
+    resetRecordingUI()
+  }, [])
 
   const recorderForm =
     recorderMethod === 'in-person' ? <MicRecorderForm /> : <TabRecorderForm />
