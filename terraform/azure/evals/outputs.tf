@@ -46,6 +46,6 @@ output "results_storage_account_blob_endpoint" {
 }
 
 output "log_analytics_workspace_id" {
-  description = "Resource ID of the Log Analytics workspace that receives File service logs."
+  description = "Resource ID of the Log Analytics workspace that receives File and Blob service logs."
   value       = azurerm_log_analytics_workspace.evals.id
 }
