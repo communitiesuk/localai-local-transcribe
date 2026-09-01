@@ -17,10 +17,16 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['versions'],
   }),
+  getMinuteMinutesMinutesIdGetOptions: () => ({
+    queryKey: ['minute'],
+  }),
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey:
     () => ['minutes'],
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation: () => ({
     mutationKey: ['create-minute'],
+  }),
+  createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
+    mutationKey: ['create-minute-version'],
   }),
 }))
 
@@ -170,16 +176,24 @@ describe('<NewDocumentTab />', () => {
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
-    configureQueries({ versions: { data: [{ status: 'completed' }] } })
+    configureQueries({
+      versions: {
+        data: [
+          {
+            status: 'completed',
+            created_datetime: '2024-01-01T00:00:00Z',
+            html_content: 'Generated version content',
+          },
+        ],
+      },
+    })
     const onCreated = vi.fn()
     renderTab({ onCreated })
 
     selectAndCreate()
 
     expect(onCreated).toHaveBeenCalledWith('General summary')
-    expect(
-      screen.getByText('Your ‘General summary’ document is ready.')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Generated version content')).toBeInTheDocument()
   })
 
   it('shows an error banner and returns to the picker when generation fails', () => {
