@@ -16,10 +16,11 @@ import {
   setRecordingSearchParams,
   valuesFromRecordingSearchParams,
 } from '@/components/recent-meetings/search-recording-params'
+import type { ErrorItem } from '@/components/govuk/error-summary'
 import { SearchRecordingsFormData } from '@/types/search-recordings'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { type SubmitErrorHandler, useForm, useWatch } from 'react-hook-form'
 
 const defaultValues: SearchRecordingsFormData = {
   dateOfRecording: { day: '', month: '', year: '' },
@@ -75,6 +76,7 @@ const errorSummaryText = (message: string): string =>
 
 export const SearchRecordings = () => {
   const [open, setOpen] = useState(false)
+  const [errorList, setErrorList] = useState<ErrorItem[]>([])
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -82,25 +84,6 @@ export const SearchRecordings = () => {
   const form = useForm<SearchRecordingsFormData>({
     defaultValues: valuesFromRecordingSearchParams(searchParams),
   })
-
-  const { errors, submitCount } = form.formState
-  const showDateofRecError = submitCount > 0 && errors.dateOfRecording
-  const showClientDobError = submitCount > 0 && errors.clientDateOfBirth
-
-  const dateOfRecordingErrorSummary =
-    typeof errors.dateOfRecording?.message === 'string'
-      ? {
-          href: '#dateOfRecording',
-          text: errorSummaryText(errors.dateOfRecording.message),
-        }
-      : null
-  const clientDateOfBirthErrorSummary =
-    typeof errors.clientDateOfBirth?.message === 'string'
-      ? {
-          href: '#clientDateOfBirth',
-          text: errorSummaryText(errors.clientDateOfBirth.message),
-        }
-      : null
 
   const watchedValues = useWatch({ control: form.control })
   const values: SearchRecordingsFormData = {
@@ -119,11 +102,30 @@ export const SearchRecordings = () => {
   const hasSearchValue = hasAnySearchValue(values)
 
   const handleSubmit = (data: SearchRecordingsFormData) => {
+    setErrorList([])
+
     const params = new URLSearchParams(searchParams)
 
     setRecordingSearchParams(params, data)
     params.delete('page')
     router.replace(hrefWithParams(pathname, params))
+  }
+
+  const handleInvalid: SubmitErrorHandler<SearchRecordingsFormData> = (
+    errors
+  ) => {
+    setErrorList(
+      [
+        typeof errors.dateOfRecording?.message === 'string' && {
+          href: '#dateOfRecording',
+          text: errorSummaryText(errors.dateOfRecording.message),
+        },
+        typeof errors.clientDateOfBirth?.message === 'string' && {
+          href: '#clientDateOfBirth',
+          text: errorSummaryText(errors.clientDateOfBirth.message),
+        },
+      ].filter(Boolean) as ErrorItem[]
+    )
   }
 
   const handleReset = () => {
@@ -132,22 +134,14 @@ export const SearchRecordings = () => {
     recordingSearchParamKeys.forEach((key) => params.delete(key))
     params.delete('page')
     form.reset(defaultValues)
+    setErrorList([])
     router.replace(hrefWithParams(pathname, params))
   }
 
   return (
     <>
-      {showDateofRecError && dateOfRecordingErrorSummary && (
-        <GovukErrorSummary
-          title="There is a problem"
-          errorList={[dateOfRecordingErrorSummary]}
-        />
-      )}
-      {showClientDobError && clientDateOfBirthErrorSummary && (
-        <GovukErrorSummary
-          title="There is a problem"
-          errorList={[clientDateOfBirthErrorSummary]}
-        />
+      {errorList.length > 0 && (
+        <GovukErrorSummary title="There is a problem" errorList={errorList} />
       )}
 
       <GovukHeading as="h2" size="m" className="govuk-!-margin-bottom-2">
@@ -158,7 +152,7 @@ export const SearchRecordings = () => {
         summary={open ? 'Hide search fields' : 'Show search fields'}
         onToggle={(e) => setOpen(e.currentTarget.open)}
       >
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
+        <form onSubmit={form.handleSubmit(handleSubmit, handleInvalid)}>
           <GovukDateInput
             legend="Date of recording"
             id="dateOfRecording"

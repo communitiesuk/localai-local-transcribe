@@ -60,6 +60,32 @@ describe('<SearchRecordings />', () => {
     expect(mocks.replace).not.toHaveBeenCalled()
   })
 
+  it('does not change the submitted summary error when search inputs change after an invalid submit', async () => {
+    render(<SearchRecordings />)
+
+    await userEvent.click(screen.getByText('Show search fields'))
+    await userEvent.type(screen.getAllByLabelText('Day')[0], '3')
+    await userEvent.type(screen.getAllByLabelText('Month')[0], '14')
+    await userEvent.type(screen.getAllByLabelText('Year')[0], '2021')
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }))
+
+    expect(
+      await screen.findByRole('link', {
+        name: 'Recording date must be a real date',
+      })
+    ).toBeInTheDocument()
+
+    await userEvent.clear(screen.getAllByLabelText('Month')[0])
+    await userEvent.type(screen.getAllByLabelText('Month')[0], '12')
+
+    expect(
+      screen.getByRole('link', {
+        name: 'Recording date must be a real date',
+      })
+    ).toBeInTheDocument()
+    expect(mocks.replace).not.toHaveBeenCalled()
+  })
+
   it('shows a mapped summary error for future full recording dates', async () => {
     render(<SearchRecordings />)
 

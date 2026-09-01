@@ -19,7 +19,6 @@ import {
   GovukNotificationBanner,
   GovukTabs,
 } from '@/components/govuk'
-import { validateDateEntry } from '@/components/govuk/date-input'
 import { StatusBadge } from '@/components/status-icon'
 import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
 import { TranscriptionGetResponse } from '@/lib/client'
@@ -35,10 +34,11 @@ import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { redirect, useRouter } from 'next/navigation'
 import { TranscriptionDetailsData } from '@/types/transcriptions'
-import { FormProvider, useForm, useWatch } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 import { BannerNotification } from '@/components/banner-notification'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useTranscriptionDetailsDraftStore } from '@/stores/use-transcription-details-draft-store'
+import type { ErrorItem } from '@/components/govuk/error-summary'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -51,6 +51,9 @@ export default function TranscriptionPage(props: {
 
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
   const [lineEditError, setLineEditError] = useState<string | null>(null)
+  const [recordingDetailsErrors, setRecordingDetailsErrors] = useState<
+    ErrorItem[]
+  >([])
   const errorSummaryRef = useRef<HTMLDivElement | null>(null)
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
@@ -176,10 +179,15 @@ export default function TranscriptionPage(props: {
   return (
     <div className="flex w-full flex-col">
       <BannerNotification />
-      {lineEditError && (
+      {(lineEditError || recordingDetailsErrors.length > 0) && (
         <GovukErrorSummary
           ref={errorSummaryRef}
-          errorList={[{ href: '#line-edit-actions', text: lineEditError }]}
+          errorList={[
+            ...(lineEditError
+              ? [{ href: '#line-edit-actions', text: lineEditError }]
+              : []),
+            ...recordingDetailsErrors,
+          ]}
         />
       )}
       <GovukHeading as="h1" size="xl" className="govuk-!-margin-bottom-2">
@@ -189,6 +197,7 @@ export default function TranscriptionPage(props: {
       <RecordingDetails
         dateTimeLabel={dateTimeLabel}
         transcription={transcription}
+        onErrorListChange={setRecordingDetailsErrors}
       />
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
       <div>
@@ -296,11 +305,53 @@ const formatRecordingDateForSave = (
   return `${dateValue.year.padStart(4, '0')}-${dateValue.month.padStart(2, '0')}-${dateValue.day.padStart(2, '0')}T${time}`
 }
 
+const recordingDetailsErrorMessageMappings = [
+  {
+    prefix: 'The date recorded must include',
+    text: 'Recording date must include a day, month and year',
+  },
+  {
+    prefix: 'The date recorded must be between',
+    text: 'The recording date cannot be in the future',
+  },
+  {
+    prefix: 'The date recorded must be today or in the past',
+    text: 'The recording date cannot be in the future',
+  },
+  {
+    prefix: 'The date recorded must be a real date',
+    text: 'Recording date must be a real date',
+  },
+  {
+    prefix: "The client's date of birth must include",
+    text: 'Date of birth must include a day, month and year',
+  },
+  {
+    prefix: "The client's date of birth must be between",
+    text: 'Date of birth must be a real date',
+  },
+  {
+    prefix: "The client's date of birth must be today or in the past",
+    text: 'Date of birth must be a real date',
+  },
+  {
+    prefix: "The client's date of birth must be a real date",
+    text: 'Date of birth must be a real date',
+  },
+]
+
+const recordingDetailsErrorSummaryText = (message: string): string =>
+  recordingDetailsErrorMessageMappings.find(({ prefix }) =>
+    message.startsWith(prefix)
+  )?.text ?? message
+
 const RecordingDetails = ({
   dateTimeLabel,
+  onErrorListChange,
   transcription,
 }: {
   dateTimeLabel: string
+  onErrorListChange: (errors: ErrorItem[]) => void
   transcription: TranscriptionGetResponse
 }) => {
   const { draft, setDraft, clearDraft } = useTranscriptionDetailsDraftStore()
@@ -316,8 +367,8 @@ const RecordingDetails = ({
   }
 
   const form = useForm<TranscriptionDetailsData>({
-    mode: 'onChange',
-    reValidateMode: 'onChange',
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
     defaultValues: {
       dateOfRecording: formatDateInputValue(
         transcription.date_of_recording ?? transcription.created_datetime
@@ -337,10 +388,6 @@ const RecordingDetails = ({
       },
     },
   })
-  const dateOfRecording = useWatch({
-    control: form.control,
-    name: 'dateOfRecording',
-  })
   useEffect(() => {
     if (draft?.transcriptionId === transcription.id) {
       form.reset(draft.data, { keepDefaultValues: true })
@@ -348,29 +395,40 @@ const RecordingDetails = ({
   }, [draft, transcription.id, form])
 
   const { dirtyFields, errors, isSubmitted } = form.formState
-  const dateOfRecordingError = isUpload
-    ? validateDateEntry(
-        dateOfRecording,
-        'past',
-        'Recording date',
-        'full-date',
-        true
-      )
-    : null
-  const errorList = [
-    errors.dateOfRecording?.message && {
-      href: '#date-recorded-day',
-      text: errors.dateOfRecording.message,
-    },
-    errors.dateOfRecordingTime?.message && {
-      href: '#time-recorded',
-      text: errors.dateOfRecordingTime.message,
-    },
-    errors.clientDateOfBirth?.message && {
-      href: '#client-dob-day',
-      text: errors.clientDateOfBirth.message,
-    },
-  ].filter(Boolean) as { href: string; text: string }[]
+  const dateOfRecordingMessage = errors.dateOfRecording?.message
+  const dateOfRecordingTimeMessage = errors.dateOfRecordingTime?.message
+  const clientDateOfBirthMessage = errors.clientDateOfBirth?.message
+
+  const shouldShowErrorSummary =
+    isSubmitted &&
+    (!!dateOfRecordingMessage ||
+      !!dateOfRecordingTimeMessage ||
+      !!clientDateOfBirthMessage)
+
+  useEffect(() => {
+    const errorList = [
+      typeof dateOfRecordingMessage === 'string' && {
+        href: '#date-recorded-day',
+        text: recordingDetailsErrorSummaryText(dateOfRecordingMessage),
+      },
+      typeof dateOfRecordingTimeMessage === 'string' && {
+        href: '#time-recorded',
+        text: dateOfRecordingTimeMessage,
+      },
+      typeof clientDateOfBirthMessage === 'string' && {
+        href: '#client-dob-day',
+        text: recordingDetailsErrorSummaryText(clientDateOfBirthMessage),
+      },
+    ].filter(Boolean) as ErrorItem[]
+
+    onErrorListChange(shouldShowErrorSummary ? errorList : [])
+  }, [
+    clientDateOfBirthMessage,
+    dateOfRecordingMessage,
+    dateOfRecordingTimeMessage,
+    onErrorListChange,
+    shouldShowErrorSummary,
+  ])
 
   const setBanner = useBannerStore((store) => store.setBanner)
 
@@ -494,12 +552,6 @@ const RecordingDetails = ({
             </p>
           </>
         )}
-        {(isSubmitted ||
-          (isUpload &&
-            (!!dirtyFields.dateOfRecording ||
-              !!dirtyFields.dateOfRecordingTime) &&
-            (!!errors.dateOfRecording || !!errors.dateOfRecordingTime))) &&
-          errorList.length > 0 && <GovukErrorSummary errorList={errorList} />}
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(handleSave)} noValidate>
             <GovukFormGroup>
@@ -529,11 +581,7 @@ const RecordingDetails = ({
                 type="submit"
                 variant="secondary"
                 className="govuk-!-margin-bottom-2"
-                disabled={
-                  !form.formState.isDirty ||
-                  !!dateOfRecordingError ||
-                  !!errors.dateOfRecordingTime
-                }
+                disabled={!form.formState.isDirty}
               >
                 Update details
               </GovukButton>
