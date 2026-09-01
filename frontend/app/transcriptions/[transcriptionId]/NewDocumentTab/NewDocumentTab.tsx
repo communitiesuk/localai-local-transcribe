@@ -23,10 +23,12 @@ export const NewDocumentTab = ({
   transcription,
   onCancel,
   onCreated,
+  onMinuteCreated,
 }: {
   transcription: TranscriptionGetResponse
   onCancel: () => void
   onCreated: (templateName: string) => void
+  onMinuteCreated?: (minuteId: string) => void
 }) => {
   const [selectedValue, setSelectedValue] = useState('')
   const [createdMinuteId, setCreatedMinuteId] = useState<string | null>(null)
@@ -74,11 +76,7 @@ export const NewDocumentTab = ({
     if (isCompleted && !renamedRef.current) {
       renamedRef.current = true
       onCreated(createdTemplateName)
-    }
-  }, [isCompleted, createdTemplateName, onCreated])
-
-  useEffect(() => {
-    if (isFailed) {
+    } else if (isFailed) {
       setBanner({
         variant: 'important',
         title: 'There is a problem',
@@ -86,7 +84,7 @@ export const NewDocumentTab = ({
           'Something went wrong generating your document. Please try again.',
       })
     }
-  }, [isFailed, setBanner])
+  }, [isCompleted, isFailed, createdTemplateName, onCreated, setBanner])
 
   if (isCompleted) {
     // TODO(AIILG-867): render the document view (button group, version history, content).
@@ -170,6 +168,7 @@ export const NewDocumentTab = ({
           })
           setCreatedTemplateName(selectedTemplate.name)
           setCreatedMinuteId(data.minute_id)
+          onMinuteCreated?.(data.minute_id)
         },
         onError: () => {
           setBanner({
