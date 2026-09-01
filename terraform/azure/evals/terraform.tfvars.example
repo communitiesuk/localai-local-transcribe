@@ -1,12 +1,15 @@
-# Example values for a Softwire sandbox apply.
-# Copy to terraform.tfvars; do not commit real subscription IDs, IPs, or object IDs.
+# Example values for both evals Terraform roots.
+# Copy to terraform.tfvars in this directory; do not commit real subscription IDs, IPs, or object IDs.
+# Each root ignores the values belonging to the other and warns about them; use -compact-warnings.
 
-subscription_id                 = "00000000-0000-0000-0000-000000000000"
-resource_group_name             = "rg-evals-sandbox"
-location                        = "uksouth"
-sensitive_storage_account_name  = "ltevalssensitive001"
-results_storage_account_name    = "ltevalsresults001"
-environment_name                = "sandbox"
+subscription_id     = "<azure-subscription-id>"
+resource_group_name = "<resource-group-name>"
+location            = "<azure-region>"
+environment_name    = "<environment-name>"
+
+terraform_state_storage_account_name = "<terraform-state-storage-account-name>"
+sensitive_storage_account_name       = "<sensitive-storage-account-name>"
+results_storage_account_name         = "<results-storage-account-name>"
 
 # Azure DevOps pipeline identity.
 # pipeline_identity_name = "evals-blob-id"
@@ -14,8 +17,16 @@ environment_name                = "sandbox"
 # ado_federation_subject = "sc://<org>/<project>/evals-blob"
 
 # Network access.
-# adapt_ip_rules = []
-# mhclg_ip_rules = []
+adapt_ip_rules = [
+  "<adapt-egress-ip-or-cidr>",
+]
+
+mhclg_ip_rules = [
+  "<mhclg-egress-ip-or-cidr>",
+]
+
+# ado_ip_rules = []
+# network_rules_bypass = []
 
 # TODO(AIILG-649): Confirm once the private endpoint setup is known in the Azure environment.
 # sensitive_public_network_access_enabled = false

@@ -24,6 +24,7 @@ Azure storage firewall rules — IP allowlists and private endpoints — are sco
 | No public blobs, no local users, SAS expiry cap | `main.tf`                                      |
 | Versioning, blob and container soft delete      | `main.tf`                                      |
 | File and Blob diagnostic logs to Log Analytics  | `logging.tf`                                   |
+| File service SMB 3.1.1, Kerberos, AES-256-GCM   | `share_properties` in `main.tf`                |
 
 Disabling shared access keys is what closes the Azure console bypass: with no account keys there is no account SAS and no "Access key" auth in the portal blob browser, so every read and write is an Entra ID call subject to the role assignments. This holds only while nobody has Owner, Contributor, or Storage Account Contributor on the resource group — those roles can re-enable keys. Keep them off it.
 
@@ -57,7 +58,7 @@ Creating the role assignments needs Owner or User Access Administrator on the re
 | `network.tf`       | Blob private endpoints                                             |
 | `rbac.tf`          | Container-scoped role assignments                                  |
 | `variables.tf`     | Input variables (required values plus optional hardening defaults) |
-| `*.tfvars.example` | Example variable files; copy to `terraform.tfvars` locally         |
+| `terraform.tfvars.example` | Example variable file for both Terraform roots             |
 
 ## Unknowns left as variables
 
@@ -98,6 +99,7 @@ Still out of scope: customer-managed keys, Queue/Table diagnostic logging, a SIE
 - Rights for the applying identity to create a Log Analytics workspace and diagnostic settings on the storage accounts
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Three globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one sensitive, one results
+- MHCLG public egress IPs or CIDR ranges for machines that run `terraform init` / `plan` / `apply` against the state backend
 - **Storage Blob Data Contributor** on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init` / `plan` / `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
 - **User Access Administrator** (or Owner) on the resource group for the applying identity, because `rbac.tf` creates role assignments
 
@@ -125,20 +127,28 @@ git clone https://github.com/communitiesuk/localai-local-transcribe
 cd localai-local-transcribe/terraform/azure/evals
 ```
 
-If Cloud Shell home storage was reset, clone again and recreate `terraform.tfvars` from the examples. The evals stack remote state still lives in Azure; the backend stack uses local state, so a wiped shell may need `terraform import` of the existing state storage account and `tfstate` container before a further backend apply.
+If Cloud Shell home storage was reset, clone again and recreate `terraform.tfvars` from the example. The evals stack remote state still lives in Azure; the backend stack uses local state, so a wiped shell may need `terraform import` of the existing state storage account and `tfstate` container before a further backend apply.
+
+Create one local var file for both Terraform roots:
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars: subscription_id, resource_group_name, location,
+# environment_name, terraform_state_storage_account_name, storage account names,
+# IP allowlists, and principal IDs.
+nano terraform.tfvars
+```
+
+Each root declares only the variables it uses, so each ignores the other's values and says so in a warning. `-compact-warnings` reduces that to a single summary line.
 
 ### Step 1: Bootstrap remote state
 
 ```bash
 cd backend
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars: subscription_id, resource_group_name, location,
-# storage_account_name (state account), environment_name
-nano terraform.tfvars
 
 terraform init
-terraform plan
-terraform apply
+terraform plan -compact-warnings -var-file=../terraform.tfvars
+terraform apply -compact-warnings -var-file=../terraform.tfvars
 ```
 
 Note the outputs: `resource_group_name`, `storage_account_name`, `container_name`.
@@ -147,19 +157,15 @@ Note the outputs: `resource_group_name`, `storage_account_name`, `container_name
 
 ```bash
 cd ..
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars: same subscription and resource group, two DIFFERENT
-# storage account names for sensitive and results, plus whichever IPs and
-# principal IDs are known. Leave the rest commented out.
-nano terraform.tfvars
 
 # Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
 # use_azuread_auth=true requires Storage Blob Data Contributor on the state storage
-# account or tfstate container for the applying identity; without that role, init fails.
+# account or tfstate container for the applying identity, and the caller must connect
+# from an IP listed in backend/mhclg_ip_rules; without both, init fails.
 terraform init -backend-config="resource_group_name=<from-backend-output>" -backend-config="storage_account_name=<from-backend-output>" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate" -backend-config="use_azuread_auth=true"
 
-terraform plan
-terraform apply
+terraform plan -compact-warnings
+terraform apply -compact-warnings
 ```
 
 Cloud Shell egresses from an unpredictable IP, so blob data plane commands run there are denied once the firewall is on. This does not block Terraform: accounts, containers, and role assignments are all managed through the resource manager API, which the storage firewall does not gate. There is no allowlist entry for the applying machine, by design — read blobs from ADAPT instead. If you must check by hand in the sandbox, add the address to `adapt_ip_rules` so the exemption is visible in the diff, and remove it before reviewing access.
