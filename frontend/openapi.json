@@ -61,6 +61,109 @@
             "description": "Sort order for date recorded"
           },
           {
+            "name": "client_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by client name",
+              "title": "Client Name"
+            },
+            "description": "Filter by client name"
+          },
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by case ID",
+              "title": "Case Id"
+            },
+            "description": "Filter by case ID"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by subject",
+              "title": "Subject"
+            },
+            "description": "Filter by subject"
+          },
+          {
+            "name": "date_of_recording",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by date recorded",
+              "title": "Date Of Recording"
+            },
+            "description": "Filter by date recorded"
+          },
+          {
+            "name": "date_of_recording_day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 31, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded day",
+              "title": "Date Of Recording Day"
+            },
+            "description": "Filter by recorded day"
+          },
+          {
+            "name": "date_of_recording_month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 12, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded month",
+              "title": "Date Of Recording Month"
+            },
+            "description": "Filter by recorded month"
+          },
+          {
+            "name": "date_of_recording_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded year",
+              "title": "Date Of Recording Year"
+            },
+            "description": "Filter by recorded year"
+          },
+          {
+            "name": "client_date_of_birth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by client date of birth",
+              "title": "Client Date Of Birth"
+            },
+            "description": "Filter by client date of birth"
+          },
+          {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
@@ -109,6 +212,109 @@
               "default": "newest"
             },
             "description": "Sort order for date recorded"
+          },
+          {
+            "name": "client_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by client name",
+              "title": "Client Name"
+            },
+            "description": "Filter by client name"
+          },
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by case ID",
+              "title": "Case Id"
+            },
+            "description": "Filter by case ID"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by subject",
+              "title": "Subject"
+            },
+            "description": "Filter by subject"
+          },
+          {
+            "name": "date_of_recording",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by date recorded",
+              "title": "Date Of Recording"
+            },
+            "description": "Filter by date recorded"
+          },
+          {
+            "name": "date_of_recording_day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 31, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded day",
+              "title": "Date Of Recording Day"
+            },
+            "description": "Filter by recorded day"
+          },
+          {
+            "name": "date_of_recording_month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 12, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded month",
+              "title": "Date Of Recording Month"
+            },
+            "description": "Filter by recorded month"
+          },
+          {
+            "name": "date_of_recording_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded year",
+              "title": "Date Of Recording Year"
+            },
+            "description": "Filter by recorded year"
+          },
+          {
+            "name": "client_date_of_birth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by client date of birth",
+              "title": "Client Date Of Birth"
+            },
+            "description": "Filter by client date of birth"
           },
           {
             "name": "x-amzn-oidc-data",

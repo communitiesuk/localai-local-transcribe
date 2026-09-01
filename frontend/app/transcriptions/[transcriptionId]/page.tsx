@@ -9,7 +9,6 @@ import { RecordingDetails } from '@/app/transcriptions/[transcriptionId]/Recordi
 import { isTranscriptionProcessing } from '@/app/transcriptions/[transcriptionId]/TranscriptionStatus'
 import { StatusNotificationPage } from '@/app/transcriptions/[transcriptionId]/TranscriptionHeader'
 import {
-  GovukBackLink,
   GovukButton,
   GovukErrorSummary,
   GovukHeading,
@@ -148,9 +147,6 @@ export default function TranscriptionPage(props: {
 
   return (
     <div className="flex w-full flex-col">
-      <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
-        Back
-      </GovukBackLink>
       <BannerNotification />
       {(lineEditError || recordingDetailsErrors.length > 0) && (
         <GovukErrorSummary

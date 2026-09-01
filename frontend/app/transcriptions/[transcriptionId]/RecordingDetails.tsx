@@ -26,6 +26,46 @@ import { useTranscriptionDetailsDraftStore } from '@/stores/use-transcription-de
 
 const TIME_HH_MM_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/
 
+const recordingDetailsErrorMessageMappings = [
+  {
+    prefix: 'The date recorded must include',
+    text: 'Recording date must include a day, month and year',
+  },
+  {
+    prefix: 'The date recorded must be between',
+    text: 'The recording date cannot be in the future',
+  },
+  {
+    prefix: 'The date recorded must be today or in the past',
+    text: 'The recording date cannot be in the future',
+  },
+  {
+    prefix: 'The date recorded must be a real date',
+    text: 'Recording date must be a real date',
+  },
+  {
+    prefix: "The client's date of birth must include",
+    text: 'Date of birth must include a day, month and year',
+  },
+  {
+    prefix: "The client's date of birth must be between",
+    text: 'Date of birth must be a real date',
+  },
+  {
+    prefix: "The client's date of birth must be today or in the past",
+    text: 'Date of birth must be a real date',
+  },
+  {
+    prefix: "The client's date of birth must be a real date",
+    text: 'Date of birth must be a real date',
+  },
+]
+
+const recordingDetailsErrorSummaryText = (message: string): string =>
+  recordingDetailsErrorMessageMappings.find(({ prefix }) =>
+    message.startsWith(prefix)
+  )?.text ?? message
+
 const formatDateTimeLocalValue = (dateString: string | null | undefined) => {
   if (!dateString) return ''
 
@@ -144,17 +184,17 @@ export const RecordingDetails = ({
 
   useEffect(() => {
     const errorList = [
-      dateOfRecordingMessage && {
+      typeof dateOfRecordingMessage === 'string' && {
         href: '#date-recorded-day',
-        text: dateOfRecordingMessage,
+        text: recordingDetailsErrorSummaryText(dateOfRecordingMessage),
       },
-      dateOfRecordingTimeMessage && {
+      typeof dateOfRecordingTimeMessage === 'string' && {
         href: '#time-recorded',
         text: dateOfRecordingTimeMessage,
       },
-      clientDateOfBirthMessage && {
+      typeof clientDateOfBirthMessage === 'string' && {
         href: '#client-dob-day',
-        text: clientDateOfBirthMessage,
+        text: recordingDetailsErrorSummaryText(clientDateOfBirthMessage),
       },
     ].filter(Boolean) as ErrorItem[]
 
