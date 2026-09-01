@@ -1,0 +1,248 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useFormContext } from 'react-hook-form'
+import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
+import { useWakeLock } from '@/hooks/use-wake-lock'
+import { type TranscriptionForm } from '@/hooks/use-start-transcription'
+import { useRecordingDb } from '@/providers/transcription-db-provider'
+import { AudioDevice } from '@/components/audio/microphone-permission'
+import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
+import { useCountdown } from '@/hooks/use-countdown'
+
+/**
+ * Encapsulates the MediaRecorder lifecycle (device selection, permission
+ * handling, start/stop/pause) for the in-person microphone recorder.
+ */
+export function useMicRecorder({
+  recordedAudio,
+  setRecordedAudio,
+}: {
+  recordedAudio: Blob | null
+  setRecordedAudio: (blob: Blob | null) => void
+}) {
+  const { releaseWakeLock, requestWakeLock } = useWakeLock()
+  const [error, setError] = useState<string | null>(null)
+  const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const form = useFormContext<TranscriptionForm>()
+  const { removeRecording, addRecording, updateRecording } = useRecordingDb()
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const [mediaRecorderStream, setMediaRecorderStream] =
+    useState<MediaStream | null>(null)
+  const micStreamRef = useRef<MediaStream | null>(null)
+  const mediaChunksRef = useRef<Blob[]>([])
+  const isStartingRecordingRef = useRef(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
+
+  const stopAllTracks = useCallback(() => {
+    isStartingRecordingRef.current = false
+
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach((track) => track.stop())
+    }
+    micStreamRef.current = null
+    mediaRecorderRef.current = null
+    setMediaRecorderStream(null)
+
+    setIsRecording(false)
+    releaseWakeLock()
+  }, [releaseWakeLock])
+
+  const startRecording = useCallback(async () => {
+    // prevent start recording triggering multiple times if recording has already started
+    if (
+      isStartingRecordingRef.current ||
+      mediaRecorderRef.current?.state === 'recording' ||
+      mediaRecorderRef.current?.state === 'paused'
+    ) {
+      return
+    }
+
+    isStartingRecordingRef.current = true
+
+    try {
+      setError(null)
+      mediaChunksRef.current = []
+      const micStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          deviceId: selectedDeviceId,
+          noiseSuppression: false,
+          echoCancellation: false,
+        },
+      })
+      micStreamRef.current = micStream
+      const options = { mimeType: 'audio/webm' }
+      const mediaRecorder = new MediaRecorder(micStream, options)
+      mediaRecorderRef.current = mediaRecorder
+      setMediaRecorderStream(mediaRecorder.stream)
+
+      mediaRecorder.onstart = async () => {
+        const recordingId = await addRecording(new Blob())
+        form.setValue('recordingId', recordingId)
+      }
+
+      mediaRecorder.ondataavailable = async (event) => {
+        if (event.data.size > 0) {
+          mediaChunksRef.current.push(event.data)
+          const recordingId = form.getValues('recordingId')
+          if (recordingId && mediaChunksRef.current.length % 60 == 0) {
+            const audioBlob = new Blob(mediaChunksRef.current, {
+              type: 'audio/webm',
+            })
+            await updateRecording(recordingId, audioBlob)
+          }
+        }
+      }
+
+      mediaRecorder.onerror = () => {
+        setError('Recording error occurred. Please try again.')
+        setRecordingUIState('idle')
+        // Don't call stopRecording here as it might cause a loop
+        // Just clean up manually if needed
+        stopAllTracks()
+      }
+
+      mediaRecorder.onstop = async () => {
+        if (mediaChunksRef.current.length > 0) {
+          const audioBlob = new Blob(mediaChunksRef.current, {
+            type: 'audio/webm',
+          })
+          setRecordedAudio(audioBlob)
+          const recordingId = form.getValues('recordingId')
+          if (recordingId) {
+            await updateRecording(recordingId, audioBlob)
+          }
+        } else {
+          setError(
+            'No audio data was recorded. Please try again and ensure audio is shared.'
+          )
+          setRecordingUIState('idle')
+        }
+        stopAllTracks()
+      }
+
+      // Start recording
+      setRecordedAudio(null)
+      await requestWakeLock()
+      mediaRecorder.start(1000) // Collect data every second
+      setIsRecording(true)
+    } catch (micError) {
+      console.warn('Error occurred starting audio recording.', micError)
+      setError('Error occurred starting audio recording. Please try again.')
+      setRecordingUIState('idle')
+      stopAllTracks()
+    } finally {
+      isStartingRecordingRef.current = false
+    }
+    // Create a media recorder from the composed stream
+  }, [
+    addRecording,
+    form,
+    requestWakeLock,
+    selectedDeviceId,
+    setRecordedAudio,
+    setRecordingUIState,
+    stopAllTracks,
+    updateRecording,
+  ])
+
+  const stopRecording = useCallback(() => {
+    // Prevent multiple calls to stopRecording
+    if (!mediaRecorderRef.current || !isRecording) {
+      return
+    }
+    try {
+      // Only call stop() if the state is not 'inactive'
+      if (mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop()
+      } else {
+        stopAllTracks()
+      }
+    } catch {
+      // Clean up streams even if stop fails
+      stopAllTracks()
+    }
+  }, [isRecording, stopAllTracks])
+
+  useEffect(() => {
+    return () => {
+      stopRecording()
+    }
+  }, [stopRecording])
+
+  const handlePauseStateChange = useCallback((paused: boolean) => {
+    if (!mediaRecorderRef.current) {
+      return
+    }
+    if (paused) {
+      mediaRecorderRef.current.pause()
+    } else {
+      mediaRecorderRef.current.resume()
+    }
+  }, [])
+
+  const handlePermissionGranted = (devices: AudioDevice[]) => {
+    setAudioDevices(devices)
+    setSelectedDeviceId(devices[0].deviceId)
+    setPermissionGranted(true)
+    setError(null)
+  }
+
+  useTabCloseWarning(!!recordedAudio || isRecording)
+
+  const handleCountdownCancel = () => {
+    setRecordingUIState('idle')
+  }
+
+  const {
+    isStartingRecording,
+    isPreparingRecording,
+    startCountdown,
+    handleLoadingComplete,
+    handleLoadingCancel,
+  } = useCountdown({
+    onComplete: startRecording,
+    onCancel: handleCountdownCancel,
+  })
+
+  const handleStartRecordingClick = () => {
+    setError(null)
+    setRecordedAudio(null)
+    setRecordingUIState('starting')
+    startCountdown()
+  }
+
+  const discardRecording = () => {
+    setRecordedAudio(null)
+    setIsDialogOpen(false)
+    const recordingId = form.getValues('recordingId')
+    if (recordingId) {
+      removeRecording(recordingId)
+    }
+  }
+
+  return {
+    error,
+    setError,
+    audioDevices,
+    selectedDeviceId,
+    setSelectedDeviceId,
+    permissionGranted,
+    isDialogOpen,
+    setIsDialogOpen,
+    mediaRecorderStream,
+    isRecording,
+    recordingUIState,
+    isStartingRecording,
+    isPreparingRecording,
+    handlePermissionGranted,
+    handleStartRecordingClick,
+    handleLoadingComplete,
+    handleLoadingCancel,
+    stopRecording,
+    handlePauseStateChange,
+    discardRecording,
+  }
+}
