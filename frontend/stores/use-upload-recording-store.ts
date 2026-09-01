@@ -1,15 +1,18 @@
-import type { TranscriptionOnlyForm } from '@/hooks/use-start-transcription-only'
+import type { TranscriptionForm } from '@/hooks/use-start-transcription'
 import { create } from 'zustand'
 
 type UploadRecordingStatus = 'idle' | 'pending' | 'success' | 'error'
+type UploadingFrom = 'upload' | 'recording' | 'in-person-recording' | null
 
 type UploadRecordingStore = {
   status: UploadRecordingStatus
   transcriptionId: string | null
+  uploadingFrom: UploadingFrom
   error: string | null
   startUpload: (
-    values: TranscriptionOnlyForm,
-    submit: (values: TranscriptionOnlyForm) => Promise<string | null>
+    uploadingFrom: UploadingFrom,
+    values: TranscriptionForm,
+    submit: (values: TranscriptionForm) => Promise<string | null>
   ) => Promise<void>
   reset: () => void
 }
@@ -17,12 +20,14 @@ type UploadRecordingStore = {
 export const useUploadRecordingStore = create<UploadRecordingStore>((set) => ({
   status: 'idle',
   transcriptionId: null,
+  uploadingFrom: null,
   error: null,
 
-  startUpload: async (values, submit) => {
+  startUpload: async (uploadingFrom, values, submit) => {
     set({
       status: 'pending',
       transcriptionId: null,
+      uploadingFrom,
       error: null,
     })
 
@@ -48,6 +53,7 @@ export const useUploadRecordingStore = create<UploadRecordingStore>((set) => ({
     set({
       status: 'idle',
       transcriptionId: null,
+      uploadingFrom: null,
       error: null,
     })
   },

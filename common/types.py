@@ -74,14 +74,6 @@ class UnlabelledTranscriptionsResponse(BaseModel):
 
 class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
-    template_name: str
-    template_id: uuid.UUID | None = None
-    agenda: str | None = Field(default=None, max_length=MAX_AGENDA_LENGTH)
-    title: str | None = None
-
-
-class TranscriptionOnlyCreateRequest(BaseModel):
-    recording_id: uuid.UUID
     title: str | None = None
 
 
@@ -303,7 +295,6 @@ class TaskType(IntEnum):
     MINUTE = 2
     EDIT = 3
     INTERACTIVE = 4
-    TRANSCRIPTION_ONLY = 5
 
 
 class EditMessageData(BaseModel):

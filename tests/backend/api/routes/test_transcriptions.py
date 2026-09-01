@@ -36,23 +36,17 @@ async def test_create_transcription_success(
     mock_session_with_recording,
     mock_user,
     mock_transcription_queue_service,
-    mock_minute,
-    mock_minute_version,
     transcription_request,
     mock_transcription,
     mock_storage_service,  # NOQA: ARG001
 ):
-    """Test successful creation of a transcription with associated minute and minute version."""
+    """Test successful creation of a transcription."""
     mocker.patch("backend.api.routes.transcriptions.Transcription", return_value=mock_transcription)
-    mocker.patch("backend.api.routes.transcriptions.Minute", return_value=mock_minute)
-    mocker.patch("backend.api.routes.transcriptions.MinuteVersion", return_value=mock_minute_version)
 
     response = await create_transcription(transcription_request, mock_session_with_recording, mock_user)
 
     assert response.id == mock_transcription.id
     mock_session_with_recording.add.assert_any_call(mock_transcription)
-    mock_session_with_recording.add.assert_any_call(mock_minute)
-    mock_session_with_recording.add.assert_any_call(mock_minute_version)
     mock_transcription_queue_service.publish_message.assert_called()
 
 

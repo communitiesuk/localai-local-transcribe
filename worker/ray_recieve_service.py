@@ -58,15 +58,9 @@ class _RayTranscriptionService:
                 try:
                     logger.info("Received minute id for transcription: %s", message.id)
                     data = message.data if isinstance(message.data, TranscriptionJobMessageData) else None
-
                     match message.type:
                         case TaskType.TRANSCRIPTION:
                             transcription_job = await TranscriptionHandlerService.process_transcription(
-                                message.id,
-                                data,
-                            )
-                        case TaskType.TRANSCRIPTION_ONLY:
-                            transcription_job = await TranscriptionHandlerService.process_transcription_only(
                                 message.id,
                                 data,
                             )
@@ -75,22 +69,15 @@ class _RayTranscriptionService:
                             self.transcription_queue_service.deadletter_message(message, receipt_handle)
                             continue
                 except TranscriptionFailedError:
-                    logger.exception("Transcription failed for minute id: %s", message.id)
+                    logger.exception("Transcription failed for transcription id: %s", message.id)
                 else:
                     # sync jobs should have the transcript available immediately, async jobs may need to go on the queue
                     if transcription_job.transcript:
-                        logger.info("Transcription complete for minute id %s complete", message.id)
-                        # create a default minute with the general template after every transcription
-                        # (unless transcription only)
-                        if message.type == TaskType.TRANSCRIPTION:
-                            minute_version = await MinuteHandlerService.get_only_minute_version_for_minute_id(
-                                message.id
-                            )
-                            self.llm_queue_service.publish_message(
-                                WorkerMessage(id=minute_version.id, type=TaskType.MINUTE)
-                            )
+                        logger.info("Transcription complete for transcription id %s complete", message.id)
                     else:
-                        logger.info("Async transcription job not ready yet. Re-queueing minute id: %s", message.id)
+                        logger.info(
+                            "Async transcription job not ready yet. Re-queueing transcription id: %s", message.id
+                        )
                         self.transcription_queue_service.publish_message(
                             WorkerMessage(id=message.id, type=message.type, data=transcription_job)
                         )

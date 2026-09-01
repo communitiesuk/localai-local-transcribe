@@ -47,6 +47,7 @@ export default function TranscriptionPage(props: {
   const params = use(props.params)
 
   const { transcriptionId } = params
+  const router = useRouter()
   const searchParams = useSearchParams()
   const detailsMode = searchParams.get('details')
   const showAddDetailsStep = detailsMode === 'open'
@@ -94,6 +95,28 @@ export default function TranscriptionPage(props: {
     refetchOnWindowFocus: false,
   })
 
+  useEffect(() => {
+    if (!showSavedDetailsSpinner || !transcription) {
+      return
+    }
+    if (
+      transcription.status &&
+      ['awaiting_start', 'in_progress'].includes(transcription.status)
+    ) {
+      return
+    }
+    setBanner({
+      variant: 'success',
+      title: 'Success',
+      message: 'Recording saved - ',
+      link: {
+        text: 'click to view',
+        href: `/transcriptions/${transcription.id}`,
+      },
+    })
+    router.push('/')
+  }, [showSavedDetailsSpinner, transcription, setBanner, router])
+
   if (!transcription && !isLoading) {
     redirect('/')
   }
@@ -129,16 +152,16 @@ export default function TranscriptionPage(props: {
     transcription.status &&
     ['awaiting_start', 'in_progress'].includes(transcription.status)
 
-  if (isProcessing) {
-    if (showSavedDetailsSpinner) {
-      return (
-        <div className="flex h-72 flex-col items-center justify-center gap-4">
-          <LoaderCircle size={80} className="animate-spin" aria-hidden="true" />
-          <p className="govuk-body">Processing recording...</p>
-        </div>
-      )
-    }
+  if (showSavedDetailsSpinner) {
+    return (
+      <div className="flex h-72 flex-col items-center justify-center gap-4">
+        <LoaderCircle size={80} className="animate-spin" aria-hidden="true" />
+        <p className="govuk-body">Processing recording...</p>
+      </div>
+    )
+  }
 
+  if (isProcessing) {
     if (showAddDetailsStep) {
       return (
         <div className="govuk-grid-row">
@@ -194,10 +217,6 @@ export default function TranscriptionPage(props: {
         <AudioPlayer transcriptionId={transcription.id} />
       </div>
     )
-  }
-
-  if (showSavedDetailsSpinner) {
-    redirect(`/?recordingSaved=${transcription.id}`)
   }
 
   const handleCreateDocument = () => {
@@ -394,9 +413,6 @@ const RecordingDetails = ({
   const isProcessing =
     transcription.status &&
     ['awaiting_start', 'in_progress'].includes(transcription.status)
-  const afterDetailsHref = isProcessing
-    ? `/transcriptions/${transcription.id}?details=saved`
-    : `/?recordingSaved=${transcription.id}`
 
   let clientDateOfBirth: Date | null = null
   if (transcription.client_date_of_birth) {
@@ -469,6 +485,23 @@ const RecordingDetails = ({
 
   const setBanner = useBannerStore((store) => store.setBanner)
 
+  const goAfterDetails = () => {
+    if (isProcessing) {
+      router.push(`/transcriptions/${transcription.id}?details=saved`)
+      return
+    }
+    setBanner({
+      variant: 'success',
+      title: 'Success',
+      message: 'Recording saved - ',
+      link: {
+        text: 'click to view',
+        href: `/transcriptions/${transcription.id}`,
+      },
+    })
+    router.push('/')
+  }
+
   const queryClient = useQueryClient()
 
   const { mutate } = useMutation({
@@ -487,7 +520,7 @@ const RecordingDetails = ({
       clearDraft()
       form.reset(form.getValues())
       if (isStandalone) {
-        router.push(afterDetailsHref)
+        goAfterDetails()
       }
     },
     onError: () => {
@@ -618,12 +651,13 @@ const RecordingDetails = ({
               {isStandalone ? 'Add details' : 'Update details'}
             </GovukButton>
             {isStandalone ? (
-              <a
-                href={afterDetailsHref}
-                className="govuk-link govuk-!-margin-bottom-2"
+              <button
+                type="button"
+                onClick={goAfterDetails}
+                className="govuk-link govuk-!-margin-bottom-2 bg-transparent p-0"
               >
                 Skip step
-              </a>
+              </button>
             ) : (
               <GovukButton
                 type="button"
