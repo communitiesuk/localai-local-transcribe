@@ -13,8 +13,6 @@ from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
 from common.database.postgres_models import (
     DialogueEntry,
-    Minute,
-    MinuteVersion,
     Recording,
     Transcription,
 )
@@ -33,7 +31,6 @@ from common.types import (
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
-    TranscriptionOnlyCreateRequest,
     TranscriptionSortOrder,
     UnlabelledTranscriptionMetadata,
     UnlabelledTranscriptionsResponse,
@@ -228,33 +225,6 @@ async def create_recording(
     return RecordingCreateResponse(id=recording.id, upload_url=presigned_url)
 
 
-@transcriptions_router.post("/transcriptions-only", response_model=TranscriptionCreateResponse, status_code=201)
-async def create_transcription_only(
-    request: TranscriptionOnlyCreateRequest,
-    session: SQLSessionDep,
-    current_user: UserDep,
-) -> TranscriptionCreateResponse:
-    """transcription without creating an associated Minute"""
-    recording = await session.get(Recording, request.recording_id)
-    if not recording or recording.user_id != current_user.id:
-        raise HTTPException(404, detail="Recording not found")
-    transcription = Transcription(user_id=current_user.id, title=request.title)
-
-    if not await storage_service.check_object_exists(recording.s3_file_key):
-        raise HTTPException(
-            status_code=404,
-            detail=f"Recording file not found in S3: {recording.s3_file_key}",
-        )
-
-    session.add(transcription)
-    recording.transcription_id = transcription.id
-    await session.commit()
-    await session.refresh(transcription)
-    transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION_ONLY))
-
-    return TranscriptionCreateResponse(id=transcription.id)
-
-
 @transcriptions_router.post("/transcriptions", response_model=TranscriptionCreateResponse, status_code=201)
 async def create_transcription(
     request: TranscriptionCreateRequest,
@@ -273,19 +243,10 @@ async def create_transcription(
             detail=f"Recording file not found in S3: {recording.s3_file_key}",
         )
 
-    minute = Minute(
-        template_name=request.template_name,
-        user_template_id=request.template_id,
-        agenda=request.agenda,
-        transcription_id=transcription.id,
-    )
-    minute_version = MinuteVersion(minute_id=minute.id)
     session.add(transcription)
-    session.add(minute)
-    session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+    transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION))
 
     return TranscriptionCreateResponse(id=transcription.id)
 
