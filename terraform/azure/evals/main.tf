@@ -90,6 +90,7 @@ resource "azurerm_storage_account" "evals" {
   account_tier             = "Standard"
   account_replication_type = var.account_replication_type
 
+  # Create-time only: changing this forces replacement and destroys data.
   infrastructure_encryption_enabled = true
 
   allow_nested_items_to_be_public = false

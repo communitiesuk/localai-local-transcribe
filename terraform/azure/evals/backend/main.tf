@@ -39,6 +39,7 @@ resource "azurerm_storage_account" "terraform_state" {
   account_tier             = "Standard"
   account_replication_type = var.account_replication_type
 
+  # Create-time only: changing this forces replacement and destroys data.
   infrastructure_encryption_enabled = true
 
   public_network_access_enabled = true
