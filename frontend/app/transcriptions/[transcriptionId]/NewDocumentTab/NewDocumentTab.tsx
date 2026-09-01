@@ -6,7 +6,7 @@ import {
   GovukHeading,
   GovukRadios,
 } from '@/components/govuk'
-import { MinuteListItem, TranscriptionGetResponse } from '@/lib/client'
+import { TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   getUserTemplatesUserTemplatesGetOptions,

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
   Minute,
-  MinuteListItem,
   MinuteVersionResponse,
   TranscriptionGetResponse,
 } from '@/lib/client'
@@ -20,7 +19,7 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FilePenLine, FileQuestion, FileX2, Loader2, Undo } from 'lucide-react'
+import { FilePenLine, FileX2, Loader2, Undo } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
