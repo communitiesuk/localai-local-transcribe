@@ -7,6 +7,7 @@ import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTa
 import { Button } from '@/components/ui/button'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
+  Minute,
   MinuteListItem,
   MinuteVersionResponse,
   TranscriptionGetResponse,
@@ -40,7 +41,7 @@ export function MinuteEditor({
   minute,
 }: {
   transcription: TranscriptionGetResponse
-  minute: MinuteListItem
+  minute: Minute
 }) {
   const [version, setVersion] = useState<string | undefined>(undefined)
   const [hideCitations, setHideCitations] = useState(false)
