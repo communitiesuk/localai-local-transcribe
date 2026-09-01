@@ -11,6 +11,7 @@ from sqlmodel import col, func, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
+from backend.utils.transcription_search_filters import _transcription_search_filters
 from common.database.postgres_models import (
     DialogueEntry,
     Recording,
@@ -107,6 +108,14 @@ async def list_labelled_transcriptions(
     sort: Annotated[
         TranscriptionSortOrder, Query(description="Sort order for date recorded")
     ] = TranscriptionSortOrder.newest,
+    client_name: Annotated[str | None, Query(description="Filter by client name")] = None,
+    case_id: Annotated[str | None, Query(description="Filter by case ID")] = None,
+    subject: Annotated[str | None, Query(description="Filter by subject")] = None,
+    date_of_recording: Annotated[datetime.date | None, Query(description="Filter by date recorded")] = None,
+    date_of_recording_day: Annotated[int | None, Query(ge=1, le=31, description="Filter by recorded day")] = None,
+    date_of_recording_month: Annotated[int | None, Query(ge=1, le=12, description="Filter by recorded month")] = None,
+    date_of_recording_year: Annotated[int | None, Query(ge=1, description="Filter by recorded year")] = None,
+    client_date_of_birth: Annotated[datetime.date | None, Query(description="Filter by client date of birth")] = None,
 ) -> LabelledTranscriptionsResponse:
     """Get paginated metadata for labelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -115,9 +124,22 @@ async def list_labelled_transcriptions(
         col(Transcription.client_name).is_not(None),
         col(Transcription.case_id).is_not(None),
     )
+    search_filters = _transcription_search_filters(
+        client_name=client_name,
+        case_id=case_id,
+        subject=subject,
+        date_of_recording=date_of_recording,
+        date_of_recording_day=date_of_recording_day,
+        date_of_recording_month=date_of_recording_month,
+        date_of_recording_year=date_of_recording_year,
+        client_date_of_birth=client_date_of_birth,
+    )
 
     count_statement = (
-        select(func.count(col(Transcription.id))).where(Transcription.user_id == current_user.id).where(labelled_filter)
+        select(func.count(col(Transcription.id)))
+        .where(Transcription.user_id == current_user.id)
+        .where(labelled_filter)
+        .where(*search_filters)
     )
     count_result = await session.exec(count_statement)
     total_count = count_result.one()
@@ -127,6 +149,7 @@ async def list_labelled_transcriptions(
         select(Transcription)
         .where(Transcription.user_id == current_user.id)
         .where(labelled_filter)
+        .where(*search_filters)
         .order_by(_created_datetime_order(sort))
         .offset(offset)
         .limit(page_size)
@@ -167,6 +190,14 @@ async def list_unlabelled_transcriptions(
     sort: Annotated[
         TranscriptionSortOrder, Query(description="Sort order for date recorded")
     ] = TranscriptionSortOrder.newest,
+    client_name: Annotated[str | None, Query(description="Filter by client name")] = None,
+    case_id: Annotated[str | None, Query(description="Filter by case ID")] = None,
+    subject: Annotated[str | None, Query(description="Filter by subject")] = None,
+    date_of_recording: Annotated[datetime.date | None, Query(description="Filter by date recorded")] = None,
+    date_of_recording_day: Annotated[int | None, Query(ge=1, le=31, description="Filter by recorded day")] = None,
+    date_of_recording_month: Annotated[int | None, Query(ge=1, le=12, description="Filter by recorded month")] = None,
+    date_of_recording_year: Annotated[int | None, Query(ge=1, description="Filter by recorded year")] = None,
+    client_date_of_birth: Annotated[datetime.date | None, Query(description="Filter by client date of birth")] = None,
 ) -> UnlabelledTranscriptionsResponse:
     """Get metadata for unlabelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -175,11 +206,22 @@ async def list_unlabelled_transcriptions(
         col(Transcription.client_name).is_not(None),
         col(Transcription.case_id).is_not(None),
     )
+    search_filters = _transcription_search_filters(
+        client_name=client_name,
+        case_id=case_id,
+        subject=subject,
+        date_of_recording=date_of_recording,
+        date_of_recording_day=date_of_recording_day,
+        date_of_recording_month=date_of_recording_month,
+        date_of_recording_year=date_of_recording_year,
+        client_date_of_birth=client_date_of_birth,
+    )
 
     count_statement = (
         select(func.count(col(Transcription.id)))
         .where(Transcription.user_id == current_user.id)
         .where(not_(labelled_filter))
+        .where(*search_filters)
     )
     count_result = await session.exec(count_statement)
     total_count = count_result.one()
@@ -188,6 +230,7 @@ async def list_unlabelled_transcriptions(
         select(Transcription)
         .where(Transcription.user_id == current_user.id)
         .where(not_(labelled_filter))
+        .where(*search_filters)
         .order_by(_created_datetime_order(sort))
     )
     result = await session.exec(statement)

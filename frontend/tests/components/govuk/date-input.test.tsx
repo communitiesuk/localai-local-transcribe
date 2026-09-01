@@ -185,12 +185,54 @@ describe('validateDateEntry', () => {
     })
   })
 
+  it('allows partial dates when partial-date validation is enabled', () => {
+    expect(
+      validateDateEntry(
+        { day: '', month: '', year: '2026' },
+        undefined,
+        'date',
+        'partial-date'
+      )
+    ).toBeNull()
+  })
+
+  it('returns an error for invalid partial date parts', () => {
+    expect(
+      validateDateEntry(
+        { day: '', month: '13', year: '' },
+        undefined,
+        'date',
+        'partial-date'
+      )
+    ).toEqual({
+      message: 'date must be a real date',
+      fields: ['month'],
+    })
+  })
+
+  it('returns an error for future years in partial past dates', () => {
+    const nextYear = new Date().getFullYear() + 1
+
+    expect(
+      validateDateEntry(
+        { day: '', month: '', year: String(nextYear) },
+        'past',
+        'Recording date',
+        'partial-date'
+      )
+    ).toEqual({
+      message: 'The Recording date cannot be in the future',
+      fields: ['year'],
+    })
+  })
+
   it('returns an error for a blank required date', () => {
     expect(
       validateDateEntry(
         { day: '', month: '', year: '' },
         undefined,
         'date recorded',
+        'full-date',
         true
       )
     ).toEqual({
