@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import RecordingControl from './recording-control'
+import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
@@ -11,47 +12,63 @@ import {
   useStartTranscription,
   type TranscriptionForm,
 } from '@/hooks/use-start-transcription'
-import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { AudioDevice, MicrophonePermission } from './microphone-permission'
 import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
+import { Loader2 } from 'lucide-react'
+import AudioPlayerComponent from './audio-player'
 
 export function MicRecorderForm() {
   const router = useRouter()
-
-  const uploadRef = useRef(false)
-  const { onSubmit, form } = useStartTranscription()
-  const startUpload = useUploadRecordingStore((store) => store.startUpload)
-
-  const handleSubmit = form.handleSubmit((formValues) => {
-    startUpload('in-person-recording', formValues, onSubmit)
-    router.push('/new/uploading')
-  })
-
+  const { isPending, onSubmit, form } = useStartTranscription()
   const watchBlob = form.watch('file')
+  const submittedBlobRef = useRef<Blob | File | null>(null)
+  const [isProcessingRecording, setIsProcessingRecording] = useState(false)
 
   useEffect(() => {
-    if (!uploadRef.current || !watchBlob) return
-    handleSubmit()
-    uploadRef.current = false
-  }, [watchBlob, handleSubmit])
+    if (!watchBlob || submittedBlobRef.current === watchBlob) {
+      return
+    }
+
+    submittedBlobRef.current = watchBlob
+    setIsProcessingRecording(true)
+
+    void form
+      .handleSubmit(async (formValues) => {
+        const transcriptionId = await onSubmit(formValues)
+        if (transcriptionId) {
+          router.push(`/transcriptions/${transcriptionId}?details=open`)
+        }
+      })()
+      .finally(() => {
+        setIsProcessingRecording(false)
+      })
+  }, [form, onSubmit, router, watchBlob])
 
   return (
     <FormProvider {...form}>
-      <Controller
-        name="file"
-        control={form.control}
-        render={({ field: { value, onChange } }) => (
-          <MicRecorderComponent
-            recordedAudio={value}
-            setRecordedAudio={onChange}
-            onStopRecording={() => (uploadRef.current = true)}
+      <form>
+        {isProcessingRecording || isPending ? (
+          <div className="flex h-72 flex-col items-center justify-center gap-4">
+            <Loader2 size={80} className="animate-spin" aria-hidden="true" />
+            <p className="govuk-body">Processing recording...</p>
+          </div>
+        ) : (
+          <Controller
+            name="file"
+            control={form.control}
+            render={({ field: { value, onChange } }) => (
+              <MicRecorderComponent
+                recordedAudio={value}
+                setRecordedAudio={onChange}
+              />
+            )}
           />
         )}
-      />
+      </form>
     </FormProvider>
   )
 }
@@ -59,19 +76,18 @@ export function MicRecorderForm() {
 function MicRecorderComponent({
   recordedAudio,
   setRecordedAudio,
-  onStopRecording,
 }: {
   recordedAudio: Blob | null
   setRecordedAudio: (blob: Blob | null) => void
-  onStopRecording: () => void
 }) {
   const { releaseWakeLock, requestWakeLock } = useWakeLock()
   const [error, setError] = useState<string | null>(null)
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const form = useFormContext<TranscriptionForm>()
-  const { addRecording, updateRecording } = useRecordingDb()
+  const { removeRecording, addRecording, updateRecording } = useRecordingDb()
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const [mediaRecorderStream, setMediaRecorderStream] =
     useState<MediaStream | null>(null)
@@ -285,7 +301,20 @@ function MicRecorderComponent({
   }
   return (
     <div className="space-y-4">
-      {!isRecording && recordingUIState !== 'stopping' ? (
+      {recordedAudio ? (
+        <div className="govuk-!-margin-top-4 space-y-3">
+          <AudioPlayerComponent audioBlob={recordedAudio} />
+          <div className="flex justify-end">
+            <GovukButton
+              type="button"
+              onClick={() => setIsDialogOpen(true)}
+              variant="secondary"
+            >
+              Discard Recording
+            </GovukButton>
+          </div>
+        </div>
+      ) : !isRecording && recordingUIState !== 'stopping' ? (
         <div className="flex flex-col space-y-4">
           <GovukFormGroup>
             <GovukLabel htmlFor="microphone-select">
@@ -325,10 +354,7 @@ function MicRecorderComponent({
           <RecordingControl
             stream={mediaRecorderStream}
             isRecording={isRecording}
-            onStopRecording={() => {
-              onStopRecording()
-              stopRecording()
-            }}
+            onStopRecording={stopRecording}
             onPauseStateChange={handlePauseStateChange}
           />
         </div>
@@ -339,6 +365,19 @@ function MicRecorderComponent({
           <span className="govuk-visually-hidden">Error:</span> {error}
         </p>
       )}
+
+      <DiscardConfirmDialog
+        open={isDialogOpen}
+        setOpen={setIsDialogOpen}
+        onClickConfirm={() => {
+          setRecordedAudio(null)
+          setIsDialogOpen(false)
+          const recordingId = form.getValues('recordingId')
+          if (recordingId) {
+            removeRecording(recordingId)
+          }
+        }}
+      />
     </div>
   )
 }

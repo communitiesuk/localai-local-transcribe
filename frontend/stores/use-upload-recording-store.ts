@@ -2,7 +2,7 @@ import type { TranscriptionForm } from '@/hooks/use-start-transcription'
 import { create } from 'zustand'
 
 type UploadRecordingStatus = 'idle' | 'pending' | 'success' | 'error'
-type UploadingFrom = 'upload' | 'recording' | 'in-person-recording' | null
+type UploadingFrom = 'upload' | 'recording' | null
 
 type UploadRecordingStore = {
   status: UploadRecordingStatus

@@ -14,13 +14,6 @@ export default function TranscriptionLoadingPage() {
 
   useEffect(() => {
     if (status === 'success' && transcriptionId) {
-      reset()
-
-      if (uploadingFrom === 'in-person-recording') {
-        router.push(`/transcriptions/${transcriptionId}?details=open`)
-        return
-      }
-
       setBanner({
         variant: 'success',
         title: 'Success',
@@ -31,6 +24,7 @@ export default function TranscriptionLoadingPage() {
         },
       })
 
+      reset()
       router.push('/')
     }
 
