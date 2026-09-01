@@ -221,7 +221,7 @@ describe('validateDateEntry', () => {
         'partial-date'
       )
     ).toEqual({
-      message: 'The Recording date must be between 1 January 1920 and today',
+      message: 'The Recording date cannot be in the future',
       fields: ['year'],
     })
   })
