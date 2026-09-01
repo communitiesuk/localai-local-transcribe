@@ -47,8 +47,9 @@ variable "mhclg_ip_rules" {
   type        = list(string)
   description = "Public egress IPs or CIDR ranges for MHCLG devices allowed to reach the Terraform state backend."
 
+  # TODO(AIILG-649): Restrict sandbox-only 0.0.0.0/0 before assured/prod use.
   validation {
-    condition     = length(var.mhclg_ip_rules) > 0 && !contains(var.mhclg_ip_rules, "0.0.0.0/0")
-    error_message = "Set mhclg_ip_rules to at least one specific MHCLG public IP or CIDR range; do not use 0.0.0.0/0."
+    condition     = length(var.mhclg_ip_rules) > 0
+    error_message = "Set mhclg_ip_rules to at least one public IP or CIDR range."
   }
 }
