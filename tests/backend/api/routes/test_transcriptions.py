@@ -536,13 +536,57 @@ async def test_get_transcription_not_found(mock_session, mock_user):
 
 
 @pytest.mark.asyncio
-async def test_delete_transcription(mock_session, mock_user, mock_transcription):
+async def test_delete_transcription_with_no_recordings(mock_session, mock_user, mock_transcription):
     mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_result = Mock()
+    mock_result.all.return_value = []
+    mock_session.exec = AsyncMock(return_value=mock_result)
 
     await delete_transcription(mock_transcription.id, mock_session, mock_user)
 
-    mock_session.delete.assert_awaited_once_with(mock_transcription)
+    mock_session.delete.assert_called_once_with(mock_transcription)
     mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_transcription_deletes_recordings_before_transcription(
+    mock_session, mock_user, mock_transcription, mock_recording, mocker
+):
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_result = Mock()
+    mock_result.all.return_value = [mock_recording]
+    mock_session.exec = AsyncMock(return_value=mock_result)
+    mock_delete_recording = mocker.patch(
+        "backend.api.routes.transcriptions.delete_recording_file_and_row",
+        AsyncMock(return_value=True),
+    )
+
+    await delete_transcription(mock_transcription.id, mock_session, mock_user)
+
+    mock_delete_recording.assert_awaited_once_with(mock_session, mock_recording)
+    assert mock_session.delete.await_args_list[-1].args == (mock_transcription,)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_transcription_raises_when_recording_file_delete_fails(
+    mock_session, mock_user, mock_transcription, mock_recording, mocker
+):
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_result = Mock()
+    mock_result.all.return_value = [mock_recording]
+    mock_session.exec = AsyncMock(return_value=mock_result)
+    mocker.patch(
+        "backend.api.routes.transcriptions.delete_recording_file_and_row",
+        AsyncMock(return_value=False),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await delete_transcription(mock_transcription.id, mock_session, mock_user)
+
+    assert exc.value.status_code == 500
+    mock_session.delete.assert_not_awaited()
+    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio

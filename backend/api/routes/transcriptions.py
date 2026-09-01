@@ -18,6 +18,7 @@ from common.database.postgres_models import (
 )
 from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
+from common.services.storage_services.audio_deletion import delete_recording_file_and_row
 from common.settings import get_settings
 from common.types import (
     LabelledTranscriptionMetadata,
@@ -440,6 +441,11 @@ async def delete_transcription(transcription_id: uuid.UUID, session: SQLSessionD
     # First check if the transcription exists and belongs to the user
     transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
 
-    # Delete the transcription
+    recordings = (await session.exec(select(Recording).where(Recording.transcription_id == transcription.id))).all()
+    for recording in recordings:
+        deleted = await delete_recording_file_and_row(session, recording)
+        if not deleted:
+            raise HTTPException(status_code=500, detail="Could not delete recording file")
+
     await session.delete(transcription)
     await session.commit()
