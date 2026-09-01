@@ -187,22 +187,16 @@ async def test_delete_recording_file_and_row_deletes_db_row_when_storage_object_
 @pytest.mark.asyncio
 async def test_init_cleanup_scheduler_starts_cleanup_job(mocker):
     mock_scheduler = Mock()
-    mock_run_time = datetime(2026, 1, 1, 1, 0, tzinfo=UTC)
 
     mocker.patch("backend.cleanup_job.AsyncIOScheduler", return_value=mock_scheduler)
-    mock_datetime = mocker.patch("backend.cleanup_job.datetime", autospec=True)
-
-    mock_datetime.now.return_value = mock_run_time
-    mock_datetime.UTC = UTC
 
     await init_cleanup_scheduler()
 
     mock_scheduler.add_job.assert_called_once()
     call_kwargs = mock_scheduler.add_job.call_args
     assert call_kwargs.args[0] is cleanup_jobs
-    assert call_kwargs.args[1] == "interval"
-    assert call_kwargs.kwargs["hours"] == 6
-
-    expected_next_run = mock_run_time.replace(hour=23, minute=0, second=0, microsecond=0)
-    assert call_kwargs.kwargs["next_run_time"] == expected_next_run
+    assert call_kwargs.args[1] == "cron"
+    assert call_kwargs.kwargs["hour"] == "0,6,12,18"
+    assert call_kwargs.kwargs["minute"] == 0
+    assert call_kwargs.kwargs["timezone"] == UTC
     mock_scheduler.start.assert_called_once()

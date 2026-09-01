@@ -76,9 +76,8 @@ async def cleanup_jobs() -> None:
 
 
 async def init_cleanup_scheduler() -> None:
-    """Initialize the scheduler to run cleanup every 6 hours."""
-    next_run_time = datetime.now(tz=UTC).replace(hour=23, minute=0, second=0, microsecond=0)
+    """Initialize the scheduler to run cleanup at midnight, 6am, noon and 6pm (UTC)."""
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(cleanup_jobs, "interval", hours=6, next_run_time=next_run_time)
+    scheduler.add_job(cleanup_jobs, "cron", hour="0,6,12,18", minute=0, timezone=UTC)
     scheduler.start()
     logger.info("cleanup scheduler initialized")
