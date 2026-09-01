@@ -48,7 +48,7 @@ const templates = [
 ]
 
 const configureQueries = (
-  overrides: { templates?: unknown; versions?: unknown } = {}
+  overrides: { templates?: unknown; versions?: unknown; minute?: unknown } = {}
 ) => {
   const templatesResult = overrides.templates ?? {
     data: templates,
@@ -57,10 +57,28 @@ const configureQueries = (
     refetch: vi.fn(),
   }
   const versionsResult = overrides.versions ?? { data: [] }
+  const minuteResult = overrides.minute ?? {
+    data: {
+      id: '1',
+      transcription_id: '1',
+    },
+  }
+
+  const queryKeyToResponse = (key: string) => {
+    switch (key) {
+      case 'versions':
+        return versionsResult
+      case 'templates':
+        return templatesResult
+      case 'minute':
+        return minuteResult
+    }
+    return undefined
+  }
   vi.mocked(useQuery).mockImplementation(((opts: { queryKey?: unknown[] }) =>
-    opts?.queryKey?.[0] === 'versions'
-      ? versionsResult
-      : templatesResult) as unknown as typeof useQuery)
+    queryKeyToResponse(
+      opts?.queryKey?.[0] as string
+    )) as unknown as typeof useQuery)
 }
 
 const mutateMock = vi.fn()
