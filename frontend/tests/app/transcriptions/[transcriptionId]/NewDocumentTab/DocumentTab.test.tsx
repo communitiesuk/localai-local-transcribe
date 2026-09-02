@@ -13,7 +13,7 @@ const versions: MinuteVersionResponse[] = [
     status: 'completed',
     created_datetime: '2024-01-01T00:00:00Z',
     html_content: 'Generated version content',
-  },
+  } as MinuteVersionResponse,
 ]
 
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
