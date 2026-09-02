@@ -57,7 +57,8 @@ export function MinuteEditor({
       query.state.data &&
       query.state.data.length > 0 &&
       ['awaiting_start', 'in_progress'].includes(
-        query.state.data.find((v) => v.id === version)?.status ?? ''
+        query.state.data.find((v) => v.id === version)?.status ??
+          query.state.data[0].status
       )
         ? 1000
         : false,
