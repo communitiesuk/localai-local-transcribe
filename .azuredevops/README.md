@@ -10,7 +10,7 @@ The summarisation and bias pipelines can be run manually, and both are scheduled
 
 ## Variable group
 
-All eval pipelines reference the `evals-smoke-test` variable group. Create or update that group in Azure DevOps with:
+All eval pipelines reference the `evals-pipeline-config` variable group. Create or update that group in Azure DevOps with:
 
 | Variable | Example | Secret |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ All eval pipelines reference the `evals-smoke-test` variable group. Create or up
 
 ## Scheduled run toggle
 
-Set `EVALS_SCHEDULED_RUNS_ENABLED` in the `evals-smoke-test` variable group to control scheduled runs:
+Set `EVALS_SCHEDULED_RUNS_ENABLED` in the `evals-pipeline-config` variable group to control scheduled runs:
 
 - `true` enables scheduled fortnightly runs.
 - `false` skips scheduled runs.

@@ -4,7 +4,7 @@ trigger: none
 pr: none
 
 variables:
-  - group: evals-smoke-test
+  - group: evals-pipeline-config
 
 parameters:
   - name: config

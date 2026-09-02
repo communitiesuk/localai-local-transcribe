@@ -4,7 +4,7 @@ trigger: none
 pr: none
 
 variables:
-  - group: evals-smoke-test
+  - group: evals-pipeline-config
 
 schedules:
   # Runs weekly at 21:00 UTC on Sundays; fortnightly cadence is enforced by the gate job.
