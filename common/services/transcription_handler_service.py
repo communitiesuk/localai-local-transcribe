@@ -153,46 +153,6 @@ class TranscriptionHandlerService:
 
     @classmethod
     async def process_transcription(
-        cls, minute_id: UUID, async_transcription_message_data: TranscriptionJobMessageData | None = None
-    ) -> TranscriptionJobMessageData:
-        """Process a transcription job and save results. Returns True if job is complete, False otherwise."""
-        try:
-            transcription = cls.get_transcription_from_minute_id(minute_id)
-        except Exception as e:
-            raise TranscriptionFailedError from e
-
-        try:
-            if async_transcription_message_data:
-                transcription_job = await transcription_manager.check_transcription(
-                    adapter_name=async_transcription_message_data.transcription_service,
-                    async_transcription_message_data=async_transcription_message_data,
-                )
-            else:
-                # it's a new transcription job
-                cls.update_transcription(transcription.id, JobStatus.IN_PROGRESS)
-                transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
-
-            if transcription_job.transcript:
-                dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
-                meeting_title = await generate_meeting_title(transcript=dialogue_entries)
-                cls.update_transcription(
-                    transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
-                )
-
-        except Exception as e:
-            msg = f"Transcription failed: {e!s}"
-            logger.exception(msg)
-            try:
-                cls.update_transcription(transcription.id, status=JobStatus.FAILED, error=msg)
-            except Exception:
-                logger.exception("Error updating transcription status. Maybe it doesn't exist?")
-
-            raise TranscriptionFailedError from e
-        else:
-            return transcription_job
-
-    @classmethod
-    async def process_transcription_only(
         cls,
         transcription_id: UUID,
         async_transcription_message_data: TranscriptionJobMessageData | None = None,

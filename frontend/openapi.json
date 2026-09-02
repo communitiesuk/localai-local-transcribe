@@ -61,6 +61,109 @@
             "description": "Sort order for date recorded"
           },
           {
+            "name": "client_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by client name",
+              "title": "Client Name"
+            },
+            "description": "Filter by client name"
+          },
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by case ID",
+              "title": "Case Id"
+            },
+            "description": "Filter by case ID"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by subject",
+              "title": "Subject"
+            },
+            "description": "Filter by subject"
+          },
+          {
+            "name": "date_of_recording",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by date recorded",
+              "title": "Date Of Recording"
+            },
+            "description": "Filter by date recorded"
+          },
+          {
+            "name": "date_of_recording_day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 31, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded day",
+              "title": "Date Of Recording Day"
+            },
+            "description": "Filter by recorded day"
+          },
+          {
+            "name": "date_of_recording_month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 12, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded month",
+              "title": "Date Of Recording Month"
+            },
+            "description": "Filter by recorded month"
+          },
+          {
+            "name": "date_of_recording_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded year",
+              "title": "Date Of Recording Year"
+            },
+            "description": "Filter by recorded year"
+          },
+          {
+            "name": "client_date_of_birth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by client date of birth",
+              "title": "Client Date Of Birth"
+            },
+            "description": "Filter by client date of birth"
+          },
+          {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
@@ -109,6 +212,109 @@
               "default": "newest"
             },
             "description": "Sort order for date recorded"
+          },
+          {
+            "name": "client_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by client name",
+              "title": "Client Name"
+            },
+            "description": "Filter by client name"
+          },
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by case ID",
+              "title": "Case Id"
+            },
+            "description": "Filter by case ID"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by subject",
+              "title": "Subject"
+            },
+            "description": "Filter by subject"
+          },
+          {
+            "name": "date_of_recording",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by date recorded",
+              "title": "Date Of Recording"
+            },
+            "description": "Filter by date recorded"
+          },
+          {
+            "name": "date_of_recording_day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 31, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded day",
+              "title": "Date Of Recording Day"
+            },
+            "description": "Filter by recorded day"
+          },
+          {
+            "name": "date_of_recording_month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 12, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded month",
+              "title": "Date Of Recording Month"
+            },
+            "description": "Filter by recorded month"
+          },
+          {
+            "name": "date_of_recording_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded year",
+              "title": "Date Of Recording Year"
+            },
+            "description": "Filter by recorded year"
+          },
+          {
+            "name": "client_date_of_birth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by client date of birth",
+              "title": "Client Date Of Birth"
+            },
+            "description": "Filter by client date of birth"
           },
           {
             "name": "x-amzn-oidc-data",
@@ -190,60 +396,11 @@
         }
       }
     },
-    "/transcriptions-only": {
-      "post": {
-        "tags": ["Transcriptions"],
-        "summary": "Create Transcription Only",
-        "description": "transcription without creating an associated Minute",
-        "operationId": "create_transcription_only_transcriptions_only_post",
-        "parameters": [
-          {
-            "name": "x-amzn-oidc-data",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "X-Amzn-Oidc-Data"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TranscriptionOnlyCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranscriptionCreateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/transcriptions": {
       "post": {
         "tags": ["Transcriptions"],
         "summary": "Create Transcription",
-        "description": "Start a transcription job.",
+        "description": "Start a transcription job",
         "operationId": "create_transcription_transcriptions_post",
         "parameters": [
           {
@@ -3077,28 +3234,13 @@
             "format": "uuid",
             "title": "Recording Id"
           },
-          "template_name": { "type": "string", "title": "Template Name" },
-          "template_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Template Id"
-          },
-          "agenda": {
-            "anyOf": [
-              { "type": "string", "maxLength": 500 },
-              { "type": "null" }
-            ],
-            "title": "Agenda"
-          },
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Title"
           }
         },
         "type": "object",
-        "required": ["recording_id", "template_name"],
+        "required": ["recording_id"],
         "title": "TranscriptionCreateRequest"
       },
       "TranscriptionCreateResponse": {
@@ -3172,22 +3314,6 @@
           "client_date_of_birth"
         ],
         "title": "TranscriptionGetResponse"
-      },
-      "TranscriptionOnlyCreateRequest": {
-        "properties": {
-          "recording_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Recording Id"
-          },
-          "title": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Title"
-          }
-        },
-        "type": "object",
-        "required": ["recording_id"],
-        "title": "TranscriptionOnlyCreateRequest"
       },
       "TranscriptionSortOrder": {
         "type": "string",

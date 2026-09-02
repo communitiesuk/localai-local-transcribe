@@ -12,6 +12,8 @@ type DateValue = {
   year: string
 }
 
+type DateValidationMode = 'full-date' | 'partial-date'
+
 type DateInputProps<T extends FieldValues> = {
   id: string
   legend: React.ReactNode
@@ -19,6 +21,7 @@ type DateInputProps<T extends FieldValues> = {
   className?: string
   mustBePastOrFuture?: 'past' | 'future'
   description?: string
+  validationMode?: DateValidationMode
   required?: boolean
 } & Omit<React.HTMLAttributes<HTMLDivElement>, 'className' | 'id'> &
   UseControllerProps<T>
@@ -50,6 +53,7 @@ export function validateDateEntry(
   value: DateValue | undefined,
   pastOrFuture?: 'past' | 'future',
   description: string = 'date',
+  validationMode: DateValidationMode = 'full-date',
   required: boolean = false
 ): { message: string; fields: ('day' | 'month' | 'year')[] } | null {
   const dateValue = value ?? { day: '', month: '', year: '' }
@@ -67,6 +71,49 @@ export function validateDateEntry(
       }
     }
     return null
+  }
+
+  if (validationMode === 'partial-date') {
+    const invalidFields = items
+      .filter(({ name }) => dateValue[name] && !/^\d+$/.test(dateValue[name]))
+      .map(({ name }) => name)
+
+    const day = Number(dateValue.day)
+    const month = Number(dateValue.month)
+    const year = Number(dateValue.year)
+
+    if (dateValue.day && (day < 1 || day > 31)) {
+      invalidFields.push('day')
+    }
+    if (dateValue.month && (month < 1 || month > 12)) {
+      invalidFields.push('month')
+    }
+    if (dateValue.year && year < 1) {
+      invalidFields.push('year')
+    }
+
+    if (invalidFields.length > 0) {
+      return {
+        message: `${description} must be a real date`,
+        fields: invalidFields,
+      }
+    }
+
+    const today = new Date()
+    if (
+      dateValue.year &&
+      pastOrFuture === 'past' &&
+      year > today.getFullYear()
+    ) {
+      return {
+        message: `The ${description} cannot be in the future`,
+        fields: ['year'],
+      }
+    }
+
+    if (missingFields.length > 0) {
+      return null
+    }
   }
 
   if (missingFields.length > 0) {
@@ -124,6 +171,7 @@ export function GovukDateInput<T extends FieldValues>({
   control,
   mustBePastOrFuture,
   description = 'date',
+  validationMode = 'full-date',
   required = false,
   rules,
   ...rest
@@ -142,6 +190,7 @@ export function GovukDateInput<T extends FieldValues>({
           value,
           mustBePastOrFuture,
           description,
+          validationMode,
           required
         )
         setErrorFields(validationResult?.fields ?? [])
