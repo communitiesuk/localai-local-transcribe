@@ -89,7 +89,9 @@ describe('RecordingDetails', () => {
   it('shows a read-only date recorded label instead of editable fields for live (non-upload) recordings', () => {
     const { container } = renderRecordingDetails({ is_upload: false })
 
-    expect(container.querySelector('#date-recorded-day')).not.toBeInTheDocument()
+    expect(
+      container.querySelector('#date-recorded-day')
+    ).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Time recorded')).not.toBeInTheDocument()
     expect(screen.getByText('1 January 2024 at 00:00')).toBeInTheDocument()
   })
