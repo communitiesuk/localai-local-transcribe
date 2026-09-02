@@ -1,37 +1,25 @@
 'use client'
 
-import { useBannerStore } from '@/stores/use-banner-store'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function TranscriptionLoadingPage() {
   const router = useRouter()
-  const setBanner = useBannerStore((store) => store.setBanner)
 
   const { status, transcriptionId, uploadingFrom, error, reset } =
     useUploadRecordingStore()
 
   useEffect(() => {
     if (status === 'success' && transcriptionId) {
-      setBanner({
-        variant: 'success',
-        title: 'Success',
-        message: 'Recording saved - ',
-        link: {
-          text: 'click to view',
-          href: `/transcriptions/${transcriptionId}`,
-        },
-      })
-
       reset()
-      router.push('/')
+      router.push(`/new/metadata/${transcriptionId}`)
     }
 
     if (status === 'idle') {
       router.replace('/')
     }
-  }, [status, transcriptionId, uploadingFrom, setBanner, reset, router])
+  }, [status, transcriptionId, uploadingFrom, reset, router])
 
   if (status === 'error') {
     throw new Error(error || 'Upload failed')
