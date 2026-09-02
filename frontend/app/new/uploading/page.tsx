@@ -2,21 +2,24 @@
 
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 export default function TranscriptionLoadingPage() {
   const router = useRouter()
+  const hasRedirectedToMetadataRef = useRef(false)
 
   const { status, transcriptionId, uploadingFrom, error, reset } =
     useUploadRecordingStore()
 
   useEffect(() => {
     if (status === 'success' && transcriptionId) {
+      hasRedirectedToMetadataRef.current = true
       reset()
       router.push(`/new/metadata/${transcriptionId}`)
+      return
     }
 
-    if (status === 'idle') {
+    if (status === 'idle' && !hasRedirectedToMetadataRef.current) {
       router.replace('/')
     }
   }, [status, transcriptionId, uploadingFrom, reset, router])
