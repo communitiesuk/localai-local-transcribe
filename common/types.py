@@ -252,11 +252,18 @@ class LLMHallucination(BaseModel):
     hallucination_text: str = Field(description="The uncited claim flagged as a potential hallucination")
     hallucination_reason: str | None = Field(description="Reason the claim was flagged", default=None)
 
+class FailureCategory(StrEnum):
+    FACTUAL_INTEGRITY = auto()
+    REQUIRED_CONTENT_AND_STRUCTURE = auto()
+    EDIT_SAFETY_AND_INTENT = auto()
+    DATA_PROTECTION_AND_INSTRUCTION_INTEGRITY = auto()
+    EVIDENCE_AND_CITATION_QUALITY = auto()
+    INPUT_SUITABILITY = auto()
 
 class GuardrailScore(BaseModel):
     score: float = Field(description="Confidence score between 0.0 and 1.0")
     reasoning: str = Field(description="Reasoning for the score")
-
+    categories: list[FailureCategory] = Field(description="List of failure categories that contributed to the score")
 
 class MinuteVersionResponse(BaseModel):
     id: uuid.UUID
