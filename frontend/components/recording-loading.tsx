@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { GovukBody } from '@/components/govuk'
+import { GovukBody, GovukButton } from '@/components/govuk'
 
 export function RecordingLoading({
   onComplete,
@@ -30,14 +30,9 @@ export function RecordingLoading({
     <div className="govuk-!-text-align-centre">
       <GovukBody size="l">Recording starts in&hellip;</GovukBody>
       <p className="mb-7 text-5xl font-bold">{countdown}</p>
-      {/* presenting this button as a link */}
-      <button
-        className="govuk-link govuk-link--no-visited-state"
-        onClick={onCancel}
-        type="button"
-      >
+      <GovukButton onClick={onCancel} variant="link">
         Cancel
-      </button>
+      </GovukButton>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import {
   createRecordingRecordingsPostMutation,
-  createTranscriptionOnlyTranscriptionsOnlyPostMutation,
+  createTranscriptionTranscriptionsPostMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { getFileExtension } from '@/lib/getFileExtension'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
@@ -8,18 +8,20 @@ import { useMutation } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 
-export type TranscriptionOnlyForm = {
+export type TranscriptionForm = {
   file: Blob | File | null
   recordingId?: string
   title?: string
 }
 
-export const useStartTranscriptionOnly = () => {
+export const useStartTranscription = (
+  defaultValues?: Partial<TranscriptionForm>
+) => {
   const { removeRecording } = useRecordingDb()
 
-  const { mutateAsync: createTranscriptionOnly, isPending: isCreating } =
+  const { mutateAsync: createTranscription, isPending: isCreating } =
     useMutation({
-      ...createTranscriptionOnlyTranscriptionsOnlyPostMutation(),
+      ...createTranscriptionTranscriptionsPostMutation(),
     })
 
   const { mutateAsync: createRecording, isPending: isConfirming } = useMutation(
@@ -51,7 +53,7 @@ export const useStartTranscriptionOnly = () => {
   })
 
   const onSubmit = useCallback(
-    async ({ file, recordingId, title }: TranscriptionOnlyForm) => {
+    async ({ file, recordingId, title }: TranscriptionForm) => {
       if (!file) {
         return null
       }
@@ -73,7 +75,7 @@ export const useStartTranscriptionOnly = () => {
         uploadUrl: recordingData.upload_url,
       })
 
-      const transcriptionData = await createTranscriptionOnly({
+      const transcriptionData = await createTranscription({
         body: {
           recording_id: recordingData.id,
           title,
@@ -86,13 +88,15 @@ export const useStartTranscriptionOnly = () => {
 
       return transcriptionData.id
     },
-    [createRecording, createTranscriptionOnly, removeRecording, uploadBlob]
+    [createRecording, createTranscription, removeRecording, uploadBlob]
   )
 
-  const form = useForm<TranscriptionOnlyForm>({
+  const form = useForm<TranscriptionForm>({
     defaultValues: {
       file: null,
+      recordingId: undefined,
       title: '',
+      ...defaultValues,
     },
   })
 
