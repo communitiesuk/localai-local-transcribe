@@ -60,8 +60,6 @@ async def list_minutes_for_transcription(
 async def create_minute(
     transcription_id: uuid.UUID, request: MinutesCreateRequest, session: SQLSessionDep, user: UserDep
 ) -> MinuteVersionResponse:
-    print(transcription_id, request)
-
     transcription = await session.get(Transcription, transcription_id)
     if not transcription or transcription.user_id != user.id:
         raise HTTPException(404, "Not found")
