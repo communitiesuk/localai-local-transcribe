@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
+import { DocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/DocumentTab'
 import { NewDocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/NewDocumentTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import { DownloadButton } from '@/components/download-button'
@@ -26,6 +27,7 @@ import {
   getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
   updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { FeatureFlags } from '@/lib/feature-flags'
@@ -59,8 +61,8 @@ export default function TranscriptionPage(props: {
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
 
   const [activeTab, setActiveTab] = useState('transcript')
-  const [documentTabs, setDocumentTabs] = useState<
-    { id: string; label: string }[]
+  const [draftTabs, setDraftTabs] = useState<
+    { id: string; label: string; minuteId: string | null }[]
   >([])
   const documentCounter = useRef(0)
 
@@ -88,6 +90,12 @@ export default function TranscriptionPage(props: {
         : false,
     refetchOnWindowFocus: false,
   })
+
+  const { data: documents = [] } = useQuery(
+    listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions({
+      path: { transcription_id: transcriptionId },
+    })
+  )
 
   if (!transcription && !isLoading) {
     redirect('/')
@@ -161,20 +169,35 @@ export default function TranscriptionPage(props: {
   }
   const handleCreateDocument = () => {
     const id = `new-document-${documentCounter.current++}`
-    setDocumentTabs((prev) => [...prev, { id, label: 'New document' }])
+    setDraftTabs((prev) => [
+      ...prev,
+      { id, label: 'New document', minuteId: null },
+    ])
     setActiveTab(id)
   }
 
-  const removeDocumentTab = (id: string) => {
-    setDocumentTabs((prev) => prev.filter((tab) => tab.id !== id))
+  const removeDraftTab = (id: string) => {
+    setDraftTabs((prev) => prev.filter((tab) => tab.id !== id))
     setActiveTab('transcript')
   }
 
+  const handleMinuteCreated = (id: string, minuteId: string) => {
+    setDraftTabs((prev) =>
+      prev.map((tab) => (tab.id === id ? { ...tab, minuteId } : tab))
+    )
+  }
+
   const handleDocumentCreated = (id: string, templateName: string) => {
-    setDocumentTabs((prev) =>
+    setDraftTabs((prev) =>
       prev.map((tab) => (tab.id === id ? { ...tab, label: templateName } : tab))
     )
   }
+
+  // Persisted document tabs, minus any doc still shown by its in-session draft tab.
+  const draftMinuteIds = new Set(
+    draftTabs.flatMap((tab) => (tab.minuteId ? [tab.minuteId] : []))
+  )
+  const documentTabs = documents.filter((doc) => !draftMinuteIds.has(doc.id!))
 
   return (
     <div className="flex w-full flex-col">
@@ -245,11 +268,19 @@ export default function TranscriptionPage(props: {
             <ChatTab transcription={transcription} />
           </GovukTabs.Panel>
         )}
-        {documentTabs.map((tab) => (
+        {documentTabs.map((doc) => (
+          <GovukTabs.Panel key={doc.id} id={doc.id!} label={doc.template_name}>
+            <DocumentTab minute={doc} />
+          </GovukTabs.Panel>
+        ))}
+        {draftTabs.map((tab) => (
           <GovukTabs.Panel key={tab.id} id={tab.id} label={tab.label}>
             <NewDocumentTab
               transcription={transcription}
-              onCancel={() => removeDocumentTab(tab.id)}
+              onCancel={() => removeDraftTab(tab.id)}
+              onMinuteCreated={(minuteId) =>
+                handleMinuteCreated(tab.id, minuteId)
+              }
               onCreated={(templateName) =>
                 handleDocumentCreated(tab.id, templateName)
               }
