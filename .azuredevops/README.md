@@ -10,7 +10,15 @@ The summarisation and bias pipelines can be run manually, and both are scheduled
 
 ## Variable group
 
-All eval pipelines reference the `evals-pipeline-config` variable group. Create or update that group in Azure DevOps with:
+All eval pipelines reference the `evals-pipeline-config` variable group.
+
+To create it in Azure DevOps:
+
+1. Go to **Pipelines** > **Library** > **Variable groups**.
+2. Select **+ Variable group**.
+3. Name it `evals-pipeline-config`.
+4. Add the variables below, marking only the listed secret values as secret.
+5. Select **Save**.
 
 | Variable | Example | Secret |
 | --- | --- | --- |
@@ -25,6 +33,25 @@ All eval pipelines reference the `evals-pipeline-config` variable group. Create 
 | `AZURE_APIM_API_VERSION` | APIM API version | No |
 | `AZURE_APIM_ACCESS_TOKEN` | Temporary APIM bearer token | Yes |
 | `AZURE_APIM_SUBSCRIPTION_KEY` | APIM subscription key | Yes |
+
+Terraform can help find the storage endpoint values after the evals stack has been applied:
+
+```bash
+cd terraform/azure/evals
+terraform output sensitive_storage_account_blob_endpoint
+terraform output results_storage_account_blob_endpoint
+```
+
+Use `sensitive_storage_account_blob_endpoint` for `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL`, and `results_storage_account_blob_endpoint` for `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL`.
+
+If you need to confirm the remote state backend values:
+
+```bash
+cd terraform/azure/evals/backend
+terraform output resource_group_name
+terraform output storage_account_name
+terraform output container_name
+```
 
 ## Scheduled run toggle
 
