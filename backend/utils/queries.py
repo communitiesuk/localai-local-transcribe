@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from common.database.postgres_models import Organisation, User, Minute, MinuteVersion, JobStatus
+from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Organisation, User
 from common.types import PaginatedUsersResponse
 
 
@@ -76,9 +76,7 @@ async def has_pending_minute_version_for_transcription(session: AsyncSession, tr
         .join(Minute)
         .where(
             Minute.transcription_id == transcription_id,
-            col(MinuteVersion.status).in_(
-                [JobStatus.AWAITING_START, JobStatus.IN_PROGRESS]
-            ),
+            col(MinuteVersion.status).in_([JobStatus.AWAITING_START, JobStatus.IN_PROGRESS]),
         )
     )
 

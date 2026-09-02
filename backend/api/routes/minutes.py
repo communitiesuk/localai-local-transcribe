@@ -65,7 +65,7 @@ async def create_minute(
         raise HTTPException(404, "Not found")
 
     pending_minute_version = await has_pending_minute_version_for_transcription(session, transcription_id)
-    if (pending_minute_version):
+    if pending_minute_version:
         raise HTTPException(
             status_code=409,
             detail="A document is already being created for this transcript",

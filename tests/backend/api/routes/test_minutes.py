@@ -88,7 +88,7 @@ async def test_create_minute_pending_document_exists(mocker, mock_session, mock_
     transcription = Mock()
     transcription.user_id = mock_user.id
     mock_session.get.return_value = transcription
-    
+
     mocker.patch(
         "backend.api.routes.minutes.has_pending_minute_version_for_transcription",
         return_value=True,
