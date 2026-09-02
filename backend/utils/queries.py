@@ -70,7 +70,7 @@ async def get_paginated_users(
     )
 
 
-async def is_minute_pending(session: AsyncSession, transcription_id: uuid.UUID) -> bool:
+async def has_pending_minute_version_for_transcription(session: AsyncSession, transcription_id: uuid.UUID) -> bool:
     query = (
         select(MinuteVersion)
         .join(Minute)

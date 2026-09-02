@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.utils.queries import is_minute_pending
+from backend.utils.queries import has_pending_minute_version_for_transcription
 from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
@@ -64,8 +64,8 @@ async def create_minute(
     if not transcription or transcription.user_id != user.id:
         raise HTTPException(404, "Not found")
 
-    pending_minute = await is_minute_pending(session, transcription_id)
-    if (pending_minute):
+    pending_minute_version = await has_pending_minute_version_for_transcription(session, transcription_id)
+    if (pending_minute_version):
         raise HTTPException(
             status_code=409,
             detail="A document is already being created for this transcript",
