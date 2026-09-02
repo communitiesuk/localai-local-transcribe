@@ -58,6 +58,10 @@ async def test_create_minute_success(mocker, mock_session, mock_minute, mock_min
 
     mocker.patch("backend.api.routes.minutes.Minute", return_value=minute)
     mocker.patch("backend.api.routes.minutes.MinuteVersion", return_value=minute_version)
+    mocker.patch(
+        "backend.api.routes.minutes.has_pending_minute_version_for_transcription",
+        new=AsyncMock(return_value=False),
+    )
 
     llm = mocker.patch("backend.api.routes.minutes.llm_queue_service")
 
@@ -76,6 +80,32 @@ async def test_create_minute_success(mocker, mock_session, mock_minute, mock_min
     llm.publish_message.assert_called()
     assert result.minute_id == minute.id
     assert result.id == minute_version.id
+
+
+@pytest.mark.asyncio
+async def test_create_minute_pending_document_exists(mocker, mock_session, mock_minute, mock_user):
+    """Test create_minute raises 409 when a minute version is already pending for the transcript."""
+    transcription = Mock()
+    transcription.user_id = mock_user.id
+    mock_session.get.return_value = transcription
+    
+    mocker.patch(
+        "backend.api.routes.minutes.has_pending_minute_version_for_transcription",
+        return_value=True,
+    )
+
+    request = SimpleNamespace(template_name="T", template_id=None, agenda="A")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await create_minute(
+            transcription_id=mock_minute.transcription_id,
+            request=request,
+            session=mock_session,
+            user=mock_user,
+        )
+    assert exc_info.value.status_code == 409
+    mock_session.add.assert_not_called()
+    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
