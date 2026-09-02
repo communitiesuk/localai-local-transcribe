@@ -1,32 +1,22 @@
 'use client'
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from '@/components/ui/select'
 import { ContentSource, MinuteVersionResponse } from '@/lib/client'
-import { Edit, Wand2 } from 'lucide-react'
 import { Dispatch, SetStateAction } from 'react'
+import { GovukLabel, GovukSelect } from '@/components/govuk'
 
-const MapContentSource = ({ source }: { source: ContentSource }) => {
-  if (source === 'ai_edit') {
-    return (
-      <div className="items-centre flex gap-1">
-        <Wand2 />
-        AI edited
-      </div>
-    )
-  } else if (source === 'manual_edit') {
-    return (
-      <div className="items-centre flex gap-1">
-        <Edit />
-        Manually edited
-      </div>
-    )
-  } else {
-    return <div>First version generated</div>
+const formatVersionDate = (date: string): string => {
+  const parsedDate = new Date(date)
+  return `${parsedDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })} ${parsedDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+}
+
+const MapContentSource = (source: ContentSource): string => {
+  switch (source) {
+    case 'ai_edit':
+      return 'AI edit'
+    case 'manual_edit':
+      return 'Manual edit'
+    case 'initial_generation':
+      return 'Original'
   }
 }
 
@@ -36,38 +26,29 @@ export const MinuteVersionSelect = ({
   setVersion,
 }: {
   minuteVersions: MinuteVersionResponse[]
-  version: number
-  setVersion: Dispatch<SetStateAction<number>>
+  version?: string
+  setVersion: Dispatch<SetStateAction<string | undefined>>
 }) => {
   return (
-    <Select value={`${version}`} onValueChange={(v) => setVersion(Number(v))}>
-      <SelectTrigger className="inline-flex">Edits</SelectTrigger>
-      <SelectContent>
-        {minuteVersions.map((v, index) => {
-          const date = new Date(v.created_datetime!)
+    <div>
+      <GovukLabel className="govuk-!-margin-bottom-2" htmlFor="version-select">
+        Version history
+      </GovukLabel>
+      <GovukSelect
+        id="version-select"
+        name="version-select"
+        value={version}
+        onChange={(e) => setVersion(e.target.value)}
+      >
+        {minuteVersions.map((v, i) => {
           return (
-            <SelectItem key={v.id!} value={`${index}`}>
-              <div className="flex w-full max-w-md flex-1 flex-col items-start">
-                <div className="flex items-center gap-2">
-                  <MapContentSource source={v.content_source} />
-                  <div className="text-muted-foreground flex gap-1 text-xs">
-                    {date.toLocaleDateString()}{' '}
-                    {date.toLocaleTimeString(undefined, {
-                      hour: 'numeric',
-                      minute: 'numeric',
-                    })}
-                  </div>
-                </div>
-                {v.ai_edit_instructions && (
-                  <div className="border-l-2 pl-2">
-                    <q>{v.ai_edit_instructions}</q>
-                  </div>
-                )}
-              </div>
-            </SelectItem>
+            <option key={v.id} value={v.id}>
+              {minuteVersions.length - i}. {MapContentSource(v.content_source)}{' '}
+              ({formatVersionDate(v.created_datetime)})
+            </option>
           )
         })}
-      </SelectContent>
-    </Select>
+      </GovukSelect>
+    </div>
   )
 }

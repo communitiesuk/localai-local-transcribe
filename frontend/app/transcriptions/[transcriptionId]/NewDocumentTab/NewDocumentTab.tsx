@@ -10,24 +10,34 @@ import { TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   getUserTemplatesUserTemplatesGetOptions,
+  listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
+  getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import posthog from 'posthog-js'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 
 export const NewDocumentTab = ({
   transcription,
   onCancel,
   onCreated,
+  onMinuteCreated,
 }: {
   transcription: TranscriptionGetResponse
   onCancel: () => void
   onCreated: (templateName: string) => void
+  onMinuteCreated?: (minuteId: string) => void
 }) => {
   const [selectedValue, setSelectedValue] = useState('')
   const [createdMinuteId, setCreatedMinuteId] = useState<string | null>(null)
+  const [createdTemplateName, setCreatedTemplateName] = useState('')
+  const renamedRef = useRef(false)
+
+  const setBanner = useBannerStore((store) => store.setBanner)
 
   const {
     data: templates = [],
@@ -35,6 +45,27 @@ export const NewDocumentTab = ({
     isError,
     refetch,
   } = useQuery(getUserTemplatesUserTemplatesGetOptions())
+
+  const { data: versions = [] } = useQuery({
+    ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
+      path: { minute_id: createdMinuteId ?? '' },
+    }),
+    enabled: createdMinuteId !== null,
+    refetchInterval: (query) => {
+      const status = query.state.data?.[0]?.status
+      return status === 'awaiting_start' || status === 'in_progress'
+        ? 1000
+        : false
+    },
+  })
+  const versionStatus = versions[0]?.status
+
+  const { data: minute = null } = useQuery({
+    ...getMinuteMinutesMinutesIdGetOptions({
+      path: { minutes_id: createdMinuteId ?? '' },
+    }),
+    enabled: createdMinuteId !== null,
+  })
 
   const queryClient = useQueryClient()
   const { mutate: createMinute, isPending } = useMutation({
@@ -45,17 +76,42 @@ export const NewDocumentTab = ({
     (t) => (t.id ?? t.name) === selectedValue
   )
 
-  if (createdMinuteId) {
-    // TODO(AIILG-866): show the creating spinner and completion, then the document view (AIILG-867).
-    return <p className="govuk-body">Your document is being created.</p>
+  const isCompleted =
+    createdMinuteId !== null && versionStatus === 'completed' && minute
+  const isFailed = createdMinuteId !== null && versionStatus === 'failed'
+  const isCreating =
+    !isFailed && (isPending || (createdMinuteId !== null && !isCompleted))
+
+  useEffect(() => {
+    if (isCompleted && !renamedRef.current) {
+      renamedRef.current = true
+      onCreated(createdTemplateName)
+    } else if (isFailed) {
+      setBanner({
+        variant: 'important',
+        title: 'There is a problem',
+        message:
+          'Something went wrong generating your document. Please try again.',
+      })
+    }
+  }, [isCompleted, isFailed, createdTemplateName, onCreated, setBanner])
+
+  if (isCompleted) {
+    return <MinuteEditor transcription={transcription} minute={minute} />
   }
 
-  if (isPending) {
+  if (isCreating) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-16">
-        <LoaderCircle size={64} className="animate-spin" aria-hidden="true" />
-        <p className="govuk-body" role="status">
-          Creating ‘{selectedTemplate?.name}’…
+      <div className="flex flex-col items-center">
+        {/* spinner */}
+        <div
+          aria-label="Creating document"
+          aria-live="polite"
+          role="status"
+          className="mb-5 h-28 w-28 animate-spin rounded-full border-[12px] border-gray-400 border-t-sky-700"
+        />
+        <p className="govuk-body">
+          Creating ‘{selectedTemplate?.name ?? createdTemplateName}’…
         </p>
       </div>
     )
@@ -92,6 +148,8 @@ export const NewDocumentTab = ({
 
   const handleCreate = () => {
     if (!selectedTemplate) return
+    renamedRef.current = false
+    setCreatedMinuteId(null)
     createMinute(
       {
         path: { transcription_id: transcription.id! },
@@ -113,8 +171,17 @@ export const NewDocumentTab = ({
               ? 'User generated'
               : selectedTemplate.name,
           })
+          setCreatedTemplateName(selectedTemplate.name)
           setCreatedMinuteId(data.minute_id)
-          onCreated(selectedTemplate.name)
+          onMinuteCreated?.(data.minute_id)
+        },
+        onError: () => {
+          setBanner({
+            variant: 'important',
+            title: 'There is a problem',
+            message:
+              'Something went wrong creating your document. Please try again.',
+          })
         },
       }
     )

@@ -6,14 +6,27 @@ import type { TranscriptionGetResponse } from '@/lib/client'
 
 vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }))
 
+const setBannerMock = vi.hoisted(() => vi.fn())
+vi.mock('@/stores/use-banner-store', () => ({
+  useBannerStore: (selector: (s: { setBanner: unknown }) => unknown) =>
+    selector({ setBanner: setBannerMock }),
+}))
+
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   getUserTemplatesUserTemplatesGetOptions: () => ({ queryKey: ['templates'] }),
-  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions:
-    () => ({ queryKey: ['minutes'] }),
+  listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
+    queryKey: ['versions'],
+  }),
+  getMinuteMinutesMinutesIdGetOptions: () => ({
+    queryKey: ['minute'],
+  }),
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey:
     () => ['minutes'],
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation: () => ({
     mutationKey: ['create-minute'],
+  }),
+  createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
+    mutationKey: ['create-minute-version'],
   }),
 }))
 
@@ -35,7 +48,7 @@ const templates = [
 ]
 
 const configureQueries = (
-  overrides: { templates?: unknown; minutes?: unknown } = {}
+  overrides: { templates?: unknown; versions?: unknown; minute?: unknown } = {}
 ) => {
   const templatesResult = overrides.templates ?? {
     data: templates,
@@ -43,11 +56,29 @@ const configureQueries = (
     isError: false,
     refetch: vi.fn(),
   }
-  const minutesResult = overrides.minutes ?? { data: [] }
+  const versionsResult = overrides.versions ?? { data: [] }
+  const minuteResult = overrides.minute ?? {
+    data: {
+      id: '1',
+      transcription_id: '1',
+    },
+  }
+
+  const queryKeyToResponse = (key: string) => {
+    switch (key) {
+      case 'versions':
+        return versionsResult
+      case 'templates':
+        return templatesResult
+      case 'minute':
+        return minuteResult
+    }
+    return undefined
+  }
   vi.mocked(useQuery).mockImplementation(((opts: { queryKey?: unknown[] }) =>
-    opts?.queryKey?.[0] === 'minutes'
-      ? minutesResult
-      : templatesResult) as unknown as typeof useQuery)
+    queryKeyToResponse(
+      opts?.queryKey?.[0] as string
+    )) as unknown as typeof useQuery)
 }
 
 const mutateMock = vi.fn()
@@ -63,6 +94,11 @@ const renderTab = (
       {...props}
     />
   )
+
+const selectAndCreate = () => {
+  fireEvent.click(screen.getByRole('radio', { name: /General summary/ }))
+  fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -135,15 +171,14 @@ describe('<NewDocumentTab />', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('creates the minute, calls onCreated and shows the placeholder on success', () => {
+  it('creates the minute and shows the creating spinner while generating', () => {
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
-    const onCreated = vi.fn()
-    renderTab({ onCreated })
+    configureQueries({ versions: { data: [{ status: 'in_progress' }] } })
+    renderTab()
 
-    fireEvent.click(screen.getByRole('radio', { name: /General summary/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    selectAndCreate()
 
     expect(mutateMock).toHaveBeenCalledWith(
       {
@@ -152,9 +187,63 @@ describe('<NewDocumentTab />', () => {
       },
       expect.anything()
     )
+    expect(screen.getByText('Creating ‘General summary’…')).toBeInTheDocument()
+  })
+
+  it('renames the tab and shows the document view when generation completes', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    configureQueries({
+      versions: {
+        data: [
+          {
+            status: 'completed',
+            created_datetime: '2024-01-01T00:00:00Z',
+            html_content: 'Generated version content',
+          },
+        ],
+      },
+    })
+    const onCreated = vi.fn()
+    renderTab({ onCreated })
+
+    selectAndCreate()
+
     expect(onCreated).toHaveBeenCalledWith('General summary')
+    expect(screen.getByText('Generated version content')).toBeInTheDocument()
+  })
+
+  it('shows an error banner and returns to the picker when generation fails', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    configureQueries({ versions: { data: [{ status: 'failed' }] } })
+    renderTab()
+
+    selectAndCreate()
+
+    expect(setBannerMock).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'important' })
+    )
     expect(
-      screen.getByText('Your document is being created.')
+      screen.getByRole('heading', { name: 'Choose a document template' })
+    ).toBeInTheDocument()
+  })
+
+  it('shows an error banner when the create request fails', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onError?.(new Error('boom'), _vars, undefined)
+    )
+    renderTab()
+
+    selectAndCreate()
+
+    expect(setBannerMock).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: 'important' })
+    )
+    expect(
+      screen.getByRole('heading', { name: 'Choose a document template' })
     ).toBeInTheDocument()
   })
 })
