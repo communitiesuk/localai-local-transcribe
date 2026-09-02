@@ -17,10 +17,16 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['versions'],
   }),
+  getMinuteMinutesMinutesIdGetOptions: () => ({
+    queryKey: ['minute'],
+  }),
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey:
     () => ['minutes'],
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation: () => ({
     mutationKey: ['create-minute'],
+  }),
+  createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
+    mutationKey: ['create-minute-version'],
   }),
 }))
 
@@ -42,7 +48,7 @@ const templates = [
 ]
 
 const configureQueries = (
-  overrides: { templates?: unknown; versions?: unknown } = {}
+  overrides: { templates?: unknown; versions?: unknown; minute?: unknown } = {}
 ) => {
   const templatesResult = overrides.templates ?? {
     data: templates,
@@ -51,10 +57,28 @@ const configureQueries = (
     refetch: vi.fn(),
   }
   const versionsResult = overrides.versions ?? { data: [] }
+  const minuteResult = overrides.minute ?? {
+    data: {
+      id: '1',
+      transcription_id: '1',
+    },
+  }
+
+  const queryKeyToResponse = (key: string) => {
+    switch (key) {
+      case 'versions':
+        return versionsResult
+      case 'templates':
+        return templatesResult
+      case 'minute':
+        return minuteResult
+    }
+    return undefined
+  }
   vi.mocked(useQuery).mockImplementation(((opts: { queryKey?: unknown[] }) =>
-    opts?.queryKey?.[0] === 'versions'
-      ? versionsResult
-      : templatesResult) as unknown as typeof useQuery)
+    queryKeyToResponse(
+      opts?.queryKey?.[0] as string
+    )) as unknown as typeof useQuery)
 }
 
 const mutateMock = vi.fn()
@@ -170,16 +194,24 @@ describe('<NewDocumentTab />', () => {
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
-    configureQueries({ versions: { data: [{ status: 'completed' }] } })
+    configureQueries({
+      versions: {
+        data: [
+          {
+            status: 'completed',
+            created_datetime: '2024-01-01T00:00:00Z',
+            html_content: 'Generated version content',
+          },
+        ],
+      },
+    })
     const onCreated = vi.fn()
     renderTab({ onCreated })
 
     selectAndCreate()
 
     expect(onCreated).toHaveBeenCalledWith('General summary')
-    expect(
-      screen.getByText('Your ‘General summary’ document is ready.')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Generated version content')).toBeInTheDocument()
   })
 
   it('shows an error banner and returns to the picker when generation fails', () => {
