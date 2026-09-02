@@ -1,18 +1,13 @@
-# Example values for both evals Terraform roots.
-# Copy to terraform.tfvars in this directory; do not commit real subscription IDs, IPs, or object IDs.
-# Each root ignores the values belonging to the other and warns about them; use -compact-warnings.
+# Example local access values for the evals Terraform roots.
+# Fixed sandbox names/defaults live in variables.tf and backend/variables.tf.
+# Copy to terraform.tfvars in this directory; do not commit real subscription IDs,
+# resource group names, IPs, or object IDs.
 
 subscription_id     = "<azure-subscription-id>"
 resource_group_name = "<resource-group-name>"
-location            = "<azure-region>"
 environment_name    = "<environment-name>"
 
-terraform_state_storage_account_name = "<terraform-state-storage-account-name>"
-sensitive_storage_account_name       = "<sensitive-storage-account-name>"
-results_storage_account_name         = "<results-storage-account-name>"
-
 # Azure DevOps pipeline identity.
-# pipeline_identity_name = "evals-blob-id"
 # ado_federation_issuer  = "https://vstoken.dev.azure.com/<org-guid>"
 # ado_federation_subject = "sc://<org>/<project>/evals-blob"
 
