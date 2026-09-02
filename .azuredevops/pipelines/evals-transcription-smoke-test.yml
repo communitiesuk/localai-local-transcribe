@@ -5,6 +5,7 @@ pr: none
 
 variables:
   - group: evals-pipeline-config
+  - template: ../templates/evals-variable-defaults.yml
 
 parameters:
   - name: config
@@ -22,8 +23,8 @@ pool:
 steps:
   - template: ../templates/run-eval-steps.yml
     parameters:
-      pythonVersion: $(EVALS_PYTHON_VERSION)
-      poetryVersion: $(EVALS_POETRY_VERSION)
+      pythonVersion: $(EVALS_PYTHON_VERSION_RESOLVED)
+      poetryVersion: $(EVALS_POETRY_VERSION_RESOLVED)
       poetryDependencyGroup: evals-transcription
       evalModule: evals.transcription.src.evaluate
       azureServiceConnection: $(EVALS_AZURE_SERVICE_CONNECTION)

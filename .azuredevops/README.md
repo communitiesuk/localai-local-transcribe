@@ -32,14 +32,16 @@ Mandatory values:
 | `AZURE_APIM_ACCESS_TOKEN` | Temporary APIM bearer token | Yes |
 | `AZURE_APIM_SUBSCRIPTION_KEY` | APIM subscription key | Yes |
 
-Configurable defaults:
+Configurable values:
 
-| Variable | Default | Secret |
+| Variable | Recommended value | Secret |
 | --- | --- | --- |
 | `EVALS_PYTHON_VERSION` | `3.12` | No |
 | `EVALS_POETRY_VERSION` | `2.4.1` | No |
 | `EVALS_SCHEDULED_RUNS_ENABLED` | `false` | No |
 | `EVALS_FORTNIGHTLY_START_SUNDAY` | `2026-08-30` | No |
+
+These are still variable-group entries, but they are optional. If omitted, `templates/evals-variable-defaults.yml` supplies the recommended values.
 
 Terraform can help find the storage endpoint values after the evals stack has been applied:
 

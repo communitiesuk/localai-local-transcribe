@@ -1,0 +1,11 @@
+# Shared defaults for optional eval pipeline variable-group values.
+
+variables:
+  - name: EVALS_PYTHON_VERSION_RESOLVED
+    value: $[ coalesce(variables['EVALS_PYTHON_VERSION'], '3.12') ]
+  - name: EVALS_POETRY_VERSION_RESOLVED
+    value: $[ coalesce(variables['EVALS_POETRY_VERSION'], '2.4.1') ]
+  - name: EVALS_SCHEDULED_RUNS_ENABLED_RESOLVED
+    value: $[ coalesce(variables['EVALS_SCHEDULED_RUNS_ENABLED'], 'false') ]
+  - name: EVALS_FORTNIGHTLY_START_SUNDAY_RESOLVED
+    value: $[ coalesce(variables['EVALS_FORTNIGHTLY_START_SUNDAY'], '2026-08-30') ]
