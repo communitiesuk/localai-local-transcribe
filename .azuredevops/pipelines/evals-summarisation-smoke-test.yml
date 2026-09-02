@@ -6,6 +6,9 @@ name: Summarisation Evals
 trigger: none
 pr: none
 
+variables:
+  - group: evals-smoke-test
+
 schedules:
   # Runs weekly at 21:00 UTC on Sundays; fortnightly cadence is enforced by the gate job.
   - cron: '0 21 * * Sun'
@@ -16,18 +19,6 @@ schedules:
     always: true
 
 parameters:
-  - name: pythonVersion
-    displayName: 'Python version'
-    type: string
-    default: '3.12'
-  - name: poetryVersion
-    displayName: 'Poetry version'
-    type: string
-    default: '2.4.1'
-  - name: azureServiceConnection
-    displayName: 'Azure service connection (workload identity) with container-scoped blob access'
-    type: string
-    default: 'evals-blob'
   - name: config
     displayName: 'Eval config'
     type: string
@@ -36,23 +27,12 @@ parameters:
     displayName: 'Short-retention non-sensitive results artifact name'
     type: string
     default: 'summarisation-eval-results'
-  - name: scheduledRunsEnabled
-    displayName: 'Enable scheduled runs'
-    type: string
-    default: 'false'
-    values:
-      - 'true'
-      - 'false'
-  - name: fortnightlyStartSunday
-    displayName: 'First scheduled Sunday to run'
-    type: string
-    default: '2026-08-30'
 
 jobs:
   - template: ../templates/fortnightly-schedule-gate-job.yml
     parameters:
-      scheduledRunsEnabled: ${{ parameters.scheduledRunsEnabled }}
-      referenceSunday: ${{ parameters.fortnightlyStartSunday }}
+      scheduledRunsEnabled: $(EVALS_SCHEDULED_RUNS_ENABLED)
+      referenceSunday: $(EVALS_FORTNIGHTLY_START_SUNDAY)
 
   - job: summarisation_smoke_test
     displayName: 'Summarisation eval smoke test'
@@ -64,11 +44,11 @@ jobs:
     steps:
       - template: ../templates/run-eval-steps.yml
         parameters:
-          pythonVersion: ${{ parameters.pythonVersion }}
-          poetryVersion: ${{ parameters.poetryVersion }}
+          pythonVersion: $(EVALS_PYTHON_VERSION)
+          poetryVersion: $(EVALS_POETRY_VERSION)
           poetryDependencyGroup: evals-summarisation
           evalModule: evals.summarisation.src.main
-          azureServiceConnection: ${{ parameters.azureServiceConnection }}
+          azureServiceConnection: $(EVALS_AZURE_SERVICE_CONNECTION)
           config: ${{ parameters.config }}
           resultsArtifactName: ${{ parameters.resultsArtifactName }}
           runDisplayName: 'Run summarisation smoke test (blob)'
