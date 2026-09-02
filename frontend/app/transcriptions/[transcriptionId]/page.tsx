@@ -158,9 +158,21 @@ export default function TranscriptionPage(props: {
     )
   }
   const handleCreateDocument = () => {
+    clearBanner()
     const id = `new-document-${documentCounter.current++}`
     setDocumentTabs((prev) => [...prev, { id, label: 'New document' }])
     setActiveTab(id)
+  }
+
+  const handleTabChange = (tab: string) => {
+    clearBanner()
+    setActiveTab(tab)
+  }
+
+  const clearBannerOnButtonClick = (event: React.MouseEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest('button')) {
+      clearBanner()
+    }
   }
 
   const removeDocumentTab = (id: string) => {
@@ -208,32 +220,36 @@ export default function TranscriptionPage(props: {
         id="transcription-tabs"
         className="govuk-!-margin-top-4"
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
       >
         <GovukTabs.Panel id="transcript" label="Transcript">
-          <TranscriptionTab
-            transcription={transcription}
-            onTranscriptCopied={() =>
-              setBanner({
-                variant: 'success',
-                title: 'Success',
-                message: 'Transcript copied to clipboard.',
-              })
-            }
-            onTranscriptDownloaded={() =>
-              setBanner({
-                variant: 'success',
-                title: 'Success',
-                message: 'Transcript downloaded.',
-              })
-            }
-            onDismissBanner={clearBanner}
-            onLineEditError={handleLineEditError}
-            onEditModeChange={setIsTranscriptEditing}
-          />
+          <div onClickCapture={clearBannerOnButtonClick}>
+            <TranscriptionTab
+              transcription={transcription}
+              onTranscriptCopied={() =>
+                setBanner({
+                  variant: 'success',
+                  title: 'Success',
+                  message: 'Transcript copied to clipboard.',
+                })
+              }
+              onTranscriptDownloaded={() =>
+                setBanner({
+                  variant: 'success',
+                  title: 'Success',
+                  message: 'Transcript downloaded.',
+                })
+              }
+              onDismissBanner={clearBanner}
+              onLineEditError={handleLineEditError}
+              onEditModeChange={setIsTranscriptEditing}
+            />
+          </div>
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
-          <MinuteTab transcription={transcription} />
+          <div onClickCapture={clearBannerOnButtonClick}>
+            <MinuteTab transcription={transcription} />
+          </div>
         </GovukTabs.Panel>
         {isChatEnabled && (
           <GovukTabs.Panel id="chat" label="Chat with your meeting">
