@@ -10,6 +10,7 @@ import type { ErrorItem } from '@/components/govuk/error-summary'
 import { RecordingDetails } from '@/app/transcriptions/[transcriptionId]/RecordingDetails'
 import {
   isTranscriptionProcessing,
+  notifyRecordingFailed,
   notifyRecordingSaved,
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionStatus'
 import { getTranscriptionTranscriptionsTranscriptionIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
@@ -50,6 +51,10 @@ export default function AddRecordingMetadataPage(props: {
       return
     }
     if (isTranscriptionProcessing(transcription.status)) {
+      return
+    }
+    if (transcription.status === 'failed') {
+      notifyRecordingFailed(router, setBanner, transcription.id)
       return
     }
     notifyRecordingSaved(router, setBanner, transcription.id)
