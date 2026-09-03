@@ -6,7 +6,7 @@ import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/Minu
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
-  MinuteListItem,
+  Minute,
   MinuteVersionResponse,
   TranscriptionGetResponse,
 } from '@/lib/client'
@@ -18,7 +18,7 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FilePenLine, FileQuestion, Loader2, LoaderCircle } from 'lucide-react'
+import { FilePenLine, Loader2, LoaderCircle } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
@@ -40,11 +40,16 @@ export function MinuteEditor({
   minute,
 }: {
   transcription: TranscriptionGetResponse
-  minute: MinuteListItem
+  minute: Minute
 }) {
   const [version, setVersion] = useState<string | undefined>(undefined)
   const [hideCitations, setHideCitations] = useState(false)
-  const { data: minuteVersions = [], isLoading } = useQuery({
+  const {
+    data: minuteVersions = [],
+    isLoading,
+    isError: isErrorFetchingVersions,
+    refetch,
+  } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
       path: { minute_id: minute.id! },
     }),
@@ -93,12 +98,12 @@ export function MinuteEditor({
   const previousVersionRef = useRef<{ id: string; status: string } | null>(null)
   useEffect(() => {
     if (minuteVersion) {
-      const previous = previousVersionRef.current
+      const previous = previousVersionRef?.current
       const justCompletedAiEdit =
         previous?.id === minuteVersion.id &&
-        previous.status !== 'completed' &&
-        minuteVersion.status === 'completed' &&
-        minuteVersion.content_source === 'ai_edit'
+        previous?.status !== 'completed' &&
+        minuteVersion?.status === 'completed' &&
+        minuteVersion?.content_source === 'ai_edit'
       if (justCompletedAiEdit) {
         setBanner({
           variant: 'success',
@@ -109,7 +114,7 @@ export function MinuteEditor({
 
       const justFailed =
         previous?.id === minuteVersion.id &&
-        previous.status !== 'failed' &&
+        previous?.status !== 'failed' &&
         minuteVersion.status === 'failed'
       if (justFailed) {
         setBanner({
@@ -202,19 +207,20 @@ export function MinuteEditor({
     )
   }
 
-  if (!displayedMinuteVersion) {
+  if (!displayedMinuteVersion || isErrorFetchingVersions) {
     return (
-      <div className="flex flex-col items-center gap-2">
-        <FileQuestion />
-        <p>
-          Nothing has been generated for this &quot;{minute.template_name}&quot;
-          minute yet. Click below to generate a minute.
-        </p>
-        <NewMinuteDialog
-          transcriptionId={transcription.id!}
-          agenda={minute.agenda ?? undefined}
-        />
-      </div>
+      <>
+        <GovukNotificationBanner
+          variant="important"
+          title="There is a problem"
+          className="govuk-!-margin-bottom-2"
+        >
+          There has been an error loading this document.
+        </GovukNotificationBanner>
+        <GovukButton variant="secondary" onClick={() => refetch()}>
+          Retry
+        </GovukButton>
+      </>
     )
   }
   if (isGenerating) {

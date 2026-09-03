@@ -288,7 +288,7 @@ export default function TranscriptionPage(props: {
         )}
         {documentTabs.map((doc) => (
           <GovukTabs.Panel key={doc.id} id={doc.id!} label={doc.template_name}>
-            <DocumentTab minute={doc} />
+            <DocumentTab transcription={transcription} minute={doc} />
           </GovukTabs.Panel>
         ))}
         {draftTabs.map((tab) => (

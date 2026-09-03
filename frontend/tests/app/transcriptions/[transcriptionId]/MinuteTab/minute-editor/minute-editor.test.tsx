@@ -118,7 +118,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
     configureQuery([])
     renderEditor()
     expect(
-      screen.getByText(/Nothing has been generated for this/)
+      screen.getByText(/There has been an error loading this document/)
     ).toBeInTheDocument()
   })
 
