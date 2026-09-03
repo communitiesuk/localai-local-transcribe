@@ -1,11 +1,12 @@
 import math
+import uuid
 
 from sqlmodel import col, func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from common.database.postgres_models import Organisation, User
+from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Organisation, User
 from common.types import PaginatedUsersResponse
 
 
@@ -67,3 +68,16 @@ async def get_paginated_users(
         page_size=page_size,
         total_pages=math.ceil(count / page_size) or 1,
     )
+
+
+async def has_pending_minute_version_for_transcription(session: AsyncSession, transcription_id: uuid.UUID) -> bool:
+    query = (
+        select(MinuteVersion)
+        .join(Minute)
+        .where(
+            Minute.transcription_id == transcription_id,
+            col(MinuteVersion.status).in_([JobStatus.AWAITING_START, JobStatus.IN_PROGRESS]),
+        )
+    )
+
+    return (await session.exec(query)).first() is not None
