@@ -13,16 +13,19 @@ variable "resource_group_name" {
 variable "location" {
   type        = string
   description = "Azure region for the evals storage accounts, for example uksouth."
+  default     = "uksouth"
 }
 
 variable "sensitive_storage_account_name" {
   type        = string
   description = "Globally unique name for the account holding the input and debug containers. Reachable from ADAPT only. 3 to 24 lowercase letters and digits."
+  default     = "ltevalsen"
 }
 
 variable "results_storage_account_name" {
   type        = string
   description = "Globally unique name for the account holding the output (results) container. Reachable from ADAPT and MHCLG devices. 3 to 24 lowercase letters and digits."
+  default     = "ltevalres"
 }
 
 variable "environment_name" {

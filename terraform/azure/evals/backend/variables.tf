@@ -13,11 +13,13 @@ variable "resource_group_name" {
 variable "location" {
   type        = string
   description = "Azure region for the state storage account, for example uksouth."
+  default     = "uksouth"
 }
 
 variable "terraform_state_storage_account_name" {
   type        = string
   description = "Globally unique storage account name for Terraform state. 3 to 24 lowercase letters and digits only."
+  default     = "ltevaltf"
 }
 
 variable "environment_name" {

@@ -133,13 +133,13 @@ Create one local var file for both Terraform roots:
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars: subscription_id, resource_group_name, location,
-# environment_name, terraform_state_storage_account_name, storage account names,
-# IP allowlists, and principal IDs.
+# Edit terraform.tfvars: subscription_id, resource_group_name, environment_name,
+# IP allowlists, principal IDs, and any pipeline federation values.
+# Fixed Softwire sandbox names/defaults live in variables.tf and backend/variables.tf.
 nano terraform.tfvars
 ```
 
-Each root declares only the variables it uses, so each ignores the other's values and says so in a warning. `-compact-warnings` reduces that to a single summary line.
+Each root declares only the variables it uses. If a local file contains extra values from another root, Terraform ignores them and says so in a warning; `-compact-warnings` reduces that to a single summary line.
 
 ### Step 1: Bootstrap remote state
 
@@ -162,7 +162,7 @@ cd ..
 # use_azuread_auth=true requires Storage Blob Data Contributor on the state storage
 # account or tfstate container for the applying identity, and the caller must connect
 # from an IP listed in backend/mhclg_ip_rules; without both, init fails.
-terraform init -backend-config="resource_group_name=<from-backend-output>" -backend-config="storage_account_name=<from-backend-output>" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate" -backend-config="use_azuread_auth=true"
+terraform init -backend-config="resource_group_name=group-aiilgazuresandbox-sandbox" -backend-config="storage_account_name=ltevaltf" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate" -backend-config="use_azuread_auth=true"
 
 terraform plan -compact-warnings
 terraform apply -compact-warnings
