@@ -1,3 +1,4 @@
+import logging
 import re
 import uuid
 from dataclasses import dataclass
@@ -5,7 +6,7 @@ from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
@@ -21,6 +22,8 @@ DOMAIN_REGEX = re.compile(
     r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z-]{0,61}[a-z]$",
     re.IGNORECASE,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def validate_fqdn_list(domains: list[str]) -> list[str]:
@@ -314,14 +317,22 @@ class FailureDetail(BaseModel):
         },
     }
 
-    @field_validator("mode")
-    @classmethod
-    def _validate_mode_matches_category(cls, mode: FailureMode, info: ValidationInfo) -> FailureMode:
-        category = info.data.get("category")
-        if category is not None and mode not in cls._VALID_MODES_BY_CATEGORY[category]:
-            message = f"Failure mode '{mode}' is not valid for category '{category}'"
-            raise ValueError(message)
-        return mode
+    _CATEGORY_BY_MODE: ClassVar[dict[FailureMode, FailureCategory]] = {
+        mode: category for category, modes in _VALID_MODES_BY_CATEGORY.items() for mode in modes
+    }
+
+    @model_validator(mode="after")
+    def _correct_category_from_mode(self) -> "FailureDetail":
+        expected_category = self._CATEGORY_BY_MODE[self.mode]
+        if self.category != expected_category:
+            logger.warning(
+                "FailureDetail category '%s' does not match mode '%s'; correcting to '%s'",
+                self.category,
+                self.mode,
+                expected_category,
+            )
+            self.category = expected_category
+        return self
 
 
 class GuardrailScore(BaseModel):
