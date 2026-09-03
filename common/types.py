@@ -3,9 +3,9 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
-from typing import Literal
+from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, ValidationInfo, field_validator
 
 from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
@@ -252,6 +252,7 @@ class LLMHallucination(BaseModel):
     hallucination_text: str = Field(description="The uncited claim flagged as a potential hallucination")
     hallucination_reason: str | None = Field(description="Reason the claim was flagged", default=None)
 
+
 class FailureCategory(StrEnum):
     FACTUAL_INTEGRITY = auto()
     REQUIRED_CONTENT_AND_STRUCTURE = auto()
@@ -260,10 +261,74 @@ class FailureCategory(StrEnum):
     EVIDENCE_AND_CITATION_QUALITY = auto()
     INPUT_SUITABILITY = auto()
 
+
+class FailureMode(StrEnum):
+    INVENTED_DECISION = auto()
+    REVERSED_MEANING = auto()
+    NO_EVIDENCE_FOR_CLAIM = auto()
+    ATTRIBUTION_NOT_EVIDENCED = auto()
+    NUMERIC_DATE_ERROR = auto()
+    CRITICAL_OMISSION = auto()
+    MISSING_ACTION = auto()
+    MISSING_REQUIRED_SECTION = auto()
+    UNSAFE_EDIT = auto()
+    EDIT_DID_WRONG_TASK = auto()
+    PERSONAL_DATA_INCLUDED = auto()
+    TRANSCRIPT_INSTRUCTION_FOLLOWED = auto()
+    WRONG_CITATION = auto()
+    WEAK_TRANSCRIPT_SUPPORT = auto()
+    SHORT_INPUT_SUMMARISED = auto()
+
+
+class FailureDetail(BaseModel):
+    category: FailureCategory
+    mode: FailureMode
+
+    _VALID_MODES_BY_CATEGORY: ClassVar[dict[FailureCategory, set[FailureMode]]] = {
+        FailureCategory.FACTUAL_INTEGRITY: {
+            FailureMode.INVENTED_DECISION,
+            FailureMode.REVERSED_MEANING,
+            FailureMode.NO_EVIDENCE_FOR_CLAIM,
+            FailureMode.ATTRIBUTION_NOT_EVIDENCED,
+            FailureMode.NUMERIC_DATE_ERROR,
+        },
+        FailureCategory.REQUIRED_CONTENT_AND_STRUCTURE: {
+            FailureMode.CRITICAL_OMISSION,
+            FailureMode.MISSING_ACTION,
+            FailureMode.MISSING_REQUIRED_SECTION,
+        },
+        FailureCategory.EDIT_SAFETY_AND_INTENT: {
+            FailureMode.UNSAFE_EDIT,
+            FailureMode.EDIT_DID_WRONG_TASK,
+        },
+        FailureCategory.DATA_PROTECTION_AND_INSTRUCTION_INTEGRITY: {
+            FailureMode.PERSONAL_DATA_INCLUDED,
+            FailureMode.TRANSCRIPT_INSTRUCTION_FOLLOWED,
+        },
+        FailureCategory.EVIDENCE_AND_CITATION_QUALITY: {
+            FailureMode.WRONG_CITATION,
+            FailureMode.WEAK_TRANSCRIPT_SUPPORT,
+        },
+        FailureCategory.INPUT_SUITABILITY: {
+            FailureMode.SHORT_INPUT_SUMMARISED,
+        },
+    }
+
+    @field_validator("mode")
+    @classmethod
+    def _validate_mode_matches_category(cls, mode: FailureMode, info: ValidationInfo) -> FailureMode:
+        category = info.data.get("category")
+        if category is not None and mode not in cls._VALID_MODES_BY_CATEGORY[category]:
+            message = f"Failure mode '{mode}' is not valid for category '{category}'"
+            raise ValueError(message)
+        return mode
+
+
 class GuardrailScore(BaseModel):
     score: float = Field(description="Confidence score between 0.0 and 1.0")
     reasoning: str = Field(description="Reasoning for the score")
-    categories: list[FailureCategory] = Field(description="List of failure categories that contributed to the score")
+    categories: list[FailureDetail] = Field(description="List of failure categories that contributed to the score")
+
 
 class MinuteVersionResponse(BaseModel):
     id: uuid.UUID
