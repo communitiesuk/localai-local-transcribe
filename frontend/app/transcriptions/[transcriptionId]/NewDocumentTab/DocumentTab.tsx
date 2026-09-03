@@ -1,6 +1,12 @@
-import { MinuteListItem } from '@/lib/client'
+import { MinuteListItem, TranscriptionGetResponse } from '@/lib/client'
+import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 
-export const DocumentTab = ({ minute }: { minute: MinuteListItem }) => {
-  // TODO(AIILG-867): render the document view (button group, version history, content).
-  return <p className="govuk-body">Your ‘{minute.template_name}’ document.</p>
+export const DocumentTab = ({
+  transcription,
+  minute,
+}: {
+  transcription: TranscriptionGetResponse
+  minute: MinuteListItem
+}) => {
+  return <MinuteEditor transcription={transcription} minute={minute} />
 }

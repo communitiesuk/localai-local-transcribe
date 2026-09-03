@@ -12,12 +12,14 @@ import {
   getUserTemplatesUserTemplatesGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
+  getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useEffect, useRef, useState } from 'react'
+import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 
 export const NewDocumentTab = ({
   transcription,
@@ -58,6 +60,13 @@ export const NewDocumentTab = ({
   })
   const versionStatus = versions[0]?.status
 
+  const { data: minute = null } = useQuery({
+    ...getMinuteMinutesMinutesIdGetOptions({
+      path: { minutes_id: createdMinuteId ?? '' },
+    }),
+    enabled: createdMinuteId !== null,
+  })
+
   const queryClient = useQueryClient()
   const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
@@ -67,7 +76,8 @@ export const NewDocumentTab = ({
     (t) => (t.id ?? t.name) === selectedValue
   )
 
-  const isCompleted = createdMinuteId !== null && versionStatus === 'completed'
+  const isCompleted =
+    createdMinuteId !== null && versionStatus === 'completed' && minute
   const isFailed = createdMinuteId !== null && versionStatus === 'failed'
   const isCreating =
     !isFailed && (isPending || (createdMinuteId !== null && !isCompleted))
@@ -87,12 +97,7 @@ export const NewDocumentTab = ({
   }, [isCompleted, isFailed, createdTemplateName, onCreated, setBanner])
 
   if (isCompleted) {
-    // TODO(AIILG-867): render the document view (button group, version history, content).
-    return (
-      <p className="govuk-body">
-        Your ‘{createdTemplateName}’ document is ready.
-      </p>
-    )
+    return <MinuteEditor transcription={transcription} minute={minute} />
   }
 
   if (isCreating) {
