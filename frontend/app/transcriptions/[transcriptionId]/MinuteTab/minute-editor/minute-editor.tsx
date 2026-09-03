@@ -26,10 +26,14 @@ import { Controller, useForm, useWatch } from 'react-hook-form'
 import {
   GovukButton,
   GovukButtonGroup,
+  GovukModalDialogue,
+  GovukModalDialogueActions,
   GovukNotificationBanner,
 } from '@/components/govuk'
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import CopyButton from '@/components/ui/copy-button'
+import { cn } from '@/lib/utils'
+import { useBannerStore } from '@/stores/use-banner-store'
 
 type MinuteEditorForm = {
   html: string
@@ -81,6 +85,8 @@ export function MinuteEditor({
 
   const queryClient = useQueryClient()
   const [isEditable, setIsEditable] = useState(false)
+  const [showDiscardModal, setShowDiscardModal] = useState(false)
+  const setBanner = useBannerStore((store) => store.setBanner)
   const form = useForm<MinuteEditorForm>()
   useEffect(() => {
     if (minuteVersion) {
@@ -111,23 +117,53 @@ export function MinuteEditor({
 
   const onSubmit = useCallback(
     (data: MinuteEditorForm) => {
-      if (data.html != minuteVersion?.html_content) {
-        saveEdit(
-          {
-            path: { minute_id: minute.id! },
-            body: { html_content: data.html, content_source: 'manual_edit' },
-          },
-          {
-            onSuccess,
-          }
-        )
-      }
-      {
+      if (data.html === minuteVersion?.html_content) {
         setIsEditable(false)
+        return
       }
+      saveEdit(
+        {
+          path: { minute_id: minute.id! },
+          body: { html_content: data.html, content_source: 'manual_edit' },
+        },
+        {
+          onSuccess: () => {
+            onSuccess()
+            setBanner({
+              variant: 'success',
+              title: 'Success',
+              message: `Manual edits to ‘${minute.template_name}’ saved`,
+            })
+          },
+          onError: () => {
+            setBanner({
+              variant: 'important',
+              title: 'There is a problem',
+              message:
+                'Something went wrong saving your edits. Please try again.',
+            })
+          },
+        }
+      )
     },
-    [minute.id, minuteVersion?.html_content, onSuccess, saveEdit]
+    [
+      minute.id,
+      minute.template_name,
+      minuteVersion?.html_content,
+      onSuccess,
+      saveEdit,
+      setBanner,
+    ]
   )
+
+  const handleCancelEdits = () => {
+    if (htmlContent !== minuteVersion?.html_content) {
+      setShowDiscardModal(true)
+    } else {
+      setIsEditable(false)
+    }
+  }
+
   const handleWordDocDownload = useCallback(() => {
     posthog.capture('minutes_downloaded', {
       format: 'word',
@@ -225,53 +261,58 @@ export function MinuteEditor({
 
   return (
     <div className="pt-2">
-      <GovukButtonGroup>
-        <AiEditPopover
-          disabled={isEditable}
-          minuteId={minute.id!}
-          minuteVersionId={minuteVersion.id}
-          onSuccess={onSuccess}
-        />
-        {isEditable ? (
-          <GovukButton
-            onClick={form.handleSubmit(onSubmit)}
-            variant="secondary"
-          >
-            Save Changes
-          </GovukButton>
-        ) : (
+      <div
+        className={cn(isEditable && 'pointer-events-none opacity-50')}
+        inert={isEditable}
+      >
+        <GovukButtonGroup>
+          <AiEditPopover
+            disabled={isEditable}
+            minuteId={minute.id!}
+            minuteVersionId={minuteVersion.id}
+            onSuccess={onSuccess}
+          />
           <GovukButton variant="secondary" onClick={() => setIsEditable(true)}>
             Manual edit
           </GovukButton>
-        )}
-        <GovukButton onClick={handleWordDocDownload} variant="secondary">
-          Download document
-        </GovukButton>
-        <CopyButton
-          textToCopy={contentToCopy}
-          posthogEvent={'editor_content_copied'}
-          label="Copy document"
-        />
-        {hasCitations && (
-          <GovukButton
-            variant="secondary"
-            onClick={() => setHideCitations((h) => !h)}
-            disabled={isEditable}
-          >
-            {isEditable
-              ? 'Quotes shown when editing'
-              : hideCitations
-                ? 'Show quotes'
-                : 'Hide quotes'}
+          <GovukButton onClick={handleWordDocDownload} variant="secondary">
+            Download document
           </GovukButton>
-        )}
-      </GovukButtonGroup>
-      <MinuteVersionSelect
-        version={minuteVersion.id}
-        setVersion={setVersion}
-        minuteVersions={minuteVersions}
-      />
+          <CopyButton
+            textToCopy={contentToCopy}
+            posthogEvent={'editor_content_copied'}
+            label="Copy document"
+          />
+          {hasCitations && (
+            <GovukButton
+              variant="secondary"
+              onClick={() => setHideCitations((h) => !h)}
+            >
+              {hideCitations ? 'Show quotes' : 'Hide quotes'}
+            </GovukButton>
+          )}
+        </GovukButtonGroup>
+        <MinuteVersionSelect
+          version={minuteVersion.id}
+          setVersion={setVersion}
+          minuteVersions={minuteVersions}
+        />
+      </div>
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-6 govuk-!-margin-bottom-6" />
+      {isEditable && (
+        <GovukButtonGroup className="govuk-!-margin-bottom-3">
+          <GovukButton type="button" onClick={form.handleSubmit(onSubmit)}>
+            Save edits
+          </GovukButton>
+          <GovukButton
+            type="button"
+            variant="warning"
+            onClick={handleCancelEdits}
+          >
+            Cancel edits
+          </GovukButton>
+        </GovukButtonGroup>
+      )}
       {!minuteVersion.too_short && minuteVersion.guardrail_results && (
         <GuardrailResponseComponent
           guardrailResults={minuteVersion.guardrail_results}
@@ -292,6 +333,32 @@ export function MinuteEditor({
           )}
         />
       </form>
+      <GovukModalDialogue
+        open={showDiscardModal}
+        onClose={() => setShowDiscardModal(false)}
+        title="Are you sure you want to discard your changes?"
+      >
+        <GovukModalDialogueActions>
+          <GovukButton
+            type="button"
+            variant="warning"
+            onClick={() => {
+              setShowDiscardModal(false)
+              setIsEditable(false)
+              form.setValue('html', minuteVersion.html_content)
+            }}
+          >
+            Discard
+          </GovukButton>
+          <GovukButton
+            type="button"
+            variant="link"
+            onClick={() => setShowDiscardModal(false)}
+          >
+            Cancel
+          </GovukButton>
+        </GovukModalDialogueActions>
+      </GovukModalDialogue>
     </div>
   )
 }
