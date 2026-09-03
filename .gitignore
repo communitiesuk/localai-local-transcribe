@@ -18,6 +18,9 @@ Brewfile.lock.json
 **/.terraform/*
 **/terraform/terraform.tfstate.d
 **/.terraform*
+# Terraform state files (may contain secrets - never commit)
+*.tfstate
+*.tfstate.*
 # Terraform lock files
 */.terraform.lock.hcl
 .terraform.lock.hcl

@@ -9,17 +9,17 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "local-transcribe-tfstate-staging"
+    bucket       = "local-transcribe-tfstate-production"
     use_lockfile = true
     encrypt      = true
-    key          = "local-transcribe-infra-staging"
+    key          = "local-transcribe-infra-production"
     region       = "eu-west-2"
   }
 }
 
 locals {
-  environment_name = "staging"
-  aws_account_id   = "342278407132"
+  environment_name = "production"
+  aws_account_id   = "555044956185"
   aws_region       = "eu-west-2"
   multi_az         = false
 
@@ -31,11 +31,11 @@ locals {
 
   database_username = "postgres"
 
-  app_host                  = "staging.local-transcribe.test.communities.gov.uk"
-  load_balancer_domain_name = "lb.staging.local-transcribe.test.communities.gov.uk"
+  app_host                  = "local-transcribe.communities.gov.uk"
+  load_balancer_domain_name = "lb.local-transcribe.communities.gov.uk"
 
   cloudwatch_log_expiration_days = 90
-  access_s3_log_expiration_days  = 90
+  access_s3_log_expiration_days  = 365
   database_allocated_storage     = 50
 }
 
@@ -92,14 +92,7 @@ module "frontdoor" {
     "45.150.142.210/32",
     # MHCLG
     "4.158.35.41/32",
-    # Cyberfort (temporarily allowed for pen testing)
-    "37.200.119.11/32",
-    "185.10.12.32/28",
-    "176.65.68.112/28",
   ]
-
-  # Cyberfort (temporarily allowed for pen testing)
-  ipv6_allowlist = ["2a00:1430:2106::/48"]
 
   app_host                                = local.app_host
   internal_access_oidc_client_id_name     = module.secrets.internal_access_oidc_client_id_name
@@ -145,6 +138,7 @@ module "secrets" {
   backend_task_execution_role_id   = module.ecs.backend_execution_task_id
   worker_task_execution_role_arn   = module.ecs.worker_execution_task_arn
   worker_task_execution_role_id    = module.ecs.worker_execution_task_id
+
 }
 
 module "bastion" {
@@ -203,7 +197,7 @@ module "ecs" {
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
   db_security_group_id = module.database.rds_security_group_id
   bastion_sg_id        = module.bastion.security_group_id
-  environment          = "staging"
+  environment          = "production"
   data_s3_bucket_name  = module.uploads_bucket.bucket_name
   private_subnet_ids   = module.networking.private_subnets[*].id
   vpc_id               = module.networking.vpc.id
@@ -226,7 +220,10 @@ module "ecs" {
   aws_region                  = local.aws_region
   lb_listener_exists          = var.ssl_certs_created
 
-  azure_apim_tenant_id_arn        = module.secrets.azure_apim_tenant_id_arn
+  azure_apim_tenant_id_arn = module.secrets.azure_apim_tenant_id_arn
+  # TEMPORARY: production intentionally points at the test APIM instance until the
+  # production secrets are set up in Azure. Switch to the production APIM URL then,
+  # and update the corresponding /local-transcribe/azure/* SSM parameters.
   azure_apim_url                  = "https://api.azc.test.communities.gov.uk/localtranscribe/"
   azure_apim_client_id_arn        = module.secrets.azure_apim_client_id_arn
   azure_apim_client_secret_arn    = module.secrets.azure_apim_client_secret_arn
@@ -272,4 +269,5 @@ module "monitoring" {
   transcription_deadletter_queue_name = module.sqs.transcription_deadletter_queue_name
   backend_log_group_name              = module.ecs.backend_log_group_name
   worker_log_group_name               = module.ecs.worker_log_group_name
+
 }

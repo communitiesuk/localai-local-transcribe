@@ -9,20 +9,20 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "local-transcribe-tfstate-staging"
+    bucket       = "local-transcribe-tfstate-production"
     use_lockfile = true
     encrypt      = true
-    key          = "local-transcribe-state-infra-staging"
+    key          = "local-transcribe-state-infra-production"
     region       = "eu-west-2"
   }
 }
 
 provider "aws" {
   region              = "eu-west-2"
-  allowed_account_ids = ["342278407132"]
+  allowed_account_ids = ["555044956185"]
 }
 
 module "terraform_backend" {
   source           = "../../modules/terraform_backend"
-  environment_name = "staging"
+  environment_name = "production"
 }

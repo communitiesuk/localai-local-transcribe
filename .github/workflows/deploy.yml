@@ -13,6 +13,7 @@ on:
         type: choice
         options:
           - staging
+          - production
 
 jobs:
   deploy-development:
@@ -38,6 +39,31 @@ jobs:
       slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_STAGING  }}
       sentry-dsn: ${{ secrets.STAGING_SENTRY_DSN }}
       sentry-auth-token: ${{ secrets.STAGING_SENTRY_AUTH_TOKEN }}
+
+  # Production deploys run from the default branch (development), matching the
+  # deployment_branch used by the github_actions_access module, since the IAM
+  # roles are only assumable from that branch.
+  check-production-branch:
+    if: github.event_name == 'workflow_dispatch' && inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if not running from development
+        if: github.ref != 'refs/heads/development'
+        run: |
+          echo "Production deploys must be run from the 'development' branch, got '${{ github.ref }}'."
+          exit 1
+
+  deploy-production:
+    needs: check-production-branch
+    uses: ./.github/workflows/deploy-base.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets:
+      aws-account-id: ${{ secrets.PROD_AWS_ACCOUNT_ID }}
+      alarm-email-address: ${{ secrets.PROD_ALARM_EMAIL_ADDRESS }}
+      slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_PROD }}
+      sentry-dsn: ${{ secrets.PROD_SENTRY_DSN }}
+      sentry-auth-token: ${{ secrets.PROD_SENTRY_AUTH_TOKEN }}
 
 
     
