@@ -128,8 +128,8 @@ export function useMicRecorder({
       await requestWakeLock()
       mediaRecorder.start(1000) // Collect data every second
       setIsRecording(true)
-    } catch (micError) {
-      console.warn('Error occurred starting audio recording.', micError)
+    } catch {
+      console.warn('Error occurred starting audio recording.')
       setError('Error occurred starting audio recording. Please try again.')
       setRecordingUIState('idle')
       stopAllTracks()
