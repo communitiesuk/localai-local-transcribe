@@ -82,17 +82,11 @@ export function MinuteEditor({
 
   const displayedMinuteVersion = fallbackAfterFailure ?? minuteVersion
 
-  const isGenerating = useMemo(
-    () =>
-      ['awaiting_start', 'in_progress'].includes(
-        displayedMinuteVersion?.status || ''
-      ),
-    [displayedMinuteVersion?.status]
+  const isGenerating = ['awaiting_start', 'in_progress'].includes(
+    displayedMinuteVersion?.status || ''
   )
-  const isError = useMemo(
-    () => displayedMinuteVersion?.status == 'failed',
-    [displayedMinuteVersion?.status]
-  )
+
+  const isError = displayedMinuteVersion?.status == 'failed'
 
   const { setBanner } = useBannerStore()
   const previousVersionRef = useRef<{ id: string; status: string } | null>(null)
