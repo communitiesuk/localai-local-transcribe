@@ -26,9 +26,3 @@ variable "bastion_ssm_patch_cloudwatch_log_expiration_days" {
   type        = number
   description = "Number of days to retain SSM bastion patch logs for"
 }
-
-variable "bastion_instance_type" {
-  type        = string
-  description = "EC2 instance type for the bastion hosts. Must match the AMI architecture (arm64)."
-  default     = "t4g.micro"
-}
