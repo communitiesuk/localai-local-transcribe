@@ -1,0 +1,39 @@
+# Example local access values for the evals Terraform roots.
+# Fixed sandbox names/defaults live in variables.tf and backend/variables.tf.
+# Copy to terraform.tfvars in this directory; do not commit real subscription IDs,
+# resource group names, IPs, or object IDs.
+
+subscription_id     = "<azure-subscription-id>"
+resource_group_name = "<resource-group-name>"
+environment_name    = "<environment-name>"
+
+# Azure DevOps pipeline identity.
+# ado_federation_issuer  = "https://vstoken.dev.azure.com/<org-guid>"
+# ado_federation_subject = "sc://<org>/<project>/evals-blob"
+
+# Network access.
+adapt_ip_rules = [
+  "<adapt-egress-ip-or-cidr>",
+]
+
+mhclg_ip_rules = [
+  "<mhclg-egress-ip-or-cidr>",
+]
+
+# ado_ip_rules = []
+# network_rules_bypass = []
+
+# TODO(AIILG-649): Confirm once the private endpoint setup is known in the Azure environment.
+# sensitive_public_network_access_enabled = false
+
+# Private endpoint.
+# private_endpoint_subnet_id            = "/subscriptions/.../virtualNetworks/vnet-adapt/subnets/snet-adapt"
+# private_endpoint_vnet_id              = "/subscriptions/.../virtualNetworks/vnet-adapt"
+# private_endpoint_is_manual_connection = false
+# private_dns_zone_ids                  = ["/subscriptions/.../privateDnsZones/privatelink.blob.core.windows.net"]
+
+# Team RBAC.
+# TODO(AIILG-649): Spike what we can do via Entra groups to make these less hardcoded.
+# input_writer_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
+# debug_reader_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
+# results_reader_principal_ids = ["00000000-0000-0000-0000-000000000000"]

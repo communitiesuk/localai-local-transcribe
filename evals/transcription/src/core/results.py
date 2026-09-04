@@ -55,3 +55,17 @@ def save_results(
         json.dump(combined, file_handle, indent=2, ensure_ascii=False)
 
     logger.info("Results saved to %s", output_path)
+
+
+def save_summary_results(
+    results: list[EngineOutput],
+    output_path: Path,
+) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    summary = {"summaries": [result.summary.model_dump() for result in results]}
+
+    with output_path.open("w", encoding="utf-8") as file_handle:
+        json.dump(summary, file_handle, indent=2, ensure_ascii=False)
+
+    logger.info("Summary results saved to %s", output_path)

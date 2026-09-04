@@ -39,13 +39,12 @@ class RunConfig(BaseModel):
     output_dir: str = "runs"
     input_dir: str | None = None
     seed: int = 0
-    split: str = "test"
+    split: str | None = None
     limit: int | None = None
     prompt_version: str = "dev"
     num_iterations: int | None = None
     dataset_version: str = "unspecified"
-    # When true (bias eval only), derive an SPC baseline from this run's deltas and write it
-    # instead of loading an existing baseline and applying threshold checks.
+    spc_baseline_enabled: bool = True
     emit_spc_baseline: bool = False
 
 
@@ -56,6 +55,17 @@ class DatasetConfig(BaseModel):
     config: str | None = None
     dialogue_field: str = "dialogue"
     reference_summary_field: str = "summary"
+    source: Literal["huggingface", "blob"] = "huggingface"
+    blob_path: str | None = None
+
+
+class BlobStorageConfig(BaseModel):
+    """Blob storage for the standard eval. Disabled by default (local disk); Entra ID auth."""
+
+    enabled: bool = False
+    restricted_account_url: str | None = None
+    shared_account_url: str | None = None
+    output_prefix: str = "summarisation"
 
 
 class JudgeConfig(BaseModel):
@@ -86,6 +96,7 @@ class AppConfig(BaseModel):
     metrics: list[MetricName] = Field(default_factory=default_criteria)
     prompts: PromptConfig
     hallucination: HallucinationConfig = Field(default_factory=HallucinationConfig)
+    blob: BlobStorageConfig = Field(default_factory=BlobStorageConfig)
 
 
 def load_config(path: str | Path) -> AppConfig:

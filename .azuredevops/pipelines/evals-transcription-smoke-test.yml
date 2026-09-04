@@ -1,0 +1,33 @@
+name: Transcription Evals
+
+trigger: none
+pr: none
+
+variables:
+  - group: evals-pipeline-config
+  - template: ../templates/evals-variable-defaults.yml
+
+parameters:
+  - name: config
+    displayName: 'Eval config'
+    type: string
+    default: 'evals/transcription/configs/blob-smoke-test.yaml'
+  - name: resultsArtifactName
+    displayName: 'Short-retention non-sensitive results artifact name'
+    type: string
+    default: 'transcription-eval-results'
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - template: ../templates/run-eval-steps.yml
+    parameters:
+      pythonVersion: $(EVALS_PYTHON_VERSION_RESOLVED)
+      poetryVersion: $(EVALS_POETRY_VERSION_RESOLVED)
+      poetryDependencyGroup: evals-transcription
+      evalModule: evals.transcription.src.evaluate
+      azureServiceConnection: $(EVALS_AZURE_SERVICE_CONNECTION)
+      config: ${{ parameters.config }}
+      resultsArtifactName: ${{ parameters.resultsArtifactName }}
+      runDisplayName: 'Run transcription smoke test (blob)'

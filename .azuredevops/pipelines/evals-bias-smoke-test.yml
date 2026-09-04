@@ -1,7 +1,4 @@
-# Summarisation Evals smoke test.
-# Reads input from / writes output to blob; Entra ID auth via the AzureCLI@2 service connection.
-
-name: Summarisation Evals
+name: Bias Evals
 
 trigger: none
 pr: none
@@ -12,6 +9,7 @@ variables:
 
 schedules:
   # Runs weekly at 21:00 UTC on Sundays; fortnightly cadence is enforced by the gate job.
+  # During British Summer Time, this is 22:00 local time.
   - cron: '0 21 * * Sun'
     displayName: 'Fortnightly Sunday 21:00 UTC'
     branches:
@@ -23,11 +21,11 @@ parameters:
   - name: config
     displayName: 'Eval config'
     type: string
-    default: 'evals/summarisation/configs/blob-smoke-test.yaml'
+    default: 'evals/summarisation/configs/bias-blob-smoke-test.yaml'
   - name: resultsArtifactName
     displayName: 'Short-retention non-sensitive results artifact name'
     type: string
-    default: 'summarisation-eval-results'
+    default: 'bias-eval-results'
 
 jobs:
   - template: ../templates/fortnightly-schedule-gate-job.yml
@@ -35,8 +33,8 @@ jobs:
       scheduledRunsEnabled: $(EVALS_SCHEDULED_RUNS_ENABLED_RESOLVED)
       referenceSunday: $(EVALS_FORTNIGHTLY_START_SUNDAY_RESOLVED)
 
-  - job: summarisation_smoke_test
-    displayName: 'Summarisation eval smoke test'
+  - job: bias_smoke_test
+    displayName: 'Bias eval smoke test'
     dependsOn: fortnightly_schedule_gate
     condition: and(succeeded(), eq(dependencies.fortnightly_schedule_gate.outputs['set_schedule_gate.shouldRun'], 'true'))
     timeoutInMinutes: 60
@@ -52,4 +50,4 @@ jobs:
           azureServiceConnection: $(EVALS_AZURE_SERVICE_CONNECTION)
           config: ${{ parameters.config }}
           resultsArtifactName: ${{ parameters.resultsArtifactName }}
-          runDisplayName: 'Run summarisation smoke test (blob)'
+          runDisplayName: 'Run bias smoke test (blob)'
