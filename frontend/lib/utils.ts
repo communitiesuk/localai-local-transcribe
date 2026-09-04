@@ -68,3 +68,27 @@ export function formatCurrentDateTime() {
 export function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('en-GB').replaceAll('/', '-')
 }
+
+function stripHtmlTags(html: string) {
+  const tmp = document.createElement('DIV')
+  tmp.innerHTML = html
+  return tmp.textContent || tmp.innerText || ''
+}
+
+export async function copyHTML(textToCopy: string) {
+  try {
+    // Try to copy as rich text first
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html': new Blob([textToCopy], { type: 'text/html' }),
+        'text/plain': new Blob([stripHtmlTags(textToCopy)], {
+          type: 'text/plain',
+        }),
+      }),
+    ])
+  } catch {
+    // Fallback for browsers that don't support clipboard.write
+    await navigator.clipboard.writeText(stripHtmlTags(textToCopy))
+  }
+  return true
+}
