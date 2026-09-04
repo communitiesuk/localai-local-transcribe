@@ -278,7 +278,13 @@ async def create_transcription(
     recording = await session.get(Recording, request.recording_id)
     if not recording or recording.user_id != current_user.id:
         raise HTTPException(404, detail="Recording not found")
-    transcription = Transcription(user_id=current_user.id, title=request.title)
+    transcription = Transcription(
+        user_id=current_user.id,
+        title=request.title,
+        date_of_recording=(
+            recording.file_created_at.replace(tzinfo=None) if recording.file_created_at is not None else None
+        ),
+    )
 
     if not await storage_service.check_object_exists(recording.s3_file_key):
         raise HTTPException(

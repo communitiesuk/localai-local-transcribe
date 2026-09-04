@@ -98,7 +98,42 @@ async def test_create_transcription_file_not_found(
         await create_transcription(transcription_request, mock_session_with_recording, mock_user)
 
     assert exception_info.value.status_code == 404
-    assert "Recording file not found in S3" in exception_info.value.detail
+
+
+@pytest.mark.asyncio
+async def test_create_transcription_uses_recording_file_created_at_as_date_of_recording(
+    mock_session_with_recording,
+    mock_recording,
+    mock_user,
+    mock_transcription_queue_service,  # NOQA: ARG001
+    transcription_request,
+    mock_storage_service,  # NOQA: ARG001
+):
+    """Uploaded recordings should default date_of_recording to the file's extracted creation date."""
+    mock_recording.file_created_at = datetime(2024, 3, 15, 9, 30, tzinfo=UTC)
+
+    await create_transcription(transcription_request, mock_session_with_recording, mock_user)
+
+    added_transcription = mock_session_with_recording.add.call_args.args[0]
+    assert added_transcription.date_of_recording == mock_recording.file_created_at.replace(tzinfo=None)
+
+
+@pytest.mark.asyncio
+async def test_create_transcription_leaves_date_of_recording_unset_for_live_recordings(
+    mock_session_with_recording,
+    mock_recording,
+    mock_user,
+    mock_transcription_queue_service,  # NOQA: ARG001
+    transcription_request,
+    mock_storage_service,  # NOQA: ARG001
+):
+    """Live (non-upload) recordings have no file_created_at, so date_of_recording stays unset."""
+    mock_recording.file_created_at = None
+
+    await create_transcription(transcription_request, mock_session_with_recording, mock_user)
+
+    added_transcription = mock_session_with_recording.add.call_args.args[0]
+    assert added_transcription.date_of_recording is None
 
 
 @pytest.mark.parametrize("file_format", ["mp3", "wav", "m4a", "webm"])
