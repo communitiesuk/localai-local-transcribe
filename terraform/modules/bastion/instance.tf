@@ -10,8 +10,8 @@ data "aws_ami" "amazon_linux_2023" {
 }
 
 resource "aws_instance" "bastion" {
-  count = length(var.bastion_subnet_ids)
-  ami   = data.aws_ami.amazon_linux_2023.id
+  count                  = length(var.bastion_subnet_ids)
+  ami                    = data.aws_ami.amazon_linux_2023.id
   instance_type          = "t4g.micro"
   subnet_id              = var.bastion_subnet_ids[count.index]
   vpc_security_group_ids = [aws_security_group.bastion.id]
