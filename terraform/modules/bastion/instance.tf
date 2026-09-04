@@ -12,9 +12,6 @@ data "aws_ami" "amazon_linux_2023" {
 resource "aws_instance" "bastion" {
   count = length(var.bastion_subnet_ids)
   ami   = data.aws_ami.amazon_linux_2023.id
-  # t4g (Graviton) rather than t2: t2 is previous generation and is prone to
-  # InsufficientInstanceCapacity in some eu-west-2 availability zones. Must stay
-  # in sync with the AMI architecture above.
   instance_type          = "t4g.micro"
   subnet_id              = var.bastion_subnet_ids[count.index]
   vpc_security_group_ids = [aws_security_group.bastion.id]
