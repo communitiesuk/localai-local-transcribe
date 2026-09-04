@@ -24,9 +24,8 @@ export function useMicRecorder({
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const form = useFormContext<TranscriptionForm>()
-  const { removeRecording, addRecording, updateRecording } = useRecordingDb()
+  const { addRecording, updateRecording } = useRecordingDb()
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const [mediaRecorderStream, setMediaRecorderStream] =
     useState<MediaStream | null>(null)
@@ -214,15 +213,6 @@ export function useMicRecorder({
     startCountdown()
   }
 
-  const discardRecording = () => {
-    setRecordedAudio(null)
-    setIsDialogOpen(false)
-    const recordingId = form.getValues('recordingId')
-    if (recordingId) {
-      removeRecording(recordingId)
-    }
-  }
-
   return {
     error,
     setError,
@@ -230,8 +220,6 @@ export function useMicRecorder({
     selectedDeviceId,
     setSelectedDeviceId,
     permissionGranted,
-    isDialogOpen,
-    setIsDialogOpen,
     mediaRecorderStream,
     isRecording,
     recordingUIState,
@@ -243,6 +231,5 @@ export function useMicRecorder({
     handleLoadingCancel,
     stopRecording,
     handlePauseStateChange,
-    discardRecording,
   }
 }

@@ -4,14 +4,12 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 import RecordingControl from './recording-control'
-import { DiscardConfirmDialog } from '@/components/audio/discard-dialog'
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
 import { useStartTranscription } from '@/hooks/use-start-transcription'
 import { Controller, FormProvider } from 'react-hook-form'
 import { MicrophonePermission } from './microphone-permission'
 import { RecordingLoading } from '@/components/recording-loading'
 import { Loader2 } from 'lucide-react'
-import AudioPlayerComponent from './audio-player'
 import { useMicRecorder } from '@/hooks/use-mic-recorder'
 
 export function MicRecorderForm() {
@@ -20,6 +18,7 @@ export function MicRecorderForm() {
   const watchBlob = form.watch('file')
   const submittedBlobRef = useRef<Blob | File | null>(null)
   const [isProcessingRecording, setIsProcessingRecording] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!watchBlob || submittedBlobRef.current === watchBlob) {
@@ -28,23 +27,48 @@ export function MicRecorderForm() {
 
     submittedBlobRef.current = watchBlob
     setIsProcessingRecording(true)
+    setSubmitError(null)
 
     void form
       .handleSubmit(async (formValues) => {
         const transcriptionId = await onSubmit(formValues)
         if (transcriptionId) {
           router.push(`/new/metadata/${transcriptionId}`)
+          return
         }
+        throw new Error('No transcription was created')
       })()
-      .finally(() => {
+      .catch(() => {
+        setSubmitError(
+          'We could not upload your recording. It has been saved on this device, so you can try again from your recordings.'
+        )
         setIsProcessingRecording(false)
       })
   }, [form, onSubmit, router, watchBlob])
 
+  const handleRetry = () => {
+    submittedBlobRef.current = null
+    setSubmitError(null)
+    form.setValue('file', null)
+  }
+
+  if (submitError) {
+    return (
+      <div className="space-y-4">
+        <p className="govuk-error-message" role="alert">
+          <span className="govuk-visually-hidden">Error:</span> {submitError}
+        </p>
+        <GovukButton type="button" onClick={handleRetry}>
+          Start again
+        </GovukButton>
+      </div>
+    )
+  }
+
   return (
     <FormProvider {...form}>
       <form>
-        {isProcessingRecording || isPending ? (
+        {isProcessingRecording || isPending || watchBlob ? (
           <div className="flex h-72 flex-col items-center justify-center gap-4">
             <Loader2 size={80} className="animate-spin" aria-hidden="true" />
             <p className="govuk-body">Processing recording...</p>
@@ -80,8 +104,6 @@ function MicRecorderComponent({
     selectedDeviceId,
     setSelectedDeviceId,
     permissionGranted,
-    isDialogOpen,
-    setIsDialogOpen,
     mediaRecorderStream,
     isRecording,
     recordingUIState,
@@ -93,7 +115,6 @@ function MicRecorderComponent({
     handleLoadingCancel,
     stopRecording,
     handlePauseStateChange,
-    discardRecording,
   } = useMicRecorder({ recordedAudio, setRecordedAudio })
 
   if (isStartingRecording || isPreparingRecording) {
@@ -122,20 +143,7 @@ function MicRecorderComponent({
   }
   return (
     <div className="space-y-4">
-      {recordedAudio ? (
-        <div className="govuk-!-margin-top-4 space-y-3">
-          <AudioPlayerComponent audioBlob={recordedAudio} />
-          <div className="flex justify-end">
-            <GovukButton
-              type="button"
-              onClick={() => setIsDialogOpen(true)}
-              variant="secondary"
-            >
-              Discard Recording
-            </GovukButton>
-          </div>
-        </div>
-      ) : !isRecording && recordingUIState !== 'stopping' ? (
+      {!isRecording && recordingUIState !== 'stopping' ? (
         <div className="flex flex-col space-y-4">
           <GovukFormGroup>
             <GovukLabel htmlFor="microphone-select">
@@ -186,12 +194,6 @@ function MicRecorderComponent({
           <span className="govuk-visually-hidden">Error:</span> {error}
         </p>
       )}
-
-      <DiscardConfirmDialog
-        open={isDialogOpen}
-        setOpen={setIsDialogOpen}
-        onClickConfirm={discardRecording}
-      />
     </div>
   )
 }
