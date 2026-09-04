@@ -87,8 +87,6 @@ const renderTabWithDismissBanner = (
     <TranscriptionTab
       transcription={transcription}
       onLineEditError={onLineEditErrorMock}
-      onTranscriptCopied={() => {}}
-      onTranscriptDownloaded={() => {}}
       onDismissBanner={onDismissBanner}
     />
   )

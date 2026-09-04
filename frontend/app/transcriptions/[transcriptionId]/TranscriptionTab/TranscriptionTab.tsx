@@ -52,10 +52,12 @@ export function TranscriptionTab({
   transcription,
   onLineEditError,
   onEditModeChange,
+  onDismissBanner,
 }: {
   transcription: TranscriptionGetResponse
   onLineEditError: (error: string | null) => void
   onEditModeChange?: (isEditing: boolean) => void
+  onDismissBanner?: () => void
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
@@ -525,7 +527,7 @@ export function TranscriptionTab({
                     onUpdateAll={handleRenameSpeakerEverywhere}
                     onUpdateSingle={handleRenameSingleSpeaker}
                     editing={isLineEditMode}
-                    onOpen={clearBanner}
+                    onOpen={onDismissBanner}
                   />
                   <TranscriptionTextArea
                     control={control}

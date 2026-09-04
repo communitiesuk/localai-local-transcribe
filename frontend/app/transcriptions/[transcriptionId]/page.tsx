@@ -55,6 +55,7 @@ export default function TranscriptionPage(props: {
     ErrorItem[]
   >([])
   const errorSummaryRef = useRef<HTMLDivElement | null>(null)
+  const { clearBanner } = useBannerStore()
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
 
@@ -241,6 +242,7 @@ export default function TranscriptionPage(props: {
             transcription={transcription}
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
+            onDismissBanner={clearBanner}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
@@ -444,7 +446,7 @@ const RecordingDetails = ({
     shouldShowErrorSummary,
   ])
 
-  const setBanner = useBannerStore((store) => store.setBanner)
+  const { setBanner } = useBannerStore()
 
   const queryClient = useQueryClient()
 

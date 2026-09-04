@@ -37,7 +37,7 @@ export const NewDocumentTab = ({
   const [createdTemplateName, setCreatedTemplateName] = useState('')
   const renamedRef = useRef(false)
 
-  const setBanner = useBannerStore((store) => store.setBanner)
+  const { setBanner } = useBannerStore()
 
   const {
     data: templates = [],

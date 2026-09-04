@@ -50,7 +50,7 @@ describe('<ReviewGuardButton />', () => {
   })
 
   it('calls onConfirm and onSuccess after review confirmation and closes the modal', async () => {
-    const onConfirm = vi.fn().mockRejectedValue(true)
+    const onConfirm = vi.fn().mockResolvedValue(true)
     const onSuccess = vi.fn()
 
     render(
