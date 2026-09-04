@@ -286,6 +286,11 @@ class FailureMode(StrEnum):
 class FailureDetail(BaseModel):
     category: FailureCategory
     mode: FailureMode
+    explanation: str | None = Field(
+        default=None,
+        description="Specific evidence explaining this failure, e.g. a quote or reference from the transcript "
+        "or minute and why it constitutes this failure mode",
+    )
 
     _VALID_MODES_BY_CATEGORY: ClassVar[dict[FailureCategory, set[FailureMode]]] = {
         FailureCategory.FACTUAL_INTEGRITY: {
@@ -324,7 +329,9 @@ class FailureDetail(BaseModel):
     @model_validator(mode="after")
     def _correct_category_from_mode(self) -> "FailureDetail":
         expected_category = self._CATEGORY_BY_MODE[self.mode]
-        if self.category != expected_category:
+        if expected_category is None:
+            logger.error("FailureMode '%s' has no known category mapping", self.mode)
+        elif self.category != expected_category:
             logger.warning(
                 "FailureDetail category '%s' does not match mode '%s'; correcting to '%s'",
                 self.category,

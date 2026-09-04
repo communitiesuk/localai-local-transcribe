@@ -5,13 +5,20 @@ import pytest
 
 from common.database.postgres_models import GuardrailResult, JobStatus
 from common.services.minute_handler_service import MinuteHandlerService
-from common.types import GuardrailScore, MeetingType, MinuteAndHallucinations
+from common.types import (
+    FailureCategory,
+    FailureDetail,
+    FailureMode,
+    GuardrailScore,
+    MeetingType,
+    MinuteAndHallucinations,
+)
 
 
 @pytest.mark.asyncio
 async def test_calculate_accuracy_score():
     # Mock the chatbot and its response
-    mock_score = GuardrailScore(score=0.95, reasoning="Excellent summary")
+    mock_score = GuardrailScore(score=0.95, reasoning="Excellent summary", categories=[])
 
     with patch("common.services.minute_handler_service.create_default_chatbot") as mock_create_chatbot:
         mock_chatbot = MagicMock()
@@ -49,7 +56,7 @@ def test_save_guardrail_result(mock_session_local):
     mock_session_local.return_value.__enter__.return_value = mock_session
 
     minute_version_id = "123e4567-e89b-12d3-a456-426614174000"
-    score = GuardrailScore(score=0.8, reasoning="Good")
+    score = GuardrailScore(score=0.8, reasoning="Good", categories=[])
 
     MinuteHandlerService.save_guardrail_result(minute_version_id, score)
 
@@ -120,7 +127,7 @@ async def test_process_minute_generation_runs_guardrails():
             hallucinations=[],
         )
 
-        mock_score = GuardrailScore(score=0.9, reasoning="Good")
+        mock_score = GuardrailScore(score=0.9, reasoning="Good", categories=[])
         mock_calc_score.return_value = mock_score
 
         # Execute
@@ -180,3 +187,62 @@ async def test_process_minute_generation_handles_exception():
         mock_update_mv.assert_called_with(
             mock_minute_version.id, html_content="<html>Minutes</html>", status=JobStatus.COMPLETED
         )
+
+
+def test_guardrail_score_with_failure_categories_round_trips():
+    """A GuardrailScore with populated failure details preserves category/mode/explanation."""
+    detail = FailureDetail(
+        category=FailureCategory.FACTUAL_INTEGRITY,
+        mode=FailureMode.INVENTED_DECISION,
+        explanation="The minute states the application was approved but no vote occurred in the transcript.",
+    )
+    score = GuardrailScore(score=0.3, reasoning="Found a fabricated decision", categories=[detail])
+
+    assert score.categories == [detail]
+    assert score.categories[0].category == FailureCategory.FACTUAL_INTEGRITY
+    assert score.categories[0].mode == FailureMode.INVENTED_DECISION
+    assert score.categories[0].explanation
+
+
+def test_failure_detail_auto_corrects_mismatched_category():
+    """A mismatched category is silently corrected to the mode's true owning category."""
+    detail = FailureDetail(
+        category=FailureCategory.INPUT_SUITABILITY,  # wrong category for this mode
+        mode=FailureMode.INVENTED_DECISION,
+        explanation="Evidence text",
+    )
+
+    assert detail.category == FailureCategory.FACTUAL_INTEGRITY
+    assert detail.mode == FailureMode.INVENTED_DECISION
+
+
+def test_failure_detail_explanation_defaults_to_none():
+    """Detailed explanation is optional — omitting it should not block validation."""
+    detail = FailureDetail(category=FailureCategory.FACTUAL_INTEGRITY, mode=FailureMode.INVENTED_DECISION)
+
+    assert detail.explanation is None
+
+
+def test_failure_detail_logs_error_when_mode_has_no_category_mapping(caplog):
+    """If a mode has no entry in _CATEGORY_BY_MODE, an error is logged instead of raising."""
+    unmapped_mapping = dict(FailureDetail._CATEGORY_BY_MODE)  # noqa: SLF001
+    unmapped_mapping[FailureMode.INVENTED_DECISION] = None
+
+    with (
+        patch.object(FailureDetail, "_CATEGORY_BY_MODE", unmapped_mapping),
+        caplog.at_level("ERROR", logger="common.types"),
+    ):
+        detail = FailureDetail(
+            category=FailureCategory.FACTUAL_INTEGRITY,
+            mode=FailureMode.INVENTED_DECISION,
+        )
+
+    assert detail.category == FailureCategory.FACTUAL_INTEGRITY
+    assert len(caplog.records) == 1
+    assert caplog.records[0].levelname == "ERROR"
+    assert "has no known category mapping" in caplog.records[0].message
+
+
+def test_all_failure_modes_are_categorized():
+    """Defensive test to ensure that all FailureMode values have a corresponding category mapping."""
+    assert set(FailureMode) == set(FailureDetail._CATEGORY_BY_MODE.keys())  # noqa: SLF001
