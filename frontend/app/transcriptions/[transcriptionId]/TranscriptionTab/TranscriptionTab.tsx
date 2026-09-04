@@ -178,7 +178,7 @@ export function TranscriptionTab({
           }),
       })
     },
-    [applySpeakerNameChange, getValues, renameSpeakerEverywhere]
+    [applySpeakerNameChange, clearBanner, getValues, renameSpeakerEverywhere]
   )
 
   const handleRenameSingleSpeaker = useCallback(
