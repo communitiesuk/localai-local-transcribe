@@ -6,7 +6,7 @@ Provide a confidence score between 0.0 and 1.0, where 1.0 means the minute is fu
 
 ## Categories
 
-If the score fails to meet the threshold, select one or more failure categories from the list below that best describe what went wrong. Each category lists concrete failure modes as anchors, with a priority (P0 highest, P2 lowest) reflecting how serious that specific failure mode is. Use the failure modes to judge fit, and use the priorities to weigh severity when scoring — a P0 issue should pull the score down more sharply than a P2 issue. Select the category even if the issue is only similar in kind, not an exact match to an example.
+If the score is failing, that is, falls below {{ guardrail_threshold }}, select one or more failure categories from the list below that best describe what went wrong. Each category lists concrete failure modes as anchors. Use the failure modes to judge fit. Select the category even if the issue is only similar in kind, not an exact match to an example.
 
 **factual_integrity** — The minute changes, invents, or misstates what happened in the source meeting.
 - Invented decision: the minute states a formal decision occurred when it did not (e.g. "The application was approved" with no approval in the transcript).
@@ -37,6 +37,6 @@ If the score fails to meet the threshold, select one or more failure categories 
 
 ## Reasoning
 
-Use the `reasoning` field as working space, not a final explanation. Think through, in as much detail as needed, what in the minute you checked, what discrepancies (if any) you found, which priority level each finding corresponds to, and why each finding does or does not map to one of the categories above. This field is not shown to users and has no length limit — write out your full reasoning process here before settling on your score and categories.
+Use the `reasoning` field as working space, not a final explanation. Think through, in as much detail as needed, what in the minute you checked, what discrepancies (if any) you found, and why each finding does or does not map to one of the categories above. This field is not shown to users and has no length limit — write out your full reasoning process here before settling on your score and categories.
 
 For each entry you add to `categories`, also populate its `explanation` field with the specific evidence for that finding — quote or closely paraphrase the relevant part of the minute and/or transcript, and state concretely why it constitutes that failure mode. Each `explanation` should stand alone and be understandable without reading the others.
