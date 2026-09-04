@@ -207,7 +207,7 @@ def test_guardrail_score_with_failure_categories_round_trips():
 def test_failure_detail_auto_corrects_mismatched_category():
     """A mismatched category is silently corrected to the mode's true owning category."""
     detail = FailureDetail(
-        category=FailureCategory.INPUT_SUITABILITY,  # wrong category for this mode
+        category=FailureCategory.EDIT_SAFETY_AND_INTENT,  # wrong category for this mode
         mode=FailureMode.INVENTED_DECISION,
         explanation="Evidence text",
     )
@@ -241,6 +241,18 @@ def test_failure_detail_logs_error_when_mode_has_no_category_mapping(caplog):
     assert len(caplog.records) == 1
     assert caplog.records[0].levelname == "ERROR"
     assert "has no known category mapping" in caplog.records[0].message
+
+
+def test_guardrail_score_logs_warning_when_failing_score_has_no_categories(caplog):
+    """A failing score with no failure categories should log a warning, not raise."""
+    failing_score = 0.2
+    with caplog.at_level("WARNING", logger="common.types"):
+        score = GuardrailScore(score=failing_score, reasoning="Inaccurate summary", categories=[])
+
+    assert score.categories == []
+    assert caplog.records[0].levelname == "WARNING"
+    assert f"GuardrailScore of {failing_score:.2f} is below the guardrail threshold" in caplog.records[0].message
+    assert "no failure categories were provided" in caplog.records[0].message
 
 
 def test_all_failure_modes_are_categorized():

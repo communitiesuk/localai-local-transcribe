@@ -17,6 +17,7 @@ from common.database.postgres_models import (
     TemplateType,
     UserRole,
 )
+from common.settings import get_settings
 
 DOMAIN_REGEX = re.compile(
     r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z-]{0,61}[a-z]$",
@@ -262,7 +263,6 @@ class FailureCategory(StrEnum):
     EDIT_SAFETY_AND_INTENT = auto()
     DATA_PROTECTION_AND_INSTRUCTION_INTEGRITY = auto()
     EVIDENCE_AND_CITATION_QUALITY = auto()
-    INPUT_SUITABILITY = auto()
 
 
 class FailureMode(StrEnum):
@@ -280,7 +280,6 @@ class FailureMode(StrEnum):
     TRANSCRIPT_INSTRUCTION_FOLLOWED = auto()
     WRONG_CITATION = auto()
     WEAK_TRANSCRIPT_SUPPORT = auto()
-    SHORT_INPUT_SUMMARISED = auto()
 
 
 class FailureDetail(BaseModel):
@@ -317,9 +316,6 @@ class FailureDetail(BaseModel):
             FailureMode.WRONG_CITATION,
             FailureMode.WEAK_TRANSCRIPT_SUPPORT,
         },
-        FailureCategory.INPUT_SUITABILITY: {
-            FailureMode.SHORT_INPUT_SUMMARISED,
-        },
     }
 
     _CATEGORY_BY_MODE: ClassVar[dict[FailureMode, FailureCategory]] = {
@@ -345,7 +341,19 @@ class FailureDetail(BaseModel):
 class GuardrailScore(BaseModel):
     score: float = Field(description="Confidence score between 0.0 and 1.0")
     reasoning: str = Field(description="Reasoning for the score")
-    categories: list[FailureDetail] = Field(description="List of failure categories that contributed to the score")
+    categories: list[FailureDetail] = Field(description="List of failure details that contributed to the score")
+
+    @model_validator(mode="after")
+    def _warn_if_failing_score_has_no_categories(self) -> "GuardrailScore":
+        threshold = get_settings().GUARDRAIL_THRESHOLD
+        if self.score < threshold and not self.categories:
+            logger.warning(
+                "GuardrailScore of %.2f is below the guardrail threshold of %.2f but no failure categories "
+                "were provided",
+                self.score,
+                threshold,
+            )
+        return self
 
 
 class MinuteVersionResponse(BaseModel):
