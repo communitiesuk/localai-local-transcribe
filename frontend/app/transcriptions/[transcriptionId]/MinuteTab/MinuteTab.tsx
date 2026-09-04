@@ -3,6 +3,12 @@
 import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { AudioWav } from '@/components/icons/AudioWav'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select'
 import { TranscriptionGetResponse } from '@/lib/client'
 import { listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useQuery } from '@tanstack/react-query'
@@ -48,6 +54,35 @@ export function MinuteTab({
   }
   return (
     <>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Select
+          value={`${safeSelectedMinute}`}
+          onValueChange={(v) => setSelectedMinute(Number(v))}
+        >
+          <SelectTrigger>
+            {minutes[safeSelectedMinute].template_name}
+          </SelectTrigger>
+          <SelectContent>
+            {minutes.map((minute, index) => {
+              const date = new Date(minute.updated_datetime)
+              return (
+                <SelectItem value={`${index}`} key={minute.id} className="">
+                  <div>
+                    <div>{minute.template_name}</div>
+                    <div className="text-muted-foreground flex gap-1 text-xs">
+                      {date.toDateString()} at {date.toLocaleTimeString()}
+                    </div>
+                  </div>
+                </SelectItem>
+              )
+            })}
+          </SelectContent>
+        </Select>
+        <NewMinuteDialog
+          transcriptionId={transcription.id!}
+          agenda={minutes[safeSelectedMinute].agenda ?? undefined}
+        />
+      </div>
       <MinuteEditor
         transcription={transcription}
         minute={minutes[safeSelectedMinute]}

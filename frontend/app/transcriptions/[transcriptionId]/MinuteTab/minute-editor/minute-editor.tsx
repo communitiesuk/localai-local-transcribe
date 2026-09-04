@@ -29,7 +29,7 @@ import {
 } from '@/components/govuk'
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import CopyButton from '@/components/ui/copy-button'
-import { useBannerStore } from '@/stores/use-banner-store'
+import { Banner, useBannerStore } from '@/stores/use-banner-store'
 
 type MinuteEditorForm = {
   html: string
@@ -89,41 +89,19 @@ export function MinuteEditor({
   const isError = displayedMinuteVersion?.status == 'failed'
 
   const { setBanner } = useBannerStore()
-  const previousVersionRef = useRef<{ id: string; status: string } | null>(null)
+  const previousVersionRef = useRef<MinuteVersionResponse | null>(null)
+
   useEffect(() => {
-    if (minuteVersion) {
-      const previous = previousVersionRef.current
-      const justCompletedAiEdit =
-        previous?.id === minuteVersion.id &&
-        previous?.status !== 'completed' &&
-        minuteVersion.status === 'completed' &&
-        minuteVersion.content_source === 'ai_edit'
-      if (justCompletedAiEdit) {
-        setBanner({
-          variant: 'success',
-          title: 'Success',
-          message: `AI edits applied to ‘${minute.template_name}’.`,
-        })
-      }
+    if (!minuteVersion) return
 
-      const justFailed =
-        previous?.id === minuteVersion.id &&
-        previous?.status !== 'failed' &&
-        minuteVersion.status === 'failed'
-      if (justFailed) {
-        setBanner({
-          variant: 'important',
-          title: 'There is a problem',
-          message:
-            'Something went wrong creating your AI Edit. Please try again.',
-        })
-      }
+    const banner = getTransitionBanner(
+      previousVersionRef.current,
+      minuteVersion,
+      minute.template_name
+    )
+    if (banner) setBanner(banner)
 
-      previousVersionRef.current = {
-        id: minuteVersion.id,
-        status: minuteVersion.status,
-      }
-    }
+    previousVersionRef.current = minuteVersion
   }, [minuteVersion, minute.template_name, setBanner])
 
   const queryClient = useQueryClient()
@@ -400,4 +378,42 @@ const MinuteVersionDeleteButton = ({
       )}
     </GovukButton>
   )
+}
+
+/** Detects an AI-edit completing/failing between two polled version snapshots. Returns the matching banner, or null. */
+function getTransitionBanner(
+  previous: MinuteVersionResponse | null,
+  current: MinuteVersionResponse,
+  templateName: string | undefined | null
+): Banner | null {
+  const isSameVersion = previous?.id === current.id
+
+  const justCompletedAiEdit =
+    isSameVersion &&
+    previous?.status !== 'completed' &&
+    current.status === 'completed' &&
+    current.content_source === 'ai_edit'
+
+  if (justCompletedAiEdit) {
+    return {
+      variant: 'success',
+      title: 'Success',
+      message: `AI edits applied to ‘${templateName}’.`,
+    }
+  }
+
+  const justFailed =
+    isSameVersion &&
+    previous?.status !== 'failed' &&
+    current.status === 'failed'
+
+  if (justFailed) {
+    return {
+      variant: 'important',
+      title: 'There is a problem',
+      message: 'Something went wrong creating your AI Edit. Please try again.',
+    }
+  }
+
+  return null
 }

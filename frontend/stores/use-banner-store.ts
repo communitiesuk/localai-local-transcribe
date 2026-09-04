@@ -1,11 +1,11 @@
 import { create } from 'zustand'
 
-type BannerLink = {
+export type BannerLink = {
   href: string
   text: string
 }
 
-type Banner = {
+export type Banner = {
   variant: 'important' | 'success'
   title: string
   message: string
