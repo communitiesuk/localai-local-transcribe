@@ -24,7 +24,7 @@ Azure storage firewall rules — IP allowlists and private endpoints — are sco
 | No public blobs, no local users, SAS expiry cap | `main.tf`                                      |
 | Versioning, blob and container soft delete      | `main.tf`                                      |
 | File and Blob diagnostic logs to Log Analytics  | `logging.tf`                                   |
-| File diagnostic logs on the state account       | `backend/logging.tf`                           |
+| File and Blob diagnostic logs on the state account | `backend/logging.tf`                        |
 | File service SMB 3.1.1, Kerberos, AES-256-GCM   | `share_properties` in `main.tf` and `backend/main.tf` |
 
 Disabling shared access keys is what closes the Azure console bypass: with no account keys there is no account SAS and no "Access key" auth in the portal blob browser, so every read and write is an Entra ID call subject to the role assignments. This holds only while nobody has Owner, Contributor, or Storage Account Contributor on the resource group — those roles can re-enable keys. Keep them off it.
@@ -54,7 +54,7 @@ Creating the role assignments needs Owner or User Access Administrator on the re
 | Path               | Role                                                               |
 | ------------------ | ------------------------------------------------------------------ |
 | `backend/`         | One-time bootstrap of remote Terraform state storage               |
-| `backend/logging.tf` | Log Analytics workspace and File diagnostic settings for state   |
+| `backend/logging.tf` | Log Analytics workspace and File and Blob diagnostic settings for state |
 | `main.tf`          | Both storage accounts, the three containers, firewall rules        |
 | `logging.tf`       | Log Analytics workspace and File and Blob diagnostic settings      |
 | `network.tf`       | Blob private endpoints                                             |
@@ -92,7 +92,7 @@ Either way the endpoint only resolves privately once `privatelink.blob.core.wind
 | File and Blob diagnostic settings                    | Yes                | Workspace names follow `environment_name`               | Whether platform wants a central workspace  |
 | Tenant, subscription, IPs, and variable values       | No                 | Always                                                  | Naming convention                           |
 
-Still out of scope: customer-managed keys, Queue/Table diagnostic logging, a SIEM, and loading data into containers. File and Blob logs for the evals accounts go to `law-evals-<environment_name>`. File logs for the state account go to `law-evals-tfstate-<environment_name>`. If either name already exists in the resource group, import it before apply.
+Still out of scope: customer-managed keys, Queue/Table diagnostic logging, a SIEM, and loading data into containers. File and Blob logs for the evals accounts go to `law-evals-<environment_name>`. File and Blob logs for the state account go to `law-evals-tfstate-<environment_name>`. If either name already exists in the resource group, import it before apply.
 
 ## Prerequisites
 

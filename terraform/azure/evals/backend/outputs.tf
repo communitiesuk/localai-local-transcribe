@@ -16,6 +16,6 @@ output "container_name" {
 }
 
 output "log_analytics_workspace_id" {
-  description = "Resource ID of the Log Analytics workspace that receives File service logs from the state account."
+  description = "Resource ID of the Log Analytics workspace that receives File and Blob service logs from the state account."
   value       = azurerm_log_analytics_workspace.terraform_state.id
 }

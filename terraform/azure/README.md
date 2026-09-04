@@ -11,7 +11,7 @@ Replace the placeholders below with your environment's values: `<subscription-id
 ## 1. Deploy the storage (Terraform)
 
 Two stacks under `terraform/azure/evals/`: `backend/` bootstraps remote state and a Log Analytics
-workspace for state File logs; the root stack creates the sensitive and results storage accounts,
+workspace for state File and Blob logs; the root stack creates the sensitive and results storage accounts,
 the three containers, the evals Log Analytics workspace, and the Azure DevOps pipeline identity.
 
 ```bash
