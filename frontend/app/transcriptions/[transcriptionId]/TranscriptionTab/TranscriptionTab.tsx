@@ -525,7 +525,7 @@ export function TranscriptionTab({
                     onUpdateAll={handleRenameSpeakerEverywhere}
                     onUpdateSingle={handleRenameSingleSpeaker}
                     editing={isLineEditMode}
-                    onOpen={onDismissBanner}
+                    onOpen={clearBanner}
                   />
                   <TranscriptionTextArea
                     control={control}
