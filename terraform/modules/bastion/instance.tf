@@ -2,7 +2,6 @@ data "aws_ami" "amazon_linux_2023" {
   most_recent = true
   owners      = ["amazon"]
 
-  # arm64 to match the Graviton (t4g) instance type.
   filter {
     name   = "name"
     values = ["al2023-ami-2023.*-kernel-*-arm64"]
