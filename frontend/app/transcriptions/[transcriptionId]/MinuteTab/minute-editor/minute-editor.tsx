@@ -32,7 +32,6 @@ import {
 } from '@/components/govuk'
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import CopyButton from '@/components/ui/copy-button'
-import { cn } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 
 type MinuteEditorForm = {
@@ -261,10 +260,7 @@ export function MinuteEditor({
 
   return (
     <div className="pt-2">
-      <div
-        className={cn(isEditable && 'pointer-events-none opacity-50')}
-        inert={isEditable}
-      >
+      <div>
         <GovukButtonGroup>
           <AiEditPopover
             disabled={isEditable}
@@ -272,21 +268,31 @@ export function MinuteEditor({
             minuteVersionId={minuteVersion.id}
             onSuccess={onSuccess}
           />
-          <GovukButton variant="secondary" onClick={() => setIsEditable(true)}>
+          <GovukButton
+            variant="secondary"
+            onClick={() => setIsEditable(true)}
+            disabled={isEditable}
+          >
             Manual edit
           </GovukButton>
-          <GovukButton onClick={handleWordDocDownload} variant="secondary">
+          <GovukButton
+            onClick={handleWordDocDownload}
+            variant="secondary"
+            disabled={isEditable}
+          >
             Download document
           </GovukButton>
           <CopyButton
             textToCopy={contentToCopy}
             posthogEvent={'editor_content_copied'}
             label="Copy document"
+            disabled={isEditable}
           />
           {hasCitations && (
             <GovukButton
               variant="secondary"
               onClick={() => setHideCitations((h) => !h)}
+              disabled={isEditable}
             >
               {hideCitations ? 'Show quotes' : 'Hide quotes'}
             </GovukButton>
@@ -296,6 +302,7 @@ export function MinuteEditor({
           version={minuteVersion.id}
           setVersion={setVersion}
           minuteVersions={minuteVersions}
+          disabled={isEditable}
         />
       </div>
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-6 govuk-!-margin-bottom-6" />
