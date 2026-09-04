@@ -24,7 +24,7 @@ Azure storage firewall rules — IP allowlists and private endpoints — are sco
 | No public blobs, no local users, SAS expiry cap | `main.tf`                                      |
 | Versioning, blob and container soft delete      | `main.tf`                                      |
 | File and Blob diagnostic logs to Log Analytics  | `logging.tf`                                   |
-| File service SMB 3.1.1, Kerberos, AES-256-GCM   | `share_properties` in `main.tf`                |
+| File service SMB 3.1.1, Kerberos, AES-256-GCM   | `share_properties` in `main.tf` and `backend/main.tf` |
 
 Disabling shared access keys is what closes the Azure console bypass: with no account keys there is no account SAS and no "Access key" auth in the portal blob browser, so every read and write is an Entra ID call subject to the role assignments. This holds only while nobody has Owner, Contributor, or Storage Account Contributor on the resource group — those roles can re-enable keys. Keep them off it.
 
