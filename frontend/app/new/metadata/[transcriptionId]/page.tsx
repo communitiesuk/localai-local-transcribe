@@ -5,7 +5,7 @@ import { redirect, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import { BannerNotification } from '@/components/banner-notification'
-import { GovukErrorSummary } from '@/components/govuk'
+import { GovukErrorSummary, GovukNotificationBanner } from '@/components/govuk'
 import type { ErrorItem } from '@/components/govuk/error-summary'
 import { RecordingDetails } from '@/app/transcriptions/[transcriptionId]/RecordingDetails'
 import {
@@ -40,11 +40,11 @@ export default function AddRecordingMetadataPage(props: {
       path: { transcription_id: transcriptionId },
     }),
     refetchInterval: (query) =>
-      isSaved && isTranscriptionProcessing(query.state.data?.status)
-        ? 2000
-        : false,
+      isTranscriptionProcessing(query.state.data?.status) ? 2000 : false,
     refetchOnWindowFocus: false,
   })
+
+  const hasFailed = transcription?.status === 'failed'
 
   useEffect(() => {
     if (!isSaved || !transcription) {
@@ -77,6 +77,9 @@ export default function AddRecordingMetadataPage(props: {
   }
 
   if (isSaved) {
+    if (!isTranscriptionProcessing(transcription.status)) {
+      return null
+    }
     return (
       <div className="flex h-72 flex-col items-center justify-center gap-4">
         <LoaderCircle size={80} className="animate-spin" aria-hidden="true" />
@@ -94,6 +97,17 @@ export default function AddRecordingMetadataPage(props: {
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-two-thirds">
         <BannerNotification />
+        {hasFailed && (
+          <GovukNotificationBanner variant="important" title="Important">
+            <p className="govuk-notification-banner__heading">
+              Something went wrong transcribing this recording.
+            </p>
+            <p className="govuk-body">
+              Your audio has been saved. You can still add these details and
+              come back to it later.
+            </p>
+          </GovukNotificationBanner>
+        )}
         {recordingDetailsErrors.length > 0 && (
           <GovukErrorSummary
             ref={errorSummaryRef}
