@@ -400,7 +400,7 @@
       "post": {
         "tags": ["Transcriptions"],
         "summary": "Create Transcription",
-        "description": "Start a transcription job",
+        "description": "Start a transcription job.",
         "operationId": "create_transcription_transcriptions_post",
         "parameters": [
           {

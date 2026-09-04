@@ -1,19 +1,18 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  PopoverAnchor,
-} from '@/components/ui/popover'
-import { Textarea } from '@/components/ui/textarea'
+  GovukButton,
+  GovukList,
+  GovukListItem,
+  GovukModalDialogue,
+  GovukModalDialogueActions,
+  GovukNotificationBanner,
+  GovukTextarea,
+} from '@/components/govuk'
 import { createMinuteVersionMinutesMinuteIdVersionsPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { useMutation } from '@tanstack/react-query'
-import { Wand2Icon } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { GovukButton } from '@/components/govuk'
 
 type AIEditFormData = { instruction: string }
 
@@ -22,11 +21,13 @@ export const AiEditPopover = ({
   minuteId,
   minuteVersionId,
   onSuccess,
+  onEditStart,
 }: {
   disabled: boolean
   minuteId: string
   minuteVersionId: string
   onSuccess: () => void
+  onEditStart?: () => void
 }) => {
   const [open, setOpen] = useState(false)
   const form = useForm<AIEditFormData>()
@@ -34,12 +35,22 @@ export const AiEditPopover = ({
     name: 'instruction',
     control: form.control,
   })
-  const { mutate: saveEdit } = useMutation({
+  const {
+    mutate: saveEdit,
+    isPending,
+    isError,
+    reset: resetSaveEdit,
+  } = useMutation({
     ...createMinuteVersionMinutesMinuteIdVersionsPostMutation(),
   })
+  const closeModal = () => {
+    resetSaveEdit()
+    setOpen(false)
+  }
   const onSubmit = useCallback(
     ({ instruction }: AIEditFormData) => {
       if (instruction) {
+        onEditStart?.()
         saveEdit(
           {
             path: { minute_id: minuteId },
@@ -52,31 +63,63 @@ export const AiEditPopover = ({
         )
       }
     },
-    [minuteId, minuteVersionId, onSuccess, saveEdit]
+    [minuteId, minuteVersionId, onSuccess, onEditStart, saveEdit]
   )
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <GovukButton variant="secondary" disabled={disabled}>
-          AI edit
-        </GovukButton>
-      </PopoverTrigger>
-      <PopoverAnchor />
-      <PopoverContent className="w-xl max-w-screen">
+    <>
+      <GovukButton
+        type="button"
+        variant="secondary"
+        disabled={disabled}
+        onClick={() => {
+          resetSaveEdit()
+          setOpen(true)
+        }}
+      >
+        AI Edit
+      </GovukButton>
+      <GovukModalDialogue open={open} onClose={closeModal} title="AI edit">
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <Textarea
-            placeholder="Describe the changes you want to make (you can always revert the changes if you don't like them)."
+          {isError && (
+            <GovukNotificationBanner
+              variant="important"
+              title="There is a problem"
+              className="mb-[15px]"
+            >
+              <p className="govuk-notification-banner__heading">
+                Something went wrong starting your AI edit. Please try again.
+              </p>
+            </GovukNotificationBanner>
+          )}
+          <p className="govuk-body">
+            Local Transcribe can improve your document in various ways, for
+            example:
+          </p>
+          <GovukList type="bullet">
+            <GovukListItem>adding or removing information</GovukListItem>
+            <GovukListItem>reordering content</GovukListItem>
+            <GovukListItem>making the tone more or less formal</GovukListItem>
+          </GovukList>
+          <p className="govuk-hint">
+            Describe what changes you&apos;d like to make to your document
+          </p>
+          <GovukTextarea
+            id="ai-edit-instruction"
             {...form.register('instruction')}
           />
-          <Button
-            className="mt-2 bg-indigo-700 hover:bg-indigo-800 active:bg-yellow-500"
-            type="submit"
-            disabled={!instructionValue}
-          >
-            <Wand2Icon /> Apply AI Edit
-          </Button>
+          <GovukModalDialogueActions className="govuk-!-margin-top-4">
+            <GovukButton
+              type="submit"
+              disabled={!instructionValue?.trim() || isPending}
+            >
+              Apply Edit
+            </GovukButton>
+            <GovukButton type="button" variant="link" onClick={closeModal}>
+              Cancel
+            </GovukButton>
+          </GovukModalDialogueActions>
         </form>
-      </PopoverContent>
-    </Popover>
+      </GovukModalDialogue>
+    </>
   )
 }
