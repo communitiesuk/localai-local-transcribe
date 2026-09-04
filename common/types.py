@@ -1,11 +1,12 @@
+import logging
 import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
-from typing import Literal
+from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
@@ -16,11 +17,14 @@ from common.database.postgres_models import (
     TemplateType,
     UserRole,
 )
+from common.settings import get_settings
 
 DOMAIN_REGEX = re.compile(
     r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z-]{0,61}[a-z]$",
     re.IGNORECASE,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def validate_fqdn_list(domains: list[str]) -> list[str]:
@@ -253,9 +257,103 @@ class LLMHallucination(BaseModel):
     hallucination_reason: str | None = Field(description="Reason the claim was flagged", default=None)
 
 
+class FailureCategory(StrEnum):
+    FACTUAL_INTEGRITY = auto()
+    REQUIRED_CONTENT_AND_STRUCTURE = auto()
+    EDIT_SAFETY_AND_INTENT = auto()
+    DATA_PROTECTION_AND_INSTRUCTION_INTEGRITY = auto()
+    EVIDENCE_AND_CITATION_QUALITY = auto()
+
+
+class FailureMode(StrEnum):
+    INVENTED_DECISION = auto()
+    REVERSED_MEANING = auto()
+    NO_EVIDENCE_FOR_CLAIM = auto()
+    ATTRIBUTION_NOT_EVIDENCED = auto()
+    NUMERIC_DATE_ERROR = auto()
+    CRITICAL_OMISSION = auto()
+    MISSING_ACTION = auto()
+    MISSING_REQUIRED_SECTION = auto()
+    UNSAFE_EDIT = auto()
+    EDIT_DID_WRONG_TASK = auto()
+    PERSONAL_DATA_INCLUDED = auto()
+    TRANSCRIPT_INSTRUCTION_FOLLOWED = auto()
+    WRONG_CITATION = auto()
+    WEAK_TRANSCRIPT_SUPPORT = auto()
+
+
+class FailureDetail(BaseModel):
+    category: FailureCategory
+    mode: FailureMode
+    explanation: str | None = Field(
+        default=None,
+        description="Specific evidence explaining this failure, e.g. a quote or reference from the transcript "
+        "or minute and why it constitutes this failure mode",
+    )
+
+    _VALID_MODES_BY_CATEGORY: ClassVar[dict[FailureCategory, set[FailureMode]]] = {
+        FailureCategory.FACTUAL_INTEGRITY: {
+            FailureMode.INVENTED_DECISION,
+            FailureMode.REVERSED_MEANING,
+            FailureMode.NO_EVIDENCE_FOR_CLAIM,
+            FailureMode.ATTRIBUTION_NOT_EVIDENCED,
+            FailureMode.NUMERIC_DATE_ERROR,
+        },
+        FailureCategory.REQUIRED_CONTENT_AND_STRUCTURE: {
+            FailureMode.CRITICAL_OMISSION,
+            FailureMode.MISSING_ACTION,
+            FailureMode.MISSING_REQUIRED_SECTION,
+        },
+        FailureCategory.EDIT_SAFETY_AND_INTENT: {
+            FailureMode.UNSAFE_EDIT,
+            FailureMode.EDIT_DID_WRONG_TASK,
+        },
+        FailureCategory.DATA_PROTECTION_AND_INSTRUCTION_INTEGRITY: {
+            FailureMode.PERSONAL_DATA_INCLUDED,
+            FailureMode.TRANSCRIPT_INSTRUCTION_FOLLOWED,
+        },
+        FailureCategory.EVIDENCE_AND_CITATION_QUALITY: {
+            FailureMode.WRONG_CITATION,
+            FailureMode.WEAK_TRANSCRIPT_SUPPORT,
+        },
+    }
+
+    _CATEGORY_BY_MODE: ClassVar[dict[FailureMode, FailureCategory]] = {
+        mode: category for category, modes in _VALID_MODES_BY_CATEGORY.items() for mode in modes
+    }
+
+    @model_validator(mode="after")
+    def _correct_category_from_mode(self) -> "FailureDetail":
+        expected_category = self._CATEGORY_BY_MODE[self.mode]
+        if expected_category is None:
+            logger.error("FailureMode '%s' has no known category mapping", self.mode)
+        elif self.category != expected_category:
+            logger.warning(
+                "FailureDetail category '%s' does not match mode '%s'; correcting to '%s'",
+                self.category,
+                self.mode,
+                expected_category,
+            )
+            self.category = expected_category
+        return self
+
+
 class GuardrailScore(BaseModel):
     score: float = Field(description="Confidence score between 0.0 and 1.0")
     reasoning: str = Field(description="Reasoning for the score")
+    categories: list[FailureDetail] = Field(description="List of failure details that contributed to the score")
+
+    @model_validator(mode="after")
+    def _warn_if_failing_score_has_no_categories(self) -> "GuardrailScore":
+        threshold = get_settings().GUARDRAIL_THRESHOLD
+        if self.score < threshold and not self.categories:
+            logger.warning(
+                "GuardrailScore of %.2f is below the guardrail threshold of %.2f but no failure categories "
+                "were provided",
+                self.score,
+                threshold,
+            )
+        return self
 
 
 class MinuteVersionResponse(BaseModel):
