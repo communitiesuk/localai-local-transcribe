@@ -35,14 +35,13 @@ export default function TranscriptionPage(props: {
 
   const { transcriptionId } = params
 
-  const { setBanner, clearBanner } = useBannerStore()
-
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
   const [lineEditError, setLineEditError] = useState<string | null>(null)
   const [recordingDetailsErrors, setRecordingDetailsErrors] = useState<
     ErrorItem[]
   >([])
   const errorSummaryRef = useRef<HTMLDivElement | null>(null)
+  const { clearBanner } = useBannerStore()
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
 
@@ -212,23 +211,9 @@ export default function TranscriptionPage(props: {
         <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab
             transcription={transcription}
-            onTranscriptCopied={() =>
-              setBanner({
-                variant: 'success',
-                title: 'Success',
-                message: 'Transcript copied to clipboard.',
-              })
-            }
-            onTranscriptDownloaded={() =>
-              setBanner({
-                variant: 'success',
-                title: 'Success',
-                message: 'Transcript downloaded.',
-              })
-            }
-            onDismissBanner={clearBanner}
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
+            onDismissBanner={clearBanner}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
