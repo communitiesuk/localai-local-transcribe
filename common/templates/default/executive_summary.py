@@ -7,7 +7,9 @@ from common.types import AgendaUsage
 
 
 class ExecutiveSummary(SimpleTemplate):
-    name = "Short 'n' Sweet"
+    # TODO(AIILG-929): Update the environmental impact docs and calculators to use "Quick Note".
+    # https://mhclgdigital.atlassian.net/browse/AIILG-929
+    name = "Quick Note"
     category = "Common"
     description = "Executive summary of the meeting + action items"
     citations_required = False
