@@ -46,16 +46,23 @@ export const NewDocumentTab = ({
 
   const { setBanner } = useBannerStore()
 
-  const defaultTemplatesQuery = useQuery(getTemplatesTemplatesGetOptions())
-  const userTemplatesQuery = useQuery(getUserTemplatesUserTemplatesGetOptions())
+  const {
+    data: defaultTemplates = [],
+    isLoading: isLoadingDefaultTemplates,
+    isError: isDefaultTemplatesError,
+    refetch: refetchDefaultTemplates,
+  } = useQuery(getTemplatesTemplatesGetOptions())
 
-  const templates = [
-    ...(defaultTemplatesQuery.data ?? []).map((template) => ({
-      id: null,
-      name: template.name,
-      description: template.description,
-    })),
-    ...(userTemplatesQuery.data ?? []),
+  const {
+    data: templates = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery(getUserTemplatesUserTemplatesGetOptions())
+
+  const allTemplates = [
+    ...defaultTemplates.map((template) => ({ ...template, id: null })),
+    ...templates,
   ]
 
   const { data: versions = [] } = useQuery({
@@ -84,16 +91,13 @@ export const NewDocumentTab = ({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
 
-  const selectedTemplate = templates.find(
+  const selectedTemplate = allTemplates.find(
     (t) => templateValue(t) === selectedValue
   )
 
   const isCompleted =
     createdMinuteId !== null && versionStatus === 'completed' && minute
   const isFailed = createdMinuteId !== null && versionStatus === 'failed'
-  const isLoading =
-    defaultTemplatesQuery.isLoading || userTemplatesQuery.isLoading
-  const isError = defaultTemplatesQuery.isError || userTemplatesQuery.isError
   const isCreating =
     !isFailed && (isPending || (createdMinuteId !== null && !isCompleted))
 
@@ -134,7 +138,7 @@ export const NewDocumentTab = ({
     )
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingDefaultTemplates) {
     return (
       <div className="flex items-center justify-center py-8">
         <LoaderCircle className="animate-spin" aria-hidden="true" />
@@ -142,7 +146,7 @@ export const NewDocumentTab = ({
     )
   }
 
-  if (isError) {
+  if (isError || isDefaultTemplatesError) {
     return (
       <div>
         <p className="govuk-body">
@@ -152,8 +156,8 @@ export const NewDocumentTab = ({
           type="button"
           variant="secondary"
           onClick={() => {
-            defaultTemplatesQuery.refetch()
-            userTemplatesQuery.refetch()
+            refetchDefaultTemplates()
+            refetch()
           }}
         >
           Try again
@@ -162,7 +166,7 @@ export const NewDocumentTab = ({
     )
   }
 
-  const sortedTemplates = [...templates].sort((a, b) =>
+  const sortedTemplates = [...allTemplates].sort((a, b) =>
     a.name.localeCompare(b.name)
   )
 
