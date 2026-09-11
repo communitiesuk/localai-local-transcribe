@@ -23,6 +23,11 @@ def test_form_b_prompt_renders_form_fields():
     prompt = _system_prompt(FormB)
 
     assert "Form B" in prompt
+    assert "TSD: tenancy start date" in prompt
+    assert "ASB: anti-social behaviour" in prompt
+    assert "CWO: Case Work Officer" in prompt
+    assert "cBCC:" not in prompt
+    assert "Confirm the local meaning of cBCC" not in prompt
     assert "# 1.1 Tenancy" in prompt
     assert "# 1.4 Rent Account" in prompt
     assert "Do not decide eligibility" in prompt
@@ -32,6 +37,8 @@ def test_form_b_prompt_renders_form_fields():
 def test_housing_application_form_prompt_renders_fixed_application_sections():
     prompt = _system_prompt(HousingApplicationForm)
 
+    assert "CTA: Common Travel Area" in prompt
+    assert "Council Tax Arrears" not in prompt
     assert "# Primary household member details" in prompt
     assert "## Equality and Diversity Monitoring" in prompt
     assert "## Threat Of Abuse, Violence or Harassment" in prompt
@@ -41,6 +48,7 @@ def test_housing_application_form_prompt_renders_fixed_application_sections():
 def test_personalised_housing_plan_prompt_allows_partial_blank_sections():
     prompt = _system_prompt(PersonalisedHousingPlan)
 
+    assert "PHP: Personalised Housing Plan" in prompt
     assert "some information towards the plan, not all information needed to complete it" in prompt
     assert "leave it blank rather than writing" in prompt
     assert "# 5. Actions the Council Will Take" in prompt
@@ -50,6 +58,10 @@ def test_personalised_housing_plan_prompt_allows_partial_blank_sections():
 def test_triage_assessment_prompt_renders_triage_and_da_sections():
     prompt = _system_prompt(TriageAssessment)
 
+    assert "HPA: Homelessness Prevention and Advice" in prompt
+    assert "HREG: housing register" in prompt
+    assert "PRS: private rented sector" in prompt
+    assert "DA: domestic abuse" in prompt
     assert "# Initial Triage Prompt investigation" in prompt
     assert "# DA Soft Approach Assessment" in prompt
     assert "Do not decide homelessness duties" in prompt
