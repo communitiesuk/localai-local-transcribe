@@ -57,7 +57,7 @@ export const UserTemplatesList = () => {
         showUpdatedDate
         emptyMessage="You haven't made any templates yet."
         action={(template) =>
-          template.id ? (
+          hasEditableTemplateId(template) ? (
             <Link href={`/templates/${template.id}`} className="govuk-link">
               Edit
             </Link>
@@ -67,6 +67,10 @@ export const UserTemplatesList = () => {
     </div>
   )
 }
+
+const hasEditableTemplateId = (
+  template: SelectableTemplate
+): template is SelectableTemplate & { id: string } => template.id !== null
 
 const TemplateTable = ({
   title,
