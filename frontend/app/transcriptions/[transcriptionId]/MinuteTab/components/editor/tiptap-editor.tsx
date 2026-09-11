@@ -31,12 +31,14 @@ function SimpleEditor({
   isEditing,
   currentTranscription,
   hideCitations,
+  focusDialogEntry,
 }: {
   initialContent: string
   onContentChange: (newContent: string) => void
   isEditing: boolean
   currentTranscription: TranscriptionGetResponse
   hideCitations: boolean
+  focusDialogEntry?: (dialogueIndex: number) => void
 }) {
   const {
     citationPopover,
@@ -97,6 +99,7 @@ function SimpleEditor({
                     posthog.capture('citation_clicked', {
                       citationIndex: index,
                     })
+                    focusDialogEntry?.(index)
                     handleCitationClick(index, rect)
                     return true
                   }
