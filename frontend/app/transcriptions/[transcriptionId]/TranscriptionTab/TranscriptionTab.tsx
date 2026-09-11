@@ -512,7 +512,7 @@ export function TranscriptionTab({
 
               return (
                 <div
-                  className={cn('flex items-start gap-2', {
+                  className={cn('dialogue-entry flex items-start gap-2', {
                     'bg-[var(--govuk-surface-background-colour)]': isPlaying,
                   })}
                   key={field.id}
