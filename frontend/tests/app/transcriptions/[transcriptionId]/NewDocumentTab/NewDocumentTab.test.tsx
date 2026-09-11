@@ -15,6 +15,7 @@ vi.mock('@/stores/use-banner-store', () => ({
 }))
 
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
+  getTemplatesTemplatesGetOptions: () => ({ queryKey: ['default-templates'] }),
   getUserTemplatesUserTemplatesGetOptions: () => ({ queryKey: ['templates'] }),
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['versions'],
@@ -44,14 +45,34 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 
 const transcription = { id: 'transcription-1' } as TranscriptionGetResponse
 
+const defaultTemplates = [
+  {
+    name: 'Default meeting summary',
+    description: 'Standard default meeting summary',
+    category: 'Common',
+    agenda_usage: 'optional',
+  },
+]
+
 const templates = [
   { id: 't1', name: 'General summary', description: 'Standard summary' },
   { id: 't2', name: 'Triage assessment', description: 'Standardised form' },
 ]
 
 const configureQueries = (
-  overrides: { templates?: unknown; versions?: unknown; minute?: unknown } = {}
+  overrides: {
+    defaultTemplates?: unknown
+    templates?: unknown
+    versions?: unknown
+    minute?: unknown
+  } = {}
 ) => {
+  const defaultTemplatesResult = overrides.defaultTemplates ?? {
+    data: defaultTemplates,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  }
   const templatesResult = overrides.templates ?? {
     data: templates,
     isLoading: false,
@@ -68,6 +89,8 @@ const configureQueries = (
 
   const queryKeyToResponse = (key: string) => {
     switch (key) {
+      case 'default-templates':
+        return defaultTemplatesResult
       case 'versions':
         return versionsResult
       case 'templates':
@@ -124,6 +147,9 @@ describe('<NewDocumentTab />', () => {
       screen.getByText('Choose a template style for your conversation')
     ).toBeInTheDocument()
     expect(
+      screen.getByRole('radio', { name: /Default meeting summary/ })
+    ).toBeInTheDocument()
+    expect(
       screen.getByRole('radio', { name: /General summary/ })
     ).toBeInTheDocument()
     expect(
@@ -146,16 +172,29 @@ describe('<NewDocumentTab />', () => {
   })
 
   it('shows an error with a retry action when templates fail to load', () => {
-    const refetch = vi.fn()
+    const refetchDefaultTemplates = vi.fn()
+    const refetchUserTemplates = vi.fn()
     configureQueries({
-      templates: { data: undefined, isLoading: false, isError: true, refetch },
+      defaultTemplates: {
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        refetch: refetchDefaultTemplates,
+      },
+      templates: {
+        data: templates,
+        isLoading: false,
+        isError: false,
+        refetch: refetchUserTemplates,
+      },
     })
     renderTab()
     expect(
       screen.getByText('Something went wrong fetching your templates.')
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
-    expect(refetch).toHaveBeenCalledOnce()
+    expect(refetchDefaultTemplates).toHaveBeenCalledOnce()
+    expect(refetchUserTemplates).toHaveBeenCalledOnce()
   })
 
   it('does not render the chooser while templates are loading', () => {
@@ -190,6 +229,29 @@ describe('<NewDocumentTab />', () => {
       expect.anything()
     )
     expect(screen.getByText('Creating ‘General summary’…')).toBeInTheDocument()
+  })
+
+  it('creates a minute from a default template without a template id', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    renderTab()
+
+    fireEvent.click(
+      screen.getByRole('radio', { name: /Default meeting summary/ })
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+
+    expect(mutateMock).toHaveBeenCalledWith(
+      {
+        path: { transcription_id: 'transcription-1' },
+        body: {
+          template_name: 'Default meeting summary',
+          template_id: null,
+        },
+      },
+      expect.anything()
+    )
   })
 
   it('renames the tab and shows the document view when generation completes', () => {

@@ -23,6 +23,7 @@ import { TemplateResponse } from '@/lib/client'
 import {
   deleteUserTemplateUserTemplatesTemplateIdDeleteMutation,
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
+  getTemplatesTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetOptions,
   getUserTemplatesUserTemplatesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
@@ -35,14 +36,31 @@ import posthog from 'posthog-js'
 
 export const UserTemplatesList = () => {
   const {
-    data: templates = [],
-    isLoading,
-    isError,
+    data: defaultTemplates = [],
+    isLoading: isLoadingDefaultTemplates,
+    isError: isDefaultTemplatesError,
+  } = useQuery(getTemplatesTemplatesGetOptions())
+
+  const {
+    data: userTemplates = [],
+    isLoading: isLoadingUserTemplates,
+    isError: isUserTemplatesError,
   } = useQuery(getUserTemplatesUserTemplatesGetOptions())
+
+  const templates = [
+    ...defaultTemplates.map((template) => ({
+      ...template,
+      id: null,
+      updated_datetime: null,
+    })),
+    ...userTemplates,
+  ]
 
   const sortedTemplates = [...templates].sort((a, b) =>
     a.name.localeCompare(b.name)
   )
+  const isLoading = isLoadingDefaultTemplates || isLoadingUserTemplates
+  const isError = isDefaultTemplatesError || isUserTemplatesError
 
   if (isLoading) {
     return <Loader2 className="animate-spin" />
@@ -84,7 +102,7 @@ export const UserTemplatesList = () => {
         </GovukTableHead>
         <GovukTableBody>
           {sortedTemplates.map((template) => (
-            <GovukTableRow key={template.id}>
+            <GovukTableRow key={template.id ?? `default-${template.name}`}>
               <GovukTableCell>{template.name}</GovukTableCell>
               <GovukTableCell>
                 {template.updated_datetime
@@ -95,9 +113,18 @@ export const UserTemplatesList = () => {
                   : 'Original template'}
               </GovukTableCell>
               <GovukTableCell isNumeric>
-                <Link href={`/templates/${template.id}`} className="govuk-link">
-                  Edit
-                </Link>
+                {template.id ? (
+                  <Link
+                    href={`/templates/${template.id}`}
+                    className="govuk-link"
+                  >
+                    Edit
+                  </Link>
+                ) : (
+                  <span className="govuk-visually-hidden">
+                    Default template
+                  </span>
+                )}
               </GovukTableCell>
             </GovukTableRow>
           ))}
