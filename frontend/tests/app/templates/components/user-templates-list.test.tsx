@@ -64,12 +64,18 @@ beforeEach(() => {
 })
 
 describe('<UserTemplatesList />', () => {
-  it('shows default and custom templates', () => {
+  it('shows standard and user templates in separate sections', () => {
     render(<UserTemplatesList />)
 
+    expect(
+      screen.getByRole('heading', { name: 'Standard templates' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Your templates' })
+    ).toBeInTheDocument()
     expect(screen.getByText('General')).toBeInTheDocument()
     expect(screen.getByText('Custom assessment')).toBeInTheDocument()
-    expect(screen.getByText('Original template')).toBeInTheDocument()
+    expect(screen.getByText('02/01/2025')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute(
       'href',
       '/templates/template-1'

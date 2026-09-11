@@ -9,22 +9,18 @@ import {
 import { TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
-  getTemplatesTemplatesGetOptions,
-  getUserTemplatesUserTemplatesGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
   getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { ProcessingSpinner } from '@/components/processing-spinner'
+import { templateValue, useTemplates } from '@/hooks/use-templates'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useEffect, useRef, useState } from 'react'
 import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
-
-const templateValue = (template: { id: string | null; name: string }) =>
-  template.id ?? `DEFAULT::${template.name}`
 
 export const NewDocumentTab = ({
   transcription,
@@ -46,24 +42,8 @@ export const NewDocumentTab = ({
 
   const { setBanner } = useBannerStore()
 
-  const {
-    data: defaultTemplates = [],
-    isLoading: isLoadingDefaultTemplates,
-    isError: isDefaultTemplatesError,
-    refetch: refetchDefaultTemplates,
-  } = useQuery(getTemplatesTemplatesGetOptions())
-
-  const {
-    data: templates = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery(getUserTemplatesUserTemplatesGetOptions())
-
-  const allTemplates = [
-    ...defaultTemplates.map((template) => ({ ...template, id: null })),
-    ...templates,
-  ]
+  const { sortedTemplates, isLoading, isError, refetchTemplates } =
+    useTemplates()
 
   const { data: versions = [] } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
@@ -91,7 +71,7 @@ export const NewDocumentTab = ({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
 
-  const selectedTemplate = allTemplates.find(
+  const selectedTemplate = sortedTemplates.find(
     (t) => templateValue(t) === selectedValue
   )
 
@@ -138,7 +118,7 @@ export const NewDocumentTab = ({
     )
   }
 
-  if (isLoading || isLoadingDefaultTemplates) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <LoaderCircle className="animate-spin" aria-hidden="true" />
@@ -146,7 +126,7 @@ export const NewDocumentTab = ({
     )
   }
 
-  if (isError || isDefaultTemplatesError) {
+  if (isError) {
     return (
       <div>
         <p className="govuk-body">
@@ -155,20 +135,13 @@ export const NewDocumentTab = ({
         <GovukButton
           type="button"
           variant="secondary"
-          onClick={() => {
-            refetchDefaultTemplates()
-            refetch()
-          }}
+          onClick={refetchTemplates}
         >
           Try again
         </GovukButton>
       </div>
     )
   }
-
-  const sortedTemplates = [...allTemplates].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  )
 
   const handleCreate = () => {
     if (!selectedTemplate) return

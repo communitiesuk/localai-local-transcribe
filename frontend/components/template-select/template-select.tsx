@@ -1,11 +1,8 @@
 import { TemplateRadioGroup } from '@/components/template-select/template-radio-group'
 import { GovukDetails } from '@/components/govuk'
-import {
-  getTemplatesTemplatesGetOptions,
-  getUserTemplatesUserTemplatesGetOptions,
-} from '@/lib/client/@tanstack/react-query.gen'
-import { Template } from '@/types/templates'
-import { useQuery } from '@tanstack/react-query'
+import { templateValue, useTemplates } from '@/hooks/use-templates'
+import type { SelectableTemplate } from '@/hooks/use-templates'
+import type { Template } from '@/types/templates'
 
 export const TemplateSelect = ({
   value,
@@ -14,91 +11,72 @@ export const TemplateSelect = ({
   onChange: (template: Template) => void
   value: Template
 }) => {
+  const {
+    sortedDefaultTemplates,
+    sortedUserTemplates,
+    isLoadingDefaultTemplates,
+    isLoadingUserTemplates,
+  } = useTemplates()
+
   return (
     <>
       <GovukDetails summary="General templates" open>
-        <DefaultTemplateSelect value={value} onChange={onChange} />
+        <TemplateSelectGroup
+          value={value}
+          onChange={onChange}
+          templates={sortedDefaultTemplates}
+          isLoading={isLoadingDefaultTemplates}
+        />
       </GovukDetails>
       <GovukDetails summary="Your templates">
-        <UserTemplateSelect value={value} onChange={onChange} />
+        <TemplateSelectGroup
+          value={value}
+          onChange={onChange}
+          templates={sortedUserTemplates}
+          isLoading={isLoadingUserTemplates}
+          emptyMessage="You haven't made any templates yet. Go to Templates to create and edit your templates."
+        />
       </GovukDetails>
     </>
   )
 }
 
-export const DefaultTemplateSelect = ({
+const TemplateSelectGroup = ({
   onChange,
   value,
+  templates,
+  isLoading,
+  emptyMessage,
 }: {
   onChange: (template: Template) => void
   value: Template
+  templates: SelectableTemplate[]
+  isLoading: boolean
+  emptyMessage?: string
 }) => {
-  const { data: templates = [], isLoading: isLoadingTemplates } = useQuery(
-    getTemplatesTemplatesGetOptions()
-  )
+  if (!isLoading && !templates.length && emptyMessage) {
+    return <p className="govuk-body">{emptyMessage}</p>
+  }
+
   return (
     <TemplateRadioGroup
       name="template"
       templates={templates.map((t) => ({
-        id: `DEFAULT::${t.name}`,
+        id: templateValue(t),
         name: t.name,
         description: t.description,
       }))}
       onChange={(id) => {
-        const selectedTemplate = templates.find(
-          (t) => `DEFAULT::${t.name}` === id
-        )
+        const selectedTemplate = templates.find((t) => templateValue(t) === id)
         if (selectedTemplate) {
           onChange({
-            id: null,
+            id: selectedTemplate.id,
             name: selectedTemplate.name,
             agenda_usage: selectedTemplate.agenda_usage,
           })
         }
       }}
-      value={`DEFAULT::${value?.name}`}
-      isLoading={isLoadingTemplates}
-    />
-  )
-}
-
-export const UserTemplateSelect = ({
-  onChange,
-  value,
-}: {
-  onChange: (template: Template) => void
-  value: Template
-}) => {
-  const { data: templates = [], isLoading } = useQuery(
-    getUserTemplatesUserTemplatesGetOptions()
-  )
-  if (!isLoading && !templates.length) {
-    return (
-      <p className="govuk-body">
-        You haven&apos;t made any templates yet. Go to Templates to create and
-        edit your templates.
-      </p>
-    )
-  }
-  return (
-    <TemplateRadioGroup
-      name="template"
-      templates={templates.map((t) => ({
-        id: t.id!,
-        name: t.name,
-        description: t.description || '',
-      }))}
-      onChange={(id) => {
-        const selectedTemplate = templates.find((t) => t.id === id)
-        if (selectedTemplate) {
-          onChange({
-            id: selectedTemplate.id!,
-            name: selectedTemplate.name,
-            agenda_usage: 'not_used',
-          })
-        }
-      }}
-      value={value?.id ?? ''}
+      value={value ? templateValue(value) : ''}
       isLoading={isLoading}
     />
   )
