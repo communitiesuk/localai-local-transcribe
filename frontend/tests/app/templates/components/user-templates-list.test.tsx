@@ -76,6 +76,10 @@ describe('<UserTemplatesList />', () => {
     expect(screen.getByText('General')).toBeInTheDocument()
     expect(screen.getByText('Custom assessment')).toBeInTheDocument()
     expect(screen.getByText('02/01/2025')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Duplicate' })).toHaveAttribute(
+      'href',
+      '/templates/default/General/duplicate'
+    )
     expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute(
       'href',
       '/templates/template-1'

@@ -36,8 +36,16 @@ export const UserTemplatesList = () => {
     <div>
       <TemplateTable
         title="Standard templates"
-        description="Includes common templates for your department. You cannot edit or delete these."
+        description="Includes common templates for your department. You cannot delete these - duplicate one if you want to customise it."
         templates={sortedDefaultTemplates}
+        action={(template) => (
+          <Link
+            href={`/templates/default/${encodeURIComponent(template.name)}/duplicate`}
+            className="govuk-link"
+          >
+            Duplicate
+          </Link>
+        )}
       />
 
       <GovukHeading

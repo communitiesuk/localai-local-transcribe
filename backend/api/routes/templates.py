@@ -8,8 +8,10 @@ from sqlmodel import col, func, select
 from backend.api.dependencies import UserDep
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.database.postgres_models import TemplateQuestion, TemplateType, UserTemplate
-from common.services.template_manager import TemplateManager
+from common.prompts import PROMPT_INJECTION_INSTRUCTIONS
+from common.services.template_manager import TemplateManager, TemplateNotFoundError
 from common.settings import get_settings
+from common.templates.types import Template
 from common.types import (
     CreateUserTemplateRequest,
     PatchUserTemplateRequest,
@@ -229,3 +231,44 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
 
     session.add(template)
     await session.commit()
+
+
+@templates_router.post("/templates/{template_name}/duplicate")
+async def duplicate_default_template(user: UserDep, session: SQLSessionDep, template_name: str) -> None:
+    if template_name not in {template.name for template in get_templates(user)}:
+        raise HTTPException(404)
+
+    try:
+        original_template = TemplateManager.get_template(template_name)
+    except TemplateNotFoundError as e:
+        raise HTTPException(404) from e
+
+    template = UserTemplate(
+        user_id=user.id,
+        name=original_template.name + " (Copy)",
+        description=original_template.description,
+        content=get_default_template_content(original_template),
+        heading=original_template.name,
+        type=TemplateType.DOCUMENT,
+        questions=[],
+    )
+
+    session.add(template)
+    await session.commit()
+
+
+def get_default_template_content(default_template: type[Template]) -> str:
+    editable_content = getattr(default_template, "editable_content", None)
+    if isinstance(editable_content, str):
+        return editable_content
+
+    prompt = getattr(default_template, "prompt", None)
+    if not callable(prompt):
+        return default_template.description
+
+    messages = prompt([], None)
+    content = next(
+        (message["content"] for message in messages if message.get("role") == "system"),
+        default_template.description,
+    )
+    return content.removeprefix(PROMPT_INJECTION_INSTRUCTIONS).strip()
