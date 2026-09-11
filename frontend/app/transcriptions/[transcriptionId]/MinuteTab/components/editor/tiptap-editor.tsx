@@ -8,8 +8,6 @@ import { EditorState, Plugin, PluginKey } from 'prosemirror-state'
 import { Decoration, DecorationSet } from 'prosemirror-view'
 import { useCallback, useEffect } from 'react'
 
-import { CitationPopoverWrapper } from '@/components/ui/citation-popover-wrapper'
-import { useCitationPopover } from '@/hooks/use-citation-popover'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import { TranscriptionGetResponse } from '@/lib/client'
 import { cn } from '@/lib/utils'
@@ -29,7 +27,6 @@ function SimpleEditor({
   initialContent,
   onContentChange,
   isEditing,
-  currentTranscription,
   hideCitations,
   focusDialogEntry,
 }: {
@@ -40,14 +37,6 @@ function SimpleEditor({
   hideCitations: boolean
   focusDialogEntry?: (dialogueIndex: number) => void
 }) {
-  const {
-    citationPopover,
-    isPopoverOpen,
-    handleCitationClick,
-    closeCitationPopover,
-    setIsPopoverOpen,
-  } = useCitationPopover()
-
   const CitationExtension = Extension.create({
     name: 'citation',
     addProseMirrorPlugins() {
@@ -95,12 +84,10 @@ function SimpleEditor({
                   const match = domNode.textContent?.match(citationRegex)
                   if (match) {
                     const index = parseInt(match[1], 10)
-                    const rect = domNode.getBoundingClientRect()
                     posthog.capture('citation_clicked', {
                       citationIndex: index,
                     })
                     focusDialogEntry?.(index)
-                    handleCitationClick(index, rect)
                     return true
                   }
                 }
@@ -307,18 +294,6 @@ function SimpleEditor({
           } as React.CSSProperties
         }
       />
-
-      {citationPopover && (
-        <CitationPopoverWrapper
-          citationPopover={citationPopover}
-          isPopoverOpen={isPopoverOpen}
-          onOpenChange={(open) => {
-            setIsPopoverOpen(open)
-            if (!open) closeCitationPopover()
-          }}
-          transcription={currentTranscription}
-        />
-      )}
     </div>
   )
 }
