@@ -14,7 +14,14 @@ import { cn, formatDate, copyHTML } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
 import { PlayButton } from '@/components/icons/play-button'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
 import posthog from 'posthog-js'
 
@@ -53,11 +60,13 @@ export function TranscriptionTab({
   onLineEditError,
   onEditModeChange,
   onDismissBanner,
+  citationIdToFocus,
 }: {
   transcription: TranscriptionGetResponse
   onLineEditError: (error: string | null) => void
   onEditModeChange?: (isEditing: boolean) => void
   onDismissBanner?: () => void
+  citationIdToFocus?: number
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
@@ -214,6 +223,7 @@ export function TranscriptionTab({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playingRef = useRef<HTMLDivElement | null>(null)
   const editSnapshotRef = useRef<DialogueEntry[]>([])
+  const focusCitationRef = useRef<HTMLDivElement | null>(null)
   const [time, setTime] = useState(0)
 
   const [isLineEditMode, setIsLineEditMode] = useState(false)
@@ -231,14 +241,30 @@ export function TranscriptionTab({
     [onLineEditError]
   )
 
-  const scrollToPlaying = () => {
-    if (playingRef.current) {
-      playingRef.current.scrollIntoView({
+  const scrollToElement = (element: RefObject<HTMLElement | null>) => {
+    if (element.current) {
+      element.current.scrollIntoView({
         block: 'center',
         behavior: 'smooth',
       })
     }
   }
+
+  const scrollToPlaying = () => scrollToElement(playingRef)
+
+  useEffect(() => {
+    if (citationIdToFocus === undefined) return
+
+    // on mount the fields array gets regenerated and so all the dialogue entries rerender
+    // this timeout ensures the focus setting runs afterwards.
+    const timeout = setTimeout(() => {
+      if (!focusCitationRef.current) return
+      scrollToElement(focusCitationRef)
+      focusCitationRef.current.focus()
+    }, 0)
+
+    return () => clearTimeout(timeout)
+  }, [citationIdToFocus])
 
   const hasRecordings = !!recordings && !!recordings.length
 
@@ -482,6 +508,7 @@ export function TranscriptionTab({
                 watchedEntries?.[index + 1]?.start_time
               )
               const isSelectedForEdit = selectedLineIndex === index
+              const isCitationToFocus = index === citationIdToFocus
 
               return (
                 <div
@@ -489,7 +516,17 @@ export function TranscriptionTab({
                     'bg-[var(--govuk-surface-background-colour)]': isPlaying,
                   })}
                   key={field.id}
-                  ref={isPlaying ? playingRef : null}
+                  ref={(el) => {
+                    if (isPlaying) {
+                      playingRef.current = el
+                    }
+
+                    if (isCitationToFocus) {
+                      focusCitationRef.current = el
+                    }
+                  }}
+                  tabIndex={isCitationToFocus ? -1 : undefined}
+                  data-testid={`dialogue-entry-${index}`}
                 >
                   {hasRecordings && !isLineEditMode && (
                     <button

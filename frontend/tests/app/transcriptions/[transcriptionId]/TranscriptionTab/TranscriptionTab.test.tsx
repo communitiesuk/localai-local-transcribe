@@ -71,6 +71,9 @@ vi.mock('posthog-js', () => ({
   default: { capture: vi.fn() },
 }))
 
+// Mock scrollIntoView as it's not present in JSDom
+window.HTMLElement.prototype.scrollIntoView = () => {}
+
 const renderTab = (transcription: TranscriptionGetResponse) =>
   render(
     <TranscriptionTab
@@ -88,6 +91,18 @@ const renderTabWithDismissBanner = (
       transcription={transcription}
       onLineEditError={onLineEditErrorMock}
       onDismissBanner={onDismissBanner}
+    />
+  )
+
+const renderTabWithDialogueEntryFocused = (
+  transcription: TranscriptionGetResponse,
+  dialogue_entry_index: number
+) =>
+  render(
+    <TranscriptionTab
+      transcription={transcription}
+      onLineEditError={onLineEditErrorMock}
+      citationIdToFocus={dialogue_entry_index}
     />
   )
 
@@ -603,5 +618,18 @@ describe('TranscriptionTab full edit flow', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Finish editing' }))
     expect(clearBannerMock).toHaveBeenCalled()
+  })
+})
+
+describe('Transcription tab focus citation', () => {
+  it('focuses dialogue entry with given index on load', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
   })
 })
