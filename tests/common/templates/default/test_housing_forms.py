@@ -52,6 +52,8 @@ def test_personalised_housing_plan_prompt_allows_partial_blank_sections():
     assert "some information towards the plan, not all information needed to complete it" in prompt
     assert "leave it blank rather than writing" in prompt
     assert "# 5. Actions the Council Will Take" in prompt
+    assert "Action [X]:" in prompt
+    assert "- Details: The officer will contact the landlord" in prompt
     assert "Do not create actions" in prompt
 
 
@@ -75,6 +77,10 @@ def test_housing_templates_are_registered_with_metadata():
     assert metadata_by_name["Housing Application Form"].agenda_usage == AgendaUsage.NOT_USED
     assert metadata_by_name["Personalised Housing Plan"].description.startswith("Personalised Housing Plan")
     assert metadata_by_name["Triage Assessment"].category == "Housing"
+
+
+def test_default_templates_have_initial_prompt_version():
+    assert {template.prompt_version for template in TemplateManager.templates.values()} == {"0.1.0"}
 
 
 def test_housing_template_prompts_include_transcript_message():
