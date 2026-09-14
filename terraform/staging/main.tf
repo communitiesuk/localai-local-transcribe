@@ -93,6 +93,8 @@ module "frontdoor" {
     "37.200.119.11/32",
     "185.10.12.32/28",
     "176.65.68.112/28",
+    # Accessibility audit (temporarily allowed)
+    "194.75.245.154/32",
   ]
 
   # Cyberfort (temporarily allowed for pen testing)

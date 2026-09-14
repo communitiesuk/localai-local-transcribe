@@ -153,7 +153,7 @@ class Recording(BaseTableMixin, table=True):
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
     s3_file_key: str
     file_created_at: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
-    transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
+    transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL", index=True)
     transcription: "Transcription" = Relationship(back_populates="recordings")
 
 

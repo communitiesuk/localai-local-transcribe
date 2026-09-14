@@ -40,7 +40,9 @@ RUN find /opt/site-packages -name "*.so" -exec strip --strip-unneeded {} + && \
            /opt/site-packages/wheel* \
 # 3. Clean up pycaches and test directories
     && find /opt/site-packages -type d -name "__pycache__" -prune -exec rm -rf {} + \
-    && find /opt/site-packages -type d -name "tests" -prune -exec rm -rf {} +
+    && find /opt/site-packages -type d -name "tests" -prune -exec rm -rf {} + \
+# 4. Remove Ray's Java runtime. This worker only creates Python actors; removing the jars prevents unnecessary vuln detections
+    && rm -rf /opt/site-packages/ray/jars
 
 # ==========================================
 # Stage 2: Runner

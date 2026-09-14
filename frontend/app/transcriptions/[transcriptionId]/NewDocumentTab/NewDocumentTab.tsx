@@ -14,6 +14,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
   getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { ProcessingSpinner } from '@/components/processing-spinner'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
@@ -39,7 +40,7 @@ export const NewDocumentTab = ({
   const [createdTemplateName, setCreatedTemplateName] = useState('')
   const renamedRef = useRef(false)
 
-  const setBanner = useBannerStore((store) => store.setBanner)
+  const { setBanner } = useBannerStore()
 
   const {
     data: templates = [],
@@ -114,18 +115,10 @@ export const NewDocumentTab = ({
 
   if (isCreating) {
     return (
-      <div className="flex flex-col items-center">
-        {/* spinner */}
-        <div
-          aria-label="Creating document"
-          aria-live="polite"
-          role="status"
-          className="mb-5 h-28 w-28 animate-spin rounded-full border-[12px] border-gray-400 border-t-sky-700"
-        />
-        <p className="govuk-body">
-          Creating ‘{selectedTemplate?.name ?? createdTemplateName}’…
-        </p>
-      </div>
+      <ProcessingSpinner
+        label="Creating document"
+        message={`Creating ‘${selectedTemplate?.name ?? createdTemplateName}’…`}
+      />
     )
   }
 

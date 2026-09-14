@@ -2,6 +2,8 @@
 
 Config-driven eval runner for DialogSum-style conversational summarization.
 
+For the end-to-end flow, exact metrics and threshold links, see [`../documentation/evals-flow.md`](../documentation/evals-flow.md).
+
 **Important: Run all commands from project root.**
 
 ## Setup

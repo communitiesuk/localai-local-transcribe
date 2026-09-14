@@ -360,6 +360,6 @@ class MinuteHandlerService:
     ) -> GuardrailScore:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         return await chatbot.structured_chat(
-            messages=get_accuracy_check_messages(minute, transcript),
+            messages=get_accuracy_check_messages(minute, transcript, settings.GUARDRAIL_THRESHOLD),
             response_format=GuardrailScore,
         )

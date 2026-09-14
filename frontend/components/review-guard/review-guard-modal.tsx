@@ -4,22 +4,27 @@ import {
   GovukButton,
   GovukModalDialogue,
   GovukModalDialogueActions,
+  GovukWarningText,
+  GovukBody,
+  GovukFormGroup,
 } from '@/components/govuk'
 import { useId, useState } from 'react'
 
-interface TranscriptReviewModalProps {
+interface ReviewGuardModalProps {
   open: boolean
   onClose: () => void
-  onConfirm: () => void
-  titleId: string
+  onConfirm: () => void | Promise<void>
+  action: 'copy' | 'download'
+  subject: 'transcript' | 'document'
 }
 
-export function TranscriptReviewModal({
-  open,
+export function ReviewGuardModal({
   onClose,
   onConfirm,
-  titleId,
-}: TranscriptReviewModalProps) {
+  open,
+  action,
+  subject,
+}: ReviewGuardModalProps) {
   const [reviewed, setReviewed] = useState(false)
   const checkboxId = useId()
 
@@ -28,9 +33,9 @@ export function TranscriptReviewModal({
     onClose()
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setReviewed(false)
-    onConfirm()
+    await onConfirm()
   }
 
   return (
@@ -38,25 +43,19 @@ export function TranscriptReviewModal({
       open={open}
       onClose={handleClose}
       title="Confirm review"
-      titleId={titleId}
+      titleId={`${action}-${subject}-modal-title`}
     >
-      <div className="govuk-warning-text govuk-!-margin-bottom-4">
-        <span className="govuk-warning-text__icon" aria-hidden="true">
-          !
-        </span>
-        <strong className="govuk-warning-text__text">
-          <span className="govuk-visually-hidden">Warning</span>
-          AI transcription is not 100% accurate. Human review is always
-          necessary.
-        </strong>
-      </div>
+      <GovukWarningText>
+        AI {subject === 'transcript' ? 'transcription' : 'summarisation'} is not
+        100% accurate. Human review is always necessary.
+      </GovukWarningText>
 
-      <p className="govuk-body govuk-!-margin-bottom-4">
-        You must confirm that you&apos;ve reviewed the transcript before you
-        copy or download it.
-      </p>
+      <GovukBody>
+        You must confirm that you&apos;ve reviewed the {subject} before you copy
+        or download it.
+      </GovukBody>
 
-      <div className="govuk-form-group govuk-!-margin-bottom-4">
+      <GovukFormGroup>
         <div className="govuk-checkboxes govuk-checkboxes--small">
           <div className="govuk-checkboxes__item">
             <input
@@ -70,11 +69,11 @@ export function TranscriptReviewModal({
               className="govuk-label govuk-checkboxes__label"
               htmlFor={checkboxId}
             >
-              I&apos;ve reviewed the transcript
+              I&apos;ve reviewed the {subject}
             </label>
           </div>
         </div>
-      </div>
+      </GovukFormGroup>
 
       <GovukModalDialogueActions>
         <GovukButton

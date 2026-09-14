@@ -146,7 +146,9 @@ class TranscriptionHandlerService:
                 transcription.dialogue_entries = transcript
             if error:
                 transcription.error = error
-            if title:
+            # The title passed here is AI-generated, so it must not clobber a title the
+            # user has already set themselves (the "subject" field on the details form).
+            if title and not transcription.title:
                 transcription.title = title
             session.add(transcription)
             session.commit()

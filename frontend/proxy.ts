@@ -80,12 +80,10 @@ export async function proxy(req: NextRequest) {
       return redirectTo(req, '/unauthorised')
     }
 
-    // TODO(@unassigned): check TOU accepted once AIILG-764 implemented
-    // https://mhclgdigital.atlassian.net/browse/AIILG-764
-    // const user = await backendAuthResponse.json()
-    // if (!user.accepted_tou && !pathname.startsWith(TOU_PATH)) {
-    //   return redirectTo(req, TOU_PATH)
-    // }
+    const user = await backendAuthResponse.json()
+    if (!user.accepted_tou && !pathname.startsWith(TOU_PATH)) {
+      return redirectTo(req, TOU_PATH)
+    }
 
     return NextResponse.next()
   } catch (error) {

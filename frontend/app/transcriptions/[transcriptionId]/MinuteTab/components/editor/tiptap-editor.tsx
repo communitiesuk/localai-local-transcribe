@@ -2,7 +2,7 @@
 
 import { Extension } from '@tiptap/core'
 import type { Editor } from '@tiptap/react'
-import { EditorContent, useEditor } from '@tiptap/react'
+import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { EditorState, Plugin, PluginKey } from 'prosemirror-state'
 import { Decoration, DecorationSet } from 'prosemirror-view'
@@ -127,7 +127,7 @@ function SimpleEditor({
 
   useEffect(() => {
     if (editorObject && initialContent !== editorObject.getHTML()) {
-      editorObject.commands.setContent(initialContent)
+      editorObject.commands.setContent(initialContent, { emitUpdate: false })
       const newEditorState = EditorState.create({
         doc: editorObject.state.doc,
         plugins: editorObject.state.plugins,
@@ -161,7 +161,22 @@ function SimpleEditor({
     editorObject.chain().focus().toggleOrderedList().run()
   }, [editorObject])
 
-  if (!editorObject) {
+  const editorState = useEditorState({
+    editor: editorObject,
+    selector: (snapshot) => ({
+      isBoldActive: snapshot?.editor?.isActive('bold'),
+      isItalicActive: snapshot?.editor?.isActive('italic'),
+      isStrikeActive: snapshot?.editor?.isActive('strike'),
+      isCodeActive: snapshot?.editor?.isActive('code'),
+      isHeading3Active: snapshot?.editor?.isActive('heading', { level: 3 }),
+      isBulletListActive: snapshot?.editor?.isActive('bulletList'),
+      isOrderedListActive: snapshot?.editor?.isActive('orderedList'),
+      undoAvailable: snapshot?.editor?.can().chain().focus().undo().run(),
+      redoAvailable: snapshot?.editor?.can().chain().focus().redo().run(),
+    }),
+  })
+
+  if (!editorObject || !editorState) {
     return null
   }
 
@@ -172,17 +187,19 @@ function SimpleEditor({
           <div className="flex items-center">
             <div className="mr-4 flex space-x-1">
               <button
+                aria-label="Undo"
                 className="rounded p-1 hover:bg-gray-200 disabled:opacity-50"
                 onClick={() => editorObject.chain().focus().undo().run()}
-                disabled={!editorObject.can().undo()}
+                disabled={!editorState.undoAvailable}
                 type="button"
               >
                 <RotateLeft size={20} />
               </button>
               <button
+                aria-label="Redo"
                 className="rounded p-1 hover:bg-gray-200 disabled:opacity-50"
                 onClick={() => editorObject.chain().focus().redo().run()}
-                disabled={!editorObject.can().redo()}
+                disabled={!editorState.redoAvailable}
                 type="button"
               >
                 <RotateRight size={20} />
@@ -190,8 +207,10 @@ function SimpleEditor({
             </div>
             <div className="mr-4 flex space-x-1">
               <button
+                aria-label="Bold"
+                aria-pressed={editorState.isBoldActive}
                 className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('bold'),
+                  'bg-gray-300': editorState.isBoldActive,
                 })}
                 onClick={toggleBold}
                 type="button"
@@ -199,8 +218,10 @@ function SimpleEditor({
                 <BoldIcon size={20} />
               </button>
               <button
+                aria-label="Italic"
+                aria-pressed={editorState.isItalicActive}
                 className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('italic'),
+                  'bg-gray-300': editorState.isItalicActive,
                 })}
                 onClick={toggleItalic}
                 type="button"
@@ -209,8 +230,10 @@ function SimpleEditor({
               </button>
 
               <button
+                aria-label="Strikethrough"
+                aria-pressed={editorState.isStrikeActive}
                 className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('strike'),
+                  'bg-gray-300': editorState.isStrikeActive,
                 })}
                 onClick={toggleStrike}
                 type="button"
@@ -220,8 +243,10 @@ function SimpleEditor({
             </div>
             <div className="mr-4 flex space-x-1">
               <button
+                aria-label="Code"
+                aria-pressed={editorState.isCodeActive}
                 className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('code'),
+                  'bg-gray-300': editorState.isCodeActive,
                 })}
                 onClick={toggleCode}
                 type="button"
@@ -231,8 +256,10 @@ function SimpleEditor({
             </div>
             <div className="flex space-x-1">
               <button
+                aria-label="Bullet list"
+                aria-pressed={editorState.isBulletListActive}
                 className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('bulletList'),
+                  'bg-gray-300': editorState.isBulletListActive,
                 })}
                 onClick={toggleBulletList}
                 type="button"
@@ -240,8 +267,10 @@ function SimpleEditor({
                 <UnorderedListIcon size={20} />
               </button>
               <button
+                aria-label="Numbered list"
+                aria-pressed={editorState.isOrderedListActive}
                 className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('orderedList'),
+                  'bg-gray-300': editorState.isOrderedListActive,
                 })}
                 onClick={toggleOrderedList}
                 type="button"
@@ -249,8 +278,10 @@ function SimpleEditor({
                 <OrderedListIcon size={20} />
               </button>
               <button
+                aria-label="Heading 3"
+                aria-pressed={editorState.isHeading3Active}
                 className={cn('rounded p-1 hover:bg-gray-200', {
-                  'bg-gray-300': editorObject.isActive('heading', { level: 3 }),
+                  'bg-gray-300': editorState.isHeading3Active,
                 })}
                 onClick={() =>
                   editorObject.chain().focus().toggleHeading({ level: 3 }).run()

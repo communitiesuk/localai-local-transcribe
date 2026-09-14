@@ -9,8 +9,16 @@ vi.mock('@/utils/auth', () => ({
 const { parseAuthToken } = await import('@/utils/auth')
 const { proxy } = await import('@/proxy')
 
-const buildRequest = (headers: Record<string, string> = {}) =>
-  new NextRequest(new URL('https://example.com/some-page'), { headers })
+const buildRequest = (
+  headers: Record<string, string> = {},
+  path = '/some-page'
+) => new NextRequest(new URL(`https://example.com${path}`), { headers })
+
+const buildUserResponse = (acceptedTou = true) =>
+  new Response(JSON.stringify({ accepted_tou: acceptedTou }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  })
 
 beforeEach(() => {
   vi.mocked(parseAuthToken).mockReset()
@@ -25,10 +33,7 @@ describe('proxy auth pathways', () => {
   it('bypasses auth when ENVIRONMENT is local', async () => {
     vi.stubEnv('ENVIRONMENT', 'local')
     vi.stubEnv('BACKEND_HOST', 'http://local')
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
-    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(buildUserResponse()))
 
     const res = await proxy(buildRequest())
 
@@ -39,10 +44,7 @@ describe('proxy auth pathways', () => {
   it('redirects to /unauthorised when auth token is missing', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
-    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(buildUserResponse()))
 
     const res = await proxy(buildRequest())
 
@@ -54,10 +56,7 @@ describe('proxy auth pathways', () => {
   it('proceeds when parseAuthToken returns an authorised result', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
-    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(buildUserResponse()))
     vi.mocked(parseAuthToken).mockResolvedValue({
       email: 'a@b.com',
       isAuthorised: true,
@@ -70,13 +69,43 @@ describe('proxy auth pathways', () => {
     expect(parseAuthToken).toHaveBeenCalledWith(expect.anything(), 'tok')
   })
 
+  it('redirects to /terms-of-use when the backend user has not accepted terms', async () => {
+    vi.stubEnv('ENVIRONMENT', 'development')
+    vi.stubEnv('BACKEND_HOST', 'http://development')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(buildUserResponse(false)))
+    vi.mocked(parseAuthToken).mockResolvedValue({
+      email: 'a@b.com',
+      isAuthorised: true,
+      authReason: 'OIDC',
+    })
+
+    const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toBe('https://example.com/terms-of-use')
+  })
+
+  it('allows /terms-of-use when the backend user has not accepted terms', async () => {
+    vi.stubEnv('ENVIRONMENT', 'development')
+    vi.stubEnv('BACKEND_HOST', 'http://development')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(buildUserResponse(false)))
+    vi.mocked(parseAuthToken).mockResolvedValue({
+      email: 'a@b.com',
+      isAuthorised: true,
+      authReason: 'OIDC',
+    })
+
+    const res = await proxy(
+      buildRequest({ 'x-amzn-oidc-data': 'tok' }, '/terms-of-use')
+    )
+
+    expect(res.headers.get('x-middleware-next')).toBe('1')
+  })
+
   it('redirects to /unauthorised when parseAuthToken returns null', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
-    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(buildUserResponse()))
     vi.mocked(parseAuthToken).mockResolvedValue(null)
 
     const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
@@ -88,10 +117,7 @@ describe('proxy auth pathways', () => {
   it('redirects to /unauthorised when parseAuthToken returns isAuthorised: false', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
-    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(buildUserResponse()))
     vi.mocked(parseAuthToken).mockResolvedValue({
       email: 'a@b.com',
       isAuthorised: false,
@@ -107,10 +133,7 @@ describe('proxy auth pathways', () => {
   it('redirects to /unauthorised when parseAuthToken throws', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
-    )
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(buildUserResponse()))
     vi.mocked(parseAuthToken).mockRejectedValue(new Error('boom'))
 
     const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))

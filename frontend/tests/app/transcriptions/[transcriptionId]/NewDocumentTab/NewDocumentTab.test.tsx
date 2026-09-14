@@ -8,8 +8,10 @@ vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }))
 
 const setBannerMock = vi.hoisted(() => vi.fn())
 vi.mock('@/stores/use-banner-store', () => ({
-  useBannerStore: (selector: (s: { setBanner: unknown }) => unknown) =>
-    selector({ setBanner: setBannerMock }),
+  useBannerStore: (selector?: (s: { setBanner: unknown }) => unknown) =>
+    selector
+      ? selector({ setBanner: setBannerMock })
+      : { setBanner: setBannerMock },
 }))
 
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({

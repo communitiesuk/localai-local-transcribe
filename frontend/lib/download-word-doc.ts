@@ -102,36 +102,100 @@ export function preprocessHtml(
 </html>`
 }
 
+async function getNewFileHandle(
+  fileName: string
+): Promise<FileSystemFileHandle | null> {
+  const options = {
+    suggestedName: fileName,
+    types: [
+      {
+        description: 'Word document',
+        accept: {
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            ['.docx'],
+        },
+      },
+    ],
+  }
+
+  if (!window.showSaveFilePicker) {
+    return null
+  }
+
+  return await window.showSaveFilePicker(options)
+}
+
+async function getNewFileHandleOrAbort(
+  fileName: string
+): Promise<FileSystemFileHandle | null | undefined> {
+  // cancelling FileSave causes an AbortError so catch that here
+  try {
+    return await getNewFileHandle(fileName)
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      return undefined
+    }
+
+    throw error
+  }
+}
+
+async function wordBlobToFile(
+  blob: Blob,
+  fileName: string,
+  fileHandle: FileSystemFileHandle | null | undefined
+) {
+  if (fileHandle === undefined) {
+    // user cancelled download
+    return false
+  }
+
+  if (fileHandle === null) {
+    // fallback as FilePicker is experimental so may be null
+    saveAs(blob, fileName)
+    return true
+  }
+
+  const writable = await fileHandle.createWritable()
+  await writable.write(blob)
+  await writable.close()
+  return true
+}
+
 export async function downloadTranscriptDoc(
   transcript: DialogueEntry[],
   fileName: string = 'transcript.docx'
-): Promise<void> {
+): Promise<boolean> {
+  const fileHandle = await getNewFileHandleOrAbort(fileName)
+
   const html = `<!DOCTYPE html><html><head>${getDocumentStyles()}</head><body>${formatTranscript(transcript)}</body></html>`
   const result = await asBlob(html)
   const blob = result instanceof Blob ? result : new Blob([result as BlobPart])
 
-  saveAs(blob, fileName)
+  return await wordBlobToFile(blob, fileName, fileHandle)
 }
 
 async function convertHTMLToWordAndDownload(
   htmlContent: string,
   transcript: DialogueEntry[],
   fileName: string = 'ai-minutes.docx'
-): Promise<void> {
+): Promise<boolean> {
+  const fileHandle = await getNewFileHandleOrAbort(fileName)
+
   const processedHtml = preprocessHtml(htmlContent, transcript)
   const result = await asBlob(processedHtml)
   const blob = result instanceof Blob ? result : new Blob([result as BlobPart])
 
-  saveAs(blob, fileName)
+  return await wordBlobToFile(blob, fileName, fileHandle)
 }
 
 async function convertAIMinutesToWordDoc(
   html: string,
   transcript: DialogueEntry[],
   fileName: string = 'document.docx'
-): Promise<void> {
+): Promise<boolean> {
   const cleanedHTML = html.replace(citationRegexWithSpace, '')
-  await convertHTMLToWordAndDownload(cleanedHTML, transcript, fileName)
+  return await convertHTMLToWordAndDownload(cleanedHTML, transcript, fileName)
 }
 
 export default convertAIMinutesToWordDoc
