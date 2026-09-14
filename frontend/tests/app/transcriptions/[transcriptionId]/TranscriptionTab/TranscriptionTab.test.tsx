@@ -14,6 +14,7 @@ import {
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import type { TranscriptionGetResponse } from '@/lib/client'
 import { DialogueEntry } from '@/lib/client'
+import userEvent from '@testing-library/user-event'
 
 const updateDialogueEntryTextMock = vi.fn()
 const updateDialogueEntrySpeakerMock = vi.fn()
@@ -631,5 +632,24 @@ describe('Transcription tab focus citation', () => {
       `dialogue-entry-${dialog_entry_id}`
     )
     await waitFor(() => expect(dialogue_entry).toHaveFocus())
+  })
+
+  it('makes dialogue entry no longer focusable after initial focus is lost', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
+
+    // click the other dialogue entry
+    await userEvent.click(screen.getByTestId('dialogue-entry-0'))
+
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+
+    await userEvent.click(dialogue_entry)
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
   })
 })

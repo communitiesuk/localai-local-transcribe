@@ -255,15 +255,26 @@ export function TranscriptionTab({
   useEffect(() => {
     if (citationIdToFocus === undefined) return
 
+    let entry: HTMLDivElement | null = null
+    const removeTabIndex = () => entry?.removeAttribute('tabindex')
+
     // on mount the fields array gets regenerated and so all the dialogue entries rerender
     // this timeout ensures the focus setting runs afterwards.
     const timeout = setTimeout(() => {
       if (!focusCitationRef.current) return
+
+      entry = focusCitationRef.current
+
       scrollToElement(focusCitationRef)
-      focusCitationRef.current.focus()
+      entry.focus()
+      entry.addEventListener('blur', removeTabIndex, { once: true })
     }, 0)
 
-    return () => clearTimeout(timeout)
+    return () => {
+      clearTimeout(timeout)
+      entry?.removeEventListener('blur', removeTabIndex)
+      removeTabIndex()
+    }
   }, [citationIdToFocus])
 
   const hasRecordings = !!recordings && !!recordings.length
