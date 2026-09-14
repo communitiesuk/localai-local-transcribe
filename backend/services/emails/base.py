@@ -1,18 +1,12 @@
-from enum import StrEnum
 from typing import Protocol
-
 
 class EmailSendError(Exception):
     pass
 
-
-class EmailTemplate(StrEnum):
-    INVITE = "invite"
-
-
 class EmailSender(Protocol):
-    def send_email(
-        self,
-        email_address: str,
-        template: EmailTemplate,
+    def send_invite_email(
+        self, 
+        email_address, 
+        user_name, 
+        organisation_name
     ) -> None: ...

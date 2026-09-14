@@ -15,6 +15,7 @@ from backend.api.dependencies import (
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email
+from backend.services.emails import get_email_sender
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
 from common.types import (
@@ -29,6 +30,8 @@ from common.types import (
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
+
+email_sender = get_email_sender()
 
 
 @users_router.get("/me")
@@ -117,6 +120,13 @@ async def create_user(
     session.add(new_user)
     await session.commit()
     await session.refresh(new_user)
+
+    inviter_organisation_name = None
+    if (user.organisation_id):
+        inviter_organisation = await session.get(Organisation, user.organisation_id)
+        if inviter_organisation:
+            inviter_organisation_name = inviter_organisation.name
+    email_sender.send_invite_email(data.email, data.name, inviter_organisation_name)
 
     return to_user_response(new_user)
 
