@@ -96,7 +96,7 @@ orjson = "^3.11.9"
 notifications-python-client = "^12.1.0"
 
 [tool.poetry.group.backend.dependencies]
-pyjwt = "^2.14.0"
+pyjwt = "2.13.0"
 posthog = "^6.6.1"
 uvicorn = "^0.31.0"
 apscheduler = "^3.11.0"
