@@ -1,15 +1,15 @@
 run:
   eval_type: bias
-  input_dir: evals/dataset_generation/counterfactual_generation/output
-  output_dir: evals/summarisation/output/bias
-  seed: 0
-  limit: 10
   prompt_version: dev
   num_iterations: 1
+  dataset_version: synthetic-bias-smoke
+  spc_baseline_enabled: false
+  emit_spc_baseline: false
 
 dataset:
-  name: counterfactual
-  config: default
+  name: synthetic-counterfactuals
+  source: blob
+  blob_path: summarisation/bias/smoke-test/gender_facilitator_to_chair.json
   dialogue_field: dialogue
   reference_summary_field: summary
 
@@ -24,3 +24,7 @@ metrics:
 prompts:
   summarizer_template_name: General
   judge_template_path: evals/summarisation/prompts/judge.j2
+
+blob:
+  enabled: true
+  output_prefix: summarisation

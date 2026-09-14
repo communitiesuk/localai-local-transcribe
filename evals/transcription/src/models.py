@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Protocol, TypedDict
+from typing import Protocol, Self, TypedDict
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from common.database.postgres_models import DialogueEntry
 
@@ -90,6 +90,12 @@ class AMIDatasetSample(DatasetItem):
     dataset_index: int
     duration_sec: float
     num_utterances: int
+    reference_diarization: list[dict] = []
+
+
+class AudioFilesDatasetSample(DatasetItem):
+    file_id: str
+    dataset_index: int
     reference_diarization: list[dict] = []
 
 
@@ -182,6 +188,50 @@ class EngineResults(BaseModel):
     timing: TimingAccumulator
 
 
+class BlobConfig(BaseModel):
+    enabled: bool = False
+    input_prefix: str | None = None
+    output_prefix: str = ""
+    restricted_account_url: str | None = None
+    shared_account_url: str | None = None
+
+    @field_validator("input_prefix")
+    @classmethod
+    def validate_input_prefix(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip("/").startswith("transcription/"):
+            msg = "Transcription blob inputs must live under the input container's transcription/ prefix"
+            raise ValueError(msg)
+        return value
+
+    @model_validator(mode="after")
+    def require_input_prefix_for_blob(self) -> Self:
+        if self.enabled and self.input_prefix is None:
+            msg = "blob.input_prefix is required when blob.enabled is true"
+            raise ValueError(msg)
+        return self
+
+
+class EvaluationConfig(BaseModel):
+    num_samples: int | None = None
+    sample_duration_fraction: float | None = None
+    dataset_loader: str | None = None
+    max_workers: int | None = None
+    prepare_only: bool = False
+    check_drift_thresholds: bool = False
+    adapters: list[str] = Field(default_factory=list)
+    blob: BlobConfig = Field(default_factory=BlobConfig)
+
+    @model_validator(mode="after")
+    def require_adapters_for_execution(self) -> Self:
+        if self.prepare_only and self.blob.enabled:
+            msg = "prepare_only is for local dataset setup only and cannot be used when blob.enabled is true"
+            raise ValueError(msg)
+        if not self.prepare_only and not self.adapters:
+            msg = "adapters must contain at least one adapter unless prepare_only is true"
+            raise ValueError(msg)
+        return self
+
+
 class MeetingSegment(BaseModel):
     """
     Represents a meeting segment with optional utterance cutoff time.
@@ -192,9 +242,15 @@ class MeetingSegment(BaseModel):
 
 
 class DatasetProtocol(Protocol):
-    """
-    Protocol for dataset objects supporting indexing and length operations.
-    """
+    """Dataset contract for eval runs."""
+
+    @property
+    def dataset_version(self) -> str:
+        pass
+
+    @property
+    def dataset_split(self) -> str | None:
+        pass
 
     def __len__(self) -> int:
         pass

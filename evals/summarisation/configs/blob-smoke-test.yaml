@@ -1,15 +1,14 @@
+# Standard summarisation smoke test reading from / writing to blob storage.
 run:
-  eval_type: bias
-  input_dir: evals/dataset_generation/counterfactual_generation/output
-  output_dir: evals/summarisation/output/bias
+  eval_type: standard
   seed: 0
-  limit: 10
+  limit: 2
   prompt_version: dev
-  num_iterations: 1
 
 dataset:
-  name: counterfactual
-  config: default
+  name: synthetic-dialogues
+  source: blob
+  blob_path: summarisation/standard/dialogues.jsonl
   dialogue_field: dialogue
   reference_summary_field: summary
 
@@ -22,5 +21,8 @@ metrics:
   - readability
 
 prompts:
-  summarizer_template_name: General
   judge_template_path: evals/summarisation/prompts/judge.j2
+
+blob:
+  enabled: true
+  output_prefix: summarisation

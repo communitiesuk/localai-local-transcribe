@@ -11,7 +11,7 @@ from evals.summarisation.src.hallucination.types import HallucinationInput
 
 class RunSummary(TypedDict):
     run_id: str
-    split: str
+    split: str | None
     n: int
     overall: float | None
     metrics: dict[str, dict[str, float]]
@@ -20,6 +20,16 @@ class RunSummary(TypedDict):
     skipped_dimensions: list[str]
     timestamp: str
     latency_ms: dict[str, int]
+    errors: list[dict[str, str]]
+
+
+def run_halted(summary: RunSummary) -> bool:
+    """True when the eval halted before completing (dspy exceeded its error budget).
+
+    The runner records the halt as a stage="evaluate" error so this can be detected from a
+    persisted summary.json without re-running — used by the CLI to fail the pipeline.
+    """
+    return any(err.get("stage") == "evaluate" for err in summary.get("errors", []))
 
 
 class DialogExample(BaseModel):
@@ -86,3 +96,4 @@ class EvalRunState(BaseModel):
     summarize_ms_values: list[int] = Field(default_factory=list)
     judge_ms_values: list[int] = Field(default_factory=list)
     metric_scores: dict[str, list[float]] = Field(default_factory=lambda: defaultdict(list))  # type: ignore[arg-type]
+    errors: list[dict[str, str]] = Field(default_factory=list)

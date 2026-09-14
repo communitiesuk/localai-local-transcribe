@@ -53,7 +53,7 @@ def setup_evaluation(tmp_path, monkeypatch):
             AZURE_APIM_ACCESS_TOKEN="token",
         )
         monkeypatch.setattr("evals.transcription.src.evaluate.settings", fake_settings)
-        monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
+        monkeypatch.setattr("evals.transcription.src.evaluate._load_dataset", lambda *_args: dataset)
         monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: audio_duration)
         monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
         monkeypatch.setattr("evals.transcription.src.evaluate.ADAPTER_REGISTRY", fake_registry)
@@ -180,7 +180,7 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
         raise ValueError(msg)
 
     monkeypatch.setattr("common.services.transcription_services.azure.make_stt_request", fake_make_stt_request)
-    monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_: dataset)
+    monkeypatch.setattr("evals.transcription.src.evaluate._load_dataset", lambda *_args: dataset)
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
 
