@@ -117,7 +117,12 @@ class SimpleTemplate(Template, Protocol):
         else:
             total_claims = 0
             hallucinations = []
-        return MinuteAndHallucinations(text=minutes, total_claims=total_claims, hallucinations=hallucinations)
+        return MinuteAndHallucinations(
+            text=minutes,
+            total_claims=total_claims,
+            hallucinations=hallucinations,
+            template_prompt_version=cls.prompt_version,
+        )
 
 
 class SectionTemplate(Template, Protocol):
@@ -213,4 +218,9 @@ class SectionTemplate(Template, Protocol):
             final_minutes = initial_draft
             total_claims = 0
 
-        return MinuteAndHallucinations(text=final_minutes, total_claims=total_claims, hallucinations=all_hallucinations)
+        return MinuteAndHallucinations(
+            text=final_minutes,
+            total_claims=total_claims,
+            hallucinations=all_hallucinations,
+            template_prompt_version=cls.prompt_version,
+        )
