@@ -14,7 +14,7 @@ from backend.api.dependencies import (
 )
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_paginated_users, get_user_by_email
+from backend.utils.queries import get_paginated_users, get_user_by_email, get_user_by_evaluation_id
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
 from common.types import (
@@ -105,6 +105,14 @@ async def create_user(
     if is_existing_user:
         raise HTTPException(status_code=409, detail=f"A user with email '{data.email}' already exists")
 
+    is_existing_evaluation_id = await get_user_by_evaluation_id(session, data.evaluation_id)
+    if is_existing_evaluation_id:
+        # The evaluation ID is never echoed back, so it stays out of the detail.
+        raise HTTPException(
+            status_code=409,
+            detail="This evaluation ID is already in use. Check the evaluation ID you received from MHCLG.",
+        )
+
     email_domain = data.email.split("@")[1]
     lowered_allowed_domains = [domain.lower() for domain in organisation.allowed_domains]
     if email_domain not in lowered_allowed_domains:
@@ -112,7 +120,12 @@ async def create_user(
             status_code=400, detail=f"An email of domain '{email_domain}' is not associated with this organisation"
         )
 
-    new_user = User(name=data.name, email=data.email, organisation_id=organisation.id)
+    new_user = User(
+        name=data.name,
+        email=data.email,
+        evaluation_id=data.evaluation_id,
+        organisation_id=organisation.id,
+    )
 
     session.add(new_user)
     await session.commit()

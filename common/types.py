@@ -155,6 +155,7 @@ class ChatCreateResponse(BaseModel):
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
+    evaluation_id: str = Field(min_length=1)
     organisation_id: uuid.UUID
 
 

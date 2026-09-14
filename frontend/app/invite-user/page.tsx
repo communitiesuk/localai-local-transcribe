@@ -9,6 +9,12 @@ import { UserRole } from '@/lib/utils'
 import isAllowedDomain from '@/utils/allowed-domains'
 import { Loader2 } from 'lucide-react'
 import { userExistsUsersUserExistsGet } from '@/lib/client'
+import {
+  GovukFormGroup,
+  GovukHint,
+  GovukInput,
+  GovukLabel,
+} from '@/components/govuk'
 
 export default function AdminAddUserPage() {
   const router = useRouter()
@@ -19,12 +25,14 @@ export default function AdminAddUserPage() {
   const {
     name: storedName,
     email: storedEmail,
+    evaluationId: storedEvaluationId,
     organisationId,
     setInviteDetails,
     clearInviteDetails,
   } = useInviteUserStore()
   const [name, setName] = useState(storedName)
   const [email, setEmail] = useState(storedEmail)
+  const [evaluationId, setEvaluationId] = useState(storedEvaluationId)
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState(invalidDomainError)
 
@@ -68,7 +76,7 @@ export default function AdminAddUserPage() {
       return
     }
 
-    setInviteDetails(name, email, organisationId)
+    setInviteDetails(name, email, evaluationId.trim(), organisationId)
     router.push('/invite-user/confirm')
   }
 
@@ -144,6 +152,28 @@ export default function AdminAddUserPage() {
               required
             />
           </div>
+
+          <GovukFormGroup>
+            <GovukLabel htmlFor="invitee-evaluation-id">
+              Evaluation ID
+            </GovukLabel>
+            <GovukHint id="invitee-evaluation-id-hint">
+              Use the evaluation ID that MHCLG provided for this person. It
+              cannot be one that is already in use, and you will not be able to
+              see it in Local Transcribe again.
+            </GovukHint>
+            <GovukInput
+              id="invitee-evaluation-id"
+              name="evaluationId"
+              type="text"
+              spellCheck="false"
+              className="govuk-input--width-20"
+              value={evaluationId}
+              onChange={(e) => setEvaluationId(e.target.value)}
+              aria-describedby="invitee-evaluation-id-hint"
+              required
+            />
+          </GovukFormGroup>
 
           <div
             style={{
