@@ -248,4 +248,23 @@ describe('<NewDocumentTab />', () => {
       screen.getByRole('heading', { name: 'Choose a document template' })
     ).toBeInTheDocument()
   })
+
+  it('reports it is busy while the chooser is open', () => {
+    const onActivityChange = vi.fn()
+    renderTab({ onActivityChange })
+    expect(onActivityChange).toHaveBeenLastCalledWith(true)
+  })
+
+  it('reports it is no longer busy when generation fails', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    configureQueries({ versions: { data: [{ status: 'failed' }] } })
+    const onActivityChange = vi.fn()
+    renderTab({ onActivityChange })
+
+    selectAndCreate()
+
+    expect(onActivityChange).toHaveBeenLastCalledWith(false)
+  })
 })

@@ -4,9 +4,17 @@ import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/m
 export const DocumentTab = ({
   transcription,
   minute,
+  onActivityChange,
 }: {
   transcription: TranscriptionGetResponse
   minute: MinuteListItem
+  onActivityChange?: (busy: boolean) => void
 }) => {
-  return <MinuteEditor transcription={transcription} minute={minute} />
+  return (
+    <MinuteEditor
+      transcription={transcription}
+      minute={minute}
+      onActivityChange={onActivityChange}
+    />
+  )
 }

@@ -27,11 +27,13 @@ export const NewDocumentTab = ({
   onCancel,
   onCreated,
   onMinuteCreated,
+  onActivityChange,
 }: {
   transcription: TranscriptionGetResponse
   onCancel: () => void
   onCreated: (templateName: string) => void
   onMinuteCreated?: (minuteId: string) => void
+  onActivityChange?: (busy: boolean) => void
 }) => {
   const [selectedValue, setSelectedValue] = useState('')
   const [createdMinuteId, setCreatedMinuteId] = useState<string | null>(null)
@@ -97,8 +99,18 @@ export const NewDocumentTab = ({
     }
   }, [isCompleted, isFailed, createdTemplateName, onCreated, setBanner])
 
+  useEffect(() => {
+    if (!isCompleted) onActivityChange?.(!isFailed)
+  }, [isCompleted, isFailed, onActivityChange])
+
   if (isCompleted) {
-    return <MinuteEditor transcription={transcription} minute={minute} />
+    return (
+      <MinuteEditor
+        transcription={transcription}
+        minute={minute}
+        onActivityChange={onActivityChange}
+      />
+    )
   }
 
   if (isCreating) {

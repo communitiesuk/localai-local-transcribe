@@ -330,4 +330,25 @@ describe('<MinuteEditor /> AI edit flow', () => {
       path: { minute_version_id: 'v2' },
     })
   })
+  it('reports busy while any version is generating, even when viewing a completed one', () => {
+    const onActivityChange = vi.fn()
+    configureQuery([
+      makeVersion(),
+      makeVersion({
+        id: 'v2',
+        status: 'in_progress',
+        content_source: 'ai_edit',
+      }),
+    ])
+
+    render(
+      <MinuteEditor
+        transcription={transcription}
+        minute={minute}
+        onActivityChange={onActivityChange}
+      />
+    )
+
+    expect(onActivityChange).toHaveBeenLastCalledWith(true)
+  })
 })

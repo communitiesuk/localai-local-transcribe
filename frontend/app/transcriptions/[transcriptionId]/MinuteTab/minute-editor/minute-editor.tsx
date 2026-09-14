@@ -42,9 +42,11 @@ type MinuteEditorForm = {
 export function MinuteEditor({
   transcription,
   minute,
+  onActivityChange,
 }: {
   transcription: TranscriptionGetResponse
   minute: Minute
+  onActivityChange?: (busy: boolean) => void
 }) {
   const [versionId, setVersionId] = useState<string | undefined>(undefined)
   const [editSourceVersionId, setEditSourceVersionId] = useState<
@@ -104,6 +106,15 @@ export function MinuteEditor({
 
   const isError = displayedMinuteVersion?.status == 'failed'
 
+  // Busy if any version is generating, not just the viewed one, so a background AI edit still counts.
+  const isAnyVersionGenerating = useMemo(
+    () =>
+      minuteVersions.some((v) =>
+        ['awaiting_start', 'in_progress'].includes(v.status)
+      ),
+    [minuteVersions]
+  )
+
   useEffect(() => {
     const banner = getTransitionBanner(
       previousMinuteVersionsRef.current,
@@ -128,6 +139,10 @@ export function MinuteEditor({
       form.setValue('html', displayedMinuteVersion.html_content)
     }
   }, [form, displayedMinuteVersion])
+
+  useEffect(() => {
+    onActivityChange?.(isAnyVersionGenerating || isEditable)
+  }, [isAnyVersionGenerating, isEditable, onActivityChange])
   const htmlContent = useWatch({ name: 'html', control: form.control })
   const contentToCopy = useMemo(() => {
     return htmlContent?.replaceAll(citationRegexWithSpace, '') || ''
