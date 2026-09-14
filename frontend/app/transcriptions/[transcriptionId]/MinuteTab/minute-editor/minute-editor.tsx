@@ -423,7 +423,7 @@ export function MinuteEditor({
               isEditing={isEditable}
               onContentChange={onChange}
               hideCitations={hideCitations && !isEditable}
-              focusDialogEntry={onCitationClicked}
+              onCitationClicked={onCitationClicked}
             />
           )}
         />

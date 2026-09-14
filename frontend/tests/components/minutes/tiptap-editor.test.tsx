@@ -13,7 +13,7 @@ describe('<SimpleEditor />', () => {
   })
 
   it('Should call focusDialogEntry on quote click with quote index', async () => {
-    const focusDialogEntry = vi.fn()
+    const onCitationClicked = vi.fn()
 
     render(
       <SimpleEditor
@@ -22,7 +22,7 @@ describe('<SimpleEditor />', () => {
         isEditing={false}
         currentTranscription={{} as TranscriptionGetResponse}
         hideCitations={false}
-        focusDialogEntry={focusDialogEntry}
+        onCitationClicked={onCitationClicked}
       />
     )
 
@@ -30,6 +30,6 @@ describe('<SimpleEditor />', () => {
     expect(citationLink).toBeInTheDocument()
 
     await userEvent.click(citationLink)
-    expect(focusDialogEntry).toHaveBeenCalledWith(1)
+    expect(onCitationClicked).toHaveBeenCalledWith(1)
   })
 })

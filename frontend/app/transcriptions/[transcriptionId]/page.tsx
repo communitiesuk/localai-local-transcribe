@@ -61,7 +61,7 @@ export default function TranscriptionPage(props: {
     )
   }, [])
 
-  const [citationIndexToFocus, setCitationIndexToFocus] = useState<
+  const [dialogueEntryIndexToFocus, setDialogueEntryIndexToFocus] = useState<
     number | null
   >(null)
 
@@ -190,7 +190,7 @@ export default function TranscriptionPage(props: {
 
   const handleCitationClicked = (citationIndex: number) => {
     handleTabChange('transcript')
-    setCitationIndexToFocus(citationIndex)
+    setDialogueEntryIndexToFocus(citationIndex) // citation indices match dialogue entry indices
   }
 
   // Persisted document tabs, minus any doc still shown by its in-session draft tab.
@@ -246,8 +246,8 @@ export default function TranscriptionPage(props: {
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
             onDismissBanner={clearBanner}
-            citationIdToFocus={citationIndexToFocus ?? undefined}
-            onCitationIdFocusLost={() => setCitationIndexToFocus(null)}
+            dialogueEntryIndexToFocus={dialogueEntryIndexToFocus ?? undefined}
+            onDialogueEntryFocusLost={() => setDialogueEntryIndexToFocus(null)}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">

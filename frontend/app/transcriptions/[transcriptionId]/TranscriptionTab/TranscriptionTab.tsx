@@ -60,15 +60,15 @@ export function TranscriptionTab({
   onLineEditError,
   onEditModeChange,
   onDismissBanner,
-  citationIdToFocus,
-  onCitationIdFocusLost,
+  dialogueEntryIndexToFocus,
+  onDialogueEntryFocusLost,
 }: {
   transcription: TranscriptionGetResponse
   onLineEditError: (error: string | null) => void
   onEditModeChange?: (isEditing: boolean) => void
   onDismissBanner?: () => void
-  citationIdToFocus?: number
-  onCitationIdFocusLost?: () => void
+  dialogueEntryIndexToFocus?: number
+  onDialogueEntryFocusLost?: () => void
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
@@ -225,7 +225,7 @@ export function TranscriptionTab({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playingRef = useRef<HTMLDivElement | null>(null)
   const editSnapshotRef = useRef<DialogueEntry[]>([])
-  const focusCitationRef = useRef<HTMLDivElement | null>(null)
+  const focusDialogueEntryRef = useRef<HTMLDivElement | null>(null)
   const [time, setTime] = useState(0)
 
   const [isLineEditMode, setIsLineEditMode] = useState(false)
@@ -255,22 +255,22 @@ export function TranscriptionTab({
   const scrollToPlaying = () => scrollToElement(playingRef)
 
   useEffect(() => {
-    if (citationIdToFocus === undefined) return
+    if (dialogueEntryIndexToFocus === undefined) return
 
     let entry: HTMLDivElement | null = null
     const onFocusLost = () => {
-      onCitationIdFocusLost?.()
+      onDialogueEntryFocusLost?.()
       entry?.removeAttribute('tabindex')
     }
 
     // on mount the fields array gets regenerated and so all the dialogue entries rerender
     // this timeout ensures the focus setting runs afterwards.
     const timeout = setTimeout(() => {
-      if (!focusCitationRef.current) return
+      if (!focusDialogueEntryRef.current) return
 
-      entry = focusCitationRef.current
+      entry = focusDialogueEntryRef.current
 
-      scrollToElement(focusCitationRef)
+      scrollToElement(focusDialogueEntryRef)
       entry.focus()
       entry.addEventListener('blur', onFocusLost, { once: true })
     }, 0)
@@ -280,7 +280,7 @@ export function TranscriptionTab({
       entry?.removeEventListener('blur', onFocusLost)
       onFocusLost()
     }
-  }, [citationIdToFocus, onCitationIdFocusLost])
+  }, [dialogueEntryIndexToFocus, onDialogueEntryFocusLost])
 
   const hasRecordings = !!recordings && !!recordings.length
 
@@ -524,7 +524,7 @@ export function TranscriptionTab({
                 watchedEntries?.[index + 1]?.start_time
               )
               const isSelectedForEdit = selectedLineIndex === index
-              const isCitationToFocus = index === citationIdToFocus
+              const isDialogueEntryToFocus = dialogueEntryIndexToFocus === index
 
               return (
                 <div
@@ -537,11 +537,11 @@ export function TranscriptionTab({
                       playingRef.current = el
                     }
 
-                    if (isCitationToFocus) {
-                      focusCitationRef.current = el
+                    if (isDialogueEntryToFocus) {
+                      focusDialogueEntryRef.current = el
                     }
                   }}
-                  tabIndex={isCitationToFocus ? -1 : undefined}
+                  tabIndex={isDialogueEntryToFocus ? -1 : undefined}
                   data-testid={`dialogue-entry-${index}`}
                 >
                   {hasRecordings && !isLineEditMode && (

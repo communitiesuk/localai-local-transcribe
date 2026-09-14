@@ -28,14 +28,14 @@ function SimpleEditor({
   onContentChange,
   isEditing,
   hideCitations,
-  focusDialogEntry,
+  onCitationClicked,
 }: {
   initialContent: string
   onContentChange: (newContent: string) => void
   isEditing: boolean
   currentTranscription: TranscriptionGetResponse
   hideCitations: boolean
-  focusDialogEntry?: (dialogueIndex: number) => void
+  onCitationClicked?: (citationIndex: number) => void
 }) {
   const CitationExtension = Extension.create({
     name: 'citation',
@@ -87,7 +87,7 @@ function SimpleEditor({
                     posthog.capture('citation_clicked', {
                       citationIndex: index,
                     })
-                    focusDialogEntry?.(index)
+                    onCitationClicked?.(index)
                     return true
                   }
                 }
