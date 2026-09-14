@@ -22,6 +22,7 @@ const renameSpeakerEverywhereMock = vi.fn()
 const setBannerMock = vi.fn()
 const clearBannerMock = vi.fn()
 const onLineEditErrorMock = vi.fn()
+const onCitationIdFocusLost = vi.fn()
 
 vi.mock('@/hooks/use-update-transcription-speakers', () => ({
   useUpdateTranscription: () => ({
@@ -104,6 +105,7 @@ const renderTabWithDialogueEntryFocused = (
       transcription={transcription}
       onLineEditError={onLineEditErrorMock}
       citationIdToFocus={dialogue_entry_index}
+      onCitationIdFocusLost={onCitationIdFocusLost}
     />
   )
 
@@ -623,6 +625,8 @@ describe('TranscriptionTab full edit flow', () => {
 })
 
 describe('Transcription tab focus citation', () => {
+  beforeEach(() => vi.clearAllMocks())
+
   it('focuses dialogue entry with given index on load', async () => {
     const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
 
@@ -651,5 +655,24 @@ describe('Transcription tab focus citation', () => {
 
     await userEvent.click(dialogue_entry)
     await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+  })
+
+  it('calls on focus lost after dialogue entry loses focus', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
+    expect(onCitationIdFocusLost).not.toHaveBeenCalled()
+
+    // click the other dialogue entry
+    await userEvent.click(screen.getByTestId('dialogue-entry-0'))
+
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+
+    expect(onCitationIdFocusLost).toHaveBeenCalledOnce()
   })
 })

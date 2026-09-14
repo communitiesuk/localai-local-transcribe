@@ -247,6 +247,7 @@ export default function TranscriptionPage(props: {
             onEditModeChange={setIsTranscriptEditing}
             onDismissBanner={clearBanner}
             citationIdToFocus={citationIndexToFocus ?? undefined}
+            onCitationIdFocusLost={() => setCitationIndexToFocus(null)}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
