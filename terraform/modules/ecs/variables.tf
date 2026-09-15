@@ -234,6 +234,11 @@ variable "govnotify_invite_template_id_arn" {
   type        = string
 }
 
+variable "govnotify_invite_no_organisation_template_id_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify invite no organisation template ID"
+  type        = string
+}
+
 variable "lb_listener_exists" {
   description = "Indicates whether the load balancer listener has been created"
   type        = bool

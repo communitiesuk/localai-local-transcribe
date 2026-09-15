@@ -157,6 +157,12 @@ class Settings(BaseSettings):
         description="Use the GovNotify website to create an email template and copy in the template ID.", default=None
     )
 
+    GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID: str | None = Field(
+        description="Use the GovNotify website to create an email template and copy in the template ID. For inviters "
+        "with no organisation.",
+        default=None,
+    )
+
     @model_validator(mode="after")
     def validate_govnotify(self) -> "Settings":
         if self.EMAIL_SERVICE == "gov_notify":
@@ -164,6 +170,9 @@ class Settings(BaseSettings):
                 error_text = "GOVNOTIFY_API_KEY must be set when EMAIL_SERVICE='gov_notify'"
                 raise ValueError(error_text)
             if not self.GOVNOTIFY_INVITE_TEMPLATE_ID:
+                error_text = "GOVNOTIFY_INVITE_TEMPLATE_ID must be set when EMAIL_SERVICE='gov_notify'"
+                raise ValueError(error_text)
+            if not self.GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID:
                 error_text = "GOVNOTIFY_INVITE_TEMPLATE_ID must be set when EMAIL_SERVICE='gov_notify'"
                 raise ValueError(error_text)
         return self
