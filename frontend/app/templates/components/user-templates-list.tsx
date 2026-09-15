@@ -38,10 +38,10 @@ export const UserTemplatesList = () => {
         title="Standard templates"
         description="Includes common templates for your department. You cannot delete these - duplicate one if you want to customise it."
         templates={sortedDefaultTemplates}
-        action={(template) => (
+        renderTemplateAction={(template) => (
           <Link
             href={`/templates/default/${encodeURIComponent(template.name)}/duplicate`}
-            className="govuk-link"
+            className="govuk-link govuk-link--no-visited-state"
           >
             Duplicate
           </Link>
@@ -64,9 +64,12 @@ export const UserTemplatesList = () => {
         templates={sortedUserTemplates}
         showUpdatedDate
         emptyMessage="You haven't made any templates yet."
-        action={(template) =>
+        renderTemplateAction={(template) =>
           hasEditableTemplateId(template) ? (
-            <Link href={`/templates/${template.id}`} className="govuk-link">
+            <Link
+              href={`/templates/${template.id}`}
+              className="govuk-link govuk-link--no-visited-state"
+            >
               Edit
             </Link>
           ) : null
@@ -86,14 +89,14 @@ const TemplateTable = ({
   templates,
   showUpdatedDate = false,
   emptyMessage,
-  action,
+  renderTemplateAction,
 }: {
   title?: string
   description?: string
   templates: SelectableTemplate[]
   showUpdatedDate?: boolean
   emptyMessage?: string
-  action?: (template: SelectableTemplate) => ReactNode
+  renderTemplateAction?: (template: SelectableTemplate) => ReactNode
 }) => (
   <section>
     {title && (
@@ -118,7 +121,7 @@ const TemplateTable = ({
                 Last updated
               </GovukTableHeaderCell>
             )}
-            {action && (
+            {renderTemplateAction && (
               <GovukTableHeaderCell scope="col">
                 <span className="govuk-visually-hidden">Actions</span>
               </GovukTableHeaderCell>
@@ -139,8 +142,10 @@ const TemplateTable = ({
                     : ''}
                 </GovukTableCell>
               )}
-              {action && (
-                <GovukTableCell isNumeric>{action(template)}</GovukTableCell>
+              {renderTemplateAction && (
+                <GovukTableCell isNumeric>
+                  {renderTemplateAction(template)}
+                </GovukTableCell>
               )}
             </GovukTableRow>
           ))}
