@@ -21,7 +21,7 @@ from common.database.postgres_models import DialogueEntry
 from common.llm.adapters.llm_constants import MAX_COMPLETION_TOKENS as MAX_TOKENS
 from common.llm.adapters.llm_constants import TEMPERATURE
 from common.settings import get_settings
-from evals.summarisation.prompts import DIMENSIONS
+from evals.summarisation.prompts import DIMENSIONS, JUDGE_CRITERIA_VERSION
 from evals.summarisation.src.common import (
     AppConfig,
     DialogExample,
@@ -249,6 +249,7 @@ class EvalRun:
                 reference_summary=ex.reference_summary,
                 candidate=pred.candidate,
                 metrics=metrics_out,
+                judge_criteria_version=JUDGE_CRITERIA_VERSION,
             )
             run.state.records.append(record)
             _maybe_flush_records(run.results_path, run.state.records, flush_every=10)
@@ -354,6 +355,7 @@ def _build_run_summary(
         "split": split,
         "n": len(devset),
         "overall": overall,
+        "judge_criteria_version": JUDGE_CRITERIA_VERSION,
         "metrics": metrics_summary,
         # Recorded so a dimension missing from `metrics` reads as deliberately out of scope for this
         # summary path, not as a dimension that silently failed to produce a score.
