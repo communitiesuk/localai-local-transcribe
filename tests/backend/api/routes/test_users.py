@@ -173,6 +173,45 @@ async def test_delete_user(
 
     assert response.status_code == expected_status
 
+@pytest.mark.asyncio
+async def test_create_user_success(
+    override_session,
+    override_support_admin_user,
+    make_organisation,
+    mock_email_sender,
+):
+    organisation = make_organisation(allowed_domains=["example.gov.uk"])
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+
+    with patch(
+        "backend.api.routes.users.get_user_by_email",
+        new=AsyncMock(return_value=None),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "test.user@example.gov.uk",
+                    "organisation_id": str(organisation.id),
+                },
+            )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["name"] == "Test User"
+    assert data["email"] == "test.user@example.gov.uk"
+    assert data["organisation_id"] == str(organisation.id)
+
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
+    mock_email_sender.send_invite_email.assert_called_once_with(
+        "test.user@example.gov.uk",
+        "Test User",
+        None,
+    )
 
 @pytest.mark.asyncio
 async def test_create_user_returns_409_when_email_already_exists(
