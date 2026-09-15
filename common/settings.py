@@ -158,7 +158,9 @@ class Settings(BaseSettings):
     )
 
     GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID: str | None = Field(
-        description="Use the GovNotify website to create an email template and copy in the template ID. For inviters with no organisation.", default=None
+        description="Use the GovNotify website to create an email template and copy in the template ID. For inviters "
+        "with no organisation.",
+        default=None,
     )
 
     @model_validator(mode="after")

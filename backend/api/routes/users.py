@@ -12,10 +12,10 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
+from backend.services.emails import get_email_sender
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email
-from backend.services.emails import get_email_sender
 from common.auth import is_admin_for_org, is_system_admin
 from common.database.postgres_models import Organisation, User, UserRole
 from common.types import (
@@ -122,7 +122,7 @@ async def create_user(
     await session.refresh(new_user)
 
     inviter_organisation_name = None
-    if (user.organisation_id):
+    if user.organisation_id:
         inviter_organisation = await session.get(Organisation, user.organisation_id)
         if inviter_organisation:
             inviter_organisation_name = inviter_organisation.name

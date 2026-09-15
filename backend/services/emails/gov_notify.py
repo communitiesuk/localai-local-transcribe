@@ -11,25 +11,23 @@ class GovNotifyEmailSender:
     def __init__(self) -> None:
         self.client = NotificationsAPIClient(settings.GOVNOTIFY_API_KEY)
 
-
-    def send_invite_email(
-        self,
-        email_address: str,
-        user_name: str,
-        organisation_name: str | None
-    ) -> None:
+    def send_invite_email(self, email_address: str, user_name: str, organisation_name: str | None) -> None:
         try:
-            if (organisation_name):
+            if organisation_name:
                 self.client.send_email_notification(
                     email_address,
                     settings.GOVNOTIFY_INVITE_TEMPLATE_ID,
-                    personalisation={"email_address": email_address, "user_name": user_name, "organisation_name": organisation_name}
+                    personalisation={
+                        "email_address": email_address,
+                        "user_name": user_name,
+                        "organisation_name": organisation_name,
+                    },
                 )
-            else: 
+            else:
                 self.client.send_email_notification(
                     email_address,
                     settings.GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID,
-                    personalisation={"email_address": email_address, "user_name": user_name}
+                    personalisation={"email_address": email_address, "user_name": user_name},
                 )
         except HTTPError as e:
             error_text = "Failed to send GovNotify email"
