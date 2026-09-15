@@ -52,7 +52,7 @@ export default function UserManagementClient() {
   const handleOrganisationChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value
     setSelectedOrganisation(value)
-    setInviteDetails('', '', value)
+    setInviteDetails('', '', '', value)
     router.replace(getHref(1))
   }
 
