@@ -449,6 +449,7 @@ class TranscriptionSortOrder(StrEnum):
 
 
 class TemplateMetadata(BaseModel):
+    id: str
     name: str
     description: str
     category: str
