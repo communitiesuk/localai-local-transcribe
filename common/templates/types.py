@@ -22,6 +22,7 @@ class Template(Protocol):
         name: The name of the template.
         description: A brief description of the template.
         category: The category or grouping of the template.
+        prompt_version: The semantic version of the prompt used by the template.
         agenda_usage: Specifies the usage of the agenda within the template.
         citations_required: Whether the generated minutes carry ``[n]`` citations into the
             transcript. Declared on every template so callers can tell, without generating
@@ -33,6 +34,7 @@ class Template(Protocol):
     name: str
     description: str
     category: str
+    prompt_version: str
     agenda_usage: AgendaUsage
     citations_required: bool
     temperature: float = 0.0
@@ -115,7 +117,12 @@ class SimpleTemplate(Template, Protocol):
         else:
             total_claims = 0
             hallucinations = []
-        return MinuteAndHallucinations(text=minutes, total_claims=total_claims, hallucinations=hallucinations)
+        return MinuteAndHallucinations(
+            text=minutes,
+            total_claims=total_claims,
+            hallucinations=hallucinations,
+            template_prompt_version=cls.prompt_version,
+        )
 
 
 class SectionTemplate(Template, Protocol):
@@ -211,4 +218,9 @@ class SectionTemplate(Template, Protocol):
             final_minutes = initial_draft
             total_claims = 0
 
-        return MinuteAndHallucinations(text=final_minutes, total_claims=total_claims, hallucinations=all_hallucinations)
+        return MinuteAndHallucinations(
+            text=final_minutes,
+            total_claims=total_claims,
+            hallucinations=all_hallucinations,
+            template_prompt_version=cls.prompt_version,
+        )

@@ -65,6 +65,7 @@ class MinuteVersion(BaseTableMixin, table=True):
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
     )
     error: str | None = None
+    template_prompt_version: str | None = Field(default=None, nullable=True)
     ai_edit_instructions: str | None = Field(
         default=None, description="If the content source is an AI edit, store the instruction here"
     )

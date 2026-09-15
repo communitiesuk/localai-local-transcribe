@@ -79,6 +79,7 @@ class MinuteHandlerService:
         html_content: str | None = None,
         status: JobStatus | None = None,
         error: str | None = None,
+        template_prompt_version: str | None = None,
     ) -> None:
         with SessionLocal() as session:
             minute_version = session.get(MinuteVersion, minute_version_id)
@@ -92,6 +93,8 @@ class MinuteHandlerService:
                 minute_version.status = status
             if error:
                 minute_version.error = error
+            if template_prompt_version is not None:
+                minute_version.template_prompt_version = template_prompt_version
             session.add(minute_version)
             session.commit()
 
@@ -195,6 +198,7 @@ class MinuteHandlerService:
                 minute_version.id,
                 html_content=html_content,
                 status=JobStatus.COMPLETED,
+                template_prompt_version=result.template_prompt_version,
             )
 
         except Exception as e:
@@ -283,7 +287,10 @@ class MinuteHandlerService:
                 generated = await cls.generate_full_minutes(minute)
         html_result = mistune.html(generated.text)
         return MinuteAndHallucinations(
-            text=cast(str, html_result), total_claims=generated.total_claims, hallucinations=generated.hallucinations
+            text=cast(str, html_result),
+            total_claims=generated.total_claims,
+            hallucinations=generated.hallucinations,
+            template_prompt_version=generated.template_prompt_version,
         )
 
     @classmethod
@@ -302,6 +309,7 @@ class MinuteHandlerService:
             text=convert_american_to_british_spelling(generated.text),
             total_claims=generated.total_claims,
             hallucinations=generated.hallucinations,
+            template_prompt_version=generated.template_prompt_version,
         )
 
     @classmethod
