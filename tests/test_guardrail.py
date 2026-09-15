@@ -258,3 +258,53 @@ def test_guardrail_score_logs_warning_when_failing_score_has_no_categories(caplo
 def test_all_failure_modes_are_categorized():
     """Defensive test to ensure that all FailureMode values have a corresponding category mapping."""
     assert set(FailureMode) == set(FailureDetail._CATEGORY_BY_MODE.keys())  # noqa: SLF001
+
+
+def test_personal_data_failure_mode_maps_to_data_protection():
+    """Personal data should have its own failure category."""
+    detail = FailureDetail(
+        category=FailureCategory.EDIT_SAFETY_AND_INTENT,
+        mode=FailureMode.PERSONAL_DATA_INCLUDED,
+    )
+
+    assert detail.category == FailureCategory.DATA_PROTECTION
+
+
+def test_transcript_instruction_failure_mode_maps_to_instruction_integrity():
+    """Transcript injection compliance should use the shared instruction-integrity category."""
+    detail = FailureDetail(
+        category=FailureCategory.EDIT_SAFETY_AND_INTENT,
+        mode=FailureMode.TRANSCRIPT_INSTRUCTION_FOLLOWED,
+    )
+
+    assert detail.category == FailureCategory.INSTRUCTION_INTEGRITY
+
+
+def test_template_instruction_failure_mode_maps_to_instruction_integrity():
+    """Template injection compliance should use the shared instruction-integrity category."""
+    detail = FailureDetail(
+        category=FailureCategory.EDIT_SAFETY_AND_INTENT,
+        mode=FailureMode.TEMPLATE_INSTRUCTION_FOLLOWED,
+    )
+
+    assert detail.category == FailureCategory.INSTRUCTION_INTEGRITY
+
+
+def test_no_quote_for_claim_maps_to_evidence_and_citation_quality():
+    """Missing citations should remain citation-quality failures."""
+    detail = FailureDetail(
+        category=FailureCategory.FACTUAL_INTEGRITY,
+        mode=FailureMode.NO_QUOTE_FOR_CLAIM,
+    )
+
+    assert detail.category == FailureCategory.EVIDENCE_AND_CITATION_QUALITY
+
+
+def test_weak_transcript_support_maps_to_factual_integrity():
+    """Weak source support should sit with other transcript-faithfulness failure modes."""
+    detail = FailureDetail(
+        category=FailureCategory.EVIDENCE_AND_CITATION_QUALITY,
+        mode=FailureMode.WEAK_TRANSCRIPT_SUPPORT,
+    )
+
+    assert detail.category == FailureCategory.FACTUAL_INTEGRITY
