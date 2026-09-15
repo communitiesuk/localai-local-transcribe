@@ -173,6 +173,7 @@ async def test_delete_user(
 
     assert response.status_code == expected_status
 
+
 @pytest.mark.asyncio
 async def test_create_user_success(
     override_session,
@@ -212,6 +213,7 @@ async def test_create_user_success(
         "Test User",
         None,
     )
+
 
 @pytest.mark.asyncio
 async def test_create_user_returns_409_when_email_already_exists(
