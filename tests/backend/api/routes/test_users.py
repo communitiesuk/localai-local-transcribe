@@ -175,7 +175,7 @@ async def test_delete_user(
 
 
 @pytest.mark.asyncio
-async def test_create_user_success(
+async def test_create_user(
     override_session,
     override_support_admin_user,
     make_organisation,
@@ -184,6 +184,7 @@ async def test_create_user_success(
     organisation = make_organisation(allowed_domains=["example.gov.uk"])
     mock_session = override_session
     mock_session.get.return_value = organisation
+    mock_session.refresh.side_effect = user_create_refresh
 
     with patch(
         "backend.api.routes.users.get_user_by_email",
