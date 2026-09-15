@@ -127,7 +127,10 @@ resource "aws_cloudfront_distribution" "main" {
     cloudfront_default_certificate = var.ssl_certs_created ? false : true
     acm_certificate_arn            = var.ssl_certs_created ? var.cloudfront_certificate_arn : null
     minimum_protocol_version       = var.ssl_certs_created ? "TLSv1.3_2025" : null
-    ssl_support_method             = "sni-only"
+    # CloudFront only accepts ssl_support_method alongside a custom certificate, so
+    # it must be null while the default certificate is in use, otherwise the value
+    # is silently dropped by the API and shows as permanent drift.
+    ssl_support_method = var.ssl_certs_created ? "sni-only" : null
   }
 
   restrictions {

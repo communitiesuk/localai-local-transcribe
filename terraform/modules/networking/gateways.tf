@@ -30,6 +30,11 @@ resource "aws_nat_gateway" "regional_nat_gateway" {
   vpc_id            = aws_vpc.main.id
   availability_mode = "regional"
 
+  # A public NAT gateway cannot be created until the internet gateway is attached
+  # to the VPC. There is no attribute reference between the two, so the dependency
+  # must be declared explicitly.
+  depends_on = [aws_internet_gateway.main]
+
   dynamic "availability_zone_address" {
     for_each = local.nat_availability_zones
     content {
