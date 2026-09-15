@@ -61,6 +61,10 @@ export default function TranscriptionPage(props: {
     )
   }, [])
 
+  const [dialogueEntryIndexToFocus, setDialogueEntryIndexToFocus] = useState<
+    number | null
+  >(null)
+
   const handleLineEditError = useCallback((error: string | null) => {
     setLineEditError(error)
   }, [])
@@ -184,6 +188,11 @@ export default function TranscriptionPage(props: {
     )
   }
 
+  const handleCitationClicked = (citationIndex: number) => {
+    handleTabChange('transcript')
+    setDialogueEntryIndexToFocus(citationIndex) // citation indices match dialogue entry indices
+  }
+
   // Persisted document tabs, minus any doc still shown by its in-session draft tab.
   const draftMinuteIds = new Set(
     draftTabs.flatMap((tab) => (tab.minuteId ? [tab.minuteId] : []))
@@ -237,6 +246,8 @@ export default function TranscriptionPage(props: {
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
             onDismissBanner={clearBanner}
+            dialogueEntryIndexToFocus={dialogueEntryIndexToFocus ?? undefined}
+            onDialogueEntryFocusLost={() => setDialogueEntryIndexToFocus(null)}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
@@ -255,6 +266,7 @@ export default function TranscriptionPage(props: {
               transcription={transcription}
               minute={doc}
               onActivityChange={(busy) => setTabBusy(doc.id!, busy)}
+              onCitationClicked={handleCitationClicked}
             />
           </GovukTabs.Panel>
         ))}
@@ -270,6 +282,7 @@ export default function TranscriptionPage(props: {
                 handleDocumentCreated(tab.id, templateName)
               }
               onActivityChange={(busy) => setTabBusy(tab.id, busy)}
+              onCitationClicked={handleCitationClicked}
             />
           </GovukTabs.Panel>
         ))}
