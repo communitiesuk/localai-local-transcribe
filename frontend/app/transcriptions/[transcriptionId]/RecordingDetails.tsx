@@ -12,7 +12,6 @@ import {
   GovukLabel,
 } from '@/components/govuk'
 import type { ErrorItem } from '@/components/govuk/error-summary'
-import { validateDateEntry } from '@/components/govuk/date-input'
 import { TranscriptionGetResponse } from '@/lib/client'
 import {
   getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
@@ -171,26 +170,7 @@ export const RecordingDetails = ({
     ? dateOfRecordingIsBlank && optionalFieldsAllBlank
     : optionalFieldsAllBlank
 
-  const clientDateOfBirthIsInvalid = !!validateDateEntry(
-    watchedClientDateOfBirth,
-    'past',
-    "client's date of birth"
-  )
-
-  const dateOfRecordingIsInvalid =
-    isUpload &&
-    !!validateDateEntry(
-      watchedDateOfRecording,
-      'past',
-      'date recorded',
-      'full-date',
-      false,
-      true
-    )
-
-  const isAddDetailsDisabled =
-    isStandalone &&
-    (allFieldsBlank || clientDateOfBirthIsInvalid || dateOfRecordingIsInvalid)
+  const isAddDetailsDisabled = isStandalone && allFieldsBlank
 
   const shouldShowErrorSummary =
     isSubmitted && (!!dateOfRecordingMessage || !!clientDateOfBirthMessage)
