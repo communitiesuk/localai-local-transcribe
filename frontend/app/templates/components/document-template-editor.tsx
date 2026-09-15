@@ -243,7 +243,7 @@ const ControlledEditor = ({
 
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '', { emitUpdate: false })
+      editor.commands.setContent(value || '', false)
     }
   }, [editor, value])
 
