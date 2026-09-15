@@ -127,7 +127,7 @@ function SimpleEditor({
 
   useEffect(() => {
     if (editorObject && initialContent !== editorObject.getHTML()) {
-      editorObject.commands.setContent(initialContent, false)
+      editorObject.commands.setContent(initialContent)
       const newEditorState = EditorState.create({
         doc: editorObject.state.doc,
         plugins: editorObject.state.plugins,
