@@ -40,7 +40,7 @@ export const UserTemplatesList = () => {
         templates={sortedDefaultTemplates}
         renderTemplateAction={(template) => (
           <Link
-            href={`/templates/default/${encodeURIComponent(template.name)}/duplicate`}
+            href={`/templates/default/${template.id}/duplicate`}
             className="govuk-link govuk-link--no-visited-state"
           >
             Duplicate
@@ -64,24 +64,18 @@ export const UserTemplatesList = () => {
         templates={sortedUserTemplates}
         showUpdatedDate
         emptyMessage="You haven't made any templates yet."
-        renderTemplateAction={(template) =>
-          hasEditableTemplateId(template) ? (
-            <Link
-              href={`/templates/${template.id}`}
-              className="govuk-link govuk-link--no-visited-state"
-            >
-              Edit
-            </Link>
-          ) : null
-        }
+        renderTemplateAction={(template) => (
+          <Link
+            href={`/templates/${template.id}`}
+            className="govuk-link govuk-link--no-visited-state"
+          >
+            Edit
+          </Link>
+        )}
       />
     </div>
   )
 }
-
-const hasEditableTemplateId = (
-  template: SelectableTemplate
-): template is SelectableTemplate & { id: string } => template.id !== null
 
 const TemplateTable = ({
   title,
@@ -130,7 +124,7 @@ const TemplateTable = ({
         </GovukTableHead>
         <GovukTableBody>
           {templates.map((template) => (
-            <GovukTableRow key={template.id ?? `default-${template.name}`}>
+            <GovukTableRow key={template.id}>
               <GovukTableCell>{template.name}</GovukTableCell>
               {showUpdatedDate && (
                 <GovukTableCell>

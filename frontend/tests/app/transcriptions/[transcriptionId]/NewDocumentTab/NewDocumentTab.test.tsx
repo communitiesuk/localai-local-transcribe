@@ -47,6 +47,7 @@ const transcription = { id: 'transcription-1' } as TranscriptionGetResponse
 
 const defaultTemplates = [
   {
+    id: 'default-default-meeting-summary',
     name: 'Default meeting summary',
     description: 'Standard default meeting summary',
     category: 'Common',

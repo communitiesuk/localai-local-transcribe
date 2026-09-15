@@ -25,7 +25,9 @@ async def test_get_templates_success(override_user, override_session):
     async with get_test_client() as ac:
         response = await ac.get("/templates")
         assert response.status_code == 200
-        assert len(response.json()) == len(TemplateManager.templates)
+        templates = response.json()
+        assert len(templates) == len(TemplateManager.templates)
+        assert all(template["id"].startswith("default-") for template in templates)
 
 
 @pytest.mark.asyncio
@@ -200,10 +202,11 @@ async def test_duplicate_user_template_not_found(mock_session, mock_user):
 
 @pytest.mark.asyncio
 async def test_duplicate_default_template_success(mocker, mock_session, mock_user):
+    template_id = "default-general"
     template_name = "General"
     mocker.patch(
         "backend.api.routes.templates.get_templates",
-        return_value=[SimpleNamespace(name=template_name)],
+        return_value=[SimpleNamespace(id=template_id, name=template_name)],
     )
 
     class DefaultTemplate:
@@ -217,13 +220,14 @@ async def test_duplicate_default_template_success(mocker, mock_session, mock_use
                 {"role": "user", "content": "transcript"},
             ]
 
-    mocker.patch(
+    get_template = mocker.patch(
         "backend.api.routes.templates.TemplateManager.get_template",
         return_value=DefaultTemplate,
     )
 
-    await duplicate_default_template(mock_user, mock_session, template_name)
+    await duplicate_default_template(mock_user, mock_session, template_id)
 
+    get_template.assert_called_once_with(template_name)
     mock_session.add.assert_called_once()
     mock_session.commit.assert_awaited()
 

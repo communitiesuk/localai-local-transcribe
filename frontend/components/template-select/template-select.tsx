@@ -76,7 +76,11 @@ const TemplateSelectGroup = ({
           })
         }
       }}
-      value={value ? templateValue(value) : ''}
+      value={
+        value
+          ? (value.id ?? templates.find((t) => t.name === value.name)?.id ?? '')
+          : ''
+      }
       isLoading={isLoading}
     />
   )

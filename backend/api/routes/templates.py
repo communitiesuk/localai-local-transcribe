@@ -235,11 +235,15 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
 
 @templates_router.post("/templates/{template_name}/duplicate")
 async def duplicate_default_template(user: UserDep, session: SQLSessionDep, template_name: str) -> None:
-    if template_name not in {template.name for template in get_templates(user)}:
+    template_metadata = next(
+        (template for template in get_templates(user) if template_name in {template.id, template.name}),
+        None,
+    )
+    if template_metadata is None:
         raise HTTPException(404)
 
     try:
-        original_template = TemplateManager.get_template(template_name)
+        original_template = TemplateManager.get_template(template_metadata.name)
     except TemplateNotFoundError as e:
         raise HTTPException(404) from e
 

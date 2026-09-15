@@ -16,6 +16,10 @@ import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
+import {
+  isDefaultTemplateId,
+  userTemplateIdForRequest,
+} from '@/hooks/use-templates'
 import { Template } from '@/types/templates'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
@@ -26,6 +30,12 @@ import { useController, useForm, useWatch } from 'react-hook-form'
 type CreateMinuteForm = {
   template: Template
   agenda?: string
+}
+
+const defaultTemplate: Template = {
+  id: null,
+  name: 'General',
+  agenda_usage: 'optional',
 }
 
 export function NewMinuteDialog({
@@ -40,14 +50,14 @@ export function NewMinuteDialog({
   const [open, setOpen] = useState(false)
   const form = useForm<CreateMinuteForm>({
     defaultValues: {
-      template: { name: 'General', agenda_usage: 'optional', id: null },
+      template: defaultTemplate,
       agenda,
     },
   })
   useEffect(() => {
     if (open) {
       form.reset({
-        template: { name: 'General', agenda_usage: 'optional', id: null },
+        template: defaultTemplate,
         agenda,
       })
     }
@@ -67,7 +77,7 @@ export function NewMinuteDialog({
         path: { transcription_id: transcriptionId },
         body: {
           template_name: template.name,
-          template_id: template.id,
+          template_id: userTemplateIdForRequest(template),
           agenda:
             selectedTemplate.agenda_usage != 'not_used' ? agenda : undefined,
         },
@@ -81,7 +91,10 @@ export function NewMinuteDialog({
               ),
           })
           posthog.capture('generate_ai_minutes_started', {
-            style: !!template.id ? 'User generated' : template.name,
+            style:
+              template.id === null || isDefaultTemplateId(template.id)
+                ? template.name
+                : 'User generated',
           })
           setOpen(false)
         },

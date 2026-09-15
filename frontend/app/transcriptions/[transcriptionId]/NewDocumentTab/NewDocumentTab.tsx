@@ -14,7 +14,12 @@ import {
   getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { ProcessingSpinner } from '@/components/processing-spinner'
-import { templateValue, useTemplates } from '@/hooks/use-templates'
+import {
+  isDefaultTemplateId,
+  templateValue,
+  userTemplateIdForRequest,
+  useTemplates,
+} from '@/hooks/use-templates'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
@@ -152,7 +157,7 @@ export const NewDocumentTab = ({
         path: { transcription_id: transcription.id! },
         body: {
           template_name: selectedTemplate.name,
-          template_id: selectedTemplate.id,
+          template_id: userTemplateIdForRequest(selectedTemplate),
         },
       },
       {
@@ -164,9 +169,9 @@ export const NewDocumentTab = ({
               ),
           })
           posthog.capture('generate_ai_minutes_started', {
-            style: selectedTemplate.id
-              ? 'User generated'
-              : selectedTemplate.name,
+            style: isDefaultTemplateId(selectedTemplate.id)
+              ? selectedTemplate.name
+              : 'User generated',
           })
           setCreatedTemplateName(selectedTemplate.name)
           setCreatedMinuteId(data.minute_id)

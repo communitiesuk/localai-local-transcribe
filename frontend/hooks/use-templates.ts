@@ -8,15 +8,23 @@ import type { AgendaUsage } from '@/lib/client'
 import { useQuery } from '@tanstack/react-query'
 
 export type SelectableTemplate = {
-  id: string | null
+  id: string
   name: string
   description: string
   agenda_usage: AgendaUsage
   updated_datetime: string | null
 }
 
+const DEFAULT_TEMPLATE_ID_PREFIX = 'default-'
+
+export const isDefaultTemplateId = (id: string | null) =>
+  id?.startsWith(DEFAULT_TEMPLATE_ID_PREFIX) ?? false
+
+export const userTemplateIdForRequest = (template: { id: string | null }) =>
+  template.id === null || isDefaultTemplateId(template.id) ? null : template.id
+
 export const templateValue = (template: { id: string | null; name: string }) =>
-  template.id ?? `DEFAULT::${template.name}`
+  template.id ?? ''
 
 const sortTemplatesByName = (templates: SelectableTemplate[]) =>
   [...templates].sort((a, b) => a.name.localeCompare(b.name))
@@ -29,7 +37,6 @@ export const useTemplates = () => {
     defaultTemplatesQuery.data ?? []
   ).map((template) => ({
     ...template,
-    id: null,
     updated_datetime: null,
   }))
   const userTemplates: SelectableTemplate[] = (

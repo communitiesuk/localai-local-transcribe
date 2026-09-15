@@ -18,6 +18,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 
 const defaultTemplates = [
   {
+    id: 'default-general',
     name: 'General',
     description: 'Standard default meeting summary',
     category: 'Common',
@@ -78,7 +79,7 @@ describe('<UserTemplatesList />', () => {
     expect(screen.getByText('02/01/2025')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Duplicate' })).toHaveAttribute(
       'href',
-      '/templates/default/General/duplicate'
+      '/templates/default/default-general/duplicate'
     )
     expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute(
       'href',
