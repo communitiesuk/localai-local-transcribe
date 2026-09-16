@@ -2,7 +2,12 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import TranscriptionPage from '@/app/transcriptions/[transcriptionId]/page'
 import userEvent from '@testing-library/user-event/dist/cjs/index.js'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import type {
   MinuteListItem,
   MinuteVersionResponse,
@@ -134,7 +139,7 @@ describe('<TranscriptionPage /> View quote', () => {
     vi.mocked(useQueryClient).mockReturnValue({
       setQueryData: vi.fn(),
       invalidateQueries: vi.fn(),
-    } as any)
+    } as unknown as QueryClient)
   })
 
   it('should change tab to transcription when quote is clicked', async () => {
