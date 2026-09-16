@@ -9,8 +9,8 @@ import pytest
 
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_target_user import get_target_user
-from backend.services.emails import EmailSendError
 from backend.main import app
+from backend.services.emails import EmailSendError
 from common.database.postgres_models import UserRole
 from tests.utils import get_test_client
 
@@ -184,12 +184,7 @@ async def test_delete_user(
     ],
 )
 async def test_create_user(
-    override_session,
-    make_user,
-    make_organisation,
-    mock_email_sender,
-    admin_roles,
-    expected_inviter_organisation_name
+    override_session, make_user, make_organisation, mock_email_sender, admin_roles, expected_inviter_organisation_name
 ):
     organisation = make_organisation(name="Example Council", allowed_domains=["example.gov.uk"])
     mock_session = override_session
@@ -227,6 +222,7 @@ async def test_create_user(
         "Test User",
         expected_inviter_organisation_name,
     )
+
 
 @pytest.mark.asyncio
 async def test_create_user_email_failure_calls_sentry(

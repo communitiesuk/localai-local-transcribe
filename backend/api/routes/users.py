@@ -2,9 +2,9 @@ import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
+import sentry_sdk
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import EmailStr
-import sentry_sdk
 
 from backend.api.dependencies import (
     OrganisationAdminDep,
@@ -13,7 +13,7 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
-from backend.services.emails import get_email_sender, EmailSendError
+from backend.services.emails import EmailSendError, get_email_sender
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email
@@ -125,7 +125,7 @@ async def create_user(
     try:
         org_name = None if is_system_admin(user) else organisation.name
         email_sender.send_invite_email(data.email, data.name, org_name)
-    except EmailSendError as e: 
+    except EmailSendError as e:
         sentry_sdk.capture_exception(e)
 
     return to_user_response(new_user)
