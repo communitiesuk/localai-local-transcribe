@@ -35,6 +35,9 @@ export default function AdminAddUserPage() {
   const [evaluationId, setEvaluationId] = useState(storedEvaluationId)
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState(invalidDomainError)
+  const [evaluationIdError, setEvaluationIdError] = useState<string | null>(
+    null
+  )
 
   const {
     currentUser,
@@ -51,8 +54,14 @@ export default function AdminAddUserPage() {
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setEvaluationIdError(null)
 
     if (!currentUser?.organisation_id) {
+      return
+    }
+
+    if (!evaluationId.trim()) {
+      setEvaluationIdError('Enter the evaluation ID for this person')
       return
     }
 
@@ -153,7 +162,7 @@ export default function AdminAddUserPage() {
             />
           </div>
 
-          <GovukFormGroup>
+          <GovukFormGroup hasError={!!evaluationIdError}>
             <GovukLabel htmlFor="invitee-evaluation-id">
               Evaluation ID
             </GovukLabel>
@@ -162,6 +171,15 @@ export default function AdminAddUserPage() {
               cannot be one that is already in use, and you will not be able to
               see it in Local Transcribe again.
             </GovukHint>
+            {evaluationIdError && (
+              <p
+                id="invitee-evaluation-id-error"
+                className="govuk-error-message"
+              >
+                <span className="govuk-visually-hidden">Error:</span>
+                {evaluationIdError}
+              </p>
+            )}
             <GovukInput
               id="invitee-evaluation-id"
               name="evaluationId"
@@ -170,7 +188,12 @@ export default function AdminAddUserPage() {
               className="govuk-input--width-20"
               value={evaluationId}
               onChange={(e) => setEvaluationId(e.target.value)}
-              aria-describedby="invitee-evaluation-id-hint"
+              aria-invalid={evaluationIdError ? true : undefined}
+              aria-describedby={
+                evaluationIdError
+                  ? 'invitee-evaluation-id-hint invitee-evaluation-id-error'
+                  : 'invitee-evaluation-id-hint'
+              }
               required
             />
           </GovukFormGroup>

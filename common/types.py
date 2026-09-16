@@ -158,6 +158,15 @@ class UserCreate(BaseModel):
     evaluation_id: str = Field(min_length=1)
     organisation_id: uuid.UUID
 
+    @field_validator("evaluation_id")
+    @classmethod
+    def _strip_evaluation_id(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            message = "Evaluation ID must contain at least one non-whitespace character"
+            raise ValueError(message)
+        return stripped
+
 
 class UserUpdateRoles(BaseModel):
     roles: list[UserRole]

@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import EmailStr
+from sqlalchemy.exc import IntegrityError
 
 from backend.api.dependencies import (
     OrganisationAdminDep,
@@ -29,6 +30,9 @@ from common.types import (
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
+
+EVALUATION_ID_UNIQUE_CONSTRAINT = "uq_user_evaluation_id"
+EVALUATION_ID_IN_USE_DETAIL = "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
 
 
 @users_router.get("/me")
@@ -108,10 +112,7 @@ async def create_user(
     is_existing_evaluation_id = await get_user_by_evaluation_id(session, data.evaluation_id)
     if is_existing_evaluation_id:
         # The evaluation ID is never echoed back, so it stays out of the detail.
-        raise HTTPException(
-            status_code=409,
-            detail="This evaluation ID is already in use. Check the evaluation ID you received from MHCLG.",
-        )
+        raise HTTPException(status_code=409, detail=EVALUATION_ID_IN_USE_DETAIL)
 
     email_domain = data.email.split("@")[1]
     lowered_allowed_domains = [domain.lower() for domain in organisation.allowed_domains]
@@ -128,7 +129,14 @@ async def create_user(
     )
 
     session.add(new_user)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError as error:
+        await session.rollback()
+        # A concurrent request may have taken the evaluation ID between the check above and the commit.
+        if EVALUATION_ID_UNIQUE_CONSTRAINT in str(error.orig):
+            raise HTTPException(status_code=409, detail=EVALUATION_ID_IN_USE_DETAIL) from error
+        raise
     await session.refresh(new_user)
 
     return to_user_response(new_user)

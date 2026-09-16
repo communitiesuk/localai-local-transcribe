@@ -11,7 +11,7 @@ import { Loader2 } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { GovukErrorSummary } from '@/components/govuk'
 
-function getInviteErrorMessage(error: unknown): string {
+export function getInviteErrorMessage(error: unknown): string {
   if (
     typeof error === 'object' &&
     error !== null &&

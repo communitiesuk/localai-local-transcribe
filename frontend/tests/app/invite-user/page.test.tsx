@@ -62,6 +62,24 @@ describe('Invite new user page', () => {
     ).toBeInTheDocument()
   })
 
+  it('does not continue when the evaluation ID is only whitespace', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(
+      screen.getByLabelText('Email address'),
+      'test.user@example.com'
+    )
+    await user.type(screen.getByLabelText('Evaluation ID'), '   ')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(
+      screen.getByText('Enter the evaluation ID for this person')
+    ).toBeInTheDocument()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
   it('carries the evaluation ID through to the confirmation step', async () => {
     const user = userEvent.setup()
     render(<AdminAddUserPage />)
