@@ -44,7 +44,7 @@ export default function TranscriptionPage(props: {
     ErrorItem[]
   >([])
   const errorSummaryRef = useRef<HTMLDivElement | null>(null)
-  const { clearBanner } = useBannerStore()
+  const { setBanner, clearBanner } = useBannerStore()
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
 
@@ -60,6 +60,10 @@ export default function TranscriptionPage(props: {
       prev[tabId] === busy ? prev : { ...prev, [tabId]: busy }
     )
   }, [])
+
+  const [dialogueEntryIndexToFocus, setDialogueEntryIndexToFocus] = useState<
+    number | null
+  >(null)
 
   const handleLineEditError = useCallback((error: string | null) => {
     setLineEditError(error)
@@ -184,6 +188,24 @@ export default function TranscriptionPage(props: {
     )
   }
 
+  const handleCitationClicked = (citationIndex: number) => {
+    if (
+      !transcription.dialogue_entries ||
+      citationIndex < 0 ||
+      citationIndex >= transcription.dialogue_entries.length
+    ) {
+      setBanner({
+        variant: 'important',
+        title: 'Important',
+        message: `Quote [${citationIndex}] is not attributed to anything in the transcript`,
+      })
+      return
+    }
+
+    handleTabChange('transcript')
+    setDialogueEntryIndexToFocus(citationIndex) // citation indices match dialogue entry indices
+  }
+
   // Persisted document tabs, minus any doc still shown by its in-session draft tab.
   const draftMinuteIds = new Set(
     draftTabs.flatMap((tab) => (tab.minuteId ? [tab.minuteId] : []))
@@ -237,6 +259,8 @@ export default function TranscriptionPage(props: {
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
             onDismissBanner={clearBanner}
+            dialogueEntryIndexToFocus={dialogueEntryIndexToFocus ?? undefined}
+            onDialogueEntryFocusLost={() => setDialogueEntryIndexToFocus(null)}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
@@ -255,6 +279,7 @@ export default function TranscriptionPage(props: {
               transcription={transcription}
               minute={doc}
               onActivityChange={(busy) => setTabBusy(doc.id!, busy)}
+              onCitationClicked={handleCitationClicked}
             />
           </GovukTabs.Panel>
         ))}
@@ -270,6 +295,7 @@ export default function TranscriptionPage(props: {
                 handleDocumentCreated(tab.id, templateName)
               }
               onActivityChange={(busy) => setTabBusy(tab.id, busy)}
+              onCitationClicked={handleCitationClicked}
             />
           </GovukTabs.Panel>
         ))}

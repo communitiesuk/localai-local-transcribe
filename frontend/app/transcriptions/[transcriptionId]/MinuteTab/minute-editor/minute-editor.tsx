@@ -43,10 +43,12 @@ export function MinuteEditor({
   transcription,
   minute,
   onActivityChange,
+  onCitationClicked,
 }: {
   transcription: TranscriptionGetResponse
   minute: Minute
   onActivityChange?: (busy: boolean) => void
+  onCitationClicked?: (citationIndex: number) => void
 }) {
   const [versionId, setVersionId] = useState<string | undefined>(undefined)
   const [editSourceVersionId, setEditSourceVersionId] = useState<
@@ -421,6 +423,7 @@ export function MinuteEditor({
               isEditing={isEditable}
               onContentChange={onChange}
               hideCitations={hideCitations && !isEditable}
+              onCitationClicked={onCitationClicked}
             />
           )}
         />

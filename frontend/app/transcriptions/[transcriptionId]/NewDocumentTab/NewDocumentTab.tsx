@@ -28,12 +28,14 @@ export const NewDocumentTab = ({
   onCreated,
   onMinuteCreated,
   onActivityChange,
+  onCitationClicked,
 }: {
   transcription: TranscriptionGetResponse
   onCancel: () => void
   onCreated: (templateName: string) => void
   onMinuteCreated?: (minuteId: string) => void
   onActivityChange?: (busy: boolean) => void
+  onCitationClicked?: (citationIndex: number) => void
 }) => {
   const [selectedValue, setSelectedValue] = useState('')
   const [createdMinuteId, setCreatedMinuteId] = useState<string | null>(null)
@@ -109,6 +111,7 @@ export const NewDocumentTab = ({
         transcription={transcription}
         minute={minute}
         onActivityChange={onActivityChange}
+        onCitationClicked={onCitationClicked}
       />
     )
   }
