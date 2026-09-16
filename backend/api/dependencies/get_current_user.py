@@ -7,13 +7,28 @@ from sqlmodel import col, select
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
-from common.database.postgres_models import User
+from common.database.postgres_models import User, UserAuthEmail
 from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings
 
 settings = get_settings()
 
 logger = logging.getLogger(__name__)
+
+
+async def record_user_auth_email(
+    session: SQLSessionDep,
+    user: User,
+    email: str,
+) -> None:
+    statement = select(UserAuthEmail).where(
+        col(UserAuthEmail.user_id) == user.id,
+        col(UserAuthEmail.email) == email,
+    )
+    existing_auth_email = (await session.exec(statement)).first()
+
+    if not existing_auth_email:
+        session.add(UserAuthEmail(user_id=user.id, email=email))
 
 
 async def get_current_user(
@@ -50,6 +65,21 @@ async def get_current_user(
         user = (await session.exec(statement)).first()
 
         if not user:
+            # If IA has changed the subs, match on email then update to the new sub
+            statement = (
+                select(User)
+                .join(UserAuthEmail, col(UserAuthEmail.user_id) == col(User.id))
+                .where(
+                    col(User.needs_to_update_sub).is_(True), # flag set manually outside of code
+                    UserAuthEmail.email == email,
+                )
+            )
+
+            user = (await session.exec(statement)).first()
+            if user:
+                user.subject_id = subject_id
+
+        if not user:
             # Try to find user by email address, this is a fallback for legacy
             # accounts which do not yet have a subject id associated.
             # After this login, a subject id will be added to the account and login
@@ -64,12 +94,13 @@ async def get_current_user(
         # Update subject_id if it has changed (e.g. legacy account matched by email)
         if user.subject_id != subject_id:
             user.subject_id = subject_id
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
 
+        await record_user_auth_email(session=session, user=user, email=email)
+        user.needs_to_update_sub = False
         user.last_login = datetime.now(UTC)
+        session.add(user)
         await session.commit()
+        await session.refresh(user)
 
         return user
     except MissingAuthTokenError as e:
