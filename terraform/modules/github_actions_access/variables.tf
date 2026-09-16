@@ -1,9 +1,9 @@
 variable "environment_name" {
-  description = "must be one of: development, staging"
+  description = "must be one of: development, staging, or production"
   type        = string
   validation {
-    condition     = contains(["development", "staging"], var.environment_name)
-    error_message = "Environment must be one of: development, staging"
+    condition     = contains(["development", "staging", "production"], var.environment_name)
+    error_message = "Environment must be one of: development, staging, production"
   }
 }
 
@@ -22,3 +22,8 @@ variable "push_worker_ecr_image_policy_arn" {
   type        = string
 }
 
+variable "deployment_branch" {
+  description = "Git branch that GitHub Actions may assume the deploy roles from"
+  type        = string
+  default     = "development"
+}

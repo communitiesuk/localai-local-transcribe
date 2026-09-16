@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from backend.api.routes.templates import (
     create_user_template,
     delete_user_template,
+    duplicate_default_template,
     duplicate_user_template,
     edit_user_template,
     get_user_template,
@@ -24,7 +25,9 @@ async def test_get_templates_success(override_user, override_session):
     async with get_test_client() as ac:
         response = await ac.get("/templates")
         assert response.status_code == 200
-        assert len(response.json()) == len(TemplateManager.templates)
+        templates = response.json()
+        assert len(templates) == len(TemplateManager.templates)
+        assert all(template["id"].startswith("default-") for template in templates)
 
 
 @pytest.mark.asyncio
@@ -195,6 +198,57 @@ async def test_duplicate_user_template_not_found(mock_session, mock_user):
     with pytest.raises(HTTPException) as exc_info:
         await duplicate_user_template(mock_user, mock_session, uuid.uuid4())
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_duplicate_default_template_success(mocker, mock_session, mock_user):
+    template_id = "default-general"
+    template_name = "General"
+    mocker.patch(
+        "backend.api.routes.templates.get_templates",
+        return_value=[SimpleNamespace(id=template_id, name=template_name)],
+    )
+
+    class DefaultTemplate:
+        name = template_name
+        description = "Standard meeting summary"
+
+        @classmethod
+        def prompt(cls, _transcript, _agenda):
+            return [
+                {"role": "system", "content": "Write a standard meeting summary"},
+                {"role": "user", "content": "transcript"},
+            ]
+
+    get_template = mocker.patch(
+        "backend.api.routes.templates.TemplateManager.get_template",
+        return_value=DefaultTemplate,
+    )
+
+    await duplicate_default_template(mock_user, mock_session, template_id)
+
+    get_template.assert_called_once_with(template_name)
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited()
+
+    duplicated_template = mock_session.add.call_args.args[0]
+    assert duplicated_template.user_id == mock_user.id
+    assert duplicated_template.name == "General (Copy)"
+    assert duplicated_template.description == "Standard meeting summary"
+    assert duplicated_template.content == "Write a standard meeting summary"
+    assert duplicated_template.heading == "General"
+
+
+@pytest.mark.asyncio
+async def test_duplicate_default_template_not_found(mocker, mock_session, mock_user):
+    mocker.patch("backend.api.routes.templates.get_templates", return_value=[])
+
+    with pytest.raises(HTTPException) as exc_info:
+        await duplicate_default_template(mock_user, mock_session, "Hidden")
+
+    assert exc_info.value.status_code == 404
+    mock_session.add.assert_not_called()
+    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
