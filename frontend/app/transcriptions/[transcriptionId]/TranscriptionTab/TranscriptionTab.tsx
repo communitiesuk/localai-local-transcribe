@@ -14,7 +14,14 @@ import { cn, formatDate, copyHTML } from '@/lib/utils'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
 import { PlayButton } from '@/components/icons/play-button'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
 import posthog from 'posthog-js'
 
@@ -53,11 +60,15 @@ export function TranscriptionTab({
   onLineEditError,
   onEditModeChange,
   onDismissBanner,
+  dialogueEntryIndexToFocus,
+  onDialogueEntryFocusLost,
 }: {
   transcription: TranscriptionGetResponse
   onLineEditError: (error: string | null) => void
   onEditModeChange?: (isEditing: boolean) => void
   onDismissBanner?: () => void
+  dialogueEntryIndexToFocus?: number
+  onDialogueEntryFocusLost?: () => void
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
@@ -214,6 +225,7 @@ export function TranscriptionTab({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playingRef = useRef<HTMLDivElement | null>(null)
   const editSnapshotRef = useRef<DialogueEntry[]>([])
+  const focusDialogueEntryRef = useRef<HTMLDivElement | null>(null)
   const [time, setTime] = useState(0)
 
   const [isLineEditMode, setIsLineEditMode] = useState(false)
@@ -231,14 +243,44 @@ export function TranscriptionTab({
     [onLineEditError]
   )
 
-  const scrollToPlaying = () => {
-    if (playingRef.current) {
-      playingRef.current.scrollIntoView({
+  const scrollToElement = (element: RefObject<HTMLElement | null>) => {
+    if (element.current) {
+      element.current.scrollIntoView({
         block: 'center',
         behavior: 'smooth',
       })
     }
   }
+
+  const scrollToPlaying = () => scrollToElement(playingRef)
+
+  useEffect(() => {
+    if (dialogueEntryIndexToFocus === undefined) return
+
+    let entry: HTMLDivElement | null = null
+    const onFocusLost = () => {
+      onDialogueEntryFocusLost?.()
+      entry?.removeAttribute('tabindex')
+    }
+
+    // on mount the fields array gets regenerated and so all the dialogue entries rerender
+    // this timeout ensures the focus setting runs afterwards.
+    const timeout = setTimeout(() => {
+      if (!focusDialogueEntryRef.current) return
+
+      entry = focusDialogueEntryRef.current
+
+      scrollToElement(focusDialogueEntryRef)
+      entry.focus()
+      entry.addEventListener('blur', onFocusLost, { once: true })
+    }, 0)
+
+    return () => {
+      clearTimeout(timeout)
+      entry?.removeEventListener('blur', onFocusLost)
+      onFocusLost()
+    }
+  }, [dialogueEntryIndexToFocus, onDialogueEntryFocusLost])
 
   const hasRecordings = !!recordings && !!recordings.length
 
@@ -482,14 +524,25 @@ export function TranscriptionTab({
                 watchedEntries?.[index + 1]?.start_time
               )
               const isSelectedForEdit = selectedLineIndex === index
+              const isDialogueEntryToFocus = dialogueEntryIndexToFocus === index
 
               return (
                 <div
-                  className={cn('flex items-start gap-2', {
+                  className={cn('dialogue-entry flex items-start gap-2', {
                     'bg-[var(--govuk-surface-background-colour)]': isPlaying,
                   })}
                   key={field.id}
-                  ref={isPlaying ? playingRef : null}
+                  ref={(el) => {
+                    if (isPlaying) {
+                      playingRef.current = el
+                    }
+
+                    if (isDialogueEntryToFocus) {
+                      focusDialogueEntryRef.current = el
+                    }
+                  }}
+                  tabIndex={isDialogueEntryToFocus ? -1 : undefined}
+                  data-testid={`dialogue-entry-${index}`}
                 >
                   {hasRecordings && !isLineEditMode && (
                     <button
