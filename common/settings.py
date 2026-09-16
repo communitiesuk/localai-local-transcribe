@@ -173,7 +173,7 @@ class Settings(BaseSettings):
                 error_text = "GOVNOTIFY_INVITE_TEMPLATE_ID must be set when EMAIL_SERVICE='gov_notify'"
                 raise ValueError(error_text)
             if not self.GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID:
-                error_text = "GOVNOTIFY_INVITE_TEMPLATE_ID must be set when EMAIL_SERVICE='gov_notify'"
+                error_text = "GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID must be set when EMAIL_SERVICE='gov_notify'"
                 raise ValueError(error_text)
         return self
 
