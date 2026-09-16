@@ -38,7 +38,7 @@ resource "aws_cloudfront_distribution" "main" {
   default_cache_behavior {
     allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods             = ["GET", "HEAD", "OPTIONS"]
-    cache_policy_id            = aws_cloudfront_cache_policy.main.id
+    cache_policy_id            = data.aws_cloudfront_cache_policy.cf_caching_disabled.id
     compress                   = true
     origin_request_policy_id   = aws_cloudfront_origin_request_policy.main.id
     response_headers_policy_id = data.aws_cloudfront_response_headers_policy.main.id
@@ -81,6 +81,18 @@ resource "aws_cloudfront_distribution" "main" {
     path_pattern           = var.maintenance_mode_on ? "*" : "/maintenance"
     target_origin_id       = local.resilience_assets_origin_id
     viewer_protocol_policy = "redirect-to-https"
+  }
+
+  ordered_cache_behavior {
+    allowed_methods            = ["GET", "HEAD"]
+    cached_methods             = ["GET", "HEAD"]
+    cache_policy_id            = aws_cloudfront_cache_policy.main.id
+    compress                   = true
+    origin_request_policy_id   = aws_cloudfront_origin_request_policy.main.id
+    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.main.id
+    path_pattern               = "/_next/static/*"
+    target_origin_id           = local.origin_id
+    viewer_protocol_policy     = "redirect-to-https"
   }
 
   dynamic "custom_error_response" {
@@ -155,6 +167,10 @@ resource "aws_cloudfront_cache_policy" "main" {
     enable_accept_encoding_gzip   = true
     enable_accept_encoding_brotli = true
   }
+}
+
+data "aws_cloudfront_cache_policy" "cf_caching_disabled" {
+  name = "Managed-CachingDisabled"
 }
 
 data "aws_cloudfront_response_headers_policy" "main" {
