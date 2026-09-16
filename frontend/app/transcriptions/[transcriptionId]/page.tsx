@@ -44,7 +44,7 @@ export default function TranscriptionPage(props: {
     ErrorItem[]
   >([])
   const errorSummaryRef = useRef<HTMLDivElement | null>(null)
-  const { clearBanner } = useBannerStore()
+  const { setBanner, clearBanner } = useBannerStore()
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
 
@@ -189,6 +189,19 @@ export default function TranscriptionPage(props: {
   }
 
   const handleCitationClicked = (citationIndex: number) => {
+    if (
+      !transcription.dialogue_entries ||
+      citationIndex < 0 ||
+      citationIndex >= transcription.dialogue_entries.length
+    ) {
+      setBanner({
+        variant: 'important',
+        title: 'Important',
+        message: `Quote [${citationIndex}] is not attributed to anything in the transcript`,
+      })
+      return
+    }
+
     handleTabChange('transcript')
     setDialogueEntryIndexToFocus(citationIndex) // citation indices match dialogue entry indices
   }
