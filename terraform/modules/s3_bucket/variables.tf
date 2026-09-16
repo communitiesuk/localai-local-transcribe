@@ -38,6 +38,12 @@ variable "expiration_days" {
   default     = null
 }
 
+variable "log_bucket_noncurrent_version_expiration_days" {
+  type        = number
+  description = "Optional override for noncurrent-version retention on the access log bucket. Defaults to noncurrent_version_expiration_days. Set this when the main bucket and its access logs need different retention."
+  default     = null
+}
+
 variable "policy" {
   description = "optional policy json to append to default bucket enforce ssl policy"
   type        = string

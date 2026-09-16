@@ -202,7 +202,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "log_bucket" {
     }
 
     noncurrent_version_expiration {
-      noncurrent_days = var.noncurrent_version_expiration_days
+      noncurrent_days = coalesce(var.log_bucket_noncurrent_version_expiration_days, var.noncurrent_version_expiration_days)
     }
 
     expiration {
