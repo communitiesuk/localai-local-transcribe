@@ -1,9 +1,9 @@
 variable "environment_name" {
-  description = "must be one of: development, or staging"
+  description = "must be one of: development, staging, or production"
   type        = string
   validation {
-    condition     = contains(["development", "staging"], var.environment_name)
-    error_message = "Environment must be one of: development, staging"
+    condition     = contains(["development", "staging", "production"], var.environment_name)
+    error_message = "Environment must be one of: development, staging, production"
   }
 }
 
@@ -254,4 +254,3 @@ variable "data_s3_bucket_name" {
   description = "name of the S3 bucket for data storage"
   type        = string
 }
-

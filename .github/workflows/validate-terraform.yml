@@ -22,6 +22,11 @@ jobs:
     with:
       environment: staging
 
+  validate-production:
+    uses: ./.github/workflows/terraform-validate.yml
+    with:
+      environment: production
+
   plan:
     needs: validate-development
     uses: ./.github/workflows/terraform-plan.yml
