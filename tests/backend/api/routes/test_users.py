@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_target_user import get_target_user
 from backend.main import app
-from common.database.postgres_models import UserRole
+from common.database.postgres_models import AnalyticsEventType, UserRole
 from tests.utils import get_test_client
 
 
@@ -173,6 +173,43 @@ async def test_delete_user(
         response = await ac.delete(f"/users/{target_user.id}")
 
     assert response.status_code == expected_status
+
+
+@pytest.mark.asyncio
+async def test_create_user_records_user_created_analytics_event(
+    mocker,
+    override_session,
+    override_support_admin_user,
+    make_organisation,
+):
+    """Creating a new user records a USER_CREATED analytics event with the invitee's evaluation_id."""
+    organisation = make_organisation(allowed_domains=["example.com"])
+    override_session.get.return_value = organisation
+    override_session.refresh.side_effect = user_create_refresh
+
+    mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
+
+    with (
+        patch("backend.api.routes.users.get_user_by_email", new=AsyncMock(return_value=None)),
+        patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "new.user@example.com",
+                    "evaluation_id": "EVAL-001",
+                    "organisation_id": str(organisation.id),
+                },
+            )
+
+    assert response.status_code == 200
+    mock_record_event.assert_awaited_once()
+    call_args = mock_record_event.await_args
+    assert call_args.args[0] is override_session
+    assert call_args.args[1] == AnalyticsEventType.USER_CREATED
+    assert call_args.args[2] == "EVAL-001"
 
 
 @pytest.mark.asyncio

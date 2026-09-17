@@ -17,7 +17,8 @@ from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SI
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email, get_user_by_evaluation_id
 from common.auth import is_admin_for_org, is_system_admin
-from common.database.postgres_models import Organisation, User, UserRole
+from common.database.postgres_models import AnalyticsEventType, Organisation, User, UserRole
+from common.services.analytics_service import record_analytics_event
 from common.types import (
     DataRetentionUpdateResponse,
     GetUserResponse,
@@ -138,6 +139,8 @@ async def create_user(
             raise HTTPException(status_code=409, detail=EVALUATION_ID_IN_USE_DETAIL) from error
         raise
     await session.refresh(new_user)
+
+    await record_analytics_event(session, AnalyticsEventType.USER_CREATED, new_user.evaluation_id)
 
     return to_user_response(new_user)
 

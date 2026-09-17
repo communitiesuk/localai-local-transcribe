@@ -21,7 +21,7 @@ from backend.api.routes.transcriptions import (
     update_transcription_title,
 )
 from backend.utils.transcription_search_filters import _transcription_search_filters
-from common.database.postgres_models import JobStatus
+from common.database.postgres_models import AnalyticsEventType, JobStatus
 from common.types import (
     RecordingCreateRequest,
     RenameSpeakerRequest,
@@ -82,6 +82,46 @@ async def test_create_transcription_success(
     assert response.id == mock_transcription.id
     mock_session_with_recording.add.assert_any_call(mock_transcription)
     mock_transcription_queue_service.publish_message.assert_called()
+
+
+@pytest.mark.asyncio
+async def test_create_transcription_records_audio_upload_completed_analytics_event(
+    mocker,
+    mock_session_with_recording,
+    mock_user,
+    mock_transcription_queue_service,  # NOQA: ARG001
+    transcription_request,
+    mock_transcription,
+    mock_storage_service,  # NOQA: ARG001
+):
+    """Creating a transcription (i.e. confirming the upload landed in S3) records an analytics event."""
+    mocker.patch("backend.api.routes.transcriptions.Transcription", return_value=mock_transcription)
+    mock_user.evaluation_id = "EVAL-001"
+    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
+
+    await create_transcription(transcription_request, mock_session_with_recording, mock_user)
+
+    mock_record_event.assert_awaited_once_with(
+        mock_session_with_recording, AnalyticsEventType.AUDIO_UPLOAD_COMPLETED, mock_user.evaluation_id
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_transcription_skips_analytics_event_when_file_not_found(
+    mocker,
+    mock_session_with_recording,
+    mock_user,
+    mock_storage_service,
+    transcription_request,
+):
+    """No analytics event should be recorded if the uploaded file can't be confirmed in S3."""
+    mock_storage_service.check_object_exists = AsyncMock(return_value=False)
+    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
+
+    with pytest.raises(HTTPException):
+        await create_transcription(transcription_request, mock_session_with_recording, mock_user)
+
+    mock_record_event.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -186,6 +226,51 @@ async def test_create_recording_different_file_extensions(
     assert file_format in mock_recording.s3_file_key
     mock_session.add.assert_called_once()
     mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_recording_records_audio_upload_started_analytics_event(
+    mocker,
+    mock_session,
+    mock_user,
+    mock_storage_service,  # NOQA: ARG001
+    mock_recording,
+):
+    """Starting a recording upload records an analytics event with the recording's ID."""
+    mock_user.evaluation_id = "EVAL-001"
+    request = RecordingCreateRequest(file_extension="mp3")
+
+    mocker.patch("backend.api.routes.transcriptions.Recording", return_value=mock_recording)
+    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
+
+    await create_recording(request, mock_session, mock_user)
+
+    mock_record_event.assert_awaited_once_with(
+        mock_session,
+        AnalyticsEventType.AUDIO_UPLOAD_STARTED,
+        mock_user.evaluation_id,
+        recording_id=mock_recording.id,
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_recording_skips_analytics_event_when_user_has_no_evaluation_id(
+    mocker,
+    mock_session,
+    mock_user,
+    mock_storage_service,  # NOQA: ARG001
+    mock_recording,
+):
+    """A real (unmocked) analytics call with no evaluation_id should be a no-op, not raise or write."""
+    mock_user.evaluation_id = None
+    request = RecordingCreateRequest(file_extension="mp3")
+
+    mocker.patch("backend.api.routes.transcriptions.Recording", return_value=mock_recording)
+
+    await create_recording(request, mock_session, mock_user)
+
+    # only the recording itself should have been added/committed - no analytics event
+    mock_session.add.assert_called_once_with(mock_recording)
 
 
 @pytest.mark.asyncio

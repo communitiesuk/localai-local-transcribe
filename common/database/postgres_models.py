@@ -280,3 +280,29 @@ class GuardrailResult(BaseTableMixin, table=True):
         default=None,
         description="Error message if the guardrail check failed",
     )
+
+
+class AnalyticsEventType(StrEnum):
+    USER_CREATED = auto()
+    USER_AUTHENTICATED = auto()
+    AUDIO_UPLOAD_STARTED = auto()
+    AUDIO_UPLOAD_COMPLETED = auto()
+    SUMMARY_RECEIVED = auto()
+    TRANSCRIPTION_RECEIVED = auto()
+
+
+class AnalyticsEvent(BaseTableMixin, table=True):
+    """First-party analytics events, recorded so we can measure real-world impact without a cookie consent banner.
+
+    Deliberately has no foreign keys: it stores the user-supplied evaluation_id (not user_id) and recording_id as
+    opaque values, so events remain valid and reportable even after the referenced user/recording is deleted.
+    """
+
+    __tablename__ = "analytics_event"
+
+    occurred_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    event_type: AnalyticsEventType = Field(
+        sa_column=Column(Enum(AnalyticsEventType, name="analyticseventtype"), nullable=False)
+    )
+    evaluation_id: str = Field(index=True)
+    recording_id: UUID | None = Field(default=None, index=True)

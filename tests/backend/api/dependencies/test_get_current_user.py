@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
@@ -6,8 +6,11 @@ import pytest
 from fastapi import HTTPException
 
 from backend.api.dependencies.get_current_user import get_current_user, require_accepted_tou
-from common.database.postgres_models import User
+from common.database.postgres_models import AnalyticsEventType, User
 from common.services.exceptions import MissingAuthTokenError
+from common.settings import get_settings
+
+settings = get_settings()
 
 TEST_EMAIL = "test@local-transcribe.com"
 TEST_SUBJECT_ID = "sub_1234567890"
@@ -70,6 +73,64 @@ async def test_get_current_user_existing_user(monkeypatch, session):
     compiled = executed_statement.compile()
     assert "subject_id" in str(compiled)
     assert TEST_SUBJECT_ID in compiled.params.values()
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_records_authenticated_analytics_event_after_session_gap(monkeypatch, session):
+    stale_last_login = datetime.now(UTC) - timedelta(minutes=settings.ANALYTICS_AUTHENTICATION_SESSION_GAP_MINUTES + 1)
+    mock_user = User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=TEST_SUBJECT_ID,
+        evaluation_id="EVAL-001",
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+        last_login=stale_last_login,
+    )
+    mock_result = Mock()
+    mock_result.first.return_value = mock_user
+    session.exec.return_value = mock_result
+
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        make_mock_get_user_info(),
+    )
+    mock_record_event = AsyncMock()
+    monkeypatch.setattr("backend.api.dependencies.get_current_user.record_analytics_event", mock_record_event)
+
+    await get_current_user(session=session, x_amzn_oidc_data=TEST_TOKEN)
+
+    mock_record_event.assert_awaited_once_with(session, AnalyticsEventType.USER_AUTHENTICATED, "EVAL-001")
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_does_not_record_analytics_event_within_session_gap(monkeypatch, session):
+    recent_last_login = datetime.now(UTC) - timedelta(minutes=1)
+    mock_user = User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=TEST_SUBJECT_ID,
+        evaluation_id="EVAL-001",
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+        last_login=recent_last_login,
+    )
+    mock_result = Mock()
+    mock_result.first.return_value = mock_user
+    session.exec.return_value = mock_result
+
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        make_mock_get_user_info(),
+    )
+    mock_record_event = AsyncMock()
+    monkeypatch.setattr("backend.api.dependencies.get_current_user.record_analytics_event", mock_record_event)
+
+    await get_current_user(session=session, x_amzn_oidc_data=TEST_TOKEN)
+
+    mock_record_event.assert_not_awaited()
 
 
 @pytest.mark.asyncio

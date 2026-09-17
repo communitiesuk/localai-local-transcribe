@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from common.database.postgres_models import JobStatus, Transcription
+from common.database.postgres_models import AnalyticsEventType, JobStatus, Recording, Transcription, User
 from common.services.transcription_handler_service import TranscriptionHandlerService
 
 
@@ -77,3 +77,77 @@ def test_update_transcription_raises_if_not_found(mock_session, mock_transcripti
         pytest.raises(ValueError, match=f"transcription id {mock_transcription.id} not found"),
     ):
         TranscriptionHandlerService.update_transcription(mock_transcription.id, title="AI generated title")
+
+
+def _make_recording(*, transcription_id, created_datetime) -> Recording:
+    return Recording(
+        id=uuid4(),
+        user_id=uuid4(),
+        s3_file_key="audio/file.mp3",
+        transcription_id=transcription_id,
+        created_datetime=created_datetime,
+    )
+
+
+def test_record_transcription_received_uses_earliest_recording_and_user_evaluation_id(mock_session):
+    ctx, session = mock_session
+
+    transcription_id = uuid4()
+    earliest_recording = _make_recording(
+        transcription_id=transcription_id, created_datetime=datetime(2026, 1, 1, tzinfo=UTC)
+    )
+    later_recording = _make_recording(
+        transcription_id=transcription_id, created_datetime=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    transcription = Transcription(
+        id=transcription_id,
+        user_id=uuid4(),
+        status=JobStatus.COMPLETED,
+        created_datetime=datetime.now(tz=UTC),
+        updated_datetime=datetime.now(tz=UTC),
+        recordings=[later_recording, earliest_recording],
+        user=User(
+            id=uuid4(),
+            email="test@local-transcribe.com",
+            evaluation_id="EVAL-001",
+            data_retention_days=30,
+            created_datetime=datetime.now(tz=UTC),
+            updated_datetime=datetime.now(tz=UTC),
+        ),
+    )
+
+    with (
+        patch("common.services.transcription_handler_service.SessionLocal", return_value=ctx),
+        patch("common.services.transcription_handler_service.record_analytics_event_sync") as mock_record_event,
+    ):
+        TranscriptionHandlerService._record_transcription_received(transcription)  # noqa: SLF001
+
+    mock_record_event.assert_called_once_with(
+        session, AnalyticsEventType.TRANSCRIPTION_RECEIVED, "EVAL-001", recording_id=earliest_recording.id
+    )
+
+
+def test_record_transcription_received_handles_no_user(mock_session):
+    ctx, session = mock_session
+
+    transcription_id = uuid4()
+    recording = _make_recording(transcription_id=transcription_id, created_datetime=datetime.now(tz=UTC))
+    transcription = Transcription(
+        id=transcription_id,
+        user_id=uuid4(),
+        status=JobStatus.COMPLETED,
+        created_datetime=datetime.now(tz=UTC),
+        updated_datetime=datetime.now(tz=UTC),
+        recordings=[recording],
+        user=None,
+    )
+
+    with (
+        patch("common.services.transcription_handler_service.SessionLocal", return_value=ctx),
+        patch("common.services.transcription_handler_service.record_analytics_event_sync") as mock_record_event,
+    ):
+        TranscriptionHandlerService._record_transcription_received(transcription)  # noqa: SLF001
+
+    mock_record_event.assert_called_once_with(
+        session, AnalyticsEventType.TRANSCRIPTION_RECEIVED, None, recording_id=recording.id
+    )

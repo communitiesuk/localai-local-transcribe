@@ -1,5 +1,5 @@
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
@@ -7,7 +7,8 @@ from sqlmodel import col, select
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
-from common.database.postgres_models import User
+from common.database.postgres_models import AnalyticsEventType, User
+from common.services.analytics_service import record_analytics_event
 from common.services.exceptions import MissingAuthTokenError
 from common.settings import get_settings
 
@@ -68,8 +69,18 @@ async def get_current_user(
             await session.commit()
             await session.refresh(user)
 
-        user.last_login = datetime.now(UTC)
+        # A user is authenticated on every request (the ALB re-validates the JWT each time), so only record an
+        # analytics event when enough time has passed since the last one to look like a new session, rather than
+        # recording one per request.
+        now = datetime.now(UTC)
+        session_gap = timedelta(minutes=settings.ANALYTICS_AUTHENTICATION_SESSION_GAP_MINUTES)
+        is_new_session = (now - user.last_login) > session_gap
+
+        user.last_login = now
         await session.commit()
+
+        if is_new_session:
+            await record_analytics_event(session, AnalyticsEventType.USER_AUTHENTICATED, user.evaluation_id)
 
         return user
     except MissingAuthTokenError as e:
