@@ -130,6 +130,7 @@ class User(BaseTableMixin, table=True):
     )
     name: str | None = Field(default=None, nullable=True)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
+    evaluation_id: str | None = Field(default=None, nullable=True, unique=True)
     data_retention_days: int = Field(default=30)
     transcriptions: list["Transcription"] = Relationship(back_populates="user")
     roles: list[UserRole] = Field(

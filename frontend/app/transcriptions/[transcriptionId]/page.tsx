@@ -44,7 +44,7 @@ export default function TranscriptionPage(props: {
     ErrorItem[]
   >([])
   const errorSummaryRef = useRef<HTMLDivElement | null>(null)
-  const { clearBanner } = useBannerStore()
+  const { setBanner, clearBanner } = useBannerStore()
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
 
@@ -52,7 +52,18 @@ export default function TranscriptionPage(props: {
   const [draftTabs, setDraftTabs] = useState<
     { id: string; label: string; minuteId: string | null }[]
   >([])
+  const [busyTabs, setBusyTabs] = useState<Record<string, boolean>>({})
   const documentCounter = useRef(0)
+
+  const setTabBusy = useCallback((tabId: string, busy: boolean) => {
+    setBusyTabs((prev) =>
+      prev[tabId] === busy ? prev : { ...prev, [tabId]: busy }
+    )
+  }, [])
+
+  const [dialogueEntryIndexToFocus, setDialogueEntryIndexToFocus] = useState<
+    number | null
+  >(null)
 
   const handleLineEditError = useCallback((error: string | null) => {
     setLineEditError(error)
@@ -157,6 +168,11 @@ export default function TranscriptionPage(props: {
 
   const removeDraftTab = (id: string) => {
     setDraftTabs((prev) => prev.filter((tab) => tab.id !== id))
+    setBusyTabs((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
     setActiveTab('transcript')
   }
 
@@ -172,11 +188,30 @@ export default function TranscriptionPage(props: {
     )
   }
 
+  const handleCitationClicked = (citationIndex: number) => {
+    if (
+      !transcription.dialogue_entries ||
+      citationIndex < 0 ||
+      citationIndex >= transcription.dialogue_entries.length
+    ) {
+      setBanner({
+        variant: 'important',
+        title: 'Important',
+        message: `Quote [${citationIndex}] is not attributed to anything in the transcript`,
+      })
+      return
+    }
+
+    handleTabChange('transcript')
+    setDialogueEntryIndexToFocus(citationIndex) // citation indices match dialogue entry indices
+  }
+
   // Persisted document tabs, minus any doc still shown by its in-session draft tab.
   const draftMinuteIds = new Set(
     draftTabs.flatMap((tab) => (tab.minuteId ? [tab.minuteId] : []))
   )
   const documentTabs = documents.filter((doc) => !draftMinuteIds.has(doc.id!))
+  const isAnyDocumentBusy = Object.values(busyTabs).some(Boolean)
 
   return (
     <div className="flex w-full flex-col">
@@ -206,7 +241,7 @@ export default function TranscriptionPage(props: {
       <div>
         <GovukButton
           type="button"
-          disabled={isTranscriptEditing}
+          disabled={isTranscriptEditing || isAnyDocumentBusy}
           onClick={handleCreateDocument}
         >
           Create document
@@ -224,6 +259,8 @@ export default function TranscriptionPage(props: {
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
             onDismissBanner={clearBanner}
+            dialogueEntryIndexToFocus={dialogueEntryIndexToFocus ?? undefined}
+            onDialogueEntryFocusLost={() => setDialogueEntryIndexToFocus(null)}
           />
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
@@ -238,7 +275,12 @@ export default function TranscriptionPage(props: {
         )}
         {documentTabs.map((doc) => (
           <GovukTabs.Panel key={doc.id} id={doc.id!} label={doc.template_name}>
-            <DocumentTab transcription={transcription} minute={doc} />
+            <DocumentTab
+              transcription={transcription}
+              minute={doc}
+              onActivityChange={(busy) => setTabBusy(doc.id!, busy)}
+              onCitationClicked={handleCitationClicked}
+            />
           </GovukTabs.Panel>
         ))}
         {draftTabs.map((tab) => (
@@ -252,6 +294,8 @@ export default function TranscriptionPage(props: {
               onCreated={(templateName) =>
                 handleDocumentCreated(tab.id, templateName)
               }
+              onActivityChange={(busy) => setTabBusy(tab.id, busy)}
+              onCitationClicked={handleCitationClicked}
             />
           </GovukTabs.Panel>
         ))}

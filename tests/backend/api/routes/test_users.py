@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_target_user import get_target_user
@@ -272,6 +273,7 @@ async def test_create_user_returns_409_when_email_already_exists(
                 json={
                     "name": "Test User",
                     "email": existing_user.email,
+                    "evaluation_id": "EVAL-001",
                     "roles": existing_user.roles,
                     "organisation_id": str(existing_user.organisation_id),
                 },
@@ -279,6 +281,123 @@ async def test_create_user_returns_409_when_email_already_exists(
 
     assert response.json()["detail"] == f"A user with email '{existing_user.email}' already exists"
     assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_create_user_returns_409_when_evaluation_id_already_exists(
+    override_session,
+    override_support_admin_user,
+    make_user,
+):
+    existing_user = make_user()
+    existing_user.evaluation_id = "EVAL-001"
+
+    with (
+        patch(
+            "backend.api.routes.users.get_user_by_email",
+            new=AsyncMock(return_value=None),
+        ),
+        patch(
+            "backend.api.routes.users.get_user_by_evaluation_id",
+            new=AsyncMock(return_value=existing_user),
+        ),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "new.user@example.com",
+                    "evaluation_id": existing_user.evaluation_id,
+                    "organisation_id": str(existing_user.organisation_id),
+                },
+            )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
+    )
+    assert existing_user.evaluation_id not in response.text
+
+
+@pytest.mark.asyncio
+async def test_create_user_rejects_a_missing_evaluation_id(
+    override_session,
+    override_support_admin_user,
+    make_user,
+):
+    existing_user = make_user()
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            "/users",
+            json={
+                "name": "Test User",
+                "email": "new.user@example.com",
+                "organisation_id": str(existing_user.organisation_id),
+            },
+        )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_user_rejects_a_whitespace_only_evaluation_id(
+    override_session,
+    override_support_admin_user,
+    make_user,
+):
+    existing_user = make_user()
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            "/users",
+            json={
+                "name": "Test User",
+                "email": "new.user@example.com",
+                "evaluation_id": "   ",
+                "organisation_id": str(existing_user.organisation_id),
+            },
+        )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_user_returns_409_when_a_concurrent_request_takes_the_evaluation_id(
+    override_session,
+    override_support_admin_user,
+    make_organisation,
+):
+    organisation = make_organisation(allowed_domains=["example.com"])
+    override_session.get.return_value = organisation
+    override_session.commit.side_effect = IntegrityError(
+        "INSERT",
+        {},
+        Exception('duplicate key value violates unique constraint "uq_user_evaluation_id"'),
+    )
+    override_session.rollback = AsyncMock()
+
+    with (
+        patch("backend.api.routes.users.get_user_by_email", new=AsyncMock(return_value=None)),
+        patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "new.user@example.com",
+                    "evaluation_id": "EVAL-001",
+                    "organisation_id": str(organisation.id),
+                },
+            )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
+    )
+    override_session.rollback.assert_awaited_once()
 
 
 @pytest.mark.asyncio

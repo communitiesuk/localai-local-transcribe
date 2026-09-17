@@ -139,9 +139,11 @@ describe('<MinuteEditor /> AI edit flow', () => {
     renderEditor()
 
     expect(
-      screen.getByText(`Applying AI edits to ‘General summary’…`)
+      screen.getByText("Applying AI edits to 'General summary'...")
     ).toBeInTheDocument()
-    expect(screen.queryByText('Minute generating...')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("Creating 'General summary'...")
+    ).not.toBeInTheDocument()
   })
 
   it('shows the generic pulse loader for a non-AI-edit generation', () => {
@@ -154,7 +156,9 @@ describe('<MinuteEditor /> AI edit flow', () => {
     ])
     renderEditor()
 
-    expect(screen.getByText('Minute generating...')).toBeInTheDocument()
+    expect(
+      screen.getByText("Creating 'General summary'...")
+    ).toBeInTheDocument()
   })
 
   it('shows the completed AI-edited document and the AI Edit button once done', () => {
@@ -246,7 +250,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
     rerender(editorElement())
 
     expect(
-      screen.getByText(`Applying AI edits to ‘General summary’…`)
+      screen.getByText("Applying AI edits to 'General summary'...")
     ).toBeInTheDocument()
 
     configureQuery([
@@ -325,5 +329,26 @@ describe('<MinuteEditor /> AI edit flow', () => {
     expect(deleteMutateMock).toHaveBeenCalledWith({
       path: { minute_version_id: 'v2' },
     })
+  })
+  it('reports busy while any version is generating, even when viewing a completed one', () => {
+    const onActivityChange = vi.fn()
+    configureQuery([
+      makeVersion(),
+      makeVersion({
+        id: 'v2',
+        status: 'in_progress',
+        content_source: 'ai_edit',
+      }),
+    ])
+
+    render(
+      <MinuteEditor
+        transcription={transcription}
+        minute={minute}
+        onActivityChange={onActivityChange}
+      />
+    )
+
+    expect(onActivityChange).toHaveBeenLastCalledWith(true)
   })
 })
