@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -40,13 +40,14 @@ const baseTranscription = {
 
 const renderRecordingDetails = (
   overrides: Partial<TranscriptionGetResponse> = {},
-  mode: 'panel' | 'standalone' = 'panel'
+  mode: 'panel' | 'standalone' = 'panel',
+  onErrorListChange = vi.fn()
 ) =>
   render(
     <RecordingDetails
       dateTimeLabel="1 January 2024 at 00:00"
       transcription={{ ...baseTranscription, ...overrides }}
-      onErrorListChange={vi.fn()}
+      onErrorListChange={onErrorListChange}
       mode={mode}
     />
   )
@@ -161,13 +162,37 @@ describe('RecordingDetails', () => {
       expect(screen.getByRole('button', { name: 'Add details' })).toBeEnabled()
     })
 
-    it('is disabled when the client date of birth is only partially filled in', async () => {
+    it('stays enabled when the client date of birth is only partially filled in and shows errors on submit', async () => {
       const user = userEvent.setup()
-      const { container } = renderRecordingDetails({}, 'standalone')
+      const onErrorListChange = vi.fn()
+      const { container } = renderRecordingDetails(
+        {},
+        'standalone',
+        onErrorListChange
+      )
 
       await user.type(container.querySelector('#client-dob-day')!, '15')
 
-      expect(screen.getByRole('button', { name: 'Add details' })).toBeDisabled()
+      const addDetailsButton = screen.getByRole('button', {
+        name: 'Add details',
+      })
+      expect(addDetailsButton).toBeEnabled()
+
+      await user.click(addDetailsButton)
+
+      expect(
+        await screen.findByText(
+          "The client's date of birth must include a month and year"
+        )
+      ).toBeInTheDocument()
+      await waitFor(() =>
+        expect(onErrorListChange).toHaveBeenLastCalledWith([
+          {
+            href: '#client-dob-day',
+            text: 'Date of birth must include a day, month and year',
+          },
+        ])
+      )
     })
 
     it('is enabled once a complete, valid client date of birth is entered', async () => {
@@ -181,16 +206,35 @@ describe('RecordingDetails', () => {
       expect(screen.getByRole('button', { name: 'Add details' })).toBeEnabled()
     })
 
-    it('is disabled for uploaded files if date recorded is only partially edited', async () => {
+    it('stays enabled for uploaded files if date recorded is only partially edited and shows errors on submit', async () => {
       const user = userEvent.setup()
+      const onErrorListChange = vi.fn()
       const { container } = renderRecordingDetails(
         { is_upload: true, date_of_recording: '2024-03-15T09:30:00' },
-        'standalone'
+        'standalone',
+        onErrorListChange
       )
 
       await user.clear(container.querySelector('#date-recorded-day')!)
 
-      expect(screen.getByRole('button', { name: 'Add details' })).toBeDisabled()
+      const addDetailsButton = screen.getByRole('button', {
+        name: 'Add details',
+      })
+      expect(addDetailsButton).toBeEnabled()
+
+      await user.click(addDetailsButton)
+
+      expect(
+        await screen.findByText('The date recorded must include a day')
+      ).toBeInTheDocument()
+      await waitFor(() =>
+        expect(onErrorListChange).toHaveBeenLastCalledWith([
+          {
+            href: '#date-recorded-day',
+            text: 'Recording date must include a day, month, year, hour and minute',
+          },
+        ])
+      )
     })
   })
 })

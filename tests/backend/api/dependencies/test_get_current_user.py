@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from backend.api.dependencies.get_current_user import get_current_user
+from backend.api.dependencies.get_current_user import get_current_user, require_accepted_tou
 from common.database.postgres_models import User
 from common.services.exceptions import MissingAuthTokenError
 
@@ -219,3 +219,33 @@ async def test_get_current_user_unhandled_exception(monkeypatch, session):
         )
 
     assert exception.value.status_code == 500
+
+
+def make_user(*, accepted_tou: bool) -> User:
+    return User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=TEST_SUBJECT_ID,
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+        accepted_tou=accepted_tou,
+    )
+
+
+@pytest.mark.asyncio
+async def test_require_accepted_tou_returns_user_when_accepted():
+    user = make_user(accepted_tou=True)
+
+    assert await require_accepted_tou(user) is user
+
+
+@pytest.mark.asyncio
+async def test_require_accepted_tou_rejects_user_when_not_accepted():
+    user = make_user(accepted_tou=False)
+
+    with pytest.raises(HTTPException) as exception:
+        await require_accepted_tou(user)
+
+    assert exception.value.status_code == 403
+    assert exception.value.detail == "Terms of use must be accepted"

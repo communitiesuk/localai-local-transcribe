@@ -171,6 +171,10 @@ export function ServiceNav() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  if (pathname?.startsWith('/terms-of-use')) {
+    return null
+  }
+
   const hasAdminRole = hasAnyRole(user?.roles, [
     UserRole.LOCAL_AUTHORITY_ADMIN,
     UserRole.MHCLG_SUPPORT_ADMIN,
