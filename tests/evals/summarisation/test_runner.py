@@ -5,8 +5,10 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import dspy
+import orjson
 
 from evals.summarisation.src.common import AppConfig
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 from evals.summarisation.src.optimisation.runner import (
     _dialogue_to_entries,
     _elapsed_ms,
@@ -128,6 +130,21 @@ def test_load_dspy_devset_missing_id_uses_index():
     assert devset[0].example_id == "0"
 
 
+def test_load_dspy_devset_loads_local_dir_source(tmp_path: Path) -> None:
+    mock_dataset = {"test": [{"id": "1", "dialogue": "Local", "summary": "Summary"}]}
+    dataset_dir = tmp_path / "dataset"
+    dataset_dir.mkdir()
+    cfg = _cfg(dataset={**_MINIMAL_DATASET, "name": str(dataset_dir), "source": "local_dir"})
+
+    with patch(
+        "evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset
+    ) as load_dataset_mock:
+        devset = load_dspy_devset(cfg, split="test", limit=None)
+
+    load_dataset_mock.assert_called_once_with("json", data_dir=str(dataset_dir))
+    assert devset[0].dialogue == "Local"
+
+
 def test_dialogue_to_entries_dialogsum_format():
     dialogue = "#Person1#: Hello there.\n#Person2#: How are you?"
     entries = _dialogue_to_entries(dialogue)
@@ -214,3 +231,8 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     assert isinstance(summary_path, Path)
     assert isinstance(hallucination_inputs_path, Path)
     assert hallucination_inputs_path.name == "hallucination_inputs.json"
+
+    summary = orjson.loads(summary_path.read_bytes())
+    records = [orjson.loads(line) for line in results_path.read_bytes().splitlines() if line.strip()]
+    assert summary["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
+    assert records[0]["judge_criteria_version"] == JUDGE_CRITERIA_VERSION

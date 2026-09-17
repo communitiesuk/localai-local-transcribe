@@ -131,6 +131,10 @@ locals {
         name      = "GOVNOTIFY_INVITE_TEMPLATE_ID"
         valueFrom = var.govnotify_invite_template_id_arn
       },
+      {
+        name      = "GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID"
+        valueFrom = var.govnotify_invite_no_organisation_template_id_arn
+      },
     ]
   )
   frontend_environment_variables = [

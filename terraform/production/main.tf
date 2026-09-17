@@ -216,8 +216,9 @@ module "ecs" {
   azure_apim_subscription_key_arn = module.secrets.azure_apim_subscription_key_arn
   sentry_dsn_arn                  = module.secrets.sentry_dsn_arn
 
-  govnotify_api_key_arn            = module.secrets.govnotify_api_key_arn
-  govnotify_invite_template_id_arn = module.secrets.govnotify_invite_template_id_arn
+  govnotify_api_key_arn                            = module.secrets.govnotify_api_key_arn
+  govnotify_invite_template_id_arn                 = module.secrets.govnotify_invite_template_id_arn
+  govnotify_invite_no_organisation_template_id_arn = module.secrets.govnotify_invite_no_organisation_template_id_arn
 }
 
 module "uploads_bucket" {

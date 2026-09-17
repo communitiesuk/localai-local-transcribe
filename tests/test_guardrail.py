@@ -137,7 +137,10 @@ async def test_process_minute_generation_runs_guardrails():
         mock_calc_score.assert_called_once()
         mock_save_result.assert_called_once_with(mock_minute_version.id, mock_score)
         mock_update_mv.assert_called_with(
-            mock_minute_version.id, html_content="<html>Minutes</html>", status=JobStatus.COMPLETED
+            mock_minute_version.id,
+            html_content="<html>Minutes</html>",
+            status=JobStatus.COMPLETED,
+            template_prompt_version=None,
         )
 
 
@@ -185,7 +188,10 @@ async def test_process_minute_generation_handles_exception():
         mock_save_error.assert_called_once()
         # Should still complete effectively
         mock_update_mv.assert_called_with(
-            mock_minute_version.id, html_content="<html>Minutes</html>", status=JobStatus.COMPLETED
+            mock_minute_version.id,
+            html_content="<html>Minutes</html>",
+            status=JobStatus.COMPLETED,
+            template_prompt_version=None,
         )
 
 

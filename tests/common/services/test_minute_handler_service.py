@@ -96,6 +96,7 @@ def test_update_minute_version_updates_fields(mock_session, mock_minute_version)
     ctx, session = mock_session
     content = "<p>html content</p>"
     new_status = JobStatus.COMPLETED
+    template_prompt_version = "0.1.0"
 
     with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
         MinuteHandlerService.update_minute_version(
@@ -103,10 +104,12 @@ def test_update_minute_version_updates_fields(mock_session, mock_minute_version)
             html_content=content,
             status=new_status,
             error=None,
+            template_prompt_version=template_prompt_version,
         )
 
     assert mock_minute_version.html_content == content
     assert mock_minute_version.status == new_status
+    assert mock_minute_version.template_prompt_version == template_prompt_version
     session.add.assert_called_once_with(mock_minute_version)
     session.commit.assert_called_once()
 
@@ -318,13 +321,21 @@ async def test_generate_minutes_standard(mocker, mock_dialogue_entry, mock_minut
     mocker.patch.object(
         MinuteHandlerService,
         "generate_full_minutes",
-        AsyncMock(return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[])),
+        AsyncMock(
+            return_value=MinuteAndHallucinations(
+                text=output,
+                total_claims=0,
+                hallucinations=[],
+                template_prompt_version="0.1.0",
+            )
+        ),
     )
     mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
 
     result = await MinuteHandlerService.generate_minutes(MeetingType.standard, mock_minute)
 
     assert result.text == f"<p>{output}</p>"
+    assert result.template_prompt_version == "0.1.0"
 
 
 @pytest.mark.asyncio
@@ -373,6 +384,29 @@ async def test_generate_full_minutes_uses_default_template(mocker, mock_minute):
 
     assert result.text == output
     mock_template.generate.assert_awaited_once_with(mock_minute)
+
+
+@pytest.mark.asyncio
+async def test_generate_full_minutes_preserves_default_template_prompt_version(mocker, mock_minute):
+    output = "expected_result"
+
+    mock_template = AsyncMock()
+    mock_template.generate = AsyncMock(
+        return_value=MinuteAndHallucinations(
+            text="result",
+            total_claims=0,
+            hallucinations=[],
+            template_prompt_version="0.1.0",
+        )
+    )
+    mock_minute.user_template_id = None
+    mocker.patch("common.services.minute_handler_service.TemplateManager.get_template", return_value=mock_template)
+    mocker.patch("common.services.minute_handler_service.convert_american_to_british_spelling", return_value=output)
+
+    result = await MinuteHandlerService.generate_full_minutes(mock_minute)
+
+    assert result.text == output
+    assert result.template_prompt_version == "0.1.0"
 
 
 @pytest.mark.asyncio
@@ -430,6 +464,7 @@ async def test_process_minute_generation_message_success(
         mock_minute_version.id,
         html_content=dialogue,
         status=JobStatus.COMPLETED,
+        template_prompt_version=None,
     )
 
 
