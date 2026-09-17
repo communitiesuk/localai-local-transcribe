@@ -1,7 +1,7 @@
 """Add template prompt version to minute version
 
 Revision ID: b6a9d4f37c21
-Revises: a87c7de937c7
+Revises: c8e5b1740fd2
 Create Date: 2026-09-14 12:20:20.694000
 
 """
@@ -14,7 +14,7 @@ import sqlmodel
 from alembic import op
 
 revision: str = "b6a9d4f37c21"
-down_revision: str | None = "a87c7de937c7"
+down_revision: str | None = "c8e5b1740fd2"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
