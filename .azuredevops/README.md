@@ -1,10 +1,11 @@
 # Azure DevOps pipelines
 
-The pipelines in `pipelines/` run eval smoke tests against blob-backed test configs:
+The pipelines in `pipelines/` run eval smoke tests against blob-backed test configs, and one pipeline applies the evals Azure Terraform:
 
 - `evals-summarisation-smoke-test.yml` runs summarisation evals.
 - `evals-bias-smoke-test.yml` runs bias evals.
 - `evals-transcription-smoke-test.yml` runs transcription evals.
+- `evals-terraform-apply.yml` plans or applies `terraform/azure/evals`. Manual only. Default run is plan.
 
 The summarisation and bias pipelines can be run manually, and both are scheduled for Sundays at 21:00 UTC. Azure DevOps cannot express "every two weeks" in cron, so the weekly schedule uses `templates/fortnightly-schedule-gate-job.yml` to skip off-cycle Sundays.
 
@@ -25,6 +26,14 @@ Mandatory values:
 | Variable | Example | Secret |
 | --- | --- | --- |
 | `EVALS_AZURE_SERVICE_CONNECTION` | `evals-blob` | No |
+| `EVALS_TERRAFORM_SERVICE_CONNECTION` | `SPN-SP-sub-tst-aielt-001` | No |
+| `EVALS_ARM_SUBSCRIPTION_ID` | Azure subscription ID | No |
+| `EVALS_RESOURCE_GROUP_NAME` | Resource group name | No |
+| `EVALS_STATE_STORAGE_ACCOUNT_NAME` | State storage account name | No |
+| `EVALS_ENVIRONMENT_NAME` | `test` | No |
+| `EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME` | Sensitive storage account name | No |
+| `EVALS_RESULTS_STORAGE_ACCOUNT_NAME` | Results storage account name | No |
+| `EVALS_ADAPT_EGRESS_IP` | Virtual desktop egress IPv4 address | No |
 | `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_APIM_URL` | APIM endpoint | No |
@@ -61,6 +70,13 @@ terraform output resource_group_name
 terraform output storage_account_name
 terraform output container_name
 ```
+
+The Terraform apply pipeline needs the ARM variables above. The blob URL and APIM variables are still required for the eval smoke tests after the storage accounts exist.
+
+These are two different Azure identities. Do not point both variables at the platform service principal.
+
+- `EVALS_TERRAFORM_SERVICE_CONNECTION` is the Azure Resource Manager connection used only to apply Terraform (`SPN-SP-sub-tst-aielt-001`).
+- `EVALS_AZURE_SERVICE_CONNECTION` is `evals-blob`, a workload-identity connection to the user-assigned managed identity Terraform creates. That identity only has container-scoped blob roles. Create it after the first apply, using `pipeline_identity_client_id`, as in `terraform/azure/README.md` step 4.
 
 ## Scheduled run toggle
 

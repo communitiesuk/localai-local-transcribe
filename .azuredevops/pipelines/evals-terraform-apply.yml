@@ -1,0 +1,44 @@
+# Plan or apply terraform/azure/evals using a dedicated Azure Resource Manager
+# service connection for Terraform (not the evals-blob workload identity).
+# Manual only until that connection exists and a plan has been reviewed.
+# Microsoft-hosted agents are temporary. Switch the pool when the shared
+# self-hosted pool name is known.
+
+name: Evals Terraform
+
+trigger: none
+pr: none
+
+variables:
+  - group: evals-pipeline-config
+
+parameters:
+  - name: terraform_command
+    displayName: Terraform command
+    type: string
+    default: plan
+    values:
+      - plan
+      - apply
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+
+  - task: AzureCLI@2
+    displayName: Run evals Terraform (${{ parameters.terraform_command }})
+    inputs:
+      azureSubscription: $(EVALS_TERRAFORM_SERVICE_CONNECTION)
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: bash .azuredevops/scripts/apply-evals-terraform.sh "${{ parameters.terraform_command }}"
+    env:
+      EVALS_ARM_SUBSCRIPTION_ID: $(EVALS_ARM_SUBSCRIPTION_ID)
+      EVALS_RESOURCE_GROUP_NAME: $(EVALS_RESOURCE_GROUP_NAME)
+      EVALS_STATE_STORAGE_ACCOUNT_NAME: $(EVALS_STATE_STORAGE_ACCOUNT_NAME)
+      EVALS_ENVIRONMENT_NAME: $(EVALS_ENVIRONMENT_NAME)
+      EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME: $(EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME)
+      EVALS_RESULTS_STORAGE_ACCOUNT_NAME: $(EVALS_RESULTS_STORAGE_ACCOUNT_NAME)
+      EVALS_ADAPT_EGRESS_IP: $(EVALS_ADAPT_EGRESS_IP)
