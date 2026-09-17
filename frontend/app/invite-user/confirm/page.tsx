@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { hasAnyRole, UserRole } from '@/lib/utils'
@@ -9,12 +9,30 @@ import { useOrganisation } from '@/hooks/use-organisation'
 import { createUserUsersPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { Loader2 } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
+import { GovukErrorSummary } from '@/components/govuk'
+
+export function getInviteErrorMessage(error: unknown): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'error' in error &&
+    typeof error.error === 'object' &&
+    error.error !== null &&
+    'detail' in error.error &&
+    typeof error.error.detail === 'string'
+  ) {
+    return error.error.detail
+  }
+
+  return 'Could not send the invitation. Try again.'
+}
 
 export default function AdminAddUserConfirmPage() {
   const router = useRouter()
-  const { name, email, organisationId, clearInviteDetails } =
+  const { name, email, evaluationId, organisationId, clearInviteDetails } =
     useInviteUserStore()
   const submitInProgress = useRef(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const {
     currentUser,
@@ -33,12 +51,12 @@ export default function AdminAddUserConfirmPage() {
 
   useEffect(() => {
     if (submitInProgress.current) return
-    if (!name || !email) {
+    if (!name || !email || !evaluationId) {
       router.replace('/invite-user')
     }
-  }, [name, email, router])
+  }, [name, email, evaluationId, router])
 
-  if (!name || !email || !organisation?.id) {
+  if (!name || !email || !evaluationId || !organisation?.id) {
     return <Loader2 className="animate-spin" />
   }
 
@@ -51,13 +69,15 @@ export default function AdminAddUserConfirmPage() {
 
   const handleCreateUser = async () => {
     submitInProgress.current = true
+    setSubmitError(null)
     if (!is_Support_Admin && !is_LA_Admin) return
 
-    if (!name || !email) {
+    if (!name || !email || !evaluationId) {
       console.error('Missing required fields for user creation:', {
         name,
         email,
       })
+      setSubmitError('Could not send the invitation. Try again.')
       submitInProgress.current = false
       return
     }
@@ -84,6 +104,7 @@ export default function AdminAddUserConfirmPage() {
           body: {
             name: name,
             email: email,
+            evaluation_id: evaluationId,
             organisation_id: organisationId,
           },
         })
@@ -92,7 +113,7 @@ export default function AdminAddUserConfirmPage() {
       } catch (error) {
         submitInProgress.current = false
         console.error('Failed to create user:', error)
-        // Awaiting error logic from UCD
+        setSubmitError(getInviteErrorMessage(error))
       }
     }
 
@@ -102,6 +123,7 @@ export default function AdminAddUserConfirmPage() {
           body: {
             name: name,
             email: email,
+            evaluation_id: evaluationId,
             organisation_id: organisation?.id,
           },
         })
@@ -110,7 +132,7 @@ export default function AdminAddUserConfirmPage() {
       } catch (error) {
         submitInProgress.current = false
         console.error('Failed to create user:', error)
-        // Awaiting error logic from UCD
+        setSubmitError(getInviteErrorMessage(error))
       }
     }
   }
@@ -121,6 +143,14 @@ export default function AdminAddUserConfirmPage() {
       {userError && <p>Error: Failed to load users.</p>}
 
       <div>
+        {submitError && (
+          <GovukErrorSummary
+            errorList={[
+              { href: '/invite-user#invitee-evaluation-id', text: submitError },
+            ]}
+          />
+        )}
+
         <h1 className="govuk-heading-l">Invite new user</h1>
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-three-quarters">

@@ -3456,6 +3456,11 @@
         "properties": {
           "name": { "type": "string", "title": "Name" },
           "email": { "type": "string", "format": "email", "title": "Email" },
+          "evaluation_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Evaluation Id"
+          },
           "organisation_id": {
             "type": "string",
             "format": "uuid",
@@ -3463,7 +3468,7 @@
           }
         },
         "type": "object",
-        "required": ["name", "email", "organisation_id"],
+        "required": ["name", "email", "evaluation_id", "organisation_id"],
         "title": "UserCreate"
       },
       "UserExistsResponse": {
