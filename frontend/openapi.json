@@ -3176,13 +3176,14 @@
       },
       "TemplateMetadata": {
         "properties": {
+          "id": { "type": "string", "title": "Id" },
           "name": { "type": "string", "title": "Name" },
           "description": { "type": "string", "title": "Description" },
           "category": { "type": "string", "title": "Category" },
           "agenda_usage": { "$ref": "#/components/schemas/AgendaUsage" }
         },
         "type": "object",
-        "required": ["name", "description", "category", "agenda_usage"],
+        "required": ["id", "name", "description", "category", "agenda_usage"],
         "title": "TemplateMetadata"
       },
       "TemplateResponse": {
@@ -3455,6 +3456,11 @@
         "properties": {
           "name": { "type": "string", "title": "Name" },
           "email": { "type": "string", "format": "email", "title": "Email" },
+          "evaluation_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Evaluation Id"
+          },
           "organisation_id": {
             "type": "string",
             "format": "uuid",
@@ -3462,7 +3468,7 @@
           }
         },
         "type": "object",
-        "required": ["name", "email", "organisation_id"],
+        "required": ["name", "email", "evaluation_id", "organisation_id"],
         "title": "UserCreate"
       },
       "UserExistsResponse": {

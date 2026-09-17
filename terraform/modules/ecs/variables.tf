@@ -1,9 +1,9 @@
 variable "environment_name" {
-  description = "must be one of: development, or staging"
+  description = "must be one of: development, staging, or production"
   type        = string
   validation {
-    condition     = contains(["development", "staging"], var.environment_name)
-    error_message = "Environment must be one of: development, staging"
+    condition     = contains(["development", "staging", "production"], var.environment_name)
+    error_message = "Environment must be one of: development, staging, production"
   }
 }
 
@@ -234,6 +234,11 @@ variable "govnotify_invite_template_id_arn" {
   type        = string
 }
 
+variable "govnotify_invite_no_organisation_template_id_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify invite no organisation template ID"
+  type        = string
+}
+
 variable "lb_listener_exists" {
   description = "Indicates whether the load balancer listener has been created"
   type        = bool
@@ -254,4 +259,3 @@ variable "data_s3_bucket_name" {
   description = "name of the S3 bucket for data storage"
   type        = string
 }
-

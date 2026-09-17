@@ -6,6 +6,7 @@ from typing import TypedDict
 
 from pydantic import BaseModel, Field
 
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 from evals.summarisation.src.hallucination.types import HallucinationInput
 
 
@@ -14,6 +15,7 @@ class RunSummary(TypedDict):
     split: str
     n: int
     overall: float | None
+    judge_criteria_version: str
     metrics: dict[str, dict[str, float]]
     # Dimensions deliberately not judged for this run's summariser template, e.g. citation quality
     # for a template that produces no citations.
@@ -71,6 +73,7 @@ class EvalRecord(BaseModel):
     example_id: str | None = None
     dialogue: str | None = None
     reference_summary: str | None = None
+    judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     needs_review: bool | None = None
     review_reasons: list[str] | None = None
 

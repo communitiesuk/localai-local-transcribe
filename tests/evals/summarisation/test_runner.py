@@ -5,8 +5,10 @@ from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import dspy
+import orjson
 
 from evals.summarisation.src.common import AppConfig
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 from evals.summarisation.src.optimisation.runner import (
     _dialogue_to_entries,
     _elapsed_ms,
@@ -229,3 +231,8 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
     assert isinstance(summary_path, Path)
     assert isinstance(hallucination_inputs_path, Path)
     assert hallucination_inputs_path.name == "hallucination_inputs.json"
+
+    summary = orjson.loads(summary_path.read_bytes())
+    records = [orjson.loads(line) for line in results_path.read_bytes().splitlines() if line.strip()]
+    assert summary["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
+    assert records[0]["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
