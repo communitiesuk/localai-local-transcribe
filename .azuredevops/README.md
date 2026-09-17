@@ -27,13 +27,13 @@ Mandatory values:
 | --- | --- | --- |
 | `EVALS_AZURE_SERVICE_CONNECTION` | `evals-blob` | No |
 | `EVALS_TERRAFORM_SERVICE_CONNECTION` | `SPN-SP-sub-tst-aielt-001` | No |
-| `EVALS_ARM_SUBSCRIPTION_ID` | `45ceb5a1-1db2-45e6-bfe7-53f488854a31` | No |
-| `EVALS_RESOURCE_GROUP_NAME` | `rg-tst-aielt-001` | No |
-| `EVALS_STATE_STORAGE_ACCOUNT_NAME` | `aieltevalstftst001` | No |
+| `EVALS_ARM_SUBSCRIPTION_ID` | Azure subscription ID | No |
+| `EVALS_RESOURCE_GROUP_NAME` | Resource group name | No |
+| `EVALS_STATE_STORAGE_ACCOUNT_NAME` | State storage account name | No |
 | `EVALS_ENVIRONMENT_NAME` | `test` | No |
-| `EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME` | `aieltevalsentst001` | No |
-| `EVALS_RESULTS_STORAGE_ACCOUNT_NAME` | `aieltevalrestst001` | No |
-| `EVALS_ADAPT_EGRESS_IP` | `85.210.30.79` | No |
+| `EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME` | Sensitive storage account name | No |
+| `EVALS_RESULTS_STORAGE_ACCOUNT_NAME` | Results storage account name | No |
+| `EVALS_ADAPT_EGRESS_IP` | Virtual desktop egress IPv4 address | No |
 | `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_APIM_URL` | APIM endpoint | No |
@@ -73,9 +73,9 @@ terraform output container_name
 
 The Terraform apply pipeline needs the ARM variables above. The blob URL and APIM variables are still required for the eval smoke tests after the storage accounts exist.
 
-These are two different Azure identities. Do not point both variables at the SPN.
+These are two different Azure identities. Do not point both variables at the platform service principal.
 
-- `EVALS_TERRAFORM_SERVICE_CONNECTION` is the platform service principal (`SPN-SP-sub-tst-aielt-001`). It has Contributor and User Access Administrator so it can apply Terraform and create role assignments.
+- `EVALS_TERRAFORM_SERVICE_CONNECTION` is the Azure Resource Manager connection used only to apply Terraform (`SPN-SP-sub-tst-aielt-001`).
 - `EVALS_AZURE_SERVICE_CONNECTION` is `evals-blob`, a workload-identity connection to the user-assigned managed identity Terraform creates. That identity only has container-scoped blob roles. Create it after the first apply, using `pipeline_identity_client_id`, as in `terraform/azure/README.md` step 4.
 
 ## Scheduled run toggle
