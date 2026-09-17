@@ -205,6 +205,12 @@ class Settings(BaseSettings):
         description="Transcript must have at least this many words to be passed to full summary stage",
     )
 
+    ANALYTICS_AUTHENTICATION_SESSION_GAP_MINUTES: int = Field(
+        default=30,
+        description="Minimum gap since a user's last login before we record another first-party "
+        "'user authenticated' analytics event for them, to avoid over-counting requests within the same session",
+    )
+
     LOCAL_STORAGE_PATH: str = Field(
         default="/tmp",  # noqa: S108
         description="The folder where the data directory is mounted for the local storage service.",
