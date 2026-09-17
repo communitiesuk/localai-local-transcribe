@@ -5,7 +5,7 @@ The pipelines in `pipelines/` run eval smoke tests against blob-backed test conf
 - `evals-summarisation-smoke-test.yml` runs summarisation evals.
 - `evals-bias-smoke-test.yml` runs bias evals.
 - `evals-transcription-smoke-test.yml` runs transcription evals.
-- `evals-terraform-apply.yml` plans or applies `terraform/azure/evals` using the project Azure Resource Manager service connection. Manual only. Default run is plan. Choose apply only after the plan is create-only.
+- `evals-terraform-apply.yml` plans or applies `terraform/azure/evals`. Manual only. Default run is plan.
 
 The summarisation and bias pipelines can be run manually, and both are scheduled for Sundays at 21:00 UTC. Azure DevOps cannot express "every two weeks" in cron, so the weekly schedule uses `templates/fortnightly-schedule-gate-job.yml` to skip off-cycle Sundays.
 
@@ -75,16 +75,8 @@ The Terraform apply pipeline needs the ARM variables above. The blob URL and API
 
 These are two different Azure identities. Do not point both variables at the SPN.
 
-- `EVALS_TERRAFORM_SERVICE_CONNECTION` is the platform service principal (`SPN-SP-sub-tst-aielt-001`). It has Contributor and User Access Administrator so it can apply Terraform and create role assignments. As of 17 September 2026 that Azure DevOps connection does not exist. The apply pipeline will fail until it is created and this team can use it.
-- `EVALS_AZURE_SERVICE_CONNECTION` is `evals-blob`, a workload-identity connection to the user-assigned managed identity Terraform creates. That identity only has container-scoped blob roles. Create it after the first apply, using `pipeline_identity_client_id`, as in `terraform/azure/README.md` step 4. The eval smoke tests must keep using this connection. They must not run as the SPN.
-
-## Register the Terraform apply pipeline
-
-1. Pipelines → New pipeline → GitHub → this repository → Existing Azure Pipelines YAML file.
-2. Branch `feat/evals-terraform-ado-apply`.
-3. Path `.azuredevops/pipelines/evals-terraform-apply.yml`.
-4. Save. Do not add a schedule.
-5. Run with `terraform_command` = `plan` until the plan is create-only, then run `apply`.
+- `EVALS_TERRAFORM_SERVICE_CONNECTION` is the platform service principal (`SPN-SP-sub-tst-aielt-001`). It has Contributor and User Access Administrator so it can apply Terraform and create role assignments.
+- `EVALS_AZURE_SERVICE_CONNECTION` is `evals-blob`, a workload-identity connection to the user-assigned managed identity Terraform creates. That identity only has container-scoped blob roles. Create it after the first apply, using `pipeline_identity_client_id`, as in `terraform/azure/README.md` step 4.
 
 ## Scheduled run toggle
 
