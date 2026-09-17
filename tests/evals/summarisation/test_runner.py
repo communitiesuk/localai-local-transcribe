@@ -130,6 +130,21 @@ def test_load_dspy_devset_missing_id_uses_index():
     assert devset[0].example_id == "0"
 
 
+def test_load_dspy_devset_loads_local_dir_source(tmp_path: Path) -> None:
+    mock_dataset = {"test": [{"id": "1", "dialogue": "Local", "summary": "Summary"}]}
+    dataset_dir = tmp_path / "dataset"
+    dataset_dir.mkdir()
+    cfg = _cfg(dataset={**_MINIMAL_DATASET, "name": str(dataset_dir), "source": "local_dir"})
+
+    with patch(
+        "evals.summarisation.src.optimisation.runner.load_dataset", return_value=mock_dataset
+    ) as load_dataset_mock:
+        devset = load_dspy_devset(cfg, split="test", limit=None)
+
+    load_dataset_mock.assert_called_once_with("json", data_dir=str(dataset_dir))
+    assert devset[0].dialogue == "Local"
+
+
 def test_dialogue_to_entries_dialogsum_format():
     dialogue = "#Person1#: Hello there.\n#Person2#: How are you?"
     entries = _dialogue_to_entries(dialogue)

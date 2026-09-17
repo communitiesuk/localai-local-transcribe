@@ -80,6 +80,7 @@ To instead configure the environemnt locally:
 #### Notes
 
 - User authenitcation and autherisation is turned off for local development, a 'dummy_user' is created for which every requested is authorised.
+- Versioned prompts are tracked for developers via an internal `prompt_version`. If you change a versioned prompt or its prompt-building code, bump the relevant version and mention it in the PR template.
 
 ## Project structure
 
