@@ -195,9 +195,12 @@ async def test_create_user(
     user = make_user(organisation_id=organisation.id, roles=admin_roles)
     app.dependency_overrides[get_current_user] = lambda: user
 
-    with patch(
-        "backend.api.routes.users.get_user_by_email",
-        new=AsyncMock(return_value=None),
+    with (
+        patch(
+            "backend.api.routes.users.get_user_by_email",
+            new=AsyncMock(return_value=None),
+        ),
+        patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
     ):
         async with get_test_client() as ac:
             response = await ac.post(
@@ -205,6 +208,7 @@ async def test_create_user(
                 json={
                     "name": "Test User",
                     "email": "test.user@example.gov.uk",
+                    "evaluation_id": "EVAL-001",
                     "organisation_id": str(organisation.id),
                 },
             )
@@ -240,6 +244,7 @@ async def test_create_user_email_failure_calls_sentry(
 
     with (
         patch("backend.api.routes.users.get_user_by_email", new=AsyncMock(return_value=None)),
+        patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
         patch("backend.api.routes.users.sentry_sdk.capture_exception") as capture_exception,
     ):
         async with get_test_client() as ac:
@@ -248,6 +253,7 @@ async def test_create_user_email_failure_calls_sentry(
                 json={
                     "name": "Test User",
                     "email": "test.user@example.gov.uk",
+                    "evaluation_id": "EVAL-001",
                     "organisation_id": str(organisation.id),
                 },
             )
