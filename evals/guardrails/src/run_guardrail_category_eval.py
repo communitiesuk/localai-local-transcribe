@@ -39,8 +39,6 @@ def _read_cases(path: Path) -> list[dict[str, Any]]:
 
 
 def _read_config(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
     return _read_json(path)
 
 
@@ -240,8 +238,6 @@ async def _run(cases_path: Path, output_path: Path, limit: int | None) -> dict[s
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the minimal guardrail category eval.")
-    parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
-    parser.add_argument("--cases", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--limit", type=int, default=None)
     return parser.parse_args()
@@ -255,8 +251,8 @@ def _build_stdout_summary(report: dict[str, Any], output_path: Path) -> dict[str
 
 def main() -> None:
     args = _parse_args()
-    config = _read_config(_repo_path(args.config))
-    cases_path = args.cases or Path(config.get("cases_path", DEFAULT_CASES_PATH))
+    config = _read_config(_repo_path(DEFAULT_CONFIG_PATH))
+    cases_path = Path(config.get("cases_path", DEFAULT_CASES_PATH))
     output_path = args.output or Path(config.get("output_path", DEFAULT_OUTPUT_PATH))
     report = asyncio.run(_run(_repo_path(cases_path), _repo_path(output_path), args.limit))
     sys.stdout.write(

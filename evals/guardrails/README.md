@@ -10,7 +10,7 @@ poetry run python evals/guardrails/src/run_guardrail_category_eval.py
 
 Layout:
 
-- `configs/default.json` — run configuration, including the case file path.
+- `configs/default.json` — default run configuration, including the case file path.
 - `input/cases.json` — ignored input case definitions.
 - `src/run_guardrail_category_eval.py` — runner.
 - `output/` — ignored generated results and written conclusions.
