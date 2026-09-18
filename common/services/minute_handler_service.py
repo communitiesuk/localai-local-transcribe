@@ -10,11 +10,13 @@ from sqlalchemy.orm import selectinload
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import (
+    AnalyticsEventType,
     DialogueEntry,
     GuardrailResult,
     JobStatus,
     Minute,
     MinuteVersion,
+    Transcription,
     UserTemplate,
 )
 from common.format_transcript import transcript_as_speaker_and_utterance
@@ -24,6 +26,7 @@ from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
+from common.services.analytics_service import record_analytics_event_sync
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.templates.user_template import generate_user_template
@@ -108,7 +111,11 @@ class MinuteHandlerService:
             minute_version = session.get(
                 MinuteVersion,
                 minute_version_id,
-                options=[selectinload(MinuteVersion.minute).selectinload(Minute.transcription)],
+                options=[
+                    selectinload(MinuteVersion.minute)
+                    .selectinload(Minute.transcription)
+                    .selectinload(Transcription.user)  # type: ignore[arg-type]
+                ],
             )
             if not minute_version:
                 msg = f"MinuteVersion not found for id: {minute_version_id}"
@@ -200,6 +207,15 @@ class MinuteHandlerService:
                 status=JobStatus.COMPLETED,
                 template_prompt_version=result.template_prompt_version,
             )
+
+            event_user = minute_version.minute.transcription.user
+            with SessionLocal() as session:
+                record_analytics_event_sync(
+                    session,
+                    AnalyticsEventType.SUMMARY_RECEIVED,
+                    event_user.evaluation_id if event_user else None,
+                    event_user.organisation_id if event_user else None,
+                )
 
         except Exception as e:
             logger.exception(
