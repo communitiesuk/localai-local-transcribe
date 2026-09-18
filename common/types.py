@@ -274,6 +274,8 @@ class FailureCategory(StrEnum):
     DATA_PROTECTION = auto()
     INSTRUCTION_INTEGRITY = auto()
     EVIDENCE_AND_CITATION_QUALITY = auto()
+    # Fallback bucket for a category the model returns that we do not recognise, so the write still succeeds.
+    OPERATIONAL_GUARDRAIL_SIGNALS = auto()
 
 
 class FailureMode(StrEnum):
@@ -339,8 +341,25 @@ class FailureDetail(BaseModel):
         mode: category for category, modes in _VALID_MODES_BY_CATEGORY.items() for mode in modes
     }
 
+    @field_validator("category", mode="before")
+    @classmethod
+    def _coerce_unrecognised_category(cls, value: object) -> object:
+        if isinstance(value, FailureCategory):
+            return value
+        try:
+            return FailureCategory(value)
+        except ValueError:
+            logger.warning(
+                "Unrecognised guardrail failure category %r; storing as %s",
+                value,
+                FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS,
+            )
+            return FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS
+
     @model_validator(mode="after")
     def _correct_category_from_mode(self) -> "FailureDetail":
+        if self.category == FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS:
+            return self
         expected_category = self._CATEGORY_BY_MODE[self.mode]
         if expected_category is None:
             logger.error("FailureMode '%s' has no known category mapping", self.mode)
