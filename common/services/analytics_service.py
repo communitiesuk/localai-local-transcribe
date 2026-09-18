@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 from uuid import UUID
 
 from sqlmodel import Session
@@ -14,6 +15,7 @@ async def record_analytics_event(
     event_type: AnalyticsEventType,
     evaluation_id: str | None,
     recording_id: UUID | None = None,
+    event_metadata: dict[str, Any] | None = None,
 ) -> None:
     """Record a first-party analytics event (see ADR-028).
 
@@ -26,7 +28,14 @@ async def record_analytics_event(
         return
 
     try:
-        session.add(AnalyticsEvent(event_type=event_type, evaluation_id=evaluation_id, recording_id=recording_id))
+        session.add(
+            AnalyticsEvent(
+                event_type=event_type,
+                evaluation_id=evaluation_id,
+                recording_id=recording_id,
+                event_metadata=event_metadata,
+            )
+        )
         await session.commit()
     except Exception:
         logger.exception("Failed to record %s analytics event", event_type)
@@ -38,6 +47,7 @@ def record_analytics_event_sync(
     event_type: AnalyticsEventType,
     evaluation_id: str | None,
     recording_id: UUID | None = None,
+    event_metadata: dict[str, Any] | None = None,
 ) -> None:
     """Sync counterpart of `record_analytics_event`, for use from the worker (which uses sync sessions)."""
     if not evaluation_id:
@@ -45,7 +55,14 @@ def record_analytics_event_sync(
         return
 
     try:
-        session.add(AnalyticsEvent(event_type=event_type, evaluation_id=evaluation_id, recording_id=recording_id))
+        session.add(
+            AnalyticsEvent(
+                event_type=event_type,
+                evaluation_id=evaluation_id,
+                recording_id=recording_id,
+                event_metadata=event_metadata,
+            )
+        )
         session.commit()
     except Exception:
         logger.exception("Failed to record %s analytics event", event_type)

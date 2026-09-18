@@ -176,13 +176,44 @@ async def test_delete_user(
 
 
 @pytest.mark.asyncio
+async def test_delete_user_records_user_deleted_analytics_event(
+    mocker,
+    override_session,
+    make_user,
+    make_organisation,
+):
+    """Deleting a user records a USER_DELETED analytics event with the deleted user's evaluation_id."""
+    organisation = make_organisation()
+    override_session.get.return_value = organisation
+
+    user = make_user(organisation_id=organisation.id, roles=[UserRole.MHCLG_SUPPORT_ADMIN])
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    target_user = make_user(organisation_id=organisation.id, roles=[UserRole.STANDARD_USER])
+    target_user.evaluation_id = "EVAL-DELETE"
+    app.dependency_overrides[get_target_user] = lambda: target_user
+
+    mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
+
+    async with get_test_client() as ac:
+        response = await ac.delete(f"/users/{target_user.id}")
+
+    assert response.status_code == 204
+    mock_record_event.assert_awaited_once()
+    call_args = mock_record_event.await_args
+    assert call_args.args[0] is override_session
+    assert call_args.args[1] == AnalyticsEventType.USER_DELETED
+    assert call_args.args[2] == "EVAL-DELETE"
+
+
+@pytest.mark.asyncio
 async def test_create_user_records_user_created_analytics_event(
     mocker,
     override_session,
     override_support_admin_user,
     make_organisation,
 ):
-    """Creating a new user records a USER_CREATED analytics event with the invitee's evaluation_id."""
+    """Creating a new user records a USER_INVITED analytics event with the invitee's evaluation_id."""
     organisation = make_organisation(allowed_domains=["example.com"])
     override_session.get.return_value = organisation
     override_session.refresh.side_effect = user_create_refresh
@@ -208,7 +239,7 @@ async def test_create_user_records_user_created_analytics_event(
     mock_record_event.assert_awaited_once()
     call_args = mock_record_event.await_args
     assert call_args.args[0] is override_session
-    assert call_args.args[1] == AnalyticsEventType.USER_CREATED
+    assert call_args.args[1] == AnalyticsEventType.USER_INVITED
     assert call_args.args[2] == "EVAL-001"
 
 

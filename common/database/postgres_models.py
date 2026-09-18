@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum, auto
-from typing import TypedDict
+from typing import Any, TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, false, text
@@ -283,12 +283,22 @@ class GuardrailResult(BaseTableMixin, table=True):
 
 
 class AnalyticsEventType(StrEnum):
-    USER_CREATED = auto()
+    USER_INVITED = auto()
     USER_AUTHENTICATED = auto()
+    USER_DELETED = auto()
     AUDIO_UPLOAD_STARTED = auto()
     AUDIO_UPLOAD_COMPLETED = auto()
     SUMMARY_RECEIVED = auto()
     TRANSCRIPTION_RECEIVED = auto()
+    TRANSCRIPTION_EDIT_SUBMITTED = auto()
+
+
+class TranscriptionEditType(StrEnum):
+    """The kind of edit made to a transcription, recorded as part of a TRANSCRIPTION_EDIT_SUBMITTED analytics event."""
+
+    DIALOGUE_ENTRY = auto()
+    SINGLE_NAME = auto()
+    ALL_NAMES = auto()
 
 
 class AnalyticsEvent(BaseTableMixin, table=True):
@@ -306,3 +316,4 @@ class AnalyticsEvent(BaseTableMixin, table=True):
     )
     evaluation_id: str = Field(index=True)
     recording_id: UUID | None = Field(default=None, index=True)
+    event_metadata: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB))

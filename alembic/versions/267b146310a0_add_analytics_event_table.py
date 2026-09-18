@@ -10,6 +10,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 import sqlmodel
+from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
@@ -20,12 +21,14 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 analytics_event_type_enum = sa.Enum(
-    "USER_CREATED",
+    "USER_INVITED",
     "USER_AUTHENTICATED",
+    "USER_DELETED",
     "AUDIO_UPLOAD_STARTED",
     "AUDIO_UPLOAD_COMPLETED",
     "SUMMARY_RECEIVED",
     "TRANSCRIPTION_RECEIVED",
+    "TRANSCRIPTION_EDIT_SUBMITTED",
     name="analyticseventtype",
 )
 
@@ -38,6 +41,7 @@ def upgrade() -> None:
         sa.Column("event_type", analytics_event_type_enum, nullable=False),
         sa.Column("evaluation_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column("recording_id", sa.Uuid(), nullable=True),
+        sa.Column("event_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_analytics_event_evaluation_id"), "analytics_event", ["evaluation_id"], unique=False)
