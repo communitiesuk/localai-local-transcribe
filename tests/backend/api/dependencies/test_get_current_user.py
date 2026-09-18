@@ -25,6 +25,12 @@ def session():
     return session
 
 
+def make_exec_result(first_value):
+    result = Mock()
+    result.first.return_value = first_value
+    return result
+
+
 def make_mock_get_user_info(email: str = TEST_EMAIL, is_authorised: bool = True, subject_id: str = TEST_SUBJECT_ID):
     mock_auth_info = Mock(email=email, is_authorised=is_authorised, subject_id=subject_id)
     return Mock(return_value=mock_auth_info)
@@ -42,9 +48,11 @@ async def test_get_current_user_existing_user(monkeypatch, session):
         updated_datetime=datetime.now(UTC),
         last_login=existing_last_login,
     )
-    mock_result = Mock()
-    mock_result.first.return_value = mock_user
-    session.exec.return_value = mock_result  # return mock user as a db result
+
+    session.exec.side_effect = [
+        make_exec_result(mock_user),  # match by subject_id
+        make_exec_result(Mock()),  # UserAuthEmail lookup
+    ]
 
     # patch in JWT decoding
     mock_get_user_info = make_mock_get_user_info()
@@ -66,7 +74,7 @@ async def test_get_current_user_existing_user(monkeypatch, session):
     assert user.last_login > existing_last_login
 
     # check the query filtered by subject_id
-    executed_statement = session.exec.call_args.args[0]
+    executed_statement = session.exec.await_args_list[0].args[0]
     compiled = executed_statement.compile()
     assert "subject_id" in str(compiled)
     assert TEST_SUBJECT_ID in compiled.params.values()
@@ -82,11 +90,13 @@ async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
     )
-    mock_result = Mock()
-    # first returns no match, then returns the user
-    # as the first query matches on subject id, and the second on email
-    mock_result.first.side_effect = [None, mock_user]
-    session.exec.return_value = mock_result
+
+    session.exec.side_effect = [
+        make_exec_result(None),  # no subject_id match
+        make_exec_result(None),  # no changed sub match
+        make_exec_result(mock_user),  # fallback legacy email match returns user
+        make_exec_result(Mock()),  # UserAuthEmail lookup
+    ]
 
     # patch in JWT decoding
     mock_get_user_info = make_mock_get_user_info()
@@ -104,10 +114,10 @@ async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch
     assert user.email == mock_user.email
     assert user.subject_id == TEST_SUBJECT_ID
     mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    assert session.commit.await_count == 2
+    assert session.commit.await_count == 1
 
     # check the query filtered by email
-    executed_statement = session.exec.call_args.args[0]
+    executed_statement = session.exec.await_args_list[2].args[0]
     compiled = executed_statement.compile()
     assert "email" in str(compiled)
     assert user.email in compiled.params.values()
