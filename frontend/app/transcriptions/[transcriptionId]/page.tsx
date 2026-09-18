@@ -13,6 +13,7 @@ import {
   GovukButton,
   GovukErrorSummary,
   GovukHeading,
+  GovukModalDialogue,
   GovukTabs,
 } from '@/components/govuk'
 import {
@@ -27,6 +28,7 @@ import { redirect, useSearchParams } from 'next/navigation'
 import { BannerNotification } from '@/components/banner-notification'
 import { useBannerStore } from '@/stores/use-banner-store'
 import type { ErrorItem } from '@/components/govuk/error-summary'
+import { ModalConfirmationInterstitial } from '@/components/govuk/modal-confirmation-interstitial'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -47,6 +49,17 @@ export default function TranscriptionPage(props: {
   const { setBanner, clearBanner } = useBannerStore()
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
+  const transcriptionTabRef = useRef<{
+    discardChanges: () => void
+    tryFinishEdit: () => boolean
+  } | null>(null)
+
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
+    useState(false)
+  const [
+    showUnsavedChangesDialogConfirmAction,
+    setShowUnsavedChangesDialogConfirmAction,
+  ] = useState<(() => void) | null>(null)
 
   const [activeTab, setActiveTab] = useState('transcript')
   const [draftTabs, setDraftTabs] = useState<
@@ -162,6 +175,24 @@ export default function TranscriptionPage(props: {
   }
 
   const handleTabChange = (tab: string) => {
+    if (
+      activeTab === 'transcript' &&
+      activeTab !== tab &&
+      transcriptionTabRef.current &&
+      isTranscriptEditing
+    ) {
+      if (!transcriptionTabRef.current.tryFinishEdit()) {
+        setShowUnsavedChangesDialog(true)
+        setShowUnsavedChangesDialogConfirmAction(() => () => {
+          transcriptionTabRef.current?.discardChanges()
+          setShowUnsavedChangesDialog(false)
+          clearBanner()
+          setActiveTab(tab)
+        })
+        return
+      }
+    }
+
     clearBanner()
     setActiveTab(tab)
   }
@@ -247,6 +278,19 @@ export default function TranscriptionPage(props: {
           Create document
         </GovukButton>
       </div>
+      <GovukModalDialogue
+        open={showUnsavedChangesDialog}
+        onClose={() => setShowUnsavedChangesDialog(false)}
+      >
+        <ModalConfirmationInterstitial
+          title="Discard changes to transcript?"
+          body="If you continue, your unsaved changes to the current line edit will be lost."
+          confirmLabel="Discard changes"
+          cancelLabel="Cancel"
+          onConfirm={showUnsavedChangesDialogConfirmAction ?? (() => {})}
+          onCancel={() => setShowUnsavedChangesDialog(false)}
+        />
+      </GovukModalDialogue>
       <GovukTabs
         id="transcription-tabs"
         className="govuk-!-margin-top-4"
@@ -255,6 +299,7 @@ export default function TranscriptionPage(props: {
       >
         <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab
+            ref={transcriptionTabRef}
             transcription={transcription}
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
