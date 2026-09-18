@@ -15,7 +15,7 @@ Layout:
 - `src/run_guardrail_category_eval.py` — runner.
 - `output/` — ignored generated results and written conclusions.
 
-The fixture uses summaries from the final July summarisation run and applies small deterministic edits. Controls have no edit. Each bad case has one expected failure mode/category. The script writes per-case score, reasoning, categories and aggregate F1 to JSON.
+The fixture uses summaries from the final July summarisation run and applies small deterministic edits. Controls have no edit. Each bad case has one expected failure category. The script writes per-case score, reasoning, categories and the requested `f1_*` metrics to JSON.
 
 Before a full run, put the case file at the configured ignored input path:
 

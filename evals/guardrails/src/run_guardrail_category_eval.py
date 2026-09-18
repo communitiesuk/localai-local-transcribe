@@ -11,12 +11,13 @@ from tenacity import RetryError
 
 from common.services.minute_handler_service import MinuteHandlerService
 from common.settings import get_settings
-from common.types import DialogueEntry, FailureCategory, FailureMode, GuardrailScore
+from common.types import DialogueEntry, FailureCategory, GuardrailScore
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_CONFIG_PATH = Path("evals/guardrails/configs/default.json")
 DEFAULT_CASES_PATH = Path("evals/guardrails/input/cases.json")
 DEFAULT_OUTPUT_PATH = Path("evals/guardrails/output/results.json")
+NO_ISSUE_LABEL = "no_issue"
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -79,21 +80,12 @@ def _normalise_category(category: str) -> str:
         return FailureCategory(category).name
 
 
-def _normalise_mode(mode: str) -> str:
-    try:
-        return FailureMode[mode].name
-    except KeyError:
-        return FailureMode(mode).name
-
-
-def _normalise_expected(case: dict[str, Any], key: str) -> list[str]:
-    values = case.get(key, [])
+def _normalise_expected_categories(case: dict[str, Any]) -> list[str]:
+    values = case.get("expected_categories", [])
     if not isinstance(values, list):
-        msg = f"{case['id']} has non-list {key}"
+        msg = f"{case['id']} has non-list expected_categories"
         raise ValueError(msg)
-    if key == "expected_categories":
-        return [_normalise_category(value) for value in values]
-    return [_normalise_mode(value) for value in values]
+    return [_normalise_category(value) for value in values]
 
 
 def _apply_mutations(summary: str, mutations: list[dict[str, Any]]) -> str:
@@ -129,10 +121,6 @@ def _prediction_categories(score: GuardrailScore) -> list[str]:
     return sorted({detail.category.name for detail in score.categories})
 
 
-def _prediction_modes(score: GuardrailScore) -> list[str]:
-    return sorted({detail.mode.name for detail in score.categories})
-
-
 def _f1(tp: int, fp: int, fn: int) -> float:
     denominator = (2 * tp) + fp + fn
     if denominator == 0:
@@ -140,53 +128,46 @@ def _f1(tp: int, fp: int, fn: int) -> float:
     return (2 * tp) / denominator
 
 
-def _score_labels(results: list[dict[str, Any]], label_key: str, prediction_key: str) -> dict[str, Any]:
+def _expected_class_labels(result: dict[str, Any]) -> list[str]:
+    categories = result.get("expected_categories")
+    if categories:
+        return [str(category) for category in categories]
+    return [NO_ISSUE_LABEL]
+
+
+def _predicted_class_labels(result: dict[str, Any]) -> list[str]:
+    categories = result.get("predicted_categories")
+    if categories:
+        return [str(category) for category in categories]
+    threshold = get_settings().GUARDRAIL_THRESHOLD
+    if result["score"] >= threshold:
+        return [NO_ISSUE_LABEL]
+    return []
+
+
+def _score_requested_metrics(results: list[dict[str, Any]]) -> dict[str, float]:
     labels = sorted(
-        {label for result in results for label in [*result.get(label_key, []), *result.get(prediction_key, [])]}
+        {label for result in results for label in [*_expected_class_labels(result), *_predicted_class_labels(result)]}
     )
-    per_label: dict[str, dict[str, float | int]] = {}
-    total_tp = total_fp = total_fn = 0
+    f1_by_label: dict[str, float] = {}
 
     for label in labels:
         tp = fp = fn = 0
         for result in results:
-            expected = set(result.get(label_key, []))
-            predicted = set(result.get(prediction_key, []))
+            expected = set(_expected_class_labels(result))
+            predicted = set(_predicted_class_labels(result))
             if label in expected and label in predicted:
                 tp += 1
             elif label not in expected and label in predicted:
                 fp += 1
             elif label in expected and label not in predicted:
                 fn += 1
-        total_tp += tp
-        total_fp += fp
-        total_fn += fn
-        per_label[label] = {"tp": tp, "fp": fp, "fn": fn, "f1": _f1(tp, fp, fn)}
+        f1_by_label[label] = _f1(tp, fp, fn)
 
-    macro_values = [label_scores["f1"] for label_scores in per_label.values()]
-    macro_f1 = sum(macro_values) / len(macro_values) if macro_values else 0.0
-    return {
-        "micro": {"tp": total_tp, "fp": total_fp, "fn": total_fn, "f1": _f1(total_tp, total_fp, total_fn)},
-        "macro_f1": macro_f1,
-        "per_label": per_label,
-    }
-
-
-def _score_binary(results: list[dict[str, Any]]) -> dict[str, float | int]:
-    threshold = get_settings().GUARDRAIL_THRESHOLD
-    tp = fp = tn = fn = 0
-    for result in results:
-        expected_flagged = bool(result["expected_categories"])
-        predicted_flagged = bool(result["predicted_categories"]) or result["score"] < threshold
-        if expected_flagged and predicted_flagged:
-            tp += 1
-        elif not expected_flagged and predicted_flagged:
-            fp += 1
-        elif not expected_flagged and not predicted_flagged:
-            tn += 1
-        else:
-            fn += 1
-    return {"tp": tp, "fp": fp, "tn": tn, "fn": fn, "f1": _f1(tp, fp, fn)}
+    metrics = {"f1_overall": sum(f1_by_label.values()) / len(f1_by_label) if f1_by_label else 0.0}
+    metrics.update({f"f1_{category.name.lower()}": f1_by_label.get(category.name, 0.0) for category in FailureCategory})
+    metrics["f1_no_issue"] = f1_by_label.get(NO_ISSUE_LABEL, 0.0)
+    return metrics
 
 
 def _error_message(exc: Exception) -> str:
@@ -207,8 +188,7 @@ async def _run_case(case: dict[str, Any], semaphore: asyncio.Semaphore) -> dict[
 
     summary = _apply_mutations(_summary_from_output(summary_path), mutations)
     transcript = _transcript_from_output(transcript_path)
-    expected_categories = _normalise_expected(case, "expected_categories")
-    expected_modes = _normalise_expected(case, "expected_modes")
+    expected_categories = _normalise_expected_categories(case)
 
     async with semaphore:
         try:
@@ -219,29 +199,22 @@ async def _run_case(case: dict[str, Any], semaphore: asyncio.Semaphore) -> dict[
                 "description": case.get("description"),
                 "error": _error_message(exc),
                 "expected_categories": expected_categories,
-                "expected_modes": expected_modes,
                 "predicted_categories": [],
-                "predicted_modes": [],
                 "score": None,
                 "reasoning": None,
                 "category_exact_match": False,
-                "mode_exact_match": False,
             }
 
     predicted_categories = _prediction_categories(score)
-    predicted_modes = _prediction_modes(score)
     return {
         "id": case["id"],
         "description": case.get("description"),
         "expected_categories": expected_categories,
-        "expected_modes": expected_modes,
         "predicted_categories": predicted_categories,
-        "predicted_modes": predicted_modes,
         "score": score.score,
         "reasoning": score.reasoning,
         "category_details": [detail.model_dump(mode="json") for detail in score.categories],
         "category_exact_match": set(predicted_categories) == set(expected_categories),
-        "mode_exact_match": set(predicted_modes) == set(expected_modes),
     }
 
 
@@ -255,9 +228,7 @@ async def _run(cases_path: Path, output_path: Path, concurrency: int, limit: int
     report = {
         "case_count": len(results),
         "completed_case_count": len(completed_results),
-        "binary": _score_binary(completed_results),
-        "categories": _score_labels(completed_results, "expected_categories", "predicted_categories"),
-        "modes": _score_labels(completed_results, "expected_modes", "predicted_modes"),
+        "metrics": _score_requested_metrics(completed_results),
         "results": results,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -277,6 +248,12 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _build_stdout_summary(report: dict[str, Any], output_path: Path) -> dict[str, Any]:
+    summary = dict(report["metrics"])
+    summary["output"] = str(output_path)
+    return summary
+
+
 def main() -> None:
     args = _parse_args()
     config = _read_config(_repo_path(args.config))
@@ -286,15 +263,7 @@ def main() -> None:
     report = asyncio.run(_run(_repo_path(cases_path), _repo_path(output_path), concurrency, args.limit))
     sys.stdout.write(
         json.dumps(
-            {
-                "case_count": report["case_count"],
-                "completed_case_count": report["completed_case_count"],
-                "binary_f1": report["binary"]["f1"],
-                "category_micro_f1": report["categories"]["micro"]["f1"],
-                "category_macro_f1": report["categories"]["macro_f1"],
-                "mode_micro_f1": report["modes"]["micro"]["f1"],
-                "output": str(output_path),
-            },
+            _build_stdout_summary(report, output_path),
             indent=2,
         )
     )
