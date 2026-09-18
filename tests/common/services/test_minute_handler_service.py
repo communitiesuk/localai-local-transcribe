@@ -452,6 +452,7 @@ async def test_process_minute_generation_message_success(
         id=uuid4(),
         email=mock_email,
         evaluation_id="EVAL-001",
+        organisation_id=uuid4(),
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
@@ -483,7 +484,12 @@ async def test_process_minute_generation_message_success(
         status=JobStatus.COMPLETED,
         template_prompt_version=None,
     )
-    mock_record_event.assert_called_once_with(mock_session, AnalyticsEventType.SUMMARY_RECEIVED, "EVAL-001")
+    mock_record_event.assert_called_once_with(
+        mock_session,
+        AnalyticsEventType.SUMMARY_RECEIVED,
+        "EVAL-001",
+        mock_minute.transcription.user.organisation_id,
+    )
 
 
 @pytest.mark.asyncio

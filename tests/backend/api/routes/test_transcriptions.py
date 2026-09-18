@@ -106,6 +106,7 @@ async def test_create_transcription_records_audio_upload_completed_analytics_eve
         mock_session_with_recording,
         AnalyticsEventType.AUDIO_UPLOAD_COMPLETED,
         mock_user.evaluation_id,
+        mock_user.organisation_id,
         recording_id=mock_session_with_recording.get.return_value.id,
         event_metadata=None,
     )
@@ -136,6 +137,7 @@ async def test_create_transcription_records_audio_duration_in_analytics_event(
         mock_session_with_recording,
         AnalyticsEventType.AUDIO_UPLOAD_COMPLETED,
         mock_user.evaluation_id,
+        mock_user.organisation_id,
         recording_id=mock_recording.id,
         event_metadata={"audio_duration_seconds": 123.45},
     )
@@ -284,6 +286,7 @@ async def test_create_recording_records_audio_upload_started_analytics_event(
         mock_session,
         AnalyticsEventType.AUDIO_UPLOAD_STARTED,
         mock_user.evaluation_id,
+        mock_user.organisation_id,
         recording_id=mock_recording.id,
     )
 
@@ -684,6 +687,7 @@ async def test_transcription_edit_records_analytics_event(
 ):
     mock_session.get = AsyncMock(return_value=mock_transcription)
     mock_user.evaluation_id = "EVAL-001"
+    mock_user.organisation_id = uuid.uuid4()
     recording_id = uuid.uuid4()
     mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
     mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
@@ -698,6 +702,7 @@ async def test_transcription_edit_records_analytics_event(
         mock_session,
         AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
         "EVAL-001",
+        mock_user.organisation_id,
         recording_id=recording_id,
         event_metadata={"edit_type": expected_edit_type.value},
     )

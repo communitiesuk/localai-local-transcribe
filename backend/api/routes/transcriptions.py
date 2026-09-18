@@ -95,6 +95,7 @@ async def _record_transcription_edit_analytics_event(
         session,
         AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
         current_user.evaluation_id,
+        current_user.organisation_id,
         recording_id=recording_id,
         event_metadata={"edit_type": edit_type.value},
     )
@@ -301,7 +302,11 @@ async def create_recording(
     await session.refresh(recording)
 
     await record_analytics_event(
-        session, AnalyticsEventType.AUDIO_UPLOAD_STARTED, user.evaluation_id, recording_id=recording.id
+        session,
+        AnalyticsEventType.AUDIO_UPLOAD_STARTED,
+        user.evaluation_id,
+        user.organisation_id,
+        recording_id=recording.id,
     )
 
     return RecordingCreateResponse(id=recording.id, upload_url=presigned_url)
@@ -341,6 +346,7 @@ async def create_transcription(
         session,
         AnalyticsEventType.AUDIO_UPLOAD_COMPLETED,
         current_user.evaluation_id,
+        current_user.organisation_id,
         recording_id=recording.id,
         event_metadata=(
             {"audio_duration_seconds": request.audio_duration_seconds}

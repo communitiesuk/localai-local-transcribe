@@ -80,7 +80,9 @@ async def get_current_user(
         await session.commit()
 
         if is_new_session:
-            await record_analytics_event(session, AnalyticsEventType.USER_AUTHENTICATED, user.evaluation_id)
+            await record_analytics_event(
+                session, AnalyticsEventType.USER_AUTHENTICATED, user.evaluation_id, user.organisation_id
+            )
 
         return user
     except MissingAuthTokenError as e:

@@ -208,13 +208,14 @@ class MinuteHandlerService:
                 template_prompt_version=result.template_prompt_version,
             )
 
-            evaluation_id = (
-                minute_version.minute.transcription.user.evaluation_id
-                if minute_version.minute.transcription.user
-                else None
-            )
+            event_user = minute_version.minute.transcription.user
             with SessionLocal() as session:
-                record_analytics_event_sync(session, AnalyticsEventType.SUMMARY_RECEIVED, evaluation_id)
+                record_analytics_event_sync(
+                    session,
+                    AnalyticsEventType.SUMMARY_RECEIVED,
+                    event_user.evaluation_id if event_user else None,
+                    event_user.organisation_id if event_user else None,
+                )
 
         except Exception as e:
             logger.exception(

@@ -144,7 +144,9 @@ async def create_user(
         raise
     await session.refresh(new_user)
 
-    await record_analytics_event(session, AnalyticsEventType.USER_INVITED, new_user.evaluation_id)
+    await record_analytics_event(
+        session, AnalyticsEventType.USER_INVITED, new_user.evaluation_id, new_user.organisation_id
+    )
 
     try:
         org_name = None if is_system_admin(user) else organisation.name
@@ -240,11 +242,14 @@ async def delete_user(session: SQLSessionDep, user: UserDep, target_user: Target
             raise HTTPException(status_code=404, detail="User not found")
 
     deleted_user_evaluation_id = target_user.evaluation_id
+    deleted_user_organisation_id = target_user.organisation_id
 
     await session.delete(target_user)
     await session.commit()
 
-    await record_analytics_event(session, AnalyticsEventType.USER_DELETED, deleted_user_evaluation_id)
+    await record_analytics_event(
+        session, AnalyticsEventType.USER_DELETED, deleted_user_evaluation_id, deleted_user_organisation_id
+    )
 
 
 @users_router.get("/user/exists", response_model=UserExistsResponse)

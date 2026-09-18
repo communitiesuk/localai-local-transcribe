@@ -208,10 +208,14 @@ class TranscriptionHandlerService:
         so we use the earliest one - the recording the user originally uploaded to start the job.
         """
         original_recording = min(transcription.recordings, key=lambda recording: recording.created_datetime)
-        evaluation_id = transcription.user.evaluation_id if transcription.user else None
+        event_user = transcription.user
         with SessionLocal() as session:
             record_analytics_event_sync(
-                session, AnalyticsEventType.TRANSCRIPTION_RECEIVED, evaluation_id, recording_id=original_recording.id
+                session,
+                AnalyticsEventType.TRANSCRIPTION_RECEIVED,
+                event_user.evaluation_id if event_user else None,
+                event_user.organisation_id if event_user else None,
+                recording_id=original_recording.id,
             )
 
     @classmethod

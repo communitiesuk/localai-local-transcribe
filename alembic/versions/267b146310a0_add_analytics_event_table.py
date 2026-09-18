@@ -40,16 +40,19 @@ def upgrade() -> None:
         sa.Column("occurred_datetime", sa.TIMESTAMP(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("event_type", analytics_event_type_enum, nullable=False),
         sa.Column("evaluation_id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("organisation_id", sa.Uuid(), nullable=True),
         sa.Column("recording_id", sa.Uuid(), nullable=True),
         sa.Column("event_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_analytics_event_evaluation_id"), "analytics_event", ["evaluation_id"], unique=False)
+    op.create_index(op.f("ix_analytics_event_organisation_id"), "analytics_event", ["organisation_id"], unique=False)
     op.create_index(op.f("ix_analytics_event_recording_id"), "analytics_event", ["recording_id"], unique=False)
 
 
 def downgrade() -> None:
     op.drop_index(op.f("ix_analytics_event_recording_id"), table_name="analytics_event")
+    op.drop_index(op.f("ix_analytics_event_organisation_id"), table_name="analytics_event")
     op.drop_index(op.f("ix_analytics_event_evaluation_id"), table_name="analytics_event")
     op.drop_table("analytics_event")
     analytics_event_type_enum.drop(op.get_bind(), checkfirst=True)

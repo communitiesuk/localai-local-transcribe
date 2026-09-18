@@ -110,6 +110,7 @@ def test_record_transcription_received_uses_earliest_recording_and_user_evaluati
             id=uuid4(),
             email="test@local-transcribe.com",
             evaluation_id="EVAL-001",
+            organisation_id=uuid4(),
             data_retention_days=30,
             created_datetime=datetime.now(tz=UTC),
             updated_datetime=datetime.now(tz=UTC),
@@ -123,7 +124,11 @@ def test_record_transcription_received_uses_earliest_recording_and_user_evaluati
         TranscriptionHandlerService._record_transcription_received(transcription)  # noqa: SLF001
 
     mock_record_event.assert_called_once_with(
-        session, AnalyticsEventType.TRANSCRIPTION_RECEIVED, "EVAL-001", recording_id=earliest_recording.id
+        session,
+        AnalyticsEventType.TRANSCRIPTION_RECEIVED,
+        "EVAL-001",
+        transcription.user.organisation_id,
+        recording_id=earliest_recording.id,
     )
 
 
@@ -149,5 +154,5 @@ def test_record_transcription_received_handles_no_user(mock_session):
         TranscriptionHandlerService._record_transcription_received(transcription)  # noqa: SLF001
 
     mock_record_event.assert_called_once_with(
-        session, AnalyticsEventType.TRANSCRIPTION_RECEIVED, None, recording_id=recording.id
+        session, AnalyticsEventType.TRANSCRIPTION_RECEIVED, None, None, recording_id=recording.id
     )

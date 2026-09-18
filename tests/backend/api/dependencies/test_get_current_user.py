@@ -83,6 +83,7 @@ async def test_get_current_user_records_authenticated_analytics_event_after_sess
         email=TEST_EMAIL,
         subject_id=TEST_SUBJECT_ID,
         evaluation_id="EVAL-001",
+        organisation_id=uuid4(),
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
@@ -101,7 +102,9 @@ async def test_get_current_user_records_authenticated_analytics_event_after_sess
 
     await get_current_user(session=session, x_amzn_oidc_data=TEST_TOKEN)
 
-    mock_record_event.assert_awaited_once_with(session, AnalyticsEventType.USER_AUTHENTICATED, "EVAL-001")
+    mock_record_event.assert_awaited_once_with(
+        session, AnalyticsEventType.USER_AUTHENTICATED, "EVAL-001", mock_user.organisation_id
+    )
 
 
 @pytest.mark.asyncio

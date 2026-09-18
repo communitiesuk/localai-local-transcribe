@@ -14,6 +14,7 @@ async def record_analytics_event(
     session: AsyncSession,
     event_type: AnalyticsEventType,
     evaluation_id: str | None,
+    organisation_id: UUID | None,
     recording_id: UUID | None = None,
     event_metadata: dict[str, Any] | None = None,
 ) -> None:
@@ -22,6 +23,9 @@ async def record_analytics_event(
     Recording analytics must never break the primary user journey, so any failure here is logged and swallowed
     rather than propagated. Users without an evaluation_id (e.g. legacy accounts) are skipped, as there is no
     pseudonymous identifier to report against.
+
+    `organisation_id` is stored so events can be reported per local authority. It is required (rather than
+    defaulting) so new call sites must decide explicitly, but may be None for users with no organisation.
     """
     if not evaluation_id:
         logger.debug("Skipping %s analytics event: user has no evaluation_id", event_type)
@@ -32,6 +36,7 @@ async def record_analytics_event(
             AnalyticsEvent(
                 event_type=event_type,
                 evaluation_id=evaluation_id,
+                organisation_id=organisation_id,
                 recording_id=recording_id,
                 event_metadata=event_metadata,
             )
@@ -46,6 +51,7 @@ def record_analytics_event_sync(
     session: Session,
     event_type: AnalyticsEventType,
     evaluation_id: str | None,
+    organisation_id: UUID | None,
     recording_id: UUID | None = None,
     event_metadata: dict[str, Any] | None = None,
 ) -> None:
@@ -59,6 +65,7 @@ def record_analytics_event_sync(
             AnalyticsEvent(
                 event_type=event_type,
                 evaluation_id=evaluation_id,
+                organisation_id=organisation_id,
                 recording_id=recording_id,
                 event_metadata=event_metadata,
             )

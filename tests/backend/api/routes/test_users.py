@@ -205,6 +205,7 @@ async def test_delete_user_records_user_deleted_analytics_event(
     assert call_args.args[0] is override_session
     assert call_args.args[1] == AnalyticsEventType.USER_DELETED
     assert call_args.args[2] == "EVAL-DELETE"
+    assert call_args.args[3] == target_user.organisation_id
 
 
 @pytest.mark.asyncio
@@ -273,6 +274,7 @@ async def test_create_user(
     assert call_args.args[0] is override_session
     assert call_args.args[1] == AnalyticsEventType.USER_INVITED
     assert call_args.args[2] == "EVAL-001"
+    assert call_args.args[3] == organisation.id
 
 
 @pytest.mark.asyncio

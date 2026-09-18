@@ -317,4 +317,5 @@ class AnalyticsEvent(BaseTableMixin, table=True):
     )
     evaluation_id: str = Field(index=True)
     recording_id: UUID | None = Field(default=None, index=True)
+    organisation_id: UUID | None = Field(default=None, index=True)
     event_metadata: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB))
