@@ -153,7 +153,7 @@ class User(BaseTableMixin, table=True):
 class UserAuthEmail(BaseTableMixin, table=True):
     __tablename__ = "user_auth_email"
 
-    user_id: UUID = Field(foreign_key="user.id", nullable=False)
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE", nullable=False)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
 
 class Recording(BaseTableMixin, table=True):

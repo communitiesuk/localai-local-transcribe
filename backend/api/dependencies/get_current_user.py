@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
 from sqlmodel import col, select
+from sqlalchemy.dialects.postgresql import insert
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
@@ -21,14 +22,17 @@ async def record_user_auth_email(
     user: User,
     email: str,
 ) -> None:
-    statement = select(UserAuthEmail).where(
-        col(UserAuthEmail.user_id) == user.id,
-        col(UserAuthEmail.email) == email,
-    )
+    statement = select(UserAuthEmail).where(UserAuthEmail.email == email)
     existing_auth_email = (await session.exec(statement)).first()
 
     if not existing_auth_email:
-        session.add(UserAuthEmail(user_id=user.id, email=email))
+        statement = (
+            insert(UserAuthEmail)
+            .values(user_id=user.id, email=email)
+            # Handle race condition when single user makes multiple requests
+            .on_conflict_do_nothing(index_elements=["email"]) 
+        )
+        await session.exec(statement)
 
 
 async def get_current_user(

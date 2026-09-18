@@ -1,8 +1,8 @@
 """add UserAuthEmail table
 
-Revision ID: 02ef85a821c6
+Revision ID: b0ccc4bfe42a
 Revises: a87c7de937c7
-Create Date: 2026-09-18 11:50:42.563486
+Create Date: 2026-09-18 13:27:37.347594
 
 """
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '02ef85a821c6'
+revision: str = 'b0ccc4bfe42a'
 down_revision: Union[str, None] = 'a87c7de937c7'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,7 +25,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), server_default=sa.text('gen_random_uuid()'), nullable=False),
     sa.Column('user_id', sa.Uuid(), nullable=False),
     sa.Column('email', postgresql.CITEXT(), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
