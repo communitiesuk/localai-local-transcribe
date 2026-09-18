@@ -26,13 +26,13 @@ async def record_user_auth_email(
     existing_auth_email = (await session.exec(statement)).first()
 
     if not existing_auth_email:
-        statement = (
+        insert_statement = (
             insert(UserAuthEmail)
             .values(user_id=user.id, email=email)
             # Handle race condition when single user makes multiple requests
             .on_conflict_do_nothing(index_elements=["email"])
         )
-        await session.exec(statement)
+        await session.exec(insert_statement)
 
 
 async def get_current_user(

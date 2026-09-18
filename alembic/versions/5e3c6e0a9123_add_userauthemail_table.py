@@ -1,11 +1,10 @@
 """add UserAuthEmail table
 
-Revision ID: b0ccc4bfe42a
-Revises: a87c7de937c7
-Create Date: 2026-09-18 13:27:37.347594
+Revision ID: 5e3c6e0a9123
+Revises: b6a9d4f37c21
+Create Date: 2026-09-18 14:57:57.910946
 
 """
-
 from typing import Sequence, Union
 
 from alembic import op
@@ -14,8 +13,8 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = "b0ccc4bfe42a"
-down_revision: Union[str, None] = "a87c7de937c7"
+revision: str = '5e3c6e0a9123'
+down_revision: Union[str, None] = 'b6a9d4f37c21'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -42,3 +41,4 @@ def downgrade() -> None:
     op.drop_column("user", "needs_to_update_sub")
     op.drop_table("user_auth_email")
     # ### end Alembic commands ###
+
