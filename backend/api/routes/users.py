@@ -2,6 +2,7 @@ import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
+import sentry_sdk
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +14,7 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
+from backend.services.emails import EmailSendError, get_email_sender
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email, get_user_by_evaluation_id
@@ -31,6 +33,8 @@ from common.types import (
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
+
+email_sender = get_email_sender()
 
 EVALUATION_ID_UNIQUE_CONSTRAINT = "uq_user_evaluation_id"
 EVALUATION_ID_IN_USE_DETAIL = "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
@@ -141,6 +145,12 @@ async def create_user(
     await session.refresh(new_user)
 
     await record_analytics_event(session, AnalyticsEventType.USER_INVITED, new_user.evaluation_id)
+
+    try:
+        org_name = None if is_system_admin(user) else organisation.name
+        email_sender.send_invite_email(data.email, data.name, org_name)
+    except EmailSendError as e:
+        sentry_sdk.capture_exception(e)
 
     return to_user_response(new_user)
 

@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_target_user import get_target_user
 from backend.main import app
+from backend.services.emails import EmailSendError
 from common.database.postgres_models import AnalyticsEventType, UserRole
 from tests.utils import get_test_client
 
@@ -207,21 +208,38 @@ async def test_delete_user_records_user_deleted_analytics_event(
 
 
 @pytest.mark.asyncio
-async def test_create_user_records_user_created_analytics_event(
+@pytest.mark.parametrize(
+    ("admin_roles", "expected_inviter_organisation_name"),
+    [
+        ([UserRole.MHCLG_SUPPORT_ADMIN], None),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], "Example Council"),
+    ],
+)
+async def test_create_user(
     mocker,
     override_session,
-    override_support_admin_user,
+    make_user,
     make_organisation,
+    mock_email_sender,
+    admin_roles,
+    expected_inviter_organisation_name,
 ):
-    """Creating a new user records a USER_INVITED analytics event with the invitee's evaluation_id."""
-    organisation = make_organisation(allowed_domains=["example.com"])
-    override_session.get.return_value = organisation
-    override_session.refresh.side_effect = user_create_refresh
+    """Creating a new user records a USER_INVITED analytics event and sends an invite email."""
+    organisation = make_organisation(name="Example Council", allowed_domains=["example.gov.uk"])
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+    mock_session.refresh.side_effect = user_create_refresh
+
+    user = make_user(organisation_id=organisation.id, roles=admin_roles)
+    app.dependency_overrides[get_current_user] = lambda: user
 
     mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
 
     with (
-        patch("backend.api.routes.users.get_user_by_email", new=AsyncMock(return_value=None)),
+        patch(
+            "backend.api.routes.users.get_user_by_email",
+            new=AsyncMock(return_value=None),
+        ),
         patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
     ):
         async with get_test_client() as ac:
@@ -229,18 +247,69 @@ async def test_create_user_records_user_created_analytics_event(
                 "/users",
                 json={
                     "name": "Test User",
-                    "email": "new.user@example.com",
+                    "email": "test.user@example.gov.uk",
                     "evaluation_id": "EVAL-001",
                     "organisation_id": str(organisation.id),
                 },
             )
 
     assert response.status_code == 200
+
+    data = response.json()
+    assert data["name"] == "Test User"
+    assert data["email"] == "test.user@example.gov.uk"
+    assert data["organisation_id"] == str(organisation.id)
+
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
+    mock_email_sender.send_invite_email.assert_called_once_with(
+        "test.user@example.gov.uk",
+        "Test User",
+        expected_inviter_organisation_name,
+    )
+
     mock_record_event.assert_awaited_once()
     call_args = mock_record_event.await_args
     assert call_args.args[0] is override_session
     assert call_args.args[1] == AnalyticsEventType.USER_INVITED
     assert call_args.args[2] == "EVAL-001"
+
+
+@pytest.mark.asyncio
+async def test_create_user_email_failure_calls_sentry(
+    mocker,
+    override_session,
+    override_support_admin_user,
+    make_organisation,
+    mock_email_sender,
+):
+    """The USER_INVITED analytics event is still recorded even if the invite email fails to send."""
+    organisation = make_organisation(allowed_domains=["example.gov.uk"])
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+    mock_session.refresh.side_effect = user_create_refresh
+    mock_email_sender.send_invite_email.side_effect = EmailSendError
+
+    mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
+
+    with (
+        patch("backend.api.routes.users.get_user_by_email", new=AsyncMock(return_value=None)),
+        patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
+        patch("backend.api.routes.users.sentry_sdk.capture_exception") as capture_exception,
+    ):
+        async with get_test_client() as ac:
+            await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "test.user@example.gov.uk",
+                    "evaluation_id": "EVAL-001",
+                    "organisation_id": str(organisation.id),
+                },
+            )
+
+    capture_exception.assert_called_once()
+    mock_record_event.assert_awaited_once()
 
 
 @pytest.mark.asyncio

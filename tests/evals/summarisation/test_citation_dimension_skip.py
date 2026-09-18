@@ -21,9 +21,7 @@ from evals.summarisation.src.common.metric import CITATION_DIMENSION, judged_dim
     ("template_name", "supported"),
     [
         ("General", True),
-        ("Care Assessment V2", True),
-        ("Delivery", True),
-        ("Short 'n' Sweet", False),
+        ("Quick Note", False),
         (None, False),  # no template: the basic-minutes fallback, which never cites
     ],
 )
@@ -50,14 +48,14 @@ def test_judged_dimensions_rejects_an_unknown_template_even_without_auditability
 
 
 def test_judged_dimensions_drops_auditability_for_a_non_citing_template():
-    dimensions = judged_dimensions(["accuracy", CITATION_DIMENSION], "Short 'n' Sweet")
+    dimensions = judged_dimensions(["accuracy", CITATION_DIMENSION], "Quick Note")
 
     assert dimensions == ["accuracy"]
 
 
 def test_build_metrics_drops_auditability_for_a_non_citing_template(eval_config):
     """The bias eval builds its judge metrics from config; the same rule has to apply there."""
-    cfg = eval_config(template_name="Short 'n' Sweet", metrics=["accuracy", CITATION_DIMENSION])
+    cfg = eval_config(template_name="Quick Note", metrics=["accuracy", CITATION_DIMENSION])
 
     assert [m.criterion for m in build_metrics(cfg)] == ["accuracy"]
 
@@ -68,7 +66,7 @@ def test_build_metrics_drops_auditability_for_a_non_citing_template(eval_config)
 def test_standard_eval_skips_auditability_for_a_non_citing_template(eval_config, run_standard_eval, judge_scoring_5):
     judge = judge_scoring_5(["accuracy"])
 
-    summary_path = run_standard_eval(eval_config(template_name="Short 'n' Sweet"), judge=judge)
+    summary_path = run_standard_eval(eval_config(template_name="Quick Note"), judge=judge)
 
     assert CITATION_DIMENSION not in judge.await_args.kwargs["dimensions"]
 
