@@ -61,7 +61,7 @@ export default function AdminAddUserPage() {
     }
 
     if (!evaluationId.trim()) {
-      setEvaluationIdError('Enter the evaluation ID for this person')
+      setEvaluationIdError('Enter an evaluation ID')
       return
     }
 

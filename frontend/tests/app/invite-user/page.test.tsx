@@ -75,7 +75,7 @@ describe('Invite new user page', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(
-      screen.getByText('Enter the evaluation ID for this person')
+      screen.getByText('Enter an evaluation ID')
     ).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
   })
@@ -92,7 +92,7 @@ describe('Invite new user page', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(
-      screen.getByText('Enter the evaluation ID for this person')
+      screen.getByText('Enter an evaluation ID')
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Evaluation ID')).not.toBeRequired()
     expect(mockPush).not.toHaveBeenCalled()
