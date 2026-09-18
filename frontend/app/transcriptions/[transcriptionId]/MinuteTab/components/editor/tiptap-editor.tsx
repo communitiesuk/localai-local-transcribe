@@ -1,14 +1,16 @@
 'use client'
 
-import { Extension } from '@tiptap/core'
+import { Extension, Mark, mergeAttributes } from '@tiptap/core'
 import type { Editor } from '@tiptap/react'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import type { MarkType, Node as ProseMirrorNode } from 'prosemirror-model'
 import { EditorState, Plugin, PluginKey } from 'prosemirror-state'
 import { Decoration, DecorationSet } from 'prosemirror-view'
+import type { EditorView } from 'prosemirror-view'
 import { useCallback, useEffect } from 'react'
 
-import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
+import { citationRegexWithSpace } from '@/lib/citationRegex'
 import { TranscriptionGetResponse } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import posthog from 'posthog-js'
@@ -27,6 +29,7 @@ function SimpleEditor({
   initialContent,
   onContentChange,
   isEditing,
+  currentTranscription,
   hideCitations,
   onCitationClicked,
 }: {
@@ -37,61 +40,266 @@ function SimpleEditor({
   hideCitations: boolean
   onCitationClicked?: (citationIndex: number) => void
 }) {
+  type CitationRange = {
+    from: number
+    to: number
+    citationIndex: string | null
+  }
+
+  const CitationMark = Mark.create({
+    name: 'citationMark',
+    inclusive: false,
+    addAttributes() {
+      return {
+        citationIndex: {
+          default: null,
+          parseHTML: (element) => {
+            const attr = element.getAttribute('data-citation-index')
+            if (attr !== null) return attr
+            const match = element.textContent?.match(/\[(\d+)(?:-\d+)?\]/)
+            return match ? match[1] : null
+          },
+          renderHTML: (attributes) => {
+            if (attributes.citationIndex === null) return {}
+            return { 'data-citation-index': attributes.citationIndex }
+          },
+        },
+      }
+    },
+    parseHTML() {
+      return [{ tag: 'span[data-citation]' }]
+    },
+    renderHTML({ mark, HTMLAttributes }) {
+      const citationIndex = mark.attrs.citationIndex as string | null
+      return [
+        'span',
+        mergeAttributes(HTMLAttributes, {
+          'data-citation': 'true',
+          class: 'citation-link',
+          style:
+            'color: blue; cursor: pointer; text-decoration: underline; display: var(--citation-display);',
+          role: 'button',
+          tabindex: '0',
+          'aria-label': citationIndex
+            ? `View citation ${citationIndex} in transcript`
+            : 'View citation in transcript',
+        }),
+        0,
+      ]
+    },
+  })
+
+  const getCitationMarkRanges = (
+    doc: ProseMirrorNode,
+    markType: MarkType
+  ): CitationRange[] => {
+    const ranges: CitationRange[] = []
+    let current: CitationRange | null = null
+    let currentIndex: string | null = null
+
+    doc.descendants((node, pos) => {
+      if (!node.isText) {
+        current = null
+        currentIndex = null
+        return
+      }
+
+      const mark = markType.isInSet(node.marks)
+      if (!mark) {
+        current = null
+        currentIndex = null
+        return
+      }
+
+      const index = (mark.attrs.citationIndex as string | null) ?? null
+
+      if (current && current.to === pos && currentIndex === index) {
+        current.to = pos + node.nodeSize
+      } else {
+        current = { from: pos, to: pos + node.nodeSize, citationIndex: index }
+        currentIndex = index
+        ranges.push(current)
+      }
+    })
+
+    return ranges
+  }
+
+  const seedCitationMarks = (view: EditorView, markType: MarkType) => {
+    const { state } = view
+    const tr = state.tr
+    let changed = false
+
+    state.doc.descendants((node, pos) => {
+      if (!node.isText || !node.text) return
+
+      const regex = new RegExp(citationRegexWithSpace.source, 'g')
+      let match
+      while ((match = regex.exec(node.text)) !== null) {
+        const from = pos + match.index + match[1].length
+        const to = pos + match.index + match[0].length
+        const existing = markType.isInSet(node.marks)
+        const alreadyCorrect =
+          existing &&
+          existing.attrs.citationIndex === match[2] &&
+          from === pos &&
+          to === pos + node.nodeSize
+        if (alreadyCorrect) continue
+
+        tr.addMark(from, to, markType.create({ citationIndex: match[2] }))
+        changed = true
+      }
+    })
+
+    if (changed) {
+      tr.setMeta('addToHistory', false)
+      tr.setMeta('citationSeed', true)
+      view.dispatch(tr)
+    }
+  }
+
   const CitationExtension = Extension.create({
     name: 'citation',
     addProseMirrorPlugins() {
+      const activateCitation = (domNode: HTMLElement): boolean => {
+        const citationLink = domNode.closest<HTMLElement>('.citation-link')
+        if (!citationLink) return false
+        const indexAttr = citationLink.getAttribute('data-citation-index')
+        if (indexAttr === null) return false
+        const index = parseInt(indexAttr, 10)
+        posthog.capture('citation_clicked', { citationIndex: index })
+        onCitationClicked?.(index)
+        return true
+      }
+
       return [
         new Plugin({
           key: new PluginKey('citation'),
+
+          filterTransaction(tr, state) {
+            if (!tr.docChanged) return true
+
+            if (tr.getMeta('citationSeed')) return true
+
+            const markType = state.schema.marks.citationMark
+            const trustedRanges = getCitationMarkRanges(state.doc, markType)
+
+            for (let i = 0; i < tr.steps.length; i++) {
+              const step = tr.steps[i] as unknown as {
+                from?: number
+                to?: number
+              }
+              if (
+                typeof step.from !== 'number' ||
+                typeof step.to !== 'number'
+              ) {
+                continue
+              }
+
+              const mapping = tr.mapping.slice(0, i)
+
+              for (const trustedRange of trustedRanges) {
+                const from = mapping.map(trustedRange.from, -1)
+                const to = mapping.map(trustedRange.to, 1)
+                if (to <= from) continue
+
+                const overlaps = step.to > from && step.from < to
+                const coversWhole = step.from <= from && step.to >= to
+                if (overlaps && !coversWhole) {
+                  return false
+                }
+              }
+            }
+
+            return true
+          },
           props: {
             decorations(state) {
               const decorations: Decoration[] = []
-              const citationRegex = citationRegexWithSpace
+              const markType = state.schema.marks.citationMark
+              const ranges = getCitationMarkRanges(state.doc, markType)
+              const dialogueEntryCount =
+                currentTranscription.dialogue_entries?.length ?? 0
 
-              state.doc.descendants((node, pos) => {
-                if (node.isText) {
-                  let match
+              for (const range of ranges) {
+                const charBefore =
+                  range.from > 0
+                    ? state.doc.textBetween(range.from - 1, range.from)
+                    : ''
+                const hasLeadingSpace = /\s/.test(charBefore)
 
-                  while ((match = citationRegex.exec(node.text!)) !== null) {
-                    const from = pos + match.index
-                    const to = from + match[0].length
-                    decorations.push(
-                      Decoration.inline(from, to, {
-                        style: 'display: var(--citation-display);',
-                      })
+                const index =
+                  range.citationIndex !== null
+                    ? parseInt(range.citationIndex, 10)
+                    : NaN
+                const isValid =
+                  !Number.isNaN(index) && index < dialogueEntryCount
+
+                if (!isValid) {
+                  decorations.push(
+                    Decoration.inline(
+                      hasLeadingSpace ? range.from - 1 : range.from,
+                      range.to,
+                      { style: 'display: none' }
                     )
-                    decorations.push(
-                      Decoration.inline(from + match[1].length, to, {
-                        class: 'citation-link',
-                        style:
-                          'color: blue; cursor: pointer; text-decoration: underline;',
-                      })
-                    )
-                  }
+                  )
+                  continue
                 }
-              })
+
+                if (hasLeadingSpace) {
+                  decorations.push(
+                    Decoration.inline(range.from - 1, range.from, {
+                      style: 'display: var(--citation-display);',
+                    })
+                  )
+                }
+              }
 
               return DecorationSet.create(state.doc, decorations)
             },
-            handleDOMEvents: {
-              click: (view, event) => {
-                const pos = view.posAtDOM(event.target as Node, 0)
-                if (pos === null) return false
-
-                const domNode = event.target as HTMLElement
-
-                if (domNode.classList.contains('citation-link')) {
-                  const match = domNode.textContent?.match(citationRegex)
-                  if (match) {
-                    const index = parseInt(match[1], 10)
-                    posthog.capture('citation_clicked', {
-                      citationIndex: index,
-                    })
-                    onCitationClicked?.(index)
-                    return true
-                  }
-                }
+            handleKeyDown(view, event) {
+              if (event.key !== 'Backspace' && event.key !== 'Delete') {
                 return false
+              }
+
+              const { state } = view
+              const { selection } = state
+              if (!selection.empty) return false
+
+              const pos = selection.from
+              const markType = state.schema.marks.citationMark
+              const citationRanges = getCitationMarkRanges(state.doc, markType)
+
+              if (event.key === 'Backspace') {
+                const range = citationRanges.find((r) => r.to === pos)
+                if (range) {
+                  view.dispatch(state.tr.delete(range.from, range.to))
+                  event.preventDefault()
+                  return true
+                }
+              }
+
+              if (event.key === 'Delete') {
+                const range = citationRanges.find((r) => r.from === pos)
+                if (range) {
+                  view.dispatch(state.tr.delete(range.from, range.to))
+                  event.preventDefault()
+                  return true
+                }
+              }
+
+              return false
+            },
+            handleDOMEvents: {
+              click: (_view, event) => {
+                return activateCitation(event.target as HTMLElement)
+              },
+
+              keydown: (_view, event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return false
+                const activated = activateCitation(event.target as HTMLElement)
+                if (activated) event.preventDefault()
+                return activated
               },
             },
           },
@@ -101,7 +309,10 @@ function SimpleEditor({
   })
 
   const editorObject = useEditor({
-    extensions: [StarterKit, CitationExtension],
+    extensions: [StarterKit, CitationMark, CitationExtension],
+    onCreate: ({ editor }) => {
+      seedCitationMarks(editor.view, editor.schema.marks.citationMark)
+    },
     onUpdate: ({ editor }) => {
       onContentChange(editor.getHTML())
     },
@@ -118,6 +329,10 @@ function SimpleEditor({
   useEffect(() => {
     if (editorObject && initialContent !== editorObject.getHTML()) {
       editorObject.commands.setContent(initialContent, { emitUpdate: false })
+      seedCitationMarks(
+        editorObject.view,
+        editorObject.schema.marks.citationMark
+      )
       const newEditorState = EditorState.create({
         doc: editorObject.state.doc,
         plugins: editorObject.state.plugins,

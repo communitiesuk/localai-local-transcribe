@@ -265,7 +265,10 @@ export default function TranscriptionPage(props: {
         </GovukTabs.Panel>
         <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
           <div>
-            <MinuteTab transcription={transcription} />
+            <MinuteTab
+              transcription={transcription}
+              onCitationClicked={handleCitationClicked}
+            />
           </div>
         </GovukTabs.Panel>
         {isChatEnabled && (
