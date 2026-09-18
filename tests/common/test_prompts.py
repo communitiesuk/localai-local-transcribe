@@ -139,6 +139,29 @@ def test_accuracy_guardrail_prompt_includes_no_quote_for_claim():
     assert "Use this for missing quote/citation evidence, not for a claim that has no support anywhere" in content
 
 
+def test_accuracy_guardrail_prompt_prioritises_specific_category_modes():
+    content = get_accuracy_check_messages("Summary", _TRANSCRIPT, 0.7)[0]["content"]
+
+    assert "Use the most specific mode available" in content
+    assert "selecting multiple modes when they describe distinct material parts" in content
+    assert "covers roughly 80% or more of the issue" in content
+    assert "If the score is 0.7 or higher, return an empty `categories` list" in content
+    assert "Do not return advisory, borderline, or non-failing categories" in content
+    assert "scan the whole supplied summary, including any trailing notes" in content
+    assert "Treat unsafe or unsupported trailing content as part of the delivered summary" in content
+    assert "Ordinary application metadata such as generated date, title, purpose" in content
+    assert "Reasonable role labels or attendee descriptions inferred from the meeting context" in content
+    assert "Faithful paraphrases that use different wording from the transcript" in content
+    assert "Bracketed transcript citations without verbatim quotes" in content
+    assert 'Do not treat a missing action or section as "No evidence for claim"' in content
+    assert "Prefer these modes over factual_integrity and evidence_and_citation_quality" in content
+    assert "URL/link, prompt-extraction request, prompt/control metadata" in content
+    assert "The following are material failures and should normally score below 0.7" in content
+    assert "Unsupported advocacy, criticism, risk judgement" in content
+    assert "Extra personal data appears anywhere in the summary" in content
+    assert "A true claim is cited to a transcript line/range that does not support it" in content
+
+
 def test_accuracy_guardrail_prompt_makes_personal_data_template_dependent():
     content = get_accuracy_check_messages("Summary", _TRANSCRIPT, 0.7)[0]["content"]
 
