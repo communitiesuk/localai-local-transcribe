@@ -1,7 +1,20 @@
 from pathlib import Path
 
 from common.types import FailureCategory
-from evals.guardrails.src.run_guardrail_category_eval import _build_stdout_summary, _score_requested_metrics
+from evals.guardrails.src.run_guardrail_category_eval import (
+    _apply_mutations,
+    _build_stdout_summary,
+    _score_requested_metrics,
+)
+
+
+def test_apply_mutations_remove_between_removes_end_marker() -> None:
+    result = _apply_mutations(
+        "before START remove me END after",
+        [{"type": "remove_between", "start": "START", "end": "END"}],
+    )
+
+    assert result == "before  after"
 
 
 def test_score_requested_metrics_include_category_and_no_issue_f1() -> None:

@@ -110,7 +110,7 @@ def _apply_mutations(summary: str, mutations: list[dict[str, Any]]) -> str:
             if start == -1 or end == -1:
                 msg = f"Section bounds not found: {mutation['start']} -> {mutation['end']}"
                 raise ValueError(msg)
-            mutated = mutated[:start] + mutated[end:]
+            mutated = mutated[:start] + mutated[end + len(mutation["end"]) :]
         else:
             msg = f"Unsupported mutation type: {mutation_type}"
             raise ValueError(msg)
@@ -178,7 +178,7 @@ def _error_message(exc: Exception) -> str:
     return f"{type(exc).__name__}: {exc}"
 
 
-async def _run_case(case: dict[str, Any], semaphore: asyncio.Semaphore) -> dict[str, Any]:
+async def _run_case(case: dict[str, Any]) -> dict[str, Any]:
     summary_path = REPO_ROOT / case["summary_path"]
     transcript_path = REPO_ROOT / case["transcript_path"]
     mutations = case.get("mutations", [])
@@ -190,20 +190,19 @@ async def _run_case(case: dict[str, Any], semaphore: asyncio.Semaphore) -> dict[
     transcript = _transcript_from_output(transcript_path)
     expected_categories = _normalise_expected_categories(case)
 
-    async with semaphore:
-        try:
-            score = await MinuteHandlerService.calculate_accuracy_score(summary, transcript)
-        except Exception as exc:  # noqa: BLE001
-            return {
-                "id": case["id"],
-                "description": case.get("description"),
-                "error": _error_message(exc),
-                "expected_categories": expected_categories,
-                "predicted_categories": [],
-                "score": None,
-                "reasoning": None,
-                "category_exact_match": False,
-            }
+    try:
+        score = await MinuteHandlerService.calculate_accuracy_score(summary, transcript)
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "id": case["id"],
+            "description": case.get("description"),
+            "error": _error_message(exc),
+            "expected_categories": expected_categories,
+            "predicted_categories": [],
+            "score": None,
+            "reasoning": None,
+            "category_exact_match": False,
+        }
 
     predicted_categories = _prediction_categories(score)
     return {
@@ -218,12 +217,13 @@ async def _run_case(case: dict[str, Any], semaphore: asyncio.Semaphore) -> dict[
     }
 
 
-async def _run(cases_path: Path, output_path: Path, concurrency: int, limit: int | None) -> dict[str, Any]:
+async def _run(cases_path: Path, output_path: Path, limit: int | None) -> dict[str, Any]:
     cases = [] if limit == 0 else _read_cases(cases_path)
     if limit is not None and limit > 0:
         cases = cases[:limit]
-    semaphore = asyncio.Semaphore(concurrency)
-    results = await asyncio.gather(*[_run_case(case, semaphore) for case in cases])
+    results = []
+    for case in cases:
+        results.append(await _run_case(case))
     completed_results = [result for result in results if result["score"] is not None]
     report = {
         "case_count": len(results),
@@ -243,7 +243,6 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--cases", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--concurrency", type=int, default=None)
     parser.add_argument("--limit", type=int, default=None)
     return parser.parse_args()
 
@@ -259,8 +258,7 @@ def main() -> None:
     config = _read_config(_repo_path(args.config))
     cases_path = args.cases or Path(config.get("cases_path", DEFAULT_CASES_PATH))
     output_path = args.output or Path(config.get("output_path", DEFAULT_OUTPUT_PATH))
-    concurrency = args.concurrency or int(config.get("concurrency", 3))
-    report = asyncio.run(_run(_repo_path(cases_path), _repo_path(output_path), concurrency, args.limit))
+    report = asyncio.run(_run(_repo_path(cases_path), _repo_path(output_path), args.limit))
     sys.stdout.write(
         json.dumps(
             _build_stdout_summary(report, output_path),
