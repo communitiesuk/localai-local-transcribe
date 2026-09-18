@@ -150,11 +150,13 @@ class User(BaseTableMixin, table=True):
         sa_column=Column(Boolean, nullable=False, server_default=false()),
     )
 
+
 class UserAuthEmail(BaseTableMixin, table=True):
     __tablename__ = "user_auth_email"
 
     user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE", nullable=False)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
+
 
 class Recording(BaseTableMixin, table=True):
     __tablename__ = "recording"

@@ -3,8 +3,8 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
-from sqlmodel import col, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlmodel import col, select
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
@@ -30,7 +30,7 @@ async def record_user_auth_email(
             insert(UserAuthEmail)
             .values(user_id=user.id, email=email)
             # Handle race condition when single user makes multiple requests
-            .on_conflict_do_nothing(index_elements=["email"]) 
+            .on_conflict_do_nothing(index_elements=["email"])
         )
         await session.exec(statement)
 
@@ -74,7 +74,7 @@ async def get_current_user(
                 select(User)
                 .join(UserAuthEmail, col(UserAuthEmail.user_id) == col(User.id))
                 .where(
-                    col(User.needs_to_update_sub).is_(True), # flag set manually outside of code
+                    col(User.needs_to_update_sub).is_(True),  # flag set manually outside of code
                     UserAuthEmail.email == email,
                 )
             )
