@@ -16,15 +16,6 @@ module "s3_bucket" {
   kms_key_arn                            = aws_kms_key.main.arn
 }
 
-removed {
-  from = aws_s3_bucket_lifecycle_configuration.expire
-
-  # Deleting this duplicate would erase the bucket's shared lifecycle configuration.
-  lifecycle {
-    destroy = false
-  }
-}
-
 data "aws_iam_policy_document" "bucket_policy" {
   statement {
     sid    = "AWSCloudTrailAclCheck"
