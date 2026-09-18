@@ -61,7 +61,7 @@ export default function AdminAddUserPage() {
     }
 
     if (!evaluationId.trim()) {
-      setEvaluationIdError('Enter the evaluation ID for this person')
+      setEvaluationIdError('Enter an evaluation ID')
       return
     }
 
@@ -194,7 +194,6 @@ export default function AdminAddUserPage() {
                   ? 'invitee-evaluation-id-hint invitee-evaluation-id-error'
                   : 'invitee-evaluation-id-hint'
               }
-              required
             />
           </GovukFormGroup>
 

@@ -50,7 +50,7 @@ describe('Invite new user page', () => {
   it('asks for an evaluation ID and explains where it comes from', () => {
     render(<AdminAddUserPage />)
 
-    expect(screen.getByLabelText('Evaluation ID')).toBeRequired()
+    expect(screen.getByLabelText('Evaluation ID')).toBeInTheDocument()
     expect(
       screen.getByText(/evaluation ID that MHCLG provided for this person/i)
     ).toBeInTheDocument()
@@ -75,8 +75,26 @@ describe('Invite new user page', () => {
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(
-      screen.getByText('Enter the evaluation ID for this person')
+      screen.getByText('Enter an evaluation ID')
     ).toBeInTheDocument()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('shows the GOV.UK error, not a native prompt, when the evaluation ID is empty', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(
+      screen.getByLabelText('Email address'),
+      'test.user@example.com'
+    )
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(
+      screen.getByText('Enter an evaluation ID')
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('Evaluation ID')).not.toBeRequired()
     expect(mockPush).not.toHaveBeenCalled()
   })
 
