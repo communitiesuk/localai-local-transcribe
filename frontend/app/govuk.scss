@@ -225,3 +225,10 @@ audio::-webkit-media-controls-enclosure {
     width: 640px;
   }
 }
+
+.dialogue-entry:focus {
+  p {
+    color: index.$govuk-focus-text-colour;
+    background-color: index.$govuk-focus-colour;
+  }
+}

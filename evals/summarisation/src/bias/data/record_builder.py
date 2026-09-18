@@ -20,6 +20,7 @@ from evals.summarisation.src.bias.utils import (
     format_dialogue,
 )
 from evals.summarisation.src.common import AppConfig
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -54,6 +55,7 @@ def build_counterfactual_record(
         hypothesis_summaries_counterfactual=cf_summaries,
         hypothesis_model=settings.BEST_LLM_MODEL_NAME,
         prompt_version=cfg.run.prompt_version,
+        judge_criteria_version=JUDGE_CRITERIA_VERSION,
         protected_characteristic=counterfactual_input.protected_characteristic,
         axis_of_change=counterfactual_input.axis_of_change,
         iterations_original=original_iterations,

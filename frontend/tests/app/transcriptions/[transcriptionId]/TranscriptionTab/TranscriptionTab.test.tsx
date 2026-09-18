@@ -14,6 +14,7 @@ import {
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import type { TranscriptionGetResponse } from '@/lib/client'
 import { DialogueEntry } from '@/lib/client'
+import userEvent from '@testing-library/user-event'
 
 const updateDialogueEntryTextMock = vi.fn()
 const updateDialogueEntrySpeakerMock = vi.fn()
@@ -21,6 +22,7 @@ const renameSpeakerEverywhereMock = vi.fn()
 const setBannerMock = vi.fn()
 const clearBannerMock = vi.fn()
 const onLineEditErrorMock = vi.fn()
+const onDialogueEntryFocusLost = vi.fn()
 
 vi.mock('@/hooks/use-update-transcription-speakers', () => ({
   useUpdateTranscription: () => ({
@@ -71,6 +73,9 @@ vi.mock('posthog-js', () => ({
   default: { capture: vi.fn() },
 }))
 
+// Mock scrollIntoView as it's not present in JSDom
+window.HTMLElement.prototype.scrollIntoView = () => {}
+
 const renderTab = (transcription: TranscriptionGetResponse) =>
   render(
     <TranscriptionTab
@@ -88,6 +93,19 @@ const renderTabWithDismissBanner = (
       transcription={transcription}
       onLineEditError={onLineEditErrorMock}
       onDismissBanner={onDismissBanner}
+    />
+  )
+
+const renderTabWithDialogueEntryFocused = (
+  transcription: TranscriptionGetResponse,
+  dialogueEntryIndex: number
+) =>
+  render(
+    <TranscriptionTab
+      transcription={transcription}
+      onLineEditError={onLineEditErrorMock}
+      dialogueEntryIndexToFocus={dialogueEntryIndex}
+      onDialogueEntryFocusLost={onDialogueEntryFocusLost}
     />
   )
 
@@ -603,5 +621,58 @@ describe('TranscriptionTab full edit flow', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Finish editing' }))
     expect(clearBannerMock).toHaveBeenCalled()
+  })
+})
+
+describe('Transcription tab focus dialogue entry', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('focuses dialogue entry with given index on load', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
+  })
+
+  it('makes dialogue entry no longer focusable after initial focus is lost', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
+
+    // click the other dialogue entry
+    await userEvent.click(screen.getByTestId('dialogue-entry-0'))
+
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+
+    await userEvent.click(dialogue_entry)
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+  })
+
+  it('calls on focus lost after dialogue entry loses focus', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
+    expect(onDialogueEntryFocusLost).not.toHaveBeenCalled()
+
+    // click the other dialogue entry
+    await userEvent.click(screen.getByTestId('dialogue-entry-0'))
+
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+
+    expect(onDialogueEntryFocusLost).toHaveBeenCalledOnce()
   })
 })

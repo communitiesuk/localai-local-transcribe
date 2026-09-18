@@ -155,7 +155,17 @@ class ChatCreateResponse(BaseModel):
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
+    evaluation_id: str = Field(min_length=1)
     organisation_id: uuid.UUID
+
+    @field_validator("evaluation_id")
+    @classmethod
+    def _strip_evaluation_id(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            message = "Evaluation ID must contain at least one non-whitespace character"
+            raise ValueError(message)
+        return stripped
 
 
 class UserUpdateRoles(BaseModel):
@@ -261,7 +271,8 @@ class FailureCategory(StrEnum):
     FACTUAL_INTEGRITY = auto()
     REQUIRED_CONTENT_AND_STRUCTURE = auto()
     EDIT_SAFETY_AND_INTENT = auto()
-    DATA_PROTECTION_AND_INSTRUCTION_INTEGRITY = auto()
+    DATA_PROTECTION = auto()
+    INSTRUCTION_INTEGRITY = auto()
     EVIDENCE_AND_CITATION_QUALITY = auto()
 
 
@@ -278,7 +289,9 @@ class FailureMode(StrEnum):
     EDIT_DID_WRONG_TASK = auto()
     PERSONAL_DATA_INCLUDED = auto()
     TRANSCRIPT_INSTRUCTION_FOLLOWED = auto()
-    WRONG_CITATION = auto()
+    TEMPLATE_INSTRUCTION_FOLLOWED = auto()
+    NO_QUOTE_FOR_CLAIM = auto()
+    WRONG_QUOTE = auto()
     WEAK_TRANSCRIPT_SUPPORT = auto()
 
 
@@ -298,6 +311,7 @@ class FailureDetail(BaseModel):
             FailureMode.NO_EVIDENCE_FOR_CLAIM,
             FailureMode.ATTRIBUTION_NOT_EVIDENCED,
             FailureMode.NUMERIC_DATE_ERROR,
+            FailureMode.WEAK_TRANSCRIPT_SUPPORT,
         },
         FailureCategory.REQUIRED_CONTENT_AND_STRUCTURE: {
             FailureMode.CRITICAL_OMISSION,
@@ -308,13 +322,16 @@ class FailureDetail(BaseModel):
             FailureMode.UNSAFE_EDIT,
             FailureMode.EDIT_DID_WRONG_TASK,
         },
-        FailureCategory.DATA_PROTECTION_AND_INSTRUCTION_INTEGRITY: {
+        FailureCategory.DATA_PROTECTION: {
             FailureMode.PERSONAL_DATA_INCLUDED,
+        },
+        FailureCategory.INSTRUCTION_INTEGRITY: {
             FailureMode.TRANSCRIPT_INSTRUCTION_FOLLOWED,
+            FailureMode.TEMPLATE_INSTRUCTION_FOLLOWED,
         },
         FailureCategory.EVIDENCE_AND_CITATION_QUALITY: {
-            FailureMode.WRONG_CITATION,
-            FailureMode.WEAK_TRANSCRIPT_SUPPORT,
+            FailureMode.NO_QUOTE_FOR_CLAIM,
+            FailureMode.WRONG_QUOTE,
         },
     }
 
@@ -419,6 +436,7 @@ class MinuteAndHallucinations:
     text: str
     total_claims: int
     hallucinations: list[LLMHallucination]
+    template_prompt_version: str | None = None
 
     def __post_init__(self) -> None:
         self.text = strip_boundary_metadata(self.text)
@@ -442,6 +460,7 @@ class TranscriptionSortOrder(StrEnum):
 
 
 class TemplateMetadata(BaseModel):
+    id: str
     name: str
     description: str
     category: str

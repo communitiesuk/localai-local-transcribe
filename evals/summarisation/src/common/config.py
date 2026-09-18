@@ -53,6 +53,7 @@ class DatasetConfig(BaseModel):
     """Configuration for dataset loading and field mapping."""
 
     name: str
+    source: Literal["local_dir"] | None = None
     config: str | None = None
     dialogue_field: str = "dialogue"
     reference_summary_field: str = "summary"

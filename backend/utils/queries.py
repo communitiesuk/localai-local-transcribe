@@ -48,6 +48,12 @@ async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
     return result.one_or_none()
 
 
+async def get_user_by_evaluation_id(session: AsyncSession, evaluation_id: str) -> User | None:
+    query = select(User).where(User.evaluation_id == evaluation_id)
+    result = await session.exec(query)
+    return result.one_or_none()
+
+
 async def get_paginated_users(
     session: AsyncSession,
     organisation: Organisation | None,
