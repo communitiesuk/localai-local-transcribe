@@ -194,7 +194,6 @@ export default function AdminAddUserPage() {
                   ? 'invitee-evaluation-id-hint invitee-evaluation-id-error'
                   : 'invitee-evaluation-id-hint'
               }
-              required
             />
           </GovukFormGroup>
 
