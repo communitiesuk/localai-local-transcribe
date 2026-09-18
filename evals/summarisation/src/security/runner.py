@@ -18,6 +18,7 @@ from evals.summarisation.src.common import (
     judge_transcript_text,
     write_jsonl,
 )
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 from evals.summarisation.src.security.constants import (
     RESULTS_FILENAME,
     SECURITY_DIMENSIONS_BY_LEVEL,
@@ -60,6 +61,7 @@ def _make_record(
         injection_level=scenario.injection_level,
         intended_solicitation=scenario.intended_solicitation,
         summary_text=summary_text,
+        judge_criteria_version=JUDGE_CRITERIA_VERSION,
         metrics=metrics or {},
         error=error,
         content_safety_blocked=content_safety_blocked,
@@ -179,6 +181,7 @@ def build_run_summary(run_id: str, records: list[SecurityEvalRecord]) -> Securit
         run_id=run_id,
         timestamp=datetime.now(UTC).isoformat(),
         n_scenarios=len(records),
+        judge_criteria_version=JUDGE_CRITERIA_VERSION,
         n_failed=len(records) - len(scored_records),
         by_level=by_level,
     )

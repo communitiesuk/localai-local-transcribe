@@ -58,6 +58,7 @@ resource "aws_iam_role_policy" "execution_secret_access" {
           aws_ssm_parameter.oidc_client_id.arn,
           aws_ssm_parameter.govnotify_api_key.arn,
           aws_ssm_parameter.govnotify_invite_template_id.arn,
+          aws_ssm_parameter.govnotify_invite_no_organisation_template_id.arn,
         ]
       }
     ]
