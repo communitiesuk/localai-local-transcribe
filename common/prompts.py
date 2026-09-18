@@ -153,7 +153,12 @@ def get_accuracy_check_messages(
         build_prompt_injection_aware_system_message(
             render_prompt_template("accuracy_check_system.j2", guardrail_threshold=guardrail_threshold)
         ),
-        get_transcript_messages(transcript),
+        {
+            "role": "user",
+            "content": render_prompt_template(
+                "transcript.j2", transcript=wrap_transcript(transcript_as_index_speaker_and_utterance(transcript))
+            ),
+        },
         {
             "role": "user",
             "content": render_prompt_template("generated_summary_to_evaluate.j2", minute=wrap_meeting_summary(minute)),
