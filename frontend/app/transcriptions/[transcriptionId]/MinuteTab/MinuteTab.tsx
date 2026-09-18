@@ -17,8 +17,10 @@ import { useState } from 'react'
 
 export function MinuteTab({
   transcription,
+  onCitationClicked,
 }: {
   transcription: TranscriptionGetResponse
+  onCitationClicked?: (citationIndex: number) => void
 }) {
   const { data: minutes = [], isLoading } = useQuery({
     ...listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions(
@@ -86,6 +88,7 @@ export function MinuteTab({
       <MinuteEditor
         transcription={transcription}
         minute={minutes[safeSelectedMinute]}
+        onCitationClicked={onCitationClicked}
       />
     </>
   )
