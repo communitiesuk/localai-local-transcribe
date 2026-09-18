@@ -11,6 +11,7 @@ from common.convert_american_to_british_spelling import convert_american_to_brit
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import (
     DialogueEntry,
+    GuardrailFailureCategory,
     GuardrailResult,
     JobStatus,
     Minute,
@@ -56,6 +57,14 @@ class MinuteHandlerService:
                 passed=passed,
                 score=score.score,
                 reasoning=score.reasoning,
+                failure_categories=[
+                    GuardrailFailureCategory(
+                        category=detail.category.value,
+                        mode=detail.mode.value,
+                        explanation=detail.explanation,
+                    )
+                    for detail in score.categories
+                ],
             )
             session.add(guardrail_result)
             session.commit()
