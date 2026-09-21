@@ -6,6 +6,7 @@ import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import { userExistsUsersUserExistsGet } from '@/lib/client'
+import { UserRole } from '@/lib/utils'
 
 const mockPush = vi.fn()
 
@@ -52,10 +53,12 @@ describe('Invite new user page', () => {
 
     expect(screen.getByLabelText('Evaluation ID')).toBeInTheDocument()
     expect(
-      screen.getByText(/evaluation ID that MHCLG provided for this person/i)
+      screen.getByText(
+        /from the list the Local Transcribe team provided for your organisation/i
+      )
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/cannot be one that is already in use/i)
+      screen.getByText(/cannot be an ID that is already in use/i)
     ).toBeInTheDocument()
     expect(
       screen.getByText(/see it in Local Transcribe again/i)
@@ -139,5 +142,69 @@ describe('Invite new user page', () => {
       expect(mockPush).toHaveBeenCalledWith('/invite-user/confirm')
     })
     expect(useInviteUserStore.getState().evaluationId).toBe('EVAL-001')
+  })
+
+  describe('as a support admin with no organisation of their own', () => {
+    beforeEach(() => {
+      vi.mocked(useAuthorisedUser).mockReturnValue({
+        currentUser: {
+          organisation_id: null,
+          roles: [UserRole.MHCLG_SUPPORT_ADMIN],
+        },
+        isLoading: false,
+        isError: false,
+      } as unknown as ReturnType<typeof useAuthorisedUser>)
+    })
+
+    it('shows the GOV.UK errors for empty fields', async () => {
+      useInviteUserStore.getState().setInviteDetails('', '', '', organisationId)
+      const user = userEvent.setup()
+      render(<AdminAddUserPage />)
+
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+      expect(screen.getByText('Enter a name')).toBeInTheDocument()
+      expect(mockPush).not.toHaveBeenCalled()
+    })
+
+    it('checks and continues with the organisation they selected', async () => {
+      useInviteUserStore.getState().setInviteDetails('', '', '', organisationId)
+      const user = userEvent.setup()
+      render(<AdminAddUserPage />)
+
+      await user.type(screen.getByLabelText('Name'), 'Test User')
+      await user.type(
+        screen.getByLabelText('Email address'),
+        'test.user@example.com'
+      )
+      await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/invite-user/confirm')
+      })
+      expect(userExistsUsersUserExistsGet).toHaveBeenCalledWith({
+        query: {
+          email: 'test.user@example.com',
+          organisation_id: organisationId,
+        },
+      })
+    })
+
+    it('returns to user management when no organisation has been selected', async () => {
+      const user = userEvent.setup()
+      render(<AdminAddUserPage />)
+
+      await user.type(screen.getByLabelText('Name'), 'Test User')
+      await user.type(
+        screen.getByLabelText('Email address'),
+        'test.user@example.com'
+      )
+      await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+      expect(mockPush).toHaveBeenCalledWith('/user-management')
+      expect(userExistsUsersUserExistsGet).not.toHaveBeenCalled()
+    })
   })
 })

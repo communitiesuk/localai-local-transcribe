@@ -49,19 +49,15 @@ export default function AdminAddUserPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const { data: organisation } = useOrganisation(
-    organisationId || currentUser?.organisation_id || ''
-  )
+  const inviteOrganisationId = organisationId || currentUser?.organisation_id
+
+  const { data: organisation } = useOrganisation(inviteOrganisationId || '')
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     setNameError(null)
     setEvaluationIdError(null)
     setHasError(false)
-
-    if (!currentUser?.organisation_id) {
-      return
-    }
 
     if (!name.trim()) {
       setNameError('Enter a name')
@@ -79,6 +75,11 @@ export default function AdminAddUserPage() {
       return
     }
 
+    if (!inviteOrganisationId) {
+      router.push('/user-management')
+      return
+    }
+
     if (!isAllowedDomain(email, organisation?.allowed_domains ?? [])) {
       console.error(invalidDomainError, email)
       setErrorMessage(invalidDomainError)
@@ -89,7 +90,7 @@ export default function AdminAddUserPage() {
     const response = await userExistsUsersUserExistsGet({
       query: {
         email,
-        organisation_id: currentUser.organisation_id,
+        organisation_id: inviteOrganisationId,
       },
     })
 
@@ -196,9 +197,10 @@ export default function AdminAddUserPage() {
               Evaluation ID
             </GovukLabel>
             <GovukHint id="invitee-evaluation-id-hint">
-              Use the evaluation ID that MHCLG provided for this person. It
-              cannot be one that is already in use, and you will not be able to
-              see it in Local Transcribe again.
+              Use an evaluation ID from the list the Local Transcribe team
+              provided for your organisation. It cannot be an ID that is already
+              in use, and you will not be able to see it in Local Transcribe
+              again.
             </GovukHint>
             {evaluationIdError && (
               <p

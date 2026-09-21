@@ -41,7 +41,7 @@ export default function AdminAddUserConfirmPage() {
   ])
 
   const { data: organisation } = useOrganisation(
-    currentUser?.organisation_id ?? ''
+    organisationId || currentUser?.organisation_id || ''
   )
 
   const createUserMutation = useMutation(createUserUsersPostMutation())
