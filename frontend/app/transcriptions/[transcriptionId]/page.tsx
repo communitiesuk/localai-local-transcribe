@@ -289,6 +289,7 @@ export default function TranscriptionPage(props: {
           cancelLabel="Cancel"
           onConfirm={showUnsavedChangesDialogConfirmAction ?? (() => {})}
           onCancel={() => setShowUnsavedChangesDialog(false)}
+          isWarning={true}
         />
       </GovukModalDialogue>
       <GovukTabs
