@@ -427,6 +427,7 @@ class MinuteAndHallucinations:
     total_claims: int
     hallucinations: list[LLMHallucination]
     template_prompt_version: str | None = None
+    citation_quality_applicable: bool = False
 
     def __post_init__(self) -> None:
         self.text = strip_boundary_metadata(self.text)

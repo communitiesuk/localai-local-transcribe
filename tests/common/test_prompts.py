@@ -147,6 +147,13 @@ def test_accuracy_guardrail_prompt_includes_no_quote_for_claim():
     assert "Use this for missing quote/citation evidence, not for a claim that has no support anywhere" in content
 
 
+def test_accuracy_guardrail_prompt_disables_citation_quality_when_not_applicable():
+    messages = get_accuracy_check_messages("Summary", _TRANSCRIPT, 0.7, citation_quality_applicable=False)
+
+    assert "citation-quality metrics are not meaningful for this summary path" in messages[0]["content"]
+    assert "Do not fail, reduce the score, or select evidence_and_citation_quality modes" in messages[0]["content"]
+
+
 def test_accuracy_guardrail_prompt_prioritises_specific_category_modes():
     content = get_accuracy_check_messages("Summary", _TRANSCRIPT, 0.7)[0]["content"]
 

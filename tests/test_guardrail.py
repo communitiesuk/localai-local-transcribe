@@ -151,6 +151,7 @@ async def test_process_minute_generation_runs_guardrails():
             text="<html>Minutes</html>",
             total_claims=0,
             hallucinations=[],
+            citation_quality_applicable=False,
         )
 
         mock_score = GuardrailScore(score=0.9, reasoning="Good", categories=[])
@@ -160,7 +161,11 @@ async def test_process_minute_generation_runs_guardrails():
         await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
 
         # Verify
-        mock_calc_score.assert_called_once()
+        mock_calc_score.assert_called_once_with(
+            minute="<html>Minutes</html>",
+            transcript=mock_minute_version.minute.transcription.dialogue_entries,
+            citation_quality_applicable=False,
+        )
         mock_save_result.assert_called_once_with(mock_minute_version.id, mock_score)
         mock_update_mv.assert_called_with(
             mock_minute_version.id,

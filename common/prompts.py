@@ -149,11 +149,18 @@ def get_meeting_detection_prompt(transcript: list[DialogueEntry]) -> list[dict[s
 
 
 def get_accuracy_check_messages(
-    minute: str, transcript: list[DialogueEntry], guardrail_threshold: float
+    minute: str,
+    transcript: list[DialogueEntry],
+    guardrail_threshold: float,
+    citation_quality_applicable: bool = True,
 ) -> list[dict[str, str]]:
     return [
         build_prompt_injection_aware_system_message(
-            render_prompt_template("accuracy_check_system.j2", guardrail_threshold=guardrail_threshold)
+            render_prompt_template(
+                "accuracy_check_system.j2",
+                guardrail_threshold=guardrail_threshold,
+                citation_quality_applicable=citation_quality_applicable,
+            )
         ),
         {
             "role": "user",
