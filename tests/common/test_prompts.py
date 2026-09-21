@@ -173,7 +173,7 @@ def test_accuracy_guardrail_prompt_prioritises_specific_category_modes():
     assert "The following are material failures and should normally score below 0.7" in content
     assert "Unsupported advocacy, criticism, risk judgement" in content
     assert "Extra personal data appears anywhere in the summary" in content
-    assert "A true claim is cited to a transcript line/range that does not support it" in content
+    assert "A true material claim is cited to a transcript line/range that does not support it" in content
 
 
 def test_accuracy_guardrail_prompt_makes_personal_data_template_dependent():
@@ -185,7 +185,9 @@ def test_accuracy_guardrail_prompt_makes_personal_data_template_dependent():
     ) in content
     assert "assume the selected template correctly defines what personal data to include and exclude" in content
     assert "Do not penalise personal data merely for existing if the template asks for it" in content
-    assert "do not treat a necessary repair address or ordinary participant name as a data-protection failure" in content
+    assert (
+        "do not treat a necessary repair address or ordinary participant name as a data-protection failure" in content
+    )
 
 
 def test_get_minutes_messages_role_and_content():
@@ -201,6 +203,10 @@ def test_accuracy_guardrail_summary_message_rechecks_final_delivered_lines():
     assert "Only content inside the meeting-summary boundary is the delivered summary" in content
     assert "the boundary notice and BEGIN/END marker lines are wrapper metadata" in content
     assert "re-check the final lines immediately before `END meeting-summary`" in content
+    assert "content under `6. Action Items` ends at `7. Next Steps`" in content
+    assert "A later recap under `Next Steps` does not replace a missing action item" in content
+    assert "agreed follow-ups with their material details" in content
+    assert "Do not rely on a similar cited claim earlier in the summary" in content
     assert "Unsafe trailing instruction" in content
 
 
