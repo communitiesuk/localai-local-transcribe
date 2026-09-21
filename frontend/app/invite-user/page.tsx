@@ -35,6 +35,7 @@ export default function AdminAddUserPage() {
   const [evaluationId, setEvaluationId] = useState(storedEvaluationId)
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState(invalidDomainError)
+  const [nameError, setNameError] = useState<string | null>(null)
   const [evaluationIdError, setEvaluationIdError] = useState<string | null>(
     null
   )
@@ -54,9 +55,22 @@ export default function AdminAddUserPage() {
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setNameError(null)
     setEvaluationIdError(null)
+    setHasError(false)
 
     if (!currentUser?.organisation_id) {
+      return
+    }
+
+    if (!name.trim()) {
+      setNameError('Enter a name')
+      return
+    }
+
+    if (!email.trim()) {
+      setErrorMessage('Enter an email address')
+      setHasError(true)
       return
     }
 
@@ -102,25 +116,40 @@ export default function AdminAddUserPage() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <fieldset className="govuk-fieldset">
           <legend className="govuk-fieldset__legend govuk-fieldset__legend--l">
             <h1 className="govuk-fieldset__heading">Invite new user</h1>
           </legend>
 
-          <div className="govuk-form-group">
+          <div
+            className={cn(
+              'govuk-form-group',
+              nameError && 'govuk-form-group--error'
+            )}
+          >
             <label className="govuk-label" htmlFor="invitee-name">
               Name
             </label>
+            {nameError && (
+              <p id="invitee-name-error" className="govuk-error-message">
+                <span className="govuk-visually-hidden">Error:</span>
+                {nameError}
+              </p>
+            )}
             <input
-              className="govuk-input govuk-input--width-30"
+              className={cn(
+                'govuk-input govuk-input--width-30',
+                nameError && 'govuk-input--error'
+              )}
               id="invitee-name"
               name="name"
               type="text"
               spellCheck="false"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
+              aria-invalid={nameError ? true : undefined}
+              aria-describedby={nameError ? 'invitee-name-error' : undefined}
             />
           </div>
 
@@ -155,10 +184,10 @@ export default function AdminAddUserPage() {
               spellCheck="false"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={hasError ? true : undefined}
               aria-describedby={
                 hasError ? 'invitee-email-address-error' : undefined
               }
-              required
             />
           </div>
 

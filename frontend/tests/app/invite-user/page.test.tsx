@@ -74,9 +74,7 @@ describe('Invite new user page', () => {
     await user.type(screen.getByLabelText('Evaluation ID'), '   ')
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(
-      screen.getByText('Enter an evaluation ID')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Enter an evaluation ID')).toBeInTheDocument()
     expect(mockPush).not.toHaveBeenCalled()
   })
 
@@ -91,10 +89,37 @@ describe('Invite new user page', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(
-      screen.getByText('Enter an evaluation ID')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Enter an evaluation ID')).toBeInTheDocument()
     expect(screen.getByLabelText('Evaluation ID')).not.toBeRequired()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('shows the GOV.UK error when the name is empty, with native validation off', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(
+      screen.getByLabelText('Email address'),
+      'test.user@example.com'
+    )
+    await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(screen.getByText('Enter a name')).toBeInTheDocument()
+    expect(screen.getByLabelText('Name')).not.toBeRequired()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('shows the GOV.UK error when the email is empty', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(screen.getByText('Enter an email address')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email address')).not.toBeRequired()
     expect(mockPush).not.toHaveBeenCalled()
   })
 
