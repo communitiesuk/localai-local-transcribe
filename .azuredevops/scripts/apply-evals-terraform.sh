@@ -26,18 +26,24 @@ results_account="${EVALS_RESULTS_STORAGE_ACCOUNT_NAME:?}"
 adapt_ip="${EVALS_ADAPT_EGRESS_IP:?}"
 
 scope="/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Storage/storageAccounts/${state_account}"
-spn_app_id="$(az account show --query user.name -o tsv)"
+# Azure CLI 2.90: --assignee-principal-type must be paired with --assignee-object-id.
+# The ARM access token oid claim is that Entra object ID, so Graph is not required.
+spn_object_id="$(python3 -c "import json, base64, subprocess
+token = subprocess.check_output(['az', 'account', 'get-access-token', '--query', 'accessToken', '-o', 'tsv'], text=True).strip()
+payload = token.split('.')[1]
+payload += '=' * ((-len(payload)) % 4)
+print(json.loads(base64.urlsafe_b64decode(payload))['oid'])")"
 
 # Contributor cannot do this. The pipeline service principal must already have
 # User Access Administrator. Repeat runs skip create when the assignment exists.
 existing_role="$(az role assignment list \
-  --assignee "${spn_app_id}" \
+  --assignee "${spn_object_id}" \
   --role "Storage Blob Data Contributor" \
   --scope "${scope}" \
   --query "[0].id" -o tsv)"
 if [ -z "${existing_role}" ]; then
   az role assignment create \
-    --assignee "${spn_app_id}" \
+    --assignee-object-id "${spn_object_id}" \
     --assignee-principal-type ServicePrincipal \
     --role "Storage Blob Data Contributor" \
     --scope "${scope}"
