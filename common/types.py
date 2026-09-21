@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
 from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
@@ -274,8 +274,6 @@ class FailureCategory(StrEnum):
     DATA_PROTECTION = auto()
     INSTRUCTION_INTEGRITY = auto()
     EVIDENCE_AND_CITATION_QUALITY = auto()
-    # Fallback bucket for a category the model returns that we do not recognise, so the write still succeeds.
-    OPERATIONAL_GUARDRAIL_SIGNALS = auto()
 
 
 class FailureMode(StrEnum):
@@ -298,7 +296,6 @@ class FailureMode(StrEnum):
 
 
 class FailureDetail(BaseModel):
-    category: FailureCategory
     mode: FailureMode
     explanation: str | None = Field(
         default=None,
@@ -341,36 +338,11 @@ class FailureDetail(BaseModel):
         mode: category for category, modes in _VALID_MODES_BY_CATEGORY.items() for mode in modes
     }
 
-    @field_validator("category", mode="before")
-    @classmethod
-    def _coerce_unrecognised_category(cls, value: object) -> object:
-        if isinstance(value, FailureCategory):
-            return value
-        if isinstance(value, str) and value in {category.value for category in FailureCategory}:
-            return FailureCategory(value)
-        logger.warning(
-            "Unrecognised guardrail failure category %r; storing as %s",
-            value,
-            FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS,
-        )
-        return FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS
-
-    @model_validator(mode="after")
-    def _correct_category_from_mode(self) -> "FailureDetail":
-        if self.category == FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS:
-            return self
-        expected_category = self._CATEGORY_BY_MODE[self.mode]
-        if expected_category is None:
-            logger.error("FailureMode '%s' has no known category mapping", self.mode)
-        elif self.category != expected_category:
-            logger.warning(
-                "FailureDetail category '%s' does not match mode '%s'; correcting to '%s'",
-                self.category,
-                self.mode,
-                expected_category,
-            )
-            self.category = expected_category
-        return self
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def category(self) -> FailureCategory:
+        """Category derived from the selected failure mode."""
+        return self._CATEGORY_BY_MODE[self.mode]
 
 
 class GuardrailScore(BaseModel):
