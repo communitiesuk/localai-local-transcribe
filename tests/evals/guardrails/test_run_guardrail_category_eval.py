@@ -39,6 +39,7 @@ def test_score_requested_metrics_include_category_and_no_issue_f1() -> None:
 
 
 def test_build_stdout_summary_uses_requested_f1_metric_names() -> None:
+    output_path = Path("evals/guardrails/output/results.json")
     report = {
         "metrics": {
             "f1_overall": 0.75,
@@ -52,7 +53,7 @@ def test_build_stdout_summary_uses_requested_f1_metric_names() -> None:
         }
     }
 
-    summary = _build_stdout_summary(report, Path("evals/guardrails/output/results.json"))
+    summary = _build_stdout_summary(report, output_path)
 
     assert summary == {
         "f1_overall": 0.75,
@@ -63,7 +64,7 @@ def test_build_stdout_summary_uses_requested_f1_metric_names() -> None:
         "f1_instruction_integrity": 0.0,
         "f1_evidence_and_citation_quality": 0.0,
         "f1_no_issue": 1.0,
-        "output": "evals/guardrails/output/results.json",
+        "output": str(output_path),
     }
 
 
