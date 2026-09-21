@@ -1,9 +1,9 @@
 # Plan or apply terraform/azure/evals using a dedicated Azure Resource Manager
 # service connection for Terraform (not the evals-blob workload identity).
-# Manual only until that connection exists and a plan has been reviewed.
-# This pool must change before the job can reach remote state. Microsoft-hosted
-# agents cannot be allowed through the state account firewall, so set the shared
-# self-hosted pool here once its name is known.
+# Manual only until a plan has been reviewed. Microsoft-hosted agents cannot be
+# allowed through the storage firewall, so this job uses the shared scale-set
+# pool. The pool still needs a firewall allow (subnet or static egress) before
+# terraform init can read remote state.
 
 name: Evals Terraform
 
@@ -23,7 +23,7 @@ parameters:
       - apply
 
 pool:
-  vmImage: ubuntu-latest
+  name: vmss-shared
 
 steps:
   - checkout: self

@@ -67,7 +67,7 @@ results_storage_account_name   = "${results_account}"
 adapt_ip_rules = ["${adapt_ip}"]
 # No stable MHCLG-device IP yet (Zscaler). Results still allow the desktop via adapt_ip_rules.
 mhclg_ip_rules = []
-# Empty until the shared self-hosted pool exists and its egress address is known.
+# Empty until the shared pool's subnet or static egress is known.
 ado_ip_rules   = []
 EOF
 
