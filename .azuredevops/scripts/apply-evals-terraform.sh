@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Grant the applying service principal blob data access, allowlist this agent,
-# then plan or apply terraform/azure/evals against remote state.
+# Grant the applying service principal blob data access on the Terraform state
+# account, then plan or apply terraform/azure/evals against remote state.
 #
 # Required environment: EVALS_ARM_SUBSCRIPTION_ID, EVALS_RESOURCE_GROUP_NAME,
 # EVALS_STATE_STORAGE_ACCOUNT_NAME, EVALS_ENVIRONMENT_NAME,
@@ -49,26 +49,14 @@ if [ -z "${existing_role}" ]; then
     --scope "${scope}"
 fi
 
-# Microsoft-hosted agents egress from a new IP each run. Remote state and
-# azurerm storage refreshes both call the blob data plane, which the firewall
-# denies unless this IP is listed. Force IPv4: blob traffic from hosted agents
-# is IPv4, and an IPv6 ipify result would not match the firewall.
-agent_ip="$(curl -4 -fsS https://api.ipify.org)"
-for account_name in $(az storage account list --resource-group "${rg}" --query "[].name" -o tsv); do
-  already="$(az storage account network-rule list \
-    --account-name "${account_name}" \
-    --resource-group "${rg}" \
-    --query "ipRules[?ipAddressOrRange=='${agent_ip}'].ipAddressOrRange" -o tsv)"
-  if [ -z "${already}" ]; then
-    az storage account network-rule add \
-      --account-name "${account_name}" \
-      --resource-group "${rg}" \
-      --ip-address "${agent_ip}"
-  fi
-done
-# Azure Storage can take a few minutes before a new IP rule is honoured on blob.
-sleep 120
-
+# This job must run on an agent whose traffic the state account firewall already
+# allows: a self-hosted pool covered by a virtual network rule, or a pool with a
+# stable public egress listed on the account. Allowlisting the agent IP at run
+# time does not work on Microsoft-hosted agents, because Azure Storage ignores IP
+# network rules for requests originating in the same region as the account, and a
+# hosted agent may land in that region on any given run. See the Azure Storage
+# firewall limitations: "IP network rules have no effect on requests that
+# originate from the same Azure region as the storage account."
 cd terraform/azure/evals
 cat > terraform.tfvars <<EOF
 subscription_id     = "${sub}"
@@ -79,7 +67,8 @@ results_storage_account_name   = "${results_account}"
 adapt_ip_rules = ["${adapt_ip}"]
 # No stable MHCLG-device IP yet (Zscaler). Results still allow the desktop via adapt_ip_rules.
 mhclg_ip_rules = []
-ado_ip_rules   = ["${agent_ip}"]
+# Empty until the shared self-hosted pool exists and its egress address is known.
+ado_ip_rules   = []
 EOF
 
 curl -fsSL "https://releases.hashicorp.com/terraform/1.16.2/terraform_1.16.2_linux_amd64.zip" -o /tmp/tf.zip

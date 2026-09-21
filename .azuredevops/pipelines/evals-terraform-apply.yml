@@ -1,8 +1,9 @@
 # Plan or apply terraform/azure/evals using a dedicated Azure Resource Manager
 # service connection for Terraform (not the evals-blob workload identity).
 # Manual only until that connection exists and a plan has been reviewed.
-# Microsoft-hosted agents are temporary. Switch the pool when the shared
-# self-hosted pool name is known.
+# This pool must change before the job can reach remote state. Microsoft-hosted
+# agents cannot be allowed through the state account firewall, so set the shared
+# self-hosted pool here once its name is known.
 
 name: Evals Terraform
 
