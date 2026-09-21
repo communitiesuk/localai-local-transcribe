@@ -276,6 +276,11 @@ class FailureCategory(StrEnum):
     EVIDENCE_AND_CITATION_QUALITY = auto()
 
 
+class GuardrailAction(StrEnum):
+    ORIGINAL_GENERATION = auto()
+    AI_EDIT = auto()
+
+
 class FailureMode(StrEnum):
     INVENTED_DECISION = auto()
     REVERSED_MEANING = auto()
