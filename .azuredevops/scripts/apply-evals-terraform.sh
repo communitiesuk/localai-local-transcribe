@@ -51,8 +51,9 @@ fi
 
 # Microsoft-hosted agents egress from a new IP each run. Remote state and
 # azurerm storage refreshes both call the blob data plane, which the firewall
-# denies unless this IP is listed.
-agent_ip="$(curl -fsS https://api.ipify.org)"
+# denies unless this IP is listed. Force IPv4: blob traffic from hosted agents
+# is IPv4, and an IPv6 ipify result would not match the firewall.
+agent_ip="$(curl -4 -fsS https://api.ipify.org)"
 for account_name in $(az storage account list --resource-group "${rg}" --query "[].name" -o tsv); do
   already="$(az storage account network-rule list \
     --account-name "${account_name}" \
@@ -65,8 +66,8 @@ for account_name in $(az storage account list --resource-group "${rg}" --query "
       --ip-address "${agent_ip}"
   fi
 done
-# Firewall updates are not always visible on the data plane immediately.
-sleep 30
+# Azure Storage can take a few minutes before a new IP rule is honoured on blob.
+sleep 120
 
 cd terraform/azure/evals
 cat > terraform.tfvars <<EOF
