@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from common.database.postgres_models import GuardrailResult, JobStatus
+from common.database.postgres_models import GuardrailFailureCategory, GuardrailResult, JobStatus
 from common.services.minute_handler_service import MinuteHandlerService
 from common.types import (
     FailureCategory,
@@ -92,6 +92,30 @@ def test_save_guardrail_error(mock_session_local):
     assert saved_obj.error == error_msg
 
     mock_session.commit.assert_called_once()
+
+
+@patch("common.services.minute_handler_service.SessionLocal")
+def test_save_guardrail_result_persists_failure_categories(mock_session_local):
+    mock_session = MagicMock()
+    mock_session_local.return_value.__enter__.return_value = mock_session
+
+    minute_version_id = "123e4567-e89b-12d3-a456-426614174000"
+    detail = FailureDetail(
+        mode=FailureMode.INVENTED_DECISION,
+        explanation="No vote occurred in the transcript.",
+    )
+    score = GuardrailScore(score=0.3, reasoning="Fabricated decision", categories=[detail])
+
+    MinuteHandlerService.save_guardrail_result(minute_version_id, score)
+
+    saved_obj = mock_session.add.call_args[0][0]
+    assert isinstance(saved_obj, GuardrailResult)
+    assert len(saved_obj.failure_categories) == 1
+    failure = saved_obj.failure_categories[0]
+    assert isinstance(failure, GuardrailFailureCategory)
+    assert failure.category == "factual_integrity"
+    assert failure.mode == "invented_decision"
+    assert failure.explanation == "No vote occurred in the transcript."
 
 
 @pytest.mark.asyncio
