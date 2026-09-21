@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from common.types import FailureCategory
+from common.types import FailureCategory, FailureDetail, FailureMode, GuardrailScore
 from evals.guardrails.src.run_guardrail_category_eval import (
     _apply_mutations,
     _build_stdout_summary,
@@ -65,3 +65,19 @@ def test_build_stdout_summary_uses_requested_f1_metric_names() -> None:
         "f1_no_issue": 1.0,
         "output": "evals/guardrails/output/results.json",
     }
+
+
+def test_failure_detail_dump_includes_derived_category() -> None:
+    score = GuardrailScore(
+        score=0.0,
+        reasoning="Found invented decision",
+        categories=[FailureDetail(mode=FailureMode.INVENTED_DECISION, explanation="Approval was invented.")],
+    )
+
+    assert [detail.model_dump(mode="json") for detail in score.categories] == [
+        {
+            "mode": FailureMode.INVENTED_DECISION.value,
+            "explanation": "Approval was invented.",
+            "category": FailureCategory.FACTUAL_INTEGRITY.value,
+        }
+    ]
