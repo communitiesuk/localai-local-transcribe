@@ -70,7 +70,8 @@ environment_name    = "${environment_name}"
 sensitive_storage_account_name = "${sensitive_account}"
 results_storage_account_name   = "${results_account}"
 adapt_ip_rules = ["${adapt_ip}"]
-mhclg_ip_rules = ["${adapt_ip}"]
+# No stable MHCLG-device IP yet (Zscaler). Results still allow the desktop via adapt_ip_rules.
+mhclg_ip_rules = []
 ado_ip_rules   = ["${agent_ip}"]
 EOF
 
