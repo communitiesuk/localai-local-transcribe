@@ -7,6 +7,8 @@ from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
 
 _TEMPLATES_DIR = Path(__file__).parent / "prompt_templates"
+GUARDRAIL_PROMPT_VERSION = "0.1.0"
+
 _env = Environment(
     loader=FileSystemLoader(_TEMPLATES_DIR),
     undefined=StrictUndefined,

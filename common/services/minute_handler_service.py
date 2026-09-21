@@ -21,6 +21,7 @@ from common.database.postgres_models import (
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
+    GUARDRAIL_PROMPT_VERSION,
     get_accuracy_check_messages,
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
@@ -37,6 +38,10 @@ from common.types import (
 settings = get_settings()
 
 logger = logging.getLogger(__name__)
+
+
+def _with_guardrail_prompt_version(reasoning: str) -> str:
+    return f"{reasoning}\nPROMPT_VERSION={GUARDRAIL_PROMPT_VERSION}"
 
 
 class MinuteGenerationFailedError(Exception):
@@ -56,7 +61,7 @@ class MinuteHandlerService:
                 minute_version_id=minute_version_id,
                 passed=passed,
                 score=score.score,
-                reasoning=score.reasoning,
+                reasoning=_with_guardrail_prompt_version(score.reasoning),
                 failure_categories=[
                     GuardrailFailureCategory(
                         category=detail.category.value,
@@ -76,7 +81,7 @@ class MinuteHandlerService:
                 minute_version_id=minute_version_id,
                 passed=False,
                 score=0.0,
-                reasoning="System Error: Could not verify accuracy.",
+                reasoning=_with_guardrail_prompt_version("System Error: Could not verify accuracy."),
                 error=error_message,
             )
             session.add(guardrail_result)
