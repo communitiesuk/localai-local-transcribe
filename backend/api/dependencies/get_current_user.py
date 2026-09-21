@@ -1,5 +1,5 @@
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
@@ -10,9 +10,6 @@ from common.auth import get_user_info
 from common.database.postgres_models import AnalyticsEventType, User
 from common.services.analytics_service import record_analytics_event
 from common.services.exceptions import MissingAuthTokenError
-from common.settings import get_settings
-
-settings = get_settings()
 
 logger = logging.getLogger(__name__)
 
@@ -69,19 +66,19 @@ async def get_current_user(
             await session.commit()
             await session.refresh(user)
 
-        # A user is authenticated on every request (the ALB re-validates the JWT each time), so only record an
-        # analytics event when enough time has passed since the last one to look like a new session, rather than
-        # recording one per request.
+        # A user is authenticated on every request (the ALB re-mints the JWT each time), so there is no login
+        # boundary we can observe here. Rather than approximate one, record a single event the first time a user
+        # authenticates; repeat usage is derivable from the timestamps on the events for their actual actions.
         now = datetime.now(UTC)
-        session_gap = timedelta(minutes=settings.ANALYTICS_AUTHENTICATION_SESSION_GAP_MINUTES)
-        is_new_session = (now - user.last_login) > session_gap
-
+        is_first_login = user.first_login is None
+        if is_first_login:
+            user.first_login = now
         user.last_login = now
         await session.commit()
 
-        if is_new_session:
+        if is_first_login:
             await record_analytics_event(
-                session, AnalyticsEventType.USER_AUTHENTICATED, user.evaluation_id, user.organisation_id
+                session, AnalyticsEventType.USER_FIRST_AUTHENTICATED, user.evaluation_id, user.organisation_id
             )
 
         return user

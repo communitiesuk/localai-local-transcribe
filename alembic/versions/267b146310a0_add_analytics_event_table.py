@@ -22,7 +22,7 @@ depends_on: str | Sequence[str] | None = None
 
 analytics_event_type_enum = sa.Enum(
     "USER_INVITED",
-    "USER_AUTHENTICATED",
+    "USER_FIRST_AUTHENTICATED",
     "USER_DELETED",
     "AUDIO_UPLOAD_STARTED",
     "AUDIO_UPLOAD_COMPLETED",

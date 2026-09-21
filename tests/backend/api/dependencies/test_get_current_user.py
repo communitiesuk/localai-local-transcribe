@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
@@ -8,9 +8,6 @@ from fastapi import HTTPException
 from backend.api.dependencies.get_current_user import get_current_user, require_accepted_tou
 from common.database.postgres_models import AnalyticsEventType, User
 from common.services.exceptions import MissingAuthTokenError
-from common.settings import get_settings
-
-settings = get_settings()
 
 TEST_EMAIL = "test@local-transcribe.com"
 TEST_SUBJECT_ID = "sub_1234567890"
@@ -44,6 +41,7 @@ async def test_get_current_user_existing_user(monkeypatch, session):
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
         last_login=existing_last_login,
+        first_login=existing_last_login,  # already authenticated before, so no analytics event is recorded
     )
     mock_result = Mock()
     mock_result.first.return_value = mock_user
@@ -76,8 +74,7 @@ async def test_get_current_user_existing_user(monkeypatch, session):
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_records_authenticated_analytics_event_after_session_gap(monkeypatch, session):
-    stale_last_login = datetime.now(UTC) - timedelta(minutes=settings.ANALYTICS_AUTHENTICATION_SESSION_GAP_MINUTES + 1)
+async def test_get_current_user_records_analytics_event_on_first_login(monkeypatch, session):
     mock_user = User(
         id=uuid4(),
         email=TEST_EMAIL,
@@ -87,7 +84,7 @@ async def test_get_current_user_records_authenticated_analytics_event_after_sess
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
-        last_login=stale_last_login,
+        first_login=None,  # never authenticated before
     )
     mock_result = Mock()
     mock_result.first.return_value = mock_user
@@ -103,13 +100,14 @@ async def test_get_current_user_records_authenticated_analytics_event_after_sess
     await get_current_user(session=session, x_amzn_oidc_data=TEST_TOKEN)
 
     mock_record_event.assert_awaited_once_with(
-        session, AnalyticsEventType.USER_AUTHENTICATED, "EVAL-001", mock_user.organisation_id
+        session, AnalyticsEventType.USER_FIRST_AUTHENTICATED, "EVAL-001", mock_user.organisation_id
     )
+    assert mock_user.first_login is not None
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_does_not_record_analytics_event_within_session_gap(monkeypatch, session):
-    recent_last_login = datetime.now(UTC) - timedelta(minutes=1)
+async def test_get_current_user_does_not_record_analytics_event_on_subsequent_logins(monkeypatch, session):
+    original_first_login = datetime.now(UTC)
     mock_user = User(
         id=uuid4(),
         email=TEST_EMAIL,
@@ -118,7 +116,7 @@ async def test_get_current_user_does_not_record_analytics_event_within_session_g
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
-        last_login=recent_last_login,
+        first_login=original_first_login,
     )
     mock_result = Mock()
     mock_result.first.return_value = mock_user
@@ -134,6 +132,7 @@ async def test_get_current_user_does_not_record_analytics_event_within_session_g
     await get_current_user(session=session, x_amzn_oidc_data=TEST_TOKEN)
 
     mock_record_event.assert_not_awaited()
+    assert mock_user.first_login == original_first_login
 
 
 @pytest.mark.asyncio
@@ -145,6 +144,7 @@ async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
+        first_login=datetime.now(UTC),  # already authenticated before, so no analytics event is recorded
     )
     mock_result = Mock()
     # first returns no match, then returns the user

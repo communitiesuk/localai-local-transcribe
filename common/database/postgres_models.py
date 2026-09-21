@@ -129,6 +129,9 @@ class User(BaseTableMixin, table=True):
     last_login: datetime = Field(
         default_factory=lambda: datetime.now(UTC), sa_column=Column(TIMESTAMP(timezone=True), nullable=False)
     )
+    # Set on the user's first authenticated request and never updated, so we can record a single
+    # USER_FIRST_AUTHENTICATED analytics event per user. Null means they have not authenticated yet.
+    first_login: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     name: str | None = Field(default=None, nullable=True)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
     evaluation_id: str | None = Field(default=None, nullable=True, unique=True)
@@ -285,7 +288,7 @@ class GuardrailResult(BaseTableMixin, table=True):
 
 class AnalyticsEventType(StrEnum):
     USER_INVITED = auto()
-    USER_AUTHENTICATED = auto()
+    USER_FIRST_AUTHENTICATED = auto()
     USER_DELETED = auto()
     AUDIO_UPLOAD_STARTED = auto()
     AUDIO_UPLOAD_COMPLETED = auto()
