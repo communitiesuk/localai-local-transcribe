@@ -1,7 +1,7 @@
 """Add guardrail_failure_category table
 
 Revision ID: 5e6494b47452
-Revises: a87c7de937c7
+Revises: b6a9d4f37c21
 Create Date: 2026-09-16 12:40:42.684914
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "5e6494b47452"
-down_revision: str | None = "a87c7de937c7"
+down_revision: str | None = "b6a9d4f37c21"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

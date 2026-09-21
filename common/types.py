@@ -155,7 +155,17 @@ class ChatCreateResponse(BaseModel):
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
+    evaluation_id: str = Field(min_length=1)
     organisation_id: uuid.UUID
+
+    @field_validator("evaluation_id")
+    @classmethod
+    def _strip_evaluation_id(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            message = "Evaluation ID must contain at least one non-whitespace character"
+            raise ValueError(message)
+        return stripped
 
 
 class UserUpdateRoles(BaseModel):
@@ -336,15 +346,14 @@ class FailureDetail(BaseModel):
     def _coerce_unrecognised_category(cls, value: object) -> object:
         if isinstance(value, FailureCategory):
             return value
-        try:
+        if isinstance(value, str) and value in {category.value for category in FailureCategory}:
             return FailureCategory(value)
-        except ValueError:
-            logger.warning(
-                "Unrecognised guardrail failure category %r; storing as %s",
-                value,
-                FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS,
-            )
-            return FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS
+        logger.warning(
+            "Unrecognised guardrail failure category %r; storing as %s",
+            value,
+            FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS,
+        )
+        return FailureCategory.OPERATIONAL_GUARDRAIL_SIGNALS
 
     @model_validator(mode="after")
     def _correct_category_from_mode(self) -> "FailureDetail":
@@ -445,6 +454,7 @@ class MinuteAndHallucinations:
     text: str
     total_claims: int
     hallucinations: list[LLMHallucination]
+    template_prompt_version: str | None = None
 
     def __post_init__(self) -> None:
         self.text = strip_boundary_metadata(self.text)
@@ -468,6 +478,7 @@ class TranscriptionSortOrder(StrEnum):
 
 
 class TemplateMetadata(BaseModel):
+    id: str
     name: str
     description: str
     category: str
