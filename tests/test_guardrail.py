@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from common.database.postgres_models import GuardrailResult, JobStatus
+from common.database.postgres_models import GuardrailFailureCategory, GuardrailResult, JobStatus
 from common.services.minute_handler_service import MinuteHandlerService
 from common.types import (
     FailureCategory,
@@ -92,6 +92,30 @@ def test_save_guardrail_error(mock_session_local):
     assert saved_obj.error == error_msg
 
     mock_session.commit.assert_called_once()
+
+
+@patch("common.services.minute_handler_service.SessionLocal")
+def test_save_guardrail_result_persists_failure_categories(mock_session_local):
+    mock_session = MagicMock()
+    mock_session_local.return_value.__enter__.return_value = mock_session
+
+    minute_version_id = "123e4567-e89b-12d3-a456-426614174000"
+    detail = FailureDetail(
+        mode=FailureMode.INVENTED_DECISION,
+        explanation="No vote occurred in the transcript.",
+    )
+    score = GuardrailScore(score=0.3, reasoning="Fabricated decision", categories=[detail])
+
+    MinuteHandlerService.save_guardrail_result(minute_version_id, score)
+
+    saved_obj = mock_session.add.call_args[0][0]
+    assert isinstance(saved_obj, GuardrailResult)
+    assert len(saved_obj.failure_categories) == 1
+    failure = saved_obj.failure_categories[0]
+    assert isinstance(failure, GuardrailFailureCategory)
+    assert failure.category == "factual_integrity"
+    assert failure.mode == "invented_decision"
+    assert failure.explanation == "No vote occurred in the transcript."
 
 
 @pytest.mark.asyncio
@@ -198,7 +222,6 @@ async def test_process_minute_generation_handles_exception():
 def test_guardrail_score_with_failure_categories_round_trips():
     """A GuardrailScore with populated failure details preserves category/mode/explanation."""
     detail = FailureDetail(
-        category=FailureCategory.FACTUAL_INTEGRITY,
         mode=FailureMode.INVENTED_DECISION,
         explanation="The minute states the application was approved but no vote occurred in the transcript.",
     )
@@ -210,43 +233,27 @@ def test_guardrail_score_with_failure_categories_round_trips():
     assert score.categories[0].explanation
 
 
-def test_failure_detail_auto_corrects_mismatched_category():
-    """A mismatched category is silently corrected to the mode's true owning category."""
-    detail = FailureDetail(
-        category=FailureCategory.EDIT_SAFETY_AND_INTENT,  # wrong category for this mode
-        mode=FailureMode.INVENTED_DECISION,
-        explanation="Evidence text",
-    )
+def test_failure_detail_derives_category_from_mode():
+    """Category is derived from the selected failure mode."""
+    detail = FailureDetail(mode=FailureMode.INVENTED_DECISION, explanation="Evidence text")
 
     assert detail.category == FailureCategory.FACTUAL_INTEGRITY
     assert detail.mode == FailureMode.INVENTED_DECISION
 
 
+def test_failure_detail_schema_does_not_ask_for_category():
+    """The LLM selects a mode; the category is derived in code."""
+    properties = GuardrailScore.model_json_schema()["$defs"]["FailureDetail"]["properties"]
+
+    assert "mode" in properties
+    assert "category" not in properties
+
+
 def test_failure_detail_explanation_defaults_to_none():
     """Detailed explanation is optional — omitting it should not block validation."""
-    detail = FailureDetail(category=FailureCategory.FACTUAL_INTEGRITY, mode=FailureMode.INVENTED_DECISION)
+    detail = FailureDetail(mode=FailureMode.INVENTED_DECISION)
 
     assert detail.explanation is None
-
-
-def test_failure_detail_logs_error_when_mode_has_no_category_mapping(caplog):
-    """If a mode has no entry in _CATEGORY_BY_MODE, an error is logged instead of raising."""
-    unmapped_mapping = dict(FailureDetail._CATEGORY_BY_MODE)  # noqa: SLF001
-    unmapped_mapping[FailureMode.INVENTED_DECISION] = None
-
-    with (
-        patch.object(FailureDetail, "_CATEGORY_BY_MODE", unmapped_mapping),
-        caplog.at_level("ERROR", logger="common.types"),
-    ):
-        detail = FailureDetail(
-            category=FailureCategory.FACTUAL_INTEGRITY,
-            mode=FailureMode.INVENTED_DECISION,
-        )
-
-    assert detail.category == FailureCategory.FACTUAL_INTEGRITY
-    assert len(caplog.records) == 1
-    assert caplog.records[0].levelname == "ERROR"
-    assert "has no known category mapping" in caplog.records[0].message
 
 
 def test_guardrail_score_logs_warning_when_failing_score_has_no_categories(caplog):
@@ -268,49 +275,34 @@ def test_all_failure_modes_are_categorized():
 
 def test_personal_data_failure_mode_maps_to_data_protection():
     """Personal data should have its own failure category."""
-    detail = FailureDetail(
-        category=FailureCategory.EDIT_SAFETY_AND_INTENT,
-        mode=FailureMode.PERSONAL_DATA_INCLUDED,
-    )
+    detail = FailureDetail(mode=FailureMode.PERSONAL_DATA_INCLUDED)
 
     assert detail.category == FailureCategory.DATA_PROTECTION
 
 
 def test_transcript_instruction_failure_mode_maps_to_instruction_integrity():
     """Transcript injection compliance should use the shared instruction-integrity category."""
-    detail = FailureDetail(
-        category=FailureCategory.EDIT_SAFETY_AND_INTENT,
-        mode=FailureMode.TRANSCRIPT_INSTRUCTION_FOLLOWED,
-    )
+    detail = FailureDetail(mode=FailureMode.TRANSCRIPT_INSTRUCTION_FOLLOWED)
 
     assert detail.category == FailureCategory.INSTRUCTION_INTEGRITY
 
 
 def test_template_instruction_failure_mode_maps_to_instruction_integrity():
     """Template injection compliance should use the shared instruction-integrity category."""
-    detail = FailureDetail(
-        category=FailureCategory.EDIT_SAFETY_AND_INTENT,
-        mode=FailureMode.TEMPLATE_INSTRUCTION_FOLLOWED,
-    )
+    detail = FailureDetail(mode=FailureMode.TEMPLATE_INSTRUCTION_FOLLOWED)
 
     assert detail.category == FailureCategory.INSTRUCTION_INTEGRITY
 
 
 def test_no_quote_for_claim_maps_to_evidence_and_citation_quality():
     """Missing citations should remain citation-quality failures."""
-    detail = FailureDetail(
-        category=FailureCategory.FACTUAL_INTEGRITY,
-        mode=FailureMode.NO_QUOTE_FOR_CLAIM,
-    )
+    detail = FailureDetail(mode=FailureMode.NO_QUOTE_FOR_CLAIM)
 
     assert detail.category == FailureCategory.EVIDENCE_AND_CITATION_QUALITY
 
 
 def test_weak_transcript_support_maps_to_factual_integrity():
     """Weak source support should sit with other transcript-faithfulness failure modes."""
-    detail = FailureDetail(
-        category=FailureCategory.EVIDENCE_AND_CITATION_QUALITY,
-        mode=FailureMode.WEAK_TRANSCRIPT_SUPPORT,
-    )
+    detail = FailureDetail(mode=FailureMode.WEAK_TRANSCRIPT_SUPPORT)
 
     assert detail.category == FailureCategory.FACTUAL_INTEGRITY
