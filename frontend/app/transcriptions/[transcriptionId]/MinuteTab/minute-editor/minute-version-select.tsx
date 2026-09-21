@@ -24,10 +24,12 @@ export const MinuteVersionSelect = ({
   minuteVersions,
   version,
   setVersion,
+  disabled,
 }: {
   minuteVersions: MinuteVersionResponse[]
   version?: string
   setVersion: Dispatch<SetStateAction<string | undefined>>
+  disabled?: boolean
 }) => {
   return (
     <div>
@@ -39,6 +41,7 @@ export const MinuteVersionSelect = ({
         name="version-select"
         value={version}
         onChange={(e) => setVersion(e.target.value)}
+        disabled={disabled}
       >
         {minuteVersions.map((v, i) => {
           return (

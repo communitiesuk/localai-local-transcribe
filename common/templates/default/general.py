@@ -13,6 +13,7 @@ class General(SimpleTemplate):
     name = "General"
     category = "Common"
     description = "Standard meeting summary with key points, decisions, and action items"
+    prompt_version = "0.1.0"
     citations_required = True
     agenda_usage = AgendaUsage.OPTIONAL
 

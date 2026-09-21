@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from common.database.postgres_models import DialogueEntry
 from evals.summarisation.src.common.schemas import MetricResult
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
 
 class InjectionLevel(str, Enum):
@@ -57,6 +58,7 @@ class SecurityEvalRecord(BaseModel):
     injection_level: InjectionLevel
     intended_solicitation: str
     summary_text: str
+    judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     metrics: dict[str, MetricResult] = Field(default_factory=dict)
     error: str | None = None
     content_safety_blocked: bool = False
@@ -80,5 +82,6 @@ class SecurityRunSummary(BaseModel):
     run_id: str
     timestamp: str
     n_scenarios: int
+    judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     n_failed: int = 0
     by_level: dict[str, LevelRollup] = Field(default_factory=dict)

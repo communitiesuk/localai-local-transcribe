@@ -56,7 +56,7 @@ The table below summarises proposed thresholds. The section below the table expa
 
 **Justification:**
 
-LocalTranscribe outputs draft minutes that a housing officer may adopt into a Personal Housing Plan under section 189A of the Housing Act 1996 [8]. That is the primary pathway the eval rubrics stress-test. The app also supports a separate adult social care workflow via the Care Assessment V2 template, where a social care worker may adopt a draft into a care needs assessment under the Care Act 2014 [7]. If a hallucinated fact is not identified and corrected by human review, it could end up misleading a statutory decision which may be hard to reverse once acted on.
+LocalTranscribe outputs draft minutes that a housing officer may adopt into a Personal Housing Plan under section 189A of the Housing Act 1996 [8]. That is the primary pathway the eval rubrics stress-test. If a hallucinated fact is not identified and corrected by human review, it could end up misleading a statutory decision which may be hard to reverse once acted on.
 
 A study published by the Ada Lovelace Institute reports such a failure mode in a similar setting, including a tool that inserted "suicidal ideation" that a client never mentioned, and warns that inaccuracies entering documentation have "far-reaching impacts" [1]. This is why a score of 2, at which at least one significant factual error could mislead the reader, should be a fail.
 
@@ -176,4 +176,3 @@ Tone could potentially have a higher harm if a material threat or safeguarding s
 6. Department for Science, Innovation and Technology and Central Digital and Data Office. "Algorithmic Transparency Recording Standard: guidance for public sector bodies" and "ATRS mandatory scope and exemptions policy." Mandatory for central government from February 2024.
 7. Care Act 2014, section 9 (duty to assess an adult's needs for care and support).
 8. Housing Act 1996, section 189A (assessments and personalised plan), inserted by the Homelessness Reduction Act 2017, section 3; and Homelessness Code of Guidance for Local Authorities, Chapter 11 (Assessments and personalised plans).
-

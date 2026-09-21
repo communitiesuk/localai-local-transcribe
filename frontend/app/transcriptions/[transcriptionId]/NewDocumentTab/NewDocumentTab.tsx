@@ -9,12 +9,17 @@ import {
 import { TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
-  getUserTemplatesUserTemplatesGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
   getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { ProcessingSpinner } from '@/components/processing-spinner'
+import {
+  isDefaultTemplateId,
+  templateValue,
+  userTemplateIdForRequest,
+  useTemplates,
+} from '@/hooks/use-templates'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
@@ -27,11 +32,15 @@ export const NewDocumentTab = ({
   onCancel,
   onCreated,
   onMinuteCreated,
+  onActivityChange,
+  onCitationClicked,
 }: {
   transcription: TranscriptionGetResponse
   onCancel: () => void
   onCreated: (templateName: string) => void
   onMinuteCreated?: (minuteId: string) => void
+  onActivityChange?: (busy: boolean) => void
+  onCitationClicked?: (citationIndex: number) => void
 }) => {
   const [selectedValue, setSelectedValue] = useState('')
   const [createdMinuteId, setCreatedMinuteId] = useState<string | null>(null)
@@ -40,12 +49,8 @@ export const NewDocumentTab = ({
 
   const { setBanner } = useBannerStore()
 
-  const {
-    data: templates = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery(getUserTemplatesUserTemplatesGetOptions())
+  const { sortedTemplates, isLoading, isError, refetchTemplates } =
+    useTemplates()
 
   const { data: versions = [] } = useQuery({
     ...listMinuteVersionsMinutesMinuteIdVersionsGetOptions({
@@ -73,8 +78,8 @@ export const NewDocumentTab = ({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
 
-  const selectedTemplate = templates.find(
-    (t) => (t.id ?? t.name) === selectedValue
+  const selectedTemplate = sortedTemplates.find(
+    (t) => templateValue(t) === selectedValue
   )
 
   const isCompleted =
@@ -97,8 +102,19 @@ export const NewDocumentTab = ({
     }
   }, [isCompleted, isFailed, createdTemplateName, onCreated, setBanner])
 
+  useEffect(() => {
+    if (!isCompleted) onActivityChange?.(!isFailed)
+  }, [isCompleted, isFailed, onActivityChange])
+
   if (isCompleted) {
-    return <MinuteEditor transcription={transcription} minute={minute} />
+    return (
+      <MinuteEditor
+        transcription={transcription}
+        minute={minute}
+        onActivityChange={onActivityChange}
+        onCitationClicked={onCitationClicked}
+      />
+    )
   }
 
   if (isCreating) {
@@ -127,17 +143,13 @@ export const NewDocumentTab = ({
         <GovukButton
           type="button"
           variant="secondary"
-          onClick={() => refetch()}
+          onClick={refetchTemplates}
         >
           Try again
         </GovukButton>
       </div>
     )
   }
-
-  const sortedTemplates = [...templates].sort((a, b) =>
-    a.name.localeCompare(b.name)
-  )
 
   const handleCreate = () => {
     if (!selectedTemplate) return
@@ -148,7 +160,7 @@ export const NewDocumentTab = ({
         path: { transcription_id: transcription.id! },
         body: {
           template_name: selectedTemplate.name,
-          template_id: selectedTemplate.id,
+          template_id: userTemplateIdForRequest(selectedTemplate),
         },
       },
       {
@@ -160,9 +172,9 @@ export const NewDocumentTab = ({
               ),
           })
           posthog.capture('generate_ai_minutes_started', {
-            style: selectedTemplate.id
-              ? 'User generated'
-              : selectedTemplate.name,
+            style: isDefaultTemplateId(selectedTemplate.id)
+              ? selectedTemplate.name
+              : 'User generated',
           })
           setCreatedTemplateName(selectedTemplate.name)
           setCreatedMinuteId(data.minute_id)
@@ -194,7 +206,7 @@ export const NewDocumentTab = ({
         onChange={setSelectedValue}
         options={sortedTemplates.map((template) => ({
           label: template.name,
-          value: template.id ?? template.name,
+          value: templateValue(template),
           hint: template.description,
         }))}
       />

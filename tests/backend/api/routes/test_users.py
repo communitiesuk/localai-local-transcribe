@@ -6,10 +6,12 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.exc import IntegrityError
 
 from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_target_user import get_target_user
 from backend.main import app
+from backend.services.emails import EmailSendError
 from common.database.postgres_models import UserRole
 from tests.utils import get_test_client
 
@@ -175,6 +177,91 @@ async def test_delete_user(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("admin_roles", "expected_inviter_organisation_name"),
+    [
+        ([UserRole.MHCLG_SUPPORT_ADMIN], None),
+        ([UserRole.LOCAL_AUTHORITY_ADMIN], "Example Council"),
+    ],
+)
+async def test_create_user(
+    override_session, make_user, make_organisation, mock_email_sender, admin_roles, expected_inviter_organisation_name
+):
+    organisation = make_organisation(name="Example Council", allowed_domains=["example.gov.uk"])
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+    mock_session.refresh.side_effect = user_create_refresh
+
+    user = make_user(organisation_id=organisation.id, roles=admin_roles)
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    with (
+        patch(
+            "backend.api.routes.users.get_user_by_email",
+            new=AsyncMock(return_value=None),
+        ),
+        patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "test.user@example.gov.uk",
+                    "evaluation_id": "EVAL-001",
+                    "organisation_id": str(organisation.id),
+                },
+            )
+
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["name"] == "Test User"
+    assert data["email"] == "test.user@example.gov.uk"
+    assert data["organisation_id"] == str(organisation.id)
+
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited_once()
+    mock_email_sender.send_invite_email.assert_called_once_with(
+        "test.user@example.gov.uk",
+        "Test User",
+        expected_inviter_organisation_name,
+    )
+
+
+@pytest.mark.asyncio
+async def test_create_user_email_failure_calls_sentry(
+    override_session,
+    override_support_admin_user,
+    make_organisation,
+    mock_email_sender,
+):
+    organisation = make_organisation(allowed_domains=["example.gov.uk"])
+    mock_session = override_session
+    mock_session.get.return_value = organisation
+    mock_session.refresh.side_effect = user_create_refresh
+    mock_email_sender.send_invite_email.side_effect = EmailSendError
+
+    with (
+        patch("backend.api.routes.users.get_user_by_email", new=AsyncMock(return_value=None)),
+        patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
+        patch("backend.api.routes.users.sentry_sdk.capture_exception") as capture_exception,
+    ):
+        async with get_test_client() as ac:
+            await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "test.user@example.gov.uk",
+                    "evaluation_id": "EVAL-001",
+                    "organisation_id": str(organisation.id),
+                },
+            )
+
+    capture_exception.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_create_user_returns_409_when_email_already_exists(
     override_session,
     override_support_admin_user,
@@ -192,6 +279,7 @@ async def test_create_user_returns_409_when_email_already_exists(
                 json={
                     "name": "Test User",
                     "email": existing_user.email,
+                    "evaluation_id": "EVAL-001",
                     "roles": existing_user.roles,
                     "organisation_id": str(existing_user.organisation_id),
                 },
@@ -199,6 +287,123 @@ async def test_create_user_returns_409_when_email_already_exists(
 
     assert response.json()["detail"] == f"A user with email '{existing_user.email}' already exists"
     assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_create_user_returns_409_when_evaluation_id_already_exists(
+    override_session,
+    override_support_admin_user,
+    make_user,
+):
+    existing_user = make_user()
+    existing_user.evaluation_id = "EVAL-001"
+
+    with (
+        patch(
+            "backend.api.routes.users.get_user_by_email",
+            new=AsyncMock(return_value=None),
+        ),
+        patch(
+            "backend.api.routes.users.get_user_by_evaluation_id",
+            new=AsyncMock(return_value=existing_user),
+        ),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "new.user@example.com",
+                    "evaluation_id": existing_user.evaluation_id,
+                    "organisation_id": str(existing_user.organisation_id),
+                },
+            )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
+    )
+    assert existing_user.evaluation_id not in response.text
+
+
+@pytest.mark.asyncio
+async def test_create_user_rejects_a_missing_evaluation_id(
+    override_session,
+    override_support_admin_user,
+    make_user,
+):
+    existing_user = make_user()
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            "/users",
+            json={
+                "name": "Test User",
+                "email": "new.user@example.com",
+                "organisation_id": str(existing_user.organisation_id),
+            },
+        )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_user_rejects_a_whitespace_only_evaluation_id(
+    override_session,
+    override_support_admin_user,
+    make_user,
+):
+    existing_user = make_user()
+
+    async with get_test_client() as ac:
+        response = await ac.post(
+            "/users",
+            json={
+                "name": "Test User",
+                "email": "new.user@example.com",
+                "evaluation_id": "   ",
+                "organisation_id": str(existing_user.organisation_id),
+            },
+        )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_user_returns_409_when_a_concurrent_request_takes_the_evaluation_id(
+    override_session,
+    override_support_admin_user,
+    make_organisation,
+):
+    organisation = make_organisation(allowed_domains=["example.com"])
+    override_session.get.return_value = organisation
+    override_session.commit.side_effect = IntegrityError(
+        "INSERT",
+        {},
+        Exception('duplicate key value violates unique constraint "uq_user_evaluation_id"'),
+    )
+    override_session.rollback = AsyncMock()
+
+    with (
+        patch("backend.api.routes.users.get_user_by_email", new=AsyncMock(return_value=None)),
+        patch("backend.api.routes.users.get_user_by_evaluation_id", new=AsyncMock(return_value=None)),
+    ):
+        async with get_test_client() as ac:
+            response = await ac.post(
+                "/users",
+                json={
+                    "name": "Test User",
+                    "email": "new.user@example.com",
+                    "evaluation_id": "EVAL-001",
+                    "organisation_id": str(organisation.id),
+                },
+            )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
+    )
+    override_session.rollback.assert_awaited_once()
 
 
 @pytest.mark.asyncio
