@@ -15,9 +15,9 @@ DATA_PROTECTION_MESSAGE = "Review carefully: this document may include personal 
 OPERATIONAL_SIGNALS_MESSAGE = (
     "Review carefully: the AI tried and failed to check the document, so it might contain inaccuracies."
 )
-EDIT_SAFETY_AND_INTENT_MESSAGE = "Something went wrong with the AI edit – try providing a different instruction."
+EDIT_SAFETY_AND_INTENT_MESSAGE = "Something went wrong with the AI edit - try providing a different instruction."
 MULTIPLE_FAILURES_MESSAGE = (
-    "Check your transcript and template – the AI spotted various issues when generating your document, "
+    "Check your transcript and template - the AI spotted various issues when generating your document, "
     "which might make it unreliable."
 )
 
