@@ -1,11 +1,10 @@
 import logging
-from typing import Any
 from uuid import UUID
 
 from sqlmodel import Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from common.database.postgres_models import AnalyticsEvent, AnalyticsEventType
+from common.database.postgres_models import AnalyticsEvent, AnalyticsEventMetadata, AnalyticsEventType
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ async def record_analytics_event(
     evaluation_id: str | None,
     organisation_id: UUID | None,
     recording_id: UUID | None = None,
-    event_metadata: dict[str, Any] | None = None,
+    event_metadata: AnalyticsEventMetadata | None = None,
 ) -> None:
     """Record a first-party analytics event (see ADR-028).
 
@@ -53,7 +52,7 @@ def record_analytics_event_sync(
     evaluation_id: str | None,
     organisation_id: UUID | None,
     recording_id: UUID | None = None,
-    event_metadata: dict[str, Any] | None = None,
+    event_metadata: AnalyticsEventMetadata | None = None,
 ) -> None:
     """Sync counterpart of `record_analytics_event`, for use from the worker (which uses sync sessions)."""
     if not evaluation_id:

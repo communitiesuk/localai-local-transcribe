@@ -97,7 +97,8 @@ async def _record_transcription_edit_analytics_event(
         current_user.evaluation_id,
         current_user.organisation_id,
         recording_id=recording_id,
-        event_metadata={"edit_type": edit_type.value},
+        # TranscriptionEditType is a StrEnum, so this serialises to the same JSON as edit_type.value
+        event_metadata={"edit_type": edit_type},
     )
 
 

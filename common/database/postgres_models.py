@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum, auto
-from typing import Any, TypedDict
+from typing import TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, false, text
@@ -284,45 +284,6 @@ class GuardrailResult(BaseTableMixin, table=True):
         default=None,
         description="Error message if the guardrail check failed",
     )
-
-
-class AnalyticsEventType(StrEnum):
-    USER_INVITED = auto()
-    USER_FIRST_AUTHENTICATED = auto()
-    USER_DELETED = auto()
-    AUDIO_UPLOAD_STARTED = auto()
-    AUDIO_UPLOAD_COMPLETED = auto()
-    SUMMARY_RECEIVED = auto()
-    TRANSCRIPTION_RECEIVED = auto()
-    TRANSCRIPTION_EDIT_SUBMITTED = auto()
-
-
-class TranscriptionEditType(StrEnum):
-    """The kind of edit made to a transcription, recorded as part of a TRANSCRIPTION_EDIT_SUBMITTED analytics event."""
-
-    DIALOGUE_ENTRY = auto()
-    SINGLE_NAME = auto()
-    ALL_NAMES = auto()
-
-
-class AnalyticsEvent(BaseTableMixin, table=True):
-    """First-party analytics events, recorded so we can measure real-world impact without a cookie consent banner.
-
-    Deliberately has no foreign keys: it stores the user-supplied evaluation_id (not user_id) and recording_id as
-    opaque values, so events remain valid and reportable even after the referenced user/recording is deleted.
-    """
-
-    __tablename__ = "analytics_event"
-
-    occurred_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
-    event_type: AnalyticsEventType = Field(
-        sa_column=Column(Enum(AnalyticsEventType, name="analyticseventtype"), nullable=False)
-    )
-    evaluation_id: str = Field(index=True)
-    recording_id: UUID | None = Field(default=None, index=True)
-    organisation_id: UUID | None = Field(default=None, index=True)
-    event_metadata: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB))
-
     failure_categories: Mapped[list["GuardrailFailureCategory"]] = Relationship(
         back_populates="guardrail_result", cascade_delete=True
     )
@@ -348,3 +309,50 @@ class GuardrailFailureCategory(BaseTableMixin, table=True):
         description="Evidence explaining this failure",
     )
 
+
+class AnalyticsEventType(StrEnum):
+    USER_INVITED = auto()
+    USER_FIRST_AUTHENTICATED = auto()
+    USER_DELETED = auto()
+    AUDIO_UPLOAD_STARTED = auto()
+    AUDIO_UPLOAD_COMPLETED = auto()
+    SUMMARY_RECEIVED = auto()
+    TRANSCRIPTION_RECEIVED = auto()
+    TRANSCRIPTION_EDIT_SUBMITTED = auto()
+
+
+class TranscriptionEditType(StrEnum):
+    """The kind of edit made to a transcription, recorded as part of a TRANSCRIPTION_EDIT_SUBMITTED analytics event."""
+
+    DIALOGUE_ENTRY = auto()
+    SINGLE_NAME = auto()
+    ALL_NAMES = auto()
+
+
+class AnalyticsEventMetadata(TypedDict, total=False):
+    """Optional per-event detail stored in `AnalyticsEvent.event_metadata`.
+
+    `total=False` because each event type sets only the keys relevant to it.
+    """
+
+    audio_duration_seconds: float
+    edit_type: TranscriptionEditType
+
+
+class AnalyticsEvent(BaseTableMixin, table=True):
+    """First-party analytics events, recorded so we can measure real-world impact without a cookie consent banner.
+
+    Deliberately has no foreign keys: it stores the user-supplied evaluation_id (not user_id) and recording_id as
+    opaque values, so events remain valid and reportable even after the referenced user/recording is deleted.
+    """
+
+    __tablename__ = "analytics_event"
+
+    occurred_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    event_type: AnalyticsEventType = Field(
+        sa_column=Column(Enum(AnalyticsEventType, name="analyticseventtype"), nullable=False)
+    )
+    evaluation_id: str = Field(index=True)
+    recording_id: UUID | None = Field(default=None, index=True)
+    organisation_id: UUID | None = Field(default=None, index=True)
+    event_metadata: AnalyticsEventMetadata | None = Field(default=None, sa_column=Column(JSONB))
