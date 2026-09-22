@@ -489,6 +489,8 @@ async def test_process_minute_generation_message_success(
         AnalyticsEventType.SUMMARY_RECEIVED,
         "EVAL-001",
         mock_minute.transcription.user.organisation_id,
+        # keyed on the minute version so a redelivered queue message doesn't duplicate the event
+        source_id=mock_minute_version.id,
     )
 
 

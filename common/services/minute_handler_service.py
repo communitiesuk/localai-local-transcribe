@@ -232,6 +232,9 @@ class MinuteHandlerService:
                     AnalyticsEventType.SUMMARY_RECEIVED,
                     event_user.evaluation_id if event_user else None,
                     event_user.organisation_id if event_user else None,
+                    # The queue message is acknowledged after this write, so a crash in between redelivers it. Keying
+                    # on the minute version makes the retry a no-op rather than a duplicate event.
+                    source_id=minute_version.id,
                 )
 
         except Exception as e:

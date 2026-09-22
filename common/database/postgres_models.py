@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, false, text
+from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, UniqueConstraint, false, text
 from sqlalchemy.dialects.postgresql import ARRAY, CITEXT, JSONB
 from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
@@ -331,6 +331,9 @@ class TranscriptionEditType(StrEnum):
     ALL_INSTANCES_OF_NAME = auto()
 
 
+ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT = "uq_analytics_event_event_type_source_id"
+
+
 class AnalyticsEventMetadata(TypedDict, total=False):
     """Optional per-event detail stored in `AnalyticsEvent.event_metadata`.
 
@@ -349,6 +352,7 @@ class AnalyticsEvent(BaseTableMixin, table=True):
     """
 
     __tablename__ = "analytics_event"
+    __table_args__ = (UniqueConstraint("event_type", "source_id", name=ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT),)
 
     occurred_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     event_type: AnalyticsEventType = Field(
@@ -357,4 +361,10 @@ class AnalyticsEvent(BaseTableMixin, table=True):
     evaluation_id: str = Field(index=True)
     recording_id: UUID | None = Field(default=None, index=True)
     organisation_id: UUID | None = Field(default=None, index=True)
+    # Idempotency key for events recorded by the worker, which consumes an at-least-once queue: the event is written
+    # before the queue message is acknowledged, so a crash in between causes redelivery. Unique per (event_type,
+    # source_id) so a redelivered message is a no-op insert. Deliberately separate from recording_id, which is not
+    # unique per event - TRANSCRIPTION_EDIT_SUBMITTED fires repeatedly for the same recording. NULL for events that
+    # need no de-duplication; Postgres treats NULLs as distinct, so those never collide.
+    source_id: UUID | None = Field(default=None)
     event_metadata: AnalyticsEventMetadata | None = Field(default=None, sa_column=Column(JSONB))

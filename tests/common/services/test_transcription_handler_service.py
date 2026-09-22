@@ -129,6 +129,8 @@ def test_record_transcription_received_uses_earliest_recording_and_user_evaluati
         "EVAL-001",
         transcription.user.organisation_id,
         recording_id=earliest_recording.id,
+        # keyed on the transcription so a redelivered queue message doesn't duplicate the event
+        source_id=transcription_id,
     )
 
 
@@ -154,5 +156,10 @@ def test_record_transcription_received_handles_no_user(mock_session):
         TranscriptionHandlerService._record_transcription_received(transcription)  # noqa: SLF001
 
     mock_record_event.assert_called_once_with(
-        session, AnalyticsEventType.TRANSCRIPTION_RECEIVED, None, None, recording_id=recording.id
+        session,
+        AnalyticsEventType.TRANSCRIPTION_RECEIVED,
+        None,
+        None,
+        recording_id=recording.id,
+        source_id=transcription_id,
     )
