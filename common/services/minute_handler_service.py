@@ -12,6 +12,7 @@ from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import (
     AnalyticsEventType,
     DialogueEntry,
+    GuardrailFailureCategory,
     GuardrailResult,
     JobStatus,
     Minute,
@@ -22,6 +23,7 @@ from common.database.postgres_models import (
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
+    GUARDRAIL_PROMPT_VERSION,
     get_accuracy_check_messages,
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
@@ -41,6 +43,10 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
+def _with_guardrail_prompt_version(reasoning: str) -> str:
+    return f"{reasoning}\nPROMPT_VERSION={GUARDRAIL_PROMPT_VERSION}"
+
+
 class MinuteGenerationFailedError(Exception):
     pass
 
@@ -58,7 +64,15 @@ class MinuteHandlerService:
                 minute_version_id=minute_version_id,
                 passed=passed,
                 score=score.score,
-                reasoning=score.reasoning,
+                reasoning=_with_guardrail_prompt_version(score.reasoning),
+                failure_categories=[
+                    GuardrailFailureCategory(
+                        category=detail.category.value,
+                        mode=detail.mode.value,
+                        explanation=detail.explanation,
+                    )
+                    for detail in score.categories
+                ],
             )
             session.add(guardrail_result)
             session.commit()
@@ -70,7 +84,7 @@ class MinuteHandlerService:
                 minute_version_id=minute_version_id,
                 passed=False,
                 score=0.0,
-                reasoning="System Error: Could not verify accuracy.",
+                reasoning=_with_guardrail_prompt_version("System Error: Could not verify accuracy."),
                 error=error_message,
             )
             session.add(guardrail_result)
@@ -155,6 +169,7 @@ class MinuteHandlerService:
         content: str,
         transcript: list[DialogueEntry],
         label: str,
+        citation_quality_applicable: bool = True,
     ) -> None:
         """Helper to run accuracy check and handle result/error logging."""
         word_count = cls._calculate_word_count(transcript)
@@ -168,6 +183,7 @@ class MinuteHandlerService:
             accuracy_score = await cls.calculate_accuracy_score(
                 minute=content,
                 transcript=transcript,
+                citation_quality_applicable=citation_quality_applicable,
             )
             cls.save_guardrail_result(minute_version_id, accuracy_score)
             logger.info("%s: Saved guardrail result for %s: %s", minute_id, label, accuracy_score)
@@ -199,6 +215,7 @@ class MinuteHandlerService:
                 content=html_content,
                 transcript=dialogue_entries,
                 label="generation",
+                citation_quality_applicable=result.citation_quality_applicable,
             )
 
             cls.update_minute_version(
@@ -307,6 +324,7 @@ class MinuteHandlerService:
             total_claims=generated.total_claims,
             hallucinations=generated.hallucinations,
             template_prompt_version=generated.template_prompt_version,
+            citation_quality_applicable=generated.citation_quality_applicable,
         )
 
     @classmethod
@@ -326,6 +344,7 @@ class MinuteHandlerService:
             total_claims=generated.total_claims,
             hallucinations=generated.hallucinations,
             template_prompt_version=generated.template_prompt_version,
+            citation_quality_applicable=generated.citation_quality_applicable,
         )
 
     @classmethod
@@ -381,9 +400,15 @@ class MinuteHandlerService:
         cls,
         minute: str,
         transcript: list[DialogueEntry],
+        citation_quality_applicable: bool = True,
     ) -> GuardrailScore:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         return await chatbot.structured_chat(
-            messages=get_accuracy_check_messages(minute, transcript, settings.GUARDRAIL_THRESHOLD),
+            messages=get_accuracy_check_messages(
+                minute,
+                transcript,
+                settings.GUARDRAIL_THRESHOLD,
+                citation_quality_applicable=citation_quality_applicable,
+            ),
             response_format=GuardrailScore,
         )
