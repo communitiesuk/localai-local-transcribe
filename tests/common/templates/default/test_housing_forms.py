@@ -66,10 +66,13 @@ def test_triage_assessment_prompt_renders_triage_and_da_sections():
     assert "HREG: housing register" in prompt
     assert "PRS: private rented sector" in prompt
     assert "DA: domestic abuse" in prompt
-    assert "# Triage Prompt Sheet" in prompt
-    assert "# DA Soft Approach" in prompt
+    assert "# Initial Triage Prompt investigation" in prompt
+    assert "# DA Soft Approach Assessment" in prompt
     assert "Do not decide homelessness duties" in prompt
     assert "- Homeless or at risk of becoming homeless:" in prompt
+    assert "- Day-to-day impact:" in prompt
+    assert "- Abuse description:" in prompt
+    assert "## Proofs Requested" in prompt
     assert "- Safe enquiry - safe contact time and method:" in prompt
     assert "- Reason for application / why homeless / excluder details:" in prompt
     assert "- Proofs requested to progress the case or access the housing register:" in prompt
