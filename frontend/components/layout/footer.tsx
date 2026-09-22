@@ -1,14 +1,14 @@
 import { MhclgLogo } from '@/components/icons/mhclg-logo'
-
-export default function GovFooter() {
-  const links = {
+ 
+ const links = {
     '/privacy': 'Local Transcribe User Privacy Notice',
     '/privacy/end-service-user': 'End Service User Privacy Notice',
     '/support': 'Support',
     '/accessibility': 'Accessibility',
     '/acceptable-use-policy': 'Acceptable Use Policy',
-  }
+}
 
+export default function GovFooter() {
   return (
     <footer className="govuk-footer" role="contentinfo">
       <div className="govuk-width-container">
