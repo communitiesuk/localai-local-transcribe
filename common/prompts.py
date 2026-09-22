@@ -8,7 +8,7 @@ from common.format_transcript import transcript_as_index_speaker_and_utterance, 
 from common.types import GuardrailAction
 
 _TEMPLATES_DIR = Path(__file__).parent / "prompt_templates"
-GUARDRAIL_PROMPT_VERSION = "0.1.0"
+GUARDRAIL_PROMPT_VERSION = "0.1.1"
 
 _env = Environment(
     loader=FileSystemLoader(_TEMPLATES_DIR),
