@@ -64,10 +64,15 @@ def test_triage_assessment_prompt_renders_triage_and_da_sections():
     assert "HREG: housing register" in prompt
     assert "PRS: private rented sector" in prompt
     assert "DA: domestic abuse" in prompt
-    assert "# Initial Triage Prompt investigation" in prompt
-    assert "# DA Soft Approach Assessment" in prompt
+    assert "# Triage Prompt Sheet" in prompt
+    assert "# DA Soft Approach" in prompt
     assert "Do not decide homelessness duties" in prompt
-    assert "## Proofs Requested" in prompt
+    assert "- Homeless or at risk of becoming homeless:" in prompt
+    assert "- Safe enquiry - safe contact time and method:" in prompt
+    assert "- Reason for application / why homeless / excluder details:" in prompt
+    assert "- Proofs requested to progress the case or access the housing register:" in prompt
+    assert "- R2B homeless/threatened with homelessness reason:" in prompt
+    assert "Q:" not in prompt
 
 
 def test_housing_templates_are_registered_with_metadata():
@@ -79,8 +84,16 @@ def test_housing_templates_are_registered_with_metadata():
     assert metadata_by_name["Triage Assessment"].category == "Housing"
 
 
-def test_default_templates_have_initial_prompt_version():
-    assert {template.prompt_version for template in TemplateManager.templates.values()} == {"0.1.0"}
+def test_default_templates_have_expected_prompt_versions():
+    prompt_versions_by_name = {
+        template.name: template.prompt_version for template in TemplateManager.templates.values()
+    }
+
+    assert prompt_versions_by_name["General"] == "0.1.1"
+    assert prompt_versions_by_name["Triage Assessment"] == "0.1.1"
+    assert {
+        version for name, version in prompt_versions_by_name.items() if name not in {"General", "Triage Assessment"}
+    } == {"0.1.0"}
 
 
 def test_housing_template_prompts_include_transcript_message():
