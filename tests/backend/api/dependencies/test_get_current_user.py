@@ -50,6 +50,7 @@ async def test_get_current_user_existing_user(monkeypatch, session):
     )
 
     session.exec.side_effect = [
+        make_exec_result(None),  # no changed sub match
         make_exec_result(mock_user),  # match by subject_id
         make_exec_result(Mock()),  # UserAuthEmail lookup
     ]
@@ -73,8 +74,8 @@ async def test_get_current_user_existing_user(monkeypatch, session):
     assert session.commit.await_count == 1
     assert user.last_login > existing_last_login
 
-    # check the query filtered by subject_id (the first exec call)
-    executed_statement = session.exec.await_args_list[0].args[0]
+    # check the query filtered by subject_id (the second exec call)
+    executed_statement = session.exec.await_args_list[1].args[0]
     compiled = executed_statement.compile()
     assert "subject_id" in str(compiled)
     assert TEST_SUBJECT_ID in compiled.params.values()
@@ -95,7 +96,6 @@ async def test_get_current_user_updates_subject_id_when_ia_subject_changed(monke
     )
 
     session.exec.side_effect = [
-        make_exec_result(None),  # no subject_id match
         make_exec_result(mock_user),  # IA changed sub match
         make_exec_result(Mock()),  # UserAuthEmail lookup
     ]
@@ -116,8 +116,8 @@ async def test_get_current_user_updates_subject_id_when_ia_subject_changed(monke
     assert user.needs_to_update_sub is False
     assert session.commit.await_count == 1
 
-    # check the query is IA changed sub lookup (the second exec call)
-    changed_sub_statement = session.exec.await_args_list[1].args[0]
+    # check the query is IA changed sub lookup (the first exec call)
+    changed_sub_statement = session.exec.await_args_list[0].args[0]
     compiled = changed_sub_statement.compile()
     compiled_statement = str(compiled)
     assert "user_auth_email" in compiled_statement
@@ -137,8 +137,8 @@ async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch
     )
 
     session.exec.side_effect = [
-        make_exec_result(None),  # no subject_id match
         make_exec_result(None),  # no changed sub match
+        make_exec_result(None),  # no subject_id match
         make_exec_result(mock_user),  # fallback legacy email match returns user
         make_exec_result(Mock()),  # UserAuthEmail lookup
     ]

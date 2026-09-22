@@ -17,6 +17,22 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
+async def get_user_by_email_if_needs_to_update_sub(
+    session: SQLSessionDep,
+    email: str,
+) -> User | None:
+    statement = (
+        select(User)
+        .join(UserAuthEmail, col(UserAuthEmail.user_id) == col(User.id))
+        .where(
+            col(User.needs_to_update_sub).is_(True),  # flag set manually outside of code
+            UserAuthEmail.email == email,
+        )
+    )
+
+    return (await session.exec(statement)).first()
+
+
 async def record_user_auth_email(
     session: SQLSessionDep,
     user: User,
@@ -65,23 +81,15 @@ async def get_current_user(
             logger.info("User %s does not have the required permissions", email)
             raise unauthorised_error
 
-        statement = select(User).where(User.subject_id == subject_id)
-        user = (await session.exec(statement)).first()
+        # If IA has changed the subs, match on email and update to new sub
+        user = await get_user_by_email_if_needs_to_update_sub(session, email)
+        if user:
+            user.subject_id = subject_id
+            user.needs_to_update_sub = False
 
         if not user:
-            # If IA has changed the subs, match on email then update to the new sub
-            statement = (
-                select(User)
-                .join(UserAuthEmail, col(UserAuthEmail.user_id) == col(User.id))
-                .where(
-                    col(User.needs_to_update_sub).is_(True),  # flag set manually outside of code
-                    UserAuthEmail.email == email,
-                )
-            )
-
+            statement = select(User).where(User.subject_id == subject_id)
             user = (await session.exec(statement)).first()
-            if user:
-                user.subject_id = subject_id
 
         if not user:
             # Try to find user by email address, this is a fallback for legacy
@@ -100,7 +108,6 @@ async def get_current_user(
             user.subject_id = subject_id
 
         await record_user_auth_email(session=session, user=user, email=email)
-        user.needs_to_update_sub = False
         user.last_login = datetime.now(UTC)
         session.add(user)
         await session.commit()
