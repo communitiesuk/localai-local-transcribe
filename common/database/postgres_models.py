@@ -325,8 +325,10 @@ class TranscriptionEditType(StrEnum):
     """The kind of edit made to a transcription, recorded as part of a TRANSCRIPTION_EDIT_SUBMITTED analytics event."""
 
     DIALOGUE_ENTRY = auto()
-    SINGLE_NAME = auto()
-    ALL_NAMES = auto()
+    # The two name edits differ only in scope: one occurrence of a speaker's name, or every occurrence of it.
+    # Neither renames other speakers.
+    SINGLE_INSTANCE_OF_NAME = auto()
+    ALL_INSTANCES_OF_NAME = auto()
 
 
 class AnalyticsEventMetadata(TypedDict, total=False):

@@ -518,7 +518,7 @@ async def update_dialogue_entry_speaker(
     await session.commit()
 
     await _record_transcription_edit_analytics_event(
-        session, current_user, transcription_id, TranscriptionEditType.SINGLE_NAME
+        session, current_user, transcription_id, TranscriptionEditType.SINGLE_INSTANCE_OF_NAME
     )
 
 

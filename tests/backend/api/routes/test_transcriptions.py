@@ -651,7 +651,7 @@ async def test_update_dialogue_entry_text_success(mock_session, mock_user, mock_
         (
             rename_speaker_everywhere,
             RenameSpeakerRequest(original_speaker="Alice", new_speaker="Alicia"),
-            TranscriptionEditType.ALL_NAMES,
+            TranscriptionEditType.ALL_INSTANCES_OF_NAME,
         ),
         (
             update_dialogue_entry_speaker,
@@ -661,7 +661,7 @@ async def test_update_dialogue_entry_text_success(mock_session, mock_user, mock_
                 expected_start_time=1.0,
                 expected_end_time=2.0,
             ),
-            TranscriptionEditType.SINGLE_NAME,
+            TranscriptionEditType.SINGLE_INSTANCE_OF_NAME,
         ),
         (
             update_dialogue_entry_text,
