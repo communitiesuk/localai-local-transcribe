@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 email_sender = get_email_sender()
 
 EVALUATION_ID_UNIQUE_CONSTRAINT = "uq_user_evaluation_id"
-EVALUATION_ID_IN_USE_DETAIL = "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
+EVALUATION_ID_IN_USE_DETAIL = "This evaluation ID is already in use."
 
 
 @users_router.get("/me")
