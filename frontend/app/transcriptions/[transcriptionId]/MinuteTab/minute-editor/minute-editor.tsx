@@ -1,7 +1,6 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
-import { GuardrailResponseComponent } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/guardrail-response-component'
 import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-version-select'
 import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { ReviewGuardButton } from '@/components/review-guard/review-guard-button'
@@ -15,6 +14,7 @@ import {
 import {
   createMinuteVersionMinutesMinuteIdVersionsPostMutation,
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation,
+  getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
@@ -30,6 +30,7 @@ import {
   GovukModalDialogue,
   GovukModalDialogueActions,
   GovukNotificationBanner,
+  GovukWarningText,
 } from '@/components/govuk'
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import { Banner, useBannerStore } from '@/stores/use-banner-store'
@@ -101,6 +102,15 @@ export function MinuteEditor({
   }
 
   const displayedMinuteVersion = determineMinuteVersionToShow()
+  const { data: guardrailWarning } = useQuery({
+    ...getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions({
+      path: { minute_version_id: displayedMinuteVersion?.id ?? '' },
+    }),
+    enabled:
+      !!displayedMinuteVersion &&
+      displayedMinuteVersion.status === 'completed' &&
+      !displayedMinuteVersion.too_short,
+  })
 
   const isGenerating = ['awaiting_start', 'in_progress'].includes(
     displayedMinuteVersion?.status || ''
@@ -390,7 +400,20 @@ export function MinuteEditor({
           disabled={isEditable}
         />
       </div>
-      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-6 govuk-!-margin-bottom-6" />
+      {guardrailWarning?.message && (
+        <div className="box-border flex w-full flex-col items-start gap-2 pt-[27px] pb-5">
+          <GovukWarningText className="govuk-!-margin-bottom-0">
+            {guardrailWarning.message}
+          </GovukWarningText>
+        </div>
+      )}
+      <hr
+        className={
+          guardrailWarning?.message
+            ? 'govuk-section-break govuk-section-break--visible govuk-!-margin-top-0 govuk-!-margin-bottom-4'
+            : 'govuk-section-break govuk-section-break--visible govuk-!-margin-top-6 govuk-!-margin-bottom-6'
+        }
+      />
       {isEditable && (
         <GovukButtonGroup className="govuk-!-margin-bottom-3">
           <GovukButton type="button" onClick={form.handleSubmit(onSubmit)}>
@@ -405,12 +428,6 @@ export function MinuteEditor({
           </GovukButton>
         </GovukButtonGroup>
       )}
-      {!displayedMinuteVersion.too_short &&
-        displayedMinuteVersion.guardrail_results && (
-          <GuardrailResponseComponent
-            guardrailResults={displayedMinuteVersion.guardrail_results}
-          />
-        )}
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller
           control={form.control}

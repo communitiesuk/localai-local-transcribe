@@ -1,4 +1,6 @@
-from common.database.postgres_models import ContentSource
+from collections.abc import Iterable
+
+from common.database.postgres_models import ContentSource, GuardrailResult
 from common.types import FailureCategory
 
 FACTUAL_INTEGRITY_MESSAGE = (
@@ -55,3 +57,20 @@ def get_guardrail_warning_message(
         return EDIT_SAFETY_AND_INTENT_MESSAGE
 
     return MULTIPLE_FAILURES_MESSAGE
+
+
+def get_guardrail_warning_message_for_results(
+    *,
+    content_source: ContentSource,
+    guardrail_results: Iterable[GuardrailResult],
+) -> str | None:
+    failed_results = [result for result in guardrail_results if not result.passed]
+    categories = {
+        category.category for guardrail_result in failed_results for category in guardrail_result.failure_categories
+    }
+
+    return get_guardrail_warning_message(
+        content_source=content_source,
+        categories=categories,
+        guardrail_failed=any(result.error for result in failed_results),
+    )

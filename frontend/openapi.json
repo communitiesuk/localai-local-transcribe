@@ -1621,6 +1621,52 @@
         }
       }
     },
+    "/minute_versions/{minute_version_id}/guardrails": {
+      "get": {
+        "tags": ["Minutes"],
+        "summary": "Get Guardrail Warning",
+        "operationId": "get_guardrail_warning_minute_versions__minute_version_id__guardrails_get",
+        "parameters": [
+          {
+            "name": "minute_version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Minute Version Id"
+            }
+          },
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GuardrailWarningResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/templates": {
       "get": {
         "tags": ["Templates"],
@@ -2671,26 +2717,16 @@
         ],
         "title": "GetUserResponse"
       },
-      "GuardrailResultResponse": {
+      "GuardrailWarningResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "passed": { "type": "boolean", "title": "Passed" },
-          "score": {
-            "anyOf": [{ "type": "number" }, { "type": "null" }],
-            "title": "Score"
-          },
-          "reasoning": {
+          "message": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Reasoning"
-          },
-          "error": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Error"
+            "title": "Message"
           }
         },
         "type": "object",
-        "required": ["id", "passed", "score", "reasoning", "error"],
-        "title": "GuardrailResultResponse"
+        "required": ["message"],
+        "title": "GuardrailWarningResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -2942,12 +2978,6 @@
             "type": "boolean",
             "title": "Too Short",
             "default": false
-          },
-          "guardrail_results": {
-            "items": { "$ref": "#/components/schemas/GuardrailResultResponse" },
-            "type": "array",
-            "title": "Guardrail Results",
-            "default": []
           }
         },
         "type": "object",
