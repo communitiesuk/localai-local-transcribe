@@ -482,7 +482,7 @@ async def rename_speaker_everywhere(
     await session.commit()
 
     await _record_transcription_edit_analytics_event(
-        session, current_user, transcription_id, TranscriptionEditType.ALL_NAMES
+        session, current_user, transcription_id, TranscriptionEditType.ALL_INSTANCES_OF_NAME
     )
 
 
