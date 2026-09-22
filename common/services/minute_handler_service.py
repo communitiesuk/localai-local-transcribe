@@ -63,14 +63,15 @@ class MinuteHandlerService:
                 passed=passed,
                 score=score.score,
                 reasoning=_with_guardrail_prompt_version(score.reasoning),
-                failure_categories=[
+                failure_categories=[]
+                if passed
+                else [
                     GuardrailFailureCategory(
                         category=detail.category.value,
                         mode=detail.mode.value,
                         explanation=detail.explanation,
                     )
                     for detail in score.categories
-                    if not passed
                 ],
             )
             session.add(guardrail_result)
