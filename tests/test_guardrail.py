@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 
 from common.database.postgres_models import GuardrailFailureCategory, GuardrailResult, JobStatus
+from common.prompts import GUARDRAIL_PROMPT_VERSION
 from common.services.minute_handler_service import MinuteHandlerService
 from common.types import (
     FailureCategory,
@@ -66,7 +67,7 @@ def test_save_guardrail_result(mock_session_local):
     assert isinstance(saved_obj, GuardrailResult)
     assert str(saved_obj.minute_version_id) == minute_version_id
     assert saved_obj.score == 0.8
-    assert saved_obj.reasoning == "Good"
+    assert saved_obj.reasoning == f"Good\nPROMPT_VERSION={GUARDRAIL_PROMPT_VERSION}"
     assert saved_obj.passed is True
     assert saved_obj.error is None
 
@@ -90,6 +91,7 @@ def test_save_guardrail_error(mock_session_local):
     assert str(saved_obj.minute_version_id) == minute_version_id
     assert saved_obj.passed is False
     assert saved_obj.error == error_msg
+    assert saved_obj.reasoning == f"System Error: Could not verify accuracy.\nPROMPT_VERSION={GUARDRAIL_PROMPT_VERSION}"
 
     mock_session.commit.assert_called_once()
 
@@ -149,6 +151,7 @@ async def test_process_minute_generation_runs_guardrails():
             text="<html>Minutes</html>",
             total_claims=0,
             hallucinations=[],
+            citation_quality_applicable=False,
         )
 
         mock_score = GuardrailScore(score=0.9, reasoning="Good", categories=[])
@@ -158,7 +161,11 @@ async def test_process_minute_generation_runs_guardrails():
         await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
 
         # Verify
-        mock_calc_score.assert_called_once()
+        mock_calc_score.assert_called_once_with(
+            minute="<html>Minutes</html>",
+            transcript=mock_minute_version.minute.transcription.dialogue_entries,
+            citation_quality_applicable=False,
+        )
         mock_save_result.assert_called_once_with(mock_minute_version.id, mock_score)
         mock_update_mv.assert_called_with(
             mock_minute_version.id,

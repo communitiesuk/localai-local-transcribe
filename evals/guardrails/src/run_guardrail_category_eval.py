@@ -116,6 +116,9 @@ def _apply_mutations(summary: str, mutations: list[dict[str, Any]]) -> str:
 
 
 def _prediction_categories(score: GuardrailScore) -> list[str]:
+    threshold = get_settings().GUARDRAIL_THRESHOLD
+    if score.score >= threshold:
+        return []
     return sorted({detail.category.name for detail in score.categories})
 
 
@@ -163,8 +166,15 @@ def _score_requested_metrics(results: list[dict[str, Any]]) -> dict[str, float]:
         f1_by_label[label] = _f1(tp, fp, fn)
 
     metrics = {"f1_overall": sum(f1_by_label.values()) / len(f1_by_label) if f1_by_label else 0.0}
-    metrics.update({f"f1_{category.name.lower()}": f1_by_label.get(category.name, 0.0) for category in FailureCategory})
-    metrics["f1_no_issue"] = f1_by_label.get(NO_ISSUE_LABEL, 0.0)
+    metrics.update(
+        {
+            f"f1_{category.name.lower()}": f1_by_label[category.name]
+            for category in FailureCategory
+            if category.name in f1_by_label
+        }
+    )
+    if NO_ISSUE_LABEL in f1_by_label:
+        metrics["f1_no_issue"] = f1_by_label[NO_ISSUE_LABEL]
     return metrics
 
 

@@ -7,6 +7,8 @@ from common.database.postgres_models import DialogueEntry
 from common.format_transcript import transcript_as_index_speaker_and_utterance, transcript_as_speaker_and_utterance
 
 _TEMPLATES_DIR = Path(__file__).parent / "prompt_templates"
+GUARDRAIL_PROMPT_VERSION = "0.1.0"
+
 _env = Environment(
     loader=FileSystemLoader(_TEMPLATES_DIR),
     undefined=StrictUndefined,
@@ -147,13 +149,25 @@ def get_meeting_detection_prompt(transcript: list[DialogueEntry]) -> list[dict[s
 
 
 def get_accuracy_check_messages(
-    minute: str, transcript: list[DialogueEntry], guardrail_threshold: float
+    minute: str,
+    transcript: list[DialogueEntry],
+    guardrail_threshold: float,
+    citation_quality_applicable: bool = True,
 ) -> list[dict[str, str]]:
     return [
         build_prompt_injection_aware_system_message(
-            render_prompt_template("accuracy_check_system.j2", guardrail_threshold=guardrail_threshold)
+            render_prompt_template(
+                "accuracy_check_system.j2",
+                guardrail_threshold=guardrail_threshold,
+                citation_quality_applicable=citation_quality_applicable,
+            )
         ),
-        get_transcript_messages(transcript),
+        {
+            "role": "user",
+            "content": render_prompt_template(
+                "transcript.j2", transcript=wrap_transcript(transcript_as_index_speaker_and_utterance(transcript))
+            ),
+        },
         {
             "role": "user",
             "content": render_prompt_template("generated_summary_to_evaluate.j2", minute=wrap_meeting_summary(minute)),

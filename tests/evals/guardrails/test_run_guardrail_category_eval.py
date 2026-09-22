@@ -36,6 +36,8 @@ def test_score_requested_metrics_include_category_and_no_issue_f1() -> None:
     assert metrics["f1_overall"] == 1.0
     assert metrics["f1_factual_integrity"] == 1.0
     assert metrics["f1_no_issue"] == 1.0
+    assert "f1_required_content_and_structure" not in metrics
+    assert "f1_edit_safety_and_intent" not in metrics
 
 
 def test_build_stdout_summary_uses_requested_f1_metric_names() -> None:
