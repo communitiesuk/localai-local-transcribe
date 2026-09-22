@@ -10,6 +10,7 @@ import {
   GovukButton,
 } from '@/components/govuk'
 import { useStartTranscription } from '@/hooks/use-start-transcription'
+import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import {
   RecordingDbItem,
   useRecordingDb,
@@ -32,13 +33,15 @@ export default function RecordingPage(props: {
     error,
   } = useQuery({
     queryKey: ['db-recording-get', recordingId],
-    queryFn: async () => await getRecording(recordingId),
+    queryFn: async () => (await getRecording(recordingId)) ?? null,
   })
   if (isLoading) {
     return (
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
-          <GovukHeading>Upload an offline recording</GovukHeading>
+          {OFFLINE_RECORDINGS_ENABLED && (
+            <GovukHeading>Upload an offline recording</GovukHeading>
+          )}
           <p className="govuk-body flex items-center gap-2">
             <Loader2 className="animate-spin" aria-hidden="true" /> Loading...
           </p>
@@ -50,7 +53,9 @@ export default function RecordingPage(props: {
     return (
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
-          <GovukHeading>Upload an offline recording</GovukHeading>
+          {OFFLINE_RECORDINGS_ENABLED && (
+            <GovukHeading>Upload an offline recording</GovukHeading>
+          )}
           <GovukNotificationBanner title="Recording not found">
             <p className="govuk-notification-banner__heading">
               Recording with id {recordingId} was not found.

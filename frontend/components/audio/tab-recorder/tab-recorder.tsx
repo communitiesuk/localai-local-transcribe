@@ -17,6 +17,7 @@ import {
 } from '@/hooks/use-start-transcription'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
+import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
@@ -222,6 +223,9 @@ function TabRecorder({
       mediaRecorderRef.current = mediaRecorder
 
       mediaRecorder.onstart = async () => {
+        if (!OFFLINE_RECORDINGS_ENABLED) {
+          return
+        }
         const recordingId = await addRecording(new Blob())
         form.setValue('recordingId', recordingId)
       }
