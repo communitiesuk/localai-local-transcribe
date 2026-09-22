@@ -35,8 +35,3 @@ variable "subnet_id" {
   type        = string
   description = "Resource ID of the private-endpoint subnet in the evaluations virtual network."
 }
-
-variable "private_dns_zone_id" {
-  type        = string
-  description = "Resource ID of the existing hub privatelink.blob.core.windows.net zone. Do not create a second zone."
-}

@@ -1,5 +1,4 @@
 # Copy to terraform.tfvars in this directory. Do not commit terraform.tfvars.
-# private_dns_zone_id must be the hub zone, not a zone in the team resource group.
 
 subscription_id      = "<azure-subscription-id>"
 resource_group_name  = "<resource-group-name>"
@@ -8,4 +7,3 @@ environment_name     = "test"
 storage_account_name = "aieltevalstftst001"
 storage_account_id   = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Storage/storageAccounts/aieltevalstftst001"
 subnet_id            = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
-private_dns_zone_id  = "<hub-privatelink-blob-zone-resource-id>"

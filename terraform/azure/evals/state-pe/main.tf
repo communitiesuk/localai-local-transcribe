@@ -2,9 +2,9 @@
 # Apply from the test desktop with local state. Do not apply the parent evals root for this:
 # that root stores remote state on this account and cannot init until the endpoint exists.
 #
-# Do not create a privatelink.blob.core.windows.net zone here. Pass the hub zone resource ID
-# so the endpoint joins the existing zone. A new zone in the team resource group will not
-# be seen by agents that use hub Domain Name System.
+# Domain Name System is not in this root. Nas attaches the endpoint to the hub
+# privatelink.blob.core.windows.net zone. This identity cannot write that zone.
+# Longer term the apply service principal should do that attach.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -33,11 +33,6 @@ resource "azurerm_private_endpoint" "state_blob" {
     private_connection_resource_id = var.storage_account_id
     subresource_names              = ["blob"]
     is_manual_connection           = false
-  }
-
-  private_dns_zone_group {
-    name                 = "blob-privatelink"
-    private_dns_zone_ids = [var.private_dns_zone_id]
   }
 
   tags = {
