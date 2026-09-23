@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMutation } from '@tanstack/react-query'
@@ -140,5 +140,17 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
       'href',
       `/invite-user?organisationId=${selectedOrganisationId}`
     )
+  })
+
+  it('redirects back to the invite form with the selected organisation when invite details are missing', async () => {
+    useInviteUserStore.getState().clearInviteDetails()
+
+    render(<AdminAddUserConfirmPage />)
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith(
+        `/invite-user?organisationId=${selectedOrganisationId}`
+      )
+    })
   })
 })

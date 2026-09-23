@@ -57,9 +57,9 @@ export default function AdminAddUserConfirmPage() {
   useEffect(() => {
     if (submitInProgress.current) return
     if (!name || !email || !evaluationId) {
-      router.replace('/invite-user')
+      router.replace(inviteUserHref)
     }
-  }, [name, email, evaluationId, router])
+  }, [inviteUserHref, name, email, evaluationId, router])
 
   if (!name || !email || !evaluationId || !organisation?.id) {
     return <Loader2 className="animate-spin" />
