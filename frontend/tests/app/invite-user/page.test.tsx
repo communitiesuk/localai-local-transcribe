@@ -181,7 +181,9 @@ describe('Invite new user page', () => {
       await user.click(screen.getByRole('button', { name: 'Continue' }))
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/invite-user/confirm')
+        expect(mockPush).toHaveBeenCalledWith(
+          `/invite-user/confirm?organisationId=${organisationId}`
+        )
       })
       expect(userExistsUsersUserExistsGet).toHaveBeenCalledWith({
         query: {
@@ -189,6 +191,37 @@ describe('Invite new user page', () => {
           organisation_id: organisationId,
         },
       })
+    })
+
+    it('continues to confirmation with the selected organisation in the URL', async () => {
+      useInviteUserStore.getState().setInviteDetails('', '', '', organisationId)
+      const user = userEvent.setup()
+      render(<AdminAddUserPage />)
+
+      await user.type(screen.getByLabelText('Name'), 'Test User')
+      await user.type(
+        screen.getByLabelText('Email address'),
+        'test.user@example.com'
+      )
+      await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith(
+          `/invite-user/confirm?organisationId=${organisationId}`
+        )
+      })
+    })
+
+    it('links back to user management with the selected organisation when cancelling', () => {
+      useInviteUserStore.getState().setInviteDetails('', '', '', organisationId)
+
+      render(<AdminAddUserPage />)
+
+      expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
+        'href',
+        `/user-management?organisationId=${organisationId}`
+      )
     })
 
     it('returns to user management when no organisation has been selected', async () => {

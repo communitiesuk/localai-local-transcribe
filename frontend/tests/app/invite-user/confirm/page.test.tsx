@@ -121,4 +121,24 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
       },
     })
   })
+
+  it('returns to user management with the invited organisation selected when the invitation succeeds', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserConfirmPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    expect(mockPush).toHaveBeenCalledWith(
+      `/user-management?organisationId=${selectedOrganisationId}`
+    )
+  })
+
+  it('links back to the invite form with the selected organisation when cancelling', () => {
+    render(<AdminAddUserConfirmPage />)
+
+    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
+      'href',
+      `/invite-user?organisationId=${selectedOrganisationId}`
+    )
+  })
 })
