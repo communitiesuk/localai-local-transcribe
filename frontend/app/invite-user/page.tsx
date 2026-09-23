@@ -50,6 +50,9 @@ export default function AdminAddUserPage() {
   ])
 
   const inviteOrganisationId = organisationId || currentUser?.organisation_id
+  const userManagementHref = organisationId
+    ? `/user-management?organisationId=${encodeURIComponent(organisationId)}`
+    : '/user-management'
 
   const { data: organisation } = useOrganisation(inviteOrganisationId || '')
 
@@ -101,7 +104,11 @@ export default function AdminAddUserPage() {
     }
 
     setInviteDetails(name, email, evaluationId.trim(), organisationId)
-    router.push('/invite-user/confirm')
+    router.push(
+      organisationId
+        ? `/invite-user/confirm?organisationId=${encodeURIComponent(organisationId)}`
+        : '/invite-user/confirm'
+    )
   }
 
   const handleCancel = (e: React.SyntheticEvent<HTMLAnchorElement>) => {
@@ -109,6 +116,7 @@ export default function AdminAddUserPage() {
     clearInviteDetails()
     setErrorMessage('')
     setHasError(false)
+    router.push(userManagementHref)
   }
 
   if (userLoading) return <Loader2 className="animate-spin" />
@@ -245,7 +253,7 @@ export default function AdminAddUserPage() {
             </button>
 
             <a
-              href="/admin/users"
+              href={userManagementHref}
               className="govuk-link"
               onClick={handleCancel}
             >

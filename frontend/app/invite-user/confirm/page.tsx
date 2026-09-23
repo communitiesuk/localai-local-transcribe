@@ -43,6 +43,12 @@ export default function AdminAddUserConfirmPage() {
   const { data: organisation } = useOrganisation(
     organisationId || currentUser?.organisation_id || ''
   )
+  const userManagementHref = organisationId
+    ? `/user-management?organisationId=${encodeURIComponent(organisationId)}`
+    : '/user-management'
+  const inviteUserHref = organisationId
+    ? `/invite-user?organisationId=${encodeURIComponent(organisationId)}`
+    : '/invite-user/'
 
   const createUserMutation = useMutation(createUserUsersPostMutation())
 
@@ -105,7 +111,7 @@ export default function AdminAddUserConfirmPage() {
             organisation_id: organisationId,
           },
         })
-        router.push('/user-management')
+        router.push(userManagementHref)
         clearInviteDetails()
       } catch (error) {
         submitInProgress.current = false
@@ -124,7 +130,7 @@ export default function AdminAddUserConfirmPage() {
             organisation_id: organisation?.id,
           },
         })
-        router.push('/user-management')
+        router.push(userManagementHref)
         clearInviteDetails()
       } catch (error) {
         submitInProgress.current = false
@@ -199,7 +205,7 @@ export default function AdminAddUserConfirmPage() {
             Invite
           </button>
 
-          <a href="/invite-user/" className="govuk-link">
+          <a href={inviteUserHref} className="govuk-link">
             Cancel
           </a>
         </div>
