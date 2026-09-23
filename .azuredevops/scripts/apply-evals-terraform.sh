@@ -2,30 +2,32 @@
 # Grant the applying service principal blob data access on the Terraform state
 # account, then plan or apply terraform/azure/evals against remote state.
 #
-# Required environment: EVALS_ARM_SUBSCRIPTION_ID, EVALS_RESOURCE_GROUP_NAME,
-# EVALS_STATE_STORAGE_ACCOUNT_NAME, EVALS_ENVIRONMENT_NAME,
-# EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME, EVALS_RESULTS_STORAGE_ACCOUNT_NAME,
-# EVALS_ADAPT_EGRESS_IP.
+# grant-key-vault-roles grants Key Vault Crypto Officer on the evaluations vault
+# to this service principal and to EVALS_SUPER_USER_OBJECT_ID. That is ARM. The
+# desktop Contributor cannot create role assignments. Run it after the desktop
+# vault apply and before the desktop key apply. It does not run Terraform.
 #
-# Argument: plan or apply.
+# Required environment for plan and apply: EVALS_ARM_SUBSCRIPTION_ID,
+# EVALS_RESOURCE_GROUP_NAME, EVALS_STATE_STORAGE_ACCOUNT_NAME,
+# EVALS_ENVIRONMENT_NAME, EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME,
+# EVALS_RESULTS_STORAGE_ACCOUNT_NAME, EVALS_ADAPT_EGRESS_IP.
+#
+# Extra environment for grant-key-vault-roles: EVALS_KEY_VAULT_NAME,
+# EVALS_SUPER_USER_OBJECT_ID.
+#
+# Argument: plan, apply, or grant-key-vault-roles.
 
 set -euo pipefail
 
-terraform_command="${1:?pass plan or apply}"
-if [ "${terraform_command}" != "plan" ] && [ "${terraform_command}" != "apply" ]; then
-  echo "first argument must be plan or apply" >&2
+terraform_command="${1:?pass plan, apply, or grant-key-vault-roles}"
+if [ "${terraform_command}" != "plan" ] && [ "${terraform_command}" != "apply" ] && [ "${terraform_command}" != "grant-key-vault-roles" ]; then
+  echo "first argument must be plan, apply, or grant-key-vault-roles" >&2
   exit 1
 fi
 
 sub="${EVALS_ARM_SUBSCRIPTION_ID:?}"
 rg="${EVALS_RESOURCE_GROUP_NAME:?}"
-state_account="${EVALS_STATE_STORAGE_ACCOUNT_NAME:?}"
-environment_name="${EVALS_ENVIRONMENT_NAME:?}"
-sensitive_account="${EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME:?}"
-results_account="${EVALS_RESULTS_STORAGE_ACCOUNT_NAME:?}"
-adapt_ip="${EVALS_ADAPT_EGRESS_IP:?}"
 
-scope="/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Storage/storageAccounts/${state_account}"
 # Azure CLI 2.90: --assignee-principal-type must be paired with --assignee-object-id.
 # The ARM access token oid claim is that Entra object ID, so Graph is not required.
 spn_object_id="$(python3 -c "import json, base64, subprocess
@@ -33,6 +35,42 @@ token = subprocess.check_output(['az', 'account', 'get-access-token', '--query',
 payload = token.split('.')[1]
 payload += '=' * ((-len(payload)) % 4)
 print(json.loads(base64.urlsafe_b64decode(payload))['oid'])")"
+
+if [ "${terraform_command}" = "grant-key-vault-roles" ]; then
+  vault_name="${EVALS_KEY_VAULT_NAME:?}"
+  super_user_object_id="${EVALS_SUPER_USER_OBJECT_ID:?}"
+  vault_scope="/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.KeyVault/vaults/${vault_name}"
+
+  grant_crypto_officer() {
+    local object_id="$1"
+    local principal_type="$2"
+    local existing
+    existing="$(az role assignment list \
+      --assignee "${object_id}" \
+      --role "Key Vault Crypto Officer" \
+      --scope "${vault_scope}" \
+      --query "[0].id" -o tsv)"
+    if [ -z "${existing}" ]; then
+      az role assignment create \
+        --assignee-object-id "${object_id}" \
+        --assignee-principal-type "${principal_type}" \
+        --role "Key Vault Crypto Officer" \
+        --scope "${vault_scope}"
+    fi
+  }
+
+  grant_crypto_officer "${spn_object_id}" "ServicePrincipal"
+  grant_crypto_officer "${super_user_object_id}" "User"
+  exit 0
+fi
+
+state_account="${EVALS_STATE_STORAGE_ACCOUNT_NAME:?}"
+environment_name="${EVALS_ENVIRONMENT_NAME:?}"
+sensitive_account="${EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME:?}"
+results_account="${EVALS_RESULTS_STORAGE_ACCOUNT_NAME:?}"
+adapt_ip="${EVALS_ADAPT_EGRESS_IP:?}"
+
+scope="/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Storage/storageAccounts/${state_account}"
 
 # Contributor cannot do this. The pipeline service principal must already have
 # User Access Administrator. Repeat runs skip create when the assignment exists.

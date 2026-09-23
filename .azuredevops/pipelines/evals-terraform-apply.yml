@@ -21,6 +21,7 @@ parameters:
     values:
       - plan
       - apply
+      - grant-key-vault-roles
 
 pool:
   name: vmss-shared
@@ -43,3 +44,5 @@ steps:
       EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME: $(EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME)
       EVALS_RESULTS_STORAGE_ACCOUNT_NAME: $(EVALS_RESULTS_STORAGE_ACCOUNT_NAME)
       EVALS_ADAPT_EGRESS_IP: $(EVALS_ADAPT_EGRESS_IP)
+      EVALS_KEY_VAULT_NAME: kv-tst-aielt-evals-001
+      EVALS_SUPER_USER_OBJECT_ID: f43c41a5-bfc4-4ca7-9283-992448e11414

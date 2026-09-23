@@ -33,7 +33,12 @@ terraform {
 }
 
 provider "azurerm" {
-  features {}
+  features {
+    key_vault {
+      purge_soft_delete_on_destroy    = false
+      recover_soft_deleted_key_vaults = true
+    }
+  }
   subscription_id = var.subscription_id
 
   # Both accounts disable shared access keys, so the provider must use Entra ID for any
@@ -92,6 +97,22 @@ resource "azurerm_storage_account" "evals" {
 
   # Create-time only: changing this forces replacement and destroys data.
   infrastructure_encryption_enabled = true
+
+  # Create-time only. Account lets the customer-managed key cover Table and Queue.
+  # Service (the Azure default) cannot be changed later without replacing the account.
+  table_encryption_key_type = "Account"
+  queue_encryption_key_type = "Account"
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.storage_customer_managed_key.id]
+  }
+
+  # Versionless key ID so a later Key Vault rotation is picked up without a Terraform change.
+  customer_managed_key {
+    key_vault_key_id          = data.azurerm_key_vault_key.evals_storage.versionless_id
+    user_assigned_identity_id = azurerm_user_assigned_identity.storage_customer_managed_key.id
+  }
 
   allow_nested_items_to_be_public = false
   local_user_enabled              = false
@@ -153,6 +174,9 @@ resource "azurerm_storage_account" "evals" {
     workload    = "evals"
     environment = var.environment_name
   }
+
+  # Wrap fails if this identity cannot yet unwrap. Role assignments can lag the create.
+  depends_on = [azurerm_role_assignment.storage_customer_managed_key]
 }
 
 # Azure does not support resource tags on blob containers. Container identity is the name;
