@@ -129,8 +129,7 @@ class User(BaseTableMixin, table=True):
     last_login: datetime = Field(
         default_factory=lambda: datetime.now(UTC), sa_column=Column(TIMESTAMP(timezone=True), nullable=False)
     )
-    # Set on the user's first authenticated request and never updated, so we can record a single
-    # USER_FIRST_AUTHENTICATED analytics event per user. Null means they have not authenticated yet.
+  
     first_login: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     name: str | None = Field(default=None, nullable=True)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
@@ -345,9 +344,7 @@ class AnalyticsEventMetadata(TypedDict, total=False):
 
 
 class AnalyticsEvent(BaseTableMixin, table=True):
-    """First-party analytics events, recorded so we can measure real-world impact without a cookie consent banner.
-
-    Deliberately has no foreign keys: it stores the user-supplied evaluation_id (not user_id) and recording_id as
+    """Uses no foreign keys: it stores the user-supplied evaluation_id (not user_id) and recording_id as
     opaque values, so events remain valid and reportable even after the referenced user/recording is deleted.
     """
 
