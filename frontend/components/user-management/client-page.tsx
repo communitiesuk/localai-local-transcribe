@@ -8,7 +8,6 @@ import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
 import {
-  GovukBackLink,
   GovukButton,
   GovukButtonLink,
   GovukTag,

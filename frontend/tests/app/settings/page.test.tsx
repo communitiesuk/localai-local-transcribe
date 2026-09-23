@@ -58,8 +58,15 @@ describe('<SettingsPage />', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument()
   })
 
-  it('renders page layout, back link, form components, and sets initial default value from user data', () => {
+  it('renders page layout, with no back link, form components, and sets initial default value from user data', () => {
     render(<SettingsPage />)
+
+    expect(screen.queryByRole('link', { name: 'Back' })).not.toBeInTheDocument()
+
+    // Check heading
+    expect(
+      screen.getByRole('heading', { name: 'Settings' })
+    ).toBeInTheDocument()
 
     // Check hint text
     expect(
