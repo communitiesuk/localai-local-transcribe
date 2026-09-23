@@ -122,3 +122,70 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
     })
   })
 })
+
+describe('<AdminAddUserConfirmPage /> for an admin who belongs to an organisation', () => {
+  const ownOrganisationId = '00000000-0000-0000-0000-000000000001'
+  const selectedOrganisationId = '00000000-0000-0000-0000-000000000002'
+
+  const setup = (roles: UserRole[]) => {
+    vi.clearAllMocks()
+    vi.mocked(useAuthorisedUser).mockReturnValue({
+      currentUser: { organisation_id: ownOrganisationId, roles },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useAuthorisedUser>)
+    vi.mocked(useOrganisation).mockImplementation(
+      (organisationId: string) =>
+        ({
+          data: organisationId ? { id: organisationId } : undefined,
+        }) as unknown as ReturnType<typeof useOrganisation>
+    )
+    vi.mocked(useMutation).mockReturnValue({
+      mutateAsync: mockMutateAsync,
+    } as unknown as ReturnType<typeof useMutation>)
+    useInviteUserStore
+      .getState()
+      .setInviteDetails(
+        'Test User',
+        'test.user@example.com',
+        'EVAL-001',
+        selectedOrganisationId
+      )
+  }
+
+  it('invites into the selected organisation, not the admin own one', async () => {
+    setup([UserRole.MHCLG_SUPPORT_ADMIN])
+    const user = userEvent.setup()
+    render(<AdminAddUserConfirmPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    expect(mockMutateAsync).toHaveBeenCalledTimes(1)
+    expect(mockMutateAsync).toHaveBeenCalledWith({
+      body: {
+        name: 'Test User',
+        email: 'test.user@example.com',
+        evaluation_id: 'EVAL-001',
+        organisation_id: selectedOrganisationId,
+      },
+    })
+  })
+
+  it('creates the user only once when the admin holds both roles', async () => {
+    setup([UserRole.MHCLG_SUPPORT_ADMIN, UserRole.LOCAL_AUTHORITY_ADMIN])
+    const user = userEvent.setup()
+    render(<AdminAddUserConfirmPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    expect(mockMutateAsync).toHaveBeenCalledTimes(1)
+    expect(mockMutateAsync).toHaveBeenCalledWith({
+      body: {
+        name: 'Test User',
+        email: 'test.user@example.com',
+        evaluation_id: 'EVAL-001',
+        organisation_id: selectedOrganisationId,
+      },
+    })
+  })
+})
