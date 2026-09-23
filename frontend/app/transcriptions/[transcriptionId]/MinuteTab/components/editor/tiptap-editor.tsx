@@ -82,8 +82,6 @@ function SimpleEditor({
         mergeAttributes(HTMLAttributes, {
           'data-citation': 'true',
           class: 'citation-link',
-          style:
-            'color: blue; cursor: pointer; text-decoration: underline; display: var(--citation-display);',
           role: 'button',
           tabindex: '0',
           'aria-label': citationIndex

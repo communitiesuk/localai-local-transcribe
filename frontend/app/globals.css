@@ -161,9 +161,11 @@
   outline: none;
 }
 
-.editor-content .citation-link:focus-visible {
-  outline: 3px solid #ffdd00;
-  outline-offset: 1px;
+.editor-content .citation-link {
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
+  display: var(--citation-display);
 }
 
 .editor-content {
