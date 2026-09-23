@@ -33,7 +33,7 @@ class HousingApplicationForm(SimpleTemplate):
     name = "Housing Application Form"
     category = "Housing"
     description = "Housing register application form with fixed applicant, eligibility, property, and need fields"
-    prompt_version = "0.1.0"
+    prompt_version = "0.1.1"
     citations_required = True
     agenda_usage = AgendaUsage.NOT_USED
 
@@ -79,7 +79,7 @@ class TriageAssessment(SimpleTemplate):
     name = "Triage Assessment"
     category = "Housing"
     description = "Homelessness triage and domestic abuse soft approach assessment form"
-    prompt_version = "0.1.0"
+    prompt_version = "0.1.1"
     citations_required = True
     agenda_usage = AgendaUsage.NOT_USED
 
