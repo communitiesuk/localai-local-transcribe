@@ -122,6 +122,7 @@ class SimpleTemplate(Template, Protocol):
             total_claims=total_claims,
             hallucinations=hallucinations,
             template_prompt_version=cls.prompt_version,
+            citation_quality_applicable=cls.citations_required,
         )
 
 
@@ -223,4 +224,5 @@ class SectionTemplate(Template, Protocol):
             total_claims=total_claims,
             hallucinations=all_hallucinations,
             template_prompt_version=cls.prompt_version,
+            citation_quality_applicable=cls.citations_required,
         )

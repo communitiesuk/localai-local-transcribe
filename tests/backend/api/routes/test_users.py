@@ -320,9 +320,7 @@ async def test_create_user_returns_409_when_evaluation_id_already_exists(
             )
 
     assert response.status_code == 409
-    assert response.json()["detail"] == (
-        "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
-    )
+    assert response.json()["detail"] == "This evaluation ID is already in use."
     assert existing_user.evaluation_id not in response.text
 
 
@@ -400,9 +398,7 @@ async def test_create_user_returns_409_when_a_concurrent_request_takes_the_evalu
             )
 
     assert response.status_code == 409
-    assert response.json()["detail"] == (
-        "This evaluation ID is already in use. Check the evaluation ID you received from MHCLG."
-    )
+    assert response.json()["detail"] == "This evaluation ID is already in use."
     override_session.rollback.assert_awaited_once()
 
 

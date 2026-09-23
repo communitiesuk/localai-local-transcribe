@@ -6,6 +6,7 @@ import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import { userExistsUsersUserExistsGet } from '@/lib/client'
+import { UserRole } from '@/lib/utils'
 
 const mockPush = vi.fn()
 
@@ -50,12 +51,14 @@ describe('Invite new user page', () => {
   it('asks for an evaluation ID and explains where it comes from', () => {
     render(<AdminAddUserPage />)
 
-    expect(screen.getByLabelText('Evaluation ID')).toBeRequired()
+    expect(screen.getByLabelText('Evaluation ID')).toBeInTheDocument()
     expect(
-      screen.getByText(/evaluation ID that MHCLG provided for this person/i)
+      screen.getByText(
+        /from the list the Local Transcribe team provided for your organisation/i
+      )
     ).toBeInTheDocument()
     expect(
-      screen.getByText(/cannot be one that is already in use/i)
+      screen.getByText(/cannot be an ID that is already in use/i)
     ).toBeInTheDocument()
     expect(
       screen.getByText(/see it in Local Transcribe again/i)
@@ -74,9 +77,52 @@ describe('Invite new user page', () => {
     await user.type(screen.getByLabelText('Evaluation ID'), '   ')
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
-    expect(
-      screen.getByText('Enter the evaluation ID for this person')
-    ).toBeInTheDocument()
+    expect(screen.getByText('Enter an evaluation ID')).toBeInTheDocument()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('shows the GOV.UK error, not a native prompt, when the evaluation ID is empty', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(
+      screen.getByLabelText('Email address'),
+      'test.user@example.com'
+    )
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(screen.getByText('Enter an evaluation ID')).toBeInTheDocument()
+    expect(screen.getByLabelText('Evaluation ID')).not.toBeRequired()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('shows the GOV.UK error when the name is empty, with native validation off', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(
+      screen.getByLabelText('Email address'),
+      'test.user@example.com'
+    )
+    await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(screen.getByText('Enter a name')).toBeInTheDocument()
+    expect(screen.getByLabelText('Name')).not.toBeRequired()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('shows the GOV.UK error when the email is empty', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(screen.getByText('Enter an email address')).toBeInTheDocument()
+    expect(screen.getByLabelText('Email address')).not.toBeRequired()
     expect(mockPush).not.toHaveBeenCalled()
   })
 
@@ -96,5 +142,69 @@ describe('Invite new user page', () => {
       expect(mockPush).toHaveBeenCalledWith('/invite-user/confirm')
     })
     expect(useInviteUserStore.getState().evaluationId).toBe('EVAL-001')
+  })
+
+  describe('as a support admin with no organisation of their own', () => {
+    beforeEach(() => {
+      vi.mocked(useAuthorisedUser).mockReturnValue({
+        currentUser: {
+          organisation_id: null,
+          roles: [UserRole.MHCLG_SUPPORT_ADMIN],
+        },
+        isLoading: false,
+        isError: false,
+      } as unknown as ReturnType<typeof useAuthorisedUser>)
+    })
+
+    it('shows the GOV.UK errors for empty fields', async () => {
+      useInviteUserStore.getState().setInviteDetails('', '', '', organisationId)
+      const user = userEvent.setup()
+      render(<AdminAddUserPage />)
+
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+      expect(screen.getByText('Enter a name')).toBeInTheDocument()
+      expect(mockPush).not.toHaveBeenCalled()
+    })
+
+    it('checks and continues with the organisation they selected', async () => {
+      useInviteUserStore.getState().setInviteDetails('', '', '', organisationId)
+      const user = userEvent.setup()
+      render(<AdminAddUserPage />)
+
+      await user.type(screen.getByLabelText('Name'), 'Test User')
+      await user.type(
+        screen.getByLabelText('Email address'),
+        'test.user@example.com'
+      )
+      await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/invite-user/confirm')
+      })
+      expect(userExistsUsersUserExistsGet).toHaveBeenCalledWith({
+        query: {
+          email: 'test.user@example.com',
+          organisation_id: organisationId,
+        },
+      })
+    })
+
+    it('returns to user management when no organisation has been selected', async () => {
+      const user = userEvent.setup()
+      render(<AdminAddUserPage />)
+
+      await user.type(screen.getByLabelText('Name'), 'Test User')
+      await user.type(
+        screen.getByLabelText('Email address'),
+        'test.user@example.com'
+      )
+      await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+      expect(mockPush).toHaveBeenCalledWith('/user-management')
+      expect(userExistsUsersUserExistsGet).not.toHaveBeenCalled()
+    })
   })
 })
