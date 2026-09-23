@@ -129,7 +129,7 @@ class User(BaseTableMixin, table=True):
     last_login: datetime = Field(
         default_factory=lambda: datetime.now(UTC), sa_column=Column(TIMESTAMP(timezone=True), nullable=False)
     )
-  
+
     first_login: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     name: str | None = Field(default=None, nullable=True)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
