@@ -645,46 +645,7 @@ async def test_update_dialogue_entry_text_success(mock_session, mock_user, mock_
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ("edit_call", "edit_request", "expected_edit_type"),
-    [
-        (
-            rename_speaker_everywhere,
-            RenameSpeakerRequest(original_speaker="Alice", new_speaker="Alicia"),
-            TranscriptionEditType.ALL_INSTANCES_OF_NAME,
-        ),
-        (
-            update_dialogue_entry_speaker,
-            UpdateDialogueEntrySpeakerRequest(
-                new_speaker="Robert",
-                expected_speaker="Bob",
-                expected_start_time=1.0,
-                expected_end_time=2.0,
-            ),
-            TranscriptionEditType.SINGLE_INSTANCE_OF_NAME,
-        ),
-        (
-            update_dialogue_entry_text,
-            UpdateDialogueEntryTextRequest(
-                new_text="Updated hello",
-                expected_text="Hello",
-                expected_speaker="Alice",
-                expected_start_time=0.0,
-                expected_end_time=1.0,
-            ),
-            TranscriptionEditType.DIALOGUE_ENTRY,
-        ),
-    ],
-)
-async def test_transcription_edit_records_analytics_event(
-    mocker,
-    mock_session,
-    mock_user,
-    mock_transcription,
-    edit_call,
-    edit_request,
-    expected_edit_type,
-):
+async def test_rename_speaker_everywhere_records_analytics_event(mocker, mock_session, mock_user, mock_transcription):
     mock_session.get = AsyncMock(return_value=mock_transcription)
     mock_user.evaluation_id = "EVAL-001"
     mock_user.organisation_id = uuid.uuid4()
@@ -692,11 +653,12 @@ async def test_transcription_edit_records_analytics_event(
     mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
     mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
 
-    if edit_call == rename_speaker_everywhere:
-        await edit_call(mock_transcription.id, edit_request, mock_session, mock_user)
-    else:
-        entry_index = 1 if edit_call == update_dialogue_entry_speaker else 0
-        await edit_call(mock_transcription.id, entry_index, edit_request, mock_session, mock_user)
+    await rename_speaker_everywhere(
+        mock_transcription.id,
+        RenameSpeakerRequest(original_speaker="Alice", new_speaker="Alicia"),
+        mock_session,
+        mock_user,
+    )
 
     mock_record_event.assert_awaited_once_with(
         mock_session,
@@ -704,7 +666,72 @@ async def test_transcription_edit_records_analytics_event(
         "EVAL-001",
         mock_user.organisation_id,
         recording_id=recording_id,
-        event_metadata={"edit_type": expected_edit_type.value},
+        event_metadata={"edit_type": TranscriptionEditType.ALL_INSTANCES_OF_NAME.value},
+    )
+
+
+@pytest.mark.asyncio
+async def test_update_dialogue_entry_speaker_records_analytics_event(mocker, mock_session, mock_user, mock_transcription):
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_user.evaluation_id = "EVAL-001"
+    mock_user.organisation_id = uuid.uuid4()
+    recording_id = uuid.uuid4()
+    mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
+    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
+
+    await update_dialogue_entry_speaker(
+        mock_transcription.id,
+        1,
+        UpdateDialogueEntrySpeakerRequest(
+            new_speaker="Robert",
+            expected_speaker="Bob",
+            expected_start_time=1.0,
+            expected_end_time=2.0,
+        ),
+        mock_session,
+        mock_user,
+    )
+
+    mock_record_event.assert_awaited_once_with(
+        mock_session,
+        AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
+        "EVAL-001",
+        mock_user.organisation_id,
+        recording_id=recording_id,
+        event_metadata={"edit_type": TranscriptionEditType.SINGLE_INSTANCE_OF_NAME.value},
+    )
+
+
+@pytest.mark.asyncio
+async def test_update_dialogue_entry_text_records_analytics_event(mocker, mock_session, mock_user, mock_transcription):
+    mock_session.get = AsyncMock(return_value=mock_transcription)
+    mock_user.evaluation_id = "EVAL-001"
+    mock_user.organisation_id = uuid.uuid4()
+    recording_id = uuid.uuid4()
+    mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
+    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
+
+    await update_dialogue_entry_text(
+        mock_transcription.id,
+        0,
+        UpdateDialogueEntryTextRequest(
+            new_text="Updated hello",
+            expected_text="Hello",
+            expected_speaker="Alice",
+            expected_start_time=0.0,
+            expected_end_time=1.0,
+        ),
+        mock_session,
+        mock_user,
+    )
+
+    mock_record_event.assert_awaited_once_with(
+        mock_session,
+        AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
+        "EVAL-001",
+        mock_user.organisation_id,
+        recording_id=recording_id,
+        event_metadata={"edit_type": TranscriptionEditType.DIALOGUE_ENTRY.value},
     )
 
 

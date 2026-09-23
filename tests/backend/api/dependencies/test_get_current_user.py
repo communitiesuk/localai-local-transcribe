@@ -197,7 +197,7 @@ async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
-        first_login=datetime.now(UTC),  # already authenticated before, so no analytics event is recorded
+        first_login=datetime.now(UTC),
     )
 
     session.exec.side_effect = [

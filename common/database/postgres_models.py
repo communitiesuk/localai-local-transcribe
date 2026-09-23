@@ -345,19 +345,14 @@ ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT = "uq_analytics_event_event_type_source
 
 
 class AnalyticsEventMetadata(TypedDict, total=False):
-    """Optional per-event detail stored in `AnalyticsEvent.event_metadata`.
-
-    `total=False` because each event type sets only the keys relevant to it.
-    """
+    """Optional detail stored in `AnalyticsEvent.event_metadata` for event-specific metadata."""
 
     audio_duration_seconds: float
     edit_type: TranscriptionEditType
 
 
 class AnalyticsEvent(BaseTableMixin, table=True):
-    """Uses no foreign keys: it stores the user-supplied evaluation_id (not user_id) and recording_id as
-    opaque values, so events remain valid and reportable even after the referenced user/recording is deleted.
-    """
+    """Stores events with evaluation_id/recording_id as opaque IDs so they remain reportable after deletes."""
 
     __tablename__ = "analytics_event"
     __table_args__ = (UniqueConstraint("event_type", "source_id", name=ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT),)
@@ -369,10 +364,8 @@ class AnalyticsEvent(BaseTableMixin, table=True):
     evaluation_id: str = Field(index=True)
     recording_id: UUID | None = Field(default=None, index=True)
     organisation_id: UUID | None = Field(default=None, index=True)
-    # Idempotency key for events recorded by the worker, which consumes an at-least-once queue: the event is written
-    # before the queue message is acknowledged, so a crash in between causes redelivery. Unique per (event_type,
-    # source_id) so a redelivered message is a no-op insert. Deliberately separate from recording_id, which is not
-    # unique per event - TRANSCRIPTION_EDIT_SUBMITTED fires repeatedly for the same recording. NULL for events that
-    # need no de-duplication; Postgres treats NULLs as distinct, so those never collide.
+    # Idempotency key for events recorded by workers using an at-least-once queue. The event is written before the
+    # message is acknowledged, so redelivery after a crash must be a no-op. Keep it separate from recording_id,
+    # because a recording can legitimately generate multiple edit events. NULL means no de-duplication is needed.
     source_id: UUID | None = Field(default=None)
     event_metadata: AnalyticsEventMetadata | None = Field(default=None, sa_column=Column(JSONB))
