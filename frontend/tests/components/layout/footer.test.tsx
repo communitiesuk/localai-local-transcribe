@@ -32,6 +32,9 @@ describe('<GovFooter />', () => {
       'href',
       '/accessibility'
     )
+    expect(
+      screen.getByRole('link', { name: 'Acceptable Use Policy' })
+    ).toHaveAttribute('href', '/acceptable-use-policy')
   })
 
   it('renders the Open Government Licence link in the meta section', () => {
