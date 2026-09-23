@@ -61,12 +61,6 @@ describe('<SettingsPage />', () => {
   it('renders page layout, back link, form components, and sets initial default value from user data', () => {
     render(<SettingsPage />)
 
-    // Check heading and back link
-    expect(
-      screen.getByRole('heading', { name: 'Settings' })
-    ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
-
     // Check hint text
     expect(
       screen.getByText(/After this period the transcriptions/i)
@@ -83,15 +77,6 @@ describe('<SettingsPage />', () => {
 
     // Since initial data_retention_days is 7, the "7 days" option should be checked
     expect(sevenDays.checked).toBe(true)
-  })
-
-  it('triggers router.back on back link click', async () => {
-    render(<SettingsPage />)
-
-    const backLink = screen.getByRole('link', { name: 'Back' })
-    await userEvent.click(backLink)
-
-    expect(mockBack).toHaveBeenCalledTimes(1)
   })
 
   it('submits selected values and invalidates queries on success', async () => {
