@@ -435,7 +435,7 @@ def test_guardrail_warning_message_uses_operational_message_for_process_failure(
     assert warning_message == OPERATIONAL_SIGNALS_MESSAGE
 
 
-def test_guardrail_warning_message_for_results_derives_inputs():
+def test_guardrail_warning_message_for_results_uses_failure_categories_from_guardrail_result():
     guardrail_results = [
         GuardrailResult(
             passed=False,
