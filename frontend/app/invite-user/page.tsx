@@ -55,6 +55,9 @@ export default function AdminAddUserPage() {
   const userManagementHref = selectedOrganisationId
     ? `/user-management?organisationId=${encodeURIComponent(selectedOrganisationId)}`
     : '/user-management'
+  const inviteUserConfirmHref = selectedOrganisationId
+    ? `/invite-user/confirm?organisationId=${encodeURIComponent(selectedOrganisationId)}`
+    : '/invite-user/confirm'
 
   const { data: organisation } = useOrganisation(inviteOrganisationId || '')
 
@@ -106,11 +109,7 @@ export default function AdminAddUserPage() {
     }
 
     setInviteDetails(name, email, evaluationId.trim())
-    router.push(
-      selectedOrganisationId
-        ? `/invite-user/confirm?organisationId=${encodeURIComponent(selectedOrganisationId)}`
-        : '/invite-user/confirm'
-    )
+    router.push(inviteUserConfirmHref)
   }
 
   const handleCancel = (e: React.SyntheticEvent<HTMLAnchorElement>) => {
