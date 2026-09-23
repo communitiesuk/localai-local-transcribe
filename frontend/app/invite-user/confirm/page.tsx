@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { hasAnyRole, UserRole } from '@/lib/utils'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
@@ -26,8 +26,8 @@ export function getInviteErrorMessage(error: unknown): string {
 
 export default function AdminAddUserConfirmPage() {
   const router = useRouter()
-  const { name, email, evaluationId, organisationId, clearInviteDetails } =
-    useInviteUserStore()
+  const searchParams = useSearchParams()
+  const { name, email, evaluationId, clearInviteDetails } = useInviteUserStore()
   const submitInProgress = useRef(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
@@ -40,14 +40,16 @@ export default function AdminAddUserConfirmPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const { data: organisation } = useOrganisation(
-    organisationId || currentUser?.organisation_id || ''
-  )
-  const userManagementHref = organisationId
-    ? `/user-management?organisationId=${encodeURIComponent(organisationId)}`
+  const selectedOrganisationId = searchParams.get('organisationId') ?? ''
+  const inviteOrganisationId =
+    selectedOrganisationId || currentUser?.organisation_id || ''
+
+  const { data: organisation } = useOrganisation(inviteOrganisationId)
+  const userManagementHref = selectedOrganisationId
+    ? `/user-management?organisationId=${encodeURIComponent(selectedOrganisationId)}`
     : '/user-management'
-  const inviteUserHref = organisationId
-    ? `/invite-user?organisationId=${encodeURIComponent(organisationId)}`
+  const inviteUserHref = selectedOrganisationId
+    ? `/invite-user?organisationId=${encodeURIComponent(selectedOrganisationId)}`
     : '/invite-user/'
 
   const createUserMutation = useMutation(createUserUsersPostMutation())
@@ -89,11 +91,11 @@ export default function AdminAddUserConfirmPage() {
       console.log('Creating user as Support Admin:', {
         name,
         email,
-        organisationId,
+        organisationId: selectedOrganisationId,
       })
 
       try {
-        if (!organisationId) {
+        if (!selectedOrganisationId) {
           console.error(
             'Organisation ID is missing for Support Admin user creation.'
           )
@@ -101,14 +103,17 @@ export default function AdminAddUserConfirmPage() {
           return
         }
 
-        console.log('Creating user with organisation ID:', organisationId)
+        console.log(
+          'Creating user with organisation ID:',
+          selectedOrganisationId
+        )
 
         await createUserMutation.mutateAsync({
           body: {
             name: name,
             email: email,
             evaluation_id: evaluationId,
-            organisation_id: organisationId,
+            organisation_id: selectedOrganisationId,
           },
         })
         router.push(userManagementHref)

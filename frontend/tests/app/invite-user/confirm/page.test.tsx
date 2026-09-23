@@ -13,9 +13,11 @@ import { UserRole } from '@/lib/utils'
 const mockPush = vi.fn()
 const mockReplace = vi.fn()
 const mockMutateAsync = vi.fn()
+let searchParams = new URLSearchParams()
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useSearchParams: () => searchParams,
 }))
 
 vi.mock('@/hooks/use-authorised-user', () => ({
@@ -70,6 +72,9 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
 
   beforeEach(() => {
     vi.clearAllMocks()
+    searchParams = new URLSearchParams(
+      `organisationId=${selectedOrganisationId}`
+    )
     vi.mocked(useAuthorisedUser).mockReturnValue({
       currentUser: {
         organisation_id: null,
@@ -92,12 +97,7 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
     } as unknown as ReturnType<typeof useMutation>)
     useInviteUserStore
       .getState()
-      .setInviteDetails(
-        'Test User',
-        'test.user@example.com',
-        'EVAL-001',
-        selectedOrganisationId
-      )
+      .setInviteDetails('Test User', 'test.user@example.com', 'EVAL-001')
   })
 
   it('shows the confirmation rather than loading forever', () => {

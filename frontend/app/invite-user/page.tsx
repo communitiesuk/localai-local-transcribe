@@ -1,5 +1,5 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
@@ -18,6 +18,7 @@ import {
 
 export default function AdminAddUserPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const invalidDomainError =
     'Please enter an email address with a valid domain for your organisation.'
   const existingEmailError = 'This email is already registered with an account'
@@ -26,7 +27,6 @@ export default function AdminAddUserPage() {
     name: storedName,
     email: storedEmail,
     evaluationId: storedEvaluationId,
-    organisationId,
     setInviteDetails,
     clearInviteDetails,
   } = useInviteUserStore()
@@ -49,9 +49,11 @@ export default function AdminAddUserPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const inviteOrganisationId = organisationId || currentUser?.organisation_id
-  const userManagementHref = organisationId
-    ? `/user-management?organisationId=${encodeURIComponent(organisationId)}`
+  const selectedOrganisationId = searchParams.get('organisationId') ?? ''
+  const inviteOrganisationId =
+    selectedOrganisationId || currentUser?.organisation_id
+  const userManagementHref = selectedOrganisationId
+    ? `/user-management?organisationId=${encodeURIComponent(selectedOrganisationId)}`
     : '/user-management'
 
   const { data: organisation } = useOrganisation(inviteOrganisationId || '')
@@ -103,10 +105,10 @@ export default function AdminAddUserPage() {
       return
     }
 
-    setInviteDetails(name, email, evaluationId.trim(), organisationId)
+    setInviteDetails(name, email, evaluationId.trim())
     router.push(
-      organisationId
-        ? `/invite-user/confirm?organisationId=${encodeURIComponent(organisationId)}`
+      selectedOrganisationId
+        ? `/invite-user/confirm?organisationId=${encodeURIComponent(selectedOrganisationId)}`
         : '/invite-user/confirm'
     )
   }

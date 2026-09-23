@@ -118,4 +118,15 @@ describe('<UserManagementPage />', () => {
     expect(target).toContain('organisationId=org-1')
     expect(target).toContain('page=1')
   })
+
+  it('starts the invite user journey with the selected organisation in the URL', async () => {
+    const user = userEvent.setup()
+    searchParams = new URLSearchParams('organisationId=org-2')
+
+    render(<UserManagementPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Invite new user' }))
+
+    expect(mockPush).toHaveBeenCalledWith('/invite-user?organisationId=org-2')
+  })
 })
