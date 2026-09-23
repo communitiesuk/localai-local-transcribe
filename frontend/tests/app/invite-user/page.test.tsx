@@ -147,6 +147,19 @@ describe('Invite new user page', () => {
     expect(useInviteUserStore.getState().evaluationId).toBe('EVAL-001')
   })
 
+  it('returns to user management when cancelling', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    const cancelLink = screen.getByRole('link', { name: 'Cancel' })
+
+    expect(cancelLink).toHaveAttribute('href', '/user-management')
+
+    await user.click(cancelLink)
+
+    expect(mockPush).toHaveBeenCalledWith('/user-management')
+  })
+
   describe('as a support admin with no organisation of their own', () => {
     beforeEach(() => {
       vi.mocked(useAuthorisedUser).mockReturnValue({
@@ -216,13 +229,22 @@ describe('Invite new user page', () => {
       })
     })
 
-    it('links back to user management with the selected organisation when cancelling', () => {
+    it('links back to user management with the selected organisation when cancelling', async () => {
       searchParams = new URLSearchParams(`organisationId=${organisationId}`)
+      const user = userEvent.setup()
 
       render(<AdminAddUserPage />)
 
-      expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
+      const cancelLink = screen.getByRole('link', { name: 'Cancel' })
+
+      expect(cancelLink).toHaveAttribute(
         'href',
+        `/user-management?organisationId=${organisationId}`
+      )
+
+      await user.click(cancelLink)
+
+      expect(mockPush).toHaveBeenCalledWith(
         `/user-management?organisationId=${organisationId}`
       )
     })
