@@ -161,6 +161,11 @@
   outline: none;
 }
 
+.editor-content .citation-link:focus-visible {
+  outline: 3px solid #ffdd00;
+  outline-offset: 1px;
+}
+
 .editor-content {
   line-height: 1.4;
   padding: 10px;
