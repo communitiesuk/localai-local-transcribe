@@ -1,8 +1,8 @@
 """add UserAuthEmail table
 
-Revision ID: f9ef087ba9e2
-Revises: b6a9d4f37c21
-Create Date: 2026-09-23 10:09:12.020289
+Revision ID: a3bcafd96ae9
+Revises: 5e6494b47452
+Create Date: 2026-09-23 10:15:30.801329
 
 """
 
@@ -14,8 +14,8 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'f9ef087ba9e2'
-down_revision: Union[str, None] = 'b6a9d4f37c21'
+revision: str = 'a3bcafd96ae9'
+down_revision: Union[str, None] = '5e6494b47452'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
