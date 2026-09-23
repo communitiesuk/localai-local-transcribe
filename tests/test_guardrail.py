@@ -10,6 +10,7 @@ from common.guardrail_messages import (
     MULTIPLE_FAILURES_MESSAGE,
     OPERATIONAL_SIGNALS_MESSAGE,
     get_guardrail_warning_message,
+    get_guardrail_warning_message_for_results,
 )
 from common.prompts import GUARDRAIL_PROMPT_VERSION, get_accuracy_check_messages
 from common.services.minute_handler_service import MinuteHandlerService
@@ -432,3 +433,25 @@ def test_guardrail_warning_message_uses_operational_message_for_process_failure(
     )
 
     assert warning_message == OPERATIONAL_SIGNALS_MESSAGE
+
+
+def test_guardrail_warning_message_for_results_uses_failure_categories_from_guardrail_result():
+    guardrail_results = [
+        GuardrailResult(
+            passed=False,
+            error=None,
+            failure_categories=[
+                GuardrailFailureCategory(
+                    category=FailureCategory.FACTUAL_INTEGRITY.value,
+                    mode=FailureMode.INVENTED_DECISION.value,
+                )
+            ],
+        )
+    ]
+
+    warning_message = get_guardrail_warning_message_for_results(
+        content_source=ContentSource.INITIAL_GENERATION,
+        guardrail_results=guardrail_results,
+    )
+
+    assert warning_message == FACTUAL_INTEGRITY_MESSAGE

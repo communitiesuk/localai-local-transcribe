@@ -76,6 +76,9 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['minute-versions'],
   }),
+  getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions: () => ({
+    queryKey: ['guardrail-warning'],
+  }),
   updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation:
     () => ({
       mutationKey: ['update-transcription-metadata'],
@@ -109,6 +112,8 @@ const configureQueries = () => {
         return { data: [] }
       case 'minute-versions':
         return { data: minuteVersions }
+      case 'guardrail-warning':
+        return { data: { message: null } }
     }
     return undefined
   }
