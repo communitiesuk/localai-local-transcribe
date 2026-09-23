@@ -204,7 +204,7 @@ async def get_minute_version(minute_version_id: uuid.UUID, session: SQLSessionDe
 
 @minutes_router.get("/minute_versions/{minute_version_id}/guardrails")
 async def get_guardrail_warning(
-    minute_version_id: uuid.UUID, session: SQLSessionDep, user: UserDep
+    minute_version_id: uuid.UUID, session: SQLSessionDep, _user: UserDep
 ) -> GuardrailWarningResponse:
     query = (
         select(MinuteVersion)
