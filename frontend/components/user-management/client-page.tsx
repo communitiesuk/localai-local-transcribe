@@ -75,7 +75,6 @@ export default function UserManagementClient() {
 
   return (
     <>
-      <GovukBackLink />
       <BannerNotification />
 
       <div className="flex items-baseline gap-4">

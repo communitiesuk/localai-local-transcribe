@@ -6,10 +6,5 @@ export default function TranscriptionsLayout({
 }: {
   children: ReactNode
 }) {
-  return (
-    <div className="p-6">
-      <GovukBackLink />
-      {children}
-    </div>
-  )
+  return <div className="p-6">{children}</div>
 }

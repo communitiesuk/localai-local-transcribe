@@ -42,7 +42,6 @@ export default function SettingsPage() {
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-two-thirds">
-        <GovukBackLink />
         <h1 className="govuk-heading-xl">Settings</h1>
         <p className="govuk-body">Configure your account settings</p>
         <SettingsForm user={user} />
