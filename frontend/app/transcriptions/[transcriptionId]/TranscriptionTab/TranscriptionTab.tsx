@@ -15,9 +15,11 @@ import { useBannerStore } from '@/stores/use-banner-store'
 import { useQuery } from '@tanstack/react-query'
 import { PlayButton } from '@/components/icons/play-button'
 import {
+  Ref,
   RefObject,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -62,6 +64,7 @@ export function TranscriptionTab({
   onDismissBanner,
   dialogueEntryIndexToFocus,
   onDialogueEntryFocusLost,
+  ref,
 }: {
   transcription: TranscriptionGetResponse
   onLineEditError: (error: string | null) => void
@@ -69,6 +72,7 @@ export function TranscriptionTab({
   onDismissBanner?: () => void
   dialogueEntryIndexToFocus?: number
   onDialogueEntryFocusLost?: () => void
+  ref?: Ref<{ discardChanges: () => void; tryFinishEdit: () => boolean }>
 }) {
   const methods = useForm<DialogueEntryForm>({
     defaultValues: { entries: transcription.dialogue_entries || [] },
@@ -382,12 +386,7 @@ export function TranscriptionTab({
     setLineEditInProgress(true)
   }, [])
 
-  const finishEditing = () => {
-    if (lineEditInProgress) {
-      setError(LINE_EDIT_ERROR)
-      return
-    }
-
+  const exitEditMode = () => {
     setIsLineEditMode(false)
     setSelectedLineIndex(null)
     setSelectedLineOriginalText('')
@@ -395,6 +394,15 @@ export function TranscriptionTab({
     setError(null)
     clearBanner()
     onEditModeChange?.(false)
+  }
+
+  const finishEditing = () => {
+    if (lineEditInProgress) {
+      setError(LINE_EDIT_ERROR)
+      return
+    }
+
+    exitEditMode()
   }
 
   const handleDownloadTranscript = async (entries: DialogueEntry[]) => {
@@ -405,6 +413,21 @@ export function TranscriptionTab({
 
     return await downloadTranscriptDoc(entries, fileName)
   }
+
+  useImperativeHandle(ref, () => ({
+    discardChanges: () => {
+      cancelLineEdit()
+      exitEditMode()
+    },
+    tryFinishEdit: () => {
+      if (lineEditInProgress) {
+        return false
+      }
+
+      finishEditing()
+      return true
+    },
+  }))
 
   return (
     <div>
