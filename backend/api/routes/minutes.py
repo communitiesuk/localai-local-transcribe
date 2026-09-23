@@ -218,7 +218,6 @@ async def get_guardrail_warning(
     if (
         not minute_version
         or not minute_version.minute.transcription.user_id
-        or minute_version.minute.transcription.user_id != user.id
     ):
         raise HTTPException(404, "Not found")
 
