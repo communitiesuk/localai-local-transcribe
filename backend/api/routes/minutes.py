@@ -215,10 +215,7 @@ async def get_guardrail_warning(
         )
     )
     minute_version = (await session.exec(query)).first()
-    if (
-        not minute_version
-        or not minute_version.minute.transcription.user_id
-    ):
+    if not minute_version or not minute_version.minute.transcription.user_id:
         raise HTTPException(404, "Not found")
 
     return GuardrailWarningResponse(
