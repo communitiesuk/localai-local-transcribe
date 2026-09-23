@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import IntEnum, StrEnum, auto
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
 from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
@@ -276,6 +276,11 @@ class FailureCategory(StrEnum):
     EVIDENCE_AND_CITATION_QUALITY = auto()
 
 
+class GuardrailAction(StrEnum):
+    ORIGINAL_GENERATION = auto()
+    AI_EDIT = auto()
+
+
 class FailureMode(StrEnum):
     INVENTED_DECISION = auto()
     REVERSED_MEANING = auto()
@@ -296,7 +301,6 @@ class FailureMode(StrEnum):
 
 
 class FailureDetail(BaseModel):
-    category: FailureCategory
     mode: FailureMode
     explanation: str | None = Field(
         default=None,
@@ -339,20 +343,11 @@ class FailureDetail(BaseModel):
         mode: category for category, modes in _VALID_MODES_BY_CATEGORY.items() for mode in modes
     }
 
-    @model_validator(mode="after")
-    def _correct_category_from_mode(self) -> "FailureDetail":
-        expected_category = self._CATEGORY_BY_MODE[self.mode]
-        if expected_category is None:
-            logger.error("FailureMode '%s' has no known category mapping", self.mode)
-        elif self.category != expected_category:
-            logger.warning(
-                "FailureDetail category '%s' does not match mode '%s'; correcting to '%s'",
-                self.category,
-                self.mode,
-                expected_category,
-            )
-            self.category = expected_category
-        return self
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def category(self) -> FailureCategory:
+        """Category derived from the selected failure mode."""
+        return self._CATEGORY_BY_MODE[self.mode]
 
 
 class GuardrailScore(BaseModel):
@@ -437,6 +432,7 @@ class MinuteAndHallucinations:
     total_claims: int
     hallucinations: list[LLMHallucination]
     template_prompt_version: str | None = None
+    citation_quality_applicable: bool = False
 
     def __post_init__(self) -> None:
         self.text = strip_boundary_metadata(self.text)

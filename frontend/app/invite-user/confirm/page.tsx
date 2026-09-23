@@ -15,13 +15,10 @@ export function getInviteErrorMessage(error: unknown): string {
   if (
     typeof error === 'object' &&
     error !== null &&
-    'error' in error &&
-    typeof error.error === 'object' &&
-    error.error !== null &&
-    'detail' in error.error &&
-    typeof error.error.detail === 'string'
+    'detail' in error &&
+    typeof error.detail === 'string'
   ) {
-    return error.error.detail
+    return error.detail
   }
 
   return 'Could not send the invitation. Try again.'
@@ -44,7 +41,7 @@ export default function AdminAddUserConfirmPage() {
   ])
 
   const { data: organisation } = useOrganisation(
-    currentUser?.organisation_id ?? ''
+    organisationId || currentUser?.organisation_id || ''
   )
 
   const createUserMutation = useMutation(createUserUsersPostMutation())

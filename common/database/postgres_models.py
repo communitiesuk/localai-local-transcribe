@@ -292,3 +292,27 @@ class GuardrailResult(BaseTableMixin, table=True):
         default=None,
         description="Error message if the guardrail check failed",
     )
+    failure_categories: Mapped[list["GuardrailFailureCategory"]] = Relationship(
+        back_populates="guardrail_result", cascade_delete=True
+    )
+
+
+class GuardrailFailureCategory(BaseTableMixin, table=True):
+    __tablename__ = "guardrail_failure_category"
+
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+
+    guardrail_result_id: UUID | None = Field(
+        default=None,
+        foreign_key="guardrail_result.id",
+        ondelete="CASCADE",
+    )
+    guardrail_result: "GuardrailResult" = Relationship(back_populates="failure_categories")
+
+    category: str = Field(index=True, description="Failure category emitted by the guardrail")
+    mode: str = Field(description="Specific failure mode within the category")
+    explanation: str | None = Field(
+        default=None,
+        description="Evidence explaining this failure",
+    )
