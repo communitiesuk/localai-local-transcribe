@@ -8,7 +8,6 @@ import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
 import {
-  GovukBackLink,
   GovukButton,
   GovukButtonLink,
   GovukTag,
@@ -75,7 +74,6 @@ export default function UserManagementClient() {
 
   return (
     <>
-      <GovukBackLink />
       <BannerNotification />
 
       <div className="flex items-baseline gap-4">
