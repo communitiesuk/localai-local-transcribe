@@ -671,7 +671,9 @@ async def test_rename_speaker_everywhere_records_analytics_event(mocker, mock_se
 
 
 @pytest.mark.asyncio
-async def test_update_dialogue_entry_speaker_records_analytics_event(mocker, mock_session, mock_user, mock_transcription):
+async def test_update_dialogue_entry_speaker_records_analytics_event(
+    mocker, mock_session, mock_user, mock_transcription
+):
     mock_session.get = AsyncMock(return_value=mock_transcription)
     mock_user.evaluation_id = "EVAL-001"
     mock_user.organisation_id = uuid.uuid4()

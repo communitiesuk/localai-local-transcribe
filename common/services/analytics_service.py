@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy.dialects.postgresql import insert
