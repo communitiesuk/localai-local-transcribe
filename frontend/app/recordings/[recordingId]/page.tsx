@@ -39,9 +39,7 @@ export default function RecordingPage(props: {
     return (
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
-          {OFFLINE_RECORDINGS_ENABLED && (
-            <GovukHeading>Upload an offline recording</GovukHeading>
-          )}
+          <GovukHeading>Upload an offline recording</GovukHeading>
           <p className="govuk-body flex items-center gap-2">
             <Loader2 className="animate-spin" aria-hidden="true" /> Loading...
           </p>
@@ -53,9 +51,7 @@ export default function RecordingPage(props: {
     return (
       <div className="govuk-grid-row">
         <div className="govuk-grid-column-two-thirds">
-          {OFFLINE_RECORDINGS_ENABLED && (
-            <GovukHeading>Upload an offline recording</GovukHeading>
-          )}
+          <GovukHeading>Upload an offline recording</GovukHeading>
           <GovukNotificationBanner title="Recording not found">
             <p className="govuk-notification-banner__heading">
               Recording with id {recordingId} was not found.
