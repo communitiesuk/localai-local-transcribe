@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMutation } from '@tanstack/react-query'
@@ -13,9 +13,11 @@ import { UserRole } from '@/lib/utils'
 const mockPush = vi.fn()
 const mockReplace = vi.fn()
 const mockMutateAsync = vi.fn()
+let searchParams = new URLSearchParams()
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useSearchParams: () => searchParams,
 }))
 
 vi.mock('@/hooks/use-authorised-user', () => ({
@@ -70,6 +72,9 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
 
   beforeEach(() => {
     vi.clearAllMocks()
+    searchParams = new URLSearchParams(
+      `organisationId=${selectedOrganisationId}`
+    )
     vi.mocked(useAuthorisedUser).mockReturnValue({
       currentUser: {
         organisation_id: null,
@@ -92,12 +97,7 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
     } as unknown as ReturnType<typeof useMutation>)
     useInviteUserStore
       .getState()
-      .setInviteDetails(
-        'Test User',
-        'test.user@example.com',
-        'EVAL-001',
-        selectedOrganisationId
-      )
+      .setInviteDetails('Test User', 'test.user@example.com', 'EVAL-001')
   })
 
   it('shows the confirmation rather than loading forever', () => {
@@ -121,6 +121,38 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
       },
     })
   })
+
+  it('returns to user management with the invited organisation selected when the invitation succeeds', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserConfirmPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    expect(mockPush).toHaveBeenCalledWith(
+      `/user-management?organisationId=${selectedOrganisationId}`
+    )
+  })
+
+  it('links back to the invite form with the selected organisation when cancelling', () => {
+    render(<AdminAddUserConfirmPage />)
+
+    expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
+      'href',
+      `/invite-user?organisationId=${selectedOrganisationId}`
+    )
+  })
+
+  it('redirects back to the invite form with the selected organisation when invite details are missing', async () => {
+    useInviteUserStore.getState().clearInviteDetails()
+
+    render(<AdminAddUserConfirmPage />)
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith(
+        `/invite-user?organisationId=${selectedOrganisationId}`
+      )
+    })
+  })
 })
 
 describe('<AdminAddUserConfirmPage /> for an admin who belongs to an organisation', () => {
@@ -129,6 +161,9 @@ describe('<AdminAddUserConfirmPage /> for an admin who belongs to an organisatio
 
   const setup = (roles: UserRole[]) => {
     vi.clearAllMocks()
+    searchParams = new URLSearchParams(
+      `organisationId=${selectedOrganisationId}`
+    )
     vi.mocked(useAuthorisedUser).mockReturnValue({
       currentUser: { organisation_id: ownOrganisationId, roles },
       isLoading: false,
@@ -145,12 +180,7 @@ describe('<AdminAddUserConfirmPage /> for an admin who belongs to an organisatio
     } as unknown as ReturnType<typeof useMutation>)
     useInviteUserStore
       .getState()
-      .setInviteDetails(
-        'Test User',
-        'test.user@example.com',
-        'EVAL-001',
-        selectedOrganisationId
-      )
+      .setInviteDetails('Test User', 'test.user@example.com', 'EVAL-001')
   }
 
   it('invites into the selected organisation, not the admin own one', async () => {
