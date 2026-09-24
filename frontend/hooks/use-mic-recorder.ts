@@ -78,7 +78,7 @@ export function useMicRecorder({
       mediaRecorderRef.current = mediaRecorder
       setMediaRecorderStream(mediaRecorder.stream)
 
-      if (!OFFLINE_RECORDINGS_ENABLED) {
+      if (OFFLINE_RECORDINGS_ENABLED) {
         mediaRecorder.onstart = async () => {
           const recordingId = await addRecording(new Blob())
           form.setValue('recordingId', recordingId)

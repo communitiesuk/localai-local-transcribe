@@ -222,7 +222,7 @@ function TabRecorder({
       const mediaRecorder = new MediaRecorder(composedStream, options)
       mediaRecorderRef.current = mediaRecorder
 
-      if (!OFFLINE_RECORDINGS_ENABLED) {
+      if (OFFLINE_RECORDINGS_ENABLED) {
         mediaRecorder.onstart = async () => {
           const recordingId = await addRecording(new Blob())
           form.setValue('recordingId', recordingId)
