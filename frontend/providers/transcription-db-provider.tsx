@@ -40,9 +40,6 @@ export function RecordingDbProvider({ children }: RecordingDbProviderProps) {
   const [db, setDb] = useState<IDBDatabase | null>(null)
 
   useEffect(() => {
-    if (!OFFLINE_RECORDINGS_ENABLED) {
-      return
-    }
     const request = window.indexedDB.open('MinuteDB', 1)
     request.onsuccess = (event) => {
       setDb((event.target as IDBOpenDBRequest)?.result || null)

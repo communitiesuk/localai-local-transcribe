@@ -11,7 +11,7 @@ export const MAX_UPLOAD_FILE_SIZE_LABEL = '5GB'
 export const MAX_AGENDA_LENGTH = 500
 
 /**
- * Kill switch for the local (IndexedDB) offline-recording persistence
+ * Feature flag for the local (IndexedDB) offline-recording persistence
  * feature.
  * See AIILG-1050.
  */
