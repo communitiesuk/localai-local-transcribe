@@ -123,9 +123,7 @@ export default function AdminAddUserConfirmPage() {
         console.error('Failed to create user:', error)
         setSubmitError(getInviteErrorMessage(error))
       }
-    }
-
-    if (is_LA_Admin) {
+    } else if (is_LA_Admin) {
       try {
         await createUserMutation.mutateAsync({
           body: {

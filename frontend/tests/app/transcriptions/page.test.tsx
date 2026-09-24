@@ -76,6 +76,9 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['minute-versions'],
   }),
+  getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions: () => ({
+    queryKey: ['guardrail-warning'],
+  }),
   updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation:
     () => ({
       mutationKey: ['update-transcription-metadata'],
@@ -109,6 +112,8 @@ const configureQueries = () => {
         return { data: [] }
       case 'minute-versions':
         return { data: minuteVersions }
+      case 'guardrail-warning':
+        return { data: { message: null } }
     }
     return undefined
   }
@@ -196,5 +201,304 @@ describe('<TranscriptionPage /> View quote', () => {
         'Quote [100] is not attributed to anything in the transcript'
       )
     ).toBeInTheDocument()
+  })
+})
+
+describe('<TranscriptionPage /> Edit transcript', () => {
+  beforeAll(() => {
+    // We stub this method because tiptap expects to be running in a real DOM
+    // and so this method to be present. The tests, however, run with jsDOM
+    // where this function doesn't exist.
+    document.elementFromPoint = () => null
+
+    // same for innerText
+    Object.defineProperty(HTMLElement.prototype, 'innerText', {
+      get() {
+        return this.textContent
+      },
+    })
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    configureQueries()
+    vi.mocked(useMutation).mockReturnValue({
+      mutate: () => {},
+      isPending: false,
+    } as unknown as ReturnType<typeof useMutation>)
+    Element.prototype.scrollIntoView = () => {}
+
+    vi.mocked(useQueryClient).mockReturnValue({
+      setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+    } as unknown as QueryClient)
+  })
+
+  it('should change tab to document tab on click when no edit in progress', async () => {
+    await act(async () =>
+      render(
+        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
+      )
+    )
+
+    const transcriptTabLink = screen.getByRole('tab', { name: 'Transcript' })
+    expect(transcriptTabLink).toBeInTheDocument()
+
+    await userEvent.click(transcriptTabLink)
+    expect(transcriptTabLink).toHaveAttribute('aria-selected', 'true')
+
+    const documentTabLink = screen.getByRole('tab', { name: 'test template' })
+    expect(documentTabLink).toBeInTheDocument()
+
+    await userEvent.click(documentTabLink)
+    expect(documentTabLink).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('should show an are you sure modal on click navigation to document tab when transcript edit in progress', async () => {
+    await act(async () =>
+      render(
+        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
+      )
+    )
+
+    const transcriptTabLink = screen.getByRole('tab', { name: 'Transcript' })
+    expect(transcriptTabLink).toBeInTheDocument()
+
+    await userEvent.click(transcriptTabLink)
+    expect(transcriptTabLink).toHaveAttribute('aria-selected', 'true')
+
+    const editTranscriptButton = screen.getByRole('button', {
+      name: 'Edit transcript',
+    })
+    await userEvent.click(editTranscriptButton)
+
+    const transcriptLine = screen.getByText('First line')
+    await userEvent.click(transcriptLine)
+
+    expect(transcriptLine).toHaveAttribute('contenteditable', 'true')
+
+    await userEvent.type(transcriptLine, ' edited')
+
+    expect(screen.getByText('First line edited')).toBeInTheDocument()
+
+    const documentTabLink = screen.getByRole('tab', { name: 'test template' })
+    expect(documentTabLink).toBeInTheDocument()
+
+    await userEvent.click(documentTabLink)
+    expect(documentTabLink).toHaveAttribute('aria-selected', 'false')
+
+    const areYouSureModal = screen.getByRole('dialog')
+    expect(areYouSureModal).toBeInTheDocument()
+
+    expect(
+      within(areYouSureModal).getByText('Discard changes to transcript?')
+    ).toBeInTheDocument()
+    expect(
+      within(areYouSureModal).getByText(
+        'If you continue, your unsaved changes to the current line edit will be lost.'
+      )
+    ).toBeInTheDocument()
+
+    expect(
+      within(areYouSureModal).getByRole('button', { name: 'Discard changes' })
+    ).toBeInTheDocument()
+    expect(
+      within(areYouSureModal).getByRole('button', { name: 'Cancel' })
+    ).toBeInTheDocument()
+    expect(
+      within(areYouSureModal).getByRole('button', { name: 'Close' })
+    ).toBeInTheDocument()
+  })
+
+  it('clicking close in the are you sure modal should close the modal and preserve edits', async () => {
+    await act(async () =>
+      render(
+        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
+      )
+    )
+
+    const transcriptTabLink = screen.getByRole('tab', { name: 'Transcript' })
+    expect(transcriptTabLink).toBeInTheDocument()
+
+    await userEvent.click(transcriptTabLink)
+    expect(transcriptTabLink).toHaveAttribute('aria-selected', 'true')
+
+    const editTranscriptButton = screen.getByRole('button', {
+      name: 'Edit transcript',
+    })
+    await userEvent.click(editTranscriptButton)
+
+    const transcriptLine = screen.getByText('First line')
+    await userEvent.click(transcriptLine)
+
+    expect(transcriptLine).toHaveAttribute('contenteditable', 'true')
+
+    await userEvent.type(transcriptLine, ' edited')
+
+    expect(screen.getByText('First line edited')).toBeInTheDocument()
+
+    const documentTabLink = screen.getByRole('tab', { name: 'test template' })
+    expect(documentTabLink).toBeInTheDocument()
+
+    await userEvent.click(documentTabLink)
+    expect(documentTabLink).toHaveAttribute('aria-selected', 'false')
+
+    const areYouSureModal = screen.getByRole('dialog')
+    expect(areYouSureModal).toBeInTheDocument()
+
+    const closeModalButton = within(areYouSureModal).getByRole('button', {
+      name: 'Close',
+    })
+    expect(closeModalButton).toBeInTheDocument()
+
+    await userEvent.click(closeModalButton)
+
+    expect(areYouSureModal).not.toBeInTheDocument()
+
+    expect(screen.getByText('First line edited')).toBeInTheDocument()
+  })
+
+  it('clicking cancel in the are you sure modal should close the modal and preserve edits', async () => {
+    await act(async () =>
+      render(
+        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
+      )
+    )
+
+    const transcriptTabLink = screen.getByRole('tab', { name: 'Transcript' })
+    expect(transcriptTabLink).toBeInTheDocument()
+
+    await userEvent.click(transcriptTabLink)
+    expect(transcriptTabLink).toHaveAttribute('aria-selected', 'true')
+
+    const editTranscriptButton = screen.getByRole('button', {
+      name: 'Edit transcript',
+    })
+    await userEvent.click(editTranscriptButton)
+
+    const transcriptLine = screen.getByText('First line')
+    await userEvent.click(transcriptLine)
+
+    expect(transcriptLine).toHaveAttribute('contenteditable', 'true')
+
+    await userEvent.type(transcriptLine, ' edited')
+
+    expect(screen.getByText('First line edited')).toBeInTheDocument()
+
+    const documentTabLink = screen.getByRole('tab', { name: 'test template' })
+    expect(documentTabLink).toBeInTheDocument()
+
+    await userEvent.click(documentTabLink)
+    expect(documentTabLink).toHaveAttribute('aria-selected', 'false')
+
+    const areYouSureModal = screen.getByRole('dialog')
+    expect(areYouSureModal).toBeInTheDocument()
+
+    const cancelModalButton = within(areYouSureModal).getByRole('button', {
+      name: 'Cancel',
+    })
+    expect(cancelModalButton).toBeInTheDocument()
+
+    await userEvent.click(cancelModalButton)
+
+    expect(areYouSureModal).not.toBeInTheDocument()
+
+    expect(screen.getByText('First line edited')).toBeInTheDocument()
+  })
+
+  it('clicking discard changes in the are you sure modal should close the modal, discards edits, and continues navigation', async () => {
+    await act(async () =>
+      render(
+        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
+      )
+    )
+
+    const transcriptTabLink = screen.getByRole('tab', { name: 'Transcript' })
+    expect(transcriptTabLink).toBeInTheDocument()
+
+    await userEvent.click(transcriptTabLink)
+    expect(transcriptTabLink).toHaveAttribute('aria-selected', 'true')
+
+    const editTranscriptButton = screen.getByRole('button', {
+      name: 'Edit transcript',
+    })
+    await userEvent.click(editTranscriptButton)
+
+    const transcriptLine = screen.getByText('First line')
+    await userEvent.click(transcriptLine)
+
+    expect(transcriptLine).toHaveAttribute('contenteditable', 'true')
+
+    await userEvent.type(transcriptLine, ' edited')
+
+    expect(screen.getByText('First line edited')).toBeInTheDocument()
+
+    const documentTabLink = screen.getByRole('tab', { name: 'test template' })
+    expect(documentTabLink).toBeInTheDocument()
+
+    await userEvent.click(documentTabLink)
+    expect(documentTabLink).toHaveAttribute('aria-selected', 'false')
+
+    const areYouSureModal = screen.getByRole('dialog')
+    expect(areYouSureModal).toBeInTheDocument()
+
+    const discardChangesButton = within(areYouSureModal).getByRole('button', {
+      name: 'Discard changes',
+    })
+    expect(discardChangesButton).toBeInTheDocument()
+
+    await userEvent.click(discardChangesButton)
+
+    expect(areYouSureModal).not.toBeInTheDocument()
+
+    expect(screen.queryByText('First line edited')).not.toBeInTheDocument()
+    expect(documentTabLink).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByText('There is a problem')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(
+        'You must save or cancel your line edit to finish editing'
+      )
+    ).not.toBeInTheDocument()
+  })
+
+  it('modal is not shown and edit automatically finished if no line edit in progress on tab change', async () => {
+    await act(async () =>
+      render(
+        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
+      )
+    )
+
+    const transcriptTabLink = screen.getByRole('tab', { name: 'Transcript' })
+    expect(transcriptTabLink).toBeInTheDocument()
+
+    await userEvent.click(transcriptTabLink)
+    expect(transcriptTabLink).toHaveAttribute('aria-selected', 'true')
+
+    const editTranscriptButton = screen.getByRole('button', {
+      name: 'Edit transcript',
+    })
+    await userEvent.click(editTranscriptButton)
+
+    const transcriptLine = screen.getByText('First line')
+    await userEvent.click(transcriptLine)
+
+    expect(transcriptLine).toHaveAttribute('contenteditable', 'true')
+
+    const finishEditingButton = screen.getByRole('button', {
+      name: 'Finish editing',
+    })
+    expect(finishEditingButton).toBeInTheDocument()
+    expect(finishEditingButton).toBeEnabled()
+
+    const documentTabLink = screen.getByRole('tab', { name: 'test template' })
+    expect(documentTabLink).toBeInTheDocument()
+
+    await userEvent.click(documentTabLink)
+
+    const areYouSureModal = screen.queryByRole('dialog')
+    expect(areYouSureModal).not.toBeInTheDocument()
+
+    expect(documentTabLink).toHaveAttribute('aria-selected', 'true')
+    expect(finishEditingButton).not.toBeInTheDocument()
   })
 })
