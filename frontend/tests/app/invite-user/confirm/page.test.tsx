@@ -161,6 +161,9 @@ describe('<AdminAddUserConfirmPage /> for an admin who belongs to an organisatio
 
   const setup = (roles: UserRole[]) => {
     vi.clearAllMocks()
+    searchParams = new URLSearchParams(
+      `organisationId=${selectedOrganisationId}`
+    )
     vi.mocked(useAuthorisedUser).mockReturnValue({
       currentUser: { organisation_id: ownOrganisationId, roles },
       isLoading: false,
@@ -177,12 +180,7 @@ describe('<AdminAddUserConfirmPage /> for an admin who belongs to an organisatio
     } as unknown as ReturnType<typeof useMutation>)
     useInviteUserStore
       .getState()
-      .setInviteDetails(
-        'Test User',
-        'test.user@example.com',
-        'EVAL-001',
-        selectedOrganisationId
-      )
+      .setInviteDetails('Test User', 'test.user@example.com', 'EVAL-001')
   }
 
   it('invites into the selected organisation, not the admin own one', async () => {
