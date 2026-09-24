@@ -10,7 +10,13 @@
 # Required environment for plan and apply: EVALS_ARM_SUBSCRIPTION_ID,
 # EVALS_RESOURCE_GROUP_NAME, EVALS_STATE_STORAGE_ACCOUNT_NAME,
 # EVALS_ENVIRONMENT_NAME, EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME,
-# EVALS_RESULTS_STORAGE_ACCOUNT_NAME, EVALS_ADAPT_EGRESS_IP.
+# EVALS_RESULTS_STORAGE_ACCOUNT_NAME, EVALS_ADAPT_EGRESS_IP,
+# EVALS_ADO_FEDERATION_ISSUER, EVALS_ADO_FEDERATION_SUBJECT.
+#
+# The two federation values are the Issuer and Subject that Azure DevOps shows on
+# the evals-blob service connection. They are required on every plan and apply.
+# If an apply ran without them, Terraform would delete the federated credential
+# on evals-blob-id and pipelines using evals-blob could no longer sign in.
 #
 # Extra environment for grant-key-vault-roles: EVALS_KEY_VAULT_NAME,
 # EVALS_SUPER_USER_OBJECT_ID.
@@ -69,6 +75,8 @@ environment_name="${EVALS_ENVIRONMENT_NAME:?}"
 sensitive_account="${EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME:?}"
 results_account="${EVALS_RESULTS_STORAGE_ACCOUNT_NAME:?}"
 adapt_ip="${EVALS_ADAPT_EGRESS_IP:?}"
+federation_issuer="${EVALS_ADO_FEDERATION_ISSUER:?}"
+federation_subject="${EVALS_ADO_FEDERATION_SUBJECT:?}"
 
 scope="/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Storage/storageAccounts/${state_account}"
 
@@ -107,6 +115,9 @@ adapt_ip_rules = ["${adapt_ip}"]
 mhclg_ip_rules = []
 # Empty until the shared pool's subnet or static egress is known.
 ado_ip_rules   = []
+# Federated credential that lets the evals-blob service connection sign in as evals-blob-id.
+ado_federation_issuer  = "${federation_issuer}"
+ado_federation_subject = "${federation_subject}"
 EOF
 
 curl -fsSL "https://releases.hashicorp.com/terraform/1.16.2/terraform_1.16.2_linux_amd64.zip" -o /tmp/tf.zip

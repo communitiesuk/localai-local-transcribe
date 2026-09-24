@@ -1,0 +1,57 @@
+# Check that the shared agents reach the two evals storage accounts through their
+# private endpoints, and that the evals-blob service connection (identity
+# evals-blob-id) can list each evals container.
+#
+# Manual only. Run after the Azure team has attached the evals private endpoints
+# to the hub private Domain Name System zone, and after the federated credential
+# on evals-blob-id exists.
+#
+# Reading the output:
+# - Each name lookup should print the private endpoint address from the evals
+#   virtual network. A public address means the hub zone has no row for that
+#   account yet.
+# - A list that succeeds, even with no blobs, means the network path and the
+#   container role both work.
+# - A timeout means the name resolved to the public address, which the agents
+#   cannot reach.
+# - 403 AuthorizationFailure means the request reached the public endpoint and
+#   the storage firewall refused it.
+# - 403 AuthorizationPermissionMismatch means the request reached the account
+#   but evals-blob-id has no role on that container.
+
+name: Evals blob access check
+
+trigger: none
+pr: none
+
+variables:
+  - group: evals-pipeline-config
+
+pool:
+  name: vmss-shared
+
+steps:
+  - checkout: none
+
+  - task: AzureCLI@2
+    displayName: Look up and list the evals containers as evals-blob-id
+    inputs:
+      azureSubscription: $(EVALS_AZURE_SERVICE_CONNECTION)
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euo pipefail
+
+        # Print the address each account name resolves to on this agent. The agents use
+        # the hub zone, so this shows whether the private endpoint rows exist.
+        getent hosts "${SENSITIVE_ACCOUNT}.blob.core.windows.net"
+        getent hosts "${RESULTS_ACCOUNT}.blob.core.windows.net"
+
+        # List at most one blob per container. An empty container still returns
+        # successfully, which is enough to show access.
+        az storage blob list --auth-mode login --account-name "${SENSITIVE_ACCOUNT}" --container-name input --num-results 1 -o table
+        az storage blob list --auth-mode login --account-name "${SENSITIVE_ACCOUNT}" --container-name debug --num-results 1 -o table
+        az storage blob list --auth-mode login --account-name "${RESULTS_ACCOUNT}" --container-name output --num-results 1 -o table
+    env:
+      SENSITIVE_ACCOUNT: $(EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME)
+      RESULTS_ACCOUNT: $(EVALS_RESULTS_STORAGE_ACCOUNT_NAME)
