@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from uuid import UUID
 
@@ -78,6 +79,20 @@ async def record_analytics_event(
         await session.rollback()
 
 
+async def _record_analytics_event_sync_session(
+    session: Session,
+    event_type: AnalyticsEventType,
+    evaluation_id: str,
+    organisation_id: UUID | None,
+    recording_id: UUID | None = None,
+    source_id: UUID | None = None,
+    event_metadata: AnalyticsEventMetadata | None = None,
+) -> None:
+    """Execute the sync-session insert in an async wrapper so it shares the same logic path as the async version."""
+    session.execute(_insert_statement(event_type, evaluation_id, organisation_id, recording_id, source_id, event_metadata))
+    session.commit()
+
+
 def record_analytics_event_sync(
     session: Session,
     event_type: AnalyticsEventType,
@@ -93,10 +108,25 @@ def record_analytics_event_sync(
         return
 
     try:
-        session.execute(
-            _insert_statement(event_type, evaluation_id, organisation_id, recording_id, source_id, event_metadata)
-        )
-        session.commit()
+        try:
+            asyncio.run(
+                _record_analytics_event_sync_session(
+                    session,
+                    event_type,
+                    evaluation_id,
+                    organisation_id,
+                    recording_id,
+                    source_id,
+                    event_metadata,
+                )
+            )
+        except RuntimeError as exc:
+            if "asyncio.run() cannot be called from a running event loop" not in str(exc):
+                raise
+            session.execute(
+                _insert_statement(event_type, evaluation_id, organisation_id, recording_id, source_id, event_metadata)
+            )
+            session.commit()
     except Exception:
         logger.exception("Failed to record %s analytics event", event_type)
         session.rollback()

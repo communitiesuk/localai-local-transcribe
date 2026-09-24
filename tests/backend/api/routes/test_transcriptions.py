@@ -108,6 +108,7 @@ async def test_create_transcription_records_audio_upload_completed_analytics_eve
         mock_user.evaluation_id,
         mock_user.organisation_id,
         recording_id=mock_session_with_recording.get.return_value.id,
+        source_id=mock_session_with_recording.get.return_value.id,
         event_metadata=None,
     )
 
@@ -139,6 +140,7 @@ async def test_create_transcription_records_audio_duration_in_analytics_event(
         mock_user.evaluation_id,
         mock_user.organisation_id,
         recording_id=mock_recording.id,
+        source_id=mock_recording.id,
         event_metadata={"audio_duration_seconds": 123.45},
     )
 

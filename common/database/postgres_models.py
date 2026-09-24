@@ -364,8 +364,8 @@ class AnalyticsEvent(BaseTableMixin, table=True):
     evaluation_id: str = Field(index=True)
     recording_id: UUID | None = Field(default=None, index=True)
     organisation_id: UUID | None = Field(default=None, index=True)
-    # Idempotency key for events recorded by workers using an at-least-once queue. The event is written before the
-    # message is acknowledged, so redelivery after a crash must be a no-op. Keep it separate from recording_id,
-    # because a recording can legitimately generate multiple edit events. NULL means no de-duplication is needed.
+    # Idempotency key for events that may be retried for the same underlying object. Keep it separate from
+    # recording_id, because a recording can legitimately generate multiple edit events. NULL means no de-duplication
+    # is needed.
     source_id: UUID | None = Field(default=None)
     event_metadata: AnalyticsEventMetadata | None = Field(default=None, sa_column=Column(JSONB))

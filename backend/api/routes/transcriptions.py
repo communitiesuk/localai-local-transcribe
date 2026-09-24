@@ -349,6 +349,7 @@ async def create_transcription(
         current_user.evaluation_id,
         current_user.organisation_id,
         recording_id=recording.id,
+        source_id=recording.id,
         event_metadata=(
             {"audio_duration_seconds": request.audio_duration_seconds}
             if request.audio_duration_seconds is not None
