@@ -12,6 +12,7 @@ from backend.api.routes.templates import (
     duplicate_default_template,
     duplicate_user_template,
     edit_user_template,
+    get_default_template_content,
     get_user_template,
     get_user_templates,
 )
@@ -235,8 +236,49 @@ async def test_duplicate_default_template_success(mocker, mock_session, mock_use
     assert duplicated_template.user_id == mock_user.id
     assert duplicated_template.name == "General (Copy)"
     assert duplicated_template.description == "Standard meeting summary"
-    assert duplicated_template.content == "Write a standard meeting summary"
+    assert duplicated_template.content == "<p>Write a standard meeting summary</p>"
     assert duplicated_template.heading == "General"
+
+
+def test_get_default_template_content_preserves_prompt_line_breaks_as_html():
+    class DefaultTemplate:
+        name = "Readable"
+        description = "Fallback description"
+
+        @classmethod
+        def prompt(cls, _transcript, _agenda):
+            return [
+                {
+                    "role": "system",
+                    "content": "\n".join(
+                        [
+                            "<role>",
+                            "You are helping write a template.",
+                            "</role>",
+                            "",
+                            "<output_format>",
+                            "# Section",
+                            "- First item",
+                            "- Second item",
+                            "</output_format>",
+                        ]
+                    ),
+                }
+            ]
+
+    content = get_default_template_content(DefaultTemplate)
+
+    assert content == "\n".join(
+        [
+            "<p>&lt;role&gt;</p>",
+            "<p>You are helping write a template.</p>",
+            "<p>&lt;/role&gt;</p>",
+            "<p>&lt;output_format&gt;</p>",
+            "<h1>Section</h1>",
+            "<ul><li>First item</li><li>Second item</li></ul>",
+            "<p>&lt;/output_format&gt;</p>",
+        ]
+    )
 
 
 @pytest.mark.asyncio

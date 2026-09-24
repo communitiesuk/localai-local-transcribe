@@ -258,12 +258,8 @@ class MinutesPatchRequest(BaseModel):
     html_content: str | None = None
 
 
-class GuardrailResultResponse(BaseModel):
-    id: uuid.UUID
-    passed: bool
-    score: float | None
-    reasoning: str | None
-    error: str | None
+class GuardrailWarningResponse(BaseModel):
+    message: str | None
 
 
 class LLMHallucination(BaseModel):
@@ -382,7 +378,6 @@ class MinuteVersionResponse(BaseModel):
     ai_edit_instructions: str | None
     content_source: ContentSource
     too_short: bool = False
-    guardrail_results: list[GuardrailResultResponse] = []
 
 
 class SpeakerPrediction(BaseModel):

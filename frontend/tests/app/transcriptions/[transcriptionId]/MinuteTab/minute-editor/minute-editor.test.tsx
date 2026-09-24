@@ -32,6 +32,9 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['minute-versions'],
   }),
+  getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions: () => ({
+    queryKey: ['guardrail-warning'],
+  }),
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey: () => [
     'minute-versions',
   ],

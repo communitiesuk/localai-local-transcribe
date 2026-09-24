@@ -267,7 +267,9 @@ describe('<EditApprovedDomainsPage />', () => {
         title: 'Approved domains updated',
       })
     )
-    expect(mockPush).toHaveBeenCalledWith('/user-management')
+    expect(mockPush).toHaveBeenCalledWith(
+      '/user-management?organisationId=org-1'
+    )
   })
 
   it('shows a validation error and does not submit when all domains are removed', async () => {
@@ -308,7 +310,7 @@ describe('<EditApprovedDomainsPage />', () => {
     renderPage()
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
       'href',
-      '/user-management'
+      '/user-management?organisationId=org-1'
     )
   })
 
