@@ -53,17 +53,13 @@ async def record_analytics_event(
     source_id: UUID | None = None,
     event_metadata: AnalyticsEventMetadata | None = None,
 ) -> None:
-    """Record a first-party analytics event.
+    """First-party analytics event logging:
 
-    Recording analytics must never break the primary user journey, so failures are logged and swallowed rather than
-    re-raised. Users without an evaluation_id are skipped because there is no pseudonymous identifier to report.
-
-    `organisation_id` is stored so events can be reported per local authority. It is required explicitly at call
-    sites, but may be None for users with no organisation.
-
-    `source_id` is an idempotency key for events that may be retried for the same underlying object; pass the ID of
-    the relevant object (for example a transcription or minute version) so an at-least-once redelivery becomes a
-    no-op.
+    Analytics events logs are triggered directly from user actions. Users without an evaluation_id are not logged because there
+    is no pseudonymous identifier to report, and user-names are never logged.
+    `organisation_id` is stored so events can be viewed per local authority. There should be no instances of users without an
+    organisation, though organisations can be removed without cascade.
+    `source_id` is an idempotency key that ensures duplication is avoided in the database.
     """
     if not evaluation_id:
         logger.debug("Skipping %s analytics event: user has no evaluation_id", event_type)
