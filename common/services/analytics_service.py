@@ -89,7 +89,9 @@ async def _record_analytics_event_sync_session(
     event_metadata: AnalyticsEventMetadata | None = None,
 ) -> None:
     """Execute the sync-session insert in an async wrapper so it shares the same logic path as the async version."""
-    session.execute(_insert_statement(event_type, evaluation_id, organisation_id, recording_id, source_id, event_metadata))
+    session.execute(
+        _insert_statement(event_type, evaluation_id, organisation_id, recording_id, source_id, event_metadata)
+    )
     session.commit()
 
 
