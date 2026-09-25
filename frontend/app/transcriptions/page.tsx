@@ -6,6 +6,7 @@ import { RecordingsSort } from '@/components/recent-meetings/recordings-sort'
 import { UnlabelledTranscriptions } from '@/components/recent-meetings/unlabelled-transcriptions'
 import { BannerNotification } from '@/components/banner-notification'
 import { SearchRecordings } from '@/components/recent-meetings/search-recordings'
+import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 
 export default function TranscriptionsPage() {
   return (
@@ -18,7 +19,7 @@ export default function TranscriptionsPage() {
           </div>
         }
       >
-        <OfflineRecordings />
+        {OFFLINE_RECORDINGS_ENABLED && <OfflineRecordings />}
         <RecordingsSort />
         <SearchRecordings />
         <UnlabelledTranscriptions />
