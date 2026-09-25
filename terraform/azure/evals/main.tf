@@ -175,7 +175,8 @@ resource "azurerm_storage_account" "evals" {
     environment = var.environment_name
   }
 
-  # Wrap fails if this identity cannot yet unwrap. Role assignments can lag the create.
+  # Creates the Key Vault role before the account. It does not wait for the role to take effect,
+  # which can take minutes, so a first apply can still fail to wrap the key. Rerun the apply if so.
   depends_on = [azurerm_role_assignment.storage_customer_managed_key]
 }
 

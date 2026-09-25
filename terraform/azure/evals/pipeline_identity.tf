@@ -2,10 +2,9 @@
 # data-plane role on the evals storage account. Used instead of an Entra app registration because the
 # tenant blocks app creation. Auth to blobs is Entra ID (workload identity federation) — no keys.
 #
-# Two-step apply: the federated credential needs the Issuer and Subject that Azure DevOps generates
-# when you create the (manual) service connection. First apply creates the identity and role and
-# outputs pipeline_identity_client_id; create the ADO connection with that client id; then set
-# ado_federation_issuer / ado_federation_subject and apply again to add the federated credential.
+# The federated credential needs the Issuer and Subject of the (manual) Azure DevOps service
+# connection. Both are predictable before the connection exists, so one apply creates the identity,
+# role and credential. Create the ADO connection afterwards with pipeline_identity_client_id.
 
 resource "azurerm_user_assigned_identity" "pipeline" {
   name                = var.pipeline_identity_name
