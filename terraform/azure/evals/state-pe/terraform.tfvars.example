@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars in this directory. Do not commit terraform.tfvars.
+
+subscription_id      = "<azure-subscription-id>"
+resource_group_name  = "<resource-group-name>"
+location             = "uksouth"
+environment_name     = "test"
+storage_account_name = "aieltevalstftst001"
+storage_account_id   = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Storage/storageAccounts/aieltevalstftst001"
+subnet_id            = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
