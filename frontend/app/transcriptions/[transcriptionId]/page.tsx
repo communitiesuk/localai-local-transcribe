@@ -2,7 +2,6 @@
 
 import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
-import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
 import { DocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/DocumentTab'
 import { NewDocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/NewDocumentTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
@@ -308,11 +307,6 @@ export default function TranscriptionPage(props: {
             dialogueEntryIndexToFocus={dialogueEntryIndexToFocus ?? undefined}
             onDialogueEntryFocusLost={() => setDialogueEntryIndexToFocus(null)}
           />
-        </GovukTabs.Panel>
-        <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
-          <div>
-            <MinuteTab transcription={transcription} />
-          </div>
         </GovukTabs.Panel>
         {isChatEnabled && (
           <GovukTabs.Panel id="chat" label="Chat with your meeting">

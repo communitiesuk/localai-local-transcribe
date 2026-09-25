@@ -80,7 +80,7 @@ export default function EditApprovedDomainsPage(props: {
         title: 'Approved domains updated',
         message: `Successfully updated approved domains for '${updatedOrganisation.name}' at ${formatCurrentDateTime()}`,
       })
-      router.push('/user-management')
+      router.push(`/user-management?organisationId=${updatedOrganisation.id}`)
     },
     onError: (error) => {
       if (error instanceof DomainsUpdateConflictError) {
@@ -158,6 +158,7 @@ export default function EditApprovedDomainsPage(props: {
         defaultValues={organisation.allowed_domains}
         onSubmit={onSubmit}
         isPending={isPending}
+        cancelHref={`/user-management?organisationId=${organisation.id}`}
       />
     </>
   )

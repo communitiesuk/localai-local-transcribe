@@ -9,9 +9,11 @@ import { userExistsUsersUserExistsGet } from '@/lib/client'
 import { UserRole } from '@/lib/utils'
 
 const mockPush = vi.fn()
+let searchParams = new URLSearchParams()
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => searchParams,
 }))
 
 vi.mock('@/hooks/use-authorised-user', () => ({
@@ -31,6 +33,7 @@ const organisationId = '00000000-0000-0000-0000-000000000001'
 describe('Invite new user page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    searchParams = new URLSearchParams()
     useInviteUserStore.getState().clearInviteDetails()
 
     vi.mocked(useAuthorisedUser).mockReturnValue({
@@ -157,7 +160,7 @@ describe('Invite new user page', () => {
     })
 
     it('shows the GOV.UK errors for empty fields', async () => {
-      useInviteUserStore.getState().setInviteDetails('', '', '', organisationId)
+      searchParams = new URLSearchParams(`organisationId=${organisationId}`)
       const user = userEvent.setup()
       render(<AdminAddUserPage />)
 
@@ -168,7 +171,7 @@ describe('Invite new user page', () => {
     })
 
     it('checks and continues with the organisation they selected', async () => {
-      useInviteUserStore.getState().setInviteDetails('', '', '', organisationId)
+      searchParams = new URLSearchParams(`organisationId=${organisationId}`)
       const user = userEvent.setup()
       render(<AdminAddUserPage />)
 
@@ -181,7 +184,9 @@ describe('Invite new user page', () => {
       await user.click(screen.getByRole('button', { name: 'Continue' }))
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/invite-user/confirm')
+        expect(mockPush).toHaveBeenCalledWith(
+          `/invite-user/confirm?organisationId=${organisationId}`
+        )
       })
       expect(userExistsUsersUserExistsGet).toHaveBeenCalledWith({
         query: {
@@ -189,6 +194,37 @@ describe('Invite new user page', () => {
           organisation_id: organisationId,
         },
       })
+    })
+
+    it('continues to confirmation with the selected organisation in the URL', async () => {
+      searchParams = new URLSearchParams(`organisationId=${organisationId}`)
+      const user = userEvent.setup()
+      render(<AdminAddUserPage />)
+
+      await user.type(screen.getByLabelText('Name'), 'Test User')
+      await user.type(
+        screen.getByLabelText('Email address'),
+        'test.user@example.com'
+      )
+      await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith(
+          `/invite-user/confirm?organisationId=${organisationId}`
+        )
+      })
+    })
+
+    it('links back to user management with the selected organisation when cancelling', () => {
+      searchParams = new URLSearchParams(`organisationId=${organisationId}`)
+
+      render(<AdminAddUserPage />)
+
+      expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
+        'href',
+        `/user-management?organisationId=${organisationId}`
+      )
     })
 
     it('returns to user management when no organisation has been selected', async () => {

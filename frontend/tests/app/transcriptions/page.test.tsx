@@ -172,6 +172,18 @@ describe('<TranscriptionPage /> View quote', () => {
     expect(transcriptTabLink).toHaveAttribute('aria-selected', 'true')
   })
 
+  it('does not render the old document tab', async () => {
+    await act(async () =>
+      render(
+        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
+      )
+    )
+
+    expect(
+      screen.queryByRole('tab', { name: 'Meeting summary' })
+    ).not.toBeInTheDocument()
+  })
+
   it("should not change tab, and show error when quote doesn't link to a line in the transcript", async () => {
     await act(async () =>
       render(
