@@ -1,7 +1,7 @@
 """add analytics event table
 
 Revision ID: 267b146310a0
-Revises: 5e6494b47452
+Revises: a3bcafd96ae9
 Create Date: 2026-09-17 11:02:49.394856
 
 """
@@ -16,7 +16,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "267b146310a0"
-down_revision: str | None = "5e6494b47452"
+down_revision: str | None = "a3bcafd96ae9"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
