@@ -149,7 +149,7 @@ async def create_user(
         email_sender.send_invite_email(data.email, data.name, org_name)
     except EmailSendError as e:
         sentry_sdk.capture_exception(e)
-    
+
     await record_analytics_event(
         session, AnalyticsEventType.USER_INVITED, new_user.evaluation_id, new_user.organisation_id
     )

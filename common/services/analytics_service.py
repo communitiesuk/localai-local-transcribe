@@ -55,10 +55,10 @@ async def record_analytics_event(
 ) -> None:
     """First-party analytics event logging:
 
-    Analytics events logs are triggered directly from user actions. Users without an evaluation_id are not logged because there
-    is no pseudonymous identifier to report, and user-names are never logged.
-    `organisation_id` is stored so events can be viewed per local authority. There should be no instances of users without an
-    organisation, though organisations can be removed without cascade.
+    Analytics events logs are triggered directly from user actions. Users without an evaluation_id are not logged
+    because there is no pseudonymous identifier to report, and user-names are never logged.
+    `organisation_id` is stored so events can be viewed per local authority. There should be no instances of users 
+    without an organisation, though organisations can be removed without cascade.
     `source_id` is an idempotency key that ensures duplication is avoided in the database.
     """
     if not evaluation_id:
