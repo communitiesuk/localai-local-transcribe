@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
 describe('<PhaseBanner />', () => {
-  it('renders canonical govuk-phase-banner markup with a govuk-tag for Alpha', () => {
+  it('renders canonical govuk-phase-banner markup with a govuk-tag for Beta', () => {
     const { container } = render(<PhaseBanner />)
     expect(container.querySelector('.govuk-phase-banner')).toBeInTheDocument()
     expect(
@@ -18,5 +18,18 @@ describe('<PhaseBanner />', () => {
     const { container } = render(<PhaseBanner />)
     const text = container.querySelector('.govuk-phase-banner__text')
     expect(text?.textContent).toContain('This is a new service')
+  })
+
+  it('renders the feedback email link with the correct address', () => {
+    const { container } = render(<PhaseBanner />)
+    const link = container.querySelector(
+      '.govuk-phase-banner__text .govuk-link'
+    )
+    expect(link).toBeInTheDocument()
+    expect(link).toHaveTextContent('email us your feedback')
+    expect(link).toHaveAttribute(
+      'href',
+      'mailto:LocalTranscribe@communities.gov.uk'
+    )
   })
 })
