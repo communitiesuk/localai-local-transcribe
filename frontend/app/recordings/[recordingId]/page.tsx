@@ -10,7 +10,6 @@ import {
   GovukButton,
 } from '@/components/govuk'
 import { useStartTranscription } from '@/hooks/use-start-transcription'
-import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import {
   RecordingDbItem,
   useRecordingDb,
