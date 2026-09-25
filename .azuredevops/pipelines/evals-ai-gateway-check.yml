@@ -33,6 +33,13 @@ steps:
       # Take the host out of the URL, for example https://host/path becomes host.
       host="${GATEWAY_URL#https://}"
       host="${host%%/*}"
+
+      # The public name is looked up only for comparison, so a missing answer does not stop
+      # the run. It shows whether these agents can resolve the gateway domain at all.
+      echo "Public name ${host/.int./.}"
+      getent hosts "${host/.int./.}" || echo "No address"
+
+      echo "Internal name ${host}"
       getent hosts "${host}"
 
       # Print only the HTTP status so the response body and headers stay out of the log.
