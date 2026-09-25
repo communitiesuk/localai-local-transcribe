@@ -5,6 +5,7 @@ Revises: 4bdf73c04aea, 7c4d81ea60b3
 Create Date: 2026-09-25 12:10:01.512858
 
 """
+
 from collections.abc import Sequence
 
 # revision identifiers, used by Alembic.
