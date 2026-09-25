@@ -1,0 +1,45 @@
+# Plan or apply terraform/azure/evals using a dedicated Azure Resource Manager
+# service connection for Terraform (not the evals-blob workload identity).
+# Manual only until a plan has been reviewed. Microsoft-hosted agents cannot be
+# allowed through the storage firewall, so this job uses the shared scale-set
+# pool. The pool still needs a firewall allow (subnet or static egress) before
+# terraform init can read remote state.
+
+name: Evals Terraform
+
+trigger: none
+pr: none
+
+variables:
+  - group: evals-pipeline-config
+
+parameters:
+  - name: terraform_command
+    displayName: Terraform command
+    type: string
+    default: plan
+    values:
+      - plan
+      - apply
+
+pool:
+  name: vmss-shared
+
+steps:
+  - checkout: self
+
+  - task: AzureCLI@2
+    displayName: Run evals Terraform (${{ parameters.terraform_command }})
+    inputs:
+      azureSubscription: $(EVALS_TERRAFORM_SERVICE_CONNECTION)
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: bash .azuredevops/scripts/apply-evals-terraform.sh "${{ parameters.terraform_command }}"
+    env:
+      EVALS_ARM_SUBSCRIPTION_ID: $(EVALS_ARM_SUBSCRIPTION_ID)
+      EVALS_RESOURCE_GROUP_NAME: $(EVALS_RESOURCE_GROUP_NAME)
+      EVALS_STATE_STORAGE_ACCOUNT_NAME: $(EVALS_STATE_STORAGE_ACCOUNT_NAME)
+      EVALS_ENVIRONMENT_NAME: $(EVALS_ENVIRONMENT_NAME)
+      EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME: $(EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME)
+      EVALS_RESULTS_STORAGE_ACCOUNT_NAME: $(EVALS_RESULTS_STORAGE_ACCOUNT_NAME)
+      EVALS_ADAPT_EGRESS_IP: $(EVALS_ADAPT_EGRESS_IP)
