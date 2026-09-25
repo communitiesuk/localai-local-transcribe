@@ -7,6 +7,11 @@ subscription_id     = "<azure-subscription-id>"
 resource_group_name = "<resource-group-name>"
 environment_name    = "<environment-name>"
 
+# Customer-managed key. Vault and key come from terraform/azure/evals/key-vault/.
+# key_vault_name                                = "<key-vault-name>"
+# storage_customer_managed_key_name             = "<key-name>"
+# storage_customer_managed_key_identity_name    = "<key-identity-name>"
+
 # Azure DevOps pipeline identity.
 # ado_federation_issuer  = "https://vstoken.dev.azure.com/<org-guid>"
 # ado_federation_subject = "sc://<org>/<project>/evals-blob"

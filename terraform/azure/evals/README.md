@@ -39,15 +39,31 @@ connection. `rbac.tf` grants it container-scoped data-plane roles: reader on `in
 `debug`, and contributor on `output`. A managed identity is used rather than an Entra app
 registration because the sandbox tenant blocks app creation for most users.
 
-Federation needs the Issuer and Subject that Azure DevOps generates for the service connection, so
-apply in two passes:
+Federation needs the Issuer and Subject of the Azure DevOps service connection. Both are known before
+the connection exists: the Issuer is `https://vstoken.dev.azure.com/<org-guid>` and the Subject is
+`sc://<org>/<project>/evals-blob`. So one apply is enough:
 
-1. First apply (leave `ado_federation_issuer` / `ado_federation_subject` unset) creates the identity
-   and role. Note the `pipeline_identity_client_id` output.
-2. Create the ADO service connection (**Workload identity federation (manual)**) using that client id;
-   copy its Issuer and Subject into `terraform.tfvars` and apply again to add the federated credential.
+1. Set `EVALS_ADO_FEDERATION_ISSUER` and `EVALS_ADO_FEDERATION_SUBJECT` in the variable group, then
+   apply. This creates the identity, its roles, and the federated credential. Note the
+   `pipeline_identity_client_id` output.
+2. Create the ADO service connection `evals-blob` (**App registration or managed identity (manual)**,
+   workload identity federation) using that client id. Check that the Issuer and Subject it shows
+   match the variable group.
 
 Creating the role assignments needs Owner or User Access Administrator on the relevant scope.
+
+## Customer-managed key
+
+The evals accounts encrypt with a customer-managed key from the vault in `key-vault/`.
+
+- Settle encryption before anyone uploads data. `infrastructure_encryption_enabled` and the Table and
+  Queue key type can only be set at create. Changing either replaces the account and deletes its blobs.
+- Rotating or replacing the key does not touch the data. Disabling or deleting the key makes the data
+  unreadable until the key is restored. Purge protection keeps a deleted key recoverable.
+- A first apply can fail to wrap the key with a 403, because the new Key Vault role for
+  `evals-storage-key-id` has not taken effect yet. Role assignments can take several minutes to apply
+  ([Microsoft documentation](https://learn.microsoft.com/en-us/azure/role-based-access-control/troubleshooting#role-assignment-changes-are-not-being-detected)).
+  Wait a few minutes and rerun the apply.
 
 ## Layout
 
@@ -92,7 +108,7 @@ Either way the endpoint only resolves privately once `privatelink.blob.core.wind
 | File and Blob diagnostic settings                    | Yes                | Workspace names follow `environment_name`               | Whether platform wants a central workspace  |
 | Tenant, subscription, IPs, and variable values       | No                 | Always                                                  | Naming convention                           |
 
-Still out of scope: customer-managed keys, Queue/Table diagnostic logging, a SIEM, and loading data into containers. File and Blob logs for the evals accounts go to `law-evals-<environment_name>`. File and Blob logs for the state account go to `law-evals-tfstate-<environment_name>`. If either name already exists in the resource group, import it before apply.
+Still out of scope: Queue/Table diagnostic logging, a SIEM, and loading data into containers. File and Blob logs for the evals accounts go to `law-evals-<environment_name>`. File and Blob logs for the state account go to `law-evals-tfstate-<environment_name>`. If either name already exists in the resource group, import it before apply.
 
 ## Prerequisites
 

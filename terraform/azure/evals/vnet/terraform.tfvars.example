@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars in this directory. Do not commit terraform.tfvars.
+# Address space is the range the Azure team allocated for test on 22 September 2026.
+
+subscription_id     = "<azure-subscription-id>"
+resource_group_name = "<resource-group-name>"
+location            = "uksouth"
+environment_name    = "test"
+address_space       = ["10.170.122.0/23"]
+subnet_prefix       = "10.170.122.0/23"

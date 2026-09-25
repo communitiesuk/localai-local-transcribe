@@ -39,6 +39,24 @@ variable "account_replication_type" {
   default     = "LRS"
 }
 
+variable "key_vault_name" {
+  type        = string
+  description = "Name of the Key Vault that holds the storage customer-managed key. Created by terraform/azure/evals/key-vault/."
+  default     = "kv-tst-aielt-evals-001"
+}
+
+variable "storage_customer_managed_key_name" {
+  type        = string
+  description = "Name of the RSA key in that vault. Must already exist before this root is planned."
+  default     = "evals-storage"
+}
+
+variable "storage_customer_managed_key_identity_name" {
+  type        = string
+  description = "User-assigned identity Storage uses to wrap and unwrap the customer-managed key. Not the evals job identity."
+  default     = "evals-storage-key-id"
+}
+
 variable "soft_delete_retention_days" {
   type        = number
   description = "Days to retain soft-deleted blobs and containers before permanent deletion."

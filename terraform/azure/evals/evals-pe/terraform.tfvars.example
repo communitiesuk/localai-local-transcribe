@@ -1,0 +1,20 @@
+# Copy to terraform.tfvars in this directory. Do not commit terraform.tfvars.
+
+subscription_id     = "<azure-subscription-id>"
+resource_group_name = "<resource-group-name>"
+location            = "uksouth"
+environment_name    = "test"
+subnet_id           = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
+
+storage_accounts = {
+  sensitive = {
+    name    = "aieltevalsentst001"
+    id      = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Storage/storageAccounts/aieltevalsentst001"
+    purpose = "evals-input-and-debug"
+  }
+  results = {
+    name    = "aieltevalrestst001"
+    id      = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Storage/storageAccounts/aieltevalrestst001"
+    purpose = "evals-results"
+  }
+}

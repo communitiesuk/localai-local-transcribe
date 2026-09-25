@@ -6,6 +6,7 @@ The pipelines in `pipelines/` run eval smoke tests against blob-backed test conf
 - `evals-bias-smoke-test.yml` runs bias evals.
 - `evals-transcription-smoke-test.yml` runs transcription evals.
 - `evals-terraform-apply.yml` plans or applies `terraform/azure/evals`. Manual only. Default run is plan.
+- `evals-blob-access-check.yml` looks up both evals account names on the shared agent and lists `input`, `debug`, and `output` as the `evals-blob` identity. Manual only.
 
 The summarisation and bias pipelines can be run manually, and both are scheduled for Sundays at 21:00 UTC. Azure DevOps cannot express "every two weeks" in cron, so the weekly schedule uses `templates/fortnightly-schedule-gate-job.yml` to skip off-cycle Sundays.
 
@@ -34,6 +35,10 @@ Mandatory values:
 | `EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME` | Sensitive storage account name | No |
 | `EVALS_RESULTS_STORAGE_ACCOUNT_NAME` | Results storage account name | No |
 | `EVALS_ADAPT_EGRESS_IP` | Virtual desktop egress IPv4 address | No |
+| `EVALS_ADO_FEDERATION_ISSUER` | Issuer shown on the `evals-blob` service connection | No |
+| `EVALS_ADO_FEDERATION_SUBJECT` | Subject shown on the `evals-blob` service connection | No |
+| `EVALS_KEY_VAULT_NAME` | Key Vault holding the storage key. Read only by `grant-key-vault-roles` | No |
+| `EVALS_SUPER_USER_OBJECT_ID` | Entra object ID given Key Vault Crypto Officer. Read only by `grant-key-vault-roles` | No |
 | `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_APIM_URL` | APIM endpoint | No |

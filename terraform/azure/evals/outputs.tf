@@ -35,6 +35,11 @@ output "pipeline_identity_principal_id" {
   value       = azurerm_user_assigned_identity.pipeline.principal_id
 }
 
+output "storage_customer_managed_key_identity_principal_id" {
+  description = "Principal ID of the identity Storage uses to wrap and unwrap the customer-managed key."
+  value       = azurerm_user_assigned_identity.storage_customer_managed_key.principal_id
+}
+
 output "sensitive_storage_account_blob_endpoint" {
   description = "Blob endpoint for the sensitive account that holds input and debug."
   value       = azurerm_storage_account.evals["sensitive"].primary_blob_endpoint
