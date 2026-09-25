@@ -234,7 +234,8 @@ class MinuteHandlerService:
                 template_prompt_version=result.template_prompt_version,
             )
 
-            event_user = minute_version.minute.transcription.user
+            minute = minute_version.minute
+            event_user = minute.transcription.user
             with SessionLocal() as session:
                 record_analytics_event_sync(
                     session,
@@ -244,6 +245,10 @@ class MinuteHandlerService:
                     # The queue message is acknowledged after this write, so a crash in between redelivers it. Keying
                     # on the minute version makes the retry a no-op rather than a duplicate event.
                     source_id=minute_version.id,
+                    event_metadata={
+                        "transcription_id": str(minute.transcription_id),
+                        "template_id": str(minute.user_template_id) if minute.user_template_id else None,
+                    },
                 )
 
         except Exception as e:

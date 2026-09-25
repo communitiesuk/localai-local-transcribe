@@ -349,6 +349,9 @@ class AnalyticsEventMetadata(TypedDict, total=False):
 
     audio_duration_seconds: float
     edit_type: TranscriptionEditType
+    # Both stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
+    transcription_id: str
+    template_id: str | None
 
 
 class AnalyticsEvent(BaseTableMixin, table=True):
