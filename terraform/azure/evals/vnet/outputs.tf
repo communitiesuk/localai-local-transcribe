@@ -1,4 +1,4 @@
-# Values to send the Azure team for the hub-side peering.
+# Resource ID of the evaluations virtual network. Used for the hub-side peering.
 
 output "virtual_network_id" {
   description = "Resource ID of the evaluations virtual network."

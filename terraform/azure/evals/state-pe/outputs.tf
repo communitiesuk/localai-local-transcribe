@@ -1,4 +1,4 @@
-# Values to confirm the endpoint and to give the Azure team if the zone attach needs them.
+# Resource ID and address of the endpoint. Used when attaching it to the hub zone.
 
 output "private_endpoint_id" {
   description = "Resource ID of the state-account blob private endpoint."

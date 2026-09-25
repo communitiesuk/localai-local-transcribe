@@ -3,10 +3,9 @@
 # on the parent evals root: that root also writes a Domain Name System zone group,
 # and this subscription cannot write the hub zone.
 #
-# Domain Name System is not in this root. After apply, send the Azure team both private
-# endpoint resource IDs. They attach them to the hub privatelink.blob.core.windows.net zone,
-# the same job as pe-aieltevalstftst001-blob. Keep public access on until
-# vmss-shared can list blobs through the private names.
+# Domain Name System is not in this root. This subscription cannot write the hub
+# privatelink.blob.core.windows.net zone. The Azure team attaches each endpoint to that
+# zone after it exists, the same as pe-aieltevalstftst001-blob.
 
 terraform {
   required_version = ">= 1.5.0"
