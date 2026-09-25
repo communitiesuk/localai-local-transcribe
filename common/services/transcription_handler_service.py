@@ -216,8 +216,7 @@ class TranscriptionHandlerService:
                 event_user.evaluation_id if event_user else None,
                 event_user.organisation_id if event_user else None,
                 recording_id=original_recording.id,
-                # The queue message is acknowledged after this write, so a crash in between redelivers it. Keying on
-                # the transcription makes the retry a no-op rather than a duplicate event.
+
                 source_id=transcription.id,
             )
 
