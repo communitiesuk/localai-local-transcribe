@@ -216,7 +216,6 @@ class TranscriptionHandlerService:
                 event_user.evaluation_id if event_user else None,
                 event_user.organisation_id if event_user else None,
                 recording_id=original_recording.id,
-
                 source_id=transcription.id,
             )
 
