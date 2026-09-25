@@ -2,7 +2,6 @@
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
 import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-version-select'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { ReviewGuardButton } from '@/components/review-guard/review-guard-button'
 import { ProcessingSpinner } from '@/components/processing-spinner'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
@@ -13,14 +12,12 @@ import {
 } from '@/lib/client'
 import {
   createMinuteVersionMinutesMinuteIdVersionsPostMutation,
-  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation,
   getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
@@ -117,6 +114,7 @@ export function MinuteEditor({
   )
 
   const isError = displayedMinuteVersion?.status == 'failed'
+  const hasMultipleMinuteVersions = minuteVersions.length > 1
 
   // Busy if any version is generating, not just the viewed one, so a background AI edit still counts.
   const isAnyVersionGenerating = useMemo(
@@ -292,15 +290,17 @@ export function MinuteEditor({
   if (isError) {
     return (
       <div className="pt-2">
-        <div className="mb-2 flex flex-wrap justify-between gap-y-2">
-          <div className="flex flex-wrap gap-2">
-            <MinuteVersionSelect
-              minuteVersions={minuteVersions}
-              version={versionId}
-              setVersion={setVersionId}
-            />
+        {hasMultipleMinuteVersions && (
+          <div className="mb-2 flex flex-wrap justify-between gap-y-2">
+            <div className="flex flex-wrap gap-2">
+              <MinuteVersionSelect
+                minuteVersions={minuteVersions}
+                version={versionId}
+                setVersion={setVersionId}
+              />
+            </div>
           </div>
-        </div>
+        )}
         <div className="mx-auto pt-12">
           <GovukNotificationBanner
             variant="important"
@@ -308,19 +308,11 @@ export function MinuteEditor({
             className="mb-[15px]!"
           >
             <p className="govuk-notification-banner__heading">
-              {minuteVersions.length > 1
-                ? 'There was a problem processing your request. Click undo to go back to the previous version.'
-                : 'There was a problem processing your request. Try generating a new Minute.'}
+              {hasMultipleMinuteVersions
+                ? 'There was a problem processing your request. Select another version to go back to a previous version.'
+                : 'There was a problem processing your request. Create a new document to try again.'}
             </p>
           </GovukNotificationBanner>
-          {minuteVersions.length > 1 ? (
-            <MinuteVersionDeleteButton minuteVersion={displayedMinuteVersion} />
-          ) : (
-            <NewMinuteDialog
-              transcriptionId={transcription.id!}
-              agenda={minute.agenda ?? undefined}
-            />
-          )}
         </div>
       </div>
     )
@@ -473,44 +465,6 @@ export function MinuteEditor({
         </GovukModalDialogueActions>
       </GovukModalDialogue>
     </div>
-  )
-}
-
-const MinuteVersionDeleteButton = ({
-  minuteVersion,
-  className,
-}: {
-  minuteVersion: MinuteVersionResponse
-  className?: string
-}) => {
-  const queryClient = useQueryClient()
-  const { mutate, isPending } = useMutation({
-    ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
-    onSuccess() {
-      queryClient.invalidateQueries({
-        queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
-          path: { minute_id: minuteVersion.minute_id },
-        }),
-      })
-      posthog.capture('deleted_minute_version', {
-        minuteVersionId: minuteVersion.id,
-      })
-    },
-  })
-  return (
-    <GovukButton
-      variant="secondary"
-      onClick={() => mutate({ path: { minute_version_id: minuteVersion.id } })}
-      className={className}
-    >
-      {isPending ? (
-        <>
-          <Loader2 className="animate-spin" /> Deleting
-        </>
-      ) : (
-        <>Undo</>
-      )}
-    </GovukButton>
   )
 }
 

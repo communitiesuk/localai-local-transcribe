@@ -26,9 +26,6 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
     mutationKey: ['create-minute-version'],
   }),
-  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
-    mutationKey: ['delete-minute-version'],
-  }),
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['minute-versions'],
   }),
@@ -87,7 +84,6 @@ const makeVersion = (
 
 const mutateMock = vi.fn()
 const resetMock = vi.fn()
-const deleteMutateMock = vi.fn()
 const invalidateQueriesMock = vi.fn()
 
 const configureQuery = (data: MinuteVersionResponse[], isLoading = false) => {
@@ -175,7 +171,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
     expect(screen.getByRole('button', { name: 'AI edit' })).toBeInTheDocument()
   })
 
-  it('renders an inline error banner with an Undo action when explicitly viewing a failed version', () => {
+  it('renders an inline error banner with version history when explicitly viewing a failed version', () => {
     configureQuery([
       makeVersion({ id: 'v2', status: 'failed', content_source: 'ai_edit' }),
       makeVersion({ id: 'v1' }),
@@ -192,13 +188,18 @@ describe('<MinuteEditor /> AI edit flow', () => {
     expect(screen.getByText('There is a problem')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'There was a problem processing your request. Click undo to go back to the previous version.'
+        'There was a problem processing your request. Select another version to go back to a previous version.'
       )
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Undo/ })).toBeInTheDocument()
+    expect(
+      screen.getByRole('combobox', { name: 'Version history' })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Undo/ })
+    ).not.toBeInTheDocument()
   })
 
-  it('shows the "generate a new Minute" option when the only version failed', () => {
+  it('shows retry guidance without legacy retry actions when the only version failed', () => {
     configureQuery([
       makeVersion({ id: 'v1', status: 'failed', content_source: 'ai_edit' }),
     ])
@@ -206,11 +207,17 @@ describe('<MinuteEditor /> AI edit flow', () => {
 
     expect(
       screen.getByText(
-        'There was a problem processing your request. Try generating a new Minute.'
+        'There was a problem processing your request. Create a new document to try again.'
       )
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Undo' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('combobox', { name: 'Version history' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Generate minute|Generate New/ })
     ).not.toBeInTheDocument()
   })
 
@@ -301,38 +308,6 @@ describe('<MinuteEditor /> AI edit flow', () => {
     )
   })
 
-  it('deletes the failed version and invalidates the versions query on undo', () => {
-    vi.mocked(useMutation).mockImplementation(((opts: {
-      mutationKey?: unknown[]
-    }) =>
-      opts?.mutationKey?.[0] === 'delete-minute-version'
-        ? {
-            mutate: deleteMutateMock,
-            isPending: false,
-          }
-        : {
-            mutate: mutateMock,
-            isPending: false,
-          }) as unknown as typeof useMutation)
-
-    configureQuery([
-      makeVersion({ id: 'v2', status: 'failed', content_source: 'ai_edit' }),
-      makeVersion({ id: 'v1' }),
-    ])
-    renderEditor()
-
-    fireEvent.change(
-      screen.getByRole('combobox', { name: 'Version history' }),
-      {
-        target: { value: 'v2' },
-      }
-    )
-    fireEvent.click(screen.getByRole('button', { name: /Undo/ }))
-
-    expect(deleteMutateMock).toHaveBeenCalledWith({
-      path: { minute_version_id: 'v2' },
-    })
-  })
   it('reports busy while any version is generating, even when viewing a completed one', () => {
     const onActivityChange = vi.fn()
     configureQuery([
