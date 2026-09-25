@@ -1,38 +1,25 @@
 'use client'
 
-import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
-import { ProcessingSpinner } from '@/components/processing-spinner'
-import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 
+import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
+import { UploadStatus } from '@/components/audio/upload-status'
 export default function TranscriptionLoadingPage() {
   const router = useRouter()
-  const hasRedirectedToMetadataRef = useRef(false)
-
-  const { status, transcriptionId, uploadingFrom, error, reset } =
-    useUploadRecordingStore()
+  const hasLeftIdleRef = useRef(false)
+  const status = useUploadRecordingStore((store) => store.status)
 
   useEffect(() => {
-    if (status === 'success' && transcriptionId) {
-      hasRedirectedToMetadataRef.current = true
-      reset()
-      router.push(`/new/metadata/${transcriptionId}`)
+    if (status !== 'idle') {
+      hasLeftIdleRef.current = true
       return
     }
 
-    if (status === 'idle' && !hasRedirectedToMetadataRef.current) {
+    if (!hasLeftIdleRef.current) {
       router.replace('/')
     }
-  }, [status, transcriptionId, uploadingFrom, reset, router])
+  }, [status, router])
 
-  if (status === 'error') {
-    throw new Error(error || 'Upload failed')
-  }
-
-  return (
-    <ProcessingSpinner
-      label={uploadingFrom === 'upload' ? 'Uploading' : 'Processing'}
-      message={`${uploadingFrom === 'upload' ? 'Uploading File' : 'Processing recording'}…`}
-    />
-  )
+  return <UploadStatus />
 }

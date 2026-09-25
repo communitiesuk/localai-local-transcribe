@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
@@ -9,6 +8,7 @@ import {
   MicrophonePermission,
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
+import { UploadStatus } from '@/components/audio/upload-status'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import {
@@ -24,15 +24,14 @@ import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
 
 export const TabRecorderForm = () => {
-  const router = useRouter()
-
   const uploadRef = useRef(false)
   const { onSubmit, form } = useStartTranscription()
   const startUpload = useUploadRecordingStore((store) => store.startUpload)
 
+  const uploadStatus = useUploadRecordingStore((store) => store.status)
+
   const handleSubmit = form.handleSubmit((formValues) => {
     startUpload('recording', formValues, onSubmit)
-    router.push('/new/uploading')
   })
 
   const watchBlob = form.watch('file')
@@ -42,6 +41,10 @@ export const TabRecorderForm = () => {
     handleSubmit()
     uploadRef.current = false
   }, [watchBlob, handleSubmit])
+
+  if (uploadStatus !== 'idle') {
+    return <UploadStatus />
+  }
 
   return (
     <FormProvider {...form}>
