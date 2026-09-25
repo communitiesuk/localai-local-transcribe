@@ -4,6 +4,7 @@ import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { type TranscriptionForm } from '@/hooks/use-start-transcription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
+import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { useCountdown } from '@/hooks/use-countdown'
@@ -77,9 +78,11 @@ export function useMicRecorder({
       mediaRecorderRef.current = mediaRecorder
       setMediaRecorderStream(mediaRecorder.stream)
 
-      mediaRecorder.onstart = async () => {
-        const recordingId = await addRecording(new Blob())
-        form.setValue('recordingId', recordingId)
+      if (OFFLINE_RECORDINGS_ENABLED) {
+        mediaRecorder.onstart = async () => {
+          const recordingId = await addRecording(new Blob())
+          form.setValue('recordingId', recordingId)
+        }
       }
 
       mediaRecorder.ondataavailable = async (event) => {
