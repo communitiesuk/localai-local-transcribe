@@ -1,5 +1,5 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
@@ -18,6 +18,7 @@ import {
 
 export default function AdminAddUserPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const invalidDomainError =
     'Please enter an email address with a valid domain for your organisation.'
   const existingEmailError = 'This email is already registered with an account'
@@ -26,7 +27,6 @@ export default function AdminAddUserPage() {
     name: storedName,
     email: storedEmail,
     evaluationId: storedEvaluationId,
-    organisationId,
     setInviteDetails,
     clearInviteDetails,
   } = useInviteUserStore()
@@ -49,7 +49,15 @@ export default function AdminAddUserPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const inviteOrganisationId = organisationId || currentUser?.organisation_id
+  const selectedOrganisationId = searchParams.get('organisationId') ?? ''
+  const inviteOrganisationId =
+    selectedOrganisationId || currentUser?.organisation_id
+  const userManagementHref = selectedOrganisationId
+    ? `/user-management?organisationId=${encodeURIComponent(selectedOrganisationId)}`
+    : '/user-management'
+  const inviteUserConfirmHref = selectedOrganisationId
+    ? `/invite-user/confirm?organisationId=${encodeURIComponent(selectedOrganisationId)}`
+    : '/invite-user/confirm'
 
   const { data: organisation } = useOrganisation(inviteOrganisationId || '')
 
@@ -100,8 +108,8 @@ export default function AdminAddUserPage() {
       return
     }
 
-    setInviteDetails(name, email, evaluationId.trim(), organisationId)
-    router.push('/invite-user/confirm')
+    setInviteDetails(name, email, evaluationId.trim())
+    router.push(inviteUserConfirmHref)
   }
 
   const handleCancel = (e: React.SyntheticEvent<HTMLAnchorElement>) => {
@@ -109,6 +117,7 @@ export default function AdminAddUserPage() {
     clearInviteDetails()
     setErrorMessage('')
     setHasError(false)
+    router.push(userManagementHref)
   }
 
   if (userLoading) return <Loader2 className="animate-spin" />
@@ -245,7 +254,7 @@ export default function AdminAddUserPage() {
             </button>
 
             <a
-              href="/admin/users"
+              href={userManagementHref}
               className="govuk-link"
               onClick={handleCancel}
             >
