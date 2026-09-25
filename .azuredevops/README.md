@@ -7,6 +7,7 @@ The pipelines in `pipelines/` run eval smoke tests against blob-backed test conf
 - `evals-transcription-smoke-test.yml` runs transcription evals.
 - `evals-terraform-apply.yml` plans or applies `terraform/azure/evals`. Manual only. Default run is plan.
 - `evals-blob-access-check.yml` looks up both evals account names on the shared agent and lists `input`, `debug`, and `output` as the `evals-blob` identity. Manual only.
+- `evals-ai-gateway-check.yml` looks up the AI Gateway internal hostname on the shared agent and prints the HTTP status of one call. Manual only.
 
 The summarisation and bias pipelines can be run manually, and both are scheduled for Sundays at 21:00 UTC. Azure DevOps cannot express "every two weeks" in cron, so the weekly schedule uses `templates/fortnightly-schedule-gate-job.yml` to skip off-cycle Sundays.
 
@@ -42,6 +43,7 @@ Mandatory values:
 | `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_APIM_URL` | APIM endpoint | No |
+| `AZURE_APIM_INTERNAL_URL` | `AZURE_APIM_URL` with the gateway's internal hostname. Read only by the AI Gateway check | No |
 | `AZURE_APIM_API_VERSION` | APIM API version | No |
 | `AZURE_APIM_ACCESS_TOKEN` | Temporary APIM bearer token | Yes |
 | `AZURE_APIM_SUBSCRIPTION_KEY` | APIM subscription key | Yes |

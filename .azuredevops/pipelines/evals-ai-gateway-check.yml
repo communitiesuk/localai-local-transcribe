@@ -1,0 +1,46 @@
+# Check that the shared agents reach the AI Gateway over its private path.
+#
+# Manual only. Needs AZURE_APIM_INTERNAL_URL in evals-pipeline-config. That is the
+# AZURE_APIM_URL value with the host swapped for the gateway's internal hostname.
+#
+# Reading the output:
+# - The name lookup should print a private address. A public address or no address
+#   means the private DNS for the gateway is not in place for these agents.
+# - Any HTTP status from the gateway, including 401 or 404, means the network path
+#   and the certificate both work. 401 with the subscription key sent means the key
+#   is wrong for this gateway.
+# - A timeout means the address is not reachable from these agents.
+# - A certificate error means the agents do not trust the certificate the internal
+#   hostname presents.
+
+name: Evals AI Gateway check
+
+trigger: none
+pr: none
+
+variables:
+  - group: evals-pipeline-config
+
+pool:
+  name: vmss-shared
+
+steps:
+  - checkout: none
+
+  - bash: |
+      set -euo pipefail
+
+      # Take the host out of the URL, for example https://host/path becomes host.
+      host="${GATEWAY_URL#https://}"
+      host="${host%%/*}"
+      getent hosts "${host}"
+
+      # Print only the HTTP status so the response body and headers stay out of the log.
+      curl -sS -o /dev/null --max-time 30 -w 'HTTP status %{http_code}\n' \
+        -H "Ocp-Apim-Subscription-Key: ${SUBSCRIPTION_KEY}" \
+        "${GATEWAY_URL}"
+    displayName: Look up and call the AI Gateway internal hostname
+    env:
+      GATEWAY_URL: $(AZURE_APIM_INTERNAL_URL)
+      # Secret variables are only passed to scripts when mapped here.
+      SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
