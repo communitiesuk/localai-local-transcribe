@@ -1,14 +1,16 @@
 'use client'
 
-import { Extension } from '@tiptap/core'
+import { Extension, Node, mergeAttributes } from '@tiptap/core'
 import type { Editor } from '@tiptap/react'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import type { NodeType } from 'prosemirror-model'
 import { EditorState, Plugin, PluginKey } from 'prosemirror-state'
 import { Decoration, DecorationSet } from 'prosemirror-view'
+import type { EditorView } from 'prosemirror-view'
 import { useCallback, useEffect } from 'react'
 
-import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
+import { citationRegexWithSpace } from '@/lib/citationRegex'
 import { TranscriptionGetResponse } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import posthog from 'posthog-js'
@@ -27,6 +29,7 @@ function SimpleEditor({
   initialContent,
   onContentChange,
   isEditing,
+  currentTranscription,
   hideCitations,
   onCitationClicked,
 }: {
@@ -37,61 +40,202 @@ function SimpleEditor({
   hideCitations: boolean
   onCitationClicked?: (citationIndex: number) => void
 }) {
+  const CitationNode = Node.create({
+    name: 'citationNode',
+    group: 'inline',
+    inline: true,
+    atom: true,
+    selectable: false,
+    addAttributes() {
+      return {
+        citationIndex: {
+          default: null,
+          parseHTML: (element) => {
+            const attr = element.getAttribute('data-citation-index')
+            if (attr !== null) return attr
+            const match = element.textContent?.match(/\[(\d+)(?:-\d+)?\]/)
+            return match ? match[1] : null
+          },
+          renderHTML: (attributes) => {
+            if (attributes.citationIndex === null) return {}
+            return { 'data-citation-index': attributes.citationIndex }
+          },
+        },
+
+        label: {
+          default: null,
+          parseHTML: (element) => element.textContent || null,
+          renderHTML: () => ({}),
+        },
+      }
+    },
+    parseHTML() {
+      return [{ tag: 'span[data-citation]' }]
+    },
+    renderHTML({ node, HTMLAttributes }) {
+      const citationIndex = node.attrs.citationIndex as string | null
+      const label =
+        (node.attrs.label as string | null) ??
+        (citationIndex !== null ? `[${citationIndex}]` : '[citation]')
+      return [
+        'span',
+        mergeAttributes(HTMLAttributes, {
+          'data-citation': 'true',
+          class: 'citation-link',
+          role: 'button',
+          tabindex: '0',
+          'aria-label': citationIndex
+            ? `View citation ${citationIndex} in transcript`
+            : 'View citation in transcript',
+        }),
+        label,
+      ]
+    },
+  })
+
+  const seedCitationNodes = (view: EditorView, nodeType: NodeType) => {
+    const { state } = view
+    const tr = state.tr
+    let changed = false
+
+    state.doc.descendants((node, pos) => {
+      if (!node.isText || !node.text) return
+
+      const regex = new RegExp(citationRegexWithSpace.source, 'g')
+      let match
+      while ((match = regex.exec(node.text)) !== null) {
+        const from = pos + match.index + match[1].length
+        const to = pos + match.index + match[0].length
+        const citationIndex = match[2]
+        const label = node.text.slice(
+          match.index + match[1].length,
+          match.index + match[0].length
+        )
+
+        const mappedFrom = tr.mapping.map(from, -1)
+        const mappedTo = tr.mapping.map(to, 1)
+
+        tr.replaceWith(
+          mappedFrom,
+          mappedTo,
+          nodeType.create({ citationIndex, label })
+        )
+        changed = true
+      }
+    })
+
+    if (changed) {
+      tr.setMeta('addToHistory', false)
+      view.dispatch(tr)
+    }
+  }
+
   const CitationExtension = Extension.create({
     name: 'citation',
     addProseMirrorPlugins() {
+      const activateCitation = (domNode: HTMLElement): boolean => {
+        const citationLink = domNode.closest<HTMLElement>('.citation-link')
+        if (!citationLink) return false
+        const indexAttr = citationLink.getAttribute('data-citation-index')
+        if (indexAttr === null) return false
+        const index = parseInt(indexAttr, 10)
+        posthog.capture('citation_clicked', { citationIndex: index })
+        onCitationClicked?.(index)
+        return true
+      }
+
       return [
         new Plugin({
           key: new PluginKey('citation'),
           props: {
             decorations(state) {
               const decorations: Decoration[] = []
-              const citationRegex = citationRegexWithSpace
+              const nodeType = state.schema.nodes.citationNode
+              const dialogueEntryCount =
+                currentTranscription.dialogue_entries?.length ?? 0
 
               state.doc.descendants((node, pos) => {
-                if (node.isText) {
-                  let match
+                if (node.type !== nodeType) return
 
-                  while ((match = citationRegex.exec(node.text!)) !== null) {
-                    const from = pos + match.index
-                    const to = from + match[0].length
+                const citationIndex = node.attrs.citationIndex as string | null
+                const index =
+                  citationIndex !== null ? parseInt(citationIndex, 10) : NaN
+                const isValid =
+                  !Number.isNaN(index) && index < dialogueEntryCount
+
+                const charBefore =
+                  pos > 0 ? state.doc.textBetween(pos - 1, pos) : ''
+                const hasLeadingSpace = /\s/.test(charBefore)
+
+                if (!isValid) {
+                  decorations.push(
+                    Decoration.node(pos, pos + node.nodeSize, {
+                      style: 'display: none',
+                    })
+                  )
+                  if (hasLeadingSpace) {
                     decorations.push(
-                      Decoration.inline(from, to, {
-                        style: 'display: var(--citation-display);',
-                      })
-                    )
-                    decorations.push(
-                      Decoration.inline(from + match[1].length, to, {
-                        class: 'citation-link',
-                        style:
-                          'color: blue; cursor: pointer; text-decoration: underline;',
+                      Decoration.inline(pos - 1, pos, {
+                        style: 'display: none',
                       })
                     )
                   }
+                  return
+                }
+
+                if (hasLeadingSpace) {
+                  decorations.push(
+                    Decoration.inline(pos - 1, pos, {
+                      style: 'display: var(--citation-display);',
+                    })
+                  )
                 }
               })
 
               return DecorationSet.create(state.doc, decorations)
             },
-            handleDOMEvents: {
-              click: (view, event) => {
-                const pos = view.posAtDOM(event.target as Node, 0)
-                if (pos === null) return false
-
-                const domNode = event.target as HTMLElement
-
-                if (domNode.classList.contains('citation-link')) {
-                  const match = domNode.textContent?.match(citationRegex)
-                  if (match) {
-                    const index = parseInt(match[1], 10)
-                    posthog.capture('citation_clicked', {
-                      citationIndex: index,
-                    })
-                    onCitationClicked?.(index)
-                    return true
-                  }
-                }
+            handleKeyDown(view, event) {
+              if (event.key !== 'Backspace' && event.key !== 'Delete') {
                 return false
+              }
+
+              const { state } = view
+              const { selection } = state
+              if (!selection.empty) return false
+
+              const pos = selection.from
+              const nodeType = state.schema.nodes.citationNode
+
+              if (event.key === 'Backspace') {
+                const before = state.doc.nodeAt(pos - 1)
+                if (before?.type === nodeType) {
+                  view.dispatch(state.tr.delete(pos - before.nodeSize, pos))
+                  event.preventDefault()
+                  return true
+                }
+              }
+
+              if (event.key === 'Delete') {
+                const after = state.doc.nodeAt(pos)
+                if (after?.type === nodeType) {
+                  view.dispatch(state.tr.delete(pos, pos + after.nodeSize))
+                  event.preventDefault()
+                  return true
+                }
+              }
+
+              return false
+            },
+            handleDOMEvents: {
+              click: (_view, event) => {
+                return activateCitation(event.target as HTMLElement)
+              },
+
+              keydown: (_view, event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return false
+                const activated = activateCitation(event.target as HTMLElement)
+                if (activated) event.preventDefault()
+                return activated
               },
             },
           },
@@ -101,7 +245,10 @@ function SimpleEditor({
   })
 
   const editorObject = useEditor({
-    extensions: [StarterKit, CitationExtension],
+    extensions: [StarterKit, CitationNode, CitationExtension],
+    onCreate: ({ editor }) => {
+      seedCitationNodes(editor.view, editor.schema.nodes.citationNode)
+    },
     onUpdate: ({ editor }) => {
       onContentChange(editor.getHTML())
     },
@@ -118,6 +265,10 @@ function SimpleEditor({
   useEffect(() => {
     if (editorObject && initialContent !== editorObject.getHTML()) {
       editorObject.commands.setContent(initialContent, { emitUpdate: false })
+      seedCitationNodes(
+        editorObject.view,
+        editorObject.schema.nodes.citationNode
+      )
       const newEditorState = EditorState.create({
         doc: editorObject.state.doc,
         plugins: editorObject.state.plugins,

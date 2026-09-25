@@ -1968,6 +1968,44 @@
         }
       }
     },
+    "/templates/{template_name}/duplicate": {
+      "post": {
+        "tags": ["Templates"],
+        "summary": "Duplicate Default Template",
+        "operationId": "duplicate_default_template_templates__template_name__duplicate_post",
+        "parameters": [
+          {
+            "name": "template_name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Template Name" }
+          },
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/transcriptions/{transcription_id}/chat": {
       "get": {
         "tags": ["Chat"],

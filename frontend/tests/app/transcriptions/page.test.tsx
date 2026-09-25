@@ -189,6 +189,7 @@ describe('<TranscriptionPage /> View quote', () => {
     expect(templateTab).toBeInTheDocument()
     const citationLink = within(templateTab).getByText('[100]')
     expect(citationLink).toBeInTheDocument()
+    expect(citationLink).not.toBeVisible()
 
     await userEvent.click(citationLink)
 
