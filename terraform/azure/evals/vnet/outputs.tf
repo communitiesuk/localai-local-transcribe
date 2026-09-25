@@ -1,4 +1,4 @@
-# Values to send Nas for the hub-side peering.
+# Values to send the Azure team for the hub-side peering.
 
 output "virtual_network_id" {
   description = "Resource ID of the evaluations virtual network."

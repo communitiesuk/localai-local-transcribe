@@ -3,8 +3,8 @@
 # on the parent evals root: that root also writes a Domain Name System zone group,
 # and this subscription cannot write the hub zone.
 #
-# Domain Name System is not in this root. After apply, send Nas both private endpoint
-# resource IDs. He attaches them to the hub privatelink.blob.core.windows.net zone,
+# Domain Name System is not in this root. After apply, send the Azure team both private
+# endpoint resource IDs. They attach them to the hub privatelink.blob.core.windows.net zone,
 # the same job as pe-aieltevalstftst001-blob. Keep public access on until
 # vmss-shared can list blobs through the private names.
 

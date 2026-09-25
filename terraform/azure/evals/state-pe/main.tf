@@ -2,7 +2,7 @@
 # Apply from the test desktop with local state. Do not apply the parent evals root for this:
 # that root stores remote state on this account and cannot init until the endpoint exists.
 #
-# Domain Name System is not in this root. Nas attaches the endpoint to the hub
+# Domain Name System is not in this root. The Azure team attaches the endpoint to the hub
 # privatelink.blob.core.windows.net zone. This identity cannot write that zone.
 # Longer term the apply service principal should do that attach.
 

@@ -1,4 +1,4 @@
-# Values to confirm the endpoints and to give Nas for the hub zone attach.
+# Values to confirm the endpoints and to give the Azure team for the hub zone attach.
 
 output "private_endpoint_ids" {
   description = "Resource IDs of the blob private endpoints, keyed by account role."

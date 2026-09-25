@@ -1,4 +1,4 @@
-# Values to confirm the endpoint and to give Nas if the zone attach needs him.
+# Values to confirm the endpoint and to give the Azure team if the zone attach needs them.
 
 output "private_endpoint_id" {
   description = "Resource ID of the state-account blob private endpoint."
