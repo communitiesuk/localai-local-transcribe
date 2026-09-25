@@ -37,6 +37,8 @@ Mandatory values:
 | `EVALS_ADAPT_EGRESS_IP` | Virtual desktop egress IPv4 address | No |
 | `EVALS_ADO_FEDERATION_ISSUER` | Issuer shown on the `evals-blob` service connection | No |
 | `EVALS_ADO_FEDERATION_SUBJECT` | Subject shown on the `evals-blob` service connection | No |
+| `EVALS_KEY_VAULT_NAME` | Key Vault holding the storage key. Read only by `grant-key-vault-roles` | No |
+| `EVALS_SUPER_USER_OBJECT_ID` | Entra object ID given Key Vault Crypto Officer. Read only by `grant-key-vault-roles` | No |
 | `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_APIM_URL` | APIM endpoint | No |
