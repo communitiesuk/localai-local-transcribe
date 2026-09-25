@@ -198,7 +198,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
     expect(screen.getByRole('button', { name: /Undo/ })).toBeInTheDocument()
   })
 
-  it('shows the "generate a new Minute" option when the only version failed', () => {
+  it('shows retry guidance without legacy retry actions when the only version failed', () => {
     configureQuery([
       makeVersion({ id: 'v1', status: 'failed', content_source: 'ai_edit' }),
     ])
@@ -206,11 +206,17 @@ describe('<MinuteEditor /> AI edit flow', () => {
 
     expect(
       screen.getByText(
-        'There was a problem processing your request. Try generating a new Minute.'
+        'There was a problem processing your request. Create a new document to try again.'
       )
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Undo' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('combobox', { name: 'Version history' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Generate minute|Generate New/ })
     ).not.toBeInTheDocument()
   })
 
