@@ -13,10 +13,14 @@ from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
 from backend.utils.transcription_search_filters import _transcription_search_filters
 from common.database.postgres_models import (
+    AnalyticsEventType,
     DialogueEntry,
     Recording,
     Transcription,
+    TranscriptionEditType,
+    User,
 )
+from common.services.analytics_service import record_analytics_event
 from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
 from common.services.storage_services.audio_deletion import delete_recording_file_and_row
@@ -64,6 +68,38 @@ async def _get_owned_transcription_or_404(
     if not transcription or transcription.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Transcription not found")
     return transcription
+
+
+async def _get_original_recording_id(session: SQLSessionDep, transcription_id: uuid.UUID) -> uuid.UUID | None:
+    """Return the id of the earliest (originally uploaded) Recording for a transcription, if any.
+
+    A transcription can have more than one Recording (e.g. a re-encoded copy added during processing), so we use
+    the earliest one - the recording the user originally uploaded.
+    """
+    result = await session.exec(
+        select(Recording.id)
+        .where(Recording.transcription_id == transcription_id)
+        .order_by(col(Recording.created_datetime))
+    )
+    return result.first()
+
+
+async def _record_transcription_edit_analytics_event(
+    session: SQLSessionDep,
+    current_user: User,
+    transcription_id: uuid.UUID,
+    edit_type: TranscriptionEditType,
+) -> None:
+    recording_id = await _get_original_recording_id(session, transcription_id) if current_user.evaluation_id else None
+    await record_analytics_event(
+        session,
+        AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
+        current_user.evaluation_id,
+        current_user.organisation_id,
+        recording_id=recording_id,
+        # TranscriptionEditType is a StrEnum, so this serialises to the same JSON as edit_type.value
+        event_metadata={"edit_type": edit_type},
+    )
 
 
 def _get_dialogue_entries(transcription: Transcription) -> list[DialogueEntry]:
@@ -265,6 +301,15 @@ async def create_recording(
     await session.commit()
     presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
     await session.refresh(recording)
+
+    await record_analytics_event(
+        session,
+        AnalyticsEventType.AUDIO_UPLOAD_STARTED,
+        user.evaluation_id,
+        user.organisation_id,
+        recording_id=recording.id,
+    )
+
     return RecordingCreateResponse(id=recording.id, upload_url=presigned_url)
 
 
@@ -297,6 +342,21 @@ async def create_transcription(
     session.add(transcription)
     recording.transcription_id = transcription.id
     await session.commit()
+
+    await record_analytics_event(
+        session,
+        AnalyticsEventType.AUDIO_UPLOAD_COMPLETED,
+        current_user.evaluation_id,
+        current_user.organisation_id,
+        recording_id=recording.id,
+        source_id=recording.id,
+        event_metadata=(
+            {"audio_duration_seconds": request.audio_duration_seconds}
+            if request.audio_duration_seconds is not None
+            else None
+        ),
+    )
+
     transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION))
 
     return TranscriptionCreateResponse(id=transcription.id)
@@ -422,6 +482,10 @@ async def rename_speaker_everywhere(
     ]
     await session.commit()
 
+    await _record_transcription_edit_analytics_event(
+        session, current_user, transcription_id, TranscriptionEditType.ALL_INSTANCES_OF_NAME
+    )
+
 
 @transcriptions_router.patch(
     "/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/speaker", status_code=204
@@ -454,6 +518,10 @@ async def update_dialogue_entry_speaker(
     ]
     await session.commit()
 
+    await _record_transcription_edit_analytics_event(
+        session, current_user, transcription_id, TranscriptionEditType.SINGLE_INSTANCE_OF_NAME
+    )
+
 
 @transcriptions_router.patch("/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/text", status_code=204)
 async def update_dialogue_entry_text(
@@ -484,6 +552,10 @@ async def update_dialogue_entry_text(
         for index, entry in enumerate(dialogue_entries)
     ]
     await session.commit()
+
+    await _record_transcription_edit_analytics_event(
+        session, current_user, transcription_id, TranscriptionEditType.DIALOGUE_ENTRY
+    )
 
 
 @transcriptions_router.delete("/transcriptions/{transcription_id}", status_code=204)

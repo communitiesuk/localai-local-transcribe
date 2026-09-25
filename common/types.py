@@ -79,6 +79,10 @@ class UnlabelledTranscriptionsResponse(BaseModel):
 class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
     title: str | None = None
+    audio_duration_seconds: float | None = Field(
+        default=None,
+        description="Client-measured audio duration in seconds, recorded as first-party analytics metadata.",
+    )
 
 
 class RecordingCreateRequest(BaseModel):

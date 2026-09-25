@@ -8,11 +8,9 @@ from sqlmodel import col, select
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
-from common.database.postgres_models import User, UserAuthEmail
+from common.database.postgres_models import AnalyticsEventType, User, UserAuthEmail
+from common.services.analytics_service import record_analytics_event
 from common.services.exceptions import MissingAuthTokenError
-from common.settings import get_settings
-
-settings = get_settings()
 
 logger = logging.getLogger(__name__)
 
@@ -107,11 +105,24 @@ async def get_current_user(
         if user.subject_id != subject_id:
             user.subject_id = subject_id
 
+        # A user is authenticated on every request (the ALB re-mints the JWT each time), so there is no login
+        # boundary we can observe here. Rather than approximate one, record a single event the first time a user
+        # authenticates; repeat usage is derivable from the timestamps on the events for their actual actions.
+        now = datetime.now(UTC)
+        is_first_login = user.first_login is None
+        if is_first_login:
+            user.first_login = now
+        user.last_login = now
+
         await record_user_auth_email(session=session, user=user, email=email)
-        user.last_login = datetime.now(UTC)
         session.add(user)
         await session.commit()
         await session.refresh(user)
+
+        if is_first_login:
+            await record_analytics_event(
+                session, AnalyticsEventType.USER_FIRST_AUTHENTICATED, user.evaluation_id, user.organisation_id
+            )
 
         return user
     except MissingAuthTokenError as e:

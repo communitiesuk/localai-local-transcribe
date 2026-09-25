@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, false, text
+from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, UniqueConstraint, false, text
 from sqlalchemy.dialects.postgresql import ARRAY, CITEXT, JSONB
 from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
@@ -129,6 +129,8 @@ class User(BaseTableMixin, table=True):
     last_login: datetime = Field(
         default_factory=lambda: datetime.now(UTC), sa_column=Column(TIMESTAMP(timezone=True), nullable=False)
     )
+
+    first_login: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     name: str | None = Field(default=None, nullable=True)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
     evaluation_id: str | None = Field(default=None, nullable=True, unique=True)
@@ -316,3 +318,57 @@ class GuardrailFailureCategory(BaseTableMixin, table=True):
         default=None,
         description="Evidence explaining this failure",
     )
+
+
+class AnalyticsEventType(StrEnum):
+    USER_INVITED = auto()
+    USER_FIRST_AUTHENTICATED = auto()
+    USER_DELETED = auto()
+    AUDIO_UPLOAD_STARTED = auto()
+    AUDIO_UPLOAD_COMPLETED = auto()
+    SUMMARY_RECEIVED = auto()
+    TRANSCRIPTION_RECEIVED = auto()
+    TRANSCRIPTION_EDIT_SUBMITTED = auto()
+
+
+class TranscriptionEditType(StrEnum):
+    """The kind of edit made to a transcription, recorded as part of a TRANSCRIPTION_EDIT_SUBMITTED analytics event."""
+
+    DIALOGUE_ENTRY = auto()
+    # The two name edits differ only in scope: one occurrence of a speaker's name, or every occurrence of it.
+    # Neither renames other speakers.
+    SINGLE_INSTANCE_OF_NAME = auto()
+    ALL_INSTANCES_OF_NAME = auto()
+
+
+ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT = "uq_analytics_event_event_type_source_id"
+
+
+class AnalyticsEventMetadata(TypedDict, total=False):
+    """Optional detail stored in `AnalyticsEvent.event_metadata` for event-specific metadata."""
+
+    audio_duration_seconds: float
+    edit_type: TranscriptionEditType
+    # Both stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
+    transcription_id: str
+    template_id: str | None
+
+
+class AnalyticsEvent(BaseTableMixin, table=True):
+    """Stores events with evaluation_id/recording_id as opaque IDs so they remain reportable after deletes."""
+
+    __tablename__ = "analytics_event"
+    __table_args__ = (UniqueConstraint("event_type", "source_id", name=ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT),)
+
+    occurred_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    event_type: AnalyticsEventType = Field(
+        sa_column=Column(Enum(AnalyticsEventType, name="analyticseventtype"), nullable=False)
+    )
+    evaluation_id: str = Field(index=True)
+    recording_id: UUID | None = Field(default=None, index=True)
+    organisation_id: UUID | None = Field(default=None, index=True)
+    # Idempotency key for events that may be retried for the same underlying object. Keep it separate from
+    # recording_id, because a recording can legitimately generate multiple edit events. NULL means no de-duplication
+    # is needed.
+    source_id: UUID | None = Field(default=None)
+    event_metadata: AnalyticsEventMetadata | None = Field(default=None, sa_column=Column(JSONB))

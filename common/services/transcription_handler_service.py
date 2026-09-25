@@ -7,10 +7,11 @@ from sqlmodel import col, select
 from common.audio.speakers import process_speakers_and_dialogue_entries
 from common.canaries import strip_boundary_metadata
 from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import Chat, JobStatus, Minute, Transcription
+from common.database.postgres_models import AnalyticsEventType, Chat, JobStatus, Minute, Transcription
 from common.generate_meeting_title import generate_meeting_title
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_chat_with_transcript_system_message
+from common.services.analytics_service import record_analytics_event_sync
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_settings
@@ -29,7 +30,10 @@ class TranscriptionHandlerService:
             transcription = session.exec(
                 select(Transcription)
                 .where(Transcription.id == transcription_id)
-                .options(selectinload(Transcription.recordings))
+                .options(
+                    selectinload(Transcription.recordings),
+                    selectinload(Transcription.user),  # type: ignore[arg-type]
+                )
             ).first()
             if transcription is None:
                 msg = f"transcription id {transcription_id} not found"
@@ -182,6 +186,7 @@ class TranscriptionHandlerService:
                 cls.update_transcription(
                     transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
                 )
+                cls._record_transcription_received(transcription)
 
         except Exception as e:
             msg = f"Transcription failed: {e!s}"
@@ -194,6 +199,25 @@ class TranscriptionHandlerService:
             raise TranscriptionFailedError from e
         else:
             return transcription_job
+
+    @classmethod
+    def _record_transcription_received(cls, transcription: Transcription) -> None:
+        """Record the TRANSCRIPTION_RECEIVED analytics event for the original recording that was transcribed.
+
+        `transcription.recordings` may have more than one entry (e.g. a re-encoded copy added during processing),
+        so we use the earliest one - the recording the user originally uploaded to start the job.
+        """
+        original_recording = min(transcription.recordings, key=lambda recording: recording.created_datetime)
+        event_user = transcription.user
+        with SessionLocal() as session:
+            record_analytics_event_sync(
+                session,
+                AnalyticsEventType.TRANSCRIPTION_RECEIVED,
+                event_user.evaluation_id if event_user else None,
+                event_user.organisation_id if event_user else None,
+                recording_id=original_recording.id,
+                source_id=transcription.id,
+            )
 
     @classmethod
     async def identify_speakers(cls, dialogue_entries: list[DialogueEntry]) -> list[DialogueEntry]:
