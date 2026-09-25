@@ -12,14 +12,12 @@ import {
 } from '@/lib/client'
 import {
   createMinuteVersionMinutesMinuteIdVersionsPostMutation,
-  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation,
   getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
@@ -311,13 +309,10 @@ export function MinuteEditor({
           >
             <p className="govuk-notification-banner__heading">
               {hasMultipleMinuteVersions
-                ? 'There was a problem processing your request. Click undo to go back to the previous version.'
+                ? 'There was a problem processing your request. Select another version to go back to a previous version.'
                 : 'There was a problem processing your request. Create a new document to try again.'}
             </p>
           </GovukNotificationBanner>
-          {hasMultipleMinuteVersions && (
-            <MinuteVersionDeleteButton minuteVersion={displayedMinuteVersion} />
-          )}
         </div>
       </div>
     )
@@ -470,44 +465,6 @@ export function MinuteEditor({
         </GovukModalDialogueActions>
       </GovukModalDialogue>
     </div>
-  )
-}
-
-const MinuteVersionDeleteButton = ({
-  minuteVersion,
-  className,
-}: {
-  minuteVersion: MinuteVersionResponse
-  className?: string
-}) => {
-  const queryClient = useQueryClient()
-  const { mutate, isPending } = useMutation({
-    ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
-    onSuccess() {
-      queryClient.invalidateQueries({
-        queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
-          path: { minute_id: minuteVersion.minute_id },
-        }),
-      })
-      posthog.capture('deleted_minute_version', {
-        minuteVersionId: minuteVersion.id,
-      })
-    },
-  })
-  return (
-    <GovukButton
-      variant="secondary"
-      onClick={() => mutate({ path: { minute_version_id: minuteVersion.id } })}
-      className={className}
-    >
-      {isPending ? (
-        <>
-          <Loader2 className="animate-spin" /> Deleting
-        </>
-      ) : (
-        <>Undo</>
-      )}
-    </GovukButton>
   )
 }
 
