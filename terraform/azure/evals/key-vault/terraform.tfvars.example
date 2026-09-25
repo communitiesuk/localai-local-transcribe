@@ -1,7 +1,7 @@
 # Copy to terraform.tfvars in this directory. Do not commit terraform.tfvars.
 
-subscription_id     = "45ceb5a1-1db2-45e6-bfe7-53f488854a31"
-resource_group_name = "rg-tst-aielt-001"
+subscription_id     = "<azure-subscription-id>"
+resource_group_name = "<resource-group-name>"
 location            = "uksouth"
 environment_name    = "test"
 key_vault_name      = "kv-tst-aielt-evals-001"

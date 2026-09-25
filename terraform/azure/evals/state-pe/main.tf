@@ -40,4 +40,10 @@ resource "azurerm_private_endpoint" "state_blob" {
     workload    = "evals"
     environment = var.environment_name
   }
+
+  # The Azure team adds the hub DNS zone group outside Terraform. Without this, a re-apply
+  # would remove it and the account name would stop resolving to the private address.
+  lifecycle {
+    ignore_changes = [private_dns_zone_group]
+  }
 }
