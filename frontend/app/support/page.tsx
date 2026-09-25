@@ -28,9 +28,9 @@ export default function SupportPage() {
                   Email us at:{' '}
                   <a
                     className="govuk-link"
-                    href="mailto:minute-support@cabinetoffice.gov.uk"
+                    href="mailto:LocalTranscribe@communities.gov.uk"
                   >
-                    minute-support@cabinetoffice.gov.uk
+                    LocalTranscribe@communities.gov.uk
                   </a>
                 </p>
               </GovukPanelContent>
