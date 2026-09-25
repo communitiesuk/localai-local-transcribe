@@ -9,7 +9,7 @@ describe('<PhaseBanner />', () => {
     expect(
       container.querySelector('.govuk-phase-banner__content')
     ).toBeInTheDocument()
-    const tag = screen.getByText('Alpha')
+    const tag = screen.getByText('Beta')
     expect(tag).toHaveClass('govuk-tag', 'govuk-phase-banner__content__tag')
     expect(tag.tagName).toBe('STRONG')
   })
