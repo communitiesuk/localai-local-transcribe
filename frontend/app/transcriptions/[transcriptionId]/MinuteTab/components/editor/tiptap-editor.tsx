@@ -194,38 +194,6 @@ function SimpleEditor({
 
               return DecorationSet.create(state.doc, decorations)
             },
-            handleKeyDown(view, event) {
-              if (event.key !== 'Backspace' && event.key !== 'Delete') {
-                return false
-              }
-
-              const { state } = view
-              const { selection } = state
-              if (!selection.empty) return false
-
-              const pos = selection.from
-              const nodeType = state.schema.nodes.citationNode
-
-              if (event.key === 'Backspace') {
-                const before = state.doc.nodeAt(pos - 1)
-                if (before?.type === nodeType) {
-                  view.dispatch(state.tr.delete(pos - before.nodeSize, pos))
-                  event.preventDefault()
-                  return true
-                }
-              }
-
-              if (event.key === 'Delete') {
-                const after = state.doc.nodeAt(pos)
-                if (after?.type === nodeType) {
-                  view.dispatch(state.tr.delete(pos, pos + after.nodeSize))
-                  event.preventDefault()
-                  return true
-                }
-              }
-
-              return false
-            },
             handleDOMEvents: {
               click: (_view, event) => {
                 return activateCitation(event.target as HTMLElement)

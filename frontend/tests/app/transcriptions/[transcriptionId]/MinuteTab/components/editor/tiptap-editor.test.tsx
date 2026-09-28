@@ -228,15 +228,19 @@ describe('<SimpleEditor /> citation behaviour', () => {
       expect(element).not.toBeNull()
       return element!
     })
-    const citation = screen.getByText('[0]')
-    const textNode = citation.firstChild as Text
+
+    const textAfter = screen.getByText('[0]').nextSibling as Text
 
     act(() => {
       editable.focus()
-      placeCaret(textNode, textNode.data.length)
+      placeCaret(textAfter, 0)
     })
 
-    fireEvent.keyDown(editable, { key: 'Backspace', code: 'Backspace' })
+    fireEvent.keyDown(editable, {
+      key: 'Backspace',
+      code: 'Backspace',
+      keyCode: 8,
+    })
 
     await waitFor(() => {
       expect(screen.queryByText('[0]')).not.toBeInTheDocument()
