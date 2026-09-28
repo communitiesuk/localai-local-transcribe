@@ -129,4 +129,34 @@ describe('<UserManagementPage />', () => {
 
     expect(mockPush).toHaveBeenCalledWith('/invite-user?organisationId=org-2')
   })
+
+  it('shows the edit approved domains action to system admins', () => {
+    searchParams = new URLSearchParams('organisationId=org-2')
+
+    render(<UserManagementPage />)
+
+    expect(
+      screen.getByRole('button', { name: 'Edit approved domains' })
+    ).toBeInTheDocument()
+  })
+
+  it('does not show the edit approved domains action to local authority admins', () => {
+    vi.mocked(useAuthorisedUser).mockReturnValue({
+      currentUser: {
+        organisation_id: 'org-1',
+        roles: [UserRole.LOCAL_AUTHORITY_ADMIN],
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useAuthorisedUser>)
+    vi.mocked(useOrganisation).mockReturnValue({
+      data: organisations[0],
+    } as unknown as ReturnType<typeof useOrganisation>)
+
+    render(<UserManagementPage />)
+
+    expect(
+      screen.queryByRole('button', { name: 'Edit approved domains' })
+    ).not.toBeInTheDocument()
+  })
 })

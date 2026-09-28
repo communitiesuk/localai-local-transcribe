@@ -76,8 +76,8 @@ const mockCurrentUser: GetUserResponse = {
   name: 'Test User',
   email: 'test.user@maidstone.gov.uk',
   data_retention_days: 30,
-  roles: ['local_authority_admin'],
-  organisation_id: 'org-1',
+  roles: ['mhclg_support_admin'],
+  organisation_id: null,
 }
 
 const buildOrganisation = (organisationId: string): OrganisationResponse => ({
@@ -314,12 +314,27 @@ describe('<EditApprovedDomainsPage />', () => {
     )
   })
 
-  it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', () => {
-    renderPage({ organisationId: 'different-org' })
+  it('shows authorization error when a local authority admin tries to access the edit page', () => {
+    vi.mocked(useAuthorisedUser).mockReturnValue({
+      currentUser: {
+        ...mockCurrentUser,
+        roles: ['local_authority_admin'],
+        organisation_id: 'org-1',
+      },
+      isAllowed: false,
+      isLoading: false,
+      isError: false,
+    })
+
+    renderPage()
+
     expect(
       screen.getByText(
         /You are not authorised to edit domains for this organisation/i
       )
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Edit approved domains' })
+    ).not.toBeInTheDocument()
   })
 })
