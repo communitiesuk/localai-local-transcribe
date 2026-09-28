@@ -45,8 +45,8 @@ export function UploadStatus() {
         <GovukHeading>We could not upload your recording</GovukHeading>
         <p className="govuk-error-message" role="alert">
           <span className="govuk-visually-hidden">Error:</span> Something went
-          wrong while uploading your recording{error ? ` (${error})` : ''}.
-          It&apos;s still held on this device, so you can try again — but it
+          wrong while uploading your recording.
+          It&apos;s still held on this device, so you can try again but it
           will be lost if you leave this page without uploading it.
         </p>
         <GovukButton
