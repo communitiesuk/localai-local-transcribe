@@ -232,3 +232,7 @@ audio::-webkit-media-controls-enclosure {
     background-color: index.$govuk-focus-colour;
   }
 }
+
+.citation-link:focus {
+  @include index.govuk-focused-text;
+}
