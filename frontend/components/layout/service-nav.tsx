@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -149,31 +149,54 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-// Empirically determined: the narrowest width at which all six nav items
-// ('User management' being the longest) fit on a single row without wrapping.
-// Not a standard GOV.UK breakpoint — chosen to match this nav's content.
-const MOBILE_BREAKPOINT = 923
+// Sub-pixel tolerance so that a row which fits exactly is not treated as
+// overflowing. Deliberately tiny: with 'User management' visible the nav only
+// has a few pixels of slack at the maximum page width, so a larger cushion
+// would pin admins to the menu at every width.
+const OVERFLOW_TOLERANCE_PX = 0.5
+
+// GOV.UK only lays the nav out as a single row from the tablet breakpoint.
+// Below it the list is not a flex row and items have no horizontal spacing,
+// so measuring there would be meaningless — it is always the menu.
+const TABLET_BREAKPOINT = 641
 
 export function ServiceNav() {
   const pathname = usePathname()
   const { data: user } = useQuery(getUserUsersMeGetOptions())
   const [isMobile, setIsMobile] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const serviceNameRef = useRef<HTMLSpanElement>(null)
+  const measureRef = useRef<HTMLUListElement>(null)
 
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < MOBILE_BREAKPOINT
-      setIsMobile(mobile)
-      if (!mobile) setIsMenuOpen(false)
+  // The visible list collapses in mobile mode, so it cannot tell us when there
+  // is room again. The hidden list always renders every item on one row, which
+  // gives a stable measurement in both directions.
+  const updateIsMobile = useCallback(() => {
+    if (window.innerWidth < TABLET_BREAKPOINT) {
+      setIsMobile(true)
+      return
     }
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
-  if (pathname?.startsWith('/terms-of-use')) {
-    return null
-  }
+    const container = containerRef.current
+    const serviceName = serviceNameRef.current
+    const measure = measureRef.current
+    if (!container || !serviceName || !measure) return
+
+    // offsetWidth excludes margins, but the service name has a sizeable right
+    // margin that the links cannot encroach on, so add it back.
+    const { marginRight } = window.getComputedStyle(serviceName)
+    const serviceNameWidth =
+      serviceName.getBoundingClientRect().width + (parseFloat(marginRight) || 0)
+
+    const available = container.clientWidth - serviceNameWidth
+    if (available <= 0) return
+
+    const required = measure.getBoundingClientRect().width
+    const mobile = required - available > OVERFLOW_TOLERANCE_PX
+    setIsMobile(mobile)
+    if (!mobile) setIsMenuOpen(false)
+  }, [])
 
   const hasAdminRole = hasAnyRole(user?.roles, [
     UserRole.LOCAL_AUTHORITY_ADMIN,
@@ -184,14 +207,41 @@ export function ServiceNav() {
     (item) => !item.isAdminOnly || hasAdminRole
   )
 
+  // Re-measure when the item set changes: 'User management' appears once the
+  // admin role loads, which makes the row wider than it was on first paint.
+  useEffect(() => {
+    // ResizeObserver reports the initial size on observe(), so no priming call
+    // is needed; the fallback path schedules one after first paint instead.
+    if (typeof ResizeObserver === 'undefined') {
+      const frame = requestAnimationFrame(updateIsMobile)
+      window.addEventListener('resize', updateIsMobile)
+      return () => {
+        cancelAnimationFrame(frame)
+        window.removeEventListener('resize', updateIsMobile)
+      }
+    }
+
+    const observer = new ResizeObserver(updateIsMobile)
+    if (containerRef.current) observer.observe(containerRef.current)
+    if (measureRef.current) observer.observe(measureRef.current)
+    return () => observer.disconnect()
+  }, [updateIsMobile, visibleItems.length])
+
+  if (pathname?.startsWith('/terms-of-use')) {
+    return null
+  }
+
   return (
     <section
       className="govuk-service-navigation"
       aria-label="Service information"
     >
       <div className="govuk-width-container">
-        <div className="govuk-service-navigation__container">
-          <span className="govuk-service-navigation__service-name">
+        <div className="govuk-service-navigation__container" ref={containerRef}>
+          <span
+            className="govuk-service-navigation__service-name"
+            ref={serviceNameRef}
+          >
             <SafeLink href="/">Local Transcribe</SafeLink>
           </span>
           <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
@@ -246,6 +296,34 @@ export function ServiceNav() {
                   </li>
                 )
               })}
+            </ul>
+            {/* Mirrors the nav as a single row so we can detect when the real
+                links would no longer fit. Hidden from layout and assistive
+                technology; only its width is ever read. */}
+            <ul
+              ref={measureRef}
+              aria-hidden="true"
+              className="govuk-service-navigation__list"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                display: 'flex',
+                flexWrap: 'nowrap',
+                width: 'max-content',
+                maxHeight: 'none',
+                whiteSpace: 'nowrap',
+                visibility: 'hidden',
+                pointerEvents: 'none',
+              }}
+            >
+              {visibleItems.map((item) => (
+                <li key={item.href} className="govuk-service-navigation__item">
+                  <span className="govuk-service-navigation__link">
+                    {item.name}
+                  </span>
+                </li>
+              ))}
             </ul>
           </nav>
         </div>
