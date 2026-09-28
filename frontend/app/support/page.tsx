@@ -1,10 +1,14 @@
+import { GovukBody, GovukHeading } from '@/components/govuk'
+
 export default function SupportPage() {
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-full">
-        <h1 className="govuk-heading-xl govuk-!-margin-bottom-6">Support</h1>
+        <GovukHeading size="xl" className="govuk-!-margin-bottom-6">
+          Support
+        </GovukHeading>
 
-        <p className="govuk-body-l govuk-!-margin-bottom-5">
+        <GovukBody size="l" className="govuk-!-margin-bottom-5">
           If you&apos;ve got a problem, or need support with using Local
           Transcribe, please email us:{' '}
           <a
@@ -14,12 +18,12 @@ export default function SupportPage() {
             LocalTranscribe@communities.gov.uk
           </a>
           .
-        </p>
+        </GovukBody>
 
-        <p className="govuk-body-l govuk-!-margin-bottom-0">
+        <GovukBody size="l" className="govuk-!-margin-bottom-0">
           Someone from the Local Transcribe team will respond within 5 working
           days.
-        </p>
+        </GovukBody>
       </div>
     </div>
   )
