@@ -41,7 +41,7 @@ export default function EditApprovedDomainsPage(props: {
   } = useAuthorisedUser([UserRole.MHCLG_SUPPORT_ADMIN])
 
   const { data: organisation, isLoading: organisationLoading } =
-    useOrganisation(organisationId)
+    useOrganisation(organisationId, !userLoading && isAllowed)
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (variables: {

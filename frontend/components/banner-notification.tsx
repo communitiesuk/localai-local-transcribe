@@ -1,20 +1,51 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useBannerStore } from '@/stores/use-banner-store'
+import { usePathname } from 'next/navigation'
+import { type Banner, useBannerStore } from '@/stores/use-banner-store'
 import { GovukNotificationBanner } from '@/components/govuk/notification-banner'
+
+let displayedBanner: Banner | null = null
+let displayedPath: string | null = null
+
+const resetDisplayedBanner = () => {
+  displayedBanner = null
+  displayedPath = null
+}
 
 export function BannerNotification() {
   const banner = useBannerStore((store) => store.banner)
+  const clearBanner = useBannerStore((store) => store.clearBanner)
+  const pathname = usePathname()
   const bannerRef = useRef<HTMLDivElement | null>(null)
+  const isStaleBanner =
+    banner && displayedBanner === banner && displayedPath !== pathname
 
   useEffect(() => {
-    if (banner && bannerRef.current) {
+    if (!banner) {
+      resetDisplayedBanner()
+      return
+    }
+
+    if (displayedBanner !== banner) {
+      displayedBanner = banner
+      displayedPath = pathname
+      return
+    }
+
+    if (isStaleBanner) {
+      clearBanner()
+      resetDisplayedBanner()
+    }
+  }, [banner, clearBanner, isStaleBanner, pathname])
+
+  useEffect(() => {
+    if (banner && !isStaleBanner && bannerRef.current) {
       bannerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
-  }, [banner])
+  }, [banner, isStaleBanner])
 
-  if (!banner) {
+  if (!banner || isStaleBanner) {
     return null
   }
 

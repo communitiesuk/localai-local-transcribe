@@ -336,5 +336,6 @@ describe('<EditApprovedDomainsPage />', () => {
     expect(
       screen.queryByRole('heading', { name: 'Edit approved domains' })
     ).not.toBeInTheDocument()
+    expect(useOrganisation).toHaveBeenCalledWith('org-1', false)
   })
 })
