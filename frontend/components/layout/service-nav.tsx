@@ -169,9 +169,6 @@ export function ServiceNav() {
   const serviceNameRef = useRef<HTMLSpanElement>(null)
   const measureRef = useRef<HTMLUListElement>(null)
 
-  // The visible list collapses in mobile mode, so it cannot tell us when there
-  // is room again. The hidden list always renders every item on one row, which
-  // gives a stable measurement in both directions.
   const updateIsMobile = useCallback(() => {
     if (window.innerWidth < TABLET_BREAKPOINT) {
       setIsMobile(true)
@@ -207,11 +204,7 @@ export function ServiceNav() {
     (item) => !item.isAdminOnly || hasAdminRole
   )
 
-  // Re-measure when the item set changes: 'User management' appears once the
-  // admin role loads, which makes the row wider than it was on first paint.
   useEffect(() => {
-    // ResizeObserver reports the initial size on observe(), so no priming call
-    // is needed; the fallback path schedules one after first paint instead.
     if (typeof ResizeObserver === 'undefined') {
       const frame = requestAnimationFrame(updateIsMobile)
       window.addEventListener('resize', updateIsMobile)
