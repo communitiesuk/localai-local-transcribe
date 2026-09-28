@@ -54,6 +54,7 @@ const minuteVersions: MinuteVersionResponse[] = [
 vi.mock('next/navigation', () => ({
   useRouter: () => null,
   useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/transcriptions/transcription-1',
   redirect: () => null,
 }))
 
