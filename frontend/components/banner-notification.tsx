@@ -5,14 +5,8 @@ import { useBannerStore } from '@/stores/use-banner-store'
 import { GovukNotificationBanner } from '@/components/govuk/notification-banner'
 
 export function BannerNotification() {
-  const { banner, clearBanner } = useBannerStore()
+  const banner = useBannerStore((store) => store.banner)
   const bannerRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    return () => {
-      clearBanner()
-    }
-  }, [clearBanner])
 
   useEffect(() => {
     if (banner && bannerRef.current) {
