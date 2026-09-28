@@ -94,6 +94,9 @@
     "typescript": "^5",
     "vitest": "^4.1.11"
   },
+  "overridesReason": {
+    "js-yaml": "Patch js-yaml CPU DoS CVEs CVE-2026-59869 and CVE-2026-84375 via transitive @hey-api/eslint deps."
+  },
   "overrides": {
     "js-yaml": "^4.3.2",
     "postcss": "^8.5.10"
