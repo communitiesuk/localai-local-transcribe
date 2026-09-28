@@ -1,4 +1,6 @@
 import datetime
+import html
+import re
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
@@ -275,4 +277,39 @@ def get_default_template_content(default_template: type[Template]) -> str:
         (message["content"] for message in messages if message.get("role") == "system"),
         default_template.description,
     )
-    return content.removeprefix(PROMPT_INJECTION_INSTRUCTIONS).strip()
+    return _plain_text_to_editable_html(content.removeprefix(PROMPT_INJECTION_INSTRUCTIONS).strip())
+
+
+def _plain_text_to_editable_html(content: str) -> str:
+    blocks: list[str] = []
+    list_items: list[str] = []
+
+    def flush_list() -> None:
+        if not list_items:
+            return
+        blocks.append("<ul>" + "".join(f"<li>{item}</li>" for item in list_items) + "</ul>")
+        list_items.clear()
+
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line:
+            flush_list()
+            continue
+
+        heading_match = re.fullmatch(r"(#{1,6})\s+(.+)", line)
+        if heading_match:
+            flush_list()
+            level = len(heading_match.group(1))
+            blocks.append(f"<h{level}>{html.escape(heading_match.group(2))}</h{level}>")
+            continue
+
+        list_match = re.fullmatch(r"[-*]\s+(.+)", line)
+        if list_match:
+            list_items.append(html.escape(list_match.group(1)))
+            continue
+
+        flush_list()
+        blocks.append(f"<p>{html.escape(line)}</p>")
+
+    flush_list()
+    return "\n".join(blocks) if blocks else "<p></p>"

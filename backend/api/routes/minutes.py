@@ -7,12 +7,13 @@ from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.queries import has_pending_minute_version_for_transcription
-from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Transcription
+from common.database.postgres_models import GuardrailResult, JobStatus, Minute, MinuteVersion, Transcription
+from common.guardrail_messages import get_guardrail_warning_message_for_results
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
     EditMessageData,
-    GuardrailResultResponse,
+    GuardrailWarningResponse,
     MinuteListItem,
     MinutesCreateRequest,
     MinuteVersionCreateRequest,
@@ -93,7 +94,6 @@ async def create_minute(
         ai_edit_instructions=minute_version.ai_edit_instructions,
         html_content=minute_version.html_content,
         content_source=minute_version.content_source,
-        guardrail_results=[],
     )
 
 
@@ -120,7 +120,7 @@ async def list_minute_versions(
         select(Minute)
         .where(Minute.id == minute_id)
         .options(
-            selectinload(Minute.minute_versions).selectinload(MinuteVersion.guardrail_results),
+            selectinload(Minute.minute_versions),
             selectinload(Minute.transcription),
         )
     )
@@ -142,16 +142,6 @@ async def list_minute_versions(
             html_content=version.html_content,
             content_source=version.content_source,
             too_short=is_too_short,
-            guardrail_results=[
-                GuardrailResultResponse(
-                    id=guardrail_result.id,
-                    passed=guardrail_result.passed,
-                    score=guardrail_result.score,
-                    reasoning=guardrail_result.reasoning,
-                    error=guardrail_result.error,
-                )
-                for guardrail_result in version.guardrail_results
-            ],
         )
         for version in minute.minute_versions
     ]
@@ -191,7 +181,6 @@ async def create_minute_version(
         ai_edit_instructions=minute_version.ai_edit_instructions,
         html_content=minute_version.html_content,
         content_source=minute_version.content_source,
-        guardrail_results=[],
     )
 
 
@@ -211,6 +200,30 @@ async def get_minute_version(minute_version_id: uuid.UUID, session: SQLSessionDe
         raise HTTPException(404, "Not found")
 
     return minute_version
+
+
+@minutes_router.get("/minute_versions/{minute_version_id}/guardrails")
+async def get_guardrail_warning(
+    minute_version_id: uuid.UUID, session: SQLSessionDep, _user: UserDep
+) -> GuardrailWarningResponse:
+    query = (
+        select(MinuteVersion)
+        .where(MinuteVersion.id == minute_version_id)
+        .options(
+            selectinload(MinuteVersion.guardrail_results).selectinload(GuardrailResult.failure_categories),
+            selectinload(MinuteVersion.minute).selectinload(Minute.transcription),
+        )
+    )
+    minute_version = (await session.exec(query)).first()
+    if not minute_version or not minute_version.minute.transcription.user_id:
+        raise HTTPException(404, "Not found")
+
+    return GuardrailWarningResponse(
+        message=get_guardrail_warning_message_for_results(
+            content_source=minute_version.content_source,
+            guardrail_results=minute_version.guardrail_results,
+        )
+    )
 
 
 @minutes_router.delete("/minute_versions/{minute_version_id}")

@@ -8,7 +8,6 @@ import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation, useGetOrganisations } from '@/hooks/use-organisation'
 import OrganisationOption from '@/components/organisation-options'
 import {
-  GovukBackLink,
   GovukButton,
   GovukButtonLink,
   GovukTag,
@@ -16,18 +15,26 @@ import {
 } from '@/components/govuk'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BannerNotification } from '@/components/banner-notification'
-import { useInviteUserStore } from '@/stores/use-invite-user-store'
 
 export default function UserManagementClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const [selectedOrganisation, setSelectedOrganisation] = useState('')
-  const { setInviteDetails } = useInviteUserStore()
+  const [selectedOrganisation, setSelectedOrganisation] = useState(
+    searchParams.get('organisationId') ?? ''
+  )
 
-  function getHref(page: number): string {
+  function getHref(
+    page: number,
+    organisationId = selectedOrganisation
+  ): string {
     const params = new URLSearchParams(searchParams.toString())
     params.set('page', String(page))
+    if (organisationId) {
+      params.set('organisationId', organisationId)
+    } else {
+      params.delete('organisationId')
+    }
     return `?${params.toString()}`
   }
 
@@ -52,12 +59,15 @@ export default function UserManagementClient() {
   const handleOrganisationChange = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value
     setSelectedOrganisation(value)
-    setInviteDetails('', '', '', value)
-    router.replace(getHref(1))
+    router.replace(getHref(1, value))
   }
 
   const handleInviteUser = () => {
-    router.push('/invite-user')
+    router.push(
+      selectedOrganisation
+        ? `/invite-user?organisationId=${encodeURIComponent(selectedOrganisation)}`
+        : '/invite-user'
+    )
   }
 
   const handleEditDomains = () => {
@@ -75,7 +85,6 @@ export default function UserManagementClient() {
 
   return (
     <>
-      <GovukBackLink />
       <BannerNotification />
 
       <div className="flex items-baseline gap-4">

@@ -166,7 +166,18 @@ describe('<UserPage />', () => {
         message: 'Permissions for Alice Smith saved at 01/01/2026, 12:00',
       })
     })
-    expect(mockReplace).toHaveBeenCalledWith('/user-management')
+    expect(mockReplace).toHaveBeenCalledWith(
+      '/user-management?organisationId=org-1'
+    )
+  })
+
+  it('links back to user management with the user organisation selected', () => {
+    renderPage()
+
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
+      'href',
+      '/user-management?organisationId=org-1'
+    )
   })
 
   it('shows an error banner and does not redirect when role update fails', async () => {

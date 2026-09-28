@@ -59,4 +59,33 @@ describe('<ModalConfirmationInterstitial />', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(defaultProps.onCancel).toHaveBeenCalledOnce()
   })
+
+  it('renders using the GOVUK warning classes when isWarning is true', () => {
+    render(<ModalConfirmationInterstitial {...defaultProps} isWarning={true} />)
+
+    const bodyText = screen.getByText(
+      'If you continue, your changes will not be saved.'
+    )
+    const warningIcon = screen.getByText('!')
+
+    expect(bodyText).toBeInTheDocument()
+    expect(bodyText).toHaveClass('govuk-warning-text__text')
+    expect(warningIcon).toBeInTheDocument()
+    expect(warningIcon).toHaveClass('govuk-warning-text__icon')
+  })
+
+  it('renders without using the GOVUK warning classes when isWarning is false', () => {
+    render(
+      <ModalConfirmationInterstitial {...defaultProps} isWarning={false} />
+    )
+
+    const bodyText = screen.getByText(
+      'If you continue, your changes will not be saved.'
+    )
+    const warningIcon = screen.queryByText('!')
+
+    expect(bodyText).toBeInTheDocument()
+    expect(bodyText).not.toHaveClass('govuk-warning-text__text')
+    expect(warningIcon).not.toBeInTheDocument()
+  })
 })

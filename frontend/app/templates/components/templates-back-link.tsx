@@ -12,6 +12,11 @@ const INTERSTITIAL_ROUTE =
 export function TemplatesBackLink() {
   const pathname = usePathname()
 
+  // no backlinks in top level route
+  if (pathname === '/templates') {
+    return null
+  }
+
   if (pathname && INTERSTITIAL_ROUTE.test(pathname)) {
     return null
   }

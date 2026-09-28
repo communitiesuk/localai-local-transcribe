@@ -25,7 +25,7 @@ export default function CreateNewOrganisationDomains() {
   const { mutate: createOrganisation, isPending: createOrganisationPending } =
     useMutation({
       ...createOrganisationOrganisationsPostMutation(),
-      onSuccess() {
+      onSuccess(createdOrganisation) {
         queryClient.invalidateQueries({
           queryKey: listOrganisationsOrganisationsGetQueryKey(),
         })
@@ -35,7 +35,9 @@ export default function CreateNewOrganisationDomains() {
           message: `Successfully created '${newOrg!.name}' at ${formatCurrentDateTime()}`,
         })
         clearNewOrg()
-        router.replace(`/user-management`)
+        router.replace(
+          `/user-management?organisationId=${createdOrganisation.id}`
+        )
       },
       onError() {
         router.replace('/generic-error')

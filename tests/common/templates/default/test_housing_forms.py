@@ -42,6 +42,8 @@ def test_housing_application_form_prompt_renders_fixed_application_sections():
     assert "# Primary household member details" in prompt
     assert "## Equality and Diversity Monitoring" in prompt
     assert "## Threat Of Abuse, Violence or Harassment" in prompt
+    assert "Birmingham" not in prompt
+    assert "the local authority" in prompt
     assert "Do not assess eligibility, banding, priority" in prompt
 
 
@@ -67,7 +69,15 @@ def test_triage_assessment_prompt_renders_triage_and_da_sections():
     assert "# Initial Triage Prompt investigation" in prompt
     assert "# DA Soft Approach Assessment" in prompt
     assert "Do not decide homelessness duties" in prompt
+    assert "- Homeless or at risk of becoming homeless:" in prompt
+    assert "- Day-to-day impact:" in prompt
+    assert "- Abuse description:" in prompt
     assert "## Proofs Requested" in prompt
+    assert "- Safe enquiry - safe contact time and method:" in prompt
+    assert "- Reason for application / why homeless / excluder details:" in prompt
+    assert "- Proofs requested to progress the case or access the housing register:" in prompt
+    assert "- R2B homeless/threatened with homelessness reason:" in prompt
+    assert "Q:" not in prompt
 
 
 def test_housing_templates_are_registered_with_metadata():
@@ -79,8 +89,19 @@ def test_housing_templates_are_registered_with_metadata():
     assert metadata_by_name["Triage Assessment"].category == "Housing"
 
 
-def test_default_templates_have_initial_prompt_version():
-    assert {template.prompt_version for template in TemplateManager.templates.values()} == {"0.1.0"}
+def test_default_templates_have_expected_prompt_versions():
+    prompt_versions_by_name = {
+        template.name: template.prompt_version for template in TemplateManager.templates.values()
+    }
+
+    assert prompt_versions_by_name["General"] == "0.1.1"
+    assert prompt_versions_by_name["Housing Application Form"] == "0.1.1"
+    assert prompt_versions_by_name["Triage Assessment"] == "0.1.1"
+    assert {
+        version
+        for name, version in prompt_versions_by_name.items()
+        if name not in {"General", "Housing Application Form", "Triage Assessment"}
+    } == {"0.1.0"}
 
 
 def test_housing_template_prompts_include_transcript_message():

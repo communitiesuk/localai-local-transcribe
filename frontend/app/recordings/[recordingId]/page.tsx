@@ -32,7 +32,7 @@ export default function RecordingPage(props: {
     error,
   } = useQuery({
     queryKey: ['db-recording-get', recordingId],
-    queryFn: async () => await getRecording(recordingId),
+    queryFn: async () => (await getRecording(recordingId)) ?? null,
   })
   if (isLoading) {
     return (

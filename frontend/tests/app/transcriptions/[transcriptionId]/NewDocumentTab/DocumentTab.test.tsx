@@ -20,6 +20,9 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['versions'],
   }),
+  getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions: () => ({
+    queryKey: ['guardrail-warning'],
+  }),
   createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
     mutationKey: ['create-minute-version'],
   }),
@@ -42,6 +45,8 @@ const configureQueries = (overrides: { versions?: unknown } = {}) => {
     switch (key) {
       case 'versions':
         return versionsResult
+      case 'guardrail-warning':
+        return { data: { message: null } }
     }
     return undefined
   }

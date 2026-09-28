@@ -1,5 +1,13 @@
 import { MhclgLogo } from '@/components/icons/mhclg-logo'
 
+const links = {
+  '/privacy': 'Local Transcribe User Privacy Notice',
+  '/privacy/end-service-user': 'End Service User Privacy Notice',
+  '/support': 'Support',
+  '/accessibility': 'Accessibility',
+  '/acceptable-use-policy': 'Acceptable Use Policy',
+}
+
 export default function GovFooter() {
   return (
     <footer className="govuk-footer" role="contentinfo">
@@ -11,29 +19,13 @@ export default function GovFooter() {
           <div className="govuk-footer__meta-item govuk-footer__meta-item--grow">
             <h2 className="govuk-visually-hidden">Support links</h2>
             <ul className="govuk-footer__inline-list">
-              <li className="govuk-footer__inline-list-item">
-                <a className="govuk-footer__link" href="/privacy">
-                  Local Transcribe User Privacy Notice
-                </a>
-              </li>
-              <li className="govuk-footer__inline-list-item">
-                <a
-                  className="govuk-footer__link"
-                  href="/privacy/end-service-user"
-                >
-                  End Service User Privacy Notice
-                </a>
-              </li>
-              <li className="govuk-footer__inline-list-item">
-                <a className="govuk-footer__link" href="/support">
-                  Support
-                </a>
-              </li>
-              <li className="govuk-footer__inline-list-item">
-                <a className="govuk-footer__link" href="/accessibility">
-                  Accessibility
-                </a>
-              </li>
+              {Object.entries(links).map(([key, value]) => (
+                <li key={key} className="govuk-footer__inline-list-item">
+                  <a className="govuk-footer__link" href={key}>
+                    {value}
+                  </a>
+                </li>
+              ))}
             </ul>
             <svg
               aria-hidden="true"

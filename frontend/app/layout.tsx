@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/header'
 import { ServiceNav } from '@/components/layout/service-nav'
 import { PhaseBanner } from '@/components/layout/phase-banner'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
+import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
 import PosthogProvider from '@/providers/posthog'
 import { RecordingDbProvider } from '@/providers/transcription-db-provider'
@@ -25,6 +26,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const appContent = (
+    <div className="govuk-modal-dialogue-inert-container">
+      <Header />
+      <ServiceNav />
+      <div className="govuk-width-container">
+        <PhaseBanner />
+      </div>
+
+      <div className="govuk-width-container">
+        <main id="main-content" className="govuk-main-wrapper">
+          {children}
+        </main>
+      </div>
+
+      <Footer />
+      <Toaster />
+      <GovukInit />
+    </div>
+  )
+
   return (
     <html lang="en" className={`govuk-template ${inter.className}`}>
       <body className="govuk-template__body js-enabled govuk-frontend-supported">
@@ -39,25 +60,11 @@ export default function RootLayout({
         <TanstackQueryProvider>
           <PosthogProvider>
             <LockNavigationProvider>
-              <RecordingDbProvider>
-                <div className="govuk-modal-dialogue-inert-container">
-                  <Header />
-                  <ServiceNav />
-                  <div className="govuk-width-container">
-                    <PhaseBanner />
-                  </div>
-
-                  <div className="govuk-width-container">
-                    <main id="main-content" className="govuk-main-wrapper">
-                      {children}
-                    </main>
-                  </div>
-
-                  <Footer />
-                  <Toaster />
-                  <GovukInit />
-                </div>
-              </RecordingDbProvider>
+              {OFFLINE_RECORDINGS_ENABLED ? (
+                <RecordingDbProvider>{appContent}</RecordingDbProvider>
+              ) : (
+                appContent
+              )}
             </LockNavigationProvider>
           </PosthogProvider>
         </TanstackQueryProvider>

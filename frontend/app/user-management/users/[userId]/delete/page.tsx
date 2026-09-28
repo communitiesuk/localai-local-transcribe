@@ -41,8 +41,11 @@ export default function UserPageDelete(props: {
     }),
   })
 
+  const userManagementHref = targetUser?.organisation_id
+    ? `/user-management?organisationId=${encodeURIComponent(targetUser.organisation_id)}`
+    : '/user-management'
   const redirectPath =
-    currentUser?.id === targetUser?.id ? '/' : '/user-management' // go to hompage if user deletes themself
+    currentUser?.id === targetUser?.id ? '/' : userManagementHref // go to homepage if user deletes themself
 
   const { mutate: deleteUser, isPending: deletePending } = useMutation({
     ...deleteUserUsersUserIdDeleteMutation(),

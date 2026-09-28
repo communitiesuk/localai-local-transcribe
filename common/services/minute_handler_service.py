@@ -72,6 +72,7 @@ class MinuteHandlerService:
                         explanation=detail.explanation,
                     )
                     for detail in score.categories
+                    if not passed
                 ],
             )
             session.add(guardrail_result)

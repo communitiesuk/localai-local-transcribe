@@ -1,9 +1,7 @@
 'use client'
 
 import SimpleEditor from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor'
-import { GuardrailResponseComponent } from '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/guardrail-response-component'
 import { MinuteVersionSelect } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-version-select'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
 import { ReviewGuardButton } from '@/components/review-guard/review-guard-button'
 import { ProcessingSpinner } from '@/components/processing-spinner'
 import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
@@ -14,13 +12,12 @@ import {
 } from '@/lib/client'
 import {
   createMinuteVersionMinutesMinuteIdVersionsPostMutation,
-  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation,
+  getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
@@ -30,6 +27,7 @@ import {
   GovukModalDialogue,
   GovukModalDialogueActions,
   GovukNotificationBanner,
+  GovukWarningText,
 } from '@/components/govuk'
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import { Banner, useBannerStore } from '@/stores/use-banner-store'
@@ -101,12 +99,22 @@ export function MinuteEditor({
   }
 
   const displayedMinuteVersion = determineMinuteVersionToShow()
+  const { data: guardrailWarning } = useQuery({
+    ...getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions({
+      path: { minute_version_id: displayedMinuteVersion?.id ?? '' },
+    }),
+    enabled:
+      !!displayedMinuteVersion &&
+      displayedMinuteVersion.status === 'completed' &&
+      !displayedMinuteVersion.too_short,
+  })
 
   const isGenerating = ['awaiting_start', 'in_progress'].includes(
     displayedMinuteVersion?.status || ''
   )
 
   const isError = displayedMinuteVersion?.status == 'failed'
+  const hasMultipleMinuteVersions = minuteVersions.length > 1
 
   // Busy if any version is generating, not just the viewed one, so a background AI edit still counts.
   const isAnyVersionGenerating = useMemo(
@@ -282,15 +290,17 @@ export function MinuteEditor({
   if (isError) {
     return (
       <div className="pt-2">
-        <div className="mb-2 flex flex-wrap justify-between gap-y-2">
-          <div className="flex flex-wrap gap-2">
-            <MinuteVersionSelect
-              minuteVersions={minuteVersions}
-              version={versionId}
-              setVersion={setVersionId}
-            />
+        {hasMultipleMinuteVersions && (
+          <div className="mb-2 flex flex-wrap justify-between gap-y-2">
+            <div className="flex flex-wrap gap-2">
+              <MinuteVersionSelect
+                minuteVersions={minuteVersions}
+                version={versionId}
+                setVersion={setVersionId}
+              />
+            </div>
           </div>
-        </div>
+        )}
         <div className="mx-auto pt-12">
           <GovukNotificationBanner
             variant="important"
@@ -298,19 +308,11 @@ export function MinuteEditor({
             className="mb-[15px]!"
           >
             <p className="govuk-notification-banner__heading">
-              {minuteVersions.length > 1
-                ? 'There was a problem processing your request. Click undo to go back to the previous version.'
-                : 'There was a problem processing your request. Try generating a new Minute.'}
+              {hasMultipleMinuteVersions
+                ? 'There was a problem processing your request. Select another version to go back to a previous version.'
+                : 'There was a problem processing your request. Create a new document to try again.'}
             </p>
           </GovukNotificationBanner>
-          {minuteVersions.length > 1 ? (
-            <MinuteVersionDeleteButton minuteVersion={displayedMinuteVersion} />
-          ) : (
-            <NewMinuteDialog
-              transcriptionId={transcription.id!}
-              agenda={minute.agenda ?? undefined}
-            />
-          )}
         </div>
       </div>
     )
@@ -390,7 +392,20 @@ export function MinuteEditor({
           disabled={isEditable}
         />
       </div>
-      <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-6 govuk-!-margin-bottom-6" />
+      {guardrailWarning?.message && (
+        <div className="box-border flex w-full flex-col items-start gap-2 pt-[27px] pb-5">
+          <GovukWarningText className="govuk-!-margin-bottom-0">
+            {guardrailWarning.message}
+          </GovukWarningText>
+        </div>
+      )}
+      <hr
+        className={
+          guardrailWarning?.message
+            ? 'govuk-section-break govuk-section-break--visible govuk-!-margin-top-0 govuk-!-margin-bottom-4'
+            : 'govuk-section-break govuk-section-break--visible govuk-!-margin-top-6 govuk-!-margin-bottom-6'
+        }
+      />
       {isEditable && (
         <GovukButtonGroup className="govuk-!-margin-bottom-3">
           <GovukButton type="button" onClick={form.handleSubmit(onSubmit)}>
@@ -405,12 +420,6 @@ export function MinuteEditor({
           </GovukButton>
         </GovukButtonGroup>
       )}
-      {!displayedMinuteVersion.too_short &&
-        displayedMinuteVersion.guardrail_results && (
-          <GuardrailResponseComponent
-            guardrailResults={displayedMinuteVersion.guardrail_results}
-          />
-        )}
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller
           control={form.control}
@@ -456,44 +465,6 @@ export function MinuteEditor({
         </GovukModalDialogueActions>
       </GovukModalDialogue>
     </div>
-  )
-}
-
-const MinuteVersionDeleteButton = ({
-  minuteVersion,
-  className,
-}: {
-  minuteVersion: MinuteVersionResponse
-  className?: string
-}) => {
-  const queryClient = useQueryClient()
-  const { mutate, isPending } = useMutation({
-    ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
-    onSuccess() {
-      queryClient.invalidateQueries({
-        queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
-          path: { minute_id: minuteVersion.minute_id },
-        }),
-      })
-      posthog.capture('deleted_minute_version', {
-        minuteVersionId: minuteVersion.id,
-      })
-    },
-  })
-  return (
-    <GovukButton
-      variant="secondary"
-      onClick={() => mutate({ path: { minute_version_id: minuteVersion.id } })}
-      className={className}
-    >
-      {isPending ? (
-        <>
-          <Loader2 className="animate-spin" /> Deleting
-        </>
-      ) : (
-        <>Undo</>
-      )}
-    </GovukButton>
   )
 }
 
