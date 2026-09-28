@@ -17,6 +17,7 @@ vi.mock('next/navigation', () => ({
     replace: mockReplace,
   }),
   useSearchParams: () => searchParams,
+  usePathname: () => '/user-management',
 }))
 
 vi.mock('@/hooks/use-authorised-user', () => ({
