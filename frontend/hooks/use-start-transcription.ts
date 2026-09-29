@@ -14,6 +14,36 @@ export type TranscriptionForm = {
   title?: string
 }
 
+const getMediaDurationSeconds = async (file: Blob | File) =>
+  new Promise<number | undefined>((resolve) => {
+    if (
+      typeof document === 'undefined' ||
+      typeof URL.createObjectURL !== 'function'
+    ) {
+      resolve(undefined)
+      return
+    }
+
+    const media = document.createElement(
+      file.type.startsWith('video/') ? 'video' : 'audio'
+    )
+    const objectUrl = URL.createObjectURL(file)
+
+    const finish = (duration?: number) => {
+      URL.revokeObjectURL(objectUrl)
+      resolve(duration)
+    }
+
+    media.preload = 'metadata'
+    media.onloadedmetadata = () => {
+      finish(Number.isFinite(media.duration) ? media.duration : undefined)
+    }
+    media.onerror = () => {
+      finish()
+    }
+    media.src = objectUrl
+  })
+
 export const useStartTranscription = (
   defaultValues?: Partial<TranscriptionForm>
 ) => {
@@ -75,10 +105,13 @@ export const useStartTranscription = (
         uploadUrl: recordingData.upload_url,
       })
 
+      const audio_duration_seconds = await getMediaDurationSeconds(file)
+
       const transcriptionData = await createTranscription({
         body: {
           recording_id: recordingData.id,
           title,
+          audio_duration_seconds,
         },
       })
 
