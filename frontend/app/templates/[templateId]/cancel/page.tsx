@@ -2,19 +2,23 @@
 
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
 import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { use } from 'react'
 
 export default function CancelTemplateEditPage(props: {
   params: Promise<{ templateId: string }>
 }) {
   const { templateId } = use(props.params)
+
+  const searchParams = useSearchParams()
+  const destination = searchParams.get('destination')
+
   const router = useRouter()
   const clearDraft = useTemplateDraftStore((store) => store.clearDraft)
 
   const handleDiscard = () => {
     clearDraft()
-    router.push('/templates')
+    router.push(destination || '/templates')
   }
 
   return (
