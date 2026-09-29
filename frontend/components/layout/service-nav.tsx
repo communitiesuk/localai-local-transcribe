@@ -149,10 +149,9 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-// Empirically determined: the narrowest width at which all six nav items
-// ('User management' being the longest) fit on a single row without wrapping.
-// Not a standard GOV.UK breakpoint — chosen to match this nav's content.
-const MOBILE_BREAKPOINT = 923
+// Keep the menu collapsed until the GOV.UK width container reaches its full
+// desktop width; all six links only fit when 'User management' is visible.
+const MOBILE_BREAKPOINT = 1020
 
 export function ServiceNav() {
   const pathname = usePathname()
