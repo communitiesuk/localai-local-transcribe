@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -149,42 +149,22 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-const OVERFLOW_TOLERANCE_PX = 0.5
-const TABLET_BREAKPOINT = 641
+const MOBILE_BREAKPOINT = 1020
 
 export function ServiceNav() {
   const pathname = usePathname()
   const { data: user } = useQuery(getUserUsersMeGetOptions())
   const [isMobile, setIsMobile] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const serviceNameRef = useRef<HTMLSpanElement>(null)
-  const measureRef = useRef<HTMLUListElement>(null)
-
-  const updateIsMobile = useCallback(() => {
-    if (window.innerWidth < TABLET_BREAKPOINT) {
-      setIsMobile(true)
-      return
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < MOBILE_BREAKPOINT
+      setIsMobile(mobile)
+      if (!mobile) setIsMenuOpen(false)
     }
-
-    const container = containerRef.current
-    const serviceName = serviceNameRef.current
-    const measure = measureRef.current
-    if (!container || !serviceName || !measure) return
-
-    // offsetWidth excludes margins, but the service name has a sizeable right
-    // margin that the links cannot encroach on, so add it back.
-    const { marginRight } = window.getComputedStyle(serviceName)
-    const serviceNameWidth =
-      serviceName.getBoundingClientRect().width + (parseFloat(marginRight) || 0)
-
-    const available = container.clientWidth - serviceNameWidth
-    if (available <= 0) return
-
-    const required = measure.getBoundingClientRect().width
-    const mobile = required - available > OVERFLOW_TOLERANCE_PX
-    setIsMobile(mobile)
-    if (!mobile) setIsMenuOpen(false)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   const hasAdminRole = hasAnyRole(user?.roles, [
@@ -196,22 +176,6 @@ export function ServiceNav() {
     (item) => !item.isAdminOnly || hasAdminRole
   )
 
-  useEffect(() => {
-    if (typeof ResizeObserver === 'undefined') {
-      const frame = requestAnimationFrame(updateIsMobile)
-      window.addEventListener('resize', updateIsMobile)
-      return () => {
-        cancelAnimationFrame(frame)
-        window.removeEventListener('resize', updateIsMobile)
-      }
-    }
-
-    const observer = new ResizeObserver(updateIsMobile)
-    if (containerRef.current) observer.observe(containerRef.current)
-    if (measureRef.current) observer.observe(measureRef.current)
-    return () => observer.disconnect()
-  }, [updateIsMobile, visibleItems.length])
-
   if (pathname?.startsWith('/terms-of-use')) {
     return null
   }
@@ -222,11 +186,8 @@ export function ServiceNav() {
       aria-label="Service information"
     >
       <div className="govuk-width-container">
-        <div className="govuk-service-navigation__container" ref={containerRef}>
-          <span
-            className="govuk-service-navigation__service-name"
-            ref={serviceNameRef}
-          >
+        <div className="govuk-service-navigation__container">
+          <span className="govuk-service-navigation__service-name">
             <SafeLink href="/">Local Transcribe</SafeLink>
           </span>
           <nav aria-label="Menu" className="govuk-service-navigation__wrapper">
@@ -281,31 +242,6 @@ export function ServiceNav() {
                   </li>
                 )
               })}
-            </ul>
-            <ul
-              ref={measureRef}
-              aria-hidden="true"
-              className="govuk-service-navigation__list"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                display: 'flex',
-                flexWrap: 'nowrap',
-                width: 'max-content',
-                maxHeight: 'none',
-                whiteSpace: 'nowrap',
-                visibility: 'hidden',
-                pointerEvents: 'none',
-              }}
-            >
-              {visibleItems.map((item) => (
-                <li key={item.href} className="govuk-service-navigation__item">
-                  <span className="govuk-service-navigation__link">
-                    {item.name}
-                  </span>
-                </li>
-              ))}
             </ul>
           </nav>
         </div>
