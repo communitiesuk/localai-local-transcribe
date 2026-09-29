@@ -14,16 +14,16 @@
 -- x
 --
 -- duplicate/retried events:
--- uses the earliest AUDIO_UPLOAD_STARTED and earliest TRANSCRIPTION_RECEIVED per recording_id.
+-- uses the earliest AUDIO_UPLOAD_STARTED and earliest TRANSCRIPTION_RECEIVED per recording_id
 
 
-WITH 
-upload_started AS (
+WITH upload_started AS (
     SELECT
         recording_id,
         MIN(occurred_datetime) AS upload_started_at
     FROM analytics_event
     WHERE event_type = 'AUDIO_UPLOAD_STARTED'
+        AND recording_id IS NOT NULL
     GROUP BY recording_id
 ),
 
@@ -33,6 +33,7 @@ transcription_received AS (
         MIN(occurred_datetime) AS transcription_received_at
     FROM analytics_event
     WHERE event_type = 'TRANSCRIPTION_RECEIVED'
+        AND recording_id IS NOT NULL
     GROUP BY recording_id
 ),
 
