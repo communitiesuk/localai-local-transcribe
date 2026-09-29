@@ -149,15 +149,7 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-// Sub-pixel tolerance so that a row which fits exactly is not treated as
-// overflowing. Deliberately tiny: with 'User management' visible the nav only
-// has a few pixels of slack at the maximum page width, so a larger cushion
-// would pin admins to the menu at every width.
 const OVERFLOW_TOLERANCE_PX = 0.5
-
-// GOV.UK only lays the nav out as a single row from the tablet breakpoint.
-// Below it the list is not a flex row and items have no horizontal spacing,
-// so measuring there would be meaningless — it is always the menu.
 const TABLET_BREAKPOINT = 641
 
 export function ServiceNav() {
@@ -290,9 +282,6 @@ export function ServiceNav() {
                 )
               })}
             </ul>
-            {/* Mirrors the nav as a single row so we can detect when the real
-                links would no longer fit. Hidden from layout and assistive
-                technology; only its width is ever read. */}
             <ul
               ref={measureRef}
               aria-hidden="true"
