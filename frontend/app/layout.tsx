@@ -3,6 +3,7 @@ import { GovukInit } from '@/components/layout/govuk-init'
 import { Header } from '@/components/layout/header'
 import { ServiceNav } from '@/components/layout/service-nav'
 import { PhaseBanner } from '@/components/layout/phase-banner'
+import { RouteWatcher } from '@/components/route-watcher'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
@@ -60,6 +61,7 @@ export default function RootLayout({
         <TanstackQueryProvider>
           <PosthogProvider>
             <LockNavigationProvider>
+              <RouteWatcher />
               {OFFLINE_RECORDINGS_ENABLED ? (
                 <RecordingDbProvider>{appContent}</RecordingDbProvider>
               ) : (

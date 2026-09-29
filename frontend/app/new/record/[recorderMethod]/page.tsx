@@ -6,6 +6,7 @@ import { MicRecorderForm } from '@/components/audio/mic-recorder'
 import { TabRecorderForm } from '@/components/audio/tab-recorder/tab-recorder'
 import { GovukHeading } from '@/components/govuk'
 import { GovukBackLinkWithLockNav } from '@/components/layout/govuk-back-link-with-lock-nav'
+import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import {
   useRecordingUIStore,
   type RecordingState,
@@ -27,7 +28,7 @@ const titleMapper: Record<RecordingState, string | boolean> = {
 const statesWithBackLink: RecordingState[] = ['idle', 'recording', 'paused']
 
 const navLockMessage =
-  'You have a recording that has not been uploaded, are you sure you want to leave this page? Your recording will be discarded if you do not upload it.'
+  'You have a recording that has not been uploaded. Your recording will be discarded if you do not upload it.'
 
 function RecordingIcon({ state }: { state: RecordingState }) {
   const colour =
@@ -72,7 +73,15 @@ export default function RecordPage() {
   return (
     <div>
       {statesWithBackLink.includes(recordingUIState) && (
-        <GovukBackLinkWithLockNav href="/" message={navLockMessage} />
+        <GovukBackLinkWithLockNav
+          href="/"
+          message={navLockMessage}
+          onLeave={() => {
+            const store = useUploadRecordingStore.getState()
+            store.cancelRequest()
+            store.reset()
+          }}
+        />
       )}
       {titleMapper[recordingUIState] && (
         <div className="flex gap-2">

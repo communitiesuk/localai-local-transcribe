@@ -21,7 +21,6 @@ export function UploadStatus() {
     status,
     transcriptionId,
     uploadingFrom,
-    error,
     awaitingManualRetry,
     reset,
     retryUpload,
@@ -39,37 +38,35 @@ export function UploadStatus() {
     }
   }, [status, transcriptionId, reset, router])
 
-  if (status === 'error') {
-    return (
-      <div className="space-y-4">
-        <GovukHeading>We could not upload your recording</GovukHeading>
-        <p className="govuk-error-message" role="alert">
-          <span className="govuk-visually-hidden">Error:</span> Something went
-          wrong while uploading your recording. It&apos;s still held on this
-          device, so you can try again but it will be lost if you leave this
-          page without uploading it.
-        </p>
-        <GovukButton
-          type="button"
-          onClick={() => retryUpload()}
-          disabled={!isOnline}
-        >
-          Retry
-        </GovukButton>
-      </div>
-    )
-  }
+  const needsRetry =
+    status === 'error' || (status === 'pending' && awaitingManualRetry)
 
-  if (status === 'pending' && awaitingManualRetry) {
+  if (needsRetry) {
+    const heading =
+      status === 'error'
+        ? 'We could not upload your recording'
+        : isOnline
+          ? 'Ready to retry'
+          : 'Waiting to reconnect'
+
+    const message =
+      status === 'error'
+        ? "Something went wrong while uploading your recording. It's still held on this device, so you can try again but it will be lost if you leave this page without uploading it."
+        : isOnline
+          ? "You're back online. Your recording is safely held on this device. Select retry to upload it."
+          : "You're currently offline. Your recording is safely held on this device. Once your connection returns, select retry to upload it. Don't close this tab or navigate away, your recording will be lost if you leave now."
+
     return (
       <div className="space-y-4">
-        <GovukHeading>
-          {isOnline ? 'Ready to retry' : 'Waiting to reconnect'}
-        </GovukHeading>
-        <p className="govuk-body">
-          {isOnline
-            ? "You're back online. Your recording is safely held on this device. Select retry to upload it."
-            : "You're currently offline. Your recording is safely held on this device. Once your connection returns, select retry to upload it. Don't close this tab or navigate away, your recording will be lost if you leave now."}
+        <GovukHeading>{heading}</GovukHeading>
+        <p
+          className={status === 'error' ? 'govuk-error-message' : 'govuk-body'}
+          role={status === 'error' ? 'alert' : undefined}
+        >
+          {status === 'error' && (
+            <span className="govuk-visually-hidden">Error: </span>
+          )}
+          {message}
         </p>
         <GovukButton
           type="button"

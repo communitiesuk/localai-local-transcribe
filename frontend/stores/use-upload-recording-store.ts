@@ -3,7 +3,10 @@ import { create } from 'zustand'
 
 type UploadRecordingStatus = 'idle' | 'pending' | 'success' | 'error'
 type UploadingFrom = 'upload' | 'recording' | null
-type SubmitFn = (values: TranscriptionForm) => Promise<string | null>
+type SubmitFn = (
+  values: TranscriptionForm,
+  signal: AbortSignal
+) => Promise<string | null>
 
 type UploadRecordingStore = {
   status: UploadRecordingStatus
@@ -19,6 +22,7 @@ type UploadRecordingStore = {
   ) => Promise<void>
 
   retryUpload: () => Promise<void>
+  cancelRequest: () => void
   reset: () => void
   _values: TranscriptionForm | null
   _submit: SubmitFn | null
@@ -29,12 +33,18 @@ export const useUploadRecordingStore = create<UploadRecordingStore>(
     const isOnline = () =>
       typeof navigator === 'undefined' ? true : navigator.onLine
 
+    let controller: AbortController | null = null
+
     const runUpload = async (
       uploadingFrom: UploadingFrom,
       values: TranscriptionForm,
       submit: SubmitFn
     ) => {
       const online = isOnline()
+
+      controller?.abort()
+      controller = new AbortController()
+      const { signal } = controller
 
       set({
         status: 'pending',
@@ -51,7 +61,11 @@ export const useUploadRecordingStore = create<UploadRecordingStore>(
       }
 
       try {
-        const transcriptionId = await submit(values)
+        const transcriptionId = await submit(values, signal)
+
+        if (signal.aborted) {
+          return
+        }
 
         set({
           status: 'success',
@@ -59,6 +73,13 @@ export const useUploadRecordingStore = create<UploadRecordingStore>(
           error: null,
         })
       } catch (error) {
+        if (
+          signal.aborted ||
+          (error instanceof Error && error.name === 'AbortError')
+        ) {
+          return
+        }
+
         set({
           status: 'error',
           transcriptionId: null,
@@ -90,7 +111,13 @@ export const useUploadRecordingStore = create<UploadRecordingStore>(
         return runUpload(uploadingFrom, _values, _submit)
       },
 
+      cancelRequest: () => {
+        controller?.abort()
+        controller = null
+      },
+
       reset: () => {
+        get().cancelRequest()
         set({
           status: 'idle',
           transcriptionId: null,

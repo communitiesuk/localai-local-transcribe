@@ -24,7 +24,7 @@ describe('useUploadRecordingStore', () => {
       .getState()
       .startUpload('recording', { file: null }, submit)
 
-    expect(submit).toHaveBeenCalledWith({ file: null })
+    expect(submit).toHaveBeenCalledWith({ file: null }, expect.any(AbortSignal))
     expect(useUploadRecordingStore.getState()).toMatchObject({
       status: 'success',
       transcriptionId: 'transcription-123',
@@ -76,7 +76,7 @@ describe('useUploadRecordingStore', () => {
     setOnline(true)
     await useUploadRecordingStore.getState().retryUpload()
 
-    expect(submit).toHaveBeenCalledWith({ file })
+    expect(submit).toHaveBeenCalledWith({ file }, expect.any(AbortSignal))
     expect(useUploadRecordingStore.getState()).toMatchObject({
       status: 'success',
       transcriptionId: 'transcription-456',
@@ -130,5 +130,37 @@ describe('useUploadRecordingStore', () => {
 
     await useUploadRecordingStore.getState().retryUpload()
     expect(submit).toHaveBeenCalledTimes(1)
+  })
+
+  it('starting a new upload aborts a previous in-flight attempt so its late resolution cannot overwrite newer state', async () => {
+    let resolveFirst: (value: string) => void = () => {}
+    const firstSubmit = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveFirst = resolve
+        })
+    )
+    const secondSubmit = vi.fn().mockResolvedValue('transcription-second')
+
+    const firstUpload = useUploadRecordingStore
+      .getState()
+      .startUpload('recording', { file: null }, firstSubmit)
+
+    await useUploadRecordingStore
+      .getState()
+      .startUpload('recording', { file: null }, secondSubmit)
+
+    expect(useUploadRecordingStore.getState()).toMatchObject({
+      status: 'success',
+      transcriptionId: 'transcription-second',
+    })
+
+    resolveFirst('transcription-first')
+    await firstUpload
+
+    expect(useUploadRecordingStore.getState()).toMatchObject({
+      status: 'success',
+      transcriptionId: 'transcription-second',
+    })
   })
 })

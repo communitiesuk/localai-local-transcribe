@@ -34,9 +34,11 @@ export const useStartTranscription = (
     mutationFn: async ({
       uploadUrl,
       file,
+      signal,
     }: {
       uploadUrl: string
       file: Blob | File
+      signal?: AbortSignal
     }) => {
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
@@ -44,6 +46,7 @@ export const useStartTranscription = (
         headers: {
           'x-ms-blob-type': 'BlockBlob',
         },
+        signal,
       })
 
       if (!uploadResponse.ok) {
@@ -53,7 +56,10 @@ export const useStartTranscription = (
   })
 
   const onSubmit = useCallback(
-    async ({ file, recordingId, title }: TranscriptionForm) => {
+    async (
+      { file, recordingId, title }: TranscriptionForm,
+      signal: AbortSignal
+    ) => {
       if (!file) {
         return null
       }
@@ -68,11 +74,13 @@ export const useStartTranscription = (
 
       const recordingData = await createRecording({
         body: { file_extension, file_created_at },
+        signal,
       })
 
       await uploadBlob({
         file,
         uploadUrl: recordingData.upload_url,
+        signal,
       })
 
       const transcriptionData = await createTranscription({
@@ -80,6 +88,7 @@ export const useStartTranscription = (
           recording_id: recordingData.id,
           title,
         },
+        signal,
       })
 
       if (recordingId) {

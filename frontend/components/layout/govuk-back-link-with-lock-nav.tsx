@@ -18,11 +18,13 @@ import { useRouter } from 'next/navigation'
 type GovBackLinkWithLockNavProps = {
   href: string
   message: string
+  onLeave?: () => void
 }
 
 export function GovukBackLinkWithLockNav({
   href,
   message,
+  onLeave,
 }: GovBackLinkWithLockNavProps) {
   const router = useRouter()
   const { lockNavigation, setLockNavigation } = useLockNavigationContext()
@@ -49,6 +51,7 @@ export function GovukBackLinkWithLockNav({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={() => {
+              onLeave?.()
               setLockNavigation(false)
               router.push(href)
             }}
