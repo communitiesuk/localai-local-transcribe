@@ -15,7 +15,7 @@ export default function SupportPage() {
             className="govuk-link"
             href="mailto:LocalTranscribe@communities.gov.uk"
           >
-            LocalTranscribe@communities.gov.uk
+            LocalTranscribeSupport@communities.gov.uk
           </a>
           .
         </GovukBody>
