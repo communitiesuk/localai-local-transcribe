@@ -11,9 +11,11 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, fie
 from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
+    AnalyticsEventName,
     ContentSource,
     DialogueEntry,
     JobStatus,
+    RecordingSource,
     TemplateType,
     UserRole,
 )
@@ -84,6 +86,7 @@ class TranscriptionCreateRequest(BaseModel):
 class RecordingCreateRequest(BaseModel):
     file_extension: str
     file_created_at: datetime | None = None
+    source: RecordingSource | None = None
 
 
 class RecordingCreateResponse(BaseModel):
@@ -529,3 +532,7 @@ class OrganisationPatchRequest(BaseModel):
 
 class UserExistsResponse(BaseModel):
     exists: bool
+
+
+class AnalyticsEventRequest(BaseModel):
+    name: AnalyticsEventName

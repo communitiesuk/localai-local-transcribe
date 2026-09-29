@@ -88,6 +88,12 @@ variable "app_url" {
   type        = string
 }
 
+variable "plausible_domain" {
+  description = "Plausible site that analytics events are recorded against. Events are stored in our own database when this is empty."
+  type        = string
+  default     = ""
+}
+
 variable "max_transcription_processes" {
   description = "maximum number of transcription processes to run"
   type        = number

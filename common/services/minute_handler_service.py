@@ -6,16 +6,19 @@ from uuid import UUID
 
 import mistune
 from sqlalchemy.orm import selectinload
+from sqlmodel import select
 
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import (
+    AnalyticsEventName,
     DialogueEntry,
     GuardrailFailureCategory,
     GuardrailResult,
     JobStatus,
     Minute,
     MinuteVersion,
+    User,
     UserTemplate,
 )
 from common.format_transcript import transcript_as_speaker_and_utterance
@@ -26,6 +29,7 @@ from common.prompts import (
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
+from common.services.analytics_service import AnalyticsService
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.templates.user_template import generate_user_template
@@ -226,6 +230,10 @@ class MinuteHandlerService:
                 status=JobStatus.COMPLETED,
                 template_prompt_version=result.template_prompt_version,
             )
+            AnalyticsService.record_event(
+                AnalyticsEventName.SUMMARY_RECEIVED,
+                cls.get_organisation_id(minute_version.minute.transcription.user_id),
+            )
 
         except Exception as e:
             logger.exception(
@@ -236,6 +244,17 @@ class MinuteHandlerService:
             )
             cls.update_minute_version(minute_version.id, status=JobStatus.FAILED, error=str(e))
             raise MinuteGenerationFailedError from e
+
+    @classmethod
+    def get_organisation_id(cls, user_id: UUID | None) -> UUID | None:
+        if not user_id:
+            return None
+        try:
+            with SessionLocal() as session:
+                return session.exec(select(User.organisation_id).where(User.id == user_id)).first()
+        except Exception:
+            logger.exception("Failed to look up the organisation for an analytics event")
+            return None
 
     @classmethod
     async def process_minute_edit_message(cls, source_minute_version_id: UUID, target_minute_version_id: UUID) -> None:

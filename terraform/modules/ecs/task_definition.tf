@@ -4,6 +4,9 @@ locals {
       name  = "ENVIRONMENT"
       value = var.environment
       }, {
+      name  = "PLAUSIBLE_DOMAIN"
+      value = var.plausible_domain
+      }, {
       name  = "USE_ELASTICMQ"
       value = "false"
       }, {

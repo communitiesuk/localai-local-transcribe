@@ -7,8 +7,16 @@ from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.queries import has_pending_minute_version_for_transcription
-from common.database.postgres_models import GuardrailResult, JobStatus, Minute, MinuteVersion, Transcription
+from common.database.postgres_models import (
+    AnalyticsEventName,
+    GuardrailResult,
+    JobStatus,
+    Minute,
+    MinuteVersion,
+    Transcription,
+)
 from common.guardrail_messages import get_guardrail_warning_message_for_results
+from common.services.analytics_service import AnalyticsService
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
@@ -84,6 +92,7 @@ async def create_minute(
     await session.commit()
     await session.refresh(minute_version)
     llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+    await AnalyticsService.record_event_async(AnalyticsEventName.SUMMARY_REQUESTED)
 
     return MinuteVersionResponse(
         id=minute_version.id,

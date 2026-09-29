@@ -9,6 +9,7 @@ import {
   MicrophonePermission,
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import {
@@ -222,8 +223,9 @@ function TabRecorder({
       const mediaRecorder = new MediaRecorder(composedStream, options)
       mediaRecorderRef.current = mediaRecorder
 
-      if (OFFLINE_RECORDINGS_ENABLED) {
-        mediaRecorder.onstart = async () => {
+      mediaRecorder.onstart = async () => {
+        void recordAnalyticsEvent('live_recording_started_or_upload_requested')
+        if (OFFLINE_RECORDINGS_ENABLED) {
           const recordingId = await addRecording(new Blob())
           form.setValue('recordingId', recordingId)
         }

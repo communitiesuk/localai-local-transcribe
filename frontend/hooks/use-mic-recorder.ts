@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { type TranscriptionForm } from '@/hooks/use-start-transcription'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { AudioDevice } from '@/components/audio/microphone-permission'
@@ -78,8 +79,9 @@ export function useMicRecorder({
       mediaRecorderRef.current = mediaRecorder
       setMediaRecorderStream(mediaRecorder.stream)
 
-      if (OFFLINE_RECORDINGS_ENABLED) {
-        mediaRecorder.onstart = async () => {
+      mediaRecorder.onstart = async () => {
+        void recordAnalyticsEvent('live_recording_started_or_upload_requested')
+        if (OFFLINE_RECORDINGS_ENABLED) {
           const recordingId = await addRecording(new Blob())
           form.setValue('recordingId', recordingId)
         }

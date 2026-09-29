@@ -17,6 +17,7 @@ from common.database.postgres_models import (
     Recording,
     Transcription,
 )
+from common.services.analytics_service import TRANSCRIPT_REQUESTED_BY_SOURCE, AnalyticsService
 from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
 from common.services.storage_services.audio_deletion import delete_recording_file_and_row
@@ -260,7 +261,12 @@ async def create_recording(
     recording_id = uuid.uuid4()
     file_name = f"{recording_id}.{request.file_extension}"
     user_upload_s3_file_key = get_file_s3_key(user.email, file_name)
-    recording = Recording(user_id=user.id, s3_file_key=user_upload_s3_file_key, file_created_at=request.file_created_at)
+    recording = Recording(
+        user_id=user.id,
+        s3_file_key=user_upload_s3_file_key,
+        file_created_at=request.file_created_at,
+        source=request.source,
+    )
     session.add(recording)
     await session.commit()
     presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
@@ -298,6 +304,9 @@ async def create_transcription(
     recording.transcription_id = transcription.id
     await session.commit()
     transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION))
+    transcript_requested_event = TRANSCRIPT_REQUESTED_BY_SOURCE.get(recording.source) if recording.source else None
+    if transcript_requested_event:
+        await AnalyticsService.record_event_async(transcript_requested_event)
 
     return TranscriptionCreateResponse(id=transcription.id)
 

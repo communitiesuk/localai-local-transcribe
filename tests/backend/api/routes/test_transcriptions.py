@@ -21,7 +21,7 @@ from backend.api.routes.transcriptions import (
     update_transcription_title,
 )
 from backend.utils.transcription_search_filters import _transcription_search_filters
-from common.database.postgres_models import JobStatus
+from common.database.postgres_models import AnalyticsEventName, JobStatus, RecordingSource
 from common.types import (
     RecordingCreateRequest,
     RenameSpeakerRequest,
@@ -757,3 +757,70 @@ async def test_delete_transcription_not_found(mock_session, mock_user):
     with pytest.raises(HTTPException) as exc:
         await delete_transcription(uuid.uuid4(), mock_session, mock_user)
     assert exc.value.status_code == 404
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("source", "expected_event"),
+    [
+        (RecordingSource.LIVE_RECORDING, AnalyticsEventName.TRANSCRIPT_REQUESTED_FOR_LIVE_RECORDING),
+        (RecordingSource.DIRECT_UPLOAD, AnalyticsEventName.TRANSCRIPT_REQUESTED_FOR_DIRECT_UPLOAD),
+    ],
+)
+async def test_create_transcription_records_the_event_for_the_source_of_the_recording(
+    mocker,
+    mock_session_with_recording,
+    mock_recording,
+    mock_user,
+    mock_transcription_queue_service,  # NOQA: ARG001
+    transcription_request,
+    mock_storage_service,  # NOQA: ARG001
+    source,
+    expected_event,
+):
+    mock_recording.source = source
+    record_event = mocker.patch(
+        "backend.api.routes.transcriptions.AnalyticsService.record_event_async", new=AsyncMock()
+    )
+
+    await create_transcription(transcription_request, mock_session_with_recording, mock_user)
+
+    record_event.assert_awaited_once_with(expected_event)
+
+
+@pytest.mark.asyncio
+async def test_create_transcription_records_no_event_when_the_source_is_unknown(
+    mocker,
+    mock_session_with_recording,
+    mock_recording,
+    mock_user,
+    mock_transcription_queue_service,  # NOQA: ARG001
+    transcription_request,
+    mock_storage_service,  # NOQA: ARG001
+):
+    mock_recording.source = None
+    record_event = mocker.patch(
+        "backend.api.routes.transcriptions.AnalyticsService.record_event_async", new=AsyncMock()
+    )
+
+    await create_transcription(transcription_request, mock_session_with_recording, mock_user)
+
+    record_event.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("source", [RecordingSource.LIVE_RECORDING, RecordingSource.DIRECT_UPLOAD])
+async def test_create_recording_stores_the_source_it_was_given(
+    mocker,
+    mock_session,
+    mock_user,
+    mock_storage_service,  # NOQA: ARG001
+    mock_recording,
+    source,
+):
+    request = RecordingCreateRequest(file_extension="webm", source=source)
+    recording_class = mocker.patch("backend.api.routes.transcriptions.Recording", return_value=mock_recording)
+
+    await create_recording(request, mock_session, mock_user)
+
+    assert recording_class.call_args.kwargs["source"] == source

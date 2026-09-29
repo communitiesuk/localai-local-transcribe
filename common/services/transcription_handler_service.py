@@ -11,6 +11,7 @@ from common.database.postgres_models import Chat, JobStatus, Minute, Transcripti
 from common.generate_meeting_title import generate_meeting_title
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_chat_with_transcript_system_message
+from common.services.analytics_service import TRANSCRIPT_RECEIVED_BY_SOURCE, AnalyticsService
 from common.services.exceptions import InteractionFailedError, TranscriptionFailedError
 from common.services.transcription_services.transcription_manager import TranscriptionServiceManager
 from common.settings import get_settings
@@ -182,6 +183,12 @@ class TranscriptionHandlerService:
                 cls.update_transcription(
                     transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
                 )
+                recording_source = transcription.recordings[0].source if transcription.recordings else None
+                transcript_received_event = (
+                    TRANSCRIPT_RECEIVED_BY_SOURCE.get(recording_source) if recording_source else None
+                )
+                if transcript_received_event:
+                    AnalyticsService.record_event(transcript_received_event)
 
         except Exception as e:
             msg = f"Transcription failed: {e!s}"

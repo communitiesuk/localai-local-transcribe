@@ -160,10 +160,19 @@ class UserAuthEmail(BaseTableMixin, table=True):
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
 
 
+class RecordingSource(StrEnum):
+    LIVE_RECORDING = auto()
+    DIRECT_UPLOAD = auto()
+
+
 class Recording(BaseTableMixin, table=True):
     __tablename__ = "recording"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
+    source: RecordingSource | None = Field(
+        default=None,
+        sa_column=Column(Enum(RecordingSource, name="recordingsource"), nullable=True),
+    )
     s3_file_key: str
     file_created_at: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL", index=True)
@@ -316,3 +325,27 @@ class GuardrailFailureCategory(BaseTableMixin, table=True):
         default=None,
         description="Evidence explaining this failure",
     )
+
+
+class AnalyticsEventName(StrEnum):
+    LIVE_RECORDING_STARTED_OR_UPLOAD_REQUESTED = auto()
+    AUDIO_UPLOAD_COMPLETE_FROM_LIVE_RECORDING = auto()
+    AUDIO_UPLOAD_COMPLETE_FROM_DIRECT_UPLOAD = auto()
+    TRANSCRIPT_REQUESTED_FOR_LIVE_RECORDING = auto()
+    TRANSCRIPT_REQUESTED_FOR_DIRECT_UPLOAD = auto()
+    TRANSCRIPT_RECEIVED_FOR_LIVE_RECORDING = auto()
+    TRANSCRIPT_RECEIVED_FOR_DIRECT_UPLOAD = auto()
+    SUMMARY_REQUESTED = auto()
+    SUMMARY_RECEIVED = auto()
+
+
+class AnalyticsEvent(BaseTableMixin, table=True):
+    __tablename__ = "analytics_event"
+
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+
+    name: AnalyticsEventName = Field(
+        sa_column=Column(Enum(AnalyticsEventName, name="analyticseventname"), nullable=False, index=True)
+    )
+
+    organisation_id: UUID | None = Field(default=None, sa_column=Column(SAUUID, nullable=True))

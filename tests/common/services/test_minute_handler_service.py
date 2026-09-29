@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 
 from common.database.postgres_models import (
+    AnalyticsEventName,
     DialogueEntry,
     JobStatus,
     Minute,
@@ -573,3 +574,37 @@ async def test_process_minute_edit_message_raises_if_no_transcript(
         await MinuteHandlerService.process_minute_edit_message(mock_minute_version.id, target.id)
 
     assert "Source minute version has no transcript" in str(exc_info.value.__cause__)
+
+
+@pytest.mark.asyncio
+async def test_process_minute_generation_records_the_summary_event_with_the_organisation():
+    organisation_id = uuid4()
+    minute_version = MagicMock()
+    minute_version.id = uuid4()
+    minute_version.minute.transcription.dialogue_entries = [
+        {"speaker": "A", "text": "word " * 201, "start_time": 0.0, "end_time": 1.0}
+    ]
+
+    with (
+        patch.object(MinuteHandlerService, "get_minute_version", new=AsyncMock(return_value=minute_version)),
+        patch.object(MinuteHandlerService, "predict_meeting", return_value=MeetingType.standard),
+        patch.object(
+            MinuteHandlerService,
+            "generate_minutes",
+            new=AsyncMock(
+                return_value=MinuteAndHallucinations(
+                    text="<html>Minutes</html>",
+                    total_claims=0,
+                    hallucinations=[],
+                    citation_quality_applicable=False,
+                )
+            ),
+        ),
+        patch.object(MinuteHandlerService, "_run_accuracy_guardrail", new=AsyncMock()),
+        patch.object(MinuteHandlerService, "update_minute_version"),
+        patch.object(MinuteHandlerService, "get_organisation_id", return_value=organisation_id),
+        patch("common.services.minute_handler_service.AnalyticsService.record_event") as record_event,
+    ):
+        await MinuteHandlerService.process_minute_generation_message(minute_version.id)
+
+    record_event.assert_called_once_with(AnalyticsEventName.SUMMARY_RECEIVED, organisation_id)

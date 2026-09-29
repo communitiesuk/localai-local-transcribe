@@ -1,23 +1,34 @@
 {
   "openapi": "3.1.0",
-  "info": { "title": "FastAPI", "version": "0.1.0" },
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
   "paths": {
     "/healthcheck": {
       "get": {
-        "tags": ["Healthcheck"],
+        "tags": [
+          "Healthcheck"
+        ],
         "summary": "Healthcheck",
         "operationId": "healthcheck_healthcheck_get",
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           }
         }
       }
     },
     "/transcriptions/labelled": {
       "get": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "List Labelled Transcriptions",
         "description": "Get paginated metadata for labelled transcriptions for the current user.",
         "operationId": "list_labelled_transcriptions_transcriptions_labelled_get",
@@ -65,7 +76,14 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "Filter by client name",
               "title": "Client Name"
             },
@@ -76,7 +94,14 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "Filter by case ID",
               "title": "Case Id"
             },
@@ -87,7 +112,14 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "Filter by subject",
               "title": "Subject"
             },
@@ -99,8 +131,13 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "string", "format": "date" },
-                { "type": "null" }
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by date recorded",
               "title": "Date Of Recording"
@@ -113,8 +150,14 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "integer", "maximum": 31, "minimum": 1 },
-                { "type": "null" }
+                {
+                  "type": "integer",
+                  "maximum": 31,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by recorded day",
               "title": "Date Of Recording Day"
@@ -127,8 +170,14 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "integer", "maximum": 12, "minimum": 1 },
-                { "type": "null" }
+                {
+                  "type": "integer",
+                  "maximum": 12,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by recorded month",
               "title": "Date Of Recording Month"
@@ -141,8 +190,13 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "integer", "minimum": 1 },
-                { "type": "null" }
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by recorded year",
               "title": "Date Of Recording Year"
@@ -155,8 +209,13 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "string", "format": "date" },
-                { "type": "null" }
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by client date of birth",
               "title": "Client Date Of Birth"
@@ -168,7 +227,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -188,7 +254,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -197,7 +265,9 @@
     },
     "/transcriptions/unlabelled": {
       "get": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "List Unlabelled Transcriptions",
         "description": "Get metadata for unlabelled transcriptions for the current user.",
         "operationId": "list_unlabelled_transcriptions_transcriptions_unlabelled_get",
@@ -218,7 +288,14 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "Filter by client name",
               "title": "Client Name"
             },
@@ -229,7 +306,14 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "Filter by case ID",
               "title": "Case Id"
             },
@@ -240,7 +324,14 @@
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "description": "Filter by subject",
               "title": "Subject"
             },
@@ -252,8 +343,13 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "string", "format": "date" },
-                { "type": "null" }
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by date recorded",
               "title": "Date Of Recording"
@@ -266,8 +362,14 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "integer", "maximum": 31, "minimum": 1 },
-                { "type": "null" }
+                {
+                  "type": "integer",
+                  "maximum": 31,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by recorded day",
               "title": "Date Of Recording Day"
@@ -280,8 +382,14 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "integer", "maximum": 12, "minimum": 1 },
-                { "type": "null" }
+                {
+                  "type": "integer",
+                  "maximum": 12,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by recorded month",
               "title": "Date Of Recording Month"
@@ -294,8 +402,13 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "integer", "minimum": 1 },
-                { "type": "null" }
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by recorded year",
               "title": "Date Of Recording Year"
@@ -308,8 +421,13 @@
             "required": false,
             "schema": {
               "anyOf": [
-                { "type": "string", "format": "date" },
-                { "type": "null" }
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
               ],
               "description": "Filter by client date of birth",
               "title": "Client Date Of Birth"
@@ -321,7 +439,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -341,7 +466,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -350,7 +477,9 @@
     },
     "/recordings": {
       "post": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Create Recording",
         "operationId": "create_recording_recordings_post",
         "parameters": [
@@ -359,7 +488,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -389,7 +525,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -398,7 +536,9 @@
     },
     "/transcriptions": {
       "post": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Create Transcription",
         "description": "Start a transcription job.",
         "operationId": "create_transcription_transcriptions_post",
@@ -408,7 +548,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -438,7 +585,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -447,7 +596,9 @@
     },
     "/transcriptions/{transcription_id}": {
       "get": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Get Transcription",
         "description": "Get a specific transcription by ID.",
         "operationId": "get_transcription_transcriptions__transcription_id__get",
@@ -467,7 +618,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -487,14 +645,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "delete": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Delete Transcription",
         "description": "Delete a specific transcription by ID.",
         "operationId": "delete_transcription_transcriptions__transcription_id__delete",
@@ -514,18 +676,29 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
         ],
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -534,7 +707,9 @@
     },
     "/transcriptions/{transcription_id}/recordings": {
       "get": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Get Recordings For Transcription",
         "operationId": "get_recordings_for_transcription_transcriptions__transcription_id__recordings_get",
         "parameters": [
@@ -553,7 +728,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -565,7 +747,9 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/SingleRecording" },
+                  "items": {
+                    "$ref": "#/components/schemas/SingleRecording"
+                  },
                   "title": "Response Get Recordings For Transcription Transcriptions  Transcription Id  Recordings Get"
                 }
               }
@@ -575,7 +759,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -584,7 +770,9 @@
     },
     "/transcriptions/{transcription_id}/title": {
       "patch": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Update Transcription Title",
         "description": "Update a transcription title.",
         "operationId": "update_transcription_title_transcriptions__transcription_id__title_patch",
@@ -604,7 +792,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -620,12 +815,16 @@
           }
         },
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -634,7 +833,9 @@
     },
     "/transcriptions/{transcription_id}/details": {
       "put": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Update Transcription Metadata",
         "description": "Update a transcription's metadata.",
         "operationId": "update_transcription_metadata_transcriptions__transcription_id__details_put",
@@ -654,7 +855,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -670,12 +878,16 @@
           }
         },
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -684,7 +896,9 @@
     },
     "/transcriptions/{transcription_id}/speakers": {
       "patch": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Rename Speaker Everywhere",
         "operationId": "rename_speaker_everywhere_transcriptions__transcription_id__speakers_patch",
         "parameters": [
@@ -703,7 +917,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -712,17 +933,23 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/RenameSpeakerRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/RenameSpeakerRequest"
+              }
             }
           }
         },
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -731,7 +958,9 @@
     },
     "/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/speaker": {
       "patch": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Update Dialogue Entry Speaker",
         "operationId": "update_dialogue_entry_speaker_transcriptions__transcription_id__dialogue_entries__entry_index__speaker_patch",
         "parameters": [
@@ -749,14 +978,24 @@
             "name": "entry_index",
             "in": "path",
             "required": true,
-            "schema": { "type": "integer", "title": "Entry Index" }
+            "schema": {
+              "type": "integer",
+              "title": "Entry Index"
+            }
           },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -772,12 +1011,16 @@
           }
         },
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -786,7 +1029,9 @@
     },
     "/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/text": {
       "patch": {
-        "tags": ["Transcriptions"],
+        "tags": [
+          "Transcriptions"
+        ],
         "summary": "Update Dialogue Entry Text",
         "operationId": "update_dialogue_entry_text_transcriptions__transcription_id__dialogue_entries__entry_index__text_patch",
         "parameters": [
@@ -804,14 +1049,24 @@
             "name": "entry_index",
             "in": "path",
             "required": true,
-            "schema": { "type": "integer", "title": "Entry Index" }
+            "schema": {
+              "type": "integer",
+              "title": "Entry Index"
+            }
           },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -827,12 +1082,16 @@
           }
         },
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -841,7 +1100,9 @@
     },
     "/users/me": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Get User",
         "operationId": "get_user_users_me_get",
         "parameters": [
@@ -850,7 +1111,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -860,7 +1128,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserResponse"
+                }
               }
             }
           },
@@ -868,7 +1138,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -877,7 +1149,9 @@
     },
     "/users/terms-of-use": {
       "post": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Accept Terms Of Use",
         "operationId": "accept_terms_of_use_users_terms_of_use_post",
         "parameters": [
@@ -886,7 +1160,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -896,7 +1177,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserResponse"
+                }
               }
             }
           },
@@ -904,7 +1187,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -913,7 +1198,9 @@
     },
     "/users/me/organisation": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Get Organisation Name",
         "operationId": "get_organisation_name_users_me_organisation_get",
         "parameters": [
@@ -922,7 +1209,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -943,7 +1237,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -952,7 +1248,9 @@
     },
     "/users/data-retention": {
       "patch": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Update Data Retention",
         "description": "Update the data retention period for the current user.\n\nArgs:\n    data: Request body containing data_retention_days\n    current_user: The current authenticated user",
         "operationId": "update_data_retention_users_data_retention_patch",
@@ -962,7 +1260,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -982,7 +1287,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserResponse"
+                }
               }
             }
           },
@@ -990,7 +1297,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -999,7 +1308,9 @@
     },
     "/users": {
       "post": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Create User",
         "operationId": "create_user_users_post",
         "parameters": [
@@ -1008,7 +1319,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1017,7 +1335,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/UserCreate" }
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
             }
           }
         },
@@ -1026,7 +1346,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserResponse"
+                }
               }
             }
           },
@@ -1034,14 +1356,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "List Users",
         "operationId": "list_users_users_get",
         "parameters": [
@@ -1073,7 +1399,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1093,7 +1426,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1102,7 +1437,9 @@
     },
     "/users/{user_id}": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Get Target User",
         "operationId": "get_target_user_users__user_id__get",
         "parameters": [
@@ -1110,14 +1447,25 @@
             "name": "user_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "User Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
           },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1127,7 +1475,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserResponse"
+                }
               }
             }
           },
@@ -1135,14 +1485,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "delete": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Delete User",
         "operationId": "delete_user_users__user_id__delete",
         "parameters": [
@@ -1150,25 +1504,40 @@
             "name": "user_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "User Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
           },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
         ],
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1177,7 +1546,9 @@
     },
     "/users/{user_id}/roles": {
       "patch": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "Update User Roles",
         "operationId": "update_user_roles_users__user_id__roles_patch",
         "parameters": [
@@ -1185,14 +1556,25 @@
             "name": "user_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "User Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
           },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1201,7 +1583,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/UserUpdateRoles" }
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateRoles"
+              }
             }
           }
         },
@@ -1210,7 +1594,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/GetUserResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/GetUserResponse"
+                }
               }
             }
           },
@@ -1218,7 +1604,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1227,7 +1615,9 @@
     },
     "/users/user/exists": {
       "get": {
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "summary": "User Exists",
         "operationId": "user_exists_users_user_exists_get",
         "parameters": [
@@ -1235,7 +1625,11 @@
             "name": "email",
             "in": "query",
             "required": true,
-            "schema": { "type": "string", "format": "email", "title": "Email" }
+            "schema": {
+              "type": "string",
+              "format": "email",
+              "title": "Email"
+            }
           },
           {
             "name": "organisation_id",
@@ -1252,7 +1646,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1262,7 +1663,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UserExistsResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/UserExistsResponse"
+                }
               }
             }
           },
@@ -1270,7 +1673,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1279,7 +1684,9 @@
     },
     "/transcription/{transcription_id}/minutes": {
       "get": {
-        "tags": ["Minutes"],
+        "tags": [
+          "Minutes"
+        ],
         "summary": "List Minutes For Transcription",
         "operationId": "list_minutes_for_transcription_transcription__transcription_id__minutes_get",
         "parameters": [
@@ -1298,7 +1705,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1310,7 +1724,9 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/MinuteListItem" },
+                  "items": {
+                    "$ref": "#/components/schemas/MinuteListItem"
+                  },
                   "title": "Response List Minutes For Transcription Transcription  Transcription Id  Minutes Get"
                 }
               }
@@ -1320,14 +1736,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "post": {
-        "tags": ["Minutes"],
+        "tags": [
+          "Minutes"
+        ],
         "summary": "Create Minute",
         "operationId": "create_minute_transcription__transcription_id__minutes_post",
         "parameters": [
@@ -1346,7 +1766,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1355,7 +1782,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/MinutesCreateRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/MinutesCreateRequest"
+              }
             }
           }
         },
@@ -1374,7 +1803,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1383,7 +1814,9 @@
     },
     "/minutes/{minutes_id}": {
       "get": {
-        "tags": ["Minutes"],
+        "tags": [
+          "Minutes"
+        ],
         "summary": "Get Minute",
         "operationId": "get_minute_minutes__minutes_id__get",
         "parameters": [
@@ -1402,7 +1835,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1412,7 +1852,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Minute" }
+                "schema": {
+                  "$ref": "#/components/schemas/Minute"
+                }
               }
             }
           },
@@ -1420,7 +1862,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1429,7 +1873,9 @@
     },
     "/minutes/{minute_id}/versions": {
       "get": {
-        "tags": ["Minutes"],
+        "tags": [
+          "Minutes"
+        ],
         "summary": "List Minute Versions",
         "operationId": "list_minute_versions_minutes__minute_id__versions_get",
         "parameters": [
@@ -1448,7 +1894,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1472,14 +1925,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "post": {
-        "tags": ["Minutes"],
+        "tags": [
+          "Minutes"
+        ],
         "summary": "Create Minute Version",
         "operationId": "create_minute_version_minutes__minute_id__versions_post",
         "parameters": [
@@ -1498,7 +1955,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1528,7 +1992,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1537,7 +2003,9 @@
     },
     "/minute_versions/{minute_version_id}": {
       "get": {
-        "tags": ["Minutes"],
+        "tags": [
+          "Minutes"
+        ],
         "summary": "Get Minute Version",
         "operationId": "get_minute_version_minute_versions__minute_version_id__get",
         "parameters": [
@@ -1556,7 +2024,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1566,7 +2041,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/MinuteVersion" }
+                "schema": {
+                  "$ref": "#/components/schemas/MinuteVersion"
+                }
               }
             }
           },
@@ -1574,14 +2051,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "delete": {
-        "tags": ["Minutes"],
+        "tags": [
+          "Minutes"
+        ],
         "summary": "Delete Minute Version",
         "operationId": "delete_minute_version_minute_versions__minute_version_id__delete",
         "parameters": [
@@ -1600,7 +2081,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1608,13 +2096,19 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1623,7 +2117,9 @@
     },
     "/minute_versions/{minute_version_id}/guardrails": {
       "get": {
-        "tags": ["Minutes"],
+        "tags": [
+          "Minutes"
+        ],
         "summary": "Get Guardrail Warning",
         "operationId": "get_guardrail_warning_minute_versions__minute_version_id__guardrails_get",
         "parameters": [
@@ -1642,7 +2138,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1662,7 +2165,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1671,7 +2176,9 @@
     },
     "/templates": {
       "get": {
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "summary": "Get Templates",
         "description": "Get metadata for all templates.",
         "operationId": "get_templates_templates_get",
@@ -1681,7 +2188,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1693,7 +2207,9 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/TemplateMetadata" },
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateMetadata"
+                  },
                   "title": "Response Get Templates Templates Get"
                 }
               }
@@ -1703,7 +2219,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1712,7 +2230,9 @@
     },
     "/user-templates": {
       "get": {
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "summary": "Get User Templates",
         "operationId": "get_user_templates_user_templates_get",
         "parameters": [
@@ -1721,7 +2241,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1733,7 +2260,9 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/TemplateResponse" },
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateResponse"
+                  },
                   "title": "Response Get User Templates User Templates Get"
                 }
               }
@@ -1743,14 +2272,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "post": {
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "summary": "Create User Template",
         "operationId": "create_user_template_user_templates_post",
         "parameters": [
@@ -1759,7 +2292,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1777,13 +2317,19 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1792,7 +2338,9 @@
     },
     "/user-templates/{template_id}": {
       "get": {
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "summary": "Get User Template",
         "operationId": "get_user_template_user_templates__template_id__get",
         "parameters": [
@@ -1811,7 +2359,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1821,7 +2376,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/TemplateResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateResponse"
+                }
               }
             }
           },
@@ -1829,14 +2386,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "patch": {
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "summary": "Edit User Template",
         "operationId": "edit_user_template_user_templates__template_id__patch",
         "parameters": [
@@ -1855,7 +2416,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1873,20 +2441,28 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "delete": {
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "summary": "Delete User Template",
         "operationId": "delete_user_template_user_templates__template_id__delete",
         "parameters": [
@@ -1905,7 +2481,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1913,13 +2496,19 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1928,7 +2517,9 @@
     },
     "/user-templates/{template_id}/duplicate": {
       "post": {
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "summary": "Duplicate User Template",
         "operationId": "duplicate_user_template_user_templates__template_id__duplicate_post",
         "parameters": [
@@ -1947,7 +2538,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1955,13 +2553,19 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -1970,7 +2574,9 @@
     },
     "/templates/{template_name}/duplicate": {
       "post": {
-        "tags": ["Templates"],
+        "tags": [
+          "Templates"
+        ],
         "summary": "Duplicate Default Template",
         "operationId": "duplicate_default_template_templates__template_name__duplicate_post",
         "parameters": [
@@ -1978,14 +2584,24 @@
             "name": "template_name",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "title": "Template Name" }
+            "schema": {
+              "type": "string",
+              "title": "Template Name"
+            }
           },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -1993,13 +2609,19 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -2008,7 +2630,9 @@
     },
     "/transcriptions/{transcription_id}/chat": {
       "get": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "List Chat",
         "operationId": "list_chat_transcriptions__transcription_id__chat_get",
         "parameters": [
@@ -2027,7 +2651,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -2037,7 +2668,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ChatGetAllResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ChatGetAllResponse"
+                }
               }
             }
           },
@@ -2045,14 +2678,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "post": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Create Chat",
         "operationId": "create_chat_transcriptions__transcription_id__chat_post",
         "parameters": [
@@ -2071,7 +2708,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -2080,7 +2724,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ChatCreateRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ChatCreateRequest"
+              }
             }
           }
         },
@@ -2089,7 +2735,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ChatCreateResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCreateResponse"
+                }
               }
             }
           },
@@ -2097,14 +2745,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "delete": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Delete Chats",
         "operationId": "delete_chats_transcriptions__transcription_id__chat_delete",
         "parameters": [
@@ -2123,18 +2775,29 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
         ],
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -2143,7 +2806,9 @@
     },
     "/transcriptions/{transcription_id}/chat/{chat_id}": {
       "get": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Get Chat",
         "operationId": "get_chat_transcriptions__transcription_id__chat__chat_id__get",
         "parameters": [
@@ -2161,14 +2826,25 @@
             "name": "chat_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Chat Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Chat Id"
+            }
           },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -2178,7 +2854,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ChatGetResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/ChatGetResponse"
+                }
               }
             }
           },
@@ -2186,14 +2864,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "delete": {
-        "tags": ["Chat"],
+        "tags": [
+          "Chat"
+        ],
         "summary": "Delete Chat",
         "description": "Delete a specific transcription by ID.",
         "operationId": "delete_chat_transcriptions__transcription_id__chat__chat_id__delete",
@@ -2212,25 +2894,40 @@
             "name": "chat_id",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid", "title": "Chat Id" }
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Chat Id"
+            }
           },
           {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
         ],
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -2239,7 +2936,9 @@
     },
     "/organisations": {
       "get": {
-        "tags": ["Organisations"],
+        "tags": [
+          "Organisations"
+        ],
         "summary": "List Organisations",
         "description": "List all organisations. Only accessible to system admins..",
         "operationId": "list_organisations_organisations_get",
@@ -2249,7 +2948,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -2273,14 +2979,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "post": {
-        "tags": ["Organisations"],
+        "tags": [
+          "Organisations"
+        ],
         "summary": "Create Organisation",
         "description": "Create a new organisation. Only accessible to system admins.",
         "operationId": "create_organisation_organisations_post",
@@ -2290,7 +3000,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -2320,7 +3037,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -2329,7 +3048,9 @@
     },
     "/organisations/{organisation_id}": {
       "get": {
-        "tags": ["Organisations"],
+        "tags": [
+          "Organisations"
+        ],
         "summary": "Get Organisation",
         "description": "Get organisation. Only accessible to organisation admins.",
         "operationId": "get_organisation_organisations__organisation_id__get",
@@ -2349,7 +3070,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -2369,14 +3097,18 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "delete": {
-        "tags": ["Organisations"],
+        "tags": [
+          "Organisations"
+        ],
         "summary": "Delete Organisation",
         "description": "Delete an organisation. Only accessible to system admins.",
         "operationId": "delete_organisation_organisations__organisation_id__delete",
@@ -2396,25 +3128,38 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
         ],
         "responses": {
-          "204": { "description": "Successful Response" },
+          "204": {
+            "description": "Successful Response"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
         }
       },
       "patch": {
-        "tags": ["Organisations"],
+        "tags": [
+          "Organisations"
+        ],
         "summary": "Update Organisation",
         "description": "Update an organisation's allowed email domains. Accessible to system admins or the organisation's own admin.",
         "operationId": "update_organisation_organisations__organisation_id__patch",
@@ -2434,7 +3179,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -2464,7 +3216,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -2473,7 +3227,9 @@
     },
     "/organisations/{organisation_id}/users": {
       "get": {
-        "tags": ["Organisations"],
+        "tags": [
+          "Organisations"
+        ],
         "summary": "List Organisations Users",
         "operationId": "list_organisations_users_organisations__organisation_id__users_get",
         "parameters": [
@@ -2514,7 +3270,14 @@
             "in": "header",
             "required": false,
             "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
               "title": "X-Amzn-Oidc-Data"
             }
           }
@@ -2534,7 +3297,9 @@
             "description": "Validation Error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
               }
             }
           }
@@ -2543,14 +3308,73 @@
     },
     "/signout": {
       "get": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Sign Out",
         "description": "Sign out the user by clearing ALB auth cookies and redirecting to the IdP.",
         "operationId": "sign_out_signout_get",
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/events": {
+      "post": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Record Analytics Event",
+        "description": "Record an aggregate analytics event reported by the browser. No user is stored against the event.",
+        "operationId": "record_analytics_event_analytics_events_post",
+        "parameters": [
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyticsEventRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
         }
       }
@@ -2560,12 +3384,19 @@
     "schemas": {
       "AgendaUsage": {
         "type": "string",
-        "enum": ["not_used", "optional", "required"],
+        "enum": [
+          "not_used",
+          "optional",
+          "required"
+        ],
         "title": "AgendaUsage"
       },
       "AiEdit": {
         "properties": {
-          "instruction": { "type": "string", "title": "Instruction" },
+          "instruction": {
+            "type": "string",
+            "title": "Instruction"
+          },
           "source_id": {
             "type": "string",
             "format": "uuid",
@@ -2573,40 +3404,89 @@
           }
         },
         "type": "object",
-        "required": ["instruction", "source_id"],
+        "required": [
+          "instruction",
+          "source_id"
+        ],
         "title": "AiEdit"
+      },
+      "AnalyticsEventName": {
+        "type": "string",
+        "enum": [
+          "live_recording_started_or_upload_requested",
+          "audio_upload_complete_from_live_recording",
+          "audio_upload_complete_from_direct_upload",
+          "transcript_requested_for_live_recording",
+          "transcript_requested_for_direct_upload",
+          "transcript_received_for_live_recording",
+          "transcript_received_for_direct_upload",
+          "summary_requested",
+          "summary_received"
+        ],
+        "title": "AnalyticsEventName"
+      },
+      "AnalyticsEventRequest": {
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/AnalyticsEventName"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "AnalyticsEventRequest"
       },
       "ChatCreateRequest": {
         "properties": {
-          "user_content": { "type": "string", "title": "User Content" }
+          "user_content": {
+            "type": "string",
+            "title": "User Content"
+          }
         },
         "type": "object",
-        "required": ["user_content"],
+        "required": [
+          "user_content"
+        ],
         "title": "ChatCreateRequest"
       },
       "ChatCreateResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" }
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
         },
         "type": "object",
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "title": "ChatCreateResponse"
       },
       "ChatGetAllResponse": {
         "properties": {
           "chat": {
-            "items": { "$ref": "#/components/schemas/ChatGetResponse" },
+            "items": {
+              "$ref": "#/components/schemas/ChatGetResponse"
+            },
             "type": "array",
             "title": "Chat"
           }
         },
         "type": "object",
-        "required": ["chat"],
+        "required": [
+          "chat"
+        ],
         "title": "ChatGetAllResponse"
       },
       "ChatGetResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
@@ -2617,12 +3497,24 @@
             "format": "date-time",
             "title": "Updated Datetime"
           },
-          "user_content": { "type": "string", "title": "User Content" },
+          "user_content": {
+            "type": "string",
+            "title": "User Content"
+          },
           "assistant_content": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Assistant Content"
           },
-          "status": { "$ref": "#/components/schemas/JobStatus" }
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          }
         },
         "type": "object",
         "required": [
@@ -2637,14 +3529,27 @@
       },
       "ContentSource": {
         "type": "string",
-        "enum": ["manual_edit", "ai_edit", "initial_generation"],
+        "enum": [
+          "manual_edit",
+          "ai_edit",
+          "initial_generation"
+        ],
         "title": "ContentSource"
       },
       "CreateQuestion": {
         "properties": {
-          "position": { "type": "integer", "title": "Position" },
-          "title": { "type": "string", "title": "Title" },
-          "description": { "type": "string", "title": "Description" },
+          "position": {
+            "type": "integer",
+            "title": "Position"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
           "format_instructions": {
             "type": "string",
             "title": "Format Instructions",
@@ -2652,32 +3557,67 @@
           }
         },
         "type": "object",
-        "required": ["position", "title", "description"],
+        "required": [
+          "position",
+          "title",
+          "description"
+        ],
         "title": "CreateQuestion"
       },
       "CreateUserTemplateRequest": {
         "properties": {
-          "name": { "type": "string", "title": "Name" },
-          "content": { "type": "string", "title": "Content" },
-          "heading": { "type": "string", "title": "Heading", "default": "" },
-          "description": { "type": "string", "title": "Description" },
-          "type": { "$ref": "#/components/schemas/TemplateType" },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "heading": {
+            "type": "string",
+            "title": "Heading",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TemplateType"
+          },
           "questions": {
             "anyOf": [
               {
-                "items": { "$ref": "#/components/schemas/CreateQuestion" },
+                "items": {
+                  "$ref": "#/components/schemas/CreateQuestion"
+                },
                 "type": "array"
               },
-              { "type": "null" }
+              {
+                "type": "null"
+              }
             ],
             "title": "Questions"
           }
         },
         "type": "object",
-        "required": ["name", "content", "description", "type"],
+        "required": [
+          "name",
+          "content",
+          "description",
+          "type"
+        ],
         "title": "CreateUserTemplateRequest"
       },
-      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30] },
+      "DataRetentionOptions": {
+        "type": "integer",
+        "enum": [
+          1,
+          7,
+          30
+        ]
+      },
       "DataRetentionUpdateResponse": {
         "properties": {
           "data_retention_days": {
@@ -2685,23 +3625,46 @@
           }
         },
         "type": "object",
-        "required": ["data_retention_days"],
+        "required": [
+          "data_retention_days"
+        ],
         "title": "DataRetentionUpdateResponse"
       },
       "DialogueEntry": {
         "properties": {
-          "speaker": { "type": "string", "title": "Speaker" },
-          "text": { "type": "string", "title": "Text" },
-          "start_time": { "type": "number", "title": "Start Time" },
-          "end_time": { "type": "number", "title": "End Time" }
+          "speaker": {
+            "type": "string",
+            "title": "Speaker"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "start_time": {
+            "type": "number",
+            "title": "Start Time"
+          },
+          "end_time": {
+            "type": "number",
+            "title": "End Time"
+          }
         },
         "type": "object",
-        "required": ["speaker", "text", "start_time", "end_time"],
+        "required": [
+          "speaker",
+          "text",
+          "start_time",
+          "end_time"
+        ],
         "title": "DialogueEntry"
       },
       "GetUserResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
@@ -2712,31 +3675,54 @@
             "format": "date-time",
             "title": "Updated Datetime"
           },
-          "accepted_tou": { "type": "boolean", "title": "Accepted Tou" },
+          "accepted_tou": {
+            "type": "boolean",
+            "title": "Accepted Tou"
+          },
           "last_login": {
             "type": "string",
             "format": "date-time",
             "title": "Last Login"
           },
-          "is_active": { "type": "boolean", "title": "Is Active" },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
           "name": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Name"
           },
-          "email": { "type": "string", "title": "Email" },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
           "data_retention_days": {
             "type": "integer",
             "title": "Data Retention Days"
           },
           "roles": {
-            "items": { "$ref": "#/components/schemas/UserRole" },
+            "items": {
+              "$ref": "#/components/schemas/UserRole"
+            },
             "type": "array",
             "title": "Roles"
           },
           "organisation_id": {
             "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Organisation Id"
           }
@@ -2760,18 +3746,29 @@
       "GuardrailWarningResponse": {
         "properties": {
           "message": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Message"
           }
         },
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "title": "GuardrailWarningResponse"
       },
       "HTTPValidationError": {
         "properties": {
           "detail": {
-            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
             "type": "array",
             "title": "Detail"
           }
@@ -2781,48 +3778,98 @@
       },
       "JobStatus": {
         "type": "string",
-        "enum": ["awaiting_start", "in_progress", "completed", "failed"],
+        "enum": [
+          "awaiting_start",
+          "in_progress",
+          "completed",
+          "failed"
+        ],
         "title": "JobStatus"
       },
       "LabelledTranscriptionMetadata": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
             "title": "Created Datetime"
           },
           "title": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Title"
           },
-          "text": { "type": "string", "title": "Text" },
-          "status": { "$ref": "#/components/schemas/JobStatus" },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
           "date_of_recording": {
             "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Date Of Recording"
           },
           "client_date_of_birth": {
             "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Client Date Of Birth"
           },
           "client_name": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Client Name"
           },
           "case_id": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Case Id"
           }
         },
         "type": "object",
-        "required": ["id", "created_datetime", "text", "status"],
+        "required": [
+          "id",
+          "created_datetime",
+          "text",
+          "status"
+        ],
         "title": "LabelledTranscriptionMetadata",
         "description": "Pydantic model for labelled transcription metadata."
       },
@@ -2835,10 +3882,22 @@
             "type": "array",
             "title": "Items"
           },
-          "total_count": { "type": "integer", "title": "Total Count" },
-          "page": { "type": "integer", "title": "Page" },
-          "page_size": { "type": "integer", "title": "Page Size" },
-          "total_pages": { "type": "integer", "title": "Total Pages" }
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          }
         },
         "type": "object",
         "required": [
@@ -2853,7 +3912,11 @@
       },
       "Minute": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
@@ -2876,23 +3939,41 @@
           },
           "user_template_id": {
             "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "User Template Id"
           },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Agenda"
           }
         },
         "type": "object",
-        "required": ["transcription_id"],
+        "required": [
+          "transcription_id"
+        ],
         "title": "Minute"
       },
       "MinuteListItem": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
@@ -2908,9 +3989,19 @@
             "format": "uuid",
             "title": "Transcription Id"
           },
-          "template_name": { "type": "string", "title": "Template Name" },
+          "template_name": {
+            "type": "string",
+            "title": "Template Name"
+          },
           "agenda": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Agenda"
           }
         },
@@ -2927,7 +4018,11 @@
       },
       "MinuteVersion": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
@@ -2953,15 +4048,36 @@
             "default": "awaiting_start"
           },
           "error": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Error"
           },
           "template_prompt_version": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Template Prompt Version"
           },
           "ai_edit_instructions": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Ai Edit Instructions",
             "description": "If the content source is an AI edit, store the instruction here"
           },
@@ -2971,19 +4087,27 @@
           }
         },
         "type": "object",
-        "required": ["minute_id"],
+        "required": [
+          "minute_id"
+        ],
         "title": "MinuteVersion"
       },
       "MinuteVersionCreateRequest": {
         "properties": {
           "ai_edit_instructions": {
             "anyOf": [
-              { "$ref": "#/components/schemas/AiEdit" },
-              { "type": "null" }
+              {
+                "$ref": "#/components/schemas/AiEdit"
+              },
+              {
+                "type": "null"
+              }
             ],
             "description": "If the content source is an AI edit, store the instruction and source version id here"
           },
-          "content_source": { "$ref": "#/components/schemas/ContentSource" },
+          "content_source": {
+            "$ref": "#/components/schemas/ContentSource"
+          },
           "html_content": {
             "type": "string",
             "title": "Html Content",
@@ -2991,33 +4115,60 @@
           }
         },
         "type": "object",
-        "required": ["content_source"],
+        "required": [
+          "content_source"
+        ],
         "title": "MinuteVersionCreateRequest"
       },
       "MinuteVersionResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "minute_id": {
             "type": "string",
             "format": "uuid",
             "title": "Minute Id"
           },
-          "status": { "$ref": "#/components/schemas/JobStatus" },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
             "title": "Created Datetime"
           },
-          "html_content": { "type": "string", "title": "Html Content" },
+          "html_content": {
+            "type": "string",
+            "title": "Html Content"
+          },
           "error": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Error"
           },
           "ai_edit_instructions": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Ai Edit Instructions"
           },
-          "content_source": { "$ref": "#/components/schemas/ContentSource" },
+          "content_source": {
+            "$ref": "#/components/schemas/ContentSource"
+          },
           "too_short": {
             "type": "boolean",
             "title": "Too Short",
@@ -3046,42 +4197,65 @@
           },
           "template_id": {
             "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Template Id",
             "description": "Optional id of user template"
           },
           "agenda": {
             "anyOf": [
-              { "type": "string", "maxLength": 500 },
-              { "type": "null" }
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Agenda",
             "description": "The agenda for the meeting"
           }
         },
         "type": "object",
-        "required": ["template_name", "template_id"],
+        "required": [
+          "template_name",
+          "template_id"
+        ],
         "title": "MinutesCreateRequest"
       },
       "OrganisationCreateRequest": {
         "properties": {
-          "name": { "type": "string", "title": "Name" },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
           "allowed_domains": {
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "type": "array",
             "title": "Allowed Domains"
           }
         },
         "type": "object",
-        "required": ["name", "allowed_domains"],
+        "required": [
+          "name",
+          "allowed_domains"
+        ],
         "title": "OrganisationCreateRequest"
       },
       "OrganisationPatchRequest": {
         "properties": {
           "allowed_domains": {
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "type": "array",
             "title": "Allowed Domains"
           },
@@ -3092,15 +4266,27 @@
           }
         },
         "type": "object",
-        "required": ["allowed_domains", "updated_datetime"],
+        "required": [
+          "allowed_domains",
+          "updated_datetime"
+        ],
         "title": "OrganisationPatchRequest"
       },
       "OrganisationResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "name": { "type": "string", "title": "Name" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
           "allowed_domains": {
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "type": "array",
             "title": "Allowed Domains"
           },
@@ -3128,14 +4314,28 @@
       "PaginatedUsersResponse": {
         "properties": {
           "items": {
-            "items": { "$ref": "#/components/schemas/GetUserResponse" },
+            "items": {
+              "$ref": "#/components/schemas/GetUserResponse"
+            },
             "type": "array",
             "title": "Items"
           },
-          "total_count": { "type": "integer", "title": "Total Count" },
-          "page": { "type": "integer", "title": "Page" },
-          "page_size": { "type": "integer", "title": "Page Size" },
-          "total_pages": { "type": "integer", "title": "Total Pages" }
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages"
+          }
         },
         "type": "object",
         "required": [
@@ -3150,19 +4350,47 @@
       "PatchUserTemplateRequest": {
         "properties": {
           "name": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Name"
           },
           "content": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Content"
           },
           "heading": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Heading"
           },
           "description": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Description"
           },
           "questions": {
@@ -3170,13 +4398,19 @@
               {
                 "items": {
                   "anyOf": [
-                    { "$ref": "#/components/schemas/CreateQuestion" },
-                    { "$ref": "#/components/schemas/Question" }
+                    {
+                      "$ref": "#/components/schemas/CreateQuestion"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Question"
+                    }
                   ]
                 },
                 "type": "array"
               },
-              { "type": "null" }
+              {
+                "type": "null"
+              }
             ],
             "title": "Questions"
           }
@@ -3186,58 +4420,133 @@
       },
       "Question": {
         "properties": {
-          "position": { "type": "integer", "title": "Position" },
-          "title": { "type": "string", "title": "Title" },
-          "description": { "type": "string", "title": "Description" },
+          "position": {
+            "type": "integer",
+            "title": "Position"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
           "format_instructions": {
             "type": "string",
             "title": "Format Instructions",
             "default": ""
           },
-          "id": { "type": "string", "format": "uuid", "title": "Id" }
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
         },
         "type": "object",
-        "required": ["position", "title", "description", "id"],
+        "required": [
+          "position",
+          "title",
+          "description",
+          "id"
+        ],
         "title": "Question"
       },
       "RecordingCreateRequest": {
         "properties": {
-          "file_extension": { "type": "string", "title": "File Extension" },
+          "file_extension": {
+            "type": "string",
+            "title": "File Extension"
+          },
           "file_created_at": {
             "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "File Created At"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecordingSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
-        "required": ["file_extension"],
+        "required": [
+          "file_extension"
+        ],
         "title": "RecordingCreateRequest"
       },
       "RecordingCreateResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "upload_url": { "type": "string", "title": "Upload Url" }
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url"
+          }
         },
         "type": "object",
-        "required": ["id", "upload_url"],
+        "required": [
+          "id",
+          "upload_url"
+        ],
         "title": "RecordingCreateResponse"
+      },
+      "RecordingSource": {
+        "type": "string",
+        "enum": [
+          "live_recording",
+          "direct_upload"
+        ],
+        "title": "RecordingSource"
       },
       "RenameSpeakerRequest": {
         "properties": {
-          "original_speaker": { "type": "string", "title": "Original Speaker" },
-          "new_speaker": { "type": "string", "title": "New Speaker" }
+          "original_speaker": {
+            "type": "string",
+            "title": "Original Speaker"
+          },
+          "new_speaker": {
+            "type": "string",
+            "title": "New Speaker"
+          }
         },
         "type": "object",
-        "required": ["original_speaker", "new_speaker"],
+        "required": [
+          "original_speaker",
+          "new_speaker"
+        ],
         "title": "RenameSpeakerRequest"
       },
       "SingleRecording": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "url": { "type": "string", "title": "Url" },
-          "extension": { "type": "string", "title": "Extension" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "extension": {
+            "type": "string",
+            "title": "Extension"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
@@ -3245,41 +4554,88 @@
           }
         },
         "type": "object",
-        "required": ["id", "url", "extension", "created_datetime"],
+        "required": [
+          "id",
+          "url",
+          "extension",
+          "created_datetime"
+        ],
         "title": "SingleRecording"
       },
       "TemplateMetadata": {
         "properties": {
-          "id": { "type": "string", "title": "Id" },
-          "name": { "type": "string", "title": "Name" },
-          "description": { "type": "string", "title": "Description" },
-          "category": { "type": "string", "title": "Category" },
-          "agenda_usage": { "$ref": "#/components/schemas/AgendaUsage" }
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "agenda_usage": {
+            "$ref": "#/components/schemas/AgendaUsage"
+          }
         },
         "type": "object",
-        "required": ["id", "name", "description", "category", "agenda_usage"],
+        "required": [
+          "id",
+          "name",
+          "description",
+          "category",
+          "agenda_usage"
+        ],
         "title": "TemplateMetadata"
       },
       "TemplateResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "updated_datetime": {
             "type": "string",
             "format": "date-time",
             "title": "Updated Datetime"
           },
-          "name": { "type": "string", "title": "Name" },
-          "content": { "type": "string", "title": "Content" },
-          "heading": { "type": "string", "title": "Heading" },
-          "description": { "type": "string", "title": "Description" },
-          "type": { "$ref": "#/components/schemas/TemplateType" },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "heading": {
+            "type": "string",
+            "title": "Heading"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TemplateType"
+          },
           "questions": {
             "anyOf": [
               {
-                "items": { "$ref": "#/components/schemas/Question" },
+                "items": {
+                  "$ref": "#/components/schemas/Question"
+                },
                 "type": "array"
               },
-              { "type": "null" }
+              {
+                "type": "null"
+              }
             ],
             "title": "Questions"
           }
@@ -3299,7 +4655,10 @@
       },
       "TemplateType": {
         "type": "string",
-        "enum": ["document", "form"],
+        "enum": [
+          "document",
+          "form"
+        ],
         "title": "TemplateType"
       },
       "TranscriptionCreateRequest": {
@@ -3310,40 +4669,72 @@
             "title": "Recording Id"
           },
           "title": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Title"
           }
         },
         "type": "object",
-        "required": ["recording_id"],
+        "required": [
+          "recording_id"
+        ],
         "title": "TranscriptionCreateRequest"
       },
       "TranscriptionCreateResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" }
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
         },
         "type": "object",
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "title": "TranscriptionCreateResponse"
       },
       "TranscriptionGetResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "title": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Title"
           },
           "dialogue_entries": {
             "anyOf": [
               {
-                "items": { "$ref": "#/components/schemas/DialogueEntry" },
+                "items": {
+                  "$ref": "#/components/schemas/DialogueEntry"
+                },
                 "type": "array"
               },
-              { "type": "null" }
+              {
+                "type": "null"
+              }
             ],
             "title": "Dialogue Entries"
           },
-          "status": { "$ref": "#/components/schemas/JobStatus" },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
           "created_datetime": {
             "type": "string",
             "format": "date-time",
@@ -3351,8 +4742,13 @@
           },
           "date_of_recording": {
             "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Date Of Recording"
           },
@@ -3362,17 +4758,36 @@
             "default": false
           },
           "client_name": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Client Name"
           },
           "case_id": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Case Id"
           },
           "client_date_of_birth": {
             "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Client Date Of Birth"
           }
@@ -3392,28 +4807,56 @@
       },
       "TranscriptionSortOrder": {
         "type": "string",
-        "enum": ["newest", "oldest"],
+        "enum": [
+          "newest",
+          "oldest"
+        ],
         "title": "TranscriptionSortOrder"
       },
       "UnlabelledTranscriptionMetadata": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "date_of_recording": {
             "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Date Of Recording"
           },
           "title": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Title"
           },
-          "text": { "type": "string", "title": "Text" },
-          "status": { "$ref": "#/components/schemas/JobStatus" }
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          }
         },
         "type": "object",
-        "required": ["id", "text", "status"],
+        "required": [
+          "id",
+          "text",
+          "status"
+        ],
         "title": "UnlabelledTranscriptionMetadata",
         "description": "Pydantic model for unlabelled transcription metadata."
       },
@@ -3426,82 +4869,178 @@
             "type": "array",
             "title": "Items"
           },
-          "total_count": { "type": "integer", "title": "Total Count" }
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          }
         },
         "type": "object",
-        "required": ["items", "total_count"],
+        "required": [
+          "items",
+          "total_count"
+        ],
         "title": "UnlabelledTranscriptionsResponse",
         "description": "Response for unlabelled transcriptions."
       },
       "UpdateDialogueEntrySpeakerRequest": {
         "properties": {
-          "new_speaker": { "type": "string", "title": "New Speaker" },
+          "new_speaker": {
+            "type": "string",
+            "title": "New Speaker"
+          },
           "expected_speaker": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Expected Speaker"
           },
           "expected_start_time": {
-            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Expected Start Time"
           },
           "expected_end_time": {
-            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Expected End Time"
           }
         },
         "type": "object",
-        "required": ["new_speaker"],
+        "required": [
+          "new_speaker"
+        ],
         "title": "UpdateDialogueEntrySpeakerRequest"
       },
       "UpdateDialogueEntryTextRequest": {
         "properties": {
-          "new_text": { "type": "string", "title": "New Text" },
+          "new_text": {
+            "type": "string",
+            "title": "New Text"
+          },
           "expected_text": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Expected Text"
           },
           "expected_speaker": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Expected Speaker"
           },
           "expected_start_time": {
-            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Expected Start Time"
           },
           "expected_end_time": {
-            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Expected End Time"
           }
         },
         "type": "object",
-        "required": ["new_text"],
+        "required": [
+          "new_text"
+        ],
         "title": "UpdateDialogueEntryTextRequest"
       },
       "UpdateTranscriptionMetadataRequest": {
         "properties": {
           "client_name": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Client Name"
           },
           "case_id": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Case Id"
           },
           "subject": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Subject"
           },
           "client_date_of_birth": {
             "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Client Date Of Birth"
           },
           "date_of_recording": {
             "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
             ],
             "title": "Date Of Recording"
           }
@@ -3519,7 +5058,14 @@
       "UpdateTranscriptionTitleRequest": {
         "properties": {
           "title": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Title"
           }
         },
@@ -3528,8 +5074,15 @@
       },
       "UserCreate": {
         "properties": {
-          "name": { "type": "string", "title": "Name" },
-          "email": { "type": "string", "format": "email", "title": "Email" },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
           "evaluation_id": {
             "type": "string",
             "minLength": 1,
@@ -3542,13 +5095,25 @@
           }
         },
         "type": "object",
-        "required": ["name", "email", "evaluation_id", "organisation_id"],
+        "required": [
+          "name",
+          "email",
+          "evaluation_id",
+          "organisation_id"
+        ],
         "title": "UserCreate"
       },
       "UserExistsResponse": {
-        "properties": { "exists": { "type": "boolean", "title": "Exists" } },
+        "properties": {
+          "exists": {
+            "type": "boolean",
+            "title": "Exists"
+          }
+        },
         "type": "object",
-        "required": ["exists"],
+        "required": [
+          "exists"
+        ],
         "title": "UserExistsResponse"
       },
       "UserRole": {
@@ -3563,29 +5128,57 @@
       "UserUpdateRoles": {
         "properties": {
           "roles": {
-            "items": { "$ref": "#/components/schemas/UserRole" },
+            "items": {
+              "$ref": "#/components/schemas/UserRole"
+            },
             "type": "array",
             "title": "Roles"
           }
         },
         "type": "object",
-        "required": ["roles"],
+        "required": [
+          "roles"
+        ],
         "title": "UserUpdateRoles"
       },
       "ValidationError": {
         "properties": {
           "loc": {
-            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
             "type": "array",
             "title": "Location"
           },
-          "msg": { "type": "string", "title": "Message" },
-          "type": { "type": "string", "title": "Error Type" },
-          "input": { "title": "Input" },
-          "ctx": { "type": "object", "title": "Context" }
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
         },
         "type": "object",
-        "required": ["loc", "msg", "type"],
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
         "title": "ValidationError"
       }
     }
