@@ -20,6 +20,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
 import { cn } from '@/lib/utils'
+import { useClearDisplayedBannerOnRouteChange } from '@/components/banner-notification'
 
 interface NavItem {
   name: string
@@ -159,6 +160,7 @@ export function ServiceNav() {
   const { data: user } = useQuery(getUserUsersMeGetOptions())
   const [isMobile, setIsMobile] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  useClearDisplayedBannerOnRouteChange()
 
   useEffect(() => {
     const handleResize = () => {

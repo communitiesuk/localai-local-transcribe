@@ -13,6 +13,19 @@ const resetDisplayedBanner = () => {
   displayedPath = null
 }
 
+export function useClearDisplayedBannerOnRouteChange() {
+  const banner = useBannerStore((store) => store.banner)
+  const clearBanner = useBannerStore((store) => store.clearBanner)
+  const pathname = usePathname()
+
+  useEffect(() => {
+    if (banner && displayedBanner === banner && displayedPath !== pathname) {
+      clearBanner()
+      resetDisplayedBanner()
+    }
+  }, [banner, clearBanner, pathname])
+}
+
 export function BannerNotification() {
   const banner = useBannerStore((store) => store.banner)
   const clearBanner = useBannerStore((store) => store.clearBanner)
