@@ -161,6 +161,13 @@
   outline: none;
 }
 
+.editor-content .citation-link {
+  color: blue;
+  cursor: pointer;
+  text-decoration: underline;
+  display: var(--citation-display);
+}
+
 .editor-content {
   line-height: 1.4;
   padding: 10px;
