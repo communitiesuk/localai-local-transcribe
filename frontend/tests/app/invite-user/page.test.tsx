@@ -68,6 +68,18 @@ describe('Invite new user page', () => {
     ).toBeInTheDocument()
   })
 
+  it('shows approved email domains as read-only guidance', () => {
+    render(<AdminAddUserPage />)
+
+    expect(
+      screen.getByText('Accepted email domains for your organisation')
+    ).toBeInTheDocument()
+    expect(screen.getByText('example.com')).toBeInTheDocument()
+    expect(
+      screen.queryByLabelText('Approved domains', { exact: false })
+    ).not.toBeInTheDocument()
+  })
+
   it('does not continue when the evaluation ID is only whitespace', async () => {
     const user = userEvent.setup()
     render(<AdminAddUserPage />)

@@ -2416,7 +2416,7 @@
       "patch": {
         "tags": ["Organisations"],
         "summary": "Update Organisation",
-        "description": "Update an organisation's allowed email domains. Accessible to system admins or the organisation's own admin.",
+        "description": "Update an organisation's allowed email domains. Only accessible to system admins.",
         "operationId": "update_organisation_organisations__organisation_id__patch",
         "parameters": [
           {
@@ -3312,6 +3312,11 @@
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Title"
+          },
+          "audio_duration_seconds": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Audio Duration Seconds",
+            "description": "Client-measured audio duration in seconds, recorded as first-party analytics metadata."
           }
         },
         "type": "object",

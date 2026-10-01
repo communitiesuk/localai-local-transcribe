@@ -34,13 +34,14 @@ export default function EditApprovedDomainsPage(props: {
 
   const { organisationId } = use(props.params)
 
-  const { currentUser, isLoading: userLoading } = useAuthorisedUser([
-    UserRole.MHCLG_SUPPORT_ADMIN,
-    UserRole.LOCAL_AUTHORITY_ADMIN,
-  ])
+  const {
+    currentUser,
+    isAllowed,
+    isLoading: userLoading,
+  } = useAuthorisedUser([UserRole.MHCLG_SUPPORT_ADMIN])
 
   const { data: organisation, isLoading: organisationLoading } =
-    useOrganisation(organisationId)
+    useOrganisation(organisationId, !userLoading && isAllowed)
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (variables: {
@@ -117,7 +118,7 @@ export default function EditApprovedDomainsPage(props: {
     [mutateAsync, organisation]
   )
 
-  if (userLoading || organisationLoading || !organisation) {
+  if (userLoading) {
     return (
       <div className="govuk-body flex items-center gap-2">
         <Loader2 className="animate-spin" />
@@ -126,14 +127,20 @@ export default function EditApprovedDomainsPage(props: {
     )
   }
 
-  if (
-    currentUser?.roles?.includes(UserRole.LOCAL_AUTHORITY_ADMIN) &&
-    currentUser.organisation_id?.toLowerCase() !== organisationId.toLowerCase()
-  ) {
+  if (currentUser && !isAllowed) {
     return (
       <div className="govuk-body flex items-center gap-2">
         <Loader2 className="animate-spin" />
         You are not authorised to edit domains for this organisation.
+      </div>
+    )
+  }
+
+  if (organisationLoading || !organisation) {
+    return (
+      <div className="govuk-body flex items-center gap-2">
+        <Loader2 className="animate-spin" />
+        Loading...
       </div>
     )
   }

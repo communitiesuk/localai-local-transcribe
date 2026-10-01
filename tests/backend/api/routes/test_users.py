@@ -12,7 +12,7 @@ from backend.api.dependencies.get_current_user import get_current_user
 from backend.api.dependencies.get_target_user import get_target_user
 from backend.main import app
 from backend.services.emails import EmailSendError
-from common.database.postgres_models import UserRole
+from common.database.postgres_models import AnalyticsEventType, UserRole
 from tests.utils import get_test_client
 
 
@@ -177,6 +177,38 @@ async def test_delete_user(
 
 
 @pytest.mark.asyncio
+async def test_delete_user_records_user_deleted_analytics_event(
+    mocker,
+    override_session,
+    make_user,
+    make_organisation,
+):
+    """Deleting a user records a USER_DELETED analytics event with the deleted user's evaluation_id."""
+    organisation = make_organisation()
+    override_session.get.return_value = organisation
+
+    user = make_user(organisation_id=organisation.id, roles=[UserRole.MHCLG_SUPPORT_ADMIN])
+    app.dependency_overrides[get_current_user] = lambda: user
+
+    target_user = make_user(organisation_id=organisation.id, roles=[UserRole.STANDARD_USER])
+    target_user.evaluation_id = "EVAL-DELETE"
+    app.dependency_overrides[get_target_user] = lambda: target_user
+
+    mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
+
+    async with get_test_client() as ac:
+        response = await ac.delete(f"/users/{target_user.id}")
+
+    assert response.status_code == 204
+    mock_record_event.assert_awaited_once()
+    call_args = mock_record_event.await_args
+    assert call_args.args[0] is override_session
+    assert call_args.args[1] == AnalyticsEventType.USER_DELETED
+    assert call_args.args[2] == "EVAL-DELETE"
+    assert call_args.args[3] == target_user.organisation_id
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("admin_roles", "expected_inviter_organisation_name"),
     [
@@ -185,8 +217,15 @@ async def test_delete_user(
     ],
 )
 async def test_create_user(
-    override_session, make_user, make_organisation, mock_email_sender, admin_roles, expected_inviter_organisation_name
+    mocker,
+    override_session,
+    make_user,
+    make_organisation,
+    mock_email_sender,
+    admin_roles,
+    expected_inviter_organisation_name,
 ):
+    """Creating a new user records a USER_INVITED analytics event and sends an invite email."""
     organisation = make_organisation(name="Example Council", allowed_domains=["example.gov.uk"])
     mock_session = override_session
     mock_session.get.return_value = organisation
@@ -194,6 +233,8 @@ async def test_create_user(
 
     user = make_user(organisation_id=organisation.id, roles=admin_roles)
     app.dependency_overrides[get_current_user] = lambda: user
+
+    mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
 
     with (
         patch(
@@ -228,19 +269,30 @@ async def test_create_user(
         expected_inviter_organisation_name,
     )
 
+    mock_record_event.assert_awaited_once()
+    call_args = mock_record_event.await_args
+    assert call_args.args[0] is override_session
+    assert call_args.args[1] == AnalyticsEventType.USER_INVITED
+    assert call_args.args[2] == "EVAL-001"
+    assert call_args.args[3] == organisation.id
+
 
 @pytest.mark.asyncio
 async def test_create_user_email_failure_calls_sentry(
+    mocker,
     override_session,
     override_support_admin_user,
     make_organisation,
     mock_email_sender,
 ):
+    """The USER_INVITED analytics event is still recorded even if the invite email fails to send."""
     organisation = make_organisation(allowed_domains=["example.gov.uk"])
     mock_session = override_session
     mock_session.get.return_value = organisation
     mock_session.refresh.side_effect = user_create_refresh
     mock_email_sender.send_invite_email.side_effect = EmailSendError
+
+    mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
 
     with (
         patch("backend.api.routes.users.get_user_by_email", new=AsyncMock(return_value=None)),
@@ -259,6 +311,7 @@ async def test_create_user_email_failure_calls_sentry(
             )
 
     capture_exception.assert_called_once()
+    mock_record_event.assert_awaited_once()
 
 
 @pytest.mark.asyncio
