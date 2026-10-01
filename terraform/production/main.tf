@@ -172,7 +172,7 @@ module "ecs" {
   environment_name            = local.environment_name
   frontend_task_desired_count = 1
   backend_task_desired_count  = 1
-  worker_task_desired_count   = 1
+  worker_task_desired_count   = 2
   frontend_port               = local.frontend_port
   backend_port                = local.backend_port
 
