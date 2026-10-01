@@ -3312,6 +3312,11 @@
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Title"
+          },
+          "audio_duration_seconds": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Audio Duration Seconds",
+            "description": "Client-measured audio duration in seconds, recorded as first-party analytics metadata."
           }
         },
         "type": "object",

@@ -19,7 +19,8 @@ from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SI
 from backend.utils.mappers import to_user_response
 from backend.utils.queries import get_paginated_users, get_user_by_email, get_user_by_evaluation_id
 from common.auth import is_admin_for_org, is_system_admin
-from common.database.postgres_models import Organisation, User, UserRole
+from common.database.postgres_models import AnalyticsEventType, Organisation, User, UserRole
+from common.services.analytics_service import record_analytics_event
 from common.types import (
     DataRetentionUpdateResponse,
     GetUserResponse,
@@ -149,6 +150,10 @@ async def create_user(
     except EmailSendError as e:
         sentry_sdk.capture_exception(e)
 
+    await record_analytics_event(
+        session, AnalyticsEventType.USER_INVITED, new_user.evaluation_id, new_user.organisation_id
+    )
+
     return to_user_response(new_user)
 
 
@@ -236,8 +241,15 @@ async def delete_user(session: SQLSessionDep, user: UserDep, target_user: Target
         if not is_admin_for_org(user, organisation):
             raise HTTPException(status_code=404, detail="User not found")
 
+    deleted_user_evaluation_id = target_user.evaluation_id
+    deleted_user_organisation_id = target_user.organisation_id
+
     await session.delete(target_user)
     await session.commit()
+
+    await record_analytics_event(
+        session, AnalyticsEventType.USER_DELETED, deleted_user_evaluation_id, deleted_user_organisation_id
+    )
 
 
 @users_router.get("/user/exists", response_model=UserExistsResponse)
