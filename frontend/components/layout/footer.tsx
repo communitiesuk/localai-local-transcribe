@@ -4,7 +4,6 @@ const links = {
   '/privacy': 'Local Transcribe User Privacy Notice',
   '/privacy/end-service-user': 'End Service User Privacy Notice',
   '/support': 'Support',
-  '/accessibility': 'Accessibility',
   '/acceptable-use-policy': 'Acceptable Use Policy',
 }
 
