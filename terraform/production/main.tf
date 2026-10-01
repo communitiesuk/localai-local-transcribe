@@ -181,6 +181,10 @@ module "ecs" {
   database_name     = module.database.database_name
   database_username = local.database_username
 
+  frontend_task_memory = var.frontend_task_memory
+  backend_task_memory  = var.backend_task_memory
+  worker_task_memory   = var.worker_task_memory
+
   lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
   db_security_group_id = module.database.rds_security_group_id
