@@ -20,25 +20,25 @@ describe('<RouteWatcher />', () => {
     useUploadRecordingStore.setState(initialStoreState, true)
   })
 
-  it('does not cancel any request on mount, or when re-rendered with an unchanged pathname (simulates React Strict Mode)', () => {
-    const cancelRequest = vi.fn()
-    useUploadRecordingStore.setState({ cancelRequest })
+  it('does not call handleRouteChange on mount, or when re-rendered with an unchanged pathname (simulates React Strict Mode)', () => {
+    const handleRouteChange = vi.fn()
+    useUploadRecordingStore.setState({ handleRouteChange })
 
     const { rerender } = render(<RouteWatcher />)
     rerender(<RouteWatcher />)
 
-    expect(cancelRequest).not.toHaveBeenCalled()
+    expect(handleRouteChange).not.toHaveBeenCalled()
   })
 
-  it('cancels the in-flight request when the pathname genuinely changes', () => {
-    const cancelRequest = vi.fn()
-    useUploadRecordingStore.setState({ cancelRequest })
+  it('calls handleRouteChange when the pathname genuinely changes', () => {
+    const handleRouteChange = vi.fn()
+    useUploadRecordingStore.setState({ handleRouteChange })
 
     const { rerender } = render(<RouteWatcher />)
 
     mockPathname = '/'
     rerender(<RouteWatcher />)
 
-    expect(cancelRequest).toHaveBeenCalledTimes(1)
+    expect(handleRouteChange).toHaveBeenCalledTimes(1)
   })
 })

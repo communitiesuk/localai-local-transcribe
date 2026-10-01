@@ -23,6 +23,8 @@ type UploadRecordingStore = {
 
   retryUpload: () => Promise<void>
   cancelRequest: () => void
+  markExpectedNavigation: () => void
+  handleRouteChange: () => void
   reset: () => void
   _values: TranscriptionForm | null
   _submit: SubmitFn | null
@@ -34,6 +36,8 @@ export const useUploadRecordingStore = create<UploadRecordingStore>(
       typeof navigator === 'undefined' ? true : navigator.onLine
 
     let controller: AbortController | null = null
+
+    let expectedNavigation = false
 
     const runUpload = async (
       uploadingFrom: UploadingFrom,
@@ -116,7 +120,21 @@ export const useUploadRecordingStore = create<UploadRecordingStore>(
         controller = null
       },
 
+      markExpectedNavigation: () => {
+        expectedNavigation = true
+      },
+
+      handleRouteChange: () => {
+        if (expectedNavigation) {
+          expectedNavigation = false
+          return
+        }
+
+        get().reset()
+      },
+
       reset: () => {
+        expectedNavigation = false
         get().cancelRequest()
         set({
           status: 'idle',

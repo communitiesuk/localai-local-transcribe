@@ -163,4 +163,55 @@ describe('useUploadRecordingStore', () => {
       transcriptionId: 'transcription-second',
     })
   })
+
+  it('handleRouteChange resets the store on a genuine navigation (no prior markExpectedNavigation call)', async () => {
+    const submit = vi.fn().mockRejectedValue(new Error('boom'))
+    await useUploadRecordingStore
+      .getState()
+      .startUpload('recording', { file: null }, submit)
+    expect(useUploadRecordingStore.getState().status).toBe('error')
+
+    useUploadRecordingStore.getState().handleRouteChange()
+
+    expect(useUploadRecordingStore.getState()).toMatchObject({
+      status: 'idle',
+      transcriptionId: null,
+      error: null,
+      awaitingManualRetry: false,
+    })
+  })
+
+  it('markExpectedNavigation suppresses exactly the next handleRouteChange call, leaving an in-flight upload untouched', async () => {
+    let resolveSubmit: (value: string) => void = () => {}
+    const submit = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          resolveSubmit = resolve
+        })
+    )
+
+    const upload = useUploadRecordingStore
+      .getState()
+      .startUpload('upload', { file: null }, submit)
+
+    useUploadRecordingStore.getState().markExpectedNavigation()
+    useUploadRecordingStore.getState().handleRouteChange()
+
+    expect(useUploadRecordingStore.getState().status).toBe('pending')
+
+    resolveSubmit('transcription-789')
+    await upload
+
+    expect(useUploadRecordingStore.getState()).toMatchObject({
+      status: 'success',
+      transcriptionId: 'transcription-789',
+    })
+
+    useUploadRecordingStore.getState().handleRouteChange()
+
+    expect(useUploadRecordingStore.getState()).toMatchObject({
+      status: 'idle',
+      transcriptionId: null,
+    })
+  })
 })

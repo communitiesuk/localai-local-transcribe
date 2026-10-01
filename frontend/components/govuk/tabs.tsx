@@ -74,8 +74,9 @@ function GovukTabsBase({
   const panelIdsString = panelIds.join('*')
 
   useEffect(() => {
-    if (panelIds.length > 0 && !panelIds.includes(currentTab)) {
-      onTabChange?.(panelIds[0])
+    const ids = panelIdsString ? panelIdsString.split('*') : []
+    if (ids.length > 0 && !ids.includes(currentTab)) {
+      onTabChange?.(ids[0])
     }
   }, [panelIdsString, currentTab, onTabChange])
 

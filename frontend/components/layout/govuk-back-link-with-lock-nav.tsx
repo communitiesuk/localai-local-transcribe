@@ -36,9 +36,20 @@ export function GovukBackLinkWithLockNav({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <a className="govuk-back-link" role="button" tabIndex={0}>
+        <button
+          type="button"
+          className="govuk-back-link"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
           Back
-        </a>
+        </button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

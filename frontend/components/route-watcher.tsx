@@ -15,7 +15,7 @@ export function RouteWatcher() {
     }
 
     previousPathnameRef.current = pathname
-    useUploadRecordingStore.getState().cancelRequest()
+    useUploadRecordingStore.getState().handleRouteChange()
   }, [pathname])
 
   return null

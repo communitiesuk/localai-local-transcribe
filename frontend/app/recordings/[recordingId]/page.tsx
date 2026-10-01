@@ -81,6 +81,7 @@ function RecordingUploadForm({ recording }: { recording: RecordingDbItem }) {
 
   const handleSubmit = form.handleSubmit((formValues) => {
     startUpload('upload', formValues, onSubmit)
+    useUploadRecordingStore.getState().markExpectedNavigation()
     router.push('/new/uploading')
   })
 
