@@ -337,15 +337,3 @@ class AnalyticsEventName(StrEnum):
     TRANSCRIPT_RECEIVED_FOR_DIRECT_UPLOAD = auto()
     SUMMARY_REQUESTED = auto()
     SUMMARY_RECEIVED = auto()
-
-
-class AnalyticsEvent(BaseTableMixin, table=True):
-    __tablename__ = "analytics_event"
-
-    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
-
-    name: AnalyticsEventName = Field(
-        sa_column=Column(Enum(AnalyticsEventName, name="analyticseventname"), nullable=False, index=True)
-    )
-
-    organisation_id: UUID | None = Field(default=None, sa_column=Column(SAUUID, nullable=True))
