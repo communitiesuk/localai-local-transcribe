@@ -10,10 +10,10 @@
 -- user_tenure_weeks: int, weeks between first authentication and reporting_period_end
 -- user_count: int, users in the tenure bucket
 -- active_user_count: int, users in the tenure bucket with at least one upload in past 7 days
--- seven_day_upload_rate_percent: numeric, percentage of active users over all users in that bucket
+-- seven_day_upload_rate_percent: numeric, percentage of eligible users in the bucket with at least one upload completed in the past 7 days
 --
 -- inclusion/exclusion rules:
--- x
+-- users within reporting period
 --
 -- duplicate/retried events:
 -- uses the earliest USER_FIRST_AUTHENTICATED and USER_DELETED event per evaluation_id
