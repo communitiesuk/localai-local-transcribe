@@ -8,13 +8,15 @@
 -- SUMMARY_RECEIVED
 --
 -- output columns and units:
--- transcript_count: int, median_summary_count: int
+-- template_id: UUID, id associated to a template
+-- transcript_count: int, number of transcripts that have been summarised with that template
+-- median_summary_count: int, median number of times that template summarises a transcript
 --
 -- inclusion/exclusion rules:
 -- x
 --
 -- duplicate/retried events:
--- there's a unique constraint on (event_type, source_id), so there should be no duplicated events
+-- there's a unique constraint on (event_type, source_id)
 
 
 WITH summaries_per_transcript AS (
