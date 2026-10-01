@@ -71,11 +71,10 @@ export default function UserManagementClient() {
   }
 
   const handleEditDomains = () => {
-    const orgId = isSystemAdmin
-      ? selectedOrganisation
-      : (organisation?.id ?? '')
-    if (orgId) {
-      router.push(`/user-management/organisations/${orgId}/domains`)
+    if (isSystemAdmin && selectedOrganisation) {
+      router.push(
+        `/user-management/organisations/${selectedOrganisation}/domains`
+      )
     }
   }
 
@@ -151,16 +150,15 @@ export default function UserManagementClient() {
 
       <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
-      <GovukButton
-        onClick={handleEditDomains}
-        variant="secondary"
-        disabled={
-          (isSystemAdmin && !selectedOrganisation) ||
-          (!isSystemAdmin && !organisation)
-        }
-      >
-        Edit approved domains
-      </GovukButton>
+      {isSystemAdmin && (
+        <GovukButton
+          onClick={handleEditDomains}
+          variant="secondary"
+          disabled={!selectedOrganisation}
+        >
+          Edit approved domains
+        </GovukButton>
+      )}
 
       <Suspense fallback={null}>
         <PaginatedUsers

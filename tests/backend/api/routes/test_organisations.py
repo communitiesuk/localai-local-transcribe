@@ -200,6 +200,43 @@ async def test_update_organisations_domains(
 
 
 @pytest.mark.asyncio
+async def test_local_authority_admin_cannot_update_own_organisation_domains(
+    client,
+    override_user,
+    override_session,
+    mock_user,
+    mock_session,
+):
+    time_now = datetime.now(UTC)
+    original_domains = ["old.gov.uk"]
+    org = Organisation(
+        id=uuid.uuid4(),
+        name="Test Organisation",
+        allowed_domains=original_domains,
+        created_datetime=time_now,
+        updated_datetime=time_now,
+    )
+    mock_user.roles = [UserRole.LOCAL_AUTHORITY_ADMIN]
+    mock_user.organisation_id = org.id
+    mock_session.get.return_value = org
+
+    response = await client.patch(
+        f"/organisations/{org.id}",
+        json={
+            "allowed_domains": ["new.gov.uk"],
+            "updated_datetime": time_now.isoformat(),
+        },
+    )
+
+    assert response.status_code == 403
+    assert org.allowed_domains == original_domains
+    assert org.updated_datetime == time_now
+
+    mock_session.commit.assert_not_awaited()
+    mock_session.refresh.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_update_organisations_domains_conflict_on_stale_updated_datetime(
     client,
     override_user,
