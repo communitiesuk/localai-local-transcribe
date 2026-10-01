@@ -25,7 +25,12 @@ const titleMapper: Record<RecordingState, string | boolean> = {
   stopping: 'Are you sure you want to stop recording?',
 }
 
-const statesWithBackLink: RecordingState[] = ['idle', 'recording', 'paused']
+const statesWithBackLink: RecordingState[] = [
+  'idle',
+  'recording',
+  'paused',
+  'stopping',
+]
 
 const navLockMessage =
   'You have a recording that has not been uploaded. Your recording will be discarded if you do not upload it.'
@@ -58,6 +63,7 @@ export default function RecordPage() {
   const params = useParams<{ recorderMethod: RecorderMethod }>()
   const recorderMethod = params.recorderMethod
   const { recordingUIState, resetRecordingUI } = useRecordingUIStore()
+  const uploadStatus = useUploadRecordingStore((store) => store.status)
 
   useEffect(() => {
     resetRecordingUI()
@@ -83,7 +89,7 @@ export default function RecordPage() {
           }}
         />
       )}
-      {titleMapper[recordingUIState] && (
+      {uploadStatus === 'idle' && titleMapper[recordingUIState] && (
         <div className="flex gap-2">
           <RecordingIcon state={recordingUIState} />
           <GovukHeading>{titleMapper[recordingUIState]}</GovukHeading>
