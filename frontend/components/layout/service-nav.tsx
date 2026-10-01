@@ -150,10 +150,7 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-// Empirically determined: the narrowest width at which all six nav items
-// ('User management' being the longest) fit on a single row without wrapping.
-// Not a standard GOV.UK breakpoint — chosen to match this nav's content.
-const MOBILE_BREAKPOINT = 923
+const MOBILE_BREAKPOINT = 1020
 
 export function ServiceNav() {
   const pathname = usePathname()
@@ -173,10 +170,6 @@ export function ServiceNav() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  if (pathname?.startsWith('/terms-of-use')) {
-    return null
-  }
-
   const hasAdminRole = hasAnyRole(user?.roles, [
     UserRole.LOCAL_AUTHORITY_ADMIN,
     UserRole.MHCLG_SUPPORT_ADMIN,
@@ -185,6 +178,10 @@ export function ServiceNav() {
   const visibleItems = navItems.filter(
     (item) => !item.isAdminOnly || hasAdminRole
   )
+
+  if (pathname?.startsWith('/terms-of-use')) {
+    return null
+  }
 
   return (
     <section

@@ -273,7 +273,7 @@
   color: red;
 }
 
-@media (max-width: 922px) {
+@media (max-width: 1019px) {
   .govuk-service-navigation__container {
     /* govuk-frontend sets flex-direction: row from ~641px (tablet breakpoint),
        causing nav items to wrap below the service name before our React-owned
@@ -283,7 +283,7 @@
   }
 }
 
-@media (min-width: 923px) {
+@media (min-width: 1020px) {
   .govuk-service-navigation__container {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
