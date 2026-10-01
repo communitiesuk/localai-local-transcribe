@@ -8,11 +8,11 @@
 -- AUDIO_UPLOAD_STARTED, TRANSCRIPTION_RECEIVED
 --
 -- output columns and units:
--- matched_recording_count: int, how many recordings have transcripts 
--- median_turnaround_seconds: int, median turnaround of these transcripts
+-- matched_recording_count: int, number of recordings with both valid upload started and transcription received events
+-- median_turnaround_seconds: numeric, median seconds between audio upload starting and transcription being received
 --
 -- inclusion/exclusion rules:
--- x
+-- includes recordings whose earliest TRANSCRIPTION_RECEIVED event occurred within the reporting period
 --
 -- duplicate/retried events:
 -- uses the earliest AUDIO_UPLOAD_STARTED and earliest TRANSCRIPTION_RECEIVED per recording_id

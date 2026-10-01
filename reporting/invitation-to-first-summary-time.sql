@@ -1,4 +1,4 @@
--- invitation-to-first-summary-received-time
+-- invitation-to-first-summary-time
 --
 -- required parameters:
 -- :reporting_period_start (e.g. '2000-01-01 00:00:00+01')
@@ -8,11 +8,11 @@
 -- USER_INVITED, SUMMARY_RECEIVED
 --
 -- output columns and units:
--- matched_user_count: int, number of invited users who have received at least one summary
+-- matched_user_count: int, number of invited users whose first summary was received within the reporting period
 -- median_invitation_to_first_summary_received_seconds: numeric, median seconds between invitation and first summary received
 --
 -- inclusion/exclusion rules:
--- x
+-- users who have summarised within the reporting period
 --
 -- duplicate/retried events:
 -- uses the earliest event for USER_INVITED and SUMMARY_RECEIVED

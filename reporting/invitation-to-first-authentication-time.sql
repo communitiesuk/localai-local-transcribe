@@ -1,4 +1,4 @@
--- median-summaries-per-transcript-and-template
+-- invitation-to-first-authentication-time
 --
 -- required parameters:
 -- :reporting_period_start (e.g. '2000-01-01 00:00:00+01')
@@ -8,14 +8,14 @@
 -- USER_INVITED, USER_FIRST_AUTHENTICATED
 --
 -- output columns and units:
--- matched_user_count: int, number of users that have been invited
--- median_invitation_to_first_authentication_seconds: int, how long before a user authenticates from first login
+-- matched_user_count: int, number of invited users whose first authentication occurred within the reporting period
+-- median_invitation_to_first_authentication_seconds: numeric, median seconds between invitation and first successful authentication
 --
 -- inclusion/exclusion rules:
--- x
+-- authenticated users within the reporting period
 --
 -- duplicate/retried events:
--- uses the earliest event for USER_INVITED and USER_FIRST_AUTHENTICATED
+-- uses the earliest USER_INVITED and earliest USER_FIRST_AUTHENTICATED event per evaluation_id
 
 
 WITH invited_users AS (
