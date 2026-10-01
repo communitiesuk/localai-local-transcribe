@@ -8,7 +8,8 @@
 -- AUDIO_UPLOAD_STARTED, TRANSCRIPTION_RECEIVED
 --
 -- output columns and units:
--- matched_recording_count: int, median_turnaround_seconds: int
+-- matched_recording_count: int, how many recordings have transcripts 
+-- median_turnaround_seconds: int, median turnaround of these transcripts
 --
 -- inclusion/exclusion rules:
 -- x
