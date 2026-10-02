@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   GovukBody,
   GovukButton,
@@ -39,9 +39,10 @@ export function MicrophoneSettings({
   const [permissionRequired, setPermissionRequired] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [warning, setWarning] = useState<string | null>(null)
+  const initialized = useRef(false)
 
   const refreshDevices = useCallback(
-    async (requestPermission = false) => {
+    async (requestPermission = false, draft?: MicrophonePreferences) => {
       try {
         if (requestPermission) {
           const stream = await navigator.mediaDevices?.getUserMedia?.({
@@ -76,31 +77,39 @@ export function MicrophoneSettings({
         }
         setPermissionRequired(false)
         setDevices(inputs.map(({ deviceId, label }) => ({ deviceId, label })))
-        let preferences: MicrophonePreferences
+        let preferences: MicrophonePreferences = draft ?? {
+          inPerson: '',
+          online: '',
+        }
         let preferencesLoaded = true
-        try {
-          preferences = loadMicrophonePreferences(userId)
-        } catch {
-          preferences = { inPerson: '', online: '' }
-          preferencesLoaded = false
-          setSaved(null)
-          setError(
-            'Your saved microphone settings could not be loaded. Choose and save your microphones again.'
-          )
+        if (!draft) {
+          try {
+            preferences = loadMicrophonePreferences(userId)
+          } catch {
+            preferencesLoaded = false
+            setError(
+              'Your saved microphone settings could not be loaded. Choose and save your microphones again.'
+            )
+          }
         }
         const inPerson = resolveMicrophone(inputs, preferences.inPerson)
         const online = resolveMicrophone(inputs, preferences.online)
         setSelected({ inPerson: inPerson.deviceId, online: online.deviceId })
-        if (!preferencesLoaded) {
-          setSaved(null)
-        } else if (preferences.inPerson || preferences.online) {
-          setSaved(preferences)
-        } else {
-          setSaved({ inPerson: inPerson.deviceId, online: online.deviceId })
+        if (!draft) {
+          if (!preferencesLoaded) {
+            setSaved(null)
+          } else if (preferences.inPerson || preferences.online) {
+            setSaved(preferences)
+          } else {
+            setSaved({ inPerson: inPerson.deviceId, online: online.deviceId })
+          }
+          initialized.current = true
         }
         setWarning(
           inPerson.unavailable || online.unavailable
-            ? 'A saved microphone is unavailable. Check and save your selected microphones.'
+            ? draft
+              ? 'A selected microphone is unavailable. Check and save your selected microphones.'
+              : 'A saved microphone is unavailable. Check and save your selected microphones.'
             : null
         )
       } catch (cause) {
@@ -130,7 +139,10 @@ export function MicrophoneSettings({
   function requestRefresh(requestPermission = false) {
     setLoading(true)
     setError(null)
-    void refreshDevices(requestPermission)
+    void refreshDevices(
+      requestPermission,
+      initialized.current ? selected : undefined
+    )
   }
 
   async function save() {

@@ -24,9 +24,14 @@ export function useMicRecorder({
   const { releaseWakeLock, requestWakeLock } = useWakeLock()
   const [error, setError] = useState<string | null>(null)
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [deviceOverride, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
   const preferredMicrophone = usePreferredMicrophone('inPerson')
+  const selection =
+    preferredMicrophone.isReady && audioDevices.length
+      ? preferredMicrophone.resolve(audioDevices)
+      : null
+  const selectedDeviceId = deviceOverride || selection?.deviceId || ''
   const form = useFormContext<TranscriptionForm>()
   const { addRecording, updateRecording } = useRecordingDb()
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -189,11 +194,10 @@ export function useMicRecorder({
   }, [])
 
   const handlePermissionGranted = (devices: AudioDevice[]) => {
-    const selection = preferredMicrophone(devices)
     setAudioDevices(devices)
-    setSelectedDeviceId(selection.deviceId)
+    setSelectedDeviceId('')
     setPermissionGranted(true)
-    setError(selection.warning)
+    setError(null)
   }
 
   useTabCloseWarning(!!recordedAudio || isRecording)
@@ -221,12 +225,13 @@ export function useMicRecorder({
   }
 
   return {
-    error,
+    error: error ?? (deviceOverride ? null : selection?.warning) ?? null,
     setError,
     audioDevices,
     selectedDeviceId,
     setSelectedDeviceId,
     permissionGranted,
+    microphoneSettingsReady: preferredMicrophone.isReady,
     mediaRecorderStream,
     isRecording,
     recordingUIState,

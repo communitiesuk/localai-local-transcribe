@@ -7,6 +7,7 @@ import {
   GovukFormGroup,
   GovukLabel,
   GovukSelect,
+  GovukBody,
 } from '@/components/govuk'
 import {
   AudioDevice,
@@ -85,16 +86,21 @@ function TabRecorder({
   const audioContext = useRef<AudioContext | null>(null)
   const recordingGain = useRef<GainNode | null>(null)
   const form = useFormContext<TranscriptionForm>()
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [deviceOverride, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
   const preferredMicrophone = usePreferredMicrophone('online')
+  const selection =
+    preferredMicrophone.isReady && audioDevices.length
+      ? preferredMicrophone.resolve(audioDevices)
+      : null
+  const selectedDeviceId = deviceOverride || selection?.deviceId || ''
+  const displayedError = err ?? (deviceOverride ? null : selection?.warning)
   const handlePermissionGranted = (devices: AudioDevice[]) => {
-    const selection = preferredMicrophone(devices)
     setAudioDevices(devices)
-    setSelectedDeviceId(selection.deviceId)
+    setSelectedDeviceId('')
     setPermissionGranted(true)
-    setError(selection.warning)
+    setError(null)
   }
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
@@ -370,6 +376,9 @@ function TabRecorder({
       />
     )
   }
+  if (!preferredMicrophone.isReady) {
+    return <GovukBody role="status">Loading microphone settings...</GovukBody>
+  }
 
   return (
     <div className="space-y-4">
@@ -428,9 +437,9 @@ function TabRecorder({
           </div>
         )}
       </div>
-      {err && (
+      {displayedError && (
         <p className="govuk-error-message" role="alert">
-          <span className="govuk-visually-hidden">Error:</span> {err}
+          <span className="govuk-visually-hidden">Error:</span> {displayedError}
         </p>
       )}
     </div>

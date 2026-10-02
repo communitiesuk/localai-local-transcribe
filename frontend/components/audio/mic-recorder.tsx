@@ -7,6 +7,7 @@ import {
   GovukFormGroup,
   GovukLabel,
   GovukSelect,
+  GovukBody,
 } from '@/components/govuk'
 import RecordingControl from './recording-control'
 import { UploadStatus } from '@/components/audio/upload-status'
@@ -73,6 +74,7 @@ function MicRecorderComponent({
     selectedDeviceId,
     setSelectedDeviceId,
     permissionGranted,
+    microphoneSettingsReady,
     mediaRecorderStream,
     isRecording,
     recordingUIState,
@@ -109,6 +111,9 @@ function MicRecorderComponent({
         )}
       </div>
     )
+  }
+  if (!microphoneSettingsReady) {
+    return <GovukBody role="status">Loading microphone settings...</GovukBody>
   }
   return (
     <div className="space-y-4">

@@ -8,9 +8,9 @@ import {
 } from '@/lib/microphone-preferences'
 
 export function usePreferredMicrophone(context: MicrophoneContext) {
-  const { data: user } = useQuery(getUserUsersMeGetOptions())
+  const { data: user, isPending } = useQuery(getUserUsersMeGetOptions())
 
-  return (devices: AudioDevice[]) => {
+  const resolve = (devices: AudioDevice[]) => {
     try {
       if (!user) throw new Error('User settings are unavailable')
       const preferences = loadMicrophonePreferences(user.id)
@@ -29,4 +29,5 @@ export function usePreferredMicrophone(context: MicrophoneContext) {
       }
     }
   }
+  return { isReady: !isPending, resolve }
 }

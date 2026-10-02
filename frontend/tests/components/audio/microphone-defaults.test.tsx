@@ -106,4 +106,80 @@ describe('recording microphone defaults', () => {
       ).toBeInTheDocument()
     }
   )
+  it.each([MicRecorderForm, TabRecorderForm])(
+    'waits for the account after device discovery and then applies the saved default',
+    async (Recorder) => {
+      saveMicrophonePreferences('user-1', {
+        inPerson: 'teams',
+        online: 'teams',
+      })
+      vi.mocked(useQuery).mockReturnValue({
+        data: undefined,
+        isPending: true,
+      } as ReturnType<typeof useQuery>)
+      const { rerender } = render(<Recorder />)
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Grant permission' })
+      )
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Loading microphone settings...'
+      )
+      expect(
+        screen.queryByLabelText('Choose microphone')
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: 'Start recording' })
+      ).not.toBeInTheDocument()
+      vi.mocked(useQuery).mockReturnValue({
+        data: { id: 'user-1' },
+        isPending: false,
+      } as ReturnType<typeof useQuery>)
+      rerender(<Recorder />)
+      expect(screen.getByLabelText('Choose microphone')).toHaveValue('teams')
+      await userEvent.selectOptions(
+        screen.getByLabelText('Choose microphone'),
+        'default'
+      )
+      rerender(<Recorder />)
+      expect(screen.getByLabelText('Choose microphone')).toHaveValue('default')
+    }
+  )
+
+  it.each([MicRecorderForm, TabRecorderForm])(
+    'uses a visible fallback if account loading fails after discovery',
+    async (Recorder) => {
+      vi.mocked(useQuery).mockReturnValue({
+        data: undefined,
+        isPending: true,
+      } as ReturnType<typeof useQuery>)
+      const { rerender } = render(<Recorder />)
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Grant permission' })
+      )
+      vi.mocked(useQuery).mockReturnValue({
+        data: undefined,
+        isPending: false,
+        isError: true,
+      } as ReturnType<typeof useQuery>)
+      rerender(<Recorder />)
+      expect(screen.getByLabelText('Choose microphone')).toHaveValue('default')
+      expect(
+        screen.getByText(/Your microphone settings could not be loaded/)
+      ).toBeInTheDocument()
+      vi.mocked(useQuery).mockReturnValue({
+        data: { id: 'user-1' },
+        isPending: false,
+      } as ReturnType<typeof useQuery>)
+      saveMicrophonePreferences('user-1', {
+        inPerson: 'teams',
+        online: 'teams',
+      })
+      await userEvent.selectOptions(
+        screen.getByLabelText('Choose microphone'),
+        'default'
+      )
+      rerender(<Recorder />)
+      expect(screen.getByLabelText('Choose microphone')).toHaveValue('default')
+    }
+  )
 })

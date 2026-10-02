@@ -183,4 +183,101 @@ describe('MicrophoneSettings', () => {
     ).toBeInTheDocument()
     expect(onSuccess).not.toHaveBeenCalledWith('Microphone settings updated')
   })
+
+  it('preserves both unsaved selections and their saved baseline when refreshing', async () => {
+    saveMicrophonePreferences('user-1', {
+      inPerson: 'default',
+      online: 'teams',
+    })
+    const getItem = vi.spyOn(Storage.prototype, 'getItem')
+    render(<MicrophoneSettings userId="user-1" onSuccess={onSuccess} />)
+    await userEvent.selectOptions(
+      await screen.findByLabelText('In person'),
+      'teams'
+    )
+    await userEvent.selectOptions(screen.getByLabelText('Online'), 'default')
+    getItem.mockClear()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Refresh microphones' })
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Refresh microphones' })
+      ).toBeEnabled()
+    )
+    expect(getItem).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('In person')).toHaveValue('teams')
+    expect(screen.getByLabelText('Online')).toHaveValue('default')
+    expect(
+      screen.getByRole('button', { name: 'Save microphones' })
+    ).toBeEnabled()
+    expect(loadMicrophonePreferences('user-1')).toEqual({
+      inPerson: 'default',
+      online: 'teams',
+    })
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Save microphones' })
+    )
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Save microphones' })
+      ).toBeDisabled()
+    )
+    expect(loadMicrophonePreferences('user-1')).toEqual({
+      inPerson: 'teams',
+      online: 'default',
+    })
+  })
+
+  it('falls back only for a disconnected draft device without changing the baseline', async () => {
+    const external = {
+      deviceId: 'external',
+      kind: 'audioinput',
+      label: 'External microphone',
+    }
+    enumerateDevices.mockResolvedValue([...devices, external])
+    saveMicrophonePreferences('user-1', { inPerson: 'teams', online: 'teams' })
+    render(<MicrophoneSettings userId="user-1" onSuccess={onSuccess} />)
+    await userEvent.selectOptions(
+      await screen.findByLabelText('In person'),
+      'external'
+    )
+    enumerateDevices.mockResolvedValue(devices)
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Refresh microphones' })
+    )
+    await screen.findByText(
+      'A selected microphone is unavailable. Check and save your selected microphones.'
+    )
+    expect(screen.getByLabelText('In person')).toHaveValue('default')
+    expect(screen.getByLabelText('Online')).toHaveValue('teams')
+    expect(
+      screen.getByRole('button', { name: 'Save microphones' })
+    ).toBeEnabled()
+    expect(loadMicrophonePreferences('user-1')).toEqual({
+      inPerson: 'teams',
+      online: 'teams',
+    })
+  })
+
+  it('preserves a draft through a failed refresh and retry', async () => {
+    render(<MicrophoneSettings userId="user-1" onSuccess={onSuccess} />)
+    await userEvent.selectOptions(
+      await screen.findByLabelText('Online'),
+      'teams'
+    )
+    enumerateDevices.mockRejectedValueOnce(new Error('Unavailable'))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Refresh microphones' })
+    )
+    await screen.findByText(/Microphone devices could not be loaded/)
+    getUserMedia.mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] })
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Allow microphone access' })
+    )
+    expect(await screen.findByLabelText('Online')).toHaveValue('teams')
+    expect(
+      screen.getByRole('button', { name: 'Save microphones' })
+    ).toBeEnabled()
+  })
 })
