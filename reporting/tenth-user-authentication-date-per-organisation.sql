@@ -5,7 +5,6 @@
 --
 -- event types/external data:
 -- USER_FIRST_AUTHENTICATED
--- organisation table for all organisations
 --
 -- output columns and units:
 -- organisation_id: UUID, ID for the organisation
@@ -33,6 +32,11 @@ WITH first_authenticated_users AS (
     GROUP BY organisation_id, evaluation_id
 ),
 
+authenticated_organisations AS (
+    SELECT DISTINCT organisation_id
+    FROM first_authenticated_users
+),
+
 ranked_authenticated_users AS (
     SELECT
         organisation_id,
@@ -46,11 +50,10 @@ ranked_authenticated_users AS (
 )
 
 SELECT
-    o.id AS organisation_id,
-    o.name AS organisation_name,
+    ao.organisation_id,
     rau.first_authenticated_at AS tenth_user_authenticated_at
-FROM organisation o
+FROM authenticated_organisations ao
 LEFT JOIN ranked_authenticated_users rau
-  ON rau.organisation_id = o.id
+  ON rau.organisation_id = ao.organisation_id
  AND rau.authentication_rank = 10
-ORDER BY o.id;
+ORDER BY ao.organisation_id;
