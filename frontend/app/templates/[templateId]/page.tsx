@@ -122,9 +122,18 @@ const EditTemplateBody = ({
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
 
+    const handleNavigate = (e: NavigateEvent) => {
+      if (e.navigationType !== 'traverse' || !e.cancelable) return
+      e.preventDefault()
+      const { pathname, search } = new URL(e.destination.url)
+      goToCancel(pathname + search)
+    }
+    window.navigation?.addEventListener('navigate', handleNavigate)
+
     return () => {
       setLockNavigation(false)
       window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.navigation?.removeEventListener('navigate', handleNavigate)
     }
   }, [form.formState.isDirty, goToCancel, setLockNavigation])
 

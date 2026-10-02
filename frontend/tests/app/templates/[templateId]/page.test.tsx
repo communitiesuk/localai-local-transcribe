@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useQuery } from '@tanstack/react-query'
 import { ReactNode, startTransition, useEffect, useState } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import EditTemplatePage from '@/app/templates/[templateId]/page'
 import CancelTemplateEditPage from '@/app/templates/[templateId]/cancel/page'
 import { ServiceNav } from '@/components/layout/service-nav'
@@ -104,6 +104,10 @@ describe('<EditTemplatePage /> navigation lock', () => {
     vi.clearAllMocks()
     history = [EDIT_PATH]
     useTemplateDraftStore.setState({ draft: null })
+    Object.defineProperty(window, 'navigation', {
+      value: new EventTarget(),
+      configurable: true,
+    })
 
     vi.mocked(useQuery).mockImplementation(
       (options: any) =>
@@ -114,6 +118,10 @@ describe('<EditTemplatePage /> navigation lock', () => {
               : template,
         }) as any
     )
+  })
+
+  afterEach(() => {
+    delete (window as any).navigation
   })
 
   const renderPage = async () => {
@@ -134,6 +142,17 @@ describe('<EditTemplatePage /> navigation lock', () => {
   const fireBeforeUnload = () => {
     const event = new Event('beforeunload', { cancelable: true })
     window.dispatchEvent(event)
+    return event.defaultPrevented
+  }
+
+  const fireBrowserBack = (url: string) => {
+    const event = Object.assign(new Event('navigate', { cancelable: true }), {
+      navigationType: 'traverse',
+      destination: { url: `http://localhost${url}` },
+    })
+    act(() => {
+      window.navigation.dispatchEvent(event)
+    })
     return event.defaultPrevented
   }
 
@@ -273,5 +292,34 @@ describe('<EditTemplatePage /> navigation lock', () => {
     await clickAndNavigate(user, 'Templates')
 
     expect(fireBeforeUnload()).toBe(false)
+  })
+
+  it('goes back in the browser normally when there are no unsaved changes', async () => {
+    await renderPage()
+
+    expect(fireBrowserBack('/templates')).toBe(false)
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('navigates to the discard changes page when going back in the browser with unsaved changes', async () => {
+    const user = userEvent.setup()
+    await renderPage()
+
+    await editTitle(user)
+
+    expect(fireBrowserBack('/templates')).toBe(true)
+    expect(mockPush).toHaveBeenLastCalledWith(
+      `${CANCEL_PATH}?destination=%2Ftemplates`
+    )
+  })
+
+  it('goes back in the browser normally once on the discard changes page', async () => {
+    const user = userEvent.setup()
+    await renderPage()
+
+    await editTitle(user)
+    await clickAndNavigate(user, 'Templates')
+
+    expect(fireBrowserBack(EDIT_PATH)).toBe(false)
   })
 })
