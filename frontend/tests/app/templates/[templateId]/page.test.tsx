@@ -322,4 +322,37 @@ describe('<EditTemplatePage /> navigation lock', () => {
 
     expect(fireBrowserBack(EDIT_PATH)).toBe(false)
   })
+
+  const discardWithDestination = async (destination?: string) => {
+    history = [
+      EDIT_PATH,
+      destination
+        ? `${CANCEL_PATH}?destination=${encodeURIComponent(destination)}`
+        : CANCEL_PATH,
+    ]
+    const user = userEvent.setup()
+    await renderPage()
+    await clickAndNavigate(user, 'Discard')
+  }
+
+  it('goes to the destination after discarding changes', async () => {
+    await discardWithDestination('/settings?tab=profile')
+
+    expect(mockPush).toHaveBeenLastCalledWith('/settings?tab=profile')
+  })
+
+  it('goes to the templates page after discarding changes when there is no destination', async () => {
+    await discardWithDestination()
+
+    expect(mockPush).toHaveBeenLastCalledWith('/templates')
+  })
+
+  it.each(['https://evil.example', '//evil.example', '/\\evil.example'])(
+    'goes to the templates page instead of the external destination %s after discarding changes',
+    async (destination) => {
+      await discardWithDestination(destination)
+
+      expect(mockPush).toHaveBeenLastCalledWith('/templates')
+    }
+  )
 })

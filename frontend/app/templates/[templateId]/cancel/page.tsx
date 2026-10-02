@@ -5,6 +5,18 @@ import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { use } from 'react'
 
+// Ensure the destination link is on this site
+const getSafeDestination = (destination: string | null) => {
+  if (!destination) return '/templates'
+  try {
+    const url = new URL(destination, window.location.origin)
+    if (url.origin !== window.location.origin) return '/templates'
+    return url.pathname + url.search + url.hash
+  } catch {
+    return '/templates'
+  }
+}
+
 export default function CancelTemplateEditPage(props: {
   params: Promise<{ templateId: string }>
 }) {
@@ -18,7 +30,7 @@ export default function CancelTemplateEditPage(props: {
 
   const handleDiscard = () => {
     clearDraft()
-    router.push(destination || '/templates')
+    router.push(getSafeDestination(destination))
   }
 
   return (
