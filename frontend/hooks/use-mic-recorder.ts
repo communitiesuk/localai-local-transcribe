@@ -116,6 +116,7 @@ export function useMicRecorder({
           if (recordingId) {
             await updateRecording(recordingId, audioBlob)
           }
+          setRecordingUIState('idle')
         } else {
           setError(
             'No audio data was recorded. Please try again and ensure audio is shared.'

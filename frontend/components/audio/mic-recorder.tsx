@@ -1,90 +1,54 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
-import RecordingControl from './recording-control'
 import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
+import RecordingControl from './recording-control'
+import { UploadStatus } from '@/components/audio/upload-status'
 import { useStartTranscription } from '@/hooks/use-start-transcription'
 import { Controller, FormProvider } from 'react-hook-form'
 import { MicrophonePermission } from './microphone-permission'
 import { RecordingLoading } from '@/components/recording-loading'
-import { Loader2 } from 'lucide-react'
 import { useMicRecorder } from '@/hooks/use-mic-recorder'
+import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 
 export function MicRecorderForm() {
-  const router = useRouter()
-  const { isPending, onSubmit, form } = useStartTranscription()
+  const { onSubmit, form } = useStartTranscription()
+
+  const startUpload = useUploadRecordingStore((store) => store.startUpload)
+  const uploadStatus = useUploadRecordingStore((store) => store.status)
+
   const watchBlob = form.watch('file')
   const submittedBlobRef = useRef<Blob | File | null>(null)
-  const [isProcessingRecording, setIsProcessingRecording] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!watchBlob || submittedBlobRef.current === watchBlob) {
       return
     }
-
     submittedBlobRef.current = watchBlob
-    setIsProcessingRecording(true)
-    setSubmitError(null)
 
-    void form
-      .handleSubmit(async (formValues) => {
-        const transcriptionId = await onSubmit(formValues)
-        if (transcriptionId) {
-          router.push(`/new/metadata/${transcriptionId}`)
-          return
-        }
-        throw new Error('No transcription was created')
-      })()
-      .catch(() => {
-        setSubmitError(
-          'We could not upload your recording. It has been saved on this device, so you can try again from your recordings.'
-        )
-        setIsProcessingRecording(false)
-      })
-  }, [form, onSubmit, router, watchBlob])
+    void form.handleSubmit((formValues) => {
+      startUpload('recording', formValues, onSubmit)
+    })()
+  }, [form, onSubmit, startUpload, watchBlob])
 
-  const handleRetry = () => {
-    submittedBlobRef.current = null
-    setSubmitError(null)
-    form.setValue('file', null)
-  }
-
-  if (submitError) {
-    return (
-      <div className="space-y-4">
-        <p className="govuk-error-message" role="alert">
-          <span className="govuk-visually-hidden">Error:</span> {submitError}
-        </p>
-        <GovukButton type="button" onClick={handleRetry}>
-          Start again
-        </GovukButton>
-      </div>
-    )
+  if (uploadStatus !== 'idle') {
+    return <UploadStatus />
   }
 
   return (
     <FormProvider {...form}>
       <form>
-        {isProcessingRecording || isPending || watchBlob ? (
-          <div className="flex h-72 flex-col items-center justify-center gap-4">
-            <Loader2 size={80} className="animate-spin" aria-hidden="true" />
-            <p className="govuk-body">Processing recording...</p>
-          </div>
-        ) : (
-          <Controller
-            name="file"
-            control={form.control}
-            render={({ field: { value, onChange } }) => (
-              <MicRecorderComponent
-                recordedAudio={value}
-                setRecordedAudio={onChange}
-              />
-            )}
-          />
-        )}
+        <Controller
+          name="file"
+          control={form.control}
+          render={({ field: { value, onChange } }) => (
+            <MicRecorderComponent
+              recordedAudio={value}
+              setRecordedAudio={onChange}
+            />
+          )}
+        />
       </form>
     </FormProvider>
   )
