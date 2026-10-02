@@ -39,3 +39,21 @@ variable "worker_task_memory" {
   type        = number
   default     = 8192
 }
+
+variable "frontend_task_cpu" {
+  description = "CPU units for the frontend ECS task definition"
+  type        = number
+  default     = 1024
+}
+
+variable "backend_task_cpu" {
+  description = "CPU units for the backend ECS task definition"
+  type        = number
+  default     = 4096
+}
+
+variable "worker_task_cpu" {
+  description = "CPU units for the worker ECS task definition"
+  type        = number
+  default     = 4096
+}
