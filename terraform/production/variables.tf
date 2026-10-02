@@ -21,3 +21,21 @@ variable "maintenance_mode_on" {
   type        = bool
   default     = false
 }
+
+variable "frontend_task_memory" {
+  description = "Memory for the frontend ECS task definition - prod"
+  type        = number
+  default     = 2048
+}
+
+variable "backend_task_memory" {
+  description = "Memory for the backend ECS task definition - prod"
+  type        = number
+  default     = 8192
+}
+
+variable "worker_task_memory" {
+  description = "Memory for the worker ECS task definition - prod"
+  type        = number
+  default     = 8192
+}

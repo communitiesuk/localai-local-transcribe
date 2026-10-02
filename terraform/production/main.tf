@@ -172,7 +172,7 @@ module "ecs" {
   environment_name            = local.environment_name
   frontend_task_desired_count = 1
   backend_task_desired_count  = 1
-  worker_task_desired_count   = 1
+  worker_task_desired_count   = 2
   frontend_port               = local.frontend_port
   backend_port                = local.backend_port
 
@@ -180,6 +180,10 @@ module "ecs" {
   database_host     = module.database.database_url
   database_name     = module.database.database_name
   database_username = local.database_username
+
+  frontend_task_memory = var.frontend_task_memory
+  backend_task_memory  = var.backend_task_memory
+  worker_task_memory   = var.worker_task_memory
 
   lb_target_group_arn  = module.frontdoor.load_balancer.target_group_arn
   lb_security_group_id = module.frontdoor.load_balancer.security_group_id
