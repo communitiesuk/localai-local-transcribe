@@ -39,7 +39,7 @@ jobs:
     condition: and(succeeded(), eq(dependencies.fortnightly_schedule_gate.outputs['set_schedule_gate.shouldRun'], 'true'))
     timeoutInMinutes: 60
     pool:
-      vmImage: ubuntu-latest
+      vmImage: vmss-shared
     steps:
       - template: ../templates/run-eval-steps.yml
         parameters:
