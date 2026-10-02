@@ -3,7 +3,7 @@ steps:
   - task: AzureCLI@2
     displayName: Upload standard summarisation smoke-test dataset
     inputs:
-      azureSubscription: $(EVALS_DATASET_UPLOAD_SERVICE_CONNECTION)
+      azureSubscription: $(EVALS_AZURE_SERVICE_CONNECTION)
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
