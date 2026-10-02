@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useOnlineStatus } from '@/hooks/use-online-status'
-import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 import { ProcessingSpinner } from '@/components/processing-spinner'
 import { GovukButton, GovukHeading } from '@/components/govuk'
 
@@ -26,7 +26,7 @@ export function UploadStatus() {
     retryUpload,
   } = useUploadRecordingStore()
 
-  useTabCloseWarning(
+  useLockNavigation(
     status === 'pending' || status === 'error' ? LOCK_NAVIGATION_MESSAGE : false
   )
 
