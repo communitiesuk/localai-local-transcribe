@@ -66,3 +66,17 @@ export const LockNavigationProvider = ({
 export const useLockNavigationContext = () => {
   return useContext(LockNavigationContext)
 }
+
+export const useLockNavigation = (
+  lock: LockNavigationContextType['lockNavigation']
+) => {
+  const { setLockNavigation } = useLockNavigationContext()
+  useEffect(() => {
+    if (lock) {
+      setLockNavigation(() => lock)
+    }
+    return () => {
+      setLockNavigation(false)
+    }
+  }, [lock, setLockNavigation])
+}

@@ -13,7 +13,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { use, useEffect } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
-import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 
 export default function EditTemplatePage(props: {
   params: Promise<{ templateId: string }>
@@ -105,21 +105,7 @@ const EditTemplateBody = ({
   const actions = <TemplateEditorActions templateId={templateId} />
   const form = useFormContext<TemplateData>()
 
-  const { setLockNavigation } = useLockNavigationContext()
-
-  useEffect(() => {
-    if (!form.formState.isDirty) {
-      setLockNavigation(false)
-      return
-    }
-    setLockNavigation(() => (href: string) => {
-      goToCancel(href)
-    })
-
-    return () => {
-      setLockNavigation(false)
-    }
-  }, [form.formState.isDirty, goToCancel, setLockNavigation])
+  useLockNavigation(form.formState.isDirty ? goToCancel : false)
 
   if (type === 'document') {
     return <DocumentTemplateEditor onSubmit={goToSave} actions={actions} />
