@@ -1,8 +1,8 @@
 -- invitation-to-first-summary-time
 --
 -- required parameters:
--- :reporting_period_start (e.g. '2000-01-01 00:00:00+01')
--- :reporting_period_end (e.g. '2010-01-01 00:00:00+01')
+-- :reporting_period_start (e.g. '2000-01-01 00:00:00+00')
+-- :reporting_period_end (e.g. '2010-01-01 00:00:00+00')
 --
 -- event types/external data:
 -- USER_INVITED, SUMMARY_RECEIVED

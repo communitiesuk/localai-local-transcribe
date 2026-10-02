@@ -1,8 +1,8 @@
 -- cost-per-uploaded-audio-hour-per-month
 --
 -- required parameters:
--- :reporting_period_start (e.g. '2000-01-01 00:00:00+00')
--- :reporting_period_end (e.g. '2010-01-01 00:00:00+00')
+-- :reporting_period_start (e.g. '2000-01-01 00:00:00+00'), requires complete months
+-- :reporting_period_end (e.g. '2010-01-01 00:00:00+00'), requires complete months
 -- :monthly_lt_costs_json e.g:
 --   '[
 --     {"month": "2025-01-01", "monthly_lt_cost": "1234.56"},
@@ -61,8 +61,8 @@ uploaded_audio_hours_per_month AS (
         COALESCE(SUM(cu.audio_duration_seconds), 0) / 3600.0 AS uploaded_audio_hours
     FROM reporting_months rm
     LEFT JOIN completed_uploads cu
-        ON cu.completed_at >= GREATEST(rm.month_start, :reporting_period_start::timestamptz)
-       AND cu.completed_at < LEAST(rm.month_start + INTERVAL '1 month', :reporting_period_end::timestamptz)
+        ON cu.completed_at >= GREATEST(rm.month_start AT TIME ZONE 'UTC', :reporting_period_start::timestamptz)
+       AND cu.completed_at < LEAST((rm.month_start + INTERVAL '1 month') AT TIME ZONE 'UTC', :reporting_period_end::timestamptz)
     GROUP BY rm.month_start
 )
 

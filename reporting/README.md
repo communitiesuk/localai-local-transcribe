@@ -12,7 +12,7 @@ cp reporting/params/ready-dates.json.example reporting/params/ready-dates.json
 cp reporting/params/monthly-lt-costs.json.example reporting/params/monthly-lt-costs.json
 ```
 
-Fill in these values for the period of data you are interested in. Not all metrics require all params.
+Fill in these values for the period of data you are interested in. Not all metrics require all params. The following metrics require full calander months: `costs-per-completed-audio-upload-per-month`, `cost-per-uploaded-audio-hour-per-month`, and `cost-per-active-user-per-month`.
 
 ## Connecting to database
 

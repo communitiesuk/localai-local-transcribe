@@ -1,7 +1,7 @@
 -- tenth-user-authentication-date-per-organisation
 --
 -- required parameters:
--- :reporting_period_end (e.g. '2010-01-01 00:00:00+01')
+-- :reporting_period_end (e.g. '2010-01-01 00:00:00+00')
 --
 -- event types/external data:
 -- USER_FIRST_AUTHENTICATED

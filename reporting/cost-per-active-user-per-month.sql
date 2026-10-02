@@ -1,8 +1,8 @@
 -- cost-per-active-user-per-month
 --
 -- required parameters:
--- :reporting_period_start (e.g. '2020-01-01 00:00:00+00')
--- :reporting_period_end (e.g. '2025-01-01 00:00:00+00')
+-- :reporting_period_start (e.g. '2020-01-01 00:00:00+00'), requires complete months
+-- :reporting_period_end (e.g. '2025-01-01 00:00:00+00'), requires complete months
 -- :monthly_lt_costs_json e.g:
 --   '[
 --     {"month": "2025-01-01", "monthly_lt_cost": "1234.56"},
@@ -40,10 +40,10 @@ reporting_days AS (
     SELECT
         rm.month_start,
         generate_series(
-            GREATEST(rm.month_start, date_trunc('day', :reporting_period_start::timestamptz)),
+            GREATEST(rm.month_start, date_trunc('day', :reporting_period_start::timestamptz AT TIME ZONE 'UTC')),
             LEAST(
                 rm.month_start + INTERVAL '1 month',
-                date_trunc('day', :reporting_period_end::timestamptz - INTERVAL '1 microsecond') + INTERVAL '1 day'
+                date_trunc('day', (:reporting_period_end::timestamptz - INTERVAL '1 microsecond') AT TIME ZONE 'UTC') + INTERVAL '1 day'
             ) - INTERVAL '1 day',
             INTERVAL '1 day'
         ) AS day_start
@@ -95,8 +95,8 @@ active_user_days_per_month AS (
         COUNT(uap.evaluation_id) AS active_user_days
     FROM reporting_days rd
     LEFT JOIN user_active_periods uap
-        ON uap.first_authenticated_at < rd.day_start + INTERVAL '1 day'
-       AND uap.active_until > rd.day_start
+        ON uap.first_authenticated_at < ((rd.day_start + INTERVAL '1 day') AT TIME ZONE 'UTC')
+       AND uap.active_until > (rd.day_start AT TIME ZONE 'UTC')
     GROUP BY rd.month_start
 ),
 

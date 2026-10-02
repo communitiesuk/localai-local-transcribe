@@ -1,7 +1,7 @@
 -- organisation-readiness-to-tenth-authentication-time
 --
 -- required parameters:
--- :reporting_period_end (e.g. '2010-01-01 00:00:00+01')
+-- :reporting_period_end (e.g. '2010-01-01 00:00:00+00')
 -- :ready_dates_json e.g:
 --   '[
 --     {"organisation_id": "xxx", "ready_at": "2025-01-01 00:00:00+00"},

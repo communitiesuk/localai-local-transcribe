@@ -21,7 +21,7 @@
 WITH completed_uploads_per_user_day AS (
     SELECT
         evaluation_id,
-        occurred_datetime::date AS upload_day,
+        (occurred_datetime AT TIME ZONE 'UTC')::date AS upload_day,
         COUNT(DISTINCT source_id) AS completed_upload_count
     FROM analytics_event
     WHERE event_type = 'AUDIO_UPLOAD_COMPLETED'
@@ -31,7 +31,7 @@ WITH completed_uploads_per_user_day AS (
       AND occurred_datetime < :reporting_period_end
     GROUP BY
         evaluation_id,
-        occurred_datetime::date
+        (occurred_datetime AT TIME ZONE 'UTC')::date
 )
 
 SELECT

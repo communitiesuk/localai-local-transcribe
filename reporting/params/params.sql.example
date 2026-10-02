@@ -1,6 +1,6 @@
 -- Params set in this file
-\set reporting_period_start '''2020-01-01 00:00:00+01'''
-\set reporting_period_end '''2025-01-01 00:00:00+01'''
+\set reporting_period_start '''2020-01-01 00:00:00+00'''
+\set reporting_period_end '''2025-01-01 00:00:00+00'''
 
 -- Params pointing to their respective JSON files
 \set ready_dates_json `printf '$json$'; cat reporting/params/ready-dates.json; printf '$json$'`

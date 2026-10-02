@@ -1,7 +1,7 @@
 -- user-active-month-rate
 --
 -- required parameters:
--- :reporting_period_end (e.g. '2010-01-01 00:00:00+01')
+-- :reporting_period_end (e.g. '2010-01-01 00:00:00+00')
 --
 -- event types/external data:
 -- USER_FIRST_AUTHENTICATED, USER_DELETED, TRANSCRIPTION_RECEIVED
@@ -60,13 +60,13 @@ user_denominators AS (
         (
             (
                 EXTRACT(YEAR FROM age(
-                    date_trunc('month', active_until - INTERVAL '1 microsecond'),
-                    date_trunc('month', first_authenticated_at)
+                    date_trunc('month', (active_until - INTERVAL '1 microsecond') AT TIME ZONE 'UTC'),
+                    date_trunc('month', first_authenticated_at AT TIME ZONE 'UTC')
                 )) * 12
             )
             + EXTRACT(MONTH FROM age(
-                date_trunc('month', active_until - INTERVAL '1 microsecond'),
-                date_trunc('month', first_authenticated_at)
+                date_trunc('month', (active_until - INTERVAL '1 microsecond') AT TIME ZONE 'UTC'),
+                date_trunc('month', first_authenticated_at AT TIME ZONE 'UTC')
             ))
             + 1
         )::int AS calendar_month_count
@@ -77,7 +77,7 @@ user_denominators AS (
 user_active_months AS (
     SELECT
         ud.evaluation_id,
-        COUNT(DISTINCT date_trunc('month', ae.occurred_datetime)) AS active_month_count
+        COUNT(DISTINCT date_trunc('month', ae.occurred_datetime AT TIME ZONE 'UTC')) AS active_month_count
     FROM user_denominators ud
     LEFT JOIN analytics_event ae
         ON ae.event_type = 'TRANSCRIPTION_RECEIVED'
