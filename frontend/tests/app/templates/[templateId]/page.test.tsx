@@ -131,6 +131,12 @@ describe('<EditTemplatePage /> navigation lock', () => {
     await act(async () => user.click(screen.getByText(text)))
   }
 
+  const fireBeforeUnload = () => {
+    const event = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(event)
+    return event.defaultPrevented
+  }
+
   it('navigates straight to the destination when there are no unsaved changes', async () => {
     const user = userEvent.setup()
     await renderPage()
@@ -230,5 +236,42 @@ describe('<EditTemplatePage /> navigation lock', () => {
 
     expect(mockBack).toHaveBeenCalled()
     expect(screen.getByLabelText('Title')).toHaveValue('Board minutes (draft)')
+  })
+
+  it('does not warn before leaving the site when there are no unsaved changes', async () => {
+    await renderPage()
+
+    expect(fireBeforeUnload()).toBe(false)
+  })
+
+  it('warns before leaving the site when there are unsaved changes', async () => {
+    const user = userEvent.setup()
+    await renderPage()
+
+    await editTitle(user)
+
+    expect(fireBeforeUnload()).toBe(true)
+  })
+
+  it('does not warn before leaving the site once changes have been undone', async () => {
+    const user = userEvent.setup()
+    await renderPage()
+
+    const title = screen.getByLabelText('Title')
+    await editTitle(user)
+    await user.clear(title)
+    await user.type(title, 'Board minutes')
+
+    expect(fireBeforeUnload()).toBe(false)
+  })
+
+  it('does not warn before leaving the site once on the discard changes page', async () => {
+    const user = userEvent.setup()
+    await renderPage()
+
+    await editTitle(user)
+    await clickAndNavigate(user, 'Templates')
+
+    expect(fireBeforeUnload()).toBe(false)
   })
 })

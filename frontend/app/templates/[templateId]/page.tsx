@@ -116,8 +116,15 @@ const EditTemplateBody = ({
       goToCancel(href)
     })
 
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = true
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
     return () => {
       setLockNavigation(false)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [form.formState.isDirty, goToCancel, setLockNavigation])
 
