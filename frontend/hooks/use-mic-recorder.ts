@@ -8,6 +8,7 @@ import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { useCountdown } from '@/hooks/use-countdown'
+import { usePreferredMicrophone } from '@/hooks/use-preferred-microphone'
 
 /**
  * Encapsulates the MediaRecorder lifecycle (device selection, permission
@@ -23,8 +24,14 @@ export function useMicRecorder({
   const { releaseWakeLock, requestWakeLock } = useWakeLock()
   const [error, setError] = useState<string | null>(null)
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [deviceOverride, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
+  const preferredMicrophone = usePreferredMicrophone('inPerson')
+  const selection =
+    preferredMicrophone.isReady && audioDevices.length
+      ? preferredMicrophone.resolve(audioDevices)
+      : null
+  const selectedDeviceId = deviceOverride || selection?.deviceId || ''
   const form = useFormContext<TranscriptionForm>()
   const { addRecording, updateRecording } = useRecordingDb()
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -188,7 +195,7 @@ export function useMicRecorder({
 
   const handlePermissionGranted = (devices: AudioDevice[]) => {
     setAudioDevices(devices)
-    setSelectedDeviceId(devices[0].deviceId)
+    setSelectedDeviceId('')
     setPermissionGranted(true)
     setError(null)
   }
@@ -218,12 +225,13 @@ export function useMicRecorder({
   }
 
   return {
-    error,
+    error: error ?? (deviceOverride ? null : selection?.warning) ?? null,
     setError,
     audioDevices,
     selectedDeviceId,
     setSelectedDeviceId,
     permissionGranted,
+    microphoneSettingsReady: preferredMicrophone.isReady,
     mediaRecorderStream,
     isRecording,
     recordingUIState,
