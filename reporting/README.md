@@ -1,13 +1,39 @@
-You will need to fill in `reporting_period_start` (e.g. `2025-01-01 00:00:00+01`), `reporting_period_end` (e.g. `2025-02-01 00:00:00+01`) and `metric` (e.g `median-transcription-turnaround-time`)
+# First party reporting
 
-```sql
-PGPASSWORD=insecure psql \
-  -h localhost \
-  -p 5432 \
-  -U postgres \
-  -d minute_db \
-  -v ON_ERROR_STOP=1 \
-  -v reporting_period_start="'<reporting_period_start>'" \
-  -v reporting_period_end="'<reporting_period_end>'" \
-  -f reporting/<metric>.sql
+We collect first party analytic events. These scripts summarise those events into various metrics.
+
+## Parameters
+
+Before running a report, create local parameter files from the example files in `reporting/params/`.
+
+```bash
+cp reporting/params/params.sql.example reporting/params/params.sql
+cp reporting/params/ready-dates.json.example reporting/params/ready-dates.json
+cp reporting/params/monthly-lt-costs.json.example reporting/params/monthly-lt-costs.json
+```
+
+Fill in these values for the period of data you are interested in. Not all metrics require all params.
+
+## Connecting to Database
+
+First authenticate to AWS:
+
+```bash
+aws sso login --profile <your-profile>
+export AWS_PROFILE=<your-profile>
+bash connect-to-aws-db.sh
+```
+
+## Running metrics
+
+Load the params:
+
+```bash
+\i reporting/params/params.sql
+```
+
+Run the sql script for the metric of interest:
+
+```
+\i reporting/<metric>.sql
 ```
