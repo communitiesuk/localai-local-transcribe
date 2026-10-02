@@ -1,6 +1,9 @@
 # Reusable steps template for running eval pipelines.
 
 parameters:
+  - name: datasetSetupSteps
+    type: stepList
+    default: []
   - name: pythonVersion
     type: string
     default: '3.12'
@@ -24,6 +27,8 @@ parameters:
 
 steps:
   - checkout: self
+
+  - ${{ parameters.datasetSetupSteps }}
 
   - template: setup-python-poetry.yml
     parameters:
