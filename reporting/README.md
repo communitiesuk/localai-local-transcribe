@@ -14,14 +14,24 @@ cp reporting/params/monthly-lt-costs.json.example reporting/params/monthly-lt-co
 
 Fill in these values for the period of data you are interested in. Not all metrics require all params.
 
-## Connecting to Database
+## Connecting to database
 
-First authenticate to AWS:
+Connect to the AWS database:
 
 ```bash
 aws sso login --profile <your-profile>
 export AWS_PROFILE=<your-profile>
 bash connect-to-aws-db.sh
+```
+
+Or locally:
+
+```bash
+PGPASSWORD=insecure psql \
+  -h localhost \
+  -p 5432 \
+  -U postgres \
+  -d minute_db
 ```
 
 ## Running metrics
