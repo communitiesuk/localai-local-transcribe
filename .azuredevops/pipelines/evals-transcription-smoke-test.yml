@@ -18,7 +18,7 @@ parameters:
     default: 'transcription-eval-results'
 
 pool:
-  vmImage: vmss-shared
+  name: vmss-shared
 
 steps:
   - template: ../templates/run-eval-steps.yml
