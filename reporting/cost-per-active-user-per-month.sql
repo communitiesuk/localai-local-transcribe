@@ -30,8 +30,8 @@
 WITH reporting_months AS (
     SELECT
         generate_series(
-            date_trunc('month', :reporting_period_start::timestamptz),
-            date_trunc('month', :reporting_period_end::timestamptz - INTERVAL '1 microsecond'),
+            date_trunc('month', :reporting_period_start::timestamptz AT TIME ZONE 'UTC'),
+            date_trunc('month', (:reporting_period_end::timestamptz - INTERVAL '1 microsecond') AT TIME ZONE 'UTC'),
             INTERVAL '1 month'
         ) AS month_start
 ),
