@@ -9,7 +9,7 @@ import {
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
 import { UploadStatus } from '@/components/audio/upload-status'
-import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import {
   useStartTranscription,
@@ -97,7 +97,7 @@ function TabRecorder({
   const [stream, setStream] = useState<MediaStream | null>(null)
   const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
 
-  useTabCloseWarning(isRecording || !!recordedAudio)
+  useLockNavigation(isRecording || !!recordedAudio)
 
   const stopAllTracks = useCallback(() => {
     isStartingRecordingRef.current = false
