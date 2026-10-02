@@ -4,7 +4,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
-from typing import ClassVar, Literal
+from typing import Annotated, ClassVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
@@ -198,7 +198,7 @@ class PaginatedUsersResponse(BaseModel):
     total_pages: int
 
 
-type DataRetentionOptions = Literal[1, 7, 30]
+type DataRetentionOptions = Annotated[int, Field(strict=True, ge=1, le=30)]
 
 
 class DataRetentionUpdateResponse(BaseModel):

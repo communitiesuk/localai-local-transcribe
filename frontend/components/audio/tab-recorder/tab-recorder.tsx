@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukFormGroup,
+  GovukLabel,
+  GovukSelect,
+} from '@/components/govuk'
 import {
   AudioDevice,
   MicrophonePermission,
@@ -22,6 +27,7 @@ import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
+import { usePreferredMicrophone } from '@/hooks/use-preferred-microphone'
 
 export const TabRecorderForm = () => {
   const uploadRef = useRef(false)
@@ -82,11 +88,13 @@ function TabRecorder({
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
+  const preferredMicrophone = usePreferredMicrophone('online')
   const handlePermissionGranted = (devices: AudioDevice[]) => {
+    const selection = preferredMicrophone(devices)
     setAudioDevices(devices)
-    setSelectedDeviceId(devices[0].deviceId)
+    setSelectedDeviceId(selection.deviceId)
     setPermissionGranted(true)
-    setError(null)
+    setError(selection.warning)
   }
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const mediaChunksRef = useRef<Blob[]>([])
@@ -372,8 +380,8 @@ function TabRecorder({
               <GovukLabel htmlFor="virtual-microphone-select">
                 Choose microphone
               </GovukLabel>
-              <select
-                className="govuk-select w-full"
+              <GovukSelect
+                className="w-full"
                 id="virtual-microphone-select"
                 value={selectedDeviceId}
                 onChange={(e) => setSelectedDeviceId(e.target.value)}
@@ -384,7 +392,7 @@ function TabRecorder({
                     {device.label}
                   </option>
                 ))}
-              </select>
+              </GovukSelect>
             </GovukFormGroup>
 
             <div className="govuk-inset-text govuk-!-margin-top-0">

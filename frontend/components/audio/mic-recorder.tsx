@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from 'react'
 
-import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukFormGroup,
+  GovukLabel,
+  GovukSelect,
+} from '@/components/govuk'
 import RecordingControl from './recording-control'
 import { UploadStatus } from '@/components/audio/upload-status'
 import { useStartTranscription } from '@/hooks/use-start-transcription'
@@ -113,8 +118,8 @@ function MicRecorderComponent({
             <GovukLabel htmlFor="microphone-select">
               Choose microphone
             </GovukLabel>
-            <select
-              className="govuk-select w-full"
+            <GovukSelect
+              className="w-full"
               id="microphone-select"
               value={selectedDeviceId}
               onChange={(e) => setSelectedDeviceId(e.target.value)}
@@ -124,7 +129,7 @@ function MicRecorderComponent({
                   {device.label}
                 </option>
               ))}
-            </select>
+            </GovukSelect>
           </GovukFormGroup>
 
           <div className="govuk-inset-text govuk-!-margin-top-0">
