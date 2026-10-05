@@ -14,7 +14,8 @@ const PUBLIC_PATHS = [
   '/unauthorised',
   '/health',
   '/monitoring',
-  '/privacy',
+  '/privacy-council-employees',
+  '/privacy-members-public',
   '/support',
   '/signout',
   '/assets', // Bypass middleware for static asset files

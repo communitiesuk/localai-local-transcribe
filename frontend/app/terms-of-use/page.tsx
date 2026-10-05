@@ -7,6 +7,8 @@ import {
   GovukButtonLink,
   GovukErrorSummary,
   GovukHeading,
+  GovukList,
+  GovukListItem,
 } from '@/components/govuk'
 import {
   acceptTermsOfUseUsersTermsOfUsePostMutation,
@@ -68,16 +70,18 @@ export default function TermsOfUsePage() {
         )}
 
         <GovukHeading as="h1" size="xl">
-          Local Transcribe – Terms of Use
+          Terms of Use
         </GovukHeading>
 
         <GovukBody>
-          These Terms of Use set out the conditions for using Local Transcribe,
-          an AI transcription and summarisation tool provided by the Ministry of
-          Housing, Communities and Local Government (MHCLG). By using Local
-          Transcribe, you agree to comply with these terms, which are designed
-          to protect users, participating local authorities, MHCLG, and the
-          service itself.
+          These terms set out the conditions for using Local Transcribe, an AI
+          transcription and summarisation tool provided by the Ministry of
+          Housing, Communities and Local Government (MHCLG).
+        </GovukBody>
+        <GovukBody>
+          By using Local Transcribe, you agree to comply with these terms, which
+          are designed to protect users, participating local authorities, MHCLG
+          and the service itself.
         </GovukBody>
 
         <GovukBody>
@@ -130,56 +134,140 @@ export default function TermsOfUsePage() {
         </GovukHeading>
         <GovukBody>
           Local Transcribe is intended to support drafting and preparation of
-          content rather than to produce final outputs. Users must make clear to
-          relevant participants when a conversation or meeting is being recorded
-          for automated transcription and summarisation purposes. Users must
-          ensure that responsibility for final content remains with a human
-          author.
+          content rather than to produce final outputs. Users must ensure that
+          responsibility for final content remains with a human author.
+        </GovukBody>
+        <GovukBody>
+          Before you start recording, you must tell everyone in the conversation
+          that it is being recorded for automated transcription and
+          summarisation purposes. If someone does not want to be recorded, the
+          conversation should proceed without it.{' '}
         </GovukBody>
 
         <GovukHeading as="h2" size="m">
           4. Compliance with Policies
         </GovukHeading>
         <GovukBody>
-          You must comply with your organisation&apos;s policies related to data
-          and AI, as well as legal and regulatory requirements from GDPR, ICO
-          guidance, and relevant ethical principles from the data and AI ethics
-          framework, when using Local Transcribe.
+          <p className="govuk-body">
+            When using Local Transcribe, you must comply with:{' '}
+          </p>
+          <GovukList type="bullet">
+            <GovukListItem>
+              your organisation&apos;s policies related to data and AI{' '}
+            </GovukListItem>
+            <GovukListItem>
+              legal and regulatory requirements, including the ICO’s{' '}
+              <a
+                className="govuk-link"
+                href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/"
+              >
+                guidance on AI and data protection
+              </a>{' '}
+              and{' '}
+              <a
+                className="govuk-link"
+                href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/"
+              >
+                UK GDPR
+              </a>
+            </GovukListItem>
+            <GovukListItem>
+              the government’s{' '}
+              <a
+                className="govuk-link"
+                href="https://www.gov.uk/government/publications/data-ethics-framework/data-and-ai-ethics-framework"
+              >
+                Data and AI Ethics Framework
+              </a>{' '}
+            </GovukListItem>
+          </GovukList>
+          You should also be familiar with any guidance we provide on Local
+          Transcribe, and any updates we issue during private beta.
         </GovukBody>
 
         <GovukHeading as="h2" size="m">
           5. Security and Privacy
         </GovukHeading>
         <GovukBody>
-          When using Local Transcribe, you must follow your organisation&apos;s
-          security requirements for the type and sensitivity of the data it
-          stores or processes, including protecting access credentials and
-          handling outputs appropriately. Any suspected security incidents, data
-          breaches, or misuse must be reported as soon as possible to{' '}
+          <p className="govuk-body">When using Local Transcribe, you must: </p>
+          <GovukList type="bullet">
+            <GovukListItem>protect your access credentials </GovukListItem>
+            <GovukListItem>not share your account </GovukListItem>
+            <GovukListItem>
+              store and share outputs only through systems and recipients
+              approved by your organisation.{' '}
+            </GovukListItem>
+          </GovukList>
+          You must report any suspected security incidents, data breaches or
+          misuse as soon as possible to your organisation’s data protection
+          contact, and to the Local Transcribe team at{' '}
           <a className="govuk-link" href="mailto:localai@communities.gov.uk">
             localai@communities.gov.uk
           </a>
-          .
         </GovukBody>
 
         <GovukHeading as="h2" size="m">
-          6. Feedback and Improvement
+          6. Accuracy and bias
         </GovukHeading>
         <GovukBody>
-          Users are encouraged to provide feedback on Local Transcribe&apos;s
-          performance, limitations, and errors to support continuous improvement
-          of the service. Users should provide feedback through the feedback
-          link in the beta banner, where available.
+          While Local Transcribe has been tested for accuracy and bias –
+          including differences in performance across accents, dialects and
+          speech patterns – you should be alert to inaccuracies or biases in
+          outputs. Make sure you apply professional judgement at all times.
+        </GovukBody>
+        <GovukBody>
+          We encourage you to provide feedback on Local Transcribe’s
+          performance, limitations and errors to support continuous improvement
+          of the service. You can either{' '}
+          <a
+            className="govuk-link"
+            href="mailto:LocalTranscribeSupport@communities.gov.uk"
+          >
+            report a problem
+          </a>{' '}
+          or{' '}
+          <a
+            className="govuk-link"
+            href="mailto:LocalTranscribeSupport@communities.gov.uk"
+          >
+            share general feedback
+          </a>
+          .
         </GovukBody>
 
         <GovukHeading as="h2" size="m">
           7. Usage Restrictions
         </GovukHeading>
         <GovukBody>
-          Local Transcribe must not be used for purposes outside approved local
+          You must not use Local Transcribe for purposes outside approved local
           government activities. Information generated by Local Transcribe must
-          not be treated as an official record, decision, or instruction without
-          appropriate review, validation, and approval.
+          not be treated as an official record, decision or instruction without
+          appropriate review, validation and approval.
+        </GovukBody>
+        <GovukBody>You must not:</GovukBody>
+        <GovukBody>
+          <GovukList type="bullet">
+            <GovukListItem>
+              record anyone without telling them beforehand{' '}
+            </GovukListItem>
+            <GovukListItem>
+              upload audio or data that you are not authorised to process{' '}
+            </GovukListItem>
+            <GovukListItem>
+              attempt to misuse, probe or bypass safeguards within the
+              service{' '}
+            </GovukListItem>
+            <GovukListItem>
+              attempt to misuse, probe or bypass safeguards within the
+              service{' '}
+            </GovukListItem>
+            <GovukListItem>
+              use outputs or usage data to monitor or access the performance of
+              individual staff{' '}
+            </GovukListItem>
+          </GovukList>
+          Reporting a fault, weakness or unexpected behaviour is not misuse, and
+          is encouraged.
         </GovukBody>
 
         <GovukHeading as="h2" size="m">
@@ -187,21 +275,22 @@ export default function TermsOfUsePage() {
         </GovukHeading>
         <GovukBody>
           Use of Local Transcribe may be logged and monitored by MHCLG for
-          operational, security, and assurance purposes. User data may be
-          accessed in exceptional circumstances by MHCLG where necessary for
-          operational or security purposes. When it has been agreed to in
-          advance, user data may also be accessed by MHCLG for evaluation
-          purposes. MHCLG reserves the right to suspend or withdraw access to
-          Local Transcribe at its discretion, including in cases of misuse,
-          policy non-compliance, or operational need.
+          operational, security and assurance purposes, including usage volumes
+          and patterns.
         </GovukBody>
 
         <GovukBody>
-          Read the{' '}
-          <a className="govuk-link" href="/privacy">
-            Local Transcribe privacy notice
-          </a>{' '}
-          to understand how the service uses personal information.
+          There is no routine monitoring of user content. User content may be
+          accessed in exceptional circumstances by MHCLG, where necessary, to
+          investigate a specific security or service fault, and access is
+          logged.
+        </GovukBody>
+        <GovukBody>
+          When it has been agreed to in advance, user data may also be accessed
+          by MHCLG for evaluation purposes. MHCLG reserves the right to suspend
+          or withdraw access to Local Transcribe during the private beta at its
+          discretion, including in cases of misuse, policy breaches or security
+          concerns.{' '}
         </GovukBody>
 
         <GovukButtonGroup>

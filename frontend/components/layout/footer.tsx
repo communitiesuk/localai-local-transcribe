@@ -1,10 +1,9 @@
 import { MhclgLogo } from '@/components/icons/mhclg-logo'
 
 const links = {
-  '/privacy': 'Local Transcribe User Privacy Notice',
-  '/privacy/end-service-user': 'End Service User Privacy Notice',
-  '/support': 'Support',
   '/acceptable-use-policy': 'Acceptable Use Policy',
+  '/privacy-council-employees': 'Privacy (council employees)',
+  '/privacy-members-public': 'Privacy (members of the public)',
 }
 
 export default function GovFooter() {
