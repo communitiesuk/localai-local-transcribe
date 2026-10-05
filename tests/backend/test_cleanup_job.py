@@ -258,7 +258,7 @@ async def test_init_cleanup_scheduler_starts_cleanup_job(mocker):
     analytics_call = mock_scheduler.add_job.call_args_list[1]
     assert analytics_call.args == (cleanup_analytics_events, "cron")
     assert analytics_call.kwargs == {
-        "hour": "0,6,12,18",
+        "hour": 23,
         "minute": 0,
         "timezone": UTC,
         "max_instances": 1,

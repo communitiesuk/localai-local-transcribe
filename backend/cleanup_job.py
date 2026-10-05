@@ -103,7 +103,7 @@ async def init_cleanup_scheduler() -> None:
     scheduler.add_job(
         cleanup_analytics_events,
         "cron",
-        hour="0,6,12,18",
+        hour=23,
         minute=0,
         timezone=UTC,
         max_instances=1,
