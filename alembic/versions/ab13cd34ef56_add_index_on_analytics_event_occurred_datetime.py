@@ -18,13 +18,20 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.create_index(
-        op.f("ix_analytics_event_occurred_datetime"),
-        "analytics_event",
-        ["occurred_datetime"],
-        unique=False,
-    )
+    with op.get_context().autocommit_block():
+        op.create_index(
+            op.f("ix_analytics_event_occurred_datetime"),
+            "analytics_event",
+            ["occurred_datetime"],
+            unique=False,
+            postgresql_concurrently=True,
+        )
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_analytics_event_occurred_datetime"), table_name="analytics_event")
+    with op.get_context().autocommit_block():
+        op.drop_index(
+            op.f("ix_analytics_event_occurred_datetime"),
+            table_name="analytics_event",
+            postgresql_concurrently=True,
+        )
