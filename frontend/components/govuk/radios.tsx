@@ -52,6 +52,9 @@ export const GovukRadios = forwardRef<HTMLDivElement, RadiosProps>(
                   disabled={disabled}
                   aria-describedby={option.hint ? hintId : undefined}
                   aria-controls={option.conditional ? conditionalId : undefined}
+                  aria-expanded={
+                    option.conditional ? value === option.value : undefined
+                  }
                 />
                 <GovukLabel
                   className="govuk-radios__label"
