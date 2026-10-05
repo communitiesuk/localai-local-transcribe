@@ -2,6 +2,7 @@ import {
   createRecordingRecordingsPostMutation,
   createTranscriptionTranscriptionsPostMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { getFileExtension } from '@/lib/getFileExtension'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
 import { useMutation } from '@tanstack/react-query'
@@ -97,6 +98,10 @@ export const useStartTranscription = (
 
       const isFile = file instanceof File
 
+      if (isFile) {
+        void recordAnalyticsEvent('live_recording_started_or_upload_requested')
+      }
+
       const file_extension = isFile ? getFileExtension(file.name) : 'webm'
       const file_created_at =
         isFile && file.lastModified
@@ -114,6 +119,12 @@ export const useStartTranscription = (
         signal,
       })
 
+      void recordAnalyticsEvent(
+        isFile
+          ? 'audio_upload_complete_from_direct_upload'
+          : 'audio_upload_complete_from_live_recording'
+      )
+
       const audio_duration_seconds = await getMediaDurationSeconds(file)
 
       const transcriptionData = await createTranscription({
@@ -124,6 +135,12 @@ export const useStartTranscription = (
         },
         signal,
       })
+
+      void recordAnalyticsEvent(
+        isFile
+          ? 'transcript_requested_for_direct_upload'
+          : 'transcript_requested_for_live_recording'
+      )
 
       if (recordingId) {
         await removeRecording(recordingId)

@@ -198,6 +198,7 @@ module "ecs" {
   private_subnet_ids   = module.networking.private_subnets[*].id
   vpc_id               = module.networking.vpc.id
   app_url              = local.app_host
+  plausible_domain     = local.app_host
 
   frontend_image_name = "${module.ecr.ecr_frontend_repository_url}:${var.image_tag}"
   backend_image_name  = "${module.ecr.ecr_backend_repository_url}:${var.image_tag}"

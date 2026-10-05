@@ -533,3 +533,17 @@ class OrganisationPatchRequest(BaseModel):
 
 class UserExistsResponse(BaseModel):
     exists: bool
+
+
+class AnalyticsEventName(StrEnum):
+    """Aggregate events sent to Plausible. All are reported by the browser, so each carries its real user agent."""
+
+    LIVE_RECORDING_STARTED_OR_UPLOAD_REQUESTED = auto()
+    AUDIO_UPLOAD_COMPLETE_FROM_LIVE_RECORDING = auto()
+    AUDIO_UPLOAD_COMPLETE_FROM_DIRECT_UPLOAD = auto()
+    TRANSCRIPT_REQUESTED_FOR_LIVE_RECORDING = auto()
+    TRANSCRIPT_REQUESTED_FOR_DIRECT_UPLOAD = auto()
+    SUMMARY_REQUESTED = auto()
+
+class AnalyticsEventRequest(BaseModel):
+    name: AnalyticsEventName

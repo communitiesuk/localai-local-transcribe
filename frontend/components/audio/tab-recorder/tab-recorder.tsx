@@ -16,6 +16,7 @@ import {
 import RecordingControl from '@/components/audio/recording-control'
 import { UploadStatus } from '@/components/audio/upload-status'
 import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import {
   useStartTranscription,
@@ -287,6 +288,7 @@ function TabRecorder({
 
       await requestWakeLock()
       form.setValue('recordedAt', new Date())
+      void recordAnalyticsEvent('live_recording_started_or_upload_requested')
       mediaRecorder.start(1000)
       setIsRecording(true)
     } catch (error) {

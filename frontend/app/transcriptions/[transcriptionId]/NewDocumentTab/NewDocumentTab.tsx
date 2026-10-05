@@ -13,6 +13,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
   getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { ProcessingSpinner } from '@/components/processing-spinner'
 import {
   isDefaultTemplateId,
@@ -155,6 +156,7 @@ export const NewDocumentTab = ({
     if (!selectedTemplate) return
     renamedRef.current = false
     setCreatedMinuteId(null)
+    void recordAnalyticsEvent('summary_requested')
     createMinute(
       {
         path: { transcription_id: transcription.id! },
