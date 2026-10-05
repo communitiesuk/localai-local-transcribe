@@ -38,6 +38,11 @@ export function useTemplateInterstitialActions(templateId: string) {
     [snapshotAndGo]
   )
   const goToDelete = useCallback(() => snapshotAndGo('delete'), [snapshotAndGo])
+
+  // finalDestination parameter specifies where the user should be redirected after
+  // confirming they want to discard their changes.
+  // This allows us to use this goToCancel in the locked navigation case - i.e. we can
+  // redirect them to where they were trying to navigate to.
   const goToCancel = useCallback(
     (finalDestination?: string) => snapshotAndGo('cancel', finalDestination),
     [snapshotAndGo]

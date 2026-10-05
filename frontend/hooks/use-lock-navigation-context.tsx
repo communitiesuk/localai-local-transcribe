@@ -21,6 +21,15 @@ const LockNavigationContext = createContext<LockNavigationContextType>({
   setLockNavigation: () => {},
 })
 
+/**
+ * Use to prevent the user navigating away from the current page.
+ * Prevents navigation using the app, and browser, controls.
+ *
+ * `lockNavigation`, can be a string, boolean, or function.
+ * Anything truthy will cause navigation to be blocked.
+ * If a string, that message will be displayed to the user when they try navigating.
+ * If a function, it will be called with the url the user is attempting to navigate to.
+ */
 export const LockNavigationProvider = ({
   children,
 }: {
@@ -67,6 +76,13 @@ export const useLockNavigationContext = () => {
   return useContext(LockNavigationContext)
 }
 
+/**
+ * Use to prevent the user navigating away from the current page.
+ * Prevents navigation using the app, and browser, controls.
+ * Usage e.g.: `useLockNavigation(!!recordedAudio || isRecording)`
+ *             `useLockNavigation(formState.isDirty ? goToCancel : false)`
+ * This is a simplified wrapper of useLockNavigationContext.
+ */
 export const useLockNavigation = (
   lock: LockNavigationContextType['lockNavigation']
 ) => {
