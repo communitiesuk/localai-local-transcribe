@@ -7,7 +7,11 @@ import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 import { ProcessingSpinner } from '@/components/processing-spinner'
-import { GovukButton, GovukHeading } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukHeading,
+  GovukNotificationBanner,
+} from '@/components/govuk'
 
 const LOCK_NAVIGATION_MESSAGE =
   'You have a recording that has not been uploaded. Are you sure you want to leave this page? Your recording will be discarded if you do not upload it.'
@@ -59,15 +63,16 @@ export function UploadStatus() {
     return (
       <div className="space-y-4">
         <GovukHeading>{heading}</GovukHeading>
-        <p
-          className={status === 'error' ? 'govuk-error-message' : 'govuk-body'}
-          role={status === 'error' ? 'alert' : undefined}
-        >
-          {status === 'error' && (
+        {status === 'error' ? (
+          <p className="govuk-error-message" role="alert">
             <span className="govuk-visually-hidden">Error: </span>
-          )}
-          {message}
-        </p>
+            {message}
+          </p>
+        ) : (
+          <GovukNotificationBanner variant={isOnline ? 'success' : 'important'}>
+            <p className="govuk-notification-banner__heading">{message}</p>
+          </GovukNotificationBanner>
+        )}
         <GovukButton
           type="button"
           onClick={() => retryUpload()}
