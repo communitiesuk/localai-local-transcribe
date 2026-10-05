@@ -13,6 +13,7 @@ from backend.cleanup_job import (
     cleanup_old_records,
     init_cleanup_scheduler,
 )
+from common.database.postgres_models import AnalyticsEvent
 from common.services.storage_services.audio_deletion import delete_recording_file_and_row
 
 
@@ -173,6 +174,14 @@ async def test_cleanup_analytics_events_deletes_expired_events_and_logs_committe
     mock_session.commit.assert_awaited_once()
     mock_session.delete.assert_not_awaited()
     assert f"Deleted {deleted_count} expired first-party analytics events" in caplog.text
+
+
+def test_analytics_event_has_retention_index():
+    assert any(
+        index.name == "ix_analytics_event_occurred_datetime"
+        and [column.name for column in index.columns] == ["occurred_datetime"]
+        for index in AnalyticsEvent.__table__.indexes
+    )
 
 
 @pytest.mark.asyncio
