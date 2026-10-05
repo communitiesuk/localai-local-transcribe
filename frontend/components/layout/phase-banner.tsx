@@ -9,7 +9,7 @@ export function PhaseBanner() {
           This is a new service –{' '}
           <a
             className="govuk-link"
-            href="mailto:LocalTranscribe@communities.gov.uk"
+            href="mailto:LocalTranscribeSupport@communities.gov.uk"
           >
             email us your feedback
           </a>{' '}
