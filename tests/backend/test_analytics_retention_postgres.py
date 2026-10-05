@@ -102,7 +102,8 @@ async def test_analytics_retention_concurrent_runs(analytics_engine):
                     "evaluation_id": "expired",
                 }
                 for _ in range(100)
-            ] + [
+            ]
+            + [
                 {
                     "id": uuid4(),
                     "occurred_datetime": now,
