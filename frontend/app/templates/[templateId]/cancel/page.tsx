@@ -2,35 +2,23 @@
 
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
 import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { use } from 'react'
-
-// Ensure the destination link is on this site
-const getSafeDestination = (destination: string | null) => {
-  if (!destination) return '/templates'
-  try {
-    const url = new URL(destination, window.location.origin)
-    if (url.origin !== window.location.origin) return '/templates'
-    return url.pathname + url.search + url.hash
-  } catch {
-    return '/templates'
-  }
-}
+import { useDestination } from '@/hooks/use-destination'
 
 export default function CancelTemplateEditPage(props: {
   params: Promise<{ templateId: string }>
 }) {
   const { templateId } = use(props.params)
 
-  const searchParams = useSearchParams()
-  const destination = searchParams.get('destination')
+  const destination = useDestination('/templates')
 
   const router = useRouter()
   const clearDraft = useTemplateDraftStore((store) => store.clearDraft)
 
   const handleDiscard = () => {
     clearDraft()
-    router.push(getSafeDestination(destination))
+    router.push(destination)
   }
 
   return (
