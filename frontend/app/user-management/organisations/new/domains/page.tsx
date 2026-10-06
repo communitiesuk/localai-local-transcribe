@@ -7,7 +7,11 @@ import {
   listOrganisationsOrganisationsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
 
-import { GovukHeading, GovukBackLink } from '@/components/govuk'
+import {
+  GovukHeading,
+  GovukBackLink,
+  GovukSectionBreak,
+} from '@/components/govuk'
 import { EditDomainsForm } from '@/components/organisations/domains-form'
 import DomainsDetails from '@/components/organisations/domains-details'
 import type { EditDomainsFormData } from '@/components/organisations/domains-form'
@@ -57,19 +61,15 @@ export default function CreateNewOrganisationDomains() {
   return (
     <>
       <GovukBackLink href="/user-management/organisations/new" />
-
       <GovukHeading>Create organisation</GovukHeading>
-
       <EditDomainsForm
         defaultValues={[]}
         onSubmit={onSubmit}
         isPending={createOrganisationPending}
-        buttonText="Create organistaion"
+        buttonText="Create organisation"
         buttonPendingText="Creating organisation..."
       />
-
-      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
-
+      <GovukSectionBreak size="l" />
       <DomainsDetails />
     </>
   )
