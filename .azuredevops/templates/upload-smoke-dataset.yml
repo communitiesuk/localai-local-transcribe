@@ -18,7 +18,7 @@ steps:
         test -s "$source_file"
         exists=$(az storage blob exists \
           --auth-mode login \
-          --blob-endpoint "$STORAGE_URL" \
+          --account-name "${SENSITIVE_ACCOUNT}" \
           --container-name input \
           --name summarisation/standard/dialogues.jsonl \
           --query exists --output tsv --only-show-errors)
@@ -33,7 +33,7 @@ steps:
 
         az storage blob upload \
           --auth-mode login \
-          --blob-endpoint "$STORAGE_URL" \
+          --account-name "${SENSITIVE_ACCOUNT}" \
           --container-name input \
           --name summarisation/standard/dialogues.jsonl \
           --file "$source_file" \
