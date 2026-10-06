@@ -62,7 +62,7 @@ async def test_accept_terms_of_use_success(override_user, override_session, mock
     mock_session.refresh.assert_awaited_once_with(mock_pending_tou_user)
 
 
-@pytest.mark.parametrize("retention_period", [1, 7, 30])
+@pytest.mark.parametrize("retention_period", range(1, 31))
 @pytest.mark.asyncio
 async def test_update_data_retention_success(
     override_user, override_session, mock_user, mock_session, retention_period
@@ -90,17 +90,21 @@ async def test_update_data_retention_success(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("retention_period", [-1, 0, 31, 1.5, 7.0, "7", True, None])
 async def test_update_data_retention_invalid(
     override_user,
     override_session,
+    mock_session,
+    retention_period,
 ):
     async with get_test_client() as ac:
         response = await ac.patch(
             "/users/data-retention",
-            json={"data_retention_days": 0},
+            json={"data_retention_days": retention_period},
         )
 
     assert response.status_code == 422
+    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio

@@ -11,8 +11,9 @@ import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
 import { TemplateData } from '@/types/templates'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import { use } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
+import { use, useEffect } from 'react'
+import { FormProvider, useForm, useFormContext } from 'react-hook-form'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 
 export default function EditTemplatePage(props: {
   params: Promise<{ templateId: string }>
@@ -74,12 +75,17 @@ const TemplateEditorForm = ({
 }) => {
   const draft = useTemplateDraftStore((store) => store.draft)
 
+  const form = useForm<TemplateData>({
+    defaultValues: defaultValues,
+  })
+
   // Re-hydrate any unsaved edits that were stashed prior to a confirmation
   // interstitial, so cancelling one returns here with all edits preserved.
-  const form = useForm<TemplateData>({
-    defaultValues:
-      draft?.templateId === templateId ? draft.data : defaultValues,
-  })
+  useEffect(() => {
+    if (draft?.templateId === templateId) {
+      form.reset(draft.data, { keepDefaultValues: true })
+    }
+  }, [draft, templateId, form])
 
   return (
     <FormProvider {...form}>
@@ -95,8 +101,11 @@ const EditTemplateBody = ({
   templateId: string
   type: TemplateData['type']
 }) => {
-  const { goToSave } = useTemplateInterstitialActions(templateId)
+  const { goToSave, goToCancel } = useTemplateInterstitialActions(templateId)
   const actions = <TemplateEditorActions templateId={templateId} />
+  const form = useFormContext<TemplateData>()
+
+  useLockNavigation(form.formState.isDirty ? goToCancel : false)
 
   if (type === 'document') {
     return <DocumentTemplateEditor onSubmit={goToSave} actions={actions} />

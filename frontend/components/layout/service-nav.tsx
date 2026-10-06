@@ -90,6 +90,22 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   }
 
   if (lockNavigation) {
+    if (typeof lockNavigation === 'function') {
+      return (
+        <Link
+          href={href}
+          className="govuk-service-navigation__link"
+          aria-current={ariaCurrent}
+          onClick={(e) => {
+            e.preventDefault()
+            lockNavigation(href)
+            setLockNavigation(false)
+          }}
+        >
+          {children}
+        </Link>
+      )
+    }
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
