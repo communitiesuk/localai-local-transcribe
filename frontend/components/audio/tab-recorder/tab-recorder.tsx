@@ -8,6 +8,7 @@ import {
   MicrophonePermission,
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
+import { microphoneInUse } from '@/lib/microphone-in-use'
 import { UploadStatus } from '@/components/audio/upload-status'
 import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
 import { useWakeLock } from '@/hooks/use-wake-lock'
@@ -411,6 +412,7 @@ function TabRecorder({
             <RecordingControl
               stream={stream}
               isRecording={isRecording}
+              microphoneLabel={microphoneInUse(audioDevices, selectedDeviceId)}
               onStopRecording={() => {
                 onStopRecording()
                 stopRecording()

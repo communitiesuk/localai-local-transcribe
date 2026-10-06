@@ -15,6 +15,7 @@ import { useRecordingTimer } from '@/hooks/use-recording-timer'
 interface RecordingControlProps {
   stream: MediaStream | null
   isRecording: boolean
+  microphoneLabel?: string
   onStopRecording: () => void
   recorderControls?: {
     togglePauseResume?: () => void
@@ -37,6 +38,7 @@ const formatDuration = (durationMs: number) => {
 export default function RecordingControl({
   stream,
   isRecording,
+  microphoneLabel,
   onStopRecording,
   recorderControls,
   onPauseStateChange,
@@ -346,6 +348,8 @@ export default function RecordingControl({
       {/* css to toggle canvas visibility when not on stop confimration page
       so canvas never unmounts and can resume if user cancels stop */}
       <div className={!showStopConfirm ? 'block' : 'hidden'}>
+        {microphoneLabel && <p>Microphone in use: {microphoneLabel}</p>}
+
         <p>Recording length: {formattedRecordingDuration}</p>
 
         <div
