@@ -1,17 +1,19 @@
 import { GovukHeading, GovukList, GovukListItem } from '@/components/govuk'
 
 export const metadata = {
-  title: 'Local Transcribe User Privacy Notice',
+  title: 'End Service User Privacy Notice',
 }
 
-export default function PrivacyPage() {
+export default function PrivacyMembersPublicPage() {
   return (
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-two-thirds">
         <GovukHeading as="h1" size="l">
           Privacy notice for Local Transcribe
         </GovukHeading>
-
+        <p className="govuk-body govuk-!-font-size-24">
+          Version for local council service users
+        </p>
         <p className="govuk-body">This privacy notice:</p>
         <GovukList type="bullet">
           <GovukListItem>explains your rights</GovukListItem>
@@ -105,8 +107,7 @@ export default function PrivacyPage() {
             <strong>Collection:</strong> When we ask you for information, we
             will keep to the law, including the Data Protection Act 2018 and UK
             General Data Protection Regulation. Personal Data will be gathered
-            during user research and engagement activities, Local Transcribe as
-            a live product and Local Transcribe evaluation.
+            during the use of Local Transcribe.
           </GovukListItem>
           <GovukListItem>
             <strong>Storage:</strong>
@@ -114,25 +115,8 @@ export default function PrivacyPage() {
               <GovukListItem>
                 All Personal Data will be securely stored. Personal Data from
                 activities between MHCLG and Local Transcribe Partner Councils
-                during user research and engagement activities, Local Transcribe
-                as a live product and Local Transcribe evaluation will be stored
-                in line with GDPR, ICO guidance, user research ethics, and
-                governance.
-              </GovukListItem>
-              <GovukListItem>
-                Your Personal Data from user research and engagement activities
-                will be stored in the third-party software used by the MHCLG
-                Department, such as SharePoint.
-              </GovukListItem>
-              <GovukListItem>
-                Any artefacts with Personally Identifiable Information from user
-                research and engagement activities between frontline workers and
-                team members from Local Transcribe such as recordings of
-                meetings, will be stored in a password protected folder.
-              </GovukListItem>
-              <GovukListItem>
-                Information will be aggregated and anonymised and outcome
-                artefacts will have Personally Identifiable Information removed.
+                related to the use of Local Transcribe will be stored in line
+                with GDPR, ICO guidance, user research ethics, and governance.
               </GovukListItem>
               <GovukListItem>
                 Personal Data within Local Transcribe will be securely stored.
@@ -177,18 +161,6 @@ export default function PrivacyPage() {
         </GovukHeading>
         <GovukList type="bullet">
           <GovukListItem>
-            The following Personal Data from local council personnel, local
-            council employees, team managers, frontline workers is being
-            collected for the described purpose:
-            <GovukList type="bullet">
-              <GovukListItem>Full name</GovukListItem>
-              <GovukListItem>Role</GovukListItem>
-              <GovukListItem>Local authority</GovukListItem>
-              <GovukListItem>Local council department</GovukListItem>
-              <GovukListItem>Email address</GovukListItem>
-            </GovukList>
-          </GovukListItem>
-          <GovukListItem>
             Personal Data within Audio Data
             <GovukList type="bullet">
               <GovukListItem>
@@ -198,8 +170,8 @@ export default function PrivacyPage() {
               </GovukListItem>
               <GovukListItem>
                 Audio data shared by Local Transcribe Partner Councils when they
-                agree to share this data, for the purpose of Local Transcribe
-                evaluation
+                agree to share this data, for the purpose of testing and
+                evaluating Local Transcribe
               </GovukListItem>
               <GovukListItem>
                 This includes audio data from meetings between frontline workers
@@ -217,7 +189,7 @@ export default function PrivacyPage() {
               <GovukListItem>
                 Data from case management systems or surveys shared by Local
                 Transcribe Partner Councils when they agree to share this data,
-                for the purpose of Local Transcribe evaluation
+                for the purpose of testing and evaluating Local Transcribe
               </GovukListItem>
               <GovukListItem>
                 This may include case note data from case management systems,
@@ -232,17 +204,6 @@ export default function PrivacyPage() {
             applicable Data Protection Legislation in respect of their
             processing of Personal Data as a Joint Controller of data as part of
             their delivery of a service to service users.
-          </GovukListItem>
-        </GovukList>
-
-        <GovukHeading as="h2" size="m">
-          What non-Personal Data is being collected
-        </GovukHeading>
-        <GovukList type="bullet">
-          <GovukListItem>
-            Information shared by Local Transcribe Partner Councils as part of
-            user research and engagement activities e.g. ways of working, end to
-            end activities carried out by frontline workers for service delivery
           </GovukListItem>
         </GovukList>
 
@@ -268,7 +229,7 @@ export default function PrivacyPage() {
           </GovukListItem>
           <GovukListItem>
             Both MHCLG and Local Transcribe Partner Councils remain responsible
-            as Joint Controllers for instructing their own Data Processors to
+            as a Joint Controller for instructing their own Data Processors to
             comply with the applicable Data Protection Legislation in respect of
             their processing of Personal Data.
           </GovukListItem>
@@ -292,29 +253,30 @@ export default function PrivacyPage() {
             interest.
           </GovukListItem>
           <GovukListItem>
-            We will only use your Personal Data for the purposes of user
-            research and engagement activities, Local Transcribe as a live
-            product, Local Transcribe evaluation, and in line with our legal
-            responsibilities under data protection law.
+            We will only use your Personal Data for the purposes of Local
+            Transcribe as a live product and Local Transcribe evaluation, and in
+            line with our legal responsibilities under data protection law.
           </GovukListItem>
         </GovukList>
 
         <GovukHeading as="h2" size="m">
           Privacy Notice
         </GovukHeading>
-        <p className="govuk-body">
-          This privacy notice explains how and why we use your personal
-          information. It sets out what data we collect, what we use it for, how
-          long we keep it, and what your rights are.
-        </p>
-        <p className="govuk-body">
-          This privacy notice is authored by MHCLG and is not intended to
-          replace each local authority’s own service-specific privacy
-          information. Councils remain responsible for determining the
-          appropriate usage of Local Transcribe in their own service delivery
-          and for ensuring service users are provided with appropriate
-          transparency information.
-        </p>
+        <GovukList type="bullet">
+          <GovukListItem>
+            This privacy notice explains how and why we use your personal
+            information. It sets out what data we collect, what we use it for,
+            how long we keep it, and what your rights are.
+          </GovukListItem>
+          <GovukListItem>
+            This privacy notice is authored by MHCLG and is not intended to
+            replace each local authority’s own service-specific privacy
+            information. Councils remain responsible for determining the
+            appropriate usage of Local Transcribe in their own service delivery
+            and for ensuring service users are provided with appropriate
+            transparency information.
+          </GovukListItem>
+        </GovukList>
 
         <GovukHeading as="h2" size="m">
           With whom we will be sharing the data
@@ -340,76 +302,61 @@ export default function PrivacyPage() {
         <GovukHeading as="h2" size="m">
           Duration of the processing
         </GovukHeading>
-        <p className="govuk-body">
-          The processing of Personal Data begins from the start of the
-          activities of Local Transcribe Partner Councils and MHCLG during user
-          research and engagement activities, Local Transcribe as a live product
-          and Local Transcribe evaluation.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data from audio data begins when personnel from
-          Local Transcribe Partner Councils, local council employees, team
-          managers and frontline workers use Local Transcribe to record meetings
-          or upload audio data to Local Transcribe or share audio data with
-          MHCLG for testing purposes and evaluation of Local Transcribe, during
-          the activities of Local Transcribe as a live product and Local
-          Transcribe evaluation.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data from case management systems or surveys
-          under this DSA begins when personnel from Local Transcribe Partner
-          Councils, local council employees, team managers and frontline workers
-          share case management or survey data with MHCLG for testing purposes
-          and evaluation of Local Transcribe, during the activities of Local
-          Transcribe evaluation.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data shall continue for the duration of Local
-          Transcribe Partner Councils, participation in user research and
-          engagement activities, Local Transcribe as a live product and Local
-          Transcribe evaluation, and only for so long as such processing remains
-          necessary and proportionate to the purposes set out in this privacy
-          notice.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data shall cease when a Local Transcribe
-          Partner Council ceases participation in user research and engagement
-          activities, when Local Transcribe Partner Councils request to have
-          their data deleted, when a service user requests to have their data
-          deleted, or when 6 months has elapsed from the start of data
-          processing.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data from audio data ceases based on the
-          deletion date set within Local Transcribe by Local Transcribe Partner
-          Councils personnel, local council employees, team managers, and
-          frontline workers. This defaults to 7 days but is configurable between
-          1 and 30 days by the user. Alternatively, processing will cease when a
-          Local Transcribe Partner Council requests to have their audio data
-          deleted, or if a service user requests to have their audio data
-          deleted.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data from audio data for Local Transcribe
-          evaluation continues for 12 months. Alternatively, processing will
-          cease when a Local Transcribe Partner Council requests to have their
-          audio data deleted.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data in event data and logs derived from audio
-          data ceases after 90 days.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data in metrics and analytics data ceases after
-          14 months or when a Local Transcribe Partner Council requests to have
-          their audio data deleted.
-        </p>
-        <p className="govuk-body">
-          Processing of Personal Data from case management systems or surveys
-          ceases after 14 months or when a Local Transcribe Partner Council
-          requests to have their audio data deleted.
-        </p>
-
+        <GovukList type="bullet">
+          <GovukListItem>
+            Local Transcribe Partner Councils, local council employees, team
+            managers and frontline workers use Local Transcribe to record
+            meetings or upload audio data to Local Transcribe or share audio
+            data with MHCLG for testing purposes and evaluation of Local
+            Transcribe, during the activities of Local Transcribe as a live
+            product and Local Transcribe evaluation.
+          </GovukListItem>
+          <GovukListItem>
+            Processing of Personal Data from case management systems or surveys
+            under this DSA begins when personnel from Local Transcribe Partner
+            Councils, local council employees, team managers and frontline
+            workers share case management or survey data with MHCLG for testing
+            purposes and evaluation of Local Transcribe, during the activities
+            of Local Transcribe evaluation.
+          </GovukListItem>
+          <GovukListItem>
+            Processing of Personal Data shall continue for the duration of Local
+            Transcribe Partner Councils, participation in Local Transcribe as a
+            live product and Local Transcribe evaluation, and only for so long
+            as such processing remains necessary and proportionate to the
+            purposes set out in this privacy notice.
+          </GovukListItem>
+          <GovukListItem>
+            Processing of Personal Data from audio data ceases based on the
+            deletion date set within Local Transcribe by Local Transcribe
+            Partner Councils personnel, local council employees, team managers,
+            and frontline workers. This defaults to 7 days but is configurable
+            between 1 and 30 days by the user. Alternatively, processing will
+            cease when a Local Transcribe Partner Council requests to have their
+            audio data deleted, or if a service user requests to have their
+            audio data deleted.
+          </GovukListItem>
+          <GovukListItem>
+            Processing of Personal Data from audio data for Local Transcribe
+            evaluation continues for 12 months. Alternatively, processing will
+            cease when a Local Transcribe Partner Council requests to have their
+            audio data deleted.
+          </GovukListItem>
+          <GovukListItem>
+            Processing of Personal Data in event data and logs derived from
+            audio data ceases after 90 days.
+          </GovukListItem>
+          <GovukListItem>
+            Processing of Personal Data in metrics and analytics data ceases
+            after 14 months or when a Local Transcribe Partner Council requests
+            to have their audio data deleted.
+          </GovukListItem>
+          <GovukListItem>
+            Processing of Personal Data from case management systems or surveys
+            ceases after 14 months or when a Local Transcribe Partner Councils
+            requests to have their audio data deleted.
+          </GovukListItem>
+        </GovukList>
         <GovukHeading as="h2" size="m">
           Your rights, e.g. access, rectification, erasure
         </GovukHeading>
@@ -445,22 +392,26 @@ export default function PrivacyPage() {
         <GovukHeading as="h2" size="m">
           Sending data overseas
         </GovukHeading>
-        <p className="govuk-body">
-          Data will be transferred to the European Economic Area (Sweden and
-          Germany) for processing by speech-to-text and LLM services, product
-          analytics and performance monitoring and error tracking. No data is
-          stored outside of the UK by speech-to-text and LLM services and no
-          data is retained or used for AI training. Data is stored in the EEA
-          for product analytics and performance monitoring and error tracking
-          only.
-        </p>
-
+        <GovukList type="bullet">
+          <GovukListItem>
+            Data will be transferred to the European Economic Area (Sweden and
+            Germany) for processing by speech-to-text and LLM services, product
+            analytics and performance monitoring and error tracking. No data is
+            stored outside of the UK by speech-to-text and LLM services and no
+            data is retained or used for AI training. Data is stored in the EEA
+            for product analytics and performance monitoring and error tracking
+            only.
+          </GovukListItem>
+        </GovukList>
         <GovukHeading as="h2" size="m">
           Automated decision making
         </GovukHeading>
-        <p className="govuk-body">
-          No automated decision making will take place using the data collected.
-        </p>
+        <GovukList type="bullet">
+          <GovukListItem>
+            No automated decision making will take place using the data
+            collected.
+          </GovukListItem>
+        </GovukList>
 
         <GovukHeading as="h2" size="m">
           Complaints
