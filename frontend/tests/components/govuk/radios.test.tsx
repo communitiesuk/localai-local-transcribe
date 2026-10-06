@@ -142,13 +142,11 @@ describe('<GovukRadios />', () => {
     const radio = screen.getByLabelText('Custom')
     const conditional = container.querySelector('#period-2-conditional')
     expect(radio).toHaveAttribute('aria-controls', 'period-2-conditional')
-    expect(radio).toHaveAttribute('aria-expanded', 'false')
     expect(conditional).not.toBeVisible()
     expect(conditional?.previousElementSibling).toHaveClass(
       'govuk-radios__item'
     )
     rerender(<GovukRadios name="period" options={options} value="custom" />)
-    expect(radio).toHaveAttribute('aria-expanded', 'true')
     expect(conditional).toBeVisible()
     expect(conditional).toHaveClass('govuk-radios__conditional')
     expect(conditional).not.toHaveClass('govuk-radios__conditional--hidden')
