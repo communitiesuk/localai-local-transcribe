@@ -1,13 +1,16 @@
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
+from sqlalchemy import delete, text
+from sqlalchemy.engine import CursorResult
 from sqlmodel import and_, func, select, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import JobStatus, MinuteVersion, Recording, Transcription, User
+from common.database.postgres_models import AnalyticsEvent, JobStatus, MinuteVersion, Recording, Transcription, User
 from common.services.storage_services.audio_deletion import delete_recording_file_and_row
 
 logger = logging.getLogger()
@@ -70,6 +73,24 @@ async def cleanup_old_records() -> None:
         await session.commit()
 
 
+async def cleanup_analytics_events() -> None:
+    """Delete first-party events at least 12 calendar months old, safely across containers."""
+    logger.info("Starting first-party analytics retention cleanup")
+    # Calendar arithmetic in UTC avoids session time zones changing month-end/DST boundaries.
+    cutoff = func.timezone("UTC", func.timezone("UTC", func.now()) - text("INTERVAL '12 months'"))
+    async with AsyncSession(async_engine) as session:
+        result = cast(
+            CursorResult[Any],
+            await session.execute(
+                delete(AnalyticsEvent)
+                .where(AnalyticsEvent.occurred_datetime <= cutoff)
+                .execution_options(synchronize_session=False)
+            ),
+        )
+        await session.commit()
+        logger.info("Deleted %d expired first-party analytics events", result.rowcount)
+
+
 async def cleanup_jobs() -> None:
     await cleanup_old_records()
     await cleanup_failed_records()
@@ -79,5 +100,14 @@ async def init_cleanup_scheduler() -> None:
     """Initialize the scheduler to run cleanup at midnight, 6am, noon and 6pm (UTC)."""
     scheduler = AsyncIOScheduler()
     scheduler.add_job(cleanup_jobs, "cron", hour="0,6,12,18", minute=0, timezone=UTC)
+    scheduler.add_job(
+        cleanup_analytics_events,
+        "cron",
+        hour=23,
+        minute=0,
+        timezone=UTC,
+        max_instances=1,
+        coalesce=True,
+    )
     scheduler.start()
     logger.info("cleanup scheduler initialized")

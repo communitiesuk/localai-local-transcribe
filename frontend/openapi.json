@@ -2677,7 +2677,11 @@
         "required": ["name", "content", "description", "type"],
         "title": "CreateUserTemplateRequest"
       },
-      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30] },
+      "DataRetentionOptions": {
+        "type": "integer",
+        "maximum": 30.0,
+        "minimum": 1.0
+      },
       "DataRetentionUpdateResponse": {
         "properties": {
           "data_retention_days": {
