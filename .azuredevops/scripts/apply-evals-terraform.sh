@@ -19,11 +19,24 @@
 # on evals-blob-id and pipelines using evals-blob could no longer sign in.
 #
 # Also required for plan and apply: EVALS_INPUT_WRITER_PRINCIPAL_IDS,
-# EVALS_DEBUG_READER_PRINCIPAL_IDS, EVALS_RESULTS_READER_PRINCIPAL_IDS. Each is a
-# Terraform list of Entra ID object IDs, for example ["id-one", "id-two"], or []
-# for nobody. They are written into terraform.tfvars as given. Terraform removes
-# any team role assignment that is missing from these lists, so set them on every
-# plan and apply.
+# EVALS_DEBUG_READER_PRINCIPAL_IDS, EVALS_RESULTS_READER_PRINCIPAL_IDS. These lists
+# decide which people can use the evaluation containers from test ADAPT:
+#   EVALS_INPUT_WRITER_PRINCIPAL_IDS   - can upload, change and delete test data in input
+#   EVALS_DEBUG_READER_PRINCIPAL_IDS   - can read debug files in debug
+#   EVALS_RESULTS_READER_PRINCIPAL_IDS - can read evals results in output
+# The evaluation pipelines do not depend on these lists. Their own identity has
+# separate, fixed roles.
+#
+# Each value is a Terraform list of Entra ID object IDs, for example
+# ["id-one", "id-two"], or [] for nobody. Use the object ID of the person's test
+# tenant Super User account, or of an Entra ID group. The values are written into
+# terraform.tfvars exactly as given.
+#
+# The values stay in the variable group between runs, so nothing needs to be
+# re-entered. Change them only when the people who need access change. Every plan
+# and apply makes the live role assignments match the current lists. Anyone
+# removed from a list loses that role. Review the role assignment changes in each
+# plan before applying it.
 #
 # Extra environment for grant-key-vault-roles: EVALS_KEY_VAULT_NAME,
 # EVALS_SUPER_USER_OBJECT_ID.
