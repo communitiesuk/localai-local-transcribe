@@ -13,7 +13,7 @@ export default function SupportPage() {
           Transcribe, please email us:{' '}
           <a
             className="govuk-link"
-            href="mailto:LocalTranscribe@communities.gov.uk"
+            href="mailto:LocalTranscribeSupport@communities.gov.uk"
           >
             LocalTranscribeSupport@communities.gov.uk
           </a>

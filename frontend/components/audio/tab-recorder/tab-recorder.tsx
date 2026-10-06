@@ -2,14 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukFormGroup,
+  GovukLabel,
+  GovukSelect,
+  GovukBody,
+} from '@/components/govuk'
 import {
   AudioDevice,
   MicrophonePermission,
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
 import { UploadStatus } from '@/components/audio/upload-status'
-import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import {
   useStartTranscription,
@@ -22,6 +28,7 @@ import { Controller, FormProvider, useFormContext } from 'react-hook-form'
 import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
+import { usePreferredMicrophone } from '@/hooks/use-preferred-microphone'
 
 export const TabRecorderForm = () => {
   const uploadRef = useRef(false)
@@ -79,12 +86,19 @@ function TabRecorder({
   const audioContext = useRef<AudioContext | null>(null)
   const recordingGain = useRef<GainNode | null>(null)
   const form = useFormContext<TranscriptionForm>()
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [deviceOverride, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
+  const preferredMicrophone = usePreferredMicrophone('online')
+  const selection =
+    preferredMicrophone.isReady && audioDevices.length
+      ? preferredMicrophone.resolve(audioDevices)
+      : null
+  const selectedDeviceId = deviceOverride || selection?.deviceId || ''
+  const displayedError = err ?? (deviceOverride ? null : selection?.warning)
   const handlePermissionGranted = (devices: AudioDevice[]) => {
     setAudioDevices(devices)
-    setSelectedDeviceId(devices[0].deviceId)
+    setSelectedDeviceId('')
     setPermissionGranted(true)
     setError(null)
   }
@@ -97,7 +111,7 @@ function TabRecorder({
   const [stream, setStream] = useState<MediaStream | null>(null)
   const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
 
-  useTabCloseWarning(isRecording || !!recordedAudio)
+  useLockNavigation(isRecording || !!recordedAudio)
 
   const stopAllTracks = useCallback(() => {
     isStartingRecordingRef.current = false
@@ -272,6 +286,7 @@ function TabRecorder({
       }
 
       await requestWakeLock()
+      form.setValue('recordedAt', new Date())
       mediaRecorder.start(1000)
       setIsRecording(true)
     } catch (error) {
@@ -362,6 +377,9 @@ function TabRecorder({
       />
     )
   }
+  if (!preferredMicrophone.isReady) {
+    return <GovukBody role="status">Loading microphone settings...</GovukBody>
+  }
 
   return (
     <div className="space-y-4">
@@ -372,8 +390,8 @@ function TabRecorder({
               <GovukLabel htmlFor="virtual-microphone-select">
                 Choose microphone
               </GovukLabel>
-              <select
-                className="govuk-select w-full"
+              <GovukSelect
+                className="w-full"
                 id="virtual-microphone-select"
                 value={selectedDeviceId}
                 onChange={(e) => setSelectedDeviceId(e.target.value)}
@@ -384,7 +402,7 @@ function TabRecorder({
                     {device.label}
                   </option>
                 ))}
-              </select>
+              </GovukSelect>
             </GovukFormGroup>
 
             <div className="govuk-inset-text govuk-!-margin-top-0">
@@ -420,9 +438,9 @@ function TabRecorder({
           </div>
         )}
       </div>
-      {err && (
+      {displayedError && (
         <p className="govuk-error-message" role="alert">
-          <span className="govuk-visually-hidden">Error:</span> {err}
+          <span className="govuk-visually-hidden">Error:</span> {displayedError}
         </p>
       )}
     </div>

@@ -29,7 +29,7 @@ describe('<PhaseBanner />', () => {
     expect(link).toHaveTextContent('email us your feedback')
     expect(link).toHaveAttribute(
       'href',
-      'mailto:LocalTranscribe@communities.gov.uk'
+      'mailto:LocalTranscribeSupport@communities.gov.uk'
     )
   })
 })

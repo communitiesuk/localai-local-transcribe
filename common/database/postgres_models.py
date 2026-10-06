@@ -19,8 +19,8 @@ class DialogueEntry(TypedDict):
 
 
 # Create factory functions for columns to avoid reusing column objects
-def created_datetime_column() -> Column[datetime]:
-    return Column(TIMESTAMP(timezone=True), nullable=False, server_default=now(), default=None)
+def created_datetime_column(*, index: bool = False) -> Column[datetime]:
+    return Column(TIMESTAMP(timezone=True), nullable=False, server_default=now(), default=None, index=index)
 
 
 def updated_datetime_column() -> Column[datetime]:
@@ -360,7 +360,7 @@ class AnalyticsEvent(BaseTableMixin, table=True):
     __tablename__ = "analytics_event"
     __table_args__ = (UniqueConstraint("event_type", "source_id", name=ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT),)
 
-    occurred_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    occurred_datetime: datetime = Field(sa_column=created_datetime_column(index=True), default=None)
     event_type: AnalyticsEventType = Field(
         sa_column=Column(Enum(AnalyticsEventType, name="analyticseventtype"), nullable=False)
     )

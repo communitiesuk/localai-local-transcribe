@@ -3,10 +3,16 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useRouter } from 'next/navigation'
 import { UploadStatus } from '@/components/audio/upload-status'
+import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
+import { saveAs } from 'file-saver'
 
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
+}))
+
+vi.mock('file-saver', () => ({
+  saveAs: vi.fn(),
 }))
 
 const initialStoreState = useUploadRecordingStore.getState()
@@ -16,6 +22,12 @@ const setOnline = (online: boolean) => {
     configurable: true,
     value: online,
   })
+}
+
+const fireBeforeUnload = () => {
+  const event = new Event('beforeunload', { cancelable: true })
+  window.dispatchEvent(event)
+  return event.defaultPrevented
 }
 
 describe('UploadStatus', () => {
@@ -140,5 +152,100 @@ describe('UploadStatus', () => {
       expect(push).toHaveBeenCalledWith('/new/metadata/transcription-789')
     })
     expect(reset).toHaveBeenCalledTimes(1)
+  })
+
+  it('warns before leaving the site while the upload is pending', () => {
+    useUploadRecordingStore.setState({
+      status: 'pending',
+      uploadingFrom: 'recording',
+    })
+
+    render(<UploadStatus />, { wrapper: LockNavigationProvider })
+
+    expect(fireBeforeUnload()).toBe(true)
+  })
+
+  it('warns before leaving the site when the upload has failed', () => {
+    useUploadRecordingStore.setState({
+      status: 'error',
+      error: 'Something broke',
+    })
+
+    render(<UploadStatus />, { wrapper: LockNavigationProvider })
+
+    expect(fireBeforeUnload()).toBe(true)
+  })
+
+  it('stops warning before leaving the site once the upload succeeds', () => {
+    useUploadRecordingStore.setState({
+      status: 'pending',
+      uploadingFrom: 'recording',
+    })
+
+    render(<UploadStatus />, { wrapper: LockNavigationProvider })
+
+    act(() => {
+      useUploadRecordingStore.setState({
+        status: 'success',
+        transcriptionId: 'transcription-789',
+        reset: vi.fn(),
+      })
+    })
+
+    expect(fireBeforeUnload()).toBe(false)
+  })
+
+  it('offers the recording for download when a recording fails to upload', async () => {
+    const file = new Blob(['audio'], { type: 'audio/webm' })
+    useUploadRecordingStore.setState({
+      status: 'error',
+      uploadingFrom: 'recording',
+      _values: { file, recordedAt: new Date(2026, 9, 2, 9, 5, 3) },
+    })
+
+    render(<UploadStatus />)
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Download recording' })
+    )
+
+    expect(saveAs).toHaveBeenCalledWith(
+      file,
+      'local-transcribe-recording-2026-10-02-090503.webm'
+    )
+  })
+
+  it('leaves the user on the page with retry still available after downloading', async () => {
+    useUploadRecordingStore.setState({
+      status: 'error',
+      uploadingFrom: 'recording',
+      _values: { file: new Blob(['audio'], { type: 'audio/webm' }) },
+    })
+
+    render(<UploadStatus />)
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Download recording' })
+    )
+
+    expect(
+      screen.getByText('We could not upload your recording')
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeEnabled()
+    expect(push).not.toHaveBeenCalled()
+  })
+
+  it('does not offer a download when an uploaded file fails, as the user still has it', () => {
+    useUploadRecordingStore.setState({
+      status: 'error',
+      uploadingFrom: 'upload',
+      _values: { file: new File(['audio'], 'meeting.mp3') },
+    })
+
+    render(<UploadStatus />)
+
+    expect(
+      screen.queryByRole('button', { name: 'Download recording' })
+    ).not.toBeInTheDocument()
   })
 })

@@ -19,17 +19,13 @@ describe('<GovFooter />', () => {
   it('renders both privacy notice links, Support, and Accessibility footer links', () => {
     render(<GovFooter />)
     expect(
-      screen.getByRole('link', { name: 'Local Transcribe User Privacy Notice' })
-    ).toHaveAttribute('href', '/privacy')
+      screen.getByRole('link', { name: 'Privacy (council employees)' })
+    ).toHaveAttribute('href', '/privacy-council-employees')
     expect(
-      screen.getByRole('link', { name: 'End Service User Privacy Notice' })
-    ).toHaveAttribute('href', '/privacy/end-service-user')
-    expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute(
-      'href',
-      '/support'
-    )
+      screen.getByRole('link', { name: 'Privacy (members of the public)' })
+    ).toHaveAttribute('href', '/privacy-members-public')
     expect(
-      screen.getByRole('link', { name: 'Acceptable Use Policy' })
+      screen.getByRole('link', { name: 'Acceptable use policy' })
     ).toHaveAttribute('href', '/acceptable-use-policy')
   })
 

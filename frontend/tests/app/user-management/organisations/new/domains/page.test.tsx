@@ -68,7 +68,7 @@ describe('<CreateNewOrganisationDomains />', () => {
 
     await user.type(screen.getByLabelText('Approved domains'), 'new.gov.uk')
     await user.click(
-      screen.getByRole('button', { name: 'Create organistaion' })
+      screen.getByRole('button', { name: 'Create organisation' })
     )
 
     expect(mockReplace).toHaveBeenCalledWith(

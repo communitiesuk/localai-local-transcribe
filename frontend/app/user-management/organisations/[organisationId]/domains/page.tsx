@@ -6,11 +6,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
-import { GovukBackLink, GovukNotificationBanner } from '@/components/govuk'
+import {
+  GovukBackLink,
+  GovukNotificationBanner,
+  GovukSectionBreak,
+} from '@/components/govuk'
 import {
   EditDomainsForm,
   EditDomainsFormData,
 } from '@/components/organisations/domains-form'
+import DomainsDetails from '@/components/organisations/domains-details'
 
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
@@ -167,6 +172,8 @@ export default function EditApprovedDomainsPage(props: {
         isPending={isPending}
         cancelHref={`/user-management?organisationId=${organisation.id}`}
       />
+      <GovukSectionBreak size="l" />
+      <DomainsDetails />
     </>
   )
 }
