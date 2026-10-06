@@ -45,9 +45,6 @@ jobs:
     steps:
       - template: ../templates/run-eval-steps.yml
         parameters:
-          ${{ if eq(parameters.config, 'evals/summarisation/configs/blob-smoke-test.yaml') }}:
-            datasetSetupSteps:
-              - template: ../templates/upload-smoke-dataset.yml
           pythonVersion: $(EVALS_PYTHON_VERSION_RESOLVED)
           poetryVersion: $(EVALS_POETRY_VERSION_RESOLVED)
           poetryDependencyGroup: evals-summarisation
