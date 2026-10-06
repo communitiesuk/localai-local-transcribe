@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { type TranscriptionForm } from '@/hooks/use-start-transcription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
@@ -201,7 +201,7 @@ export function useMicRecorder({
     setError(null)
   }
 
-  useTabCloseWarning(!!recordedAudio || isRecording)
+  useLockNavigation(!!recordedAudio || isRecording)
 
   const handleCountdownCancel = () => {
     setRecordingUIState('idle')

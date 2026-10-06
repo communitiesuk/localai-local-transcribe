@@ -25,9 +25,6 @@ vi.mock('@/providers/transcription-db-provider', () => ({
 vi.mock('@/hooks/use-wake-lock', () => ({
   useWakeLock: () => ({ requestWakeLock: vi.fn(), releaseWakeLock: vi.fn() }),
 }))
-vi.mock('@/hooks/use-tab-close-warning', () => ({
-  useTabCloseWarning: vi.fn(),
-}))
 vi.mock('@/hooks/use-countdown', () => ({
   useCountdown: () => ({
     isStartingRecording: false,

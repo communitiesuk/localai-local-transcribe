@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useRouter } from 'next/navigation'
 import { UploadStatus } from '@/components/audio/upload-status'
+import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { saveAs } from 'file-saver'
 
@@ -21,6 +22,12 @@ const setOnline = (online: boolean) => {
     configurable: true,
     value: online,
   })
+}
+
+const fireBeforeUnload = () => {
+  const event = new Event('beforeunload', { cancelable: true })
+  window.dispatchEvent(event)
+  return event.defaultPrevented
 }
 
 describe('UploadStatus', () => {
@@ -145,6 +152,47 @@ describe('UploadStatus', () => {
       expect(push).toHaveBeenCalledWith('/new/metadata/transcription-789')
     })
     expect(reset).toHaveBeenCalledTimes(1)
+  })
+
+  it('warns before leaving the site while the upload is pending', () => {
+    useUploadRecordingStore.setState({
+      status: 'pending',
+      uploadingFrom: 'recording',
+    })
+
+    render(<UploadStatus />, { wrapper: LockNavigationProvider })
+
+    expect(fireBeforeUnload()).toBe(true)
+  })
+
+  it('warns before leaving the site when the upload has failed', () => {
+    useUploadRecordingStore.setState({
+      status: 'error',
+      error: 'Something broke',
+    })
+
+    render(<UploadStatus />, { wrapper: LockNavigationProvider })
+
+    expect(fireBeforeUnload()).toBe(true)
+  })
+
+  it('stops warning before leaving the site once the upload succeeds', () => {
+    useUploadRecordingStore.setState({
+      status: 'pending',
+      uploadingFrom: 'recording',
+    })
+
+    render(<UploadStatus />, { wrapper: LockNavigationProvider })
+
+    act(() => {
+      useUploadRecordingStore.setState({
+        status: 'success',
+        transcriptionId: 'transcription-789',
+        reset: vi.fn(),
+      })
+    })
+
+    expect(fireBeforeUnload()).toBe(false)
   })
 
   it('offers the recording for download when a recording fails to upload', async () => {
