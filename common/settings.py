@@ -190,14 +190,6 @@ class Settings(BaseSettings):
     POSTHOG_API_KEY: str | None = Field(description="PostHog API key for analytics", default=None)
     POSTHOG_HOST: str = Field(description="PostHog service host URL", default="https://eu.i.posthog.com")
 
-    # if using plausible
-    PLAUSIBLE_DOMAIN: str | None = Field(
-        description="Plausible site that aggregate analytics events are recorded against. No events are sent when"
-        " this is unset",
-        default=None,
-    )
-    PLAUSIBLE_HOST: str = Field(description="Plausible service host URL", default="https://plausible.io")
-
     GUARDRAIL_THRESHOLD: float = Field(
         default=0.7,
         description="Guardrail threshold for LLM responses",

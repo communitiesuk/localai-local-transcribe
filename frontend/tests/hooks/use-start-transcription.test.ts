@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useStartTranscription } from '@/hooks/use-start-transcription'
@@ -20,11 +20,15 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   createTranscriptionTranscriptionsPostMutation: () => ({
     mutationKey: ['createTranscription'],
   }),
+  getUserUsersMeGetOptions: () => ({ queryKey: ['user'] }),
 }))
 
 vi.mock('@tanstack/react-query', () => ({
   useMutation: vi.fn(),
+  useQuery: vi.fn(),
 }))
+
+const ORGANISATION_ID = 'a3f1c2d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d'
 
 describe('useStartTranscription', () => {
   const createTranscription = vi.fn()
@@ -52,6 +56,9 @@ describe('useStartTranscription', () => {
       upload_url: 'https://uploads.test/recording-1',
     })
     uploadBlob.mockResolvedValue(undefined)
+    vi.mocked(useQuery).mockReturnValue({
+      data: { organisation_id: ORGANISATION_ID },
+    } as never)
 
     vi.mocked(useMutation).mockImplementation((options: unknown) => {
       const mutationKey = (options as { mutationKey?: string[] }).mutationKey
@@ -69,7 +76,8 @@ describe('useStartTranscription', () => {
     await submit(new Blob(['audio']))
 
     expect(recordAnalyticsEvent).toHaveBeenCalledWith(
-      'audio_upload_complete_from_live_recording'
+      'audio_upload_complete_from_live_recording',
+      { organisation_id: ORGANISATION_ID }
     )
     expect(recordAnalyticsEvent).toHaveBeenCalledWith(
       'transcript_requested_for_live_recording'
@@ -87,7 +95,8 @@ describe('useStartTranscription', () => {
       'live_recording_started_or_upload_requested'
     )
     expect(recordAnalyticsEvent).toHaveBeenCalledWith(
-      'audio_upload_complete_from_direct_upload'
+      'audio_upload_complete_from_direct_upload',
+      { organisation_id: ORGANISATION_ID }
     )
     expect(recordAnalyticsEvent).toHaveBeenCalledWith(
       'transcript_requested_for_direct_upload'
@@ -102,10 +111,24 @@ describe('useStartTranscription', () => {
     )
 
     expect(recordAnalyticsEvent).not.toHaveBeenCalledWith(
-      'audio_upload_complete_from_live_recording'
+      'audio_upload_complete_from_live_recording',
+      { organisation_id: ORGANISATION_ID }
     )
     expect(recordAnalyticsEvent).not.toHaveBeenCalledWith(
       'transcript_requested_for_live_recording'
+    )
+  })
+
+  it('sends no organisation when the user has none', async () => {
+    vi.mocked(useQuery).mockReturnValue({
+      data: { organisation_id: null },
+    } as never)
+
+    await submit(new Blob(['audio']))
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      'audio_upload_complete_from_live_recording',
+      undefined
     )
   })
 })

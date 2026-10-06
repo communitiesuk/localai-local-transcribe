@@ -17,6 +17,8 @@ on:
         required: false
       sentry-auth-token:
         required: false
+      plausible-domain:
+        required: false
 
 permissions:
   id-token: write
@@ -53,6 +55,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_SENTRY_DSN=${{ secrets.sentry-dsn }}
             NEXT_PUBLIC_ENVIRONMENT=${{ inputs.environment }}
+            NEXT_PUBLIC_PLAUSIBLE_DOMAIN=${{ secrets.plausible-domain }}
           secrets: |
             "sentry_auth_token=${{ secrets.sentry-auth-token }}"
             

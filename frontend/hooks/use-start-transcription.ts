@@ -1,11 +1,12 @@
 import {
   createRecordingRecordingsPostMutation,
   createTranscriptionTranscriptionsPostMutation,
+  getUserUsersMeGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { recordAnalyticsEvent } from '@/lib/analytics'
 import { getFileExtension } from '@/lib/getFileExtension'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 
@@ -50,6 +51,8 @@ export const useStartTranscription = (
   defaultValues?: Partial<TranscriptionForm>
 ) => {
   const { removeRecording } = useRecordingDb()
+  const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
+  const organisationId = user?.organisation_id
 
   const { mutateAsync: createTranscription, isPending: isCreating } =
     useMutation({
@@ -99,7 +102,7 @@ export const useStartTranscription = (
       const isFile = file instanceof File
 
       if (isFile) {
-        void recordAnalyticsEvent('live_recording_started_or_upload_requested')
+        recordAnalyticsEvent('live_recording_started_or_upload_requested')
       }
 
       const file_extension = isFile ? getFileExtension(file.name) : 'webm'
@@ -119,10 +122,11 @@ export const useStartTranscription = (
         signal,
       })
 
-      void recordAnalyticsEvent(
+      recordAnalyticsEvent(
         isFile
           ? 'audio_upload_complete_from_direct_upload'
-          : 'audio_upload_complete_from_live_recording'
+          : 'audio_upload_complete_from_live_recording',
+        organisationId ? { organisation_id: organisationId } : undefined
       )
 
       const audio_duration_seconds = await getMediaDurationSeconds(file)
@@ -136,7 +140,7 @@ export const useStartTranscription = (
         signal,
       })
 
-      void recordAnalyticsEvent(
+      recordAnalyticsEvent(
         isFile
           ? 'transcript_requested_for_direct_upload'
           : 'transcript_requested_for_live_recording'
@@ -148,7 +152,13 @@ export const useStartTranscription = (
 
       return transcriptionData.id
     },
-    [createRecording, createTranscription, removeRecording, uploadBlob]
+    [
+      createRecording,
+      createTranscription,
+      organisationId,
+      removeRecording,
+      uploadBlob,
+    ]
   )
 
   const form = useForm<TranscriptionForm>({

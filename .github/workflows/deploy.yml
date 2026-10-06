@@ -27,6 +27,7 @@ jobs:
       slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_DEV }}
       sentry-dsn: ${{ secrets.DEV_SENTRY_DSN }}
       sentry-auth-token: ${{ secrets.DEV_SENTRY_AUTH_TOKEN }}
+      plausible-domain: ${{ secrets.DEV_PLAUSIBLE_DOMAIN }}
   
   deploy-staging:
     if: github.event_name == 'workflow_dispatch' && inputs.environment == 'staging'
@@ -39,6 +40,7 @@ jobs:
       slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_STAGING  }}
       sentry-dsn: ${{ secrets.STAGING_SENTRY_DSN }}
       sentry-auth-token: ${{ secrets.STAGING_SENTRY_AUTH_TOKEN }}
+      plausible-domain: ${{ secrets.STAGING_PLAUSIBLE_DOMAIN }}
 
   deploy-production:
     if: github.event_name == 'workflow_dispatch' && inputs.environment == 'production'
@@ -51,6 +53,7 @@ jobs:
       slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_PROD }}
       sentry-dsn: ${{ secrets.PROD_SENTRY_DSN }}
       sentry-auth-token: ${{ secrets.PROD_SENTRY_AUTH_TOKEN }}
+      plausible-domain: ${{ secrets.PROD_PLAUSIBLE_DOMAIN }}
 
 
     

@@ -156,7 +156,7 @@ export const NewDocumentTab = ({
     if (!selectedTemplate) return
     renamedRef.current = false
     setCreatedMinuteId(null)
-    void recordAnalyticsEvent('summary_requested')
+    recordAnalyticsEvent('summary_requested')
     createMinute(
       {
         path: { transcription_id: transcription.id! },

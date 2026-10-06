@@ -138,7 +138,7 @@ export function useMicRecorder({
       setRecordedAudio(null)
       await requestWakeLock()
       form.setValue('recordedAt', new Date())
-      void recordAnalyticsEvent('live_recording_started_or_upload_requested')
+      recordAnalyticsEvent('live_recording_started_or_upload_requested')
       mediaRecorder.start(1000) // Collect data every second
       setIsRecording(true)
     } catch {

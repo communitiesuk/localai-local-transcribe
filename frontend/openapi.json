@@ -2554,62 +2554,6 @@
           }
         }
       }
-    },
-    "/analytics/events": {
-      "post": {
-        "tags": ["Analytics"],
-        "summary": "Record Analytics Event",
-        "description": "Record an aggregate analytics event reported by the browser. No user is stored against the event.",
-        "operationId": "record_analytics_event_analytics_events_post",
-        "parameters": [
-          {
-            "name": "user-agent",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "User-Agent"
-            }
-          },
-          {
-            "name": "x-forwarded-for",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "X-Forwarded-For"
-            }
-          },
-          {
-            "name": "x-amzn-oidc-data",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "X-Amzn-Oidc-Data"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/AnalyticsEventRequest" }
-            }
-          }
-        },
-        "responses": {
-          "204": { "description": "Successful Response" },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -2631,26 +2575,6 @@
         "type": "object",
         "required": ["instruction", "source_id"],
         "title": "AiEdit"
-      },
-      "AnalyticsEventName": {
-        "type": "string",
-        "enum": [
-          "live_recording_started_or_upload_requested",
-          "audio_upload_complete_from_live_recording",
-          "audio_upload_complete_from_direct_upload",
-          "transcript_requested_for_live_recording",
-          "transcript_requested_for_direct_upload",
-          "summary_requested"
-        ],
-        "title": "AnalyticsEventName"
-      },
-      "AnalyticsEventRequest": {
-        "properties": {
-          "name": { "$ref": "#/components/schemas/AnalyticsEventName" }
-        },
-        "type": "object",
-        "required": ["name"],
-        "title": "AnalyticsEventRequest"
       },
       "ChatCreateRequest": {
         "properties": {
