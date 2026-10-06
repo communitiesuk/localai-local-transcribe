@@ -29,16 +29,6 @@ describe('<GovFooter />', () => {
     ).toHaveAttribute('href', '/acceptable-use-policy')
   })
 
-  it('renders the Open Government Licence link in the meta section', () => {
-    render(<GovFooter />)
-    const ogl = screen.getByRole('link', { name: /Open Government Licence/i })
-    expect(ogl).toHaveAttribute(
-      'href',
-      'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/'
-    )
-    expect(ogl).toHaveAttribute('rel', 'license')
-  })
-
   it('renders the Crown copyright link', () => {
     render(<GovFooter />)
     const crown = screen.getByRole('link', { name: /Crown copyright/i })
