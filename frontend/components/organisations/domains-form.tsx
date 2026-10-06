@@ -5,7 +5,6 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   GovukButton,
   GovukButtonGroup,
-  GovukDetails,
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
