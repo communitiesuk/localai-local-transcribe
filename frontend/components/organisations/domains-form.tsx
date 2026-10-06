@@ -32,6 +32,7 @@ export function EditDomainsForm({
   cancelHref?: string
 }) {
   const form = useForm<EditDomainsFormData>({
+    reValidateMode: 'onSubmit',
     defaultValues: {
       domains: defaultValues.join('\n'),
     },
@@ -76,8 +77,7 @@ export function EditDomainsForm({
                   return 'One or more lines contain multiple domains. Enter only one domain per line.'
                 }
 
-                const domainList = invalidDomains.join(', ')
-                return `The following domains are in the wrong format: ${domainList}. Enter them in the correct format, like 'communities.gov.uk'.`
+                return 'Enter approved domains in the correct format, like communities.gov.uk'
               }
               return true
             },
