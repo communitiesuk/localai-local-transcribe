@@ -25,7 +25,7 @@ describe('<GovFooter />', () => {
       screen.getByRole('link', { name: 'Privacy (members of the public)' })
     ).toHaveAttribute('href', '/privacy-members-public')
     expect(
-      screen.getByRole('link', { name: 'Acceptable Use Policy' })
+      screen.getByRole('link', { name: 'Acceptable use policy' })
     ).toHaveAttribute('href', '/acceptable-use-policy')
   })
 

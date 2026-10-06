@@ -17,6 +17,7 @@ import {
 import { API_PROXY_PATH } from '@/lib/constants'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
 export default function TermsOfUsePage() {
@@ -123,8 +124,11 @@ export default function TermsOfUsePage() {
           If Local Transcribe generates or exposes information that you believe
           it should not, you must not further use or distribute that information
           and must report the issue immediately to{' '}
-          <a className="govuk-link" href="mailto:localai@communities.gov.uk">
-            localai@communities.gov.uk
+          <a
+            className="govuk-link"
+            href="mailto:LocalTranscribeSupport@communities.gov.uk"
+          >
+            LocalTranscribeSupport@communities.gov.uk
           </a>
           .
         </GovukBody>
@@ -148,39 +152,39 @@ export default function TermsOfUsePage() {
           4. Compliance with Policies
         </GovukHeading>
         <GovukBody>
-          <p className="govuk-body">
-            When using Local Transcribe, you must comply with:{' '}
-          </p>
-          <GovukList type="bullet">
-            <GovukListItem>
-              your organisation&apos;s policies related to data and AI{' '}
-            </GovukListItem>
-            <GovukListItem>
-              legal and regulatory requirements, including the ICO’s{' '}
-              <a
-                className="govuk-link"
-                href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/"
-              >
-                guidance on AI and data protection
-              </a>{' '}
-              and{' '}
-              <a
-                className="govuk-link"
-                href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/"
-              >
-                UK GDPR
-              </a>
-            </GovukListItem>
-            <GovukListItem>
-              the government’s{' '}
-              <a
-                className="govuk-link"
-                href="https://www.gov.uk/government/publications/data-ethics-framework/data-and-ai-ethics-framework"
-              >
-                Data and AI Ethics Framework
-              </a>{' '}
-            </GovukListItem>
-          </GovukList>
+          When using Local Transcribe, you must comply with:
+        </GovukBody>
+        <GovukList type="bullet">
+          <GovukListItem>
+            your organisation&apos;s policies related to data and AI{' '}
+          </GovukListItem>
+          <GovukListItem>
+            legal and regulatory requirements, including the ICO’s{' '}
+            <a
+              className="govuk-link"
+              href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/artificial-intelligence/guidance-on-ai-and-data-protection/"
+            >
+              guidance on AI and data protection
+            </a>{' '}
+            and{' '}
+            <a
+              className="govuk-link"
+              href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/"
+            >
+              UK GDPR
+            </a>
+          </GovukListItem>
+          <GovukListItem>
+            the government’s{' '}
+            <a
+              className="govuk-link"
+              href="https://www.gov.uk/government/publications/data-ethics-framework/data-and-ai-ethics-framework"
+            >
+              Data and AI Ethics Framework
+            </a>{' '}
+          </GovukListItem>
+        </GovukList>
+        <GovukBody>
           You should also be familiar with any guidance we provide on Local
           Transcribe, and any updates we issue during private beta.
         </GovukBody>
@@ -188,22 +192,26 @@ export default function TermsOfUsePage() {
         <GovukHeading as="h2" size="m">
           5. Security and Privacy
         </GovukHeading>
+        <GovukBody>When using Local Transcribe, you must:</GovukBody>
+        <GovukList type="bullet">
+          <GovukListItem>protect your access credentials </GovukListItem>
+          <GovukListItem>not share your account </GovukListItem>
+          <GovukListItem>
+            store and share outputs only through systems and recipients approved
+            by your organisation.{' '}
+          </GovukListItem>
+        </GovukList>
         <GovukBody>
-          <p className="govuk-body">When using Local Transcribe, you must: </p>
-          <GovukList type="bullet">
-            <GovukListItem>protect your access credentials </GovukListItem>
-            <GovukListItem>not share your account </GovukListItem>
-            <GovukListItem>
-              store and share outputs only through systems and recipients
-              approved by your organisation.{' '}
-            </GovukListItem>
-          </GovukList>
           You must report any suspected security incidents, data breaches or
           misuse as soon as possible to your organisation’s data protection
           contact, and to the Local Transcribe team at{' '}
-          <a className="govuk-link" href="mailto:localai@communities.gov.uk">
-            localai@communities.gov.uk
+          <a
+            className="govuk-link"
+            href="mailto:LocalTranscribeSupport@communities.gov.uk"
+          >
+            LocalTranscribeSupport@communities.gov.uk
           </a>
+          .
         </GovukBody>
 
         <GovukHeading as="h2" size="m">
@@ -219,19 +227,9 @@ export default function TermsOfUsePage() {
           We encourage you to provide feedback on Local Transcribe’s
           performance, limitations and errors to support continuous improvement
           of the service. You can either{' '}
-          <a
-            className="govuk-link"
-            href="mailto:LocalTranscribeSupport@communities.gov.uk"
-          >
-            report a problem
-          </a>{' '}
-          or{' '}
-          <a
-            className="govuk-link"
-            href="mailto:LocalTranscribeSupport@communities.gov.uk"
-          >
-            share general feedback
-          </a>
+          <Link className="govuk-link" href="/support">
+            report a problem or share general feedback
+          </Link>
           .
         </GovukBody>
 
@@ -245,27 +243,28 @@ export default function TermsOfUsePage() {
           appropriate review, validation and approval.
         </GovukBody>
         <GovukBody>You must not:</GovukBody>
+        <GovukList type="bullet">
+          <GovukListItem>
+            record anyone without telling them beforehand{' '}
+          </GovukListItem>
+          <GovukListItem>
+            upload audio or data that you are not authorised to process{' '}
+          </GovukListItem>
+
+          <GovukListItem>
+            attempt to misuse, probe or bypass safeguards within the
+            service{' '}
+          </GovukListItem>
+          <GovukListItem>
+            use outputs to mislead, misrepresent facts or create discriminatory
+            content
+          </GovukListItem>
+          <GovukListItem>
+            use outputs or usage data to monitor or access the performance of
+            individual staff{' '}
+          </GovukListItem>
+        </GovukList>
         <GovukBody>
-          <GovukList type="bullet">
-            <GovukListItem>
-              record anyone without telling them beforehand{' '}
-            </GovukListItem>
-            <GovukListItem>
-              upload audio or data that you are not authorised to process{' '}
-            </GovukListItem>
-            <GovukListItem>
-              attempt to misuse, probe or bypass safeguards within the
-              service{' '}
-            </GovukListItem>
-            <GovukListItem>
-              attempt to misuse, probe or bypass safeguards within the
-              service{' '}
-            </GovukListItem>
-            <GovukListItem>
-              use outputs or usage data to monitor or access the performance of
-              individual staff{' '}
-            </GovukListItem>
-          </GovukList>
           Reporting a fault, weakness or unexpected behaviour is not misuse, and
           is encouraged.
         </GovukBody>
