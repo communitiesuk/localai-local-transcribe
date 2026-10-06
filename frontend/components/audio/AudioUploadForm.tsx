@@ -2,6 +2,7 @@
 
 import { GovukButton, GovukFormGroup, GovukHint } from '@/components/govuk'
 import { useStartTranscription } from '@/hooks/use-start-transcription'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import {
   MAX_UPLOAD_FILE_SIZE_BYTES,
   MAX_UPLOAD_FILE_SIZE_LABEL,
@@ -32,6 +33,7 @@ export const AudioUploadForm = () => {
   }
 
   const handleSubmit = form.handleSubmit((formValues) => {
+    recordAnalyticsEvent('live_recording_started_or_upload_requested')
     startUpload('upload', formValues, onSubmit)
     useUploadRecordingStore.getState().markExpectedNavigation()
     router.push('/new/uploading')

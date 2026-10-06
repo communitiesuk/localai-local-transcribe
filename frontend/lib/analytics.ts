@@ -19,9 +19,14 @@ export const initAnalytics = () => {
 
   init({
     domain: PLAUSIBLE_DOMAIN,
-    // Our paths carry transcription and recording identifiers, so no page is ever reported.
     autoCapturePageviews: false,
     captureOnLocalhost: true,
+    // Our paths and referrers carry transcription and recording identifiers, so neither is ever sent.
+    transformRequest: (payload) => ({
+      ...payload,
+      u: `https://${PLAUSIBLE_DOMAIN}/`,
+      r: null,
+    }),
   })
 
   initialised = true
@@ -35,5 +40,5 @@ export const recordAnalyticsEvent = (
     return
   }
 
-  track(name, { url: `https://${PLAUSIBLE_DOMAIN}/`, props })
+  track(name, { props })
 }

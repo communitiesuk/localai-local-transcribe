@@ -24,20 +24,29 @@ describe('analytics', () => {
     recordAnalyticsEvent('summary_requested')
 
     expect(track).toHaveBeenCalledWith('summary_requested', {
-      url: 'https://transcribe.test/',
       props: undefined,
     })
   })
 
-  it('reports no page of ours, so no identifiers reach Plausible', async () => {
-    const { recordAnalyticsEvent } = await loadAnalytics()
+  it('sends neither our page nor our referrer, so no identifiers reach Plausible', async () => {
+    const { initAnalytics } = await loadAnalytics()
 
-    recordAnalyticsEvent('transcript_requested_for_live_recording')
+    initAnalytics()
+    const { transformRequest } = vi.mocked(init).mock.calls[0][0]
 
-    expect(track).toHaveBeenCalledWith(
-      'transcript_requested_for_live_recording',
-      expect.objectContaining({ url: 'https://transcribe.test/' })
-    )
+    expect(
+      transformRequest?.({
+        n: 'summary_requested',
+        u: 'https://transcribe.test/transcriptions/9f1b-uuid',
+        d: 'transcribe.test',
+        r: 'https://transcribe.test/recordings/3c7a-uuid',
+      })
+    ).toEqual({
+      n: 'summary_requested',
+      u: 'https://transcribe.test/',
+      d: 'transcribe.test',
+      r: null,
+    })
   })
 
   it('sends the organisation as a custom property', async () => {
@@ -60,11 +69,13 @@ describe('analytics', () => {
     initAnalytics()
 
     expect(init).toHaveBeenCalledTimes(1)
-    expect(init).toHaveBeenCalledWith({
-      domain: 'transcribe.test',
-      autoCapturePageviews: false,
-      captureOnLocalhost: true,
-    })
+    expect(init).toHaveBeenCalledWith(
+      expect.objectContaining({
+        domain: 'transcribe.test',
+        autoCapturePageviews: false,
+        captureOnLocalhost: true,
+      })
+    )
   })
 
   it('does nothing when no site is configured', async () => {

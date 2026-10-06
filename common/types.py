@@ -14,6 +14,7 @@ from common.database.postgres_models import (
     ContentSource,
     DialogueEntry,
     JobStatus,
+    RecordingSource,
     TemplateType,
     UserRole,
 )
@@ -88,6 +89,7 @@ class TranscriptionCreateRequest(BaseModel):
 class RecordingCreateRequest(BaseModel):
     file_extension: str
     file_created_at: datetime | None = None
+    source: RecordingSource | None = None
 
 
 class RecordingCreateResponse(BaseModel):

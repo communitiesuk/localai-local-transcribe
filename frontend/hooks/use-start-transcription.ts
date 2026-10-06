@@ -6,7 +6,7 @@ import {
 import { recordAnalyticsEvent } from '@/lib/analytics'
 import { getFileExtension } from '@/lib/getFileExtension'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 
@@ -51,8 +51,18 @@ export const useStartTranscription = (
   defaultValues?: Partial<TranscriptionForm>
 ) => {
   const { removeRecording } = useRecordingDb()
-  const { data: user } = useQuery({ ...getUserUsersMeGetOptions() })
-  const organisationId = user?.organisation_id
+  const queryClient = useQueryClient()
+
+  const getOrganisationId = useCallback(async () => {
+    try {
+      const user = await queryClient.ensureQueryData(getUserUsersMeGetOptions())
+      return user.organisation_id
+        ? { organisation_id: user.organisation_id }
+        : undefined
+    } catch {
+      return undefined
+    }
+  }, [queryClient])
 
   const { mutateAsync: createTranscription, isPending: isCreating } =
     useMutation({
@@ -101,10 +111,6 @@ export const useStartTranscription = (
 
       const isFile = file instanceof File
 
-      if (isFile) {
-        recordAnalyticsEvent('live_recording_started_or_upload_requested')
-      }
-
       const file_extension = isFile ? getFileExtension(file.name) : 'webm'
       const file_created_at =
         isFile && file.lastModified
@@ -112,7 +118,11 @@ export const useStartTranscription = (
           : undefined
 
       const recordingData = await createRecording({
-        body: { file_extension, file_created_at },
+        body: {
+          file_extension,
+          file_created_at,
+          source: isFile ? 'direct_upload' : 'live_recording',
+        },
         signal,
       })
 
@@ -126,7 +136,7 @@ export const useStartTranscription = (
         isFile
           ? 'audio_upload_complete_from_direct_upload'
           : 'audio_upload_complete_from_live_recording',
-        organisationId ? { organisation_id: organisationId } : undefined
+        await getOrganisationId()
       )
 
       const audio_duration_seconds = await getMediaDurationSeconds(file)
@@ -155,7 +165,7 @@ export const useStartTranscription = (
     [
       createRecording,
       createTranscription,
-      organisationId,
+      getOrganisationId,
       removeRecording,
       uploadBlob,
     ]

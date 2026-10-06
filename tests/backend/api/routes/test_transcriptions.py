@@ -21,7 +21,12 @@ from backend.api.routes.transcriptions import (
     update_transcription_title,
 )
 from backend.utils.transcription_search_filters import _transcription_search_filters
-from common.database.postgres_models import AnalyticsEventType, JobStatus, TranscriptionEditType
+from common.database.postgres_models import (
+    AnalyticsEventType,
+    JobStatus,
+    RecordingSource,
+    TranscriptionEditType,
+)
 from common.types import (
     RecordingCreateRequest,
     RenameSpeakerRequest,
@@ -265,6 +270,27 @@ async def test_create_recording_different_file_extensions(
     assert file_format in mock_recording.s3_file_key
     mock_session.add.assert_called_once()
     mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.parametrize(
+    "source", [RecordingSource.LIVE_RECORDING, RecordingSource.DIRECT_UPLOAD, None]
+)
+@pytest.mark.asyncio
+async def test_create_recording_stores_where_the_audio_came_from(
+    mocker,
+    mock_session,
+    mock_user,
+    mock_storage_service,  # NOQA: ARG001
+    mock_recording,
+    source,
+):
+    """The source is persisted so the worker can report it on the transcript received event."""
+    request = RecordingCreateRequest(file_extension="mp3", source=source)
+    recording_cls = mocker.patch("backend.api.routes.transcriptions.Recording", return_value=mock_recording)
+
+    await create_recording(request, mock_session, mock_user)
+
+    assert recording_cls.call_args.kwargs["source"] == source
 
 
 @pytest.mark.asyncio
