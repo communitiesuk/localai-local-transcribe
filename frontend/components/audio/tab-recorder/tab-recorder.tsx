@@ -272,6 +272,7 @@ function TabRecorder({
       }
 
       await requestWakeLock()
+      form.setValue('recordedAt', new Date())
       mediaRecorder.start(1000)
       setIsRecording(true)
     } catch (error) {
