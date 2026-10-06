@@ -18,6 +18,13 @@
 # If an apply ran without them, Terraform would delete the federated credential
 # on evals-blob-id and pipelines using evals-blob could no longer sign in.
 #
+# Also required for plan and apply: EVALS_INPUT_WRITER_PRINCIPAL_IDS,
+# EVALS_DEBUG_READER_PRINCIPAL_IDS, EVALS_RESULTS_READER_PRINCIPAL_IDS. Each is a
+# Terraform list of Entra ID object IDs, for example ["id-one", "id-two"], or []
+# for nobody. They are written into terraform.tfvars as given. Terraform removes
+# any team role assignment that is missing from these lists, so set them on every
+# plan and apply.
+#
 # Extra environment for grant-key-vault-roles: EVALS_KEY_VAULT_NAME,
 # EVALS_SUPER_USER_OBJECT_ID.
 #
@@ -77,6 +84,9 @@ results_account="${EVALS_RESULTS_STORAGE_ACCOUNT_NAME:?}"
 adapt_ip="${EVALS_ADAPT_EGRESS_IP:?}"
 federation_issuer="${EVALS_ADO_FEDERATION_ISSUER:?}"
 federation_subject="${EVALS_ADO_FEDERATION_SUBJECT:?}"
+input_writer_ids="${EVALS_INPUT_WRITER_PRINCIPAL_IDS:?}"
+debug_reader_ids="${EVALS_DEBUG_READER_PRINCIPAL_IDS:?}"
+results_reader_ids="${EVALS_RESULTS_READER_PRINCIPAL_IDS:?}"
 
 scope="/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Storage/storageAccounts/${state_account}"
 
@@ -118,6 +128,10 @@ ado_ip_rules   = []
 # Federated credential that lets the evals-blob service connection sign in as evals-blob-id.
 ado_federation_issuer  = "${federation_issuer}"
 ado_federation_subject = "${federation_subject}"
+# People or groups given container roles in rbac.tf. Prefer one Entra ID group per list.
+input_writer_principal_ids   = ${input_writer_ids}
+debug_reader_principal_ids   = ${debug_reader_ids}
+results_reader_principal_ids = ${results_reader_ids}
 EOF
 
 curl -fsSL "https://releases.hashicorp.com/terraform/1.16.2/terraform_1.16.2_linux_amd64.zip" -o /tmp/tf.zip
