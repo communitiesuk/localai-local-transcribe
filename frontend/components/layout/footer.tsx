@@ -11,7 +11,9 @@ export default function GovFooter() {
   return (
     <footer className="govuk-footer" role="contentinfo">
       <div className="govuk-width-container">
-        <MhclgLogo />
+        <div className="govuk-!-padding-top-6">
+          <MhclgLogo />
+        </div>
         <div className="govuk-footer__meta">
           <div className="govuk-footer__meta-item govuk-footer__meta-item--grow">
             <h2 className="govuk-visually-hidden">Support links</h2>
