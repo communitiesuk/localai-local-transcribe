@@ -12,6 +12,7 @@ export type TranscriptionForm = {
   file: Blob | File | null
   recordingId?: string
   title?: string
+  recordedAt?: Date
 }
 
 const getMediaDurationSeconds = async (file: Blob | File) =>

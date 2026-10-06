@@ -129,6 +129,7 @@ export function useMicRecorder({
       // Start recording
       setRecordedAudio(null)
       await requestWakeLock()
+      form.setValue('recordedAt', new Date())
       mediaRecorder.start(1000) // Collect data every second
       setIsRecording(true)
     } catch {
