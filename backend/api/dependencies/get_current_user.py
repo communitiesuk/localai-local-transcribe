@@ -11,7 +11,6 @@ from common.auth import get_user_info
 from common.database.postgres_models import AnalyticsEventType, User, UserAuthEmail
 from common.services.analytics_service import record_analytics_event
 from common.services.exceptions import MissingAuthTokenError
-from common.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -62,17 +61,6 @@ async def get_current_user(
     Returns:
         User: The user matching the username in the token
     """
-    settings = Settings()
-    if settings.ENVIRONMENT == "local":
-        statement = select(User).where(User.email == "john@communities.gov.uk")
-
-    user = (await session.exec(statement)).one_or_none()
-
-    if not user:
-        error_message = "Local test user not found. Please ensure a user with email"
-
-        raise ValueError(error_message)
-    return user
 
     authorization: str | None = x_amzn_oidc_data
 
