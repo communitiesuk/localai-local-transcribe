@@ -7,7 +7,14 @@ from sqlmodel import col, select
 from common.audio.speakers import process_speakers_and_dialogue_entries
 from common.canaries import strip_boundary_metadata
 from common.database.postgres_database import SessionLocal
-from common.database.postgres_models import AnalyticsEventType, Chat, JobStatus, Minute, Transcription
+from common.database.postgres_models import (
+    AnalyticsEventMetadata,
+    AnalyticsEventType,
+    Chat,
+    JobStatus,
+    Minute,
+    Transcription,
+)
 from common.generate_meeting_title import generate_meeting_title
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_chat_with_transcript_system_message
@@ -209,6 +216,9 @@ class TranscriptionHandlerService:
         """
         original_recording = min(transcription.recordings, key=lambda recording: recording.created_datetime)
         event_user = transcription.user
+        event_metadata: AnalyticsEventMetadata | None = (
+            {"recording_source": original_recording.source} if original_recording.source else None
+        )
         with SessionLocal() as session:
             record_analytics_event_sync(
                 session,
@@ -217,6 +227,7 @@ class TranscriptionHandlerService:
                 event_user.organisation_id if event_user else None,
                 recording_id=original_recording.id,
                 source_id=transcription.id,
+                event_metadata=event_metadata,
             )
 
     @classmethod
