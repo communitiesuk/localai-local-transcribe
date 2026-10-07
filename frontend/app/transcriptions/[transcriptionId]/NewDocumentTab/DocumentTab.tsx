@@ -12,7 +12,7 @@ export const DocumentTab = ({
   minute: MinuteListItem
   onActivityChange?: (busy: boolean) => void
   onCitationClicked?: (citationIndex: number) => void
-  onRemoved?: () => void
+  onRemoved: () => void
 }) => {
   return (
     <MinuteEditor

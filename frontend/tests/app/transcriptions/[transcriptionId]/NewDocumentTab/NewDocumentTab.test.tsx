@@ -126,6 +126,7 @@ const renderTab = (
       transcription={transcription}
       onCancel={vi.fn()}
       onCreated={vi.fn()}
+      onFailedResultRemoved={vi.fn()}
       {...props}
     />
   )
@@ -138,17 +139,11 @@ const selectAndCreate = () => {
 beforeEach(() => {
   vi.clearAllMocks()
   configureQueries()
-  vi.mocked(useMutation).mockImplementation(((opts: {
-    mutationKey?: string[]
-  }) => {
-    if (opts.mutationKey?.[0] === 'delete-minute-version') {
-      return {
-        mutate: deleteMutateMock,
-        isPending: false,
-      }
-    }
+  let mutationCall = 0
+  vi.mocked(useMutation).mockImplementation((() => {
+    mutationCall += 1
     return {
-      mutate: mutateMock,
+      mutate: mutationCall % 2 === 0 ? deleteMutateMock : mutateMock,
       isPending: false,
     }
   }) as unknown as typeof useMutation)
@@ -314,11 +309,36 @@ describe('<NewDocumentTab />', () => {
       screen.getByRole('heading', { name: 'Document generation failed' })
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: 'Try again' })
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', { name: 'Try again' })
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Remove failed result' })
     ).toBeInTheDocument()
+  })
+
+  it('removes the failed result and retries the same template', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    deleteMutateMock.mockImplementation((_vars, opts) => opts?.onSuccess?.())
+    configureQueries({ versions: { data: [{ id: 'v1', status: 'failed' }] } })
+    renderTab()
+
+    selectAndCreate()
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(deleteMutateMock).toHaveBeenCalledWith(
+      { path: { minute_version_id: 'v1' } },
+      expect.anything()
+    )
+    expect(mutateMock).toHaveBeenCalledTimes(2)
+    expect(mutateMock).toHaveBeenLastCalledWith(
+      {
+        path: { transcription_id: 'transcription-1' },
+        body: { template_name: 'General summary', template_id: 't1' },
+      },
+      expect.anything()
+    )
   })
 
   it('removes the failed result and notifies the parent', () => {

@@ -83,6 +83,7 @@ describe('<DocumentTab />', () => {
       <DocumentTab
         transcription={{ id: '1' } as TranscriptionGetResponse}
         minute={{ id: '1' } as MinuteListItem}
+        onRemoved={vi.fn()}
       />
     )
 

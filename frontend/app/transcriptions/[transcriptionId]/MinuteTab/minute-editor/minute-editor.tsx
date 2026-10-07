@@ -50,7 +50,7 @@ export function MinuteEditor({
   minute: Minute
   onActivityChange?: (busy: boolean) => void
   onCitationClicked?: (citationIndex: number) => void
-  onRemoved?: () => void
+  onRemoved: () => void
 }) {
   const [versionId, setVersionId] = useState<string | undefined>(undefined)
   const [editSourceVersionId, setEditSourceVersionId] = useState<
@@ -259,14 +259,14 @@ export function MinuteEditor({
               path: { minute_id: minute.id! },
             }),
           })
-          queryClient.invalidateQueries({
-            queryKey:
-              listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
-                { path: { transcription_id: transcription.id! } }
-              ),
-          })
           if (!hasMultipleMinuteVersions) {
-            onRemoved?.()
+            queryClient.invalidateQueries({
+              queryKey:
+                listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
+                  { path: { transcription_id: transcription.id! } }
+                ),
+            })
+            onRemoved()
           }
           setBanner({
             variant: 'success',

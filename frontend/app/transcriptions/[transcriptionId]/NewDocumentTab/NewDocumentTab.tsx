@@ -42,7 +42,7 @@ export const NewDocumentTab = ({
   onCancel: () => void
   onCreated: (templateName: string) => void
   onMinuteCreated?: (minuteId: string) => void
-  onFailedResultRemoved?: () => void
+  onFailedResultRemoved: () => void
   onActivityChange?: (busy: boolean) => void
   onCitationClicked?: (citationIndex: number) => void
 }) => {
@@ -121,6 +121,7 @@ export const NewDocumentTab = ({
         minute={minute}
         onActivityChange={onActivityChange}
         onCitationClicked={onCitationClicked}
+        onRemoved={onFailedResultRemoved}
       />
     )
   }
@@ -218,7 +219,32 @@ export const NewDocumentTab = ({
               ),
           })
           setCreatedMinuteId(null)
-          onFailedResultRemoved?.()
+          onFailedResultRemoved()
+        },
+        onError: () => {
+          setBanner({
+            variant: 'important',
+            title: 'There is a problem',
+            message:
+              'Something went wrong removing the failed document. Please try again.',
+          })
+        },
+      }
+    )
+  }
+
+  const handleRetry = () => {
+    const failedVersionId = versions[0]?.id
+    if (!failedVersionId || !selectedTemplate) return
+
+    deleteMinuteVersion(
+      {
+        path: { minute_version_id: failedVersionId },
+      },
+      {
+        onSuccess: () => {
+          setCreatedMinuteId(null)
+          handleCreate()
         },
         onError: () => {
           setBanner({
@@ -239,10 +265,17 @@ export const NewDocumentTab = ({
           Document generation failed
         </GovukHeading>
         <p className="govuk-body">
-          Something went wrong generating your document. Remove this failed
-          result, then create another document if you need one.
+          Something went wrong generating your document. Try again or remove
+          this failed result.
         </p>
         <GovukButtonGroup>
+          <GovukButton
+            type="button"
+            disabled={isDeletingFailedVersion}
+            onClick={handleRetry}
+          >
+            Try again
+          </GovukButton>
           <GovukButton
             type="button"
             variant="warning"

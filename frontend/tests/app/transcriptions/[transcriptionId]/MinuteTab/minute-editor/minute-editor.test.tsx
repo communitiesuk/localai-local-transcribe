@@ -98,8 +98,14 @@ const configureQuery = (data: MinuteVersionResponse[], isLoading = false) => {
   } as unknown as ReturnType<typeof useQuery>)
 }
 
+const onRemovedMock = vi.fn()
+
 const editorElement = () => (
-  <MinuteEditor transcription={transcription} minute={minute} />
+  <MinuteEditor
+    transcription={transcription}
+    minute={minute}
+    onRemoved={onRemovedMock}
+  />
 )
 
 const renderEditor = () => render(editorElement())
@@ -288,6 +294,12 @@ describe('<MinuteEditor /> AI edit flow', () => {
       expect.anything()
     )
     expect(onRemoved).not.toHaveBeenCalled()
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ['minute-versions'],
+    })
+    expect(invalidateQueriesMock).not.toHaveBeenCalledWith({
+      queryKey: ['minutes'],
+    })
   })
 
   it('displays the previously-selected version (not the latest) when a later AI edit fails and shows error banner', async () => {
