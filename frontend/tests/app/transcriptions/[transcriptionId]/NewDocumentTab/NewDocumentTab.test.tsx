@@ -116,7 +116,6 @@ const configureQueries = (
 }
 
 const mutateMock = vi.fn()
-const deleteMutateMock = vi.fn()
 
 const renderTab = (
   props: Partial<React.ComponentProps<typeof NewDocumentTab>> = {}
@@ -139,14 +138,10 @@ const selectAndCreate = () => {
 beforeEach(() => {
   vi.clearAllMocks()
   configureQueries()
-  let mutationCall = 0
-  vi.mocked(useMutation).mockImplementation((() => {
-    mutationCall += 1
-    return {
-      mutate: mutationCall % 2 === 0 ? deleteMutateMock : mutateMock,
-      isPending: false,
-    }
-  }) as unknown as typeof useMutation)
+  vi.mocked(useMutation).mockReturnValue({
+    mutate: mutateMock,
+    isPending: false,
+  } as unknown as ReturnType<typeof useMutation>)
   vi.mocked(useQueryClient).mockReturnValue({
     invalidateQueries: vi.fn(),
   } as unknown as ReturnType<typeof useQueryClient>)
@@ -319,29 +314,6 @@ describe('<NewDocumentTab />', () => {
     expect(
       screen.getByRole('button', { name: 'Remove failed document' })
     ).toBeInTheDocument()
-  })
-
-  it('removes the failed result and notifies the parent', () => {
-    const onCancel = vi.fn()
-    const onFailedResultRemoved = vi.fn()
-    mutateMock.mockImplementation((_vars, opts) =>
-      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
-    )
-    deleteMutateMock.mockImplementation((_vars, opts) => opts?.onSuccess?.())
-    configureQueries({ versions: { data: [{ id: 'v1', status: 'failed' }] } })
-    renderTab({ onCancel, onFailedResultRemoved })
-
-    selectAndCreate()
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Remove failed document' })
-    )
-
-    expect(deleteMutateMock).toHaveBeenCalledWith(
-      { path: { minute_version_id: 'v1' } },
-      expect.anything()
-    )
-    expect(onFailedResultRemoved).toHaveBeenCalledOnce()
-    expect(onCancel).not.toHaveBeenCalled()
   })
 
   it('shows an error banner when the create request fails', () => {

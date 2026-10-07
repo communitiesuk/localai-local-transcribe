@@ -118,10 +118,6 @@ export function MinuteEditor({
   )
 
   const isError = displayedMinuteVersion?.status == 'failed'
-  const failedResultName =
-    displayedMinuteVersion?.content_source === 'ai_edit'
-      ? 'version'
-      : 'document'
   const hasMultipleMinuteVersions = minuteVersions.length > 1
 
   // Busy if any version is generating, not just the viewed one, so a background AI edit still counts.
@@ -364,7 +360,7 @@ export function MinuteEditor({
             <p className="govuk-notification-banner__heading">
               {hasMultipleMinuteVersions
                 ? 'There was a problem processing your request. Select another version to go back to a previous version.'
-                : `There was a problem processing your request. Create a new ${failedResultName} to try again.`}
+                : 'There was a problem processing your request. Create a new document to try again.'}
             </p>
           </GovukNotificationBanner>
           <GovukButtonGroup>
@@ -374,7 +370,7 @@ export function MinuteEditor({
               disabled={isDeletingFailedVersion}
               onClick={handleRemoveFailedVersion}
             >
-              Remove failed {failedResultName}
+              Remove failed document
             </GovukButton>
           </GovukButtonGroup>
         </div>

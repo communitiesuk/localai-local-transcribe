@@ -218,7 +218,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
 
     expect(
       screen.getByText(
-        'There was a problem processing your request. Create a new version to try again.'
+        'There was a problem processing your request. Create a new document to try again.'
       )
     ).toBeInTheDocument()
     expect(
@@ -228,7 +228,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
       screen.queryByRole('combobox', { name: 'Version history' })
     ).not.toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Remove failed version' })
+      screen.getByRole('button', { name: 'Remove failed document' })
     ).toBeInTheDocument()
   })
 
@@ -248,7 +248,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
     )
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Remove failed version' })
+      screen.getByRole('button', { name: 'Remove failed document' })
     )
 
     expect(mutateMock).toHaveBeenCalledWith(
@@ -286,7 +286,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
       }
     )
     fireEvent.click(
-      screen.getByRole('button', { name: 'Remove failed version' })
+      screen.getByRole('button', { name: 'Remove failed document' })
     )
 
     expect(mutateMock).toHaveBeenCalledWith(
@@ -405,6 +405,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
         transcription={transcription}
         minute={minute}
         onActivityChange={onActivityChange}
+        onRemoved={vi.fn()}
       />
     )
 

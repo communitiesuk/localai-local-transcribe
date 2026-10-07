@@ -51,30 +51,11 @@ const minuteVersions: MinuteVersionResponse[] = [
   } as MinuteVersionResponse,
 ]
 
-const defaultTemplates = [
-  {
-    id: 'default-default-meeting-summary',
-    name: 'Default meeting summary',
-    description: 'Standard default meeting summary',
-    agenda_usage: 'optional',
-  },
-]
-
-const userTemplates = [
-  {
-    id: 'template-1',
-    name: 'General summary',
-    description: 'Standard summary',
-    updated_datetime: '2024-01-01T00:00:00Z',
-  },
-]
-
-const redirectMock = vi.hoisted(() => vi.fn())
 vi.mock('next/navigation', () => ({
   useRouter: () => null,
   useSearchParams: () => new URLSearchParams(),
   usePathname: () => '/transcriptions/transcription-1',
-  redirect: redirectMock,
+  redirect: () => null,
 }))
 
 vi.mock('posthog-js/react', () => ({
@@ -98,17 +79,8 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['minute-versions'],
   }),
-  getMinuteMinutesMinutesIdGetOptions: () => ({
-    queryKey: ['minute'],
-  }),
   getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions: () => ({
     queryKey: ['guardrail-warning'],
-  }),
-  getTemplatesTemplatesGetOptions: () => ({
-    queryKey: ['default-templates'],
-  }),
-  getUserTemplatesUserTemplatesGetOptions: () => ({
-    queryKey: ['templates'],
   }),
   updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation:
     () => ({
@@ -148,20 +120,6 @@ const configureQueries = () => {
         return { data: minuteVersions }
       case 'guardrail-warning':
         return { data: { message: null } }
-      case 'default-templates':
-        return {
-          data: defaultTemplates,
-          isLoading: false,
-          isError: false,
-          refetch: vi.fn(),
-        }
-      case 'templates':
-        return {
-          data: userTemplates,
-          isLoading: false,
-          isError: false,
-          refetch: vi.fn(),
-        }
     }
     return undefined
   }
@@ -261,111 +219,6 @@ describe('<TranscriptionPage /> View quote', () => {
       screen.getByText(
         'Quote [100] is not attributed to anything in the transcript'
       )
-    ).toBeInTheDocument()
-  })
-})
-
-describe('<TranscriptionPage /> Document generation failure', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    Element.prototype.scrollIntoView = () => {}
-    vi.mocked(useQuery).mockImplementation(((opts: {
-      queryKey?: unknown[]
-    }) => {
-      switch (opts?.queryKey?.[0]) {
-        case 'transcription':
-          return { data: transcription, isLoading: false, isSuccess: true }
-        case 'minutes':
-          return { data: [] }
-        case 'recordings':
-          return { data: [] }
-        case 'minute-versions':
-          return { data: [{ id: 'v1', status: 'failed' }] }
-        case 'minute':
-          return {
-            data: {
-              id: 'm1',
-              transcription_id: transcription.id,
-              template_name: 'General summary',
-            },
-          }
-        case 'default-templates':
-          return {
-            data: defaultTemplates,
-            isLoading: false,
-            isError: false,
-            refetch: vi.fn(),
-          }
-        case 'templates':
-          return {
-            data: userTemplates,
-            isLoading: false,
-            isError: false,
-            refetch: vi.fn(),
-          }
-        case 'guardrail-warning':
-          return { data: { message: null } }
-      }
-      return undefined
-    }) as unknown as typeof useQuery)
-    vi.mocked(useMutation).mockReturnValue({
-      mutate: (
-        variables: unknown,
-        options:
-          | {
-              onSuccess?: (
-                data: { minute_id: string },
-                variables: unknown,
-                context: unknown
-              ) => void
-            }
-          | undefined
-      ) => options?.onSuccess?.({ minute_id: 'm1' }, variables, undefined),
-      isPending: false,
-    } as unknown as ReturnType<typeof useMutation>)
-    vi.mocked(useQueryClient).mockReturnValue({
-      setQueryData: vi.fn(),
-      invalidateQueries: vi.fn(),
-    } as unknown as QueryClient)
-  })
-
-  it('stays on the document tab and shows the failed-generation state', async () => {
-    await act(async () =>
-      render(
-        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
-      )
-    )
-
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Create document' })
-    )
-    await userEvent.click(
-      screen.getByRole('radio', { name: /General summary/ })
-    )
-    await userEvent.click(screen.getByRole('button', { name: 'Create' }))
-
-    expect(redirectMock).not.toHaveBeenCalled()
-    expect(screen.getByText('There is a problem')).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'There was a problem processing your request. Create a new document to try again.'
-      )
-    ).toBeInTheDocument()
-    expect(
-      screen.queryByRole('heading', { name: 'Document generation failed' })
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Try again' })
-    ).not.toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'New document' })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    )
-    expect(
-      screen.queryByRole('tab', { name: 'Failed document' })
-    ).not.toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Remove failed document' })
     ).toBeInTheDocument()
   })
 })

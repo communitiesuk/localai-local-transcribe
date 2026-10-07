@@ -90,11 +90,7 @@ export default function TranscriptionPage(props: {
     }
   }, [lineEditError])
 
-  const {
-    data: transcription,
-    isLoading,
-    isSuccess: hasLoadedTranscription,
-  } = useQuery({
+  const { data: transcription, isLoading } = useQuery({
     ...getTranscriptionTranscriptionsTranscriptionIdGetOptions({
       path: { transcription_id: transcriptionId },
     }),
@@ -109,7 +105,7 @@ export default function TranscriptionPage(props: {
     })
   )
 
-  if (!transcription && !isLoading && hasLoadedTranscription) {
+  if (!transcription && !isLoading) {
     redirect('/')
   }
 

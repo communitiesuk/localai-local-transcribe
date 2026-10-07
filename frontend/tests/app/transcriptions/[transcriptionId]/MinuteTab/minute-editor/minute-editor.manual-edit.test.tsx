@@ -118,6 +118,7 @@ const renderEditor = () =>
         } as unknown as TranscriptionGetResponse
       }
       minute={{ id: 'm1' } as Minute}
+      onRemoved={vi.fn()}
     />
   )
 

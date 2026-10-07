@@ -4,13 +4,11 @@ import {
   GovukButton,
   GovukButtonGroup,
   GovukHeading,
-  GovukNotificationBanner,
   GovukRadios,
 } from '@/components/govuk'
 import { TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
-  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
   getMinuteMinutesMinutesIdGetOptions,
@@ -82,20 +80,20 @@ export const NewDocumentTab = ({
   const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
-  const { mutate: deleteMinuteVersion, isPending: isDeletingFailedVersion } =
-    useMutation({
-      ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
-    })
 
   const selectedTemplate = sortedTemplates.find(
     (t) => templateValue(t) === selectedValue
   )
 
+  const hasGeneratedMinute =
+    createdMinuteId !== null &&
+    (versionStatus === 'completed' || versionStatus === 'failed') &&
+    minute
   const isCompleted =
     createdMinuteId !== null && versionStatus === 'completed' && minute
   const isFailed = createdMinuteId !== null && versionStatus === 'failed'
   const isCreating =
-    !isFailed && (isPending || (createdMinuteId !== null && !isCompleted))
+    isPending || (createdMinuteId !== null && !hasGeneratedMinute)
 
   useEffect(() => {
     if (isCompleted && !renamedRef.current) {
@@ -108,7 +106,7 @@ export const NewDocumentTab = ({
     if (!isCompleted) onActivityChange?.(!isFailed)
   }, [isCompleted, isFailed, onActivityChange])
 
-  if (isCompleted) {
+  if (hasGeneratedMinute) {
     return (
       <MinuteEditor
         transcription={transcription}
@@ -193,66 +191,6 @@ export const NewDocumentTab = ({
           })
         },
       }
-    )
-  }
-
-  const handleRemoveFailedResult = () => {
-    const failedVersionId = versions[0]?.id
-    if (!failedVersionId) return
-
-    deleteMinuteVersion(
-      {
-        path: { minute_version_id: failedVersionId },
-      },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({
-            queryKey:
-              listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
-                { path: { transcription_id: transcription.id! } }
-              ),
-          })
-          setCreatedMinuteId(null)
-          onFailedResultRemoved()
-        },
-        onError: () => {
-          setBanner({
-            variant: 'important',
-            title: 'There is a problem',
-            message:
-              'Something went wrong removing the failed document. Please try again.',
-          })
-        },
-      }
-    )
-  }
-
-  if (isFailed) {
-    return (
-      <div className="pt-2">
-        <div className="mx-auto pt-12">
-          <GovukNotificationBanner
-            variant="important"
-            title="There is a problem"
-            className="mb-[15px]!"
-          >
-            <p className="govuk-notification-banner__heading">
-              There was a problem processing your request. Create a new document
-              to try again.
-            </p>
-          </GovukNotificationBanner>
-        </div>
-        <GovukButtonGroup>
-          <GovukButton
-            type="button"
-            variant="warning"
-            disabled={isDeletingFailedVersion}
-            onClick={handleRemoveFailedResult}
-          >
-            Remove failed document
-          </GovukButton>
-        </GovukButtonGroup>
-      </div>
     )
   }
 
