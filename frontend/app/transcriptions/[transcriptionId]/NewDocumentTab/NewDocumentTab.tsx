@@ -9,6 +9,7 @@ import {
 import { TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
+  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
   getMinuteMinutesMinutesIdGetOptions,
@@ -78,6 +79,10 @@ export const NewDocumentTab = ({
   const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
   })
+  const { mutate: deleteMinuteVersion, isPending: isDeletingFailedVersion } =
+    useMutation({
+      ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
+    })
 
   const selectedTemplate = sortedTemplates.find(
     (t) => templateValue(t) === selectedValue
@@ -191,6 +196,61 @@ export const NewDocumentTab = ({
           })
         },
       }
+    )
+  }
+
+  const handleRemoveFailedResult = () => {
+    const failedVersionId = versions[0]?.id
+    if (!failedVersionId) return
+
+    deleteMinuteVersion(
+      {
+        path: { minute_version_id: failedVersionId },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey:
+              listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
+                { path: { transcription_id: transcription.id! } }
+              ),
+          })
+          setCreatedMinuteId(null)
+          onCancel()
+        },
+        onError: () => {
+          setBanner({
+            variant: 'important',
+            title: 'There is a problem',
+            message:
+              'Something went wrong removing the failed document. Please try again.',
+          })
+        },
+      }
+    )
+  }
+
+  if (isFailed) {
+    return (
+      <div>
+        <GovukHeading as="h2" size="m">
+          Document generation failed
+        </GovukHeading>
+        <p className="govuk-body">
+          Something went wrong generating your document. Remove this failed
+          result, then create another document if you need one.
+        </p>
+        <GovukButtonGroup>
+          <GovukButton
+            type="button"
+            variant="warning"
+            disabled={isDeletingFailedVersion}
+            onClick={handleRemoveFailedResult}
+          >
+            Remove failed result
+          </GovukButton>
+        </GovukButtonGroup>
+      </div>
     )
   }
 

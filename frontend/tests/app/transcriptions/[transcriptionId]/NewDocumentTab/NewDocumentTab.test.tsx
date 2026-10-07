@@ -31,6 +31,9 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation: () => ({
     mutationKey: ['create-minute'],
   }),
+  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
+    mutationKey: ['delete-minute-version'],
+  }),
   createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
     mutationKey: ['create-minute-version'],
   }),
@@ -113,6 +116,7 @@ const configureQueries = (
 }
 
 const mutateMock = vi.fn()
+const deleteMutateMock = vi.fn()
 
 const renderTab = (
   props: Partial<React.ComponentProps<typeof NewDocumentTab>> = {}
@@ -134,10 +138,20 @@ const selectAndCreate = () => {
 beforeEach(() => {
   vi.clearAllMocks()
   configureQueries()
-  vi.mocked(useMutation).mockReturnValue({
-    mutate: mutateMock,
-    isPending: false,
-  } as unknown as ReturnType<typeof useMutation>)
+  vi.mocked(useMutation).mockImplementation(((opts: {
+    mutationKey?: string[]
+  }) => {
+    if (opts.mutationKey?.[0] === 'delete-minute-version') {
+      return {
+        mutate: deleteMutateMock,
+        isPending: false,
+      }
+    }
+    return {
+      mutate: mutateMock,
+      isPending: false,
+    }
+  }) as unknown as typeof useMutation)
   vi.mocked(useQueryClient).mockReturnValue({
     invalidateQueries: vi.fn(),
   } as unknown as ReturnType<typeof useQueryClient>)
@@ -284,11 +298,11 @@ describe('<NewDocumentTab />', () => {
     expect(screen.getByText('Generated version content')).toBeInTheDocument()
   })
 
-  it('shows an error banner and returns to the picker when generation fails', () => {
+  it('shows a clear failure state when generation fails', () => {
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
-    configureQueries({ versions: { data: [{ status: 'failed' }] } })
+    configureQueries({ versions: { data: [{ id: 'v1', status: 'failed' }] } })
     renderTab()
 
     selectAndCreate()
@@ -297,8 +311,35 @@ describe('<NewDocumentTab />', () => {
       expect.objectContaining({ variant: 'important' })
     )
     expect(
-      screen.getByRole('heading', { name: 'Choose a document template' })
+      screen.getByRole('heading', { name: 'Document generation failed' })
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Try again' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Remove failed result' })
+    ).toBeInTheDocument()
+  })
+
+  it('removes the failed result and closes the draft tab', () => {
+    const onCancel = vi.fn()
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    deleteMutateMock.mockImplementation((_vars, opts) => opts?.onSuccess?.())
+    configureQueries({ versions: { data: [{ id: 'v1', status: 'failed' }] } })
+    renderTab({ onCancel })
+
+    selectAndCreate()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Remove failed result' })
+    )
+
+    expect(deleteMutateMock).toHaveBeenCalledWith(
+      { path: { minute_version_id: 'v1' } },
+      expect.anything()
+    )
+    expect(onCancel).toHaveBeenCalledOnce()
   })
 
   it('shows an error banner when the create request fails', () => {

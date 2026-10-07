@@ -20,11 +20,17 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['versions'],
   }),
+  listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey: () => ['versions'],
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey:
+    () => ['minutes'],
   getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions: () => ({
     queryKey: ['guardrail-warning'],
   }),
   createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
     mutationKey: ['create-minute-version'],
+  }),
+  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
+    mutationKey: ['delete-minute-version'],
   }),
 }))
 
