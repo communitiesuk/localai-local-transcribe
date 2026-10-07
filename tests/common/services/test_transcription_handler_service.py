@@ -176,9 +176,7 @@ def test_record_transcription_received_reports_a_direct_upload(mock_session):
     ):
         TranscriptionHandlerService._record_transcription_received(transcription)  # noqa: SLF001
 
-    assert mock_record_event.call_args.kwargs["event_metadata"] == {
-        "recording_source": RecordingSource.DIRECT_UPLOAD
-    }
+    assert mock_record_event.call_args.kwargs["event_metadata"] == {"recording_source": RecordingSource.DIRECT_UPLOAD}
 
 
 def test_record_transcription_received_sends_no_metadata_for_a_recording_made_before_source_was_captured(

@@ -272,9 +272,7 @@ async def test_create_recording_different_file_extensions(
     mock_session.commit.assert_awaited_once()
 
 
-@pytest.mark.parametrize(
-    "source", [RecordingSource.LIVE_RECORDING, RecordingSource.DIRECT_UPLOAD, None]
-)
+@pytest.mark.parametrize("source", [RecordingSource.LIVE_RECORDING, RecordingSource.DIRECT_UPLOAD, None])
 @pytest.mark.asyncio
 async def test_create_recording_stores_where_the_audio_came_from(
     mocker,
