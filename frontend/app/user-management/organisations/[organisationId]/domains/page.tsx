@@ -43,10 +43,14 @@ export default function EditApprovedDomainsPage(props: {
     currentUser,
     isAllowed,
     isLoading: userLoading,
+    isError: userError,
   } = useAuthorisedUser([UserRole.MHCLG_SUPPORT_ADMIN])
 
-  const { data: organisation, isLoading: organisationLoading } =
-    useOrganisation(organisationId, !userLoading && isAllowed)
+  const {
+    data: organisation,
+    isLoading: organisationLoading,
+    isError: organisationError,
+  } = useOrganisation(organisationId, !userLoading && isAllowed)
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (variables: {
@@ -132,22 +136,25 @@ export default function EditApprovedDomainsPage(props: {
     )
   }
 
-  if (currentUser && !isAllowed) {
-    return (
-      <div className="govuk-body flex items-center gap-2">
-        <Loader2 className="animate-spin" />
-        You are not authorised to edit domains for this organisation.
-      </div>
-    )
+  if (userError || !currentUser) {
+    throw new Error('Unable to load user')
   }
 
-  if (organisationLoading || !organisation) {
+  if (!isAllowed) {
+    return null
+  }
+
+  if (organisationLoading) {
     return (
       <div className="govuk-body flex items-center gap-2">
         <Loader2 className="animate-spin" />
         Loading...
       </div>
     )
+  }
+
+  if (organisationError || !organisation) {
+    return <p>Error: Failed to load organisation.</p>
   }
 
   return (

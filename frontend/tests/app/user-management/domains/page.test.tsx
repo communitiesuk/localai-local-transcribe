@@ -93,8 +93,9 @@ const buildOrganisation = (organisationId: string): OrganisationResponse => ({
 
 const mockOrganisationQuery = (
   data: OrganisationResponse | undefined,
-  isLoading = false
-) => ({ data, isLoading }) as ReturnType<typeof useOrganisation>
+  isLoading = false,
+  isError = false
+) => ({ data, isLoading, isError }) as ReturnType<typeof useOrganisation>
 
 describe('<EditApprovedDomainsPage />', () => {
   const mockMutateAsync = vi.fn()
@@ -370,13 +371,12 @@ describe('<EditApprovedDomainsPage />', () => {
 
     renderPage()
 
-    expect(
-      screen.getByText(
-        /You are not authorised to edit domains for this organisation/i
-      )
-    ).toBeInTheDocument()
+    expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Edit approved domains' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Save' })
     ).not.toBeInTheDocument()
     expect(useOrganisation).toHaveBeenCalledWith('org-1', false)
   })
