@@ -256,7 +256,10 @@ async def test_delete_minute_version_deletes_parent_minute_for_only_failed_versi
 
     exec_result = Mock()
     exec_result.first.return_value = minute_version
-    mock_session.exec.return_value = exec_result
+    lock_result = Mock()
+    sibling_result = Mock()
+    sibling_result.first.return_value = None
+    mock_session.exec.side_effect = [exec_result, lock_result, sibling_result]
 
     await delete_minute_version(minute_version.id, mock_session, mock_user)
 
@@ -280,12 +283,15 @@ async def test_delete_minute_version_preserves_minute_when_failed_version_has_su
     minute_version.minute_id = minute.id
     minute_version.status = JobStatus.FAILED
     successful_version = Mock()
+    successful_version.id = uuid.uuid4()
     successful_version.status = JobStatus.COMPLETED
-    minute.minute_versions = [minute_version, successful_version]
 
     exec_result = Mock()
     exec_result.first.return_value = minute_version
-    mock_session.exec.return_value = exec_result
+    lock_result = Mock()
+    sibling_result = Mock()
+    sibling_result.first.return_value = successful_version.id
+    mock_session.exec.side_effect = [exec_result, lock_result, sibling_result]
 
     await delete_minute_version(minute_version.id, mock_session, mock_user)
 

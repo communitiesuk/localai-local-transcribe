@@ -335,6 +335,7 @@ export default function TranscriptionPage(props: {
               onMinuteCreated={(minuteId) =>
                 handleMinuteCreated(tab.id, minuteId)
               }
+              onFailedResultRemoved={() => removeDraftTab(tab.id)}
               onCreated={(templateName) =>
                 handleDocumentCreated(tab.id, templateName)
               }

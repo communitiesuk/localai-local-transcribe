@@ -321,14 +321,15 @@ describe('<NewDocumentTab />', () => {
     ).toBeInTheDocument()
   })
 
-  it('removes the failed result and closes the draft tab', () => {
+  it('removes the failed result and notifies the parent', () => {
     const onCancel = vi.fn()
+    const onFailedResultRemoved = vi.fn()
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
     deleteMutateMock.mockImplementation((_vars, opts) => opts?.onSuccess?.())
     configureQueries({ versions: { data: [{ id: 'v1', status: 'failed' }] } })
-    renderTab({ onCancel })
+    renderTab({ onCancel, onFailedResultRemoved })
 
     selectAndCreate()
     fireEvent.click(
@@ -339,7 +340,8 @@ describe('<NewDocumentTab />', () => {
       { path: { minute_version_id: 'v1' } },
       expect.anything()
     )
-    expect(onCancel).toHaveBeenCalledOnce()
+    expect(onFailedResultRemoved).toHaveBeenCalledOnce()
+    expect(onCancel).not.toHaveBeenCalled()
   })
 
   it('shows an error banner when the create request fails', () => {

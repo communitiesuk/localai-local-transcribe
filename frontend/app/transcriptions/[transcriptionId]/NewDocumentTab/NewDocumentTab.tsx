@@ -34,6 +34,7 @@ export const NewDocumentTab = ({
   onCancel,
   onCreated,
   onMinuteCreated,
+  onFailedResultRemoved,
   onActivityChange,
   onCitationClicked,
 }: {
@@ -41,6 +42,7 @@ export const NewDocumentTab = ({
   onCancel: () => void
   onCreated: (templateName: string) => void
   onMinuteCreated?: (minuteId: string) => void
+  onFailedResultRemoved?: () => void
   onActivityChange?: (busy: boolean) => void
   onCitationClicked?: (citationIndex: number) => void
 }) => {
@@ -216,7 +218,7 @@ export const NewDocumentTab = ({
               ),
           })
           setCreatedMinuteId(null)
-          onCancel()
+          onFailedResultRemoved?.()
         },
         onError: () => {
           setBanner({
