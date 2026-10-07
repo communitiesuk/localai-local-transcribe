@@ -43,7 +43,7 @@ describe('<AudioUploadForm />', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Upload' }))
 
     expect(recordAnalyticsEvent).toHaveBeenCalledExactlyOnceWith(
-      'live_recording_started_or_upload_requested'
+      'audio_upload_requested'
     )
   })
 })

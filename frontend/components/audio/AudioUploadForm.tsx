@@ -33,7 +33,7 @@ export const AudioUploadForm = () => {
   }
 
   const handleSubmit = form.handleSubmit((formValues) => {
-    recordAnalyticsEvent('live_recording_started_or_upload_requested')
+    recordAnalyticsEvent('audio_upload_requested')
     startUpload('upload', formValues, onSubmit)
     useUploadRecordingStore.getState().markExpectedNavigation()
     router.push('/new/uploading')

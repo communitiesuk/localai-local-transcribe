@@ -288,7 +288,7 @@ function TabRecorder({
 
       await requestWakeLock()
       form.setValue('recordedAt', new Date())
-      recordAnalyticsEvent('live_recording_started_or_upload_requested')
+      recordAnalyticsEvent('live_recording_started')
       mediaRecorder.start(1000)
       setIsRecording(true)
     } catch (error) {

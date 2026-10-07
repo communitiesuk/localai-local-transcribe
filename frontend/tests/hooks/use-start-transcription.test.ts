@@ -100,7 +100,7 @@ describe('useStartTranscription', () => {
     await submit(new File(['audio'], 'meeting.mp3', { type: 'audio/mpeg' }))
 
     expect(recordAnalyticsEvent).not.toHaveBeenCalledWith(
-      'live_recording_started_or_upload_requested'
+      'audio_upload_requested'
     )
   })
 

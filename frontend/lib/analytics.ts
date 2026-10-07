@@ -1,7 +1,8 @@
 import { init, track } from '@plausible-analytics/tracker'
 
 export type AnalyticsEventName =
-  | 'live_recording_started_or_upload_requested'
+  | 'live_recording_started'
+  | 'audio_upload_requested'
   | 'audio_upload_complete_from_live_recording'
   | 'audio_upload_complete_from_direct_upload'
   | 'transcript_requested_for_live_recording'
