@@ -33,15 +33,18 @@ export const TranscriptionTitleEditor = ({
       setErrorMessage(null)
       try {
         await updateTitle(title)
-        posthog.capture('edited_transcript_title', {
-          transcriptionId: transcriptionId,
-        })
-        setEditing(false)
       } catch {
         setErrorMessage(
           'We could not save the title. Your changes have not been lost, please try again.'
         )
+        return
       }
+      try {
+        posthog.capture('edited_transcript_title', {
+          transcriptionId: transcriptionId,
+        })
+      } catch {}
+      setEditing(false)
     },
     [transcriptionId, updateTitle]
   )
