@@ -357,8 +357,15 @@ describe('<TranscriptionPage /> Document generation failure', () => {
     expect(
       screen.queryByRole('button', { name: 'Try again' })
     ).not.toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'New document' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    )
     expect(
-      screen.getByRole('button', { name: 'Remove failed result' })
+      screen.queryByRole('tab', { name: 'Failed document' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Remove failed document' })
     ).toBeInTheDocument()
   })
 })

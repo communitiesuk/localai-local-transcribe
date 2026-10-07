@@ -249,7 +249,7 @@ export const NewDocumentTab = ({
             disabled={isDeletingFailedVersion}
             onClick={handleRemoveFailedResult}
           >
-            Remove failed result
+            Remove failed document
           </GovukButton>
         </GovukButtonGroup>
       </div>

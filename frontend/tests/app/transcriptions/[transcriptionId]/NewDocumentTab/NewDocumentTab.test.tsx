@@ -294,14 +294,16 @@ describe('<NewDocumentTab />', () => {
   })
 
   it('shows the standard failed document state when generation fails', () => {
+    const onCreated = vi.fn()
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
     configureQueries({ versions: { data: [{ id: 'v1', status: 'failed' }] } })
-    renderTab()
+    renderTab({ onCreated })
 
     selectAndCreate()
 
+    expect(onCreated).not.toHaveBeenCalled()
     expect(screen.getByText('There is a problem')).toBeInTheDocument()
     expect(
       screen.getByText(
@@ -315,7 +317,7 @@ describe('<NewDocumentTab />', () => {
       screen.queryByRole('button', { name: 'Try again' })
     ).not.toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Remove failed result' })
+      screen.getByRole('button', { name: 'Remove failed document' })
     ).toBeInTheDocument()
   })
 
@@ -331,7 +333,7 @@ describe('<NewDocumentTab />', () => {
 
     selectAndCreate()
     fireEvent.click(
-      screen.getByRole('button', { name: 'Remove failed result' })
+      screen.getByRole('button', { name: 'Remove failed document' })
     )
 
     expect(deleteMutateMock).toHaveBeenCalledWith(
