@@ -4,6 +4,7 @@ import {
   GovukButton,
   GovukButtonGroup,
   GovukHeading,
+  GovukNotificationBanner,
   GovukRadios,
 } from '@/components/govuk'
 import { TranscriptionGetResponse } from '@/lib/client'
@@ -100,15 +101,8 @@ export const NewDocumentTab = ({
     if (isCompleted && !renamedRef.current) {
       renamedRef.current = true
       onCreated(createdTemplateName)
-    } else if (isFailed) {
-      setBanner({
-        variant: 'important',
-        title: 'There is a problem',
-        message:
-          'Something went wrong generating your document. Please try again.',
-      })
     }
-  }, [isCompleted, isFailed, createdTemplateName, onCreated, setBanner])
+  }, [isCompleted, createdTemplateName, onCreated])
 
   useEffect(() => {
     if (!isCompleted) onActivityChange?.(!isFailed)
@@ -233,49 +227,22 @@ export const NewDocumentTab = ({
     )
   }
 
-  const handleRetry = () => {
-    const failedVersionId = versions[0]?.id
-    if (!failedVersionId || !selectedTemplate) return
-
-    deleteMinuteVersion(
-      {
-        path: { minute_version_id: failedVersionId },
-      },
-      {
-        onSuccess: () => {
-          setCreatedMinuteId(null)
-          handleCreate()
-        },
-        onError: () => {
-          setBanner({
-            variant: 'important',
-            title: 'There is a problem',
-            message:
-              'Something went wrong removing the failed document. Please try again.',
-          })
-        },
-      }
-    )
-  }
-
   if (isFailed) {
     return (
-      <div>
-        <GovukHeading as="h2" size="m">
-          Document generation failed
-        </GovukHeading>
-        <p className="govuk-body">
-          Something went wrong generating your document. Try again or remove
-          this failed result.
-        </p>
-        <GovukButtonGroup>
-          <GovukButton
-            type="button"
-            disabled={isDeletingFailedVersion}
-            onClick={handleRetry}
+      <div className="pt-2">
+        <div className="mx-auto pt-12">
+          <GovukNotificationBanner
+            variant="important"
+            title="There is a problem"
+            className="mb-[15px]!"
           >
-            Try again
-          </GovukButton>
+            <p className="govuk-notification-banner__heading">
+              There was a problem processing your request. Create a new document
+              to try again.
+            </p>
+          </GovukNotificationBanner>
+        </div>
+        <GovukButtonGroup>
           <GovukButton
             type="button"
             variant="warning"

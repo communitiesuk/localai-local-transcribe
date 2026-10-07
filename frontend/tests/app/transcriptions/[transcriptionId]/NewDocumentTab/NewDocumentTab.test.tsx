@@ -293,7 +293,7 @@ describe('<NewDocumentTab />', () => {
     expect(screen.getByText('Generated version content')).toBeInTheDocument()
   })
 
-  it('shows a clear failure state when generation fails', () => {
+  it('shows the standard failed document state when generation fails', () => {
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
@@ -302,43 +302,21 @@ describe('<NewDocumentTab />', () => {
 
     selectAndCreate()
 
-    expect(setBannerMock).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'important' })
-    )
+    expect(screen.getByText('There is a problem')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Document generation failed' })
+      screen.getByText(
+        'There was a problem processing your request. Create a new document to try again.'
+      )
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Try again' })
-    ).toBeInTheDocument()
+      screen.queryByRole('heading', { name: 'Document generation failed' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Try again' })
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: 'Remove failed result' })
     ).toBeInTheDocument()
-  })
-
-  it('removes the failed result and retries the same template', () => {
-    mutateMock.mockImplementation((_vars, opts) =>
-      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
-    )
-    deleteMutateMock.mockImplementation((_vars, opts) => opts?.onSuccess?.())
-    configureQueries({ versions: { data: [{ id: 'v1', status: 'failed' }] } })
-    renderTab()
-
-    selectAndCreate()
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
-
-    expect(deleteMutateMock).toHaveBeenCalledWith(
-      { path: { minute_version_id: 'v1' } },
-      expect.anything()
-    )
-    expect(mutateMock).toHaveBeenCalledTimes(2)
-    expect(mutateMock).toHaveBeenLastCalledWith(
-      {
-        path: { transcription_id: 'transcription-1' },
-        body: { template_name: 'General summary', template_id: 't1' },
-      },
-      expect.anything()
-    )
   })
 
   it('removes the failed result and notifies the parent', () => {
