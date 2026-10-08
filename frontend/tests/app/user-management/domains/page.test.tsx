@@ -93,8 +93,9 @@ const buildOrganisation = (organisationId: string): OrganisationResponse => ({
 
 const mockOrganisationQuery = (
   data: OrganisationResponse | undefined,
-  isLoading = false
-) => ({ data, isLoading }) as ReturnType<typeof useOrganisation>
+  isLoading = false,
+  isError = false
+) => ({ data, isLoading, isError }) as ReturnType<typeof useOrganisation>
 
 describe('<EditApprovedDomainsPage />', () => {
   const mockMutateAsync = vi.fn()
@@ -288,6 +289,48 @@ describe('<EditApprovedDomainsPage />', () => {
     expect(mockMutateAsync).not.toHaveBeenCalled()
   })
 
+  it('shows a validation error when domain is invalid', async () => {
+    renderPage()
+
+    const textarea = screen.getByLabelText('Approved domains', {
+      exact: false,
+    })
+    await userEvent.clear(textarea)
+    await userEvent.type(textarea, 'not-a-domain')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText(
+        'Enter approved domains in the correct format, like communities.gov.uk'
+      )
+    ).toBeInTheDocument()
+    expect(mockMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('only revalidates the domains on submit', async () => {
+    renderPage()
+
+    const textarea = screen.getByLabelText('Approved domains', {
+      exact: false,
+    })
+    await userEvent.clear(textarea)
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText('Enter at least one approved domain')
+    ).toBeInTheDocument()
+
+    await userEvent.type(textarea, 'not-a-domain')
+
+    expect(
+      screen.getByText('Enter at least one approved domain')
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Enter approved domains in the correct format/)
+    ).not.toBeInTheDocument()
+  })
+
   it('shows a conflict banner and refetches instead of navigating away when the domains were changed elsewhere', async () => {
     mockMutateAsync.mockRejectedValueOnce(new DomainsUpdateConflictError())
     renderPage()
@@ -328,13 +371,12 @@ describe('<EditApprovedDomainsPage />', () => {
 
     renderPage()
 
-    expect(
-      screen.getByText(
-        /You are not authorised to edit domains for this organisation/i
-      )
-    ).toBeInTheDocument()
+    expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Edit approved domains' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Save' })
     ).not.toBeInTheDocument()
     expect(useOrganisation).toHaveBeenCalledWith('org-1', false)
   })

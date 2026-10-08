@@ -6,13 +6,13 @@ import {
   GovukHeading,
   GovukRadios,
 } from '@/components/govuk'
-import { TranscriptionGetResponse } from '@/lib/client'
+import { Minute, TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
-  getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { ProcessingSpinner } from '@/components/processing-spinner'
 import {
   isDefaultTemplateId,
@@ -27,11 +27,45 @@ import posthog from 'posthog-js'
 import { useEffect, useRef, useState } from 'react'
 import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 
+enum DocumentGenerationState {
+  Idle = 'idle',
+  Creating = 'creating',
+  Generating = 'generating',
+  Finished = 'finished',
+}
+
+const terminalVersionStatuses = ['completed', 'failed']
+
+const getGenerationState = ({
+  createdMinuteId,
+  isCreatePending,
+  versionStatus,
+}: {
+  createdMinuteId: string | null
+  isCreatePending: boolean
+  versionStatus?: string
+}): DocumentGenerationState => {
+  if (versionStatus && terminalVersionStatuses.includes(versionStatus)) {
+    return DocumentGenerationState.Finished
+  }
+
+  if (createdMinuteId !== null) {
+    return DocumentGenerationState.Generating
+  }
+
+  if (isCreatePending) {
+    return DocumentGenerationState.Creating
+  }
+
+  return DocumentGenerationState.Idle
+}
+
 export const NewDocumentTab = ({
   transcription,
   onCancel,
   onCreated,
   onMinuteCreated,
+  onFailedResultRemoved,
   onActivityChange,
   onCitationClicked,
 }: {
@@ -39,6 +73,7 @@ export const NewDocumentTab = ({
   onCancel: () => void
   onCreated: (templateName: string) => void
   onMinuteCreated?: (minuteId: string) => void
+  onFailedResultRemoved: () => void
   onActivityChange?: (busy: boolean) => void
   onCitationClicked?: (citationIndex: number) => void
 }) => {
@@ -66,13 +101,6 @@ export const NewDocumentTab = ({
   })
   const versionStatus = versions[0]?.status
 
-  const { data: minute = null } = useQuery({
-    ...getMinuteMinutesMinutesIdGetOptions({
-      path: { minutes_id: createdMinuteId ?? '' },
-    }),
-    enabled: createdMinuteId !== null,
-  })
-
   const queryClient = useQueryClient()
   const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
@@ -82,42 +110,54 @@ export const NewDocumentTab = ({
     (t) => templateValue(t) === selectedValue
   )
 
+  const generationState = getGenerationState({
+    createdMinuteId,
+    isCreatePending: isPending,
+    versionStatus,
+  })
   const isCompleted =
-    createdMinuteId !== null && versionStatus === 'completed' && minute
-  const isFailed = createdMinuteId !== null && versionStatus === 'failed'
-  const isCreating =
-    !isFailed && (isPending || (createdMinuteId !== null && !isCompleted))
+    createdMinuteId !== null &&
+    generationState === DocumentGenerationState.Finished &&
+    versionStatus === 'completed'
 
   useEffect(() => {
     if (isCompleted && !renamedRef.current) {
       renamedRef.current = true
       onCreated(createdTemplateName)
-    } else if (isFailed) {
-      setBanner({
-        variant: 'important',
-        title: 'There is a problem',
-        message:
-          'Something went wrong generating your document. Please try again.',
-      })
     }
-  }, [isCompleted, isFailed, createdTemplateName, onCreated, setBanner])
+  }, [isCompleted, createdTemplateName, onCreated])
 
   useEffect(() => {
-    if (!isCompleted) onActivityChange?.(!isFailed)
-  }, [isCompleted, isFailed, onActivityChange])
+    if (!isCompleted) {
+      onActivityChange?.(generationState !== DocumentGenerationState.Finished)
+    }
+  }, [isCompleted, generationState, onActivityChange])
 
-  if (isCompleted) {
+  if (
+    generationState === DocumentGenerationState.Finished &&
+    createdMinuteId !== null
+  ) {
+    const createdMinute: Minute = {
+      id: createdMinuteId,
+      transcription_id: transcription.id!,
+      template_name: createdTemplateName,
+    }
+
     return (
       <MinuteEditor
         transcription={transcription}
-        minute={minute}
+        minute={createdMinute}
         onActivityChange={onActivityChange}
         onCitationClicked={onCitationClicked}
+        onRemoved={onFailedResultRemoved}
       />
     )
   }
 
-  if (isCreating) {
+  if (
+    generationState === DocumentGenerationState.Creating ||
+    generationState === DocumentGenerationState.Generating
+  ) {
     return (
       <ProcessingSpinner
         label="Creating document"
@@ -155,6 +195,7 @@ export const NewDocumentTab = ({
     if (!selectedTemplate) return
     renamedRef.current = false
     setCreatedMinuteId(null)
+    recordAnalyticsEvent('summary_requested')
     createMinute(
       {
         path: { transcription_id: transcription.id! },

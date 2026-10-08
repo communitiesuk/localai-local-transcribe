@@ -5,7 +5,6 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   GovukButton,
   GovukButtonGroup,
-  GovukDetails,
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
@@ -32,6 +31,7 @@ export function EditDomainsForm({
   cancelHref?: string
 }) {
   const form = useForm<EditDomainsFormData>({
+    reValidateMode: 'onSubmit',
     defaultValues: {
       domains: defaultValues.join('\n'),
     },
@@ -76,8 +76,7 @@ export function EditDomainsForm({
                   return 'One or more lines contain multiple domains. Enter only one domain per line.'
                 }
 
-                const domainList = invalidDomains.join(', ')
-                return `The following domains are in the wrong format: ${domainList}. Enter them in the correct format, like 'communities.gov.uk'.`
+                return 'Enter approved domains in the correct format, like communities.gov.uk'
               }
               return true
             },
@@ -105,19 +104,6 @@ export function EditDomainsForm({
           Cancel
         </Link>
       </GovukButtonGroup>
-
-      <hr className="govuk-section-break govuk-section-break--visible govuk-section-break--l" />
-
-      <GovukDetails summary="More about approved domains">
-        <p className="govuk-body">
-          These are the email address domains that are able to be invited to a
-          given organisation using Internal Access authentication.
-        </p>
-        <p className="govuk-body">
-          Email addresses without an associated approved domain will not be able
-          to be invited.
-        </p>
-      </GovukDetails>
     </form>
   )
 }

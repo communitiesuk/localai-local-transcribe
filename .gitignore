@@ -148,3 +148,7 @@ frontend/public/assets/govuk.coverage
 
 #openapi auto-generated files
 frontend/lib/client/
+
+# Reporting
+reporting/params/*
+!reporting/params/*example*

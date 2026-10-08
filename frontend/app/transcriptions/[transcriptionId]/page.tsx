@@ -320,6 +320,10 @@ export default function TranscriptionPage(props: {
               minute={doc}
               onActivityChange={(busy) => setTabBusy(doc.id!, busy)}
               onCitationClicked={handleCitationClicked}
+              onRemoved={() => {
+                setTabBusy(doc.id!, false)
+                setActiveTab('transcript')
+              }}
             />
           </GovukTabs.Panel>
         ))}
@@ -331,6 +335,7 @@ export default function TranscriptionPage(props: {
               onMinuteCreated={(minuteId) =>
                 handleMinuteCreated(tab.id, minuteId)
               }
+              onFailedResultRemoved={() => removeDraftTab(tab.id)}
               onCreated={(templateName) =>
                 handleDocumentCreated(tab.id, templateName)
               }

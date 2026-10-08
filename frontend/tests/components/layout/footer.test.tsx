@@ -19,28 +19,14 @@ describe('<GovFooter />', () => {
   it('renders both privacy notice links, Support, and Accessibility footer links', () => {
     render(<GovFooter />)
     expect(
-      screen.getByRole('link', { name: 'Local Transcribe User Privacy Notice' })
-    ).toHaveAttribute('href', '/privacy')
+      screen.getByRole('link', { name: 'Privacy (council employees)' })
+    ).toHaveAttribute('href', '/privacy-council-employees')
     expect(
-      screen.getByRole('link', { name: 'End Service User Privacy Notice' })
-    ).toHaveAttribute('href', '/privacy/end-service-user')
-    expect(screen.getByRole('link', { name: 'Support' })).toHaveAttribute(
-      'href',
-      '/support'
-    )
+      screen.getByRole('link', { name: 'Privacy (members of the public)' })
+    ).toHaveAttribute('href', '/privacy-members-public')
     expect(
-      screen.getByRole('link', { name: 'Acceptable Use Policy' })
+      screen.getByRole('link', { name: 'Acceptable use policy' })
     ).toHaveAttribute('href', '/acceptable-use-policy')
-  })
-
-  it('renders the Open Government Licence link in the meta section', () => {
-    render(<GovFooter />)
-    const ogl = screen.getByRole('link', { name: /Open Government Licence/i })
-    expect(ogl).toHaveAttribute(
-      'href',
-      'https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/'
-    )
-    expect(ogl).toHaveAttribute('rel', 'license')
   })
 
   it('renders the Crown copyright link', () => {

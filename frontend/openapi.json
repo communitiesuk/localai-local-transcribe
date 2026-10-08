@@ -2677,7 +2677,11 @@
         "required": ["name", "content", "description", "type"],
         "title": "CreateUserTemplateRequest"
       },
-      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30] },
+      "DataRetentionOptions": {
+        "type": "integer",
+        "maximum": 30.0,
+        "minimum": 1.0
+      },
       "DataRetentionUpdateResponse": {
         "properties": {
           "data_retention_days": {
@@ -3209,6 +3213,12 @@
               { "type": "null" }
             ],
             "title": "File Created At"
+          },
+          "source": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RecordingSource" },
+              { "type": "null" }
+            ]
           }
         },
         "type": "object",
@@ -3223,6 +3233,12 @@
         "type": "object",
         "required": ["id", "upload_url"],
         "title": "RecordingCreateResponse"
+      },
+      "RecordingSource": {
+        "type": "string",
+        "enum": ["live_recording", "direct_upload"],
+        "title": "RecordingSource",
+        "description": "How the audio reached us. Null on recordings created before this was captured."
       },
       "RenameSpeakerRequest": {
         "properties": {

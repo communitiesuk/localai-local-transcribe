@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { useWakeLock } from '@/hooks/use-wake-lock'
 import { type TranscriptionForm } from '@/hooks/use-start-transcription'
 import { useRecordingDb } from '@/providers/transcription-db-provider'
@@ -8,6 +9,7 @@ import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { useCountdown } from '@/hooks/use-countdown'
+import { usePreferredMicrophone } from '@/hooks/use-preferred-microphone'
 
 /**
  * Encapsulates the MediaRecorder lifecycle (device selection, permission
@@ -23,8 +25,14 @@ export function useMicRecorder({
   const { releaseWakeLock, requestWakeLock } = useWakeLock()
   const [error, setError] = useState<string | null>(null)
   const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([])
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('')
+  const [deviceOverride, setSelectedDeviceId] = useState<string>('')
   const [permissionGranted, setPermissionGranted] = useState<boolean>(false)
+  const preferredMicrophone = usePreferredMicrophone('inPerson')
+  const selection =
+    preferredMicrophone.isReady && audioDevices.length
+      ? preferredMicrophone.resolve(audioDevices)
+      : null
+  const selectedDeviceId = deviceOverride || selection?.deviceId || ''
   const form = useFormContext<TranscriptionForm>()
   const { addRecording, updateRecording } = useRecordingDb()
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -129,6 +137,8 @@ export function useMicRecorder({
       // Start recording
       setRecordedAudio(null)
       await requestWakeLock()
+      form.setValue('recordedAt', new Date())
+      recordAnalyticsEvent('live_recording_started')
       mediaRecorder.start(1000) // Collect data every second
       setIsRecording(true)
     } catch {
@@ -188,12 +198,12 @@ export function useMicRecorder({
 
   const handlePermissionGranted = (devices: AudioDevice[]) => {
     setAudioDevices(devices)
-    setSelectedDeviceId(devices[0].deviceId)
+    setSelectedDeviceId('')
     setPermissionGranted(true)
     setError(null)
   }
 
-  useTabCloseWarning(!!recordedAudio || isRecording)
+  useLockNavigation(!!recordedAudio || isRecording)
 
   const handleCountdownCancel = () => {
     setRecordingUIState('idle')
@@ -218,12 +228,13 @@ export function useMicRecorder({
   }
 
   return {
-    error,
+    error: error ?? (deviceOverride ? null : selection?.warning) ?? null,
     setError,
     audioDevices,
     selectedDeviceId,
     setSelectedDeviceId,
     permissionGranted,
+    microphoneSettingsReady: preferredMicrophone.isReady,
     mediaRecorderStream,
     isRecording,
     recordingUIState,

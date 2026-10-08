@@ -5,13 +5,15 @@ import { useRouter } from 'next/navigation'
 
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { useOnlineStatus } from '@/hooks/use-online-status'
-import { useTabCloseWarning } from '@/hooks/use-tab-close-warning'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 import { ProcessingSpinner } from '@/components/processing-spinner'
 import {
   GovukButton,
+  GovukButtonGroup,
   GovukHeading,
   GovukNotificationBanner,
 } from '@/components/govuk'
+import { downloadRecording } from '@/lib/download-recording'
 
 const LOCK_NAVIGATION_MESSAGE =
   'You have a recording that has not been uploaded. Are you sure you want to leave this page? Your recording will be discarded if you do not upload it.'
@@ -28,9 +30,12 @@ export function UploadStatus() {
     awaitingManualRetry,
     reset,
     retryUpload,
+    _values,
   } = useUploadRecordingStore()
 
-  useTabCloseWarning(
+  const recordedFile = uploadingFrom === 'recording' ? _values?.file : null
+
+  useLockNavigation(
     status === 'pending' || status === 'error' ? LOCK_NAVIGATION_MESSAGE : false
   )
 
@@ -73,13 +78,26 @@ export function UploadStatus() {
             <p className="govuk-notification-banner__heading">{message}</p>
           </GovukNotificationBanner>
         )}
-        <GovukButton
-          type="button"
-          onClick={() => retryUpload()}
-          disabled={!isOnline}
-        >
-          Retry
-        </GovukButton>
+        <GovukButtonGroup>
+          <GovukButton
+            type="button"
+            onClick={() => retryUpload()}
+            disabled={!isOnline}
+          >
+            Retry
+          </GovukButton>
+          {recordedFile && (
+            <GovukButton
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                downloadRecording(recordedFile, _values?.recordedAt)
+              }
+            >
+              Download recording
+            </GovukButton>
+          )}
+        </GovukButtonGroup>
       </div>
     )
   }

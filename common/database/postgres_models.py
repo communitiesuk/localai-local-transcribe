@@ -19,8 +19,8 @@ class DialogueEntry(TypedDict):
 
 
 # Create factory functions for columns to avoid reusing column objects
-def created_datetime_column() -> Column[datetime]:
-    return Column(TIMESTAMP(timezone=True), nullable=False, server_default=now(), default=None)
+def created_datetime_column(*, index: bool = False) -> Column[datetime]:
+    return Column(TIMESTAMP(timezone=True), nullable=False, server_default=now(), default=None, index=index)
 
 
 def updated_datetime_column() -> Column[datetime]:
@@ -162,11 +162,21 @@ class UserAuthEmail(BaseTableMixin, table=True):
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
 
 
+class RecordingSource(StrEnum):
+    """How the audio reached us. Null on recordings created before this was captured."""
+
+    LIVE_RECORDING = auto()
+    DIRECT_UPLOAD = auto()
+
+
 class Recording(BaseTableMixin, table=True):
     __tablename__ = "recording"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
     s3_file_key: str
+    source: RecordingSource | None = Field(
+        default=None, sa_column=Column(Enum(RecordingSource, name="recordingsource"), nullable=True)
+    )
     file_created_at: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL", index=True)
     transcription: "Transcription" = Relationship(back_populates="recordings")
@@ -349,6 +359,7 @@ class AnalyticsEventMetadata(TypedDict, total=False):
 
     audio_duration_seconds: float
     edit_type: TranscriptionEditType
+    recording_source: RecordingSource
     # Both stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
     transcription_id: str
     template_id: str | None
@@ -360,7 +371,7 @@ class AnalyticsEvent(BaseTableMixin, table=True):
     __tablename__ = "analytics_event"
     __table_args__ = (UniqueConstraint("event_type", "source_id", name=ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT),)
 
-    occurred_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    occurred_datetime: datetime = Field(sa_column=created_datetime_column(index=True), default=None)
     event_type: AnalyticsEventType = Field(
         sa_column=Column(Enum(AnalyticsEventType, name="analyticseventtype"), nullable=False)
     )

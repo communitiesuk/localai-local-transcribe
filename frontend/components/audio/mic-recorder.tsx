@@ -2,7 +2,13 @@
 
 import { useEffect, useRef } from 'react'
 
-import { GovukButton, GovukFormGroup, GovukLabel } from '@/components/govuk'
+import {
+  GovukButton,
+  GovukFormGroup,
+  GovukLabel,
+  GovukSelect,
+  GovukBody,
+} from '@/components/govuk'
 import RecordingControl from './recording-control'
 import { microphoneInUse } from '@/lib/microphone-in-use'
 import { UploadStatus } from '@/components/audio/upload-status'
@@ -69,6 +75,7 @@ function MicRecorderComponent({
     selectedDeviceId,
     setSelectedDeviceId,
     permissionGranted,
+    microphoneSettingsReady,
     mediaRecorderStream,
     isRecording,
     recordingUIState,
@@ -106,6 +113,9 @@ function MicRecorderComponent({
       </div>
     )
   }
+  if (!microphoneSettingsReady) {
+    return <GovukBody role="status">Loading microphone settings...</GovukBody>
+  }
   return (
     <div className="space-y-4">
       {!isRecording && recordingUIState !== 'stopping' ? (
@@ -114,8 +124,8 @@ function MicRecorderComponent({
             <GovukLabel htmlFor="microphone-select">
               Choose microphone
             </GovukLabel>
-            <select
-              className="govuk-select w-full"
+            <GovukSelect
+              className="w-full"
               id="microphone-select"
               value={selectedDeviceId}
               onChange={(e) => setSelectedDeviceId(e.target.value)}
@@ -125,7 +135,7 @@ function MicRecorderComponent({
                   {device.label}
                 </option>
               ))}
-            </select>
+            </GovukSelect>
           </GovukFormGroup>
 
           <div className="govuk-inset-text govuk-!-margin-top-0">
