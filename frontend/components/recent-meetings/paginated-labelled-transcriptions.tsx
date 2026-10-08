@@ -38,6 +38,14 @@ export const getPageNumbers = (
   return pages
 }
 
+// Dates of birth are stored as midnight timestamps; only the date part is meaningful.
+// Rearranged from the string rather than via Date to avoid timezone day shifts.
+export const formatDateOfBirth = (date: string | null | undefined) => {
+  if (!date) return '—'
+  const [year, month, day] = date.slice(0, 10).split('-')
+  return `${day}/${month}/${year}`
+}
+
 export const PaginatedLabelledTranscriptions = () => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -136,7 +144,7 @@ export const PaginatedLabelledTranscriptions = () => {
                   <GovukTableCell>{transcription.case_id}</GovukTableCell>
                   <GovukTableCell>{transcription.title}</GovukTableCell>
                   <GovukTableCell>
-                    {transcription.client_date_of_birth}
+                    {formatDateOfBirth(transcription.client_date_of_birth)}
                   </GovukTableCell>
                   <GovukTableCell>
                     {formatRecordedDate(
