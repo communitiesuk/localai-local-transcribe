@@ -143,6 +143,22 @@ export function MinuteEditor({
   }, [minuteVersions, minute.template_name, setBanner])
 
   const queryClient = useQueryClient()
+  const minuteVersionsQueryKey = useMemo(
+    () =>
+      listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
+        path: { minute_id: minute.id! },
+      }),
+    [minute.id]
+  )
+  const transcriptionMinutesQueryKey = useMemo(
+    () =>
+      listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
+        {
+          path: { transcription_id: transcription.id! },
+        }
+      ),
+    [transcription.id]
+  )
   const [isEditable, setIsEditable] = useState(false)
   const [showDiscardModal, setShowDiscardModal] = useState(false)
   // The editor only reads initialContent on mount, so bumping this key discards its edits.
@@ -173,15 +189,59 @@ export function MinuteEditor({
       ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
     })
 
+  const invalidateMinuteVersions = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: minuteVersionsQueryKey,
+    })
+  }, [minuteVersionsQueryKey, queryClient])
+
   const onSuccess = useCallback(() => {
     setIsEditable(false)
     setVersionId(undefined)
+    invalidateMinuteVersions()
+  }, [invalidateMinuteVersions])
+
+  const removeMinuteWhenOnlyVersion = useCallback(() => {
+    if (hasMultipleMinuteVersions) return
+
     queryClient.invalidateQueries({
-      queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
-        path: { minute_id: minute.id! },
-      }),
+      queryKey: transcriptionMinutesQueryKey,
     })
-  }, [minute.id, queryClient])
+    onRemoved()
+  }, [
+    hasMultipleMinuteVersions,
+    onRemoved,
+    queryClient,
+    transcriptionMinutesQueryKey,
+  ])
+
+  const showFailedVersionRemovedBanner = useCallback(() => {
+    setBanner({
+      variant: 'success',
+      title: 'Success',
+      message: 'Failed document removed',
+    })
+  }, [setBanner])
+
+  const showFailedVersionRemoveError = useCallback(() => {
+    setBanner({
+      variant: 'important',
+      title: 'There is a problem',
+      message:
+        'Something went wrong removing the failed document. Please try again.',
+    })
+  }, [setBanner])
+
+  const handleFailedVersionRemoved = useCallback(() => {
+    setVersionId(undefined)
+    invalidateMinuteVersions()
+    removeMinuteWhenOnlyVersion()
+    showFailedVersionRemovedBanner()
+  }, [
+    invalidateMinuteVersions,
+    removeMinuteWhenOnlyVersion,
+    showFailedVersionRemovedBanner,
+  ])
 
   const onSubmit = useCallback(
     (data: MinuteEditorForm) => {
@@ -252,36 +312,8 @@ export function MinuteEditor({
         path: { minute_version_id: displayedMinuteVersion.id },
       },
       {
-        onSuccess: () => {
-          setVersionId(undefined)
-          queryClient.invalidateQueries({
-            queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
-              path: { minute_id: minute.id! },
-            }),
-          })
-          if (!hasMultipleMinuteVersions) {
-            queryClient.invalidateQueries({
-              queryKey:
-                listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
-                  { path: { transcription_id: transcription.id! } }
-                ),
-            })
-            onRemoved()
-          }
-          setBanner({
-            variant: 'success',
-            title: 'Success',
-            message: 'Failed document removed',
-          })
-        },
-        onError: () => {
-          setBanner({
-            variant: 'important',
-            title: 'There is a problem',
-            message:
-              'Something went wrong removing the failed document. Please try again.',
-          })
-        },
+        onSuccess: handleFailedVersionRemoved,
+        onError: showFailedVersionRemoveError,
       }
     )
   }
