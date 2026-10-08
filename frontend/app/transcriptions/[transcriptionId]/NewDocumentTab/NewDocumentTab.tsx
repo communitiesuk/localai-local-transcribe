@@ -6,12 +6,11 @@ import {
   GovukHeading,
   GovukRadios,
 } from '@/components/govuk'
-import { TranscriptionGetResponse } from '@/lib/client'
+import { Minute, TranscriptionGetResponse } from '@/lib/client'
 import {
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
-  getMinuteMinutesMinutesIdGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { recordAnalyticsEvent } from '@/lib/analytics'
 import { ProcessingSpinner } from '@/components/processing-spinner'
@@ -27,6 +26,39 @@ import { LoaderCircle } from 'lucide-react'
 import posthog from 'posthog-js'
 import { useEffect, useRef, useState } from 'react'
 import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
+
+enum DocumentGenerationState {
+  Idle = 'idle',
+  Creating = 'creating',
+  Generating = 'generating',
+  Finished = 'finished',
+}
+
+const terminalVersionStatuses = ['completed', 'failed']
+
+const getGenerationState = ({
+  createdMinuteId,
+  isCreatePending,
+  versionStatus,
+}: {
+  createdMinuteId: string | null
+  isCreatePending: boolean
+  versionStatus?: string
+}): DocumentGenerationState => {
+  if (versionStatus && terminalVersionStatuses.includes(versionStatus)) {
+    return DocumentGenerationState.Finished
+  }
+
+  if (createdMinuteId !== null) {
+    return DocumentGenerationState.Generating
+  }
+
+  if (isCreatePending) {
+    return DocumentGenerationState.Creating
+  }
+
+  return DocumentGenerationState.Idle
+}
 
 export const NewDocumentTab = ({
   transcription,
@@ -69,13 +101,6 @@ export const NewDocumentTab = ({
   })
   const versionStatus = versions[0]?.status
 
-  const { data: minute = null } = useQuery({
-    ...getMinuteMinutesMinutesIdGetOptions({
-      path: { minutes_id: createdMinuteId ?? '' },
-    }),
-    enabled: createdMinuteId !== null,
-  })
-
   const queryClient = useQueryClient()
   const { mutate: createMinute, isPending } = useMutation({
     ...createMinuteTranscriptionTranscriptionIdMinutesPostMutation(),
@@ -85,14 +110,15 @@ export const NewDocumentTab = ({
     (t) => templateValue(t) === selectedValue
   )
 
-  const hasTerminalVersionStatus =
-    versionStatus === 'completed' || versionStatus === 'failed'
-  const isGenerationFinished = hasTerminalVersionStatus
-  const hasGeneratedMinute = isGenerationFinished && minute
+  const generationState = getGenerationState({
+    createdMinuteId,
+    isCreatePending: isPending,
+    versionStatus,
+  })
   const isCompleted =
-    createdMinuteId !== null && versionStatus === 'completed' && minute
-  const isCreating =
-    !isGenerationFinished && (isPending || createdMinuteId !== null)
+    createdMinuteId !== null &&
+    generationState === DocumentGenerationState.Finished &&
+    versionStatus === 'completed'
 
   useEffect(() => {
     if (isCompleted && !renamedRef.current) {
@@ -102,14 +128,25 @@ export const NewDocumentTab = ({
   }, [isCompleted, createdTemplateName, onCreated])
 
   useEffect(() => {
-    if (!isCompleted) onActivityChange?.(!isGenerationFinished)
-  }, [isCompleted, isGenerationFinished, onActivityChange])
+    if (!isCompleted) {
+      onActivityChange?.(generationState !== DocumentGenerationState.Finished)
+    }
+  }, [isCompleted, generationState, onActivityChange])
 
-  if (hasGeneratedMinute) {
+  if (
+    generationState === DocumentGenerationState.Finished &&
+    createdMinuteId !== null
+  ) {
+    const createdMinute: Minute = {
+      id: createdMinuteId,
+      transcription_id: transcription.id!,
+      template_name: createdTemplateName,
+    }
+
     return (
       <MinuteEditor
         transcription={transcription}
-        minute={minute}
+        minute={createdMinute}
         onActivityChange={onActivityChange}
         onCitationClicked={onCitationClicked}
         onRemoved={onFailedResultRemoved}
@@ -117,7 +154,10 @@ export const NewDocumentTab = ({
     )
   }
 
-  if (isCreating) {
+  if (
+    generationState === DocumentGenerationState.Creating ||
+    generationState === DocumentGenerationState.Generating
+  ) {
     return (
       <ProcessingSpinner
         label="Creating document"

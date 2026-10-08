@@ -359,14 +359,16 @@ describe('<NewDocumentTab />', () => {
     expect(onActivityChange).toHaveBeenLastCalledWith(false)
   })
 
-  it('stops creating when generation completes but the document is unavailable', () => {
+  it('shows the document view from the created minute id when generation completes', () => {
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
     configureQueries({
-      versions: { data: [{ status: 'completed' }] },
-      minute: { data: null },
-      useDisabledQueryData: true,
+      versions: {
+        data: [
+          { status: 'completed', html_content: 'Generated version content' },
+        ],
+      },
     })
     const onActivityChange = vi.fn()
     renderTab({ onActivityChange })
@@ -376,6 +378,42 @@ describe('<NewDocumentTab />', () => {
     expect(
       screen.queryByText('Creating ‘General summary’…')
     ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Choose a document template' })
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('Generated version content')).toBeInTheDocument()
+    expect(vi.mocked(useQuery)).not.toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: ['minute'] })
+    )
+    expect(onActivityChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('shows the failed document state from the created minute id when generation fails', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    configureQueries({
+      versions: { data: [{ id: 'v1', status: 'failed' }] },
+    })
+    const onActivityChange = vi.fn()
+    renderTab({ onActivityChange })
+
+    selectAndCreate()
+
+    expect(
+      screen.queryByText('Creating ‘General summary’…')
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Choose a document template' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'There was a problem processing your request. Create a new document to try again.'
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Remove failed document' })
+    ).toBeInTheDocument()
     expect(onActivityChange).toHaveBeenLastCalledWith(false)
   })
 
