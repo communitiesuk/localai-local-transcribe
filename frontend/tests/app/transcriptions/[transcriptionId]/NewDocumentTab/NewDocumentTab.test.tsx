@@ -113,10 +113,13 @@ const configureQueries = (
     }
     return undefined
   }
-  vi.mocked(useQuery).mockImplementation(((opts: { queryKey?: unknown[] }) =>
+  vi.mocked(useQuery).mockImplementation(((opts: {
+    queryKey?: unknown[]
+    enabled?: boolean
+  }) =>
     queryKeyToResponse(
       opts?.queryKey?.[0] as string,
-      opts?.enabled as boolean | undefined
+      opts?.enabled
     )) as unknown as typeof useQuery)
 }
 
