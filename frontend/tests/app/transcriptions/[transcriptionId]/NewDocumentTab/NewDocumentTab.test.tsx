@@ -73,6 +73,7 @@ const configureQueries = (
     templates?: unknown
     versions?: unknown
     minute?: unknown
+    useDisabledQueryData?: boolean
   } = {}
 ) => {
   const defaultTemplatesResult = overrides.defaultTemplates ?? {
@@ -95,15 +96,17 @@ const configureQueries = (
     },
   }
 
-  const queryKeyToResponse = (key: string) => {
+  const queryKeyToResponse = (key: string, enabled = true) => {
     switch (key) {
       case 'default-templates':
         return defaultTemplatesResult
       case 'versions':
+        if (!enabled && !overrides.useDisabledQueryData) return { data: [] }
         return versionsResult
       case 'templates':
         return templatesResult
       case 'minute':
+        if (!enabled && !overrides.useDisabledQueryData) return { data: null }
         return minuteResult
       case 'guardrail-warning':
         return { data: { message: null } }
@@ -112,7 +115,8 @@ const configureQueries = (
   }
   vi.mocked(useQuery).mockImplementation(((opts: { queryKey?: unknown[] }) =>
     queryKeyToResponse(
-      opts?.queryKey?.[0] as string
+      opts?.queryKey?.[0] as string,
+      opts?.enabled as boolean | undefined
     )) as unknown as typeof useQuery)
 }
 
@@ -349,6 +353,43 @@ describe('<NewDocumentTab />', () => {
 
     selectAndCreate()
 
+    expect(onActivityChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('stops creating when generation completes but the document is unavailable', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    configureQueries({
+      versions: { data: [{ status: 'completed' }] },
+      minute: { data: null },
+      useDisabledQueryData: true,
+    })
+    const onActivityChange = vi.fn()
+    renderTab({ onActivityChange })
+
+    selectAndCreate()
+
+    expect(
+      screen.queryByText('Creating ‘General summary’…')
+    ).not.toBeInTheDocument()
+    expect(onActivityChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('stops creating when generation completes without a created minute id', () => {
+    vi.mocked(useMutation).mockReturnValue({
+      mutate: mutateMock,
+      isPending: true,
+    } as unknown as ReturnType<typeof useMutation>)
+    configureQueries({
+      versions: { data: [{ status: 'completed' }] },
+      minute: { data: null },
+      useDisabledQueryData: true,
+    })
+    const onActivityChange = vi.fn()
+    renderTab({ onActivityChange })
+
+    expect(screen.queryByText(/Creating/)).not.toBeInTheDocument()
     expect(onActivityChange).toHaveBeenLastCalledWith(false)
   })
 })

@@ -85,15 +85,14 @@ export const NewDocumentTab = ({
     (t) => templateValue(t) === selectedValue
   )
 
-  const hasGeneratedMinute =
-    createdMinuteId !== null &&
-    (versionStatus === 'completed' || versionStatus === 'failed') &&
-    minute
+  const hasTerminalVersionStatus =
+    versionStatus === 'completed' || versionStatus === 'failed'
+  const isGenerationFinished = hasTerminalVersionStatus
+  const hasGeneratedMinute = isGenerationFinished && minute
   const isCompleted =
     createdMinuteId !== null && versionStatus === 'completed' && minute
-  const isFailed = createdMinuteId !== null && versionStatus === 'failed'
   const isCreating =
-    isPending || (createdMinuteId !== null && !hasGeneratedMinute)
+    !isGenerationFinished && (isPending || createdMinuteId !== null)
 
   useEffect(() => {
     if (isCompleted && !renamedRef.current) {
@@ -103,8 +102,8 @@ export const NewDocumentTab = ({
   }, [isCompleted, createdTemplateName, onCreated])
 
   useEffect(() => {
-    if (!isCompleted) onActivityChange?.(!isFailed)
-  }, [isCompleted, isFailed, onActivityChange])
+    if (!isCompleted) onActivityChange?.(!isGenerationFinished)
+  }, [isCompleted, isGenerationFinished, onActivityChange])
 
   if (hasGeneratedMinute) {
     return (
