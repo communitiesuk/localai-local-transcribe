@@ -16,6 +16,7 @@ interface RecordingControlProps {
   stream: MediaStream | null
   isRecording: boolean
   microphoneLabel?: string
+  noMicrophone?: boolean
   onStopRecording: () => void
   recorderControls?: {
     togglePauseResume?: () => void
@@ -39,6 +40,7 @@ export default function RecordingControl({
   stream,
   isRecording,
   microphoneLabel,
+  noMicrophone,
   onStopRecording,
   recorderControls,
   onPauseStateChange,
@@ -348,7 +350,11 @@ export default function RecordingControl({
       {/* css to toggle canvas visibility when not on stop confimration page
       so canvas never unmounts and can resume if user cancels stop */}
       <div className={!showStopConfirm ? 'block' : 'hidden'}>
-        {microphoneLabel && <p>Microphone in use: {microphoneLabel}</p>}
+        {noMicrophone ? (
+          <p>No microphone in use, recording tab audio only</p>
+        ) : (
+          microphoneLabel && <p>Microphone in use: {microphoneLabel}</p>
+        )}
 
         <p>Recording length: {formattedRecordingDuration}</p>
 

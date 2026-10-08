@@ -148,7 +148,7 @@ function MicRecorderComponent({
           <RecordingControl
             stream={mediaRecorderStream}
             isRecording={isRecording}
-            microphoneLabel={microphoneInUse(audioDevices, selectedDeviceId)}
+            microphoneLabel={microphoneInUse(audioDevices, mediaRecorderStream)}
             onStopRecording={stopRecording}
             onPauseStateChange={handlePauseStateChange}
           />

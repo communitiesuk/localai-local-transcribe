@@ -30,6 +30,22 @@ describe('<RecordingControl />', () => {
     ).toBeTruthy()
   })
 
+  it('says explicitly when there is no microphone, so a tab only recording is clear', () => {
+    render(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        noMicrophone={true}
+        onStopRecording={vi.fn()}
+      />
+    )
+
+    expect(
+      screen.getByText('No microphone in use, recording tab audio only')
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Microphone in use:/)).not.toBeInTheDocument()
+  })
+
   it('shows no microphone line when the device is unknown', () => {
     render(
       <RecordingControl
