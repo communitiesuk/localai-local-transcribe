@@ -14,6 +14,7 @@ from backend.api.routes.minutes import (
     list_minute_versions,
     list_minutes_for_transcription,
 )
+from common.database.postgres_models import JobStatus
 
 
 @pytest.mark.asyncio
@@ -229,6 +230,68 @@ async def test_delete_minute_version_success(
     exec_result = Mock()
     exec_result.first.return_value = minute_version
     mock_session.exec.return_value = exec_result
+
+    await delete_minute_version(minute_version.id, mock_session, mock_user)
+
+    mock_session.delete.assert_awaited_once_with(minute_version)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_minute_version_deletes_parent_minute_for_only_failed_version(
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
+):
+    transcription = mock_transcription
+    transcription.user_id = mock_user.id
+
+    minute = mock_minute
+    minute.transcription = transcription
+    minute.transcription_id = transcription.id
+    minute.minute_versions = [mock_minute_version]
+
+    minute_version = mock_minute_version
+    minute_version.minute = minute
+    minute_version.minute_id = minute.id
+    minute_version.status = JobStatus.FAILED
+
+    exec_result = Mock()
+    exec_result.first.return_value = minute_version
+    lock_result = Mock()
+    sibling_result = Mock()
+    sibling_result.first.return_value = None
+    mock_session.exec.side_effect = [exec_result, lock_result, sibling_result]
+
+    await delete_minute_version(minute_version.id, mock_session, mock_user)
+
+    mock_session.delete.assert_awaited_once_with(minute)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_minute_version_preserves_minute_when_failed_version_has_successful_sibling(
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
+):
+    transcription = mock_transcription
+    transcription.user_id = mock_user.id
+
+    minute = mock_minute
+    minute.transcription = transcription
+    minute.transcription_id = transcription.id
+
+    minute_version = mock_minute_version
+    minute_version.minute = minute
+    minute_version.minute_id = minute.id
+    minute_version.status = JobStatus.FAILED
+    successful_version = Mock()
+    successful_version.id = uuid.uuid4()
+    successful_version.status = JobStatus.COMPLETED
+
+    exec_result = Mock()
+    exec_result.first.return_value = minute_version
+    lock_result = Mock()
+    sibling_result = Mock()
+    sibling_result.first.return_value = successful_version.id
+    mock_session.exec.side_effect = [exec_result, lock_result, sibling_result]
 
     await delete_minute_version(minute_version.id, mock_session, mock_user)
 

@@ -231,7 +231,9 @@ async def delete_minute_version(minute_version_id: uuid.UUID, session: SQLSessio
     query = (
         select(MinuteVersion)
         .where(MinuteVersion.id == minute_version_id)
-        .options(selectinload(MinuteVersion.minute).selectinload(Minute.transcription))
+        .options(
+            selectinload(MinuteVersion.minute).selectinload(Minute.transcription),
+        )
     )
     minute_version = (await session.exec(query)).first()
     if (
@@ -241,5 +243,17 @@ async def delete_minute_version(minute_version_id: uuid.UUID, session: SQLSessio
     ):
         raise HTTPException(404, "Not found")
 
-    await session.delete(minute_version)
+    minute = minute_version.minute
+    should_delete_minute = False
+    if minute_version.status == JobStatus.FAILED:
+        await session.exec(select(Minute.id).where(Minute.id == minute.id).with_for_update())
+        sibling_result = await session.exec(
+            select(MinuteVersion.id)
+            .where(MinuteVersion.minute_id == minute.id)
+            .where(MinuteVersion.id != minute_version.id)
+            .limit(1)
+        )
+        should_delete_minute = sibling_result.first() is None
+
+    await session.delete(minute if should_delete_minute else minute_version)
     await session.commit()

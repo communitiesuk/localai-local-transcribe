@@ -26,6 +26,9 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
     mutationKey: ['create-minute-version'],
   }),
+  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
+    mutationKey: ['delete-minute-version'],
+  }),
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['minute-versions'],
   }),
@@ -35,6 +38,8 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey: () => [
     'minute-versions',
   ],
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey:
+    () => ['minutes'],
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation: () => ({
     mutationKey: ['create-minute'],
   }),
@@ -93,8 +98,14 @@ const configureQuery = (data: MinuteVersionResponse[], isLoading = false) => {
   } as unknown as ReturnType<typeof useQuery>)
 }
 
+const onRemovedMock = vi.fn()
+
 const editorElement = () => (
-  <MinuteEditor transcription={transcription} minute={minute} />
+  <MinuteEditor
+    transcription={transcription}
+    minute={minute}
+    onRemoved={onRemovedMock}
+  />
 )
 
 const renderEditor = () => render(editorElement())
@@ -217,8 +228,78 @@ describe('<MinuteEditor /> AI edit flow', () => {
       screen.queryByRole('combobox', { name: 'Version history' })
     ).not.toBeInTheDocument()
     expect(
-      screen.queryByRole('button', { name: /Generate minute|Generate New/ })
-    ).not.toBeInTheDocument()
+      screen.getByRole('button', { name: 'Remove failed document' })
+    ).toBeInTheDocument()
+  })
+
+  it('removes a failed-only document and notifies the parent tab', () => {
+    mutateMock.mockImplementation((_vars, opts) => opts?.onSuccess?.())
+    const onRemoved = vi.fn()
+    configureQuery([
+      makeVersion({ id: 'v1', status: 'failed', content_source: 'ai_edit' }),
+    ])
+
+    render(
+      <MinuteEditor
+        transcription={transcription}
+        minute={minute}
+        onRemoved={onRemoved}
+      />
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Remove failed document' })
+    )
+
+    expect(mutateMock).toHaveBeenCalledWith(
+      { path: { minute_version_id: 'v1' } },
+      expect.anything()
+    )
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ['minute-versions'],
+    })
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ['minutes'],
+    })
+    expect(onRemoved).toHaveBeenCalledOnce()
+  })
+
+  it('removes only the failed version when successful versions exist', () => {
+    mutateMock.mockImplementation((_vars, opts) => opts?.onSuccess?.())
+    const onRemoved = vi.fn()
+    configureQuery([
+      makeVersion({ id: 'v2', status: 'failed', content_source: 'ai_edit' }),
+      makeVersion({ id: 'v1' }),
+    ])
+    render(
+      <MinuteEditor
+        transcription={transcription}
+        minute={minute}
+        onRemoved={onRemoved}
+      />
+    )
+
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Version history' }),
+      {
+        target: { value: 'v2' },
+      }
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Remove failed document' })
+    )
+
+    expect(mutateMock).toHaveBeenCalledWith(
+      { path: { minute_version_id: 'v2' } },
+      expect.anything()
+    )
+    expect(onRemoved).not.toHaveBeenCalled()
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ['minute-versions'],
+    })
+    expect(invalidateQueriesMock).not.toHaveBeenCalledWith({
+      queryKey: ['minutes'],
+    })
   })
 
   it('displays the previously-selected version (not the latest) when a later AI edit fails and shows error banner', async () => {
@@ -324,6 +405,7 @@ describe('<MinuteEditor /> AI edit flow', () => {
         transcription={transcription}
         minute={minute}
         onActivityChange={onActivityChange}
+        onRemoved={vi.fn()}
       />
     )
 

@@ -12,7 +12,9 @@ import {
 } from '@/lib/client'
 import {
   createMinuteVersionMinutesMinuteIdVersionsPostMutation,
+  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation,
   getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions,
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey,
 } from '@/lib/client/@tanstack/react-query.gen'
@@ -42,11 +44,13 @@ export function MinuteEditor({
   minute,
   onActivityChange,
   onCitationClicked,
+  onRemoved,
 }: {
   transcription: TranscriptionGetResponse
   minute: Minute
   onActivityChange?: (busy: boolean) => void
   onCitationClicked?: (citationIndex: number) => void
+  onRemoved: () => void
 }) {
   const [versionId, setVersionId] = useState<string | undefined>(undefined)
   const [editSourceVersionId, setEditSourceVersionId] = useState<
@@ -139,6 +143,22 @@ export function MinuteEditor({
   }, [minuteVersions, minute.template_name, setBanner])
 
   const queryClient = useQueryClient()
+  const minuteVersionsQueryKey = useMemo(
+    () =>
+      listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
+        path: { minute_id: minute.id! },
+      }),
+    [minute.id]
+  )
+  const transcriptionMinutesQueryKey = useMemo(
+    () =>
+      listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey(
+        {
+          path: { transcription_id: transcription.id! },
+        }
+      ),
+    [transcription.id]
+  )
   const [isEditable, setIsEditable] = useState(false)
   const [showDiscardModal, setShowDiscardModal] = useState(false)
   // The editor only reads initialContent on mount, so bumping this key discards its edits.
@@ -164,16 +184,64 @@ export function MinuteEditor({
   const { mutate: saveEdit } = useMutation({
     ...createMinuteVersionMinutesMinuteIdVersionsPostMutation(),
   })
+  const { mutate: deleteMinuteVersion, isPending: isDeletingFailedVersion } =
+    useMutation({
+      ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
+    })
+
+  const invalidateMinuteVersions = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: minuteVersionsQueryKey,
+    })
+  }, [minuteVersionsQueryKey, queryClient])
 
   const onSuccess = useCallback(() => {
     setIsEditable(false)
     setVersionId(undefined)
+    invalidateMinuteVersions()
+  }, [invalidateMinuteVersions])
+
+  const removeMinuteWhenOnlyVersion = useCallback(() => {
+    if (hasMultipleMinuteVersions) return
+
     queryClient.invalidateQueries({
-      queryKey: listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey({
-        path: { minute_id: minute.id! },
-      }),
+      queryKey: transcriptionMinutesQueryKey,
     })
-  }, [minute.id, queryClient])
+    onRemoved()
+  }, [
+    hasMultipleMinuteVersions,
+    onRemoved,
+    queryClient,
+    transcriptionMinutesQueryKey,
+  ])
+
+  const showFailedVersionRemovedBanner = useCallback(() => {
+    setBanner({
+      variant: 'success',
+      title: 'Success',
+      message: 'Failed document removed',
+    })
+  }, [setBanner])
+
+  const showFailedVersionRemoveError = useCallback(() => {
+    setBanner({
+      variant: 'important',
+      title: 'There is a problem',
+      message:
+        'Something went wrong removing the failed document. Please try again.',
+    })
+  }, [setBanner])
+
+  const handleFailedVersionRemoved = useCallback(() => {
+    setVersionId(undefined)
+    invalidateMinuteVersions()
+    removeMinuteWhenOnlyVersion()
+    showFailedVersionRemovedBanner()
+  }, [
+    invalidateMinuteVersions,
+    removeMinuteWhenOnlyVersion,
+    showFailedVersionRemovedBanner,
+  ])
 
   const onSubmit = useCallback(
     (data: MinuteEditorForm) => {
@@ -233,6 +301,20 @@ export function MinuteEditor({
       htmlContent,
       transcription.dialogue_entries || [],
       fileName
+    )
+  }
+
+  const handleRemoveFailedVersion = () => {
+    if (!displayedMinuteVersion?.id) return
+
+    deleteMinuteVersion(
+      {
+        path: { minute_version_id: displayedMinuteVersion.id },
+      },
+      {
+        onSuccess: handleFailedVersionRemoved,
+        onError: showFailedVersionRemoveError,
+      }
     )
   }
 
@@ -313,6 +395,16 @@ export function MinuteEditor({
                 : 'There was a problem processing your request. Create a new document to try again.'}
             </p>
           </GovukNotificationBanner>
+          <GovukButtonGroup>
+            <GovukButton
+              type="button"
+              variant="warning"
+              disabled={isDeletingFailedVersion}
+              onClick={handleRemoveFailedVersion}
+            >
+              Remove failed document
+            </GovukButton>
+          </GovukButtonGroup>
         </div>
       </div>
     )
