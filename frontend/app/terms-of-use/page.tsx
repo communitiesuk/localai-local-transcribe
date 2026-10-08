@@ -29,6 +29,8 @@ export default function TermsOfUsePage() {
     ...userQueryOptions,
     refetchOnMount: 'always',
   })
+  const [hasDeclinedTerms, setHasDeclinedTerms] = useState(false)
+
   const { mutate: acceptTerms, isPending } = useMutation({
     ...acceptTermsOfUseUsersTermsOfUsePostMutation(),
     async onSuccess(updatedUser) {
@@ -53,6 +55,51 @@ export default function TermsOfUsePage() {
       })
     }
   }, [hasSubmissionError])
+
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        window.location.reload()
+      }
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
+
+  if (hasDeclinedTerms) {
+    return (
+      <div className="govuk-grid-row">
+        <div className="govuk-grid-column-two-thirds">
+          <GovukHeading as="h1" size="xl">
+            Terms of Use required
+          </GovukHeading>
+          <GovukBody>
+            You&apos;ll need to accept the Terms of Use to use Local Transcribe.
+            Would you like to review them again, or exit the application?
+          </GovukBody>
+
+          <GovukButtonGroup>
+            <GovukButton
+              onClick={() => {
+                setHasSubmissionError(false)
+                setHasDeclinedTerms(false)
+              }}
+              className="govuk-button--secondary"
+            >
+              Review Terms of Use
+            </GovukButton>
+            <GovukButtonLink
+              href={`${API_PROXY_PATH}/signout`}
+              variant="secondary"
+              className="govuk-button--warning"
+            >
+              Exit Local Transcribe
+            </GovukButtonLink>
+          </GovukButtonGroup>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="govuk-grid-row">
@@ -313,12 +360,13 @@ export default function TermsOfUsePage() {
               'Accept and continue'
             )}
           </GovukButton>
-          <GovukButtonLink
-            href={`${API_PROXY_PATH}/signout`}
+          <GovukButton
+            onClick={() => setHasDeclinedTerms(true)}
             variant="secondary"
+            disabled={isPending || user?.accepted_tou}
           >
             I do not accept
-          </GovukButtonLink>
+          </GovukButton>
         </GovukButtonGroup>
       </div>
     </div>
