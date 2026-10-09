@@ -81,7 +81,7 @@ export const TranscriptionTitleEditor = ({
         <input
           {...form.register('title')}
           id="transcription-title"
-          className="govuk-input govuk-!-font-size-36 govuk-!-font-weight-bold govuk-!-margin-bottom-2 h-14"
+          className="govuk-input govuk-!-font-size-36 govuk-!-font-weight-bold govuk-!-margin-bottom-2 !h-14"
           placeholder={placeholder}
           disabled={isSaving}
         />
