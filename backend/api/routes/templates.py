@@ -20,6 +20,7 @@ from common.types import (
     Question,
     TemplateMetadata,
     TemplateResponse,
+    DuplicateTemplateResponse,
 )
 
 templates_router = APIRouter(tags=["Templates"])
@@ -100,17 +101,20 @@ async def get_user_template(user: UserDep, session: SQLSessionDep, template_id: 
     )
 
 
+def normalise_template_name(name: str) -> str:
+    return name.strip().lower()
+
+
 @templates_router.post("/user-templates")
 async def create_user_template(user: UserDep, session: SQLSessionDep, request: CreateUserTemplateRequest) -> None:
     existing_template = (
         await session.exec(
             select(UserTemplate).where(
                 UserTemplate.user_id == user.id,
-                func.lower(func.trim(col(UserTemplate.name))) == request.name.strip().lower(),
+                func.lower(func.trim(col(UserTemplate.name))) == normalise_template_name(request.name),
             )
         )
     ).first()
-
     if existing_template:
         raise HTTPException(status_code=409, detail="A template with this title already exists")
 
@@ -148,7 +152,20 @@ async def edit_user_template(
         raise HTTPException(404)
 
     if request.name is not None:
+        conflicting_template = (
+            await session.exec(
+                select(UserTemplate).where(
+                    UserTemplate.user_id == user.id,
+                    UserTemplate.id != template_id,
+                    func.lower(func.trim(col(UserTemplate.name))) == normalise_template_name(request.name),
+                )
+            )
+        ).first()
+        if conflicting_template:
+            raise HTTPException(status_code=409, detail="A template with this title already exists")
+
         template.name = request.name
+
     if request.content is not None:
         template.content = request.content
     if request.heading is not None:
@@ -200,8 +217,28 @@ async def delete_user_template(user: UserDep, session: SQLSessionDep, template_i
     await session.commit()
 
 
+async def next_unique_template_name(session: SQLSessionDep, user_id: UUID, base_name: str) -> str:
+    existing_templates = (
+        await session.exec(
+            select(UserTemplate.name).where(UserTemplate.user_id == user_id)
+        )
+    ).all()
+    existing_names = {normalise_template_name(name) for name in existing_templates}
+
+    copy_base = f"{base_name} (Copy)"
+    if normalise_template_name(copy_base) not in existing_names:
+        return copy_base
+
+    counter = 2
+    while True:
+        new_name = f"{base_name} (Copy {counter})"
+        if normalise_template_name(new_name) not in existing_names:
+            return new_name
+        counter += 1
+
+
 @templates_router.post("/user-templates/{template_id}/duplicate")
-async def duplicate_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> None:
+async def duplicate_user_template(user: UserDep, session: SQLSessionDep, template_id: UUID) -> DuplicateTemplateResponse:
     original_template = (
         await session.exec(
             select(UserTemplate)
@@ -215,7 +252,7 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
 
     template = UserTemplate(
         user_id=user.id,
-        name=original_template.name + " (Copy)",
+        name=await next_unique_template_name(session, user.id, original_template.name),
         description=original_template.description,
         content=original_template.content,
         heading=original_template.heading,
@@ -234,9 +271,11 @@ async def duplicate_user_template(user: UserDep, session: SQLSessionDep, templat
     session.add(template)
     await session.commit()
 
+    return DuplicateTemplateResponse(id=template.id, name=template.name)
+
 
 @templates_router.post("/templates/{template_name}/duplicate")
-async def duplicate_default_template(user: UserDep, session: SQLSessionDep, template_name: str) -> None:
+async def duplicate_default_template(user: UserDep, session: SQLSessionDep, template_name: str) -> DuplicateTemplateResponse:
     template_metadata = next(
         (template for template in get_templates(user) if template_name in {template.id, template.name}),
         None,
@@ -251,7 +290,7 @@ async def duplicate_default_template(user: UserDep, session: SQLSessionDep, temp
 
     template = UserTemplate(
         user_id=user.id,
-        name=original_template.name + " (Copy)",
+        name=await next_unique_template_name(session, user.id, original_template.name),
         description=original_template.description,
         content=get_default_template_content(original_template),
         heading=original_template.name,
@@ -261,6 +300,8 @@ async def duplicate_default_template(user: UserDep, session: SQLSessionDep, temp
 
     session.add(template)
     await session.commit()
+
+    return DuplicateTemplateResponse(id=template.id, name=template.name)
 
 
 def get_default_template_content(default_template: type[Template]) -> str:
