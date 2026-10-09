@@ -13,7 +13,9 @@ dataset:
   reference_summary_field: summary
 
 judge:
-  pass_threshold: 4
+  # Lower than the usual 4. This smoke test checks the pipeline runs end to end, and with
+  # two dialogues a single low judge score would otherwise fail it.
+  pass_threshold: 3
 
 metrics:
   - accuracy
