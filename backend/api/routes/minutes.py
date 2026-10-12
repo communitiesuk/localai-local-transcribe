@@ -40,7 +40,7 @@ async def list_minutes_for_transcription(
         raise HTTPException(404, "Not found")
 
     query = (
-        select(Minute).where(Minute.transcription_id == transcription_id).order_by(col(Minute.updated_datetime).desc())
+        select(Minute).where(Minute.transcription_id == transcription_id).order_by(col(Minute.created_datetime).asc())
     )
     result = await session.exec(query)
     minutes = result.all()
