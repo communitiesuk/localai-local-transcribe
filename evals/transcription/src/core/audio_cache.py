@@ -16,7 +16,7 @@ class CorruptAudioError(RuntimeError):
     """Raised when an audio file exists but cannot be decoded."""
 
 
-class AudioCache:
+class AudioFileHandler:
     """
     Reads and writes processed dataset audio as mono MP3.
 

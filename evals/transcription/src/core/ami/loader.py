@@ -10,7 +10,7 @@ from evals.transcription.src.core.ami import audio, cache
 from evals.transcription.src.core.ami.constants import AMI_DATASET_NAME
 from evals.transcription.src.core.ami.metadata import load_or_build_metadata
 from evals.transcription.src.core.ami.selection import MeetingSegment, select_segments
-from evals.transcription.src.core.audio_cache import AudioCache
+from evals.transcription.src.core.audio_cache import AudioFileHandler
 from evals.transcription.src.core.benchmark_dataset_source import BenchmarkDatasetSource
 from evals.transcription.src.models import (
     AMIDatasetSample,
@@ -52,7 +52,7 @@ class AMIDatasetLoader(DatasetProtocol):
         self.processed_cache_dir.mkdir(parents=True, exist_ok=True)
 
         self.samples: list[AMIDatasetSample] = []
-        self.audio_cache = AudioCache()
+        self.audio_cache = AudioFileHandler()
 
     def _load_utterances_for_meetings(self, required_meetings: set[str]) -> defaultdict[str, list[RawDatasetRow]]:
         """

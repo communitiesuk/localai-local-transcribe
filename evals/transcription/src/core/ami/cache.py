@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from evals.transcription.src.core.audio_cache import AudioCache, CorruptAudioError
+from evals.transcription.src.core.audio_cache import AudioFileHandler, CorruptAudioError
 from evals.transcription.src.models import MeetingSegment
 
 DIARIZATION_SUFFIX = "_ref_diarization.json"
@@ -46,7 +46,7 @@ class AMISampleCache:
         processed_dir: Path,
         segment: MeetingSegment,
         index: int,
-        audio_cache: AudioCache | None = None,
+        audio_cache: AudioFileHandler | None = None,
     ):
         """
         Derives the cache paths for one meeting segment from its id, position, and cutoff.
@@ -57,7 +57,7 @@ class AMISampleCache:
         entry and silently scores the first run's truncated audio as a whole meeting.
         Preserve the full float precision because even nearby cutoffs can select different utterances.
         """
-        self._audio_cache = audio_cache if audio_cache is not None else AudioCache()
+        self._audio_cache = audio_cache if audio_cache is not None else AudioFileHandler()
 
         cutoff = "full" if segment.utterance_cutoff_time is None else f"c{segment.utterance_cutoff_time!r}"
         stem = f"{segment.meeting_id}_{index:06d}_{cutoff}"

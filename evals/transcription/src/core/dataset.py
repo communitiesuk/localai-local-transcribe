@@ -5,7 +5,7 @@ from evals.transcription.src.constants import (
     AUDIO_DIR,
 )
 from evals.transcription.src.core.ami.loader import AMIDatasetSource
-from evals.transcription.src.core.audio_cache import AudioCache
+from evals.transcription.src.core.audio_cache import AudioFileHandler
 from evals.transcription.src.core.benchmark_dataset_source import BenchmarkDatasetSource
 from evals.transcription.src.models import DatasetItem, DatasetProtocol
 
@@ -49,7 +49,7 @@ def prepare_audio_for_transcription(example: DatasetItem, index: int) -> str:
     audio_data = example.audio.array
     sample_rate = example.audio.sampling_rate
 
-    audio_cache = AudioCache()
+    audio_cache = AudioFileHandler()
     output_path = AUDIO_DIR / f"sample_{index:06d}{audio_cache.suffix}"
 
     audio_cache.write(output_path, audio_data, sample_rate)

@@ -152,7 +152,7 @@ def main() -> None:
     prepare_only = bool(get_config(config, "prepare_only", bool, default=False))
     check_drift_thresholds = bool(get_config(config, "check_drift_thresholds", bool, default=False))
     adapter_names = get_config(config, "adapters", list, required=True)
-    dataset_name = get_config(config, "dataset", str, default=DEFAULT_DATASET_NAME) or DEFAULT_DATASET_NAME
+    dataset_name = get_config(config, "dataset", str, default=DEFAULT_DATASET_NAME)
     samples_per_group = get_config(config, "samples_per_group", int)
     input_dir_raw = get_config(config, "input_dir", str)
     input_dir = Path(input_dir_raw).expanduser() if input_dir_raw else None
