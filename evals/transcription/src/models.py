@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from collections.abc import Callable
 from typing import Protocol, TypedDict
 
@@ -191,16 +192,37 @@ class MeetingSegment(BaseModel):
     utterance_cutoff_time: float | None = None
 
 
+class DatasetRequest(BaseModel):
+    """
+    Sampling options requested for a benchmark load.
+
+    Each dataset source reads the options it declares support for, so adding an option
+    here does not change the signature of every source.
+    """
+
+    num_samples: int | None = None
+    sample_duration_fraction: float | None = None
+    samples_per_group: int | None = None
+
+
 class DatasetProtocol(Protocol):
     """
     Protocol for dataset objects supporting indexing and length operations.
     """
 
-    def __len__(self) -> int:
-        pass
+    @property
+    @abstractmethod
+    def dataset_version(self) -> str: ...
 
-    def __getitem__(self, index: int) -> DatasetItem:
-        pass
+    @property
+    @abstractmethod
+    def dataset_split(self) -> str | None: ...
+
+    @abstractmethod
+    def __len__(self) -> int: ...
+
+    @abstractmethod
+    def __getitem__(self, index: int) -> DatasetItem: ...
 
 
 class TimingAccumulator:

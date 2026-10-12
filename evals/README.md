@@ -123,7 +123,7 @@ scenario; a judge failure stops the run.
 
 # Transcription Evaluation
 
-Compares transcription services using the AMI Corpus (auto-downloaded to `input/ami/`).
+Compares transcription services using the AMI Corpus, loaded automatically through Hugging Face.
 
 **Important: Run all commands from project root.**
 
@@ -147,6 +147,27 @@ poetry run python evals/transcription/src/evaluate.py --config larger_cloud_test
 **Configs:** `evals/transcription/configs/` (`smoketest.yaml`, `larger_cloud_test.yaml`)
 
 **Results:** `evals/transcription/output/`
+
+The dataset defaults to AMI. Set `input_dir` to override its cache directory:
+
+```yaml
+dataset: ami
+input_dir: ~/datasets/ami
+num_samples: 2
+sample_duration_fraction: 0.1
+```
+
+Relative `input_dir` paths resolve from the YAML file's directory. The default is
+`evals/transcription/input/ami/`, with the datasets Arrow cache under `raw/` and
+prepared mono MP3 audio, transcripts, and diarization under `processed/`.
+AMI supports `num_samples` and `sample_duration_fraction`; `samples_per_group` is unsupported.
+
+`input_dir` relocates the Arrow and processed caches. Hugging Face Hub source blobs remain
+in the Hub cache (normally `~/.cache/huggingface/hub`, controlled separately by `HF_HOME`
+or `HF_HUB_CACHE`). Existing Hub downloads can be reused without fetching the corpus again.
+Each different `input_dir` builds its own Arrow and processed caches, so its first run can
+still take longer and require additional disk space. Processed cache keys include the exact
+duration cutoff; older processed entries are rebuilt.
 
 # Dataset Generation
 

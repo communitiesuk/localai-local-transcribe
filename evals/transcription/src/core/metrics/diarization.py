@@ -67,9 +67,9 @@ def find_optimal_speaker_mapping(
     row_ind, col_ind = linear_sum_assignment(cost_matrix, maximize=True)
 
     mapping: dict[str, str] = {}
-    for i, j in zip(row_ind, col_ind, strict=False):
-        if cost_matrix[i, j] > 0:
-            mapping[hyp_speakers[i]] = ref_speakers[j]
+    for row, col in zip(row_ind, col_ind, strict=False):
+        if cost_matrix[row, col] > 0:
+            mapping[hyp_speakers[row]] = ref_speakers[col]
 
     for hyp_spk in hyp_speakers:
         if hyp_spk not in mapping:
