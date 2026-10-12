@@ -19,6 +19,9 @@ const UUID_SEGMENT =
 const scrubUrl = (url: string): string | null => {
   try {
     const parsedUrl = new URL(url)
+    if (!['https:', 'http:'].includes(parsedUrl.protocol)) {
+      return null
+    }
     const pathname = parsedUrl.pathname
       .split('/')
       .map((segment) =>
@@ -26,7 +29,8 @@ const scrubUrl = (url: string): string | null => {
       )
       .join('/')
     return `${parsedUrl.origin}${pathname}`
-  } catch {
+  } catch (error) {
+    console.warn('Plausible: unable to sanitise analytics URL', { url, error })
     return null
   }
 }
