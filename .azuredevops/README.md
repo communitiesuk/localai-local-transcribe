@@ -34,7 +34,6 @@ Mandatory values:
 | `EVALS_ENVIRONMENT_NAME` | `test` | No |
 | `EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME` | Sensitive storage account name | No |
 | `EVALS_RESULTS_STORAGE_ACCOUNT_NAME` | Results storage account name | No |
-| `EVALS_ADAPT_EGRESS_IP` | Virtual desktop egress IPv4 address | No |
 | `EVALS_ADO_FEDERATION_ISSUER` | Issuer shown on the `evals-blob` service connection | No |
 | `EVALS_ADO_FEDERATION_SUBJECT` | Subject shown on the `evals-blob` service connection | No |
 | `EVALS_KEY_VAULT_NAME` | Key Vault holding the storage key. Read only by `grant-key-vault-roles` | No |

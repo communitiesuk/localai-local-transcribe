@@ -10,8 +10,8 @@
 # Required environment for plan and apply: EVALS_ARM_SUBSCRIPTION_ID,
 # EVALS_RESOURCE_GROUP_NAME, EVALS_STATE_STORAGE_ACCOUNT_NAME,
 # EVALS_ENVIRONMENT_NAME, EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME,
-# EVALS_RESULTS_STORAGE_ACCOUNT_NAME, EVALS_ADAPT_EGRESS_IP,
-# EVALS_ADO_FEDERATION_ISSUER, EVALS_ADO_FEDERATION_SUBJECT.
+# EVALS_RESULTS_STORAGE_ACCOUNT_NAME, EVALS_ADO_FEDERATION_ISSUER,
+# EVALS_ADO_FEDERATION_SUBJECT.
 #
 # The two federation values are the Issuer and Subject that Azure DevOps shows on
 # the evals-blob service connection. They are required on every plan and apply.
@@ -94,7 +94,6 @@ state_account="${EVALS_STATE_STORAGE_ACCOUNT_NAME:?}"
 environment_name="${EVALS_ENVIRONMENT_NAME:?}"
 sensitive_account="${EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME:?}"
 results_account="${EVALS_RESULTS_STORAGE_ACCOUNT_NAME:?}"
-adapt_ip="${EVALS_ADAPT_EGRESS_IP:?}"
 federation_issuer="${EVALS_ADO_FEDERATION_ISSUER:?}"
 federation_subject="${EVALS_ADO_FEDERATION_SUBJECT:?}"
 input_writer_ids="${EVALS_INPUT_WRITER_PRINCIPAL_IDS:?}"
@@ -133,11 +132,13 @@ resource_group_name = "${rg}"
 environment_name    = "${environment_name}"
 sensitive_storage_account_name = "${sensitive_account}"
 results_storage_account_name   = "${results_account}"
-adapt_ip_rules = ["${adapt_ip}"]
-# No stable MHCLG-device IP yet (Zscaler). Results still allow the desktop via adapt_ip_rules.
+# Test ADAPT and the shared agents reach both accounts through their private endpoints,
+# and results are read over private connectivity, so no public addresses are allowed.
+adapt_ip_rules = []
 mhclg_ip_rules = []
-# Empty until the shared pool's subnet or static egress is known.
 ado_ip_rules   = []
+# Input and debug are reachable only through the sensitive account's private endpoint.
+sensitive_public_network_access_enabled = false
 # Federated credential that lets the evals-blob service connection sign in as evals-blob-id.
 ado_federation_issuer  = "${federation_issuer}"
 ado_federation_subject = "${federation_subject}"
