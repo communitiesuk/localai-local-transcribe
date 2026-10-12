@@ -29,8 +29,8 @@ const scrubUrl = (url: string): string | null => {
       )
       .join('/')
     return `${parsedUrl.origin}${pathname}`
-  } catch (error) {
-    console.warn('Plausible: unable to sanitise analytics URL', { url, error })
+  } catch {
+    console.warn('Plausible: unable to sanitise analytics URL', { url })
     return null
   }
 }
