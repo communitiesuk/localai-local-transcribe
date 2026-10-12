@@ -111,7 +111,6 @@ def test_sample_cache_round_trips_all_three_artefacts(tmp_path, monkeypatch):
 
 
 def test_audio_cache_read_returns_numpy_array(tmp_path):
-
     audio_path = tmp_path / "test.wav"
     expected_audio = np.array([0.1, 0.2, 0.3], dtype=np.float32)
     sf.write(audio_path, expected_audio, 16000)
@@ -166,7 +165,6 @@ def test_cache_key_retains_fractional_cutoff(tmp_path, cutoff):
 
 @pytest.mark.parametrize("corrupt_file", ["diarization", "transcript"])
 def test_corrupt_text_artefact_with_valid_audio_names_only_affected_entry(tmp_path, corrupt_file):
-
     entry = _entry(tmp_path)
     soundfile.write(entry.audio, np.zeros(160), 16000, format="WAV")
     entry.transcript.write_text("hello", encoding="utf-8")
@@ -194,7 +192,6 @@ def test_audio_write_cleans_temporary_wav_when_soundfile_write_fails(tmp_path, m
 
 
 def test_cache_entry_equality_does_not_compare_numpy_arrays():
-
     first = AMICacheEntry(np.array([0.1, 0.2]), "hello", [])
     second = AMICacheEntry(np.array([0.1, 0.2]), "hello", [])
     comparison = first == second
@@ -203,7 +200,6 @@ def test_cache_entry_equality_does_not_compare_numpy_arrays():
 
 @pytest.mark.parametrize("stage", ["audio", "transcript", "diarization"])
 def test_interrupted_rebuild_does_not_accept_truncated_audio_or_text(tmp_path, monkeypatch, stage):
-
     monkeypatch.setattr("evals.transcription.src.core.audio_cache.convert_to_mp3", shutil.copyfile)
     entry = _entry(tmp_path)
     samples = np.zeros(16000, dtype=np.float32)
@@ -239,7 +235,6 @@ def test_interrupted_rebuild_does_not_accept_truncated_audio_or_text(tmp_path, m
 
 
 def _seeded_entry(tmp_path) -> AMISampleCache:
-
     entry = _entry(tmp_path)
     soundfile.write(entry.audio, np.zeros(160), 16000, format="WAV")
     entry.transcript.write_text("hello", encoding="utf-8")
@@ -276,8 +271,6 @@ def test_unreadable_transcript_does_not_advise_deleting_valid_cache(tmp_path):
 
 
 def test_real_ffmpeg_sample_cache_round_trip(tmp_path):
-
-
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         pytest.skip("ffmpeg and ffprobe are required")
     sample_rate = 16000
@@ -295,8 +288,6 @@ def test_real_ffmpeg_sample_cache_round_trip(tmp_path):
 
 
 def test_readable_truncated_mp3_cannot_complete_an_interrupted_rebuild(tmp_path, monkeypatch):
-
-
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         pytest.skip("ffmpeg and ffprobe are required")
     entry = _entry(tmp_path)

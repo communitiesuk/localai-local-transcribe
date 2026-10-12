@@ -167,7 +167,6 @@ def test_ami_dataset_loader_load_required_utterances_returns_empty_when_cached(t
 def test_ami_dataset_loader_process_segment_loads_from_cache(tmp_path, monkeypatch):
     segment = MeetingSegment(meeting_id="ES2008a", utterance_cutoff_time=None)
 
-
     audio_data = np.array([0.1, 0.2, 0.3], dtype=np.float32)
     temp_wav = tmp_path / "temp.wav"
     sf.write(temp_wav, audio_data, 16000)

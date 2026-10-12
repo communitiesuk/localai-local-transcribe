@@ -66,8 +66,6 @@ def test_run_evaluation(tmp_path, monkeypatch, kwargs, dataset_len, expected_loa
 
 @pytest.mark.parametrize("input_dir", ["../cache", None])
 def test_main_parses_yaml_and_resolves_relative_input_dir(tmp_path, monkeypatch, input_dir):
-
-
     config_dir = tmp_path / "nested" / "configs"
     config_dir.mkdir(parents=True)
     config_path = config_dir / "evaluation.yaml"

@@ -159,7 +159,6 @@ def test_adapter_contracts(tmp_path, monkeypatch, adapter_name, monkeypatch_targ
     wav_file = tmp_path / "test.wav"
     sf.write(wav_file, [0.0, 0.0], 16000, subtype="PCM_16")
 
-
     adapter_class = ADAPTER_REGISTRY[adapter_name]
     adapter = ServiceTranscriptionAdapter(adapter_class)
     result = adapter.transcribe(str(wav_file))
