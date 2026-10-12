@@ -46,6 +46,10 @@ steps:
         # the hub zone, so this shows whether the private endpoint rows exist.
         getent hosts "${SENSITIVE_ACCOUNT}.blob.core.windows.net"
         getent hosts "${RESULTS_ACCOUNT}.blob.core.windows.net"
+        # The vault holding the storage key. A public address means the vault endpoint is not
+        # attached to the hub privatelink.vaultcore.azure.net zone yet. Do not lock the vault
+        # down until this prints the vault endpoint's private address.
+        getent hosts "${KEY_VAULT}.vault.azure.net"
 
         # List at most one blob per container. An empty container still returns
         # successfully, which is enough to show access.
@@ -55,3 +59,4 @@ steps:
     env:
       SENSITIVE_ACCOUNT: $(EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME)
       RESULTS_ACCOUNT: $(EVALS_RESULTS_STORAGE_ACCOUNT_NAME)
+      KEY_VAULT: $(EVALS_KEY_VAULT_NAME)

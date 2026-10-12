@@ -25,6 +25,16 @@ output "private_endpoint_ip_addresses" {
   value       = { for key, endpoint in azurerm_private_endpoint.blob : key => endpoint.private_service_connection[0].private_ip_address }
 }
 
+output "key_vault_private_endpoint_id" {
+  description = "Resource ID of the vault private endpoint. Give this to the Azure team to attach to the hub privatelink.vaultcore.azure.net zone."
+  value       = azurerm_private_endpoint.key_vault.id
+}
+
+output "key_vault_private_endpoint_ip_address" {
+  description = "Private IP assigned to the vault private endpoint."
+  value       = azurerm_private_endpoint.key_vault.private_service_connection[0].private_ip_address
+}
+
 output "pipeline_identity_client_id" {
   description = "Client ID of the pipeline managed identity. Use as the Service Principal Id when creating the Azure DevOps service connection."
   value       = azurerm_user_assigned_identity.pipeline.client_id

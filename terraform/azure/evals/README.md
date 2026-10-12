@@ -86,7 +86,9 @@ IP allowlists support public IPv4 CIDR ranges. Use plain IPs for single-host ent
 
 ## Private endpoints
 
-`network.tf` creates one blob private endpoint per evals account in `private_endpoint_subnet_id`, the subnet created by `vnet/`. This root writes no Domain Name System records, because this subscription cannot write the hub `privatelink.blob.core.windows.net` zone. After an endpoint is created, the Azure team attaches it to that zone. Terraform ignores the zone group they add, so an apply does not remove it.
+`network.tf` creates one blob private endpoint per evals account, and one endpoint for the vault in `key-vault/`, in `private_endpoint_subnet_id`, the subnet created by `vnet/`. This root writes no Domain Name System records, because this subscription cannot write the hub `privatelink.blob.core.windows.net` and `privatelink.vaultcore.azure.net` zones. After an endpoint is created, the Azure team attaches it to its zone. Terraform ignores the zone group they add, so an apply does not remove it.
+
+The vault lock-down is in `key-vault/`. Apply it only after the Evals blob access check shows the vault name resolving to the vault endpoint's private address on `vmss-shared`. The parent plan reads the key on every run, and the agents are not a trusted Microsoft service.
 
 ## Softwire Sandbox vs assured Azure environment
 
