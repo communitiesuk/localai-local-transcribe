@@ -31,12 +31,3 @@ resource "azurerm_private_endpoint" "blob" {
     ignore_changes = [private_dns_zone_group]
   }
 }
-
-# The test endpoints were created from the test desktop with local state in evals-pe/.
-# These blocks bring them into this root's remote state. Remove them after the import
-# apply, because a fresh apply in another environment has no endpoints to import.
-import {
-  for_each = local.accounts
-  to       = azurerm_private_endpoint.blob[each.key]
-  id       = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/privateEndpoints/pe-${each.value.name}-blob"
-}
