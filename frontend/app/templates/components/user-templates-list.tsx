@@ -137,7 +137,7 @@ const TemplateTable = ({
                 </GovukTableCell>
               )}
               {renderTemplateAction && (
-                <GovukTableCell isNumeric>
+                <GovukTableCell isNumeric className="whitespace-nowrap">
                   {renderTemplateAction(template)}
                 </GovukTableCell>
               )}
