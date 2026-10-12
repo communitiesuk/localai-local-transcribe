@@ -31,11 +31,8 @@ mhclg_ip_rules = [
 # TODO(AIILG-649): Confirm once the private endpoint setup is known in the Azure environment.
 # sensitive_public_network_access_enabled = false
 
-# Private endpoint.
-# private_endpoint_subnet_id            = "/subscriptions/.../virtualNetworks/vnet-adapt/subnets/snet-adapt"
-# private_endpoint_vnet_id              = "/subscriptions/.../virtualNetworks/vnet-adapt"
-# private_endpoint_is_manual_connection = false
-# private_dns_zone_ids                  = ["/subscriptions/.../privateDnsZones/privatelink.blob.core.windows.net"]
+# Private endpoint subnet in the evals virtual network.
+private_endpoint_subnet_id = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
 
 # Team RBAC.
 # TODO(AIILG-649): Spike what we can do via Entra groups to make these less hardcoded.
