@@ -3,7 +3,7 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, UniqueConstraint, false, text
+from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Index, Text, UniqueConstraint, false, text
 from sqlalchemy.dialects.postgresql import ARRAY, CITEXT, JSONB
 from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
@@ -253,6 +253,14 @@ class TemplateQuestion(BaseTableMixin, table=True):
 
 class UserTemplate(BaseTableMixin, table=True):
     __tablename__ = "user_template"
+    __table_args__ = (
+        Index(
+            "uq_user_template_user_id_normalised_name",
+            "user_id",
+            text("lower(trim(name))"),
+            unique=True,
+        ),
+    )
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
 
