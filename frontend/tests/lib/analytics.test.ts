@@ -28,26 +28,29 @@ describe('analytics', () => {
     })
   })
 
-  it('sends neither our page nor our referrer, so no identifiers reach Plausible', async () => {
-    const { initAnalytics } = await loadAnalytics()
+  it.each(['pageview', 'summary_requested', 'audio_upload_requested'])(
+    'scrubs the page and referrer for %s',
+    async (name) => {
+      const { initAnalytics } = await loadAnalytics()
 
-    initAnalytics()
-    const { transformRequest } = vi.mocked(init).mock.calls[0][0]
+      initAnalytics()
+      const { transformRequest } = vi.mocked(init).mock.calls[0][0]
 
-    expect(
-      transformRequest?.({
-        n: 'summary_requested',
-        u: 'https://transcribe.test/transcriptions/9f1b-uuid',
+      expect(
+        transformRequest?.({
+          n: name,
+          u: 'https://transcribe.test/transcriptions/12345678-1234-1234-1234-123456789abc?email=private#private',
+          d: 'transcribe.test',
+          r: 'https://referrer.test/recordings/12345678-1234-1234-1234-123456789abc?token=private#private',
+        })
+      ).toEqual({
+        n: name,
+        u: 'https://transcribe.test/transcriptions/_id_',
         d: 'transcribe.test',
-        r: 'https://transcribe.test/recordings/3c7a-uuid',
+        r: 'https://referrer.test/recordings/_id_',
       })
-    ).toEqual({
-      n: 'summary_requested',
-      u: 'https://transcribe.test/',
-      d: 'transcribe.test',
-      r: null,
-    })
-  })
+    }
+  )
 
   it('sends the organisation as a custom property', async () => {
     const { recordAnalyticsEvent } = await loadAnalytics()
@@ -62,7 +65,120 @@ describe('analytics', () => {
     )
   })
 
-  it('initialises once, with page views off', async () => {
+  it.each([
+    ['/support', '/support'],
+    ['/new/record/in-person', '/new/record/in-person'],
+    ['/new/record/online', '/new/record/online'],
+    ['/templates/new/confirm', '/templates/new/confirm'],
+    [
+      '/transcriptions/12345678-1234-1234-1234-123456789abc',
+      '/transcriptions/_id_',
+    ],
+    ['/recordings/12345678-1234-1234-1234-123456789abc', '/recordings/_id_'],
+    [
+      '/templates/12345678-1234-1234-1234-123456789abc/delete',
+      '/templates/_id_/delete',
+    ],
+    [
+      '/user-management/users/12345678-1234-1234-1234-123456789ABC/delete',
+      '/user-management/users/_id_/delete',
+    ],
+    [
+      '/user-management/organisations/12345678-1234-1234-1234-123456789abc/domains',
+      '/user-management/organisations/_id_/domains',
+    ],
+    [
+      '/new/metadata/12345678-1234-1234-1234-123456789abc',
+      '/new/metadata/_id_',
+    ],
+    [
+      '/templates/default/default-meeting-notes/duplicate',
+      '/templates/default/default-meeting-notes/duplicate',
+    ],
+    [
+      '/transcriptions/%31%32%33%34%35%36%37%38-1234-1234-1234-123456789abc',
+      '/transcriptions/_id_',
+    ],
+    ['/support?email=person@example.com#private', '/support'],
+    [
+      '/user-management?organisationId=12345678-1234-1234-1234-123456789abc',
+      '/user-management',
+    ],
+    [
+      '/transcriptions/12345678-1234-1234-1234-123456789abc/12345678-1234-1234-1234-123456789abc',
+      '/transcriptions/_id_/_id_',
+    ],
+  ])('sanitises pageviews for %s', async (path, expectedPath) => {
+    const { initAnalytics } = await loadAnalytics()
+    initAnalytics()
+    const { transformRequest } = vi.mocked(init).mock.calls[0][0]
+
+    expect(
+      transformRequest?.({
+        n: 'pageview',
+        u: `https://actual-host.test${path}`,
+        d: 'transcribe.test',
+        r: null,
+      })
+    ).toEqual({
+      n: 'pageview',
+      u: `https://actual-host.test${expectedPath}`,
+      d: 'transcribe.test',
+      r: null,
+    })
+  })
+
+  it.each([
+    [undefined, null],
+    [null, null],
+    ['', null],
+    ['not a URL', null],
+    ['javascript:alert(1)', null],
+    [
+      'https://referrer.test/support?email=private#private',
+      'https://referrer.test/support',
+    ],
+    [
+      'https://referrer.test/templates/default/default-meeting-notes/duplicate',
+      'https://referrer.test/templates/default/default-meeting-notes/duplicate',
+    ],
+    ['https://username:password@referrer.test/', 'https://referrer.test/'],
+    [
+      'https://referrer.test/transcriptions/%31%32%33%34%35%36%37%38-1234-1234-1234-123456789abc',
+      'https://referrer.test/transcriptions/_id_',
+    ],
+  ])('scrubs or omits referrer %s', async (referrer, expected) => {
+    const { initAnalytics } = await loadAnalytics()
+    initAnalytics()
+    const { transformRequest } = vi.mocked(init).mock.calls[0][0]
+    expect(
+      transformRequest?.({
+        n: 'summary_requested',
+        u: 'https://transcribe.test/',
+        d: 'transcribe.test',
+        r: referrer,
+      })?.r
+    ).toBe(expected)
+  })
+
+  it.each([
+    'not a URL',
+    'https://transcribe.test/support/%invalid',
+    'javascript:alert(1)',
+  ])('falls back to the root for invalid event URL %s', async (url) => {
+    const { initAnalytics } = await loadAnalytics()
+    initAnalytics()
+    const { transformRequest } = vi.mocked(init).mock.calls[0][0]
+    expect(
+      transformRequest?.({
+        n: 'pageview',
+        u: url,
+        d: 'transcribe.test',
+      })?.u
+    ).toBe('https://transcribe.test/')
+  })
+
+  it('initialises once, with automatic page views on', async () => {
     const { initAnalytics } = await loadAnalytics()
 
     initAnalytics()
@@ -72,7 +188,7 @@ describe('analytics', () => {
     expect(init).toHaveBeenCalledWith(
       expect.objectContaining({
         domain: 'transcribe.test',
-        autoCapturePageviews: false,
+        autoCapturePageviews: true,
         captureOnLocalhost: true,
       })
     )
