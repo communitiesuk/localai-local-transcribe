@@ -9,3 +9,6 @@ storage_customer_managed_key_name = "evals-storage"
 
 # First apply: false. After the pipeline has granted Key Vault Crypto Officer: true.
 create_storage_key = false
+
+# Workspace created by the parent evals root. Receives vault audit events.
+log_analytics_workspace_id = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.OperationalInsights/workspaces/law-evals-test"
