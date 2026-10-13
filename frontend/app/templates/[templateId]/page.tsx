@@ -91,7 +91,7 @@ const TemplateEditorForm = ({
     }
   }, [draft, templateId, form])
 
-  // Add in form errors if confirmation intersitial errored
+  // Add in form errors if confirmation interstitial errored
   useEffect(() => {
     if (!titleConflict) return
 
