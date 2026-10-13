@@ -113,7 +113,10 @@ async def test_edit_user_template_success(mock_session, mock_user, mock_user_tem
     exec_q = Mock()
     exec_q.all.return_value = []
 
-    mock_session.exec.side_effect = [exec_result, exec_q]
+    conflict_result = Mock()
+    conflict_result.first.return_value = None
+    
+    mock_session.exec.side_effect = [exec_result, conflict_result, exec_q]
 
     original_datetime = mock_user_template.updated_datetime
 
@@ -174,11 +177,15 @@ async def test_delete_user_template_not_found(mock_session, mock_user):
 
 @pytest.mark.asyncio
 async def test_duplicate_user_template_success(mock_session, mock_user, mock_user_template):
-    exec_result = Mock()
-    exec_result.first.return_value = mock_user_template
-    mock_session.exec.return_value = exec_result
+    template_result = Mock()
+    template_result.first.return_value = mock_user_template
 
-    await duplicate_user_template(mock_user, mock_session, mock_user_template.id)
+    existing_names_result = Mock()
+    existing_names_result.all.return_value = [mock_user_template.name]
+
+    mock_session.exec.side_effect = [template_result, existing_names_result]
+
+    response = await duplicate_user_template(mock_user, mock_session, mock_user_template.id)
 
     mock_session.add.assert_called()
     mock_session.commit.assert_awaited()
@@ -188,6 +195,8 @@ async def test_duplicate_user_template_success(mock_session, mock_user, mock_use
     assert duplicated_template.name == mock_user_template.name + duplicated_name_suffix
     assert duplicated_template.content == mock_user_template.content
     assert duplicated_template.description == mock_user_template.description
+    assert response.id == duplicated_template.id
+    assert response.name == duplicated_template.name
 
 
 @pytest.mark.asyncio
@@ -225,6 +234,10 @@ async def test_duplicate_default_template_success(mocker, mock_session, mock_use
         "backend.api.routes.templates.TemplateManager.get_template",
         return_value=DefaultTemplate,
     )
+
+    existing_names_result = Mock()
+    existing_names_result.all.return_value = [template_name]
+    mock_session.exec.return_value = existing_names_result
 
     await duplicate_default_template(mock_user, mock_session, template_id)
 
@@ -337,7 +350,10 @@ async def test_edit_user_template_adds_new_question_when_no_id(
     exec_q = Mock()
     exec_q.all.return_value = []
 
-    mock_session.exec.side_effect = [exec_result, exec_q]
+    conflict_result = Mock()
+    conflict_result.first.return_value = None
+
+    mock_session.exec.side_effect = [exec_result, conflict_result, exec_q]
 
     await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
 

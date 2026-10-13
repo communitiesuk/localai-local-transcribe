@@ -266,6 +266,7 @@ async def duplicate_user_template(
     if not original_template:
         raise HTTPException(404)
 
+    user_id = user.id
     base_name = original_template.name
     description = original_template.description
     content = original_template.content
@@ -283,8 +284,8 @@ async def duplicate_user_template(
 
     for _ in range(MAX_DUPLICATE_NAME_ATTEMPTS):
         template = UserTemplate(
-            user_id=user.id,
-            name=await next_unique_template_name(session, user.id, base_name),
+            user_id=user_id,
+            name=await next_unique_template_name(session, user_id, base_name),
             description=description,
             content=content,
             heading=heading,
@@ -330,6 +331,7 @@ async def duplicate_default_template(
     except TemplateNotFoundError as e:
         raise HTTPException(404) from e
 
+    user_id = user.id
     base_name = original_template.name
     description = original_template.description
     content = get_default_template_content(original_template)
@@ -337,8 +339,8 @@ async def duplicate_default_template(
 
     for _ in range(MAX_DUPLICATE_NAME_ATTEMPTS):
         template = UserTemplate(
-            user_id=user.id,
-            name=await next_unique_template_name(session, user.id, base_name),
+            user_id=user_id,
+            name=await next_unique_template_name(session, user_id, base_name),
             description=description,
             content=content,
             heading=heading,
