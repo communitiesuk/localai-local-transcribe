@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from evals.transcription.src.core.ami import audio
-from evals.transcription.src.core.ami.loader import _apply_cutoff
+from evals.transcription.src.core.ami.loader import AMIDatasetLoader
 from evals.transcription.src.models import RawAudioDict, RawDatasetRow
 
 
@@ -51,6 +51,6 @@ def test_apply_cutoff_respects_duration():
         _create_utterance("3", "c", np.array([0.0], dtype=np.float32), 2.5, 4.0),
     ]
 
-    trimmed = _apply_cutoff(utterances, cutoff_time=2.0)
+    trimmed = AMIDatasetLoader._apply_cutoff(utterances, cutoff_time=2.0)  # noqa: SLF001
 
     assert [u.text for u in trimmed] == ["a"]

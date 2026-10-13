@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from evals.transcription.src.core.results import create_summary, save_results
@@ -19,10 +21,10 @@ def make_sample_row(
     substitutions=1,
     deletions=0,
     insertions=0,
-    wder=0.0,
+    wder: float | None = 0.0,
     speaker_errors=0,
     total_words=10,
-    speaker_count_accuracy=1.0,
+    speaker_count_accuracy: float | None = 1.0,
     ref_speaker_count=2,
     hyp_speaker_count=2,
     latency_ms=1000.0,
@@ -176,7 +178,6 @@ def test_save_results_creates_file(tmp_path):
         engine_version="TestEngine",
         split="n2_f0.1",
         n_examples=1,
-        overall_score=None,
         metrics={},
         processing_speed_ratio=0.5,
     )
@@ -186,8 +187,6 @@ def test_save_results_creates_file(tmp_path):
     save_results(results, output_path)
 
     assert output_path.exists()
-
-    import json
 
     with output_path.open() as f:
         data = json.load(f)
@@ -220,7 +219,7 @@ def test_save_results_multiple_engines(tmp_path):
         substitutions=2,
         latency_ms=1500.0,
         processing_speed_ratio=0.6,
-        wder=None,
+        wder=0.0,
         speaker_count_accuracy=None,
     )
 
@@ -231,7 +230,6 @@ def test_save_results_multiple_engines(tmp_path):
         engine_version="Engine1",
         split="n2_f0.1",
         n_examples=1,
-        overall_score=None,
         metrics={},
         processing_speed_ratio=0.5,
     )
@@ -243,7 +241,6 @@ def test_save_results_multiple_engines(tmp_path):
         engine_version="Engine2",
         split="n2_f0.1",
         n_examples=1,
-        overall_score=None,
         metrics={},
         processing_speed_ratio=0.6,
     )
@@ -254,8 +251,6 @@ def test_save_results_multiple_engines(tmp_path):
     ]
 
     save_results(results, output_path)
-
-    import json
 
     with output_path.open() as f:
         data = json.load(f)

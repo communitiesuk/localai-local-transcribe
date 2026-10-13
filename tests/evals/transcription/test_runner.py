@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 import pytest
@@ -223,8 +224,6 @@ def test_run_engines_parallel_multiple_adapters(tmp_path):
 
 
 def test_run_engines_parallel_respects_max_workers(tmp_path):
-    from concurrent.futures import ThreadPoolExecutor
-
     wav_a = tmp_path / "a.wav"
     wav_a.write_bytes(b"RIFFfake")
 

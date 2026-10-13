@@ -1,121 +1,40 @@
 from __future__ import annotations
 
-from unittest.mock import Mock
+import shutil
 
 import numpy as np
-import pytest
 
-from evals.transcription.src.core.ami_dataset import _validate_dataset_contract, load_ami_dataset
-from evals.transcription.src.models import AMIDatasetSample, AudioSample
-
-
-def test_load_ami_dataset_with_num_samples(tmp_path, monkeypatch):
-    mock_loader = Mock()
-    mock_sample = Mock()
-    mock_sample.audio = Mock(array=np.array([0.0]), sampling_rate=16000)
-    mock_sample.text = "test"
-    mock_loader.prepare.return_value = [mock_sample]
-
-    def fake_loader(_cache_dir, num_samples, sample_duration_fraction):
-        assert num_samples == 3
-        assert sample_duration_fraction is None
-        return mock_loader
-
-    monkeypatch.setattr("evals.transcription.src.core.ami_dataset.AMIDatasetLoader", fake_loader)
-
-    dataset = load_ami_dataset(tmp_path, num_samples=3)
-
-    assert dataset == mock_loader
-    mock_loader.prepare.assert_called_once()
+from evals.transcription.src.core.ami import AMIDatasetLoader, AMIDatasetSource
+from evals.transcription.src.models import DatasetProtocol
 
 
-def test_load_ami_dataset_with_duration_fraction(tmp_path, monkeypatch):
-    mock_loader = Mock()
-    mock_sample = Mock()
-    mock_sample.audio = Mock(array=np.array([0.0]), sampling_rate=16000)
-    mock_sample.text = "test"
-    mock_loader.prepare.return_value = [mock_sample]
+def test_ami_source_returns_a_real_prepared_dataset(tmp_path, monkeypatch):
+    rows = [
+        {
+            "meeting_id": "meeting",
+            "audio_id": "utterance",
+            "text": "hello world",
+            "audio": {"array": np.zeros(16000, dtype=np.float32), "sampling_rate": 16000},
+            "begin_time": 0.0,
+            "end_time": 1.0,
+            "microphone_id": "headset",
+            "speaker_id": "speaker",
+        }
+    ]
+    monkeypatch.setattr("evals.transcription.src.core.ami.metadata.load_dataset", lambda *_args, **_kwargs: rows)
+    monkeypatch.setattr("evals.transcription.src.core.ami.loader.load_dataset", lambda *_args, **_kwargs: rows)
+    monkeypatch.setattr("evals.transcription.src.core.audio_cache.convert_to_mp3", shutil.copyfile)
 
-    def fake_loader(_cache_dir, num_samples, sample_duration_fraction):
-        assert num_samples is None
-        assert sample_duration_fraction == 0.5
-        return mock_loader
+    dataset: DatasetProtocol = AMIDatasetSource(tmp_path).load(num_samples=1)
 
-    monkeypatch.setattr("evals.transcription.src.core.ami_dataset.AMIDatasetLoader", fake_loader)
+    assert isinstance(dataset, AMIDatasetLoader)
+    assert len(dataset) == 1
+    assert dataset.dataset_version == "AMI_v0"
+    assert dataset.dataset_split == "n1"
+    assert dataset[0].text == "hello world"
+    assert dataset[0].audio.array.size > 0
+    assert dataset[0].reference_diarization[0]["speaker"] == "speaker"
 
-    dataset = load_ami_dataset(tmp_path, num_samples=None, sample_duration_fraction=0.5)
-
-    assert dataset == mock_loader
-
-
-def test_load_ami_dataset_with_empty_samples(tmp_path, monkeypatch):
-    mock_loader = Mock()
-    mock_loader.prepare.return_value = []
-
-    def fake_loader(_cache_dir, _num_samples, _sample_duration_fraction):
-        return mock_loader
-
-    monkeypatch.setattr("evals.transcription.src.core.ami_dataset.AMIDatasetLoader", fake_loader)
-
-    dataset = load_ami_dataset(tmp_path, num_samples=None)
-
-    assert dataset == mock_loader
-
-
-def test_validate_dataset_contract_passes_valid_sample():
-    sample = AMIDatasetSample(
-        audio=AudioSample(array=np.array([0.0]), sampling_rate=16000, path="test.wav"),
-        text="hello world",
-        meeting_id="ES2008a",
-        dataset_index=0,
-        duration_sec=1.0,
-        num_utterances=1,
-        reference_diarization=[],
-    )
-
-    result = _validate_dataset_contract(sample)
-    assert result is None
-
-
-def test_validate_dataset_contract_raises_when_no_audio():
-    sample = Mock(spec=[])
-
-    with pytest.raises(ValueError, match="Dataset row must contain 'audio'"):
-        _validate_dataset_contract(sample)
-
-
-def test_validate_dataset_contract_raises_when_no_text():
-    sample = Mock(spec=["audio"])
-    sample.audio = Mock()
-
-    with pytest.raises(ValueError, match="Dataset row must contain 'text'"):
-        _validate_dataset_contract(sample)
-
-
-def test_validate_dataset_contract_raises_when_audio_no_array():
-    sample = Mock()
-    sample.audio = Mock(spec=[])
-    sample.text = "test"
-
-    with pytest.raises(ValueError, match="audio must contain 'array'"):
-        _validate_dataset_contract(sample)
-
-
-def test_validate_dataset_contract_raises_when_audio_no_sampling_rate():
-    sample = Mock()
-    sample.audio = Mock()
-    sample.audio.array = np.array([0.0])
-    sample.text = "test"
-    delattr(sample.audio, "sampling_rate")
-
-    with pytest.raises(ValueError, match="audio must contain 'sampling_rate'"):
-        _validate_dataset_contract(sample)
-
-
-def test_validate_dataset_contract_raises_when_text_not_string():
-    sample = Mock()
-    sample.audio = Mock(array=np.array([0.0]), sampling_rate=16000)
-    sample.text = 123
-
-    with pytest.raises(TypeError, match="'text' must be a string transcript"):
-        _validate_dataset_contract(sample)
+    cached = AMIDatasetSource(tmp_path).load(num_samples=1)
+    assert cached[0].text == dataset[0].text
+    np.testing.assert_allclose(cached[0].audio.array, dataset[0].audio.array)
