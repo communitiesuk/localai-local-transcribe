@@ -65,6 +65,16 @@ class DatasetItem(BaseModel):
     text: str
 
 
+class EnglishDialectsSample(DatasetItem):
+    """One utterance from the English Dialects corpus."""
+
+    dialect: str
+    gender: str
+    speaker_id: str
+    line_id: str
+    dataset_index: int
+
+
 class RawDatasetRow(BaseModel):
     """
     Raw utterance row from the AMI dataset as returned by HuggingFace datasets.
@@ -114,12 +124,19 @@ class SampleMetrics(BaseModel):
     substitutions: int
     deletions: int
     insertions: int
-    wder: float
-    speaker_errors: int
-    total_words: int
-    speaker_count_accuracy: float
-    ref_speaker_count: int
-    hyp_speaker_count: int
+    content_wer: float | None = None
+    content_hits: int = 0
+    content_substitutions: int = 0
+    content_deletions: int = 0
+    content_insertions: int = 0
+    content_reference_words: int = 0
+    content_hypothesis_words: int = 0
+    wder: float | None = None
+    speaker_errors: int | None = None
+    total_words: int | None = None
+    speaker_count_accuracy: float | None = None
+    ref_speaker_count: int | None = None
+    hyp_speaker_count: int | None = None
     processing_speed_ratio: float
 
 
@@ -138,6 +155,7 @@ class SampleRow(BaseModel):
     hypothesis_dialogue_entries: list[DiarizationSegment] | None
     latency_ms: float
     metrics: dict[str, float]
+    sample_metadata: dict[str, str | int] | None = None
     error: dict[str, str] | None = None
 
 
@@ -160,6 +178,8 @@ class Summary(BaseModel):
     split: str | None
     n_examples: int
     metrics: dict[str, AggregatedMetricStats]
+    corpus_content_wer: float | None = None
+    content_profile: str | None = None
     processing_speed_ratio: float
 
 

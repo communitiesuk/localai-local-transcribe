@@ -98,6 +98,7 @@ class AMIDatasetLoader(DatasetProtocol):
         wav_path: Path,
         num_utterances: int,
         reference_diarization: list[dict],
+        sample_rate: int = TARGET_SAMPLE_RATE,
     ) -> AMIDatasetSample:
         """
         Builds a dataset sample dictionary containing the mixed audio, transcript text, and metadata.
@@ -105,13 +106,13 @@ class AMIDatasetLoader(DatasetProtocol):
         return AMIDatasetSample(
             audio=AudioSample(
                 array=mixed_audio,
-                sampling_rate=TARGET_SAMPLE_RATE,
+                sampling_rate=sample_rate,
                 path=str(wav_path),
             ),
             text=text,
             meeting_id=segment.meeting_id,
             dataset_index=index,
-            duration_sec=audio.compute_duration(mixed_audio),
+            duration_sec=audio.compute_duration(mixed_audio, sample_rate),
             num_utterances=num_utterances,
             reference_diarization=reference_diarization,
         )
@@ -200,7 +201,14 @@ class AMIDatasetLoader(DatasetProtocol):
 
         word_count = len(text.split())
         sample = self._build_sample(
-            mixed_audio, text, segment, index, sample_cache.audio, len(utterances), reference_diarization
+            mixed_audio,
+            text,
+            segment,
+            index,
+            sample_cache.audio,
+            len(utterances),
+            reference_diarization,
+            sample_rate=entry.sample_rate,
         )
 
         logger.info(

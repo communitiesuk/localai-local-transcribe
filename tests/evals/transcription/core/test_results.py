@@ -44,8 +44,8 @@ def make_sample_row(
         metrics["total_words"] = total_words
     if speaker_count_accuracy is not None:
         metrics["speaker_count_accuracy"] = speaker_count_accuracy
-        metrics["ref_speaker_count"] = ref_speaker_count
-        metrics["hyp_speaker_count"] = hyp_speaker_count
+        metrics["reference_speaker_count"] = ref_speaker_count
+        metrics["predicted_speaker_count"] = hyp_speaker_count
 
     return SampleRow(
         run_id="test_run",
@@ -206,6 +206,38 @@ def test_save_results_creates_file(tmp_path):
         "TestEngine_samples_count": len(data["engines"]["TestEngine"]),
     }
     assert actual == expected
+
+    assert data["engines"]["TestEngine"][0]["hypothesis_transcript"] == sample.hypothesis_transcript
+    assert data["engines"]["TestEngine"][0]["reference_transcript"] == sample.reference_transcript
+
+
+def test_save_results_groups_wer_by_dialect_and_gender(tmp_path):
+    output_path = tmp_path / "output.json"
+    sample = make_sample_row(wder=None, speaker_count_accuracy=None)
+    sample.sample_metadata = {"dialect": "irish", "gender": "male", "speaker_id": "1"}
+    summary = Summary(
+        run_id="test_run",
+        timestamp="20260223_100000",
+        dataset_version="EnglishDialects_v1",
+        engine_version="TestEngine",
+        split="published_train_all",
+        n_examples=1,
+        metrics={},
+        processing_speed_ratio=0.5,
+    )
+
+    save_results(
+        [EngineOutput(summary=summary, samples=[sample])],
+        output_path,
+    )
+
+    import json
+
+    data = json.loads(output_path.read_text(encoding="utf-8"))
+    group = data["wer_by_dialect_and_gender"]["TestEngine"]["irish_male"]
+    assert group["n_examples"] == 1
+    assert group["wer"]["mean"] == pytest.approx(0.1)
+    assert group["corpus_wer"] == pytest.approx(0.1)
 
 
 def test_save_results_multiple_engines(tmp_path):

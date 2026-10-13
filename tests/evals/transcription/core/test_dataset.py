@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import numpy as np
 import pytest
+import soundfile
 
 from evals.transcription.src.core.ami.loader import AMIDatasetSource
 from evals.transcription.src.core.dataset import load_benchmark_dataset, prepare_audio_for_transcription
@@ -116,3 +117,52 @@ def test_source_accepts_declared_supported_option(tmp_path, monkeypatch):
     monkeypatch.setattr("evals.transcription.src.core.ami.loader.AMIDatasetLoader", loader_class)
 
     assert AMIDatasetSource().load(num_samples=1, sample_duration_fraction=0.25) is loader_class.return_value
+
+
+@pytest.mark.parametrize("override", [False, True])
+def test_audio_files_directory_default_and_override(tmp_path, monkeypatch, override):
+    monkeypatch.setattr("evals.transcription.src.core.benchmark_dataset_source.INPUT_DIR", tmp_path)
+    source_dir = tmp_path / "configured" if override else tmp_path / "custom"
+    source_dir.mkdir()
+    soundfile.write(source_dir / "sample.wav", np.zeros(160), 16000)
+    (source_dir / "sample.txt").write_text("hello", encoding="utf-8")
+    dataset = load_benchmark_dataset(1, dataset_name="audio_files", input_dir=source_dir if override else None)
+    assert len(dataset) == 1
+    assert dataset[0].text == "hello"
+    assert dataset[0].audio.path == str((source_dir / "sample.wav").resolve())
+
+
+@pytest.mark.parametrize("override", [False, True])
+def test_english_dialects_source_directory_default_and_override(tmp_path, monkeypatch, override):
+    monkeypatch.setattr("evals.transcription.src.core.benchmark_dataset_source.INPUT_DIR", tmp_path)
+    dataset_class = Mock()
+    monkeypatch.setattr(
+        "evals.transcription.src.core.english_dialects.english_dialects_dataset.EnglishDialectsDataset", dataset_class
+    )
+    configured_dir = tmp_path / "configured" if override else None
+    load_benchmark_dataset(2, dataset_name="english_dialects", input_dir=configured_dir)
+    dataset_class.assert_called_once_with(
+        num_samples=2,
+        samples_per_group=None,
+        cache_dir=configured_dir if override else tmp_path / "english_dialects" / "raw",
+    )
+
+
+def test_missing_reference_identifies_both_audio_and_transcript(tmp_path):
+    audio_path = tmp_path / "recording.wav"
+    soundfile.write(audio_path, np.zeros(160), 16000)
+    with pytest.raises(FileNotFoundError) as error:
+        load_benchmark_dataset(1, dataset_name="audio_files", input_dir=tmp_path)
+    assert str(audio_path) in str(error.value)
+    assert str(audio_path.with_suffix(".txt")) in str(error.value)
+
+
+def test_local_dataset_identity_distinguishes_directories_with_same_basename(tmp_path):
+    versions = []
+    for parent in ("first", "second"):
+        directory = tmp_path / parent / "recordings"
+        directory.mkdir(parents=True)
+        soundfile.write(directory / "sample.wav", np.zeros(160), 16000)
+        (directory / "sample.txt").write_text("hello", encoding="utf-8")
+        versions.append(load_benchmark_dataset(1, dataset_name="audio_files", input_dir=directory).dataset_version)
+    assert versions[0] != versions[1]

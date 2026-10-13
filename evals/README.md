@@ -169,6 +169,44 @@ Each different `input_dir` builds its own Arrow and processed caches, so its fir
 still take longer and require additional disk space. Processed cache keys include the exact
 duration cutoff; older processed entries are rebuilt.
 
+Additional datasets are selected through the same source registry:
+
+- `dataset: english_dialects` loads all published dialect/gender groups. Its default
+  Arrow cache directory is `evals/transcription/input/english_dialects/raw/`; processed
+  utterances are cached under `<input_dir>/processed/mono_mp3_v1/`.
+- `dataset: audio_files` reads audio files paired with same-name UTF-8 `.txt` references.
+  Its default source directory is `evals/transcription/input/custom/`.
+
+Both datasets omit diarization metrics. Drift checks skip unavailable speaker metrics.
+English Dialects uses the shared `AudioFileHandler` for conversion and cache reuse.
+
+Every transcription evaluation outputs `content_wer` alongside standard WER, for all
+adapters and datasets. It uses the same text normalisation and excludes conservative
+non-lexical fillers (such as "um", "uh", and "hmm") from both transcripts; meaningful
+responses such as "yeah", "okay", and "right" remain scored. Each sample includes
+content edit counts, and engine summaries include content WER statistics and
+`corpus_content_wer` (total content errors divided by total content reference words).
+The profile is `ami_content_v1`.
+
+When a reference contains no content words at all (for example an utterance that
+normalises to just "um um"), the per-sample rate is undefined, so `content_wer` is
+omitted from that sample and does not distort the mean. Its edit counts are still exact
+and still feed `corpus_content_wer`, so spurious hypothesis words remain penalised.
+`corpus_content_wer` is `null` only when no reference in the run has content words.
+
+For English Dialects, `num_samples` is a total budget distributed in rounds across
+non-empty dialect/gender groups, with speaker-balanced selection inside each group.
+A budget of at least 11 covers all 11 published groups, when each has recordings.
+Smaller budgets cover that many groups in a reproducibly shuffled order (seed 42),
+independent of the supplied subset order. Use
+`samples_per_group` instead for a fixed number from every group; do not combine it
+with `num_samples`.
+
+Content WER complements standard WER when comparing APIs that omit fillers such as
+"erm" and "um". Engine summaries record the content profile. Dialect/gender groups
+include content WER statistics and corpus scores alongside standard WER. All metrics
+are written to the normal results file.
+
 # Dataset Generation
 
 End-to-end pipeline for generating synthetic conversational transcripts with controlled variations.

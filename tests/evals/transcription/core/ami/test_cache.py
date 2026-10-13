@@ -4,7 +4,6 @@ import json
 import os
 import shutil
 from pathlib import Path
-from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -12,7 +11,6 @@ import soundfile
 
 from common.audio.ffmpeg import convert_to_mp3
 from evals.transcription.src.core.ami.cache import AMICacheEntry, AMISampleCache, CorruptCacheEntryError
-from evals.transcription.src.core.audio_cache import AudioFileHandler
 from evals.transcription.src.models import MeetingSegment
 
 SEGMENT = MeetingSegment(meeting_id="ES2008a", utterance_cutoff_time=None)
@@ -104,43 +102,10 @@ def test_sample_cache_round_trips_all_three_artefacts(tmp_path, monkeypatch):
     assert entry.is_complete() is True
 
     loaded = entry.read()
+    assert loaded.sample_rate == 16000
     assert loaded.text == "hello world"
     assert loaded.reference_diarization == DIARIZATION
     np.testing.assert_allclose(loaded.audio, audio_data, rtol=1e-3, atol=1e-4)
-
-
-def test_audio_cache_read_returns_numpy_array(tmp_path):
-    audio_path = tmp_path / "test.wav"
-    expected_audio = np.array([0.1, 0.2, 0.3], dtype=np.float32)
-    soundfile.write(audio_path, expected_audio, 16000)
-
-    loaded_audio = AudioFileHandler().read(audio_path)
-
-    assert isinstance(loaded_audio, np.ndarray)
-    assert len(loaded_audio) == len(expected_audio)
-    np.testing.assert_allclose(loaded_audio, expected_audio, rtol=1e-3, atol=1e-4)
-
-
-def test_audio_cache_write_creates_mp3_file(tmp_path, monkeypatch):
-    audio_data = np.array([0.1, 0.2, 0.3], dtype=np.float32)
-    output_path = tmp_path / "output.mp3"
-
-    def fake_convert(_input_path, output_path):
-        output_path.write_bytes(b"fake mp3 data")
-
-    monkeypatch.setattr("evals.transcription.src.core.audio_cache.convert_to_mp3", fake_convert)
-
-    AudioFileHandler().write(output_path, audio_data, 16000)
-
-    assert output_path.exists()
-
-
-def test_audio_cache_contains_reports_presence(tmp_path):
-    cached = tmp_path / "present.mp3"
-    cached.write_bytes(b"fake mp3 data")
-
-    assert AudioFileHandler().contains(cached)
-    assert not AudioFileHandler().contains(tmp_path / "absent.mp3")
 
 
 def test_read_raises_a_named_error_for_a_corrupt_entry(tmp_path):
@@ -175,24 +140,9 @@ def test_corrupt_text_artefact_with_valid_audio_names_only_affected_entry(tmp_pa
         assert str(path) in str(error.value)
 
 
-def test_audio_write_cleans_temporary_wav_when_soundfile_write_fails(tmp_path, monkeypatch):
-    temporary_paths = []
-
-    def fail_write(path, *_args, **_kwargs):
-        temporary_paths.append(path)
-        message = "write failed"
-        raise OSError(message)
-
-    monkeypatch.setattr("evals.transcription.src.core.audio_cache.soundfile.write", fail_write)
-    with pytest.raises(OSError, match="write failed"):
-        AudioFileHandler().write(tmp_path / "sample.mp3", np.zeros(160), 16000)
-    assert len(temporary_paths) == 1
-    assert not temporary_paths[0].exists()
-
-
 def test_cache_entry_equality_does_not_compare_numpy_arrays():
-    first = AMICacheEntry(np.array([0.1, 0.2]), "hello", [])
-    second = AMICacheEntry(np.array([0.1, 0.2]), "hello", [])
+    first = AMICacheEntry(np.array([0.1, 0.2]), "hello", [], sample_rate=16000)
+    second = AMICacheEntry(np.array([0.1, 0.2]), "hello", [], sample_rate=16000)
     comparison = first == second
     assert isinstance(comparison, bool)
 
@@ -282,6 +232,7 @@ def test_real_ffmpeg_sample_cache_round_trip(tmp_path):
     assert len(loaded.audio) == len(waveform)
     assert soundfile.info(entry.audio).samplerate == sample_rate
     assert np.corrcoef(loaded.audio, waveform)[0, 1] > 0.99
+    assert loaded.sample_rate == 16000
     assert loaded.text == "hello world"
     assert loaded.reference_diarization == DIARIZATION
 
@@ -304,17 +255,7 @@ def test_readable_truncated_mp3_cannot_complete_an_interrupted_rebuild(tmp_path,
     monkeypatch.setattr("evals.transcription.src.core.audio_cache.convert_to_mp3", interrupted_encode)
     with pytest.raises(RuntimeError, match="encode interrupted"):
         entry.write(waveform, 16000, "hello world", DIARIZATION)
-    partial_audio = AudioFileHandler().read(entry.audio)
-    assert 0 < len(partial_audio) < len(waveform)
+    assert not entry.audio.exists()
     assert not entry.is_complete()
     assert not entry.transcript.exists()
     assert not entry.diarization.exists()
-
-
-def test_audio_read_uses_native_path_io_after_preflight(tmp_path):
-    audio_path = tmp_path / "audio.wav"
-    soundfile.write(audio_path, np.zeros(160), 16000)
-    with patch("evals.transcription.src.core.audio_cache.soundfile.read", wraps=soundfile.read) as read:
-        loaded = AudioFileHandler().read(audio_path)
-    read.assert_called_once_with(audio_path)
-    assert len(loaded) == 160

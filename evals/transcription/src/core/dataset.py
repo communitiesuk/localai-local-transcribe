@@ -6,7 +6,9 @@ from evals.transcription.src.constants import (
 )
 from evals.transcription.src.core.ami.loader import AMIDatasetSource
 from evals.transcription.src.core.audio_cache import AudioFileHandler
+from evals.transcription.src.core.audio_files_dataset import AudioFilesSource
 from evals.transcription.src.core.benchmark_dataset_source import BenchmarkDatasetSource
+from evals.transcription.src.core.english_dialects.english_dialects_dataset import EnglishDialectsSource
 from evals.transcription.src.models import DatasetItem, DatasetProtocol
 
 logger = logging.getLogger(__name__)
@@ -15,6 +17,8 @@ DEFAULT_DATASET_NAME = AMIDatasetSource.name
 
 DATASET_REGISTRY: dict[str, type[BenchmarkDatasetSource]] = {
     AMIDatasetSource.name: AMIDatasetSource,
+    EnglishDialectsSource.name: EnglishDialectsSource,
+    AudioFilesSource.name: AudioFilesSource,
 }
 
 
