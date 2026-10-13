@@ -329,11 +329,12 @@ def corpus_wer_from_samples(samples: list[SampleRow]) -> float | None:
     scorable_samples = [sample for sample in samples if is_wer_scorable(sample)]
     if not scorable_samples:
         return None
-    meetings = [
+    components = [
         meeting_components_from_sample({"example_id": sample.example_id, "metrics": sample.metrics})
         for sample in scorable_samples
     ]
-    return corpus_wer(meetings)
+    meetings = [component for component in components if component is not None]
+    return corpus_wer(meetings) if meetings else None
 
 
 def corpus_wder_from_samples(samples: list[SampleRow]) -> float | None:
