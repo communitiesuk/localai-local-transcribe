@@ -11,7 +11,7 @@
 # EVALS_RESOURCE_GROUP_NAME, EVALS_STATE_STORAGE_ACCOUNT_NAME,
 # EVALS_ENVIRONMENT_NAME, EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME,
 # EVALS_RESULTS_STORAGE_ACCOUNT_NAME, EVALS_ADO_FEDERATION_ISSUER,
-# EVALS_ADO_FEDERATION_SUBJECT.
+# EVALS_ADO_FEDERATION_SUBJECT, EVALS_PRIVATE_ENDPOINT_SUBNET_ID.
 #
 # The two federation values are the Issuer and Subject that Azure DevOps shows on
 # the evals-blob service connection. They are required on every plan and apply.
@@ -96,6 +96,7 @@ sensitive_account="${EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME:?}"
 results_account="${EVALS_RESULTS_STORAGE_ACCOUNT_NAME:?}"
 federation_issuer="${EVALS_ADO_FEDERATION_ISSUER:?}"
 federation_subject="${EVALS_ADO_FEDERATION_SUBJECT:?}"
+private_endpoint_subnet_id="${EVALS_PRIVATE_ENDPOINT_SUBNET_ID:?}"
 input_writer_ids="${EVALS_INPUT_WRITER_PRINCIPAL_IDS:?}"
 debug_reader_ids="${EVALS_DEBUG_READER_PRINCIPAL_IDS:?}"
 results_reader_ids="${EVALS_RESULTS_READER_PRINCIPAL_IDS:?}"
@@ -139,6 +140,8 @@ mhclg_ip_rules = []
 ado_ip_rules   = []
 # Input and debug are reachable only through the sensitive account's private endpoint.
 sensitive_public_network_access_enabled = false
+# Subnet in the evals virtual network that holds both blob private endpoints.
+private_endpoint_subnet_id = "${private_endpoint_subnet_id}"
 # Federated credential that lets the evals-blob service connection sign in as evals-blob-id.
 ado_federation_issuer  = "${federation_issuer}"
 ado_federation_subject = "${federation_subject}"

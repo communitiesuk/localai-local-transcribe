@@ -122,32 +122,10 @@ variable "sensitive_public_network_access_enabled" {
 }
 
 # Private endpoint
-#
-# Leave private_endpoint_subnet_id null when the ADAPT team creates the endpoint from their
-# own subscription. See network.tf.
 
 variable "private_endpoint_subnet_id" {
   type        = string
-  description = "Resource ID of the ADAPT subnet to place the blob private endpoints in. Null means this stack creates no endpoint."
-  default     = null
-}
-
-variable "private_endpoint_vnet_id" {
-  type        = string
-  description = "Resource ID of the ADAPT VNet to link to a new private DNS zone. Required when creating private endpoints without private_dns_zone_ids."
-  default     = null
-}
-
-variable "private_endpoint_is_manual_connection" {
-  type        = bool
-  description = "True when the subnet and the storage accounts have different owners, leaving the connection pending ADAPT approval."
-  default     = false
-}
-
-variable "private_dns_zone_ids" {
-  type        = list(string)
-  description = "Resource IDs of existing privatelink.blob.core.windows.net private DNS zones to register the endpoints in. If empty and this stack creates private endpoints, it also creates and links a private DNS zone."
-  default     = []
+  description = "Resource ID of the private endpoint subnet in the evals virtual network (created by the vnet/ root). Both blob private endpoints are placed in it."
 }
 
 # Team RBAC

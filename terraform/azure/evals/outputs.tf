@@ -21,7 +21,7 @@ output "container_ids" {
 }
 
 output "private_endpoint_ip_addresses" {
-  description = "Private IPs assigned to the blob private endpoints, keyed by account role. Empty when ADAPT owns the endpoints."
+  description = "Private IPs assigned to the blob private endpoints, keyed by account role."
   value       = { for key, endpoint in azurerm_private_endpoint.blob : key => endpoint.private_service_connection[0].private_ip_address }
 }
 
