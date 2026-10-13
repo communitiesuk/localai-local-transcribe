@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy.dialects import postgresql
 
 from backend.api.routes.minutes import (
     create_minute,
@@ -31,9 +32,13 @@ async def test_list_minutes_for_transcription_success(mock_session, mock_minute,
 
     result = await list_minutes_for_transcription(minute.transcription_id, mock_session, mock_user)
 
+    statement = mock_session.exec.await_args.args[0]
+    compiled_statement = str(statement.compile(dialect=postgresql.dialect()))
+
     assert len(result) == 1
     assert result[0].id == minute.id
     assert result[0].template_name == minute.template_name
+    assert "ORDER BY minute.created_datetime ASC" in compiled_statement
 
 
 @pytest.mark.asyncio
