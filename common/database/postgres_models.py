@@ -3,7 +3,19 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Index, Text, UniqueConstraint, false, text
+from sqlalchemy import (
+    TIMESTAMP,
+    Boolean,
+    Column,
+    Enum,
+    ForeignKey,
+    Index,
+    Text,
+    UniqueConstraint,
+    false,
+    literal_column,
+    text,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, CITEXT, JSONB
 from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
@@ -257,7 +269,7 @@ class UserTemplate(BaseTableMixin, table=True):
         Index(
             "uq_user_template_user_id_normalised_name",
             "user_id",
-            text("lower(trim(name))"),
+            literal_column("lower(btrim(name::text))"),
             unique=True,
         ),
     )
