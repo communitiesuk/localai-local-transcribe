@@ -13,7 +13,7 @@ def _plausible_query(body: dict[str, object]) -> list[dict[str, list[object]]]:
     base_url = os.environ["PLAUSIBLE_BASE_URL"].rstrip("/")
     bearer_token = os.environ["PLAUSIBLE_API_KEY"]
     site_id = os.environ["PLAUSIBLE_SITE_ID"]
-    
+
     response = httpx.post(
         f"{base_url}/api/v2/query",
         headers={"Authorization": f"Bearer {bearer_token}"},
