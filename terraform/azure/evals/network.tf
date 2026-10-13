@@ -37,8 +37,10 @@ resource "azurerm_private_endpoint" "blob" {
 # The vault itself is created by key-vault/ on the test desktop. The endpoint lives here so the
 # pipeline manages it with remote state. The vault lock-down (public access off, firewall
 # denying by default) stays in key-vault/, and is applied only after the agents resolve the
-# vault to this endpoint's address. Until then the parent plan reads the key over the public
-# vault endpoint.
+# vault to this endpoint's address. Once this endpoint exists, public Domain Name System points
+# the vault name at privatelink.vaultcore.azure.net. The agents use the hub zone for that name,
+# so the vault does not resolve on them, and the parent plan cannot read the key, until the
+# Azure team attaches this endpoint.
 resource "azurerm_private_endpoint" "key_vault" {
   name                = "pe-${data.azurerm_key_vault.evals_storage.name}-vault"
   location            = var.location
