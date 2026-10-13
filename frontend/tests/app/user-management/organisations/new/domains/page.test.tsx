@@ -67,10 +67,7 @@ describe('<CreateNewOrganisationDomains />', () => {
 
     const cancelLink = screen.getByRole('link', { name: 'Cancel' })
     expect(cancelLink).toHaveAttribute('href', '/user-management')
-    expect(cancelLink).toHaveClass(
-      'govuk-link',
-      'govuk-link--no-visited-state'
-    )
+    expect(cancelLink).toHaveClass('govuk-link', 'govuk-link--no-visited-state')
   })
 
   it('returns to user management with the new organisation selected when creation succeeds', async () => {
