@@ -11,6 +11,10 @@
 # Purge protection cannot be turned off once set. Public access stays on until a private
 # endpoint is proven. Trusted Microsoft services may bypass the firewall so Storage can
 # wrap and unwrap before Domain Name System is attached.
+#
+# The key rotates itself once a year through its rotation policy. Apply the rotation
+# policy and vault logging while the vault is still public, because after the vault
+# lock-down the test desktop cannot reach the vault until Zscaler maps its private name.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -78,9 +82,46 @@ resource "azurerm_key_vault_key" "evals_storage" {
     "wrapKey",
   ]
 
+  # A new key version is created one year after the current one, matching the yearly
+  # rotation used for the AWS KMS keys elsewhere in this repository. Each version expires
+  # after 15 months. The three months between rotation and expiry leave time to notice
+  # and fix a failed rotation, because an expired key stops Storage reaching the data.
+  # Key Vault requires expiry to be at least 28 days later than rotation.
+  #
+  # The provider requires notify_before_expiry with expire_after. It publishes a "near
+  # expiry" event 30 days before expiry. Nothing subscribes to that event yet.
+  rotation_policy {
+    expire_after         = "P15M"
+    notify_before_expiry = "P30D"
+
+    automatic {
+      time_after_creation = "P1Y"
+    }
+  }
+
+  # Each rotation gives the current version a new expiry date, which would otherwise show
+  # as drift. Changing expiration_date to an earlier date also forces the key to be
+  # replaced, which would cut Storage off from the data. The current version gets its
+  # expiry from the policy by rotating once by hand after the first apply.
+  lifecycle {
+    ignore_changes = [expiration_date]
+  }
+
   tags = {
     purpose     = "evals-storage-customer-managed-key"
     workload    = "evals"
     environment = var.environment_name
+  }
+}
+
+# Sends every vault access (key reads, wraps, unwraps, rotations and permission changes)
+# to the evals Log Analytics workspace created by the parent evals root.
+resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault" {
+  name                       = "key-vault-audit-logging"
+  target_resource_id         = azurerm_key_vault.evals_storage.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log {
+    category = "AuditEvent"
   }
 }
