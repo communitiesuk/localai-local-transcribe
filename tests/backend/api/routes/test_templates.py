@@ -107,9 +107,7 @@ async def test_create_user_template_duplicate_title(mock_session, mock_user, moc
 
 
 @pytest.mark.asyncio
-async def test_create_user_template_unique_constraint_race_returns_conflict(
-    mock_session, mock_user, mock_request
-):
+async def test_create_user_template_unique_constraint_race_returns_conflict(mock_session, mock_user, mock_request):
     exec_result = Mock()
     exec_result.first.return_value = None
     mock_session.exec.return_value = exec_result
@@ -137,7 +135,7 @@ async def test_edit_user_template_success(mock_session, mock_user, mock_user_tem
 
     conflict_result = Mock()
     conflict_result.first.return_value = None
-    
+
     mock_session.exec.side_effect = [exec_result, conflict_result, exec_q]
 
     original_datetime = mock_user_template.updated_datetime
@@ -161,9 +159,7 @@ async def test_edit_user_template_success(mock_session, mock_user, mock_user_tem
 
 
 @pytest.mark.asyncio
-async def test_edit_user_template_allows_unchanged_title(
-    mock_session, mock_user, mock_user_template, mock_request
-):
+async def test_edit_user_template_allows_unchanged_title(mock_session, mock_user, mock_user_template, mock_request):
     mock_request.name = "test template"
     mock_request.questions = None
 
@@ -182,9 +178,7 @@ async def test_edit_user_template_allows_unchanged_title(
 
 
 @pytest.mark.asyncio
-async def test_edit_user_template_duplicate_title(
-    mock_session, mock_user, mock_user_template, mock_request
-):
+async def test_edit_user_template_duplicate_title(mock_session, mock_user, mock_user_template, mock_request):
     template_result = Mock()
     template_result.first.return_value = mock_user_template
 
@@ -262,9 +256,7 @@ async def test_duplicate_user_template_success(mock_session, mock_user, mock_use
 
 
 @pytest.mark.asyncio
-async def test_duplicate_user_template_uses_counter_when_copy_exists(
-    mock_session, mock_user, mock_user_template
-):
+async def test_duplicate_user_template_uses_counter_when_copy_exists(mock_session, mock_user, mock_user_template):
     template_result = Mock()
     template_result.first.return_value = mock_user_template
 
