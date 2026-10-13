@@ -5,7 +5,7 @@ from common.database.postgres_models import AnalyticsEventType, RecordingSource
 
 Source = Literal["plausible", "postgres"]
 
-# Plausible event names, as sent by frontend/lib/analytics.ts.
+# Plausible event names, as set by frontend/lib/analytics.ts.
 LIVE_RECORDING_STARTED = "live_recording_started"
 AUDIO_UPLOAD_COMPLETE_FROM_LIVE_RECORDING = "audio_upload_complete_from_live_recording"
 AUDIO_UPLOAD_COMPLETE_FROM_DIRECT_UPLOAD = "audio_upload_complete_from_direct_upload"
