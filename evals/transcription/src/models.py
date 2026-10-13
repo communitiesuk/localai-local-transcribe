@@ -179,7 +179,6 @@ class Summary(BaseModel):
     n_examples: int
     metrics: dict[str, AggregatedMetricStats]
     corpus_content_wer: float | None = None
-    content_profile: str | None = None
     processing_speed_ratio: float
 
 

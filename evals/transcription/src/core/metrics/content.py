@@ -1,10 +1,8 @@
-"""Content WER using the shared conservative filler-word profile."""
+"""Content WER using the shared conservative filler-word list."""
 
 import jiwer
 
 from evals.transcription.src.core.metrics.transforms import normalise_text
-
-PROFILE_NAME = "ami_content_v1"
 
 # Conservative non-lexical vocalisations. Meaningful responses such as "yeah",
 # "okay", "right", and "oh" deliberately remain part of the score.
@@ -31,8 +29,8 @@ def normalise_content(text: str, ignored_words: frozenset[str] = DEFAULT_IGNORED
     """
     Apply the standard WER normalisation and remove agreed non-lexical words.
     """
-    normalised = normalise_text(text)
-    return " ".join(word for word in normalised.split() if word not in ignored_words)
+    normalised_text = normalise_text(text)
+    return " ".join(word for word in normalised_text.split() if word not in ignored_words)
 
 
 def compute_content_wer_metrics(
@@ -42,7 +40,7 @@ def compute_content_wer_metrics(
     Return WER and edit counts after content normalisation.
 
     A reference made up entirely of ignored words leaves no content to score against, so
-    the rate is undefined and reported as ``None``. The edit counts are still exact, and
+    the rate is undefined and reported as None. The edit counts are still exact, and
     corpus-level scores sum them, so spurious hypothesis words are never lost.
     """
     reference_content = normalise_content(reference, ignored_words)

@@ -129,7 +129,6 @@ def test_saved_results_include_content_wer_with_standard_diarization_metrics(tmp
         "processing_speed_ratio",
     }
     assert saved["summaries"][0]["corpus_content_wer"] == 0
-    assert saved["summaries"][0]["content_profile"] == "ami_content_v1"
     assert not any("chunk_local" in key or "content_wder" in key for key in metrics)
     assert not any("chunk_local" in key or "content_wder" in key for key in saved["summaries"][0])
 
@@ -197,5 +196,4 @@ def test_summary_without_content_scores_reports_unavailable():
     rows[0].metrics = {key: value for key, value in rows[0].metrics.items() if not key.startswith("content_")}
     summary = create_summary("test", rows, TimingAccumulator(), "test", "test", "test", None)
     assert summary.corpus_content_wer is None
-    assert summary.content_profile is None
     assert "content_wer" not in summary.metrics

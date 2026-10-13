@@ -186,7 +186,6 @@ non-lexical fillers (such as "um", "uh", and "hmm") from both transcripts; meani
 responses such as "yeah", "okay", and "right" remain scored. Each sample includes
 content edit counts, and engine summaries include content WER statistics and
 `corpus_content_wer` (total content errors divided by total content reference words).
-The profile is `ami_content_v1`.
 
 When a reference contains no content words at all (for example an utterance that
 normalises to just "um um"), the per-sample rate is undefined, so `content_wer` is

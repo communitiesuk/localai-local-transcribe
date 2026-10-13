@@ -5,7 +5,6 @@ from pathlib import Path
 
 from evals.transcription.src.constants import AGGREGATABLE_METRIC_KEYS
 from evals.transcription.src.core.metrics import aggregate_metrics
-from evals.transcription.src.core.metrics.content import PROFILE_NAME
 from evals.transcription.src.models import (
     AggregatedMetricStats,
     EngineOutput,
@@ -50,7 +49,6 @@ def create_summary(
         n_examples=len(rows),
         metrics=aggregated,
         corpus_content_wer=corpus_content_wer,
-        content_profile=PROFILE_NAME if content_rows else None,
         processing_speed_ratio=_timing.processing_speed_ratio,
     )
 

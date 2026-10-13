@@ -78,24 +78,24 @@ class EnglishDialectsDataset:
             dataset.select_columns(["text", "speaker_id", "line_id"]) for dataset in self.datasets
         ]
         if num_samples is not None:
-            counts = [0] * len(self.datasets)
-            groups = sorted(
+            subset_sample_counts = [0] * len(self.datasets)
+            subset_indices = sorted(
                 (index for index, dataset in enumerate(self.datasets) if len(dataset)),
                 key=lambda index: self.subsets[index],
             )
             # Canonicalise before shuffling so selection is independent of subset order.
-            np.random.default_rng(42).shuffle(groups)
-            available_groups = deque(groups)
-            remaining = num_samples
-            while remaining and available_groups:
+            np.random.default_rng(42).shuffle(subset_indices)
+            available_groups = deque(subset_indices)
+            remaining_samples = num_samples
+            while remaining_samples and available_groups:
                 group = available_groups.popleft()
-                counts[group] += 1
-                remaining -= 1
-                if counts[group] < len(self.datasets[group]):
+                subset_sample_counts[group] += 1
+                remaining_samples -= 1
+                if subset_sample_counts[group] < len(self.datasets[group]):
                     available_groups.append(group)
             self.selected_indices = [
                 self._balanced_speaker_indices(dataset, count)
-                for dataset, count in zip(self.datasets, counts, strict=True)
+                for dataset, count in zip(self.datasets, subset_sample_counts, strict=True)
             ]
         else:
             self.selected_indices = [
@@ -110,7 +110,7 @@ class EnglishDialectsDataset:
         self.samples_per_group = samples_per_group
 
     @staticmethod
-    def _balanced_speaker_indices(dataset: Dataset, limit: int) -> list[int]:
+    def _balanced_speaker_indices(dataset: Dataset, max_samples: int) -> list[int]:
         """
         Select deterministically in speaker rounds so prolific speakers do not dominate.
         """
@@ -120,13 +120,13 @@ class EnglishDialectsDataset:
 
         selected: list[int] = []
         speakers = sorted(indices_by_speaker)
-        while len(selected) < min(limit, len(dataset)):
+        while len(selected) < min(max_samples, len(dataset)):
             added_in_round = False
             for speaker in speakers:
                 if indices_by_speaker[speaker]:
                     selected.append(indices_by_speaker[speaker].popleft())
                     added_in_round = True
-                    if len(selected) == min(limit, len(dataset)):
+                    if len(selected) == min(max_samples, len(dataset)):
                         break
             if not added_in_round:
                 break
