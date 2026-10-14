@@ -26,6 +26,7 @@ class AMICacheEntry:
     audio: np.ndarray
     text: str
     reference_diarization: list[dict]
+    sample_rate: int
 
 
 class AMISampleCache:
@@ -80,8 +81,10 @@ class AMISampleCache:
         Filesystem access errors propagate without advice to delete a healthy entry.
         """
         try:
+            audio, sample_rate = self._audio_cache.read(self.audio)
             return AMICacheEntry(
-                audio=self._audio_cache.read(self.audio),
+                audio=audio,
+                sample_rate=sample_rate,
                 text=self.transcript.read_text(encoding="utf-8"),
                 reference_diarization=json.loads(self.diarization.read_text(encoding="utf-8")),
             )

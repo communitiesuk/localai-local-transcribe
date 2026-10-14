@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 import yaml
 
 from evals.transcription.src import evaluate
+from evals.transcription.src.constants import PROCESSING_SPEED_DRIFT_THRESHOLDS, SPEAKER_COUNT_DRIFT_THRESHOLDS
 from evals.transcription.src.core.dataset import DEFAULT_DATASET_NAME
 from evals.transcription.src.evaluate import run_evaluation
+from tests.evals.transcription.conftest import FakeAdapter, FakeDataset
 
 
 @pytest.mark.parametrize(
@@ -117,3 +120,39 @@ def test_empty_dataset_fails_before_adapter_calls_or_results(tmp_path, monkeypat
     adapter.assert_not_called()
     run.assert_not_called()
     save.assert_not_called()
+
+
+@pytest.mark.parametrize("dataset_supports_diarization", [False, True])
+def test_runner_and_drift_agree_on_each_engine_capability(tmp_path, monkeypatch, dataset_supports_diarization):
+    audio_path = tmp_path / "audio.wav"
+    audio_path.write_bytes(b"fake audio")
+    dataset = FakeDataset(
+        [
+            {"text": "hello world", "audio": {"path": str(audio_path)}}
+            for _ in range(SPEAKER_COUNT_DRIFT_THRESHOLDS.n_meetings)
+        ]
+    )
+    dataset.supports_diarization = dataset_supports_diarization
+    speakers = FakeAdapter("speakers", "hello world", proc_sec=PROCESSING_SPEED_DRIFT_THRESHOLDS.baseline_ratio)
+    text_only = FakeAdapter("text_only", "hello world", proc_sec=PROCESSING_SPEED_DRIFT_THRESHOLDS.baseline_ratio)
+    text_only.supports_diarization = False
+    monkeypatch.setattr(evaluate, "WORKDIR", tmp_path)
+    monkeypatch.setattr(evaluate, "load_benchmark_dataset", lambda **_kwargs: dataset)
+    monkeypatch.setattr(evaluate, "ADAPTER_REGISTRY", {"speakers": speakers, "text_only": text_only})
+    monkeypatch.setattr(evaluate, "ServiceTranscriptionAdapter", lambda service: service)
+    monkeypatch.setattr(evaluate, "prepare_audio_for_transcription", lambda sample, _index: sample.audio.path)
+    monkeypatch.setattr(evaluate, "get_duration", lambda _path: 1.0)
+    assert run_evaluation(adapter_names=["speakers", "text_only"], check_drift_thresholds=True, max_workers=1) == 0
+    saved = json.loads(next((tmp_path / "output").glob("evaluation_results_*.json")).read_text())
+    review = json.loads(next((tmp_path / "output").glob("drift_review_*.json")).read_text())
+    for engine_name, supported in (("speakers", dataset_supports_diarization), ("text_only", False)):
+        assert ("wder" in saved["engines"][engine_name][0]["metrics"]) == supported
+        verdict = next(
+            check
+            for check in review["checks"]
+            if check["engine_version"] == engine_name and check["metric"] == "corpus_wder"
+        )
+        assert (verdict["observed"] is not None) == supported
+        if not supported:
+            assert verdict["outcome"] == "review"
+            assert "dataset or adapter" in verdict["detail"]

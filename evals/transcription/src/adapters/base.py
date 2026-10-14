@@ -17,6 +17,8 @@ class EvalsTranscriptionAdapter(ABC):
     Abstract base class for transcription adapters used in evaluations.
     """
 
+    supports_diarization: bool = True
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -37,6 +39,9 @@ class ServiceTranscriptionAdapter(EvalsTranscriptionAdapter):
         Initializes the service transcription adapter with the given adapter class.
         """
         self._adapter = service_adapter
+        # Read the wrapped service's capability once here rather than as a property: the base
+        # class declares a writeable attribute, which a read-only property cannot override.
+        self.supports_diarization = bool(getattr(service_adapter, "supports_diarization", True))
 
     @property
     def name(self) -> str:

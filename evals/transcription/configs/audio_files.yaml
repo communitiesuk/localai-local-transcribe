@@ -1,0 +1,9 @@
+# Relative to this config file. Each audio file needs a same-name .txt reference.
+dataset: audio_files
+input_dir: ../input/custom
+num_samples: 2
+max_workers: 1
+prepare_only: false
+check_drift_thresholds: false
+adapters:
+  - azure

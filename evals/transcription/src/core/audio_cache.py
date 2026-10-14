@@ -30,15 +30,15 @@ class AudioFileHandler:
         """
         Checks whether a cached audio file exists at the given path.
 
-        Presence only. The file is not opened, so an entry left truncated by an interrupted
-        write still reports as present. Partial MP3s can decode successfully with fewer samples;
+        Presence only. Writes publish the final file only after conversion succeeds.
+        Older or externally truncated MP3s may still decode with fewer samples;
         neither this check nor read verifies the expected duration.
         """
         return path.is_file()
 
-    def read(self, path: Path) -> np.ndarray:
+    def read(self, path: Path) -> tuple[np.ndarray, int]:
         """
-        Loads the audio at the given path and returns it as a numpy array.
+        Loads audio samples and returns their decoded sample rate alongside the array.
 
         Raises CorruptAudioError when the file exists but cannot be decoded, so callers
         do not have to know which audio library produced the failure.
@@ -50,15 +50,16 @@ class AudioFileHandler:
         with path.open("rb"):
             pass
         try:
-            audio, _sample_rate = soundfile.read(path)
+            audio, sample_rate = soundfile.read(path)
         except soundfile.SoundFileError as error:
             message = f"Could not decode audio at {path}: {error}"
             raise CorruptAudioError(message) from error
-        return cast(np.ndarray, audio)
+        return cast(np.ndarray, audio), int(sample_rate)
 
     def write(self, path: Path, audio: np.ndarray, sample_rate: int) -> None:
         """
-        Saves the given audio array to the specified path as mono MP3 (preserves sample rate).
+        Write mono MP3 through a sibling temporary file, then atomically replace the destination.
+        A failed conversion leaves the previous destination intact, or absent for a new file.
         """
         path.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
@@ -66,6 +67,14 @@ class AudioFileHandler:
 
         try:
             soundfile.write(temp_path, audio, sample_rate, subtype="PCM_16")
-            convert_to_mp3(temp_path, path)
+            with tempfile.NamedTemporaryFile(
+                dir=path.parent, prefix=f".{path.stem}-", suffix=self.suffix, delete=False
+            ) as output_file:
+                output_temp_path = Path(output_file.name)
+            try:
+                convert_to_mp3(temp_path, output_temp_path)
+                output_temp_path.replace(path)
+            finally:
+                output_temp_path.unlink(missing_ok=True)
         finally:
             temp_path.unlink(missing_ok=True)
