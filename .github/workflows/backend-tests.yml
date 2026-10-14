@@ -6,9 +6,6 @@ on:
       python_version:
         required: true
         type: string
-      poetry_version:
-        required: true
-        type: string
 
 env:
   ENVIRONMENT: test
@@ -31,10 +28,14 @@ jobs:
         with:
           python-version: ${{ inputs.python_version }}
 
+      - name: Read Poetry version from pyproject.toml
+        id: poetry-version
+        run: python -c 'import tomllib; print("version=" + tomllib.load(open("pyproject.toml", "rb"))["tool"]["poetry"]["requires-poetry"].lstrip("="))' >> "$GITHUB_OUTPUT"
+
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2
         with:
-          poetry-version: ${{ inputs.poetry_version }}
+          poetry-version: ${{ steps.poetry-version.outputs.version }}
 
       - name: Configure Poetry to create .venv in project
         run: poetry config virtualenvs.in-project true
