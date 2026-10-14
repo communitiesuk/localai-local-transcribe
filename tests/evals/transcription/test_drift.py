@@ -245,7 +245,12 @@ def test_drift_skips_unavailable_diarization_metrics(tmp_path, omit_metrics):
     verdicts = assess_engine_drift(engine, supports_diarization=False)
     assert len(verdicts) == 4
     assert sum(verdict.outcome == "review" for verdict in verdicts) == 2
-    assert apply_drift_thresholds([engine], tmp_path, "non_diarizing", supports_diarization=False) == 0
+    assert (
+        apply_drift_thresholds(
+            [engine], tmp_path, "non_diarizing", diarization_capabilities={engine.summary.engine_version: False}
+        )
+        == 0
+    )
     payload = json.loads((tmp_path / "drift_review_non_diarizing.json").read_text())
     assert payload["overall_outcome"] == "review"
     skipped = [check for check in payload["checks"] if check["outcome"] == "review"]

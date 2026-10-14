@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from evals.transcription.src.core.results import create_summary, save_results
+from evals.transcription.src.core.results import _wer_by_group, create_summary, save_results
 from evals.transcription.src.models import (
     EngineOutput,
     SampleRow,
@@ -211,10 +211,10 @@ def test_save_results_creates_file(tmp_path):
     assert data["engines"]["TestEngine"][0]["reference_transcript"] == sample.reference_transcript
 
 
-def test_save_results_groups_wer_by_dialect_and_gender(tmp_path):
+def test_save_results_groups_wer_by_group(tmp_path):
     output_path = tmp_path / "output.json"
     sample = make_sample_row(wder=None, speaker_count_accuracy=None)
-    sample.sample_metadata = {"dialect": "irish", "gender": "male", "speaker_id": "1"}
+    sample.sample_metadata = {"group": "irish_male", "dialect": "irish", "gender": "male", "speaker_id": "1"}
     summary = Summary(
         run_id="test_run",
         timestamp="20260223_100000",
@@ -234,7 +234,7 @@ def test_save_results_groups_wer_by_dialect_and_gender(tmp_path):
     import json
 
     data = json.loads(output_path.read_text(encoding="utf-8"))
-    group = data["wer_by_dialect_and_gender"]["TestEngine"]["irish_male"]
+    group = data["wer_by_group"]["TestEngine"]["irish_male"]
     assert group["n_examples"] == 1
     assert group["wer"]["mean"] == pytest.approx(0.1)
     assert group["corpus_wer"] == pytest.approx(0.1)
@@ -300,3 +300,23 @@ def test_save_results_multiple_engines(tmp_path):
         "has_Engine2": "Engine2" in data["engines"],
     }
     assert actual == expected
+
+
+def test_wer_grouping_uses_dataset_supplied_group_without_dialect_fields():
+    sample = make_sample_row()
+    sample.sample_metadata = {"group": "room_a"}
+    groups = _wer_by_group([sample])
+    assert set(groups) == {"room_a"}
+    assert groups["room_a"]["n_examples"] == 1
+    assert groups["room_a"]["corpus_wer"] == pytest.approx(0.1)
+
+
+def test_ungrouped_results_omit_group_section(tmp_path):
+    sample = make_sample_row()
+    sample.sample_metadata = {"dataset_index": 0}
+    summary = create_summary("TestEngine", [sample], TimingAccumulator(), "run", "ts", "AMI_v0", None)
+    path = tmp_path / "results.json"
+    save_results([EngineOutput(summary=summary, samples=[sample])], path)
+    data = json.loads(path.read_text())
+    assert "wer_by_group" not in data
+    assert "wer_by_dialect_and_gender" not in data

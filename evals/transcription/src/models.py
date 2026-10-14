@@ -63,6 +63,7 @@ class DatasetItem(BaseModel):
 
     audio: AudioSample
     text: str
+    sample_metadata: dict[str, str | int] | None = None
 
 
 class EnglishDialectsSample(DatasetItem):
@@ -228,6 +229,8 @@ class DatasetProtocol(Protocol):
     """
     Protocol for dataset objects supporting indexing and length operations.
     """
+
+    supports_diarization: bool
 
     @property
     @abstractmethod

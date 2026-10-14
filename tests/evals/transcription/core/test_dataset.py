@@ -144,7 +144,7 @@ def test_english_dialects_source_directory_default_and_override(tmp_path, monkey
     dataset_class.assert_called_once_with(
         num_samples=2,
         samples_per_group=None,
-        cache_dir=configured_dir if override else tmp_path / "english_dialects" / "raw",
+        cache_dir=configured_dir if override else tmp_path / "english_dialects",
     )
 
 

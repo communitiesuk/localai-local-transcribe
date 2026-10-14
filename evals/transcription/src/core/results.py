@@ -53,25 +53,24 @@ def create_summary(
     )
 
 
-def _wer_by_dialect_and_gender(samples: list[SampleRow]) -> dict[str, dict]:
+def _wer_by_group(samples: list[SampleRow]) -> dict[str, dict]:
     """
-    Aggregate mean and corpus WER for each published dialect/gender group.
+    Aggregate mean and corpus WER for groups explicitly supplied by each dataset.
     """
     grouped: dict[str, list[SampleRow]] = defaultdict(list)
     for sample in samples:
         metadata = sample.sample_metadata or {}
-        dialect = metadata.get("dialect")
-        gender = metadata.get("gender")
-        if dialect and gender:
-            grouped[f"{dialect}_{gender}"].append(sample)
+        group = metadata.get("group")
+        if isinstance(group, str) and group:
+            grouped[group].append(sample)
 
     metrics_by_group: dict[str, dict] = {}
     for group_name, rows in sorted(grouped.items()):
         wer_statistics = aggregate_metrics([row.metrics for row in rows], ["wer"])["wer"]
-        substitutions = sum(int(row.metrics.get("substitutions", 0)) for row in rows)
-        deletions = sum(int(row.metrics.get("deletions", 0)) for row in rows)
-        insertions = sum(int(row.metrics.get("insertions", 0)) for row in rows)
-        hits = sum(int(row.metrics.get("hits", 0)) for row in rows)
+        substitutions = sum(int(row.metrics["substitutions"]) for row in rows)
+        deletions = sum(int(row.metrics["deletions"]) for row in rows)
+        insertions = sum(int(row.metrics["insertions"]) for row in rows)
+        hits = sum(int(row.metrics["hits"]) for row in rows)
         reference_words = hits + substitutions + deletions
         errors = substitutions + deletions + insertions
         content_rows = [row for row in rows if "content_reference_words" in row.metrics]
@@ -111,15 +110,17 @@ def save_results(
 
     grouped_metrics = {}
     for result in results:
-        groups = _wer_by_dialect_and_gender(result.samples)
+        groups = _wer_by_group(result.samples)
         if groups:
             grouped_metrics[result.summary.engine_version] = groups
 
     combined = {
         "summaries": [result.summary.model_dump() for result in results],
         "engines": {result.summary.engine_version: [s.model_dump() for s in result.samples] for result in results},
-        "wer_by_dialect_and_gender": grouped_metrics,
     }
+
+    if grouped_metrics:
+        combined["wer_by_group"] = grouped_metrics
 
     with output_path.open("w", encoding="utf-8") as file_handle:
         json.dump(combined, file_handle, indent=2, ensure_ascii=False)

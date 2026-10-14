@@ -14,7 +14,7 @@ from common.audio.ffmpeg import convert_to_mp3
 from evals.transcription.src.constants import WORKDIR
 from evals.transcription.src.core.dataset import load_benchmark_dataset
 from evals.transcription.src.core.english_dialects import EnglishDialectsDataset
-from evals.transcription.src.core.english_dialects.english_dialects_dataset import ALL_SUBSETS
+from evals.transcription.src.core.english_dialects.english_dialects_dataset import ALL_SUBSETS, EnglishDialectsSource
 from evals.transcription.src.core.results import save_results
 from evals.transcription.src.core.runner import run_engines_parallel
 from tests.evals.transcription.conftest import FakeAdapter
@@ -22,7 +22,7 @@ from tests.evals.transcription.conftest import FakeAdapter
 
 @pytest.fixture(autouse=True)
 def isolated_audio_cache(tmp_path, monkeypatch):
-    monkeypatch.setattr("evals.transcription.src.core.english_dialects.english_dialects_dataset.INPUT_DIR", tmp_path)
+    monkeypatch.setattr("evals.transcription.src.core.benchmark_dataset_source.INPUT_DIR", tmp_path)
     monkeypatch.setattr("evals.transcription.src.core.audio_cache.convert_to_mp3", shutil.copyfile)
 
 
@@ -45,7 +45,7 @@ def _row(speaker_id: int, line_id: str, text: str = "hello") -> dict:
     }
 
 
-def test_dataset_indexes_across_subsets_and_preserves_metadata(monkeypatch):
+def test_dataset_indexes_across_subsets_and_preserves_metadata(monkeypatch, tmp_path):
     rows = {
         "irish_male": _FakeRows([_row(1, "IR0001")]),
         "welsh_female": _FakeRows([_row(2, "WE0001"), _row(2, "WE0002")]),
@@ -55,7 +55,7 @@ def test_dataset_indexes_across_subsets_and_preserves_metadata(monkeypatch):
         lambda _name, subset, **_kwargs: rows[subset],
     )
 
-    dataset = EnglishDialectsDataset(subsets=("irish_male", "welsh_female"))
+    dataset = EnglishDialectsDataset(cache_dir=tmp_path, subsets=("irish_male", "welsh_female"))
 
     assert len(dataset) == 3
     assert dataset.dataset_split == "published_train_all"
@@ -66,13 +66,13 @@ def test_dataset_indexes_across_subsets_and_preserves_metadata(monkeypatch):
     assert dataset.supports_diarization is False
 
 
-def test_dataset_applies_global_sample_cap(monkeypatch):
+def test_dataset_applies_global_sample_cap(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "evals.transcription.src.core.english_dialects.english_dialects_dataset.load_dataset",
         lambda _name, _subset, **_kwargs: _FakeRows([_row(1, "A"), _row(1, "B")]),
     )
 
-    dataset = EnglishDialectsDataset(subsets=("irish_male", "welsh_female"), num_samples=3)
+    dataset = EnglishDialectsDataset(cache_dir=tmp_path, subsets=("irish_male", "welsh_female"), num_samples=3)
 
     assert len(dataset) == 3
     dialects = [dataset[index].dialect for index in range(3)]
@@ -82,12 +82,12 @@ def test_dataset_applies_global_sample_cap(monkeypatch):
         _ = dataset[3]
 
 
-def test_dataset_rejects_unknown_subset():
+def test_dataset_rejects_unknown_subset(tmp_path):
     with pytest.raises(ValueError, match="Unknown English Dialects subsets"):
-        EnglishDialectsDataset(subsets=("invented_male",))
+        EnglishDialectsDataset(cache_dir=tmp_path, subsets=("invented_male",))
 
 
-def test_balanced_subset_round_robins_speakers(monkeypatch):
+def test_balanced_subset_round_robins_speakers(monkeypatch, tmp_path):
     rows = _FakeRows(
         [
             _row(1, "S1-A"),
@@ -102,18 +102,19 @@ def test_balanced_subset_round_robins_speakers(monkeypatch):
         lambda _name, _subset, **_kwargs: rows,
     )
 
-    dataset = EnglishDialectsDataset(subsets=("irish_male",), samples_per_group=4)
+    dataset = EnglishDialectsDataset(cache_dir=tmp_path, subsets=("irish_male",), samples_per_group=4)
 
     assert len(dataset) == 4
     assert [dataset[index].line_id for index in range(4)] == ["S1-A", "S2-A", "S1-B", "S2-B"]
 
 
-def test_balanced_subset_cannot_be_combined_with_global_cap():
+def test_balanced_subset_cannot_be_combined_with_global_cap(tmp_path):
     with pytest.raises(ValueError, match="either samples_per_group or num_samples"):
-        EnglishDialectsDataset(subsets=("irish_male",), num_samples=10, samples_per_group=5)
+        EnglishDialectsDataset(cache_dir=tmp_path, subsets=("irish_male",), num_samples=10, samples_per_group=5)
 
 
-def test_dataset_uses_configured_local_cache(monkeypatch, tmp_path):
+@pytest.mark.parametrize("override", [False, True])
+def test_dataset_uses_matching_cache_layout_for_default_and_override(monkeypatch, tmp_path, override):
     calls = []
 
     def fake_load_dataset(_name, subset, **kwargs):
@@ -124,18 +125,17 @@ def test_dataset_uses_configured_local_cache(monkeypatch, tmp_path):
         "evals.transcription.src.core.english_dialects.english_dialects_dataset.load_dataset",
         fake_load_dataset,
     )
-    cache_dir = tmp_path / "english_dialects" / "raw"
+    configured_dir = tmp_path / "configured" if override else None
+    cache_dir = configured_dir if override else tmp_path / "english_dialects"
 
-    EnglishDialectsDataset(
-        subsets=("irish_male", "welsh_female"),
-        cache_dir=cache_dir,
-    )
+    dataset = EnglishDialectsSource(configured_dir).load()
 
-    assert cache_dir.is_dir()
-    assert calls == [
-        ("irish_male", {"split": "train", "cache_dir": str(cache_dir)}),
-        ("welsh_female", {"split": "train", "cache_dir": str(cache_dir)}),
-    ]
+    assert dataset.cache_dir == cache_dir
+    assert dataset.raw_cache_dir == cache_dir / "raw"
+    assert dataset.raw_cache_dir.is_dir()
+    assert dataset.processed_cache_dir == cache_dir / "processed" / "mono_mp3_v1"
+    assert dataset.processed_cache_dir.is_dir()
+    assert calls == [(subset, {"split": "train", "cache_dir": str(cache_dir / "raw")}) for subset in ALL_SUBSETS]
 
 
 def test_cloud_config_samples_and_reports_every_published_group(tmp_path, monkeypatch):
@@ -167,18 +167,18 @@ def test_cloud_config_samples_and_reports_every_published_group(tmp_path, monkey
     )
     output = tmp_path / "results.json"
     save_results(results, output)
-    groups = json.loads(output.read_text())["wer_by_dialect_and_gender"]["test"]
+    groups = json.loads(output.read_text())["wer_by_group"]["test"]
     assert set(groups) == set(ALL_SUBSETS)
     assert all(group["n_examples"] == 1 for group in groups.values())
 
 
 @pytest.mark.parametrize("budget", [2, 11, 14])
-def test_global_budget_is_distributed_across_groups(monkeypatch, budget):
+def test_global_budget_is_distributed_across_groups(monkeypatch, budget, tmp_path):
     monkeypatch.setattr(
         "evals.transcription.src.core.english_dialects.english_dialects_dataset.load_dataset",
         lambda _name, subset, **_kwargs: _FakeRows([_row(index, f"{subset}-{index}") for index in range(4)]),
     )
-    dataset = EnglishDialectsDataset(num_samples=budget)
+    dataset = EnglishDialectsDataset(cache_dir=tmp_path, num_samples=budget)
     counts = Counter(f"{dataset[index].dialect}_{dataset[index].gender}" for index in range(len(dataset)))
     assert len(dataset) == budget
     assert len(counts) == min(budget, len(ALL_SUBSETS))
@@ -186,7 +186,7 @@ def test_global_budget_is_distributed_across_groups(monkeypatch, budget):
     assert len({dataset[index].line_id for index in range(len(dataset))}) == budget
 
 
-def test_global_sampling_redistributes_budget_from_empty_and_exhausted_groups(monkeypatch):
+def test_global_sampling_redistributes_budget_from_empty_and_exhausted_groups(monkeypatch, tmp_path):
     rows = {
         "irish_male": _FakeRows([]),
         "welsh_female": _FakeRows([_row(1, "W")]),
@@ -196,25 +196,25 @@ def test_global_sampling_redistributes_budget_from_empty_and_exhausted_groups(mo
         "evals.transcription.src.core.english_dialects.english_dialects_dataset.load_dataset",
         lambda _name, subset, **_kwargs: rows[subset],
     )
-    dataset = EnglishDialectsDataset(subsets=tuple(rows), num_samples=10)
+    dataset = EnglishDialectsDataset(cache_dir=tmp_path, subsets=tuple(rows), num_samples=10)
     assert len(dataset) == 4
     assert [dataset[index].line_id for index in range(4)] == ["W", "S1", "S3", "S2"]
 
 
 @pytest.mark.parametrize("num_samples", [0, -1])
-def test_global_sampling_rejects_nonpositive_budget(num_samples):
+def test_global_sampling_rejects_nonpositive_budget(num_samples, tmp_path):
     with pytest.raises(ValueError, match="num_samples must be greater than zero"):
-        EnglishDialectsDataset(num_samples=num_samples)
+        EnglishDialectsDataset(cache_dir=tmp_path, num_samples=num_samples)
 
 
-def test_small_global_budget_is_reproducible_and_independent_of_subset_order(monkeypatch):
+def test_small_global_budget_is_reproducible_and_independent_of_subset_order(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "evals.transcription.src.core.english_dialects.english_dialects_dataset.load_dataset",
         lambda _name, subset, **_kwargs: _FakeRows([_row(1, f"{subset}-1"), _row(2, f"{subset}-2")]),
     )
 
     def selected_groups(subsets):
-        dataset = EnglishDialectsDataset(subsets=subsets, num_samples=2)
+        dataset = EnglishDialectsDataset(cache_dir=tmp_path, subsets=subsets, num_samples=2)
         return {f"{dataset[index].dialect}_{dataset[index].gender}" for index in range(len(dataset))}
 
     selected = selected_groups(ALL_SUBSETS)

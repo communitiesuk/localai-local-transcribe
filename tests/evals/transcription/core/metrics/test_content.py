@@ -3,7 +3,7 @@ import json
 import pytest
 
 from evals.transcription.src.core.metrics.content import normalise_content
-from evals.transcription.src.core.results import _wer_by_dialect_and_gender, create_summary, save_results
+from evals.transcription.src.core.results import _wer_by_group, create_summary, save_results
 from evals.transcription.src.core.runner import _compute_all_metrics
 from evals.transcription.src.models import EngineOutput, SampleRow, TimingAccumulator
 
@@ -58,11 +58,11 @@ def test_standard_content_wer_by_dialect():
             "example_id": "0",
             "reference_transcript": "hello world",
             "hypothesis_transcript": "hello there",
-            "sample_metadata": {"dialect": "welsh", "gender": "female"},
+            "sample_metadata": {"group": "welsh_female", "dialect": "welsh", "gender": "female"},
         }
     ]
     rows, summary = _evaluate_samples(samples)
-    group = _wer_by_dialect_and_gender(rows)["welsh_female"]
+    group = _wer_by_group(rows)["welsh_female"]
     assert group["corpus_content_wer"] == pytest.approx(0.5)
     assert group["content_wer"]["mean"] == pytest.approx(0.5)
 
@@ -142,11 +142,11 @@ def test_empty_content_reference_reports_no_rate_at_sample_and_corpus_level(hypo
                 "example_id": "0",
                 "reference_transcript": "erm um",
                 "hypothesis_transcript": hypothesis,
-                "sample_metadata": {"dialect": "welsh", "gender": "female"},
+                "sample_metadata": {"group": "welsh_female", "dialect": "welsh", "gender": "female"},
             }
         ]
     )
-    group = _wer_by_dialect_and_gender(rows)["welsh_female"]
+    group = _wer_by_group(rows)["welsh_female"]
     assert "content_wer" not in rows[0].metrics
     assert summary.corpus_content_wer is None
     assert group["corpus_content_wer"] is None
@@ -162,18 +162,18 @@ def test_empty_content_reference_still_contributes_insertions_to_corpus():
                 "example_id": "0",
                 "reference_transcript": "erm um",
                 "hypothesis_transcript": "hello world",
-                "sample_metadata": {"dialect": "welsh", "gender": "female"},
+                "sample_metadata": {"group": "welsh_female", "dialect": "welsh", "gender": "female"},
             },
             # Two content reference words, matched exactly.
             {
                 "example_id": "1",
                 "reference_transcript": "hello there",
                 "hypothesis_transcript": "hello there",
-                "sample_metadata": {"dialect": "welsh", "gender": "female"},
+                "sample_metadata": {"group": "welsh_female", "dialect": "welsh", "gender": "female"},
             },
         ]
     )
-    group = _wer_by_dialect_and_gender(rows)["welsh_female"]
+    group = _wer_by_group(rows)["welsh_female"]
 
     assert "content_wer" not in rows[0].metrics
     assert rows[1].metrics["content_wer"] == 0

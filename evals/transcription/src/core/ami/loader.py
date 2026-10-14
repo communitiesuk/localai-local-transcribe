@@ -28,6 +28,8 @@ class AMIDatasetLoader(DatasetProtocol):
     Loads and caches AMI dataset samples with configurable meeting selection.
     """
 
+    supports_diarization = True
+
     def __init__(
         self,
         cache_dir: Path,
@@ -110,6 +112,7 @@ class AMIDatasetLoader(DatasetProtocol):
                 path=str(wav_path),
             ),
             text=text,
+            sample_metadata={"dataset_index": index},
             meeting_id=segment.meeting_id,
             dataset_index=index,
             duration_sec=audio.compute_duration(mixed_audio, sample_rate),

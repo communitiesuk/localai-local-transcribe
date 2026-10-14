@@ -9,7 +9,6 @@ from pathlib import Path
 import numpy as np
 from datasets import Dataset, load_dataset
 
-from evals.transcription.src.constants import INPUT_DIR
 from evals.transcription.src.core.audio_cache import AudioFileHandler
 from evals.transcription.src.core.benchmark_dataset_source import BenchmarkDatasetSource
 from evals.transcription.src.models import AudioSample, DatasetRequest, EnglishDialectsSample
@@ -40,10 +39,10 @@ class EnglishDialectsDataset:
 
     def __init__(
         self,
+        cache_dir: Path,
         subsets: Sequence[str] = ALL_SUBSETS,
         num_samples: int | None = None,
         samples_per_group: int | None = None,
-        cache_dir: Path | None = None,
     ):
         unknown = sorted(set(subsets) - set(ALL_SUBSETS))
         if unknown:
@@ -60,17 +59,18 @@ class EnglishDialectsDataset:
             raise ValueError(msg)
 
         self.subsets = tuple(subsets)
-        self.cache_dir = cache_dir if cache_dir is not None else INPUT_DIR / "english_dialects" / "raw"
+        self.cache_dir = cache_dir
+        self.raw_cache_dir = self.cache_dir / "raw"
         self.audio_cache = AudioFileHandler()
         self.processed_cache_dir = self.cache_dir / "processed" / "mono_mp3_v1"
-        if self.cache_dir is not None:
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.raw_cache_dir.mkdir(parents=True, exist_ok=True)
+        self.processed_cache_dir.mkdir(parents=True, exist_ok=True)
         self.datasets: list[Dataset] = [
             load_dataset(
                 DATASET_NAME,
                 subset,
                 split=PUBLISHED_SPLIT,
-                **({"cache_dir": str(self.cache_dir)} if self.cache_dir is not None else {}),
+                cache_dir=str(self.raw_cache_dir),
             )
             for subset in self.subsets
         ]
@@ -172,6 +172,14 @@ class EnglishDialectsDataset:
                 path=str(audio_path.resolve()),
             ),
             text=str(row["text"]),
+            sample_metadata={
+                "group": subset,
+                "dialect": dialect,
+                "gender": gender,
+                "speaker_id": str(row["speaker_id"]),
+                "line_id": str(row["line_id"]),
+                "dataset_index": index,
+            },
             dialect=dialect,
             gender=gender,
             speaker_id=str(row["speaker_id"]),
@@ -186,7 +194,7 @@ class EnglishDialectsSource(BenchmarkDatasetSource):
     """
 
     name = "english_dialects"
-    default_subdir = "english_dialects/raw"
+    default_subdir = "english_dialects"
     supports_samples_per_group = True
 
     def _load(self, request: DatasetRequest) -> EnglishDialectsDataset:

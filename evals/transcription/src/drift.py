@@ -391,7 +391,7 @@ def assess_engine_drift(engine_output: EngineOutput, *, supports_diarization: bo
             )
         ]
     if not supports_diarization:
-        detail = "Not assessed: this dataset does not support diarization."
+        detail = "Not assessed: the dataset or adapter does not support diarization."
         verdicts.extend(
             [
                 DriftVerdict("corpus_wder", "review", detail, None),
@@ -426,7 +426,7 @@ def apply_drift_thresholds(
     output_dir: Path,
     timestamp: str,
     *,
-    supports_diarization: bool = True,
+    diarization_capabilities: dict[str, bool] | None = None,
 ) -> int:
     """Assess drift for each engine output, write a review file if needed, and return the process exit code.
 
@@ -441,6 +441,11 @@ def apply_drift_thresholds(
     all_verdicts: list[dict] = []
     outcomes: list[DriftOutcome] = []
     for engine_output in results:
+        supports_diarization = (
+            diarization_capabilities[engine_output.summary.engine_version]
+            if diarization_capabilities is not None
+            else True
+        )
         engine_verdicts = assess_engine_drift(engine_output, supports_diarization=supports_diarization)
         for verdict in engine_verdicts:
             logger.info(

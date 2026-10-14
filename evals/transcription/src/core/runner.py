@@ -43,13 +43,6 @@ def _extract_segments(result: TranscriptionResult, example: DatasetItem) -> tupl
     return dialogue_entries, reference_diarization
 
 
-def _extract_sample_metadata(example: DatasetItem) -> dict[str, str | int] | None:
-    """Return available sample identity and grouping fields, including AMI's dataset index."""
-    field_names = ("dialect", "gender", "speaker_id", "line_id", "dataset_index")
-    metadata = {name: getattr(example, name) for name in field_names if hasattr(example, name)}
-    return metadata or None
-
-
 def _compute_all_metrics(
     ref_raw: str,
     hyp_raw: str,
@@ -136,9 +129,7 @@ def run_engines_parallel(
         process_seconds = float(result.duration_sec)
 
         dialogue_entries, reference_diarization = _extract_segments(result, example)
-        supports_diarization = bool(
-            getattr(adapter, "supports_diarization", True) and getattr(dataset, "supports_diarization", True)
-        )
+        supports_diarization = adapter.supports_diarization and dataset.supports_diarization
         if supports_diarization:
             ref_diar_dicts, hyp_diar_dicts = _validate_and_convert_diarization(reference_diarization, dialogue_entries)
         else:
@@ -167,7 +158,7 @@ def run_engines_parallel(
             # transcription_eval_metric_result table is keyed by metric_name, so "not
             # applicable" is the absence of a row.
             metrics=metrics.model_dump(exclude_none=True),
-            sample_metadata=_extract_sample_metadata(example),
+            sample_metadata=example.sample_metadata,
             error=None,
         )
 

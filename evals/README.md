@@ -172,8 +172,9 @@ duration cutoff; older processed entries are rebuilt.
 Additional datasets are selected through the same source registry:
 
 - `dataset: english_dialects` loads all published dialect/gender groups. Its default
-  Arrow cache directory is `evals/transcription/input/english_dialects/raw/`; processed
-  utterances are cached under `<input_dir>/processed/mono_mp3_v1/`.
+  dataset directory is `evals/transcription/input/english_dialects/`. Both default and
+  configured directories use `raw/` for Arrow data and `processed/mono_mp3_v1/` for audio.
+  `input_dir` always selects the dataset root, matching AMI.
 - `dataset: audio_files` reads audio files paired with same-name UTF-8 `.txt` references.
   Its default source directory is `evals/transcription/input/custom/`.
 
@@ -202,9 +203,8 @@ independent of the supplied subset order. Use
 with `num_samples`.
 
 Content WER complements standard WER when comparing APIs that omit fillers such as
-"erm" and "um". Engine summaries record the content profile. Dialect/gender groups
-include content WER statistics and corpus scores alongside standard WER. All metrics
-are written to the normal results file.
+"erm" and "um". Dialect/gender groups include content WER statistics and corpus scores
+alongside standard WER. All metrics are written to the normal results file.
 
 # Dataset Generation
 
