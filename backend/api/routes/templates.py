@@ -1,6 +1,7 @@
 import datetime
 import html
 import re
+from typing import TypedDict
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
@@ -254,37 +255,34 @@ async def next_unique_template_name(session: SQLSessionDep, user_id: UUID, base_
         counter += 1
 
 
-@templates_router.post("/user-templates/{template_id}/duplicate")
-async def duplicate_user_template(
-    user: UserDep, session: SQLSessionDep, template_id: UUID
+class TemplateQuestionCopy(TypedDict):
+    position: int
+    title: str
+    description: str
+    format_instructions: str
+
+
+async def duplicate_template(
+    session: SQLSessionDep,
+    user_id: UUID,
+    base_name: str,
+    description: str,
+    content: str,
+    heading: str,
+    template_type: TemplateType,
+    questions: list[TemplateQuestion],
 ) -> DuplicateTemplateResponse:
-    original_template = (
-        await session.exec(
-            select(UserTemplate)
-            .where(UserTemplate.id == template_id, UserTemplate.user_id == user.id)
-            .options(selectinload(UserTemplate.questions))
-        )
-    ).first()
-
-    if not original_template:
-        raise HTTPException(404)
-
-    user_id = user.id
-    base_name = original_template.name
-    description = original_template.description
-    content = original_template.content
-    heading = original_template.heading
-    template_type = original_template.type
-    questions = [
+    # Copy questions before entering loop as rollback can interfere with ORM relationship values
+    question_copies: list[TemplateQuestionCopy] = [
         {
             "position": question.position,
             "title": question.title,
             "description": question.description,
             "format_instructions": question.format_instructions,
         }
-        for question in original_template.questions
+        for question in questions
     ]
-
+        
     for _ in range(MAX_DUPLICATE_NAME_ATTEMPTS):
         template = UserTemplate(
             user_id=user_id,
@@ -300,7 +298,7 @@ async def duplicate_user_template(
                     description=question["description"],
                     format_instructions=question["format_instructions"],
                 )
-                for question in questions
+                for question in question_copies
             ],
         )
 
@@ -316,6 +314,33 @@ async def duplicate_user_template(
         return DuplicateTemplateResponse(id=template.id, name=template.name)
 
     raise HTTPException(status_code=409, detail=TEMPLATE_TITLE_CONFLICT_DETAIL)
+
+
+@templates_router.post("/user-templates/{template_id}/duplicate")
+async def duplicate_user_template(
+    user: UserDep, session: SQLSessionDep, template_id: UUID
+) -> DuplicateTemplateResponse:
+    original_template = (
+        await session.exec(
+            select(UserTemplate)
+            .where(UserTemplate.id == template_id, UserTemplate.user_id == user.id)
+            .options(selectinload(UserTemplate.questions))
+        )
+    ).first()
+
+    if not original_template:
+        raise HTTPException(404)
+
+    return await duplicate_template(
+        session=session,
+        user_id=user.id,
+        base_name=original_template.name,
+        description=original_template.description,
+        content=original_template.content,
+        heading=original_template.heading,
+        template_type=original_template.type,
+        questions=original_template.questions
+    )
 
 
 @templates_router.post("/templates/{template_name}/duplicate")
@@ -334,36 +359,16 @@ async def duplicate_default_template(
     except TemplateNotFoundError as e:
         raise HTTPException(404) from e
 
-    user_id = user.id
-    base_name = original_template.name
-    description = original_template.description
-    content = get_default_template_content(original_template)
-    heading = original_template.name
-
-    for _ in range(MAX_DUPLICATE_NAME_ATTEMPTS):
-        template = UserTemplate(
-            user_id=user_id,
-            name=await next_unique_template_name(session, user_id, base_name),
-            description=description,
-            content=content,
-            heading=heading,
-            type=TemplateType.DOCUMENT,
-            questions=[],
-        )
-
-        session.add(template)
-
-        try:
-            await session.commit()
-        except IntegrityError as error:
-            await session.rollback()
-            if is_template_name_unique_violation(error):
-                continue
-            raise
-
-        return DuplicateTemplateResponse(id=template.id, name=template.name)
-
-    raise HTTPException(status_code=409, detail=TEMPLATE_TITLE_CONFLICT_DETAIL)
+    return await duplicate_template(
+        session=session,
+        user_id=user.id,
+        base_name=original_template.name,
+        description=original_template.description,
+        content=get_default_template_content(original_template),
+        heading=original_template.name,
+        template_type=TemplateType.DOCUMENT,
+        questions=[],
+    )
 
 
 def get_default_template_content(default_template: type[Template]) -> str:
