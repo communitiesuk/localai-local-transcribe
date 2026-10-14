@@ -4,6 +4,7 @@ import re
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
+from sqlalchemy import literal
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 from sqlmodel import col, func, select
@@ -14,6 +15,11 @@ from common.database.postgres_models import TemplateQuestion, TemplateType, User
 from common.prompts import PROMPT_INJECTION_INSTRUCTIONS
 from common.services.template_manager import TemplateManager, TemplateNotFoundError
 from common.settings import get_settings
+from common.templates.name_normalisation import (
+    TEMPLATE_NAME_TRIM_CHARS,
+    USER_TEMPLATE_NORMALISED_NAME_UNIQUE_INDEX,
+    normalise_template_name,
+)
 from common.templates.types import Template
 from common.types import (
     CreateUserTemplateRequest,
@@ -30,12 +36,7 @@ beta_templates = get_settings().BETA_TEMPLATE_NAMES
 ga_only_template_metadata = [template for template in all_template_metadata if template.name not in beta_templates]
 
 TEMPLATE_TITLE_CONFLICT_DETAIL = "A template with this title already exists"
-USER_TEMPLATE_NORMALISED_NAME_UNIQUE_INDEX = "uq_user_template_user_id_normalised_name"
 MAX_DUPLICATE_NAME_ATTEMPTS = 10
-
-
-def normalise_template_name(name: str) -> str:
-    return name.strip().lower()
 
 
 def is_template_name_unique_violation(error: IntegrityError) -> bool:
@@ -130,7 +131,8 @@ async def create_user_template(user: UserDep, session: SQLSessionDep, request: C
         await session.exec(
             select(UserTemplate).where(
                 UserTemplate.user_id == user.id,
-                func.lower(func.trim(col(UserTemplate.name))) == normalise_template_name(request.name),
+                func.lower(func.btrim(col(UserTemplate.name), literal(TEMPLATE_NAME_TRIM_CHARS)))
+                == normalise_template_name(request.name),
             )
         )
     ).first()
@@ -176,7 +178,8 @@ async def edit_user_template(
                 select(UserTemplate).where(
                     UserTemplate.user_id == user.id,
                     UserTemplate.id != template_id,
-                    func.lower(func.trim(col(UserTemplate.name))) == normalise_template_name(request.name),
+                    func.lower(func.btrim(col(UserTemplate.name), literal(TEMPLATE_NAME_TRIM_CHARS)))
+                    == normalise_template_name(request.name),
                 )
             )
         ).first()

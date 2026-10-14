@@ -22,6 +22,11 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
 
+from common.templates.name_normalisation import (
+    TEMPLATE_NAME_TRIM_CHARS_SQL,
+    USER_TEMPLATE_NORMALISED_NAME_UNIQUE_INDEX,
+)
+
 
 class DialogueEntry(TypedDict):
     speaker: str
@@ -267,9 +272,9 @@ class UserTemplate(BaseTableMixin, table=True):
     __tablename__ = "user_template"
     __table_args__ = (
         Index(
-            "uq_user_template_user_id_normalised_name",
+            USER_TEMPLATE_NORMALISED_NAME_UNIQUE_INDEX,
             "user_id",
-            literal_column("lower(btrim(name::text))"),
+            literal_column(f"lower(btrim(name::text, {TEMPLATE_NAME_TRIM_CHARS_SQL}))"),
             unique=True,
         ),
     )
