@@ -19,7 +19,7 @@ jobs:
           WEBHOOK_STAGING: ${{ secrets.SLACK_WEBHOOK_STAGING }}
           WEBHOOK_PROD: ${{ secrets.SLACK_WEBHOOK_PROD }}
         run: |
-          MESSAGE="Dependabot security fix merged in PR #${PR_NUMBER}. Redeploy required."
+          MESSAGE=":shield: Dependabot security fix merged in PR #${PR_NUMBER}. Redeploy required."
           PAYLOAD=$(jq -n --arg text "$MESSAGE" '{text: $text}')
 
           for webhook in "$WEBHOOK_DEV" "$WEBHOOK_STAGING" "$WEBHOOK_PROD"; do
