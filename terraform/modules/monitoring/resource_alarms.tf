@@ -256,8 +256,8 @@ resource "aws_cloudwatch_metric_alarm" "credential_renewal_failed" {
   alarm_description   = "The database credential renewal process has failed in the backend or worker"
   threshold           = 0
   comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = 5
-  datapoints_to_alarm = 3
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
   treat_missing_data  = "notBreaching"
 
   metric_query {
