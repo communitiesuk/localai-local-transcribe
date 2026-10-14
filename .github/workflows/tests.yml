@@ -37,7 +37,7 @@ jobs:
     uses: ./.github/workflows/backend-tests.yml
     with:
       python_version: "3.12"
-      poetry_version: "2.4.1"
+      poetry_version: "2.5.1"
     secrets: inherit
 
   frontend_tests:

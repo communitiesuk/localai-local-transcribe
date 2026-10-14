@@ -6,7 +6,7 @@ parameters:
     default: '3.12'
   - name: poetryVersion
     type: string
-    default: '2.4.1'
+    default: '2.5.1'
 
 steps:
   - script: |
