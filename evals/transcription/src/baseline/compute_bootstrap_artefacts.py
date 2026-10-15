@@ -77,13 +77,19 @@ def main() -> None:
 
     BASELINE_ARTEFACT_DIR.mkdir(parents=True, exist_ok=True)
     wer_artefact = build_wer_bootstrap_artefact(results_path)
-    _write_artefact(
-        wer_artefact,
-        WER_BOOTSTRAP_ARTEFACT_PATH,
-        "baseline_corpus_wer",
-        "relative_increase_vs_baseline_corpus_wer",
-    )
+    if wer_artefact is None:
+        logger.warning("No scorable WER samples in %s; WER baseline artefact was not updated", results_path)
+    else:
+        _write_artefact(
+            wer_artefact,
+            WER_BOOTSTRAP_ARTEFACT_PATH,
+            "baseline_corpus_wer",
+            "relative_increase_vs_baseline_corpus_wer",
+        )
     wder_artefact = build_wder_bootstrap_artefact(results_path)
+    if wder_artefact is None:
+        logger.warning("No scorable WDER samples in %s; WDER baseline artefact was not updated", results_path)
+        return
     _write_artefact(
         wder_artefact,
         WDER_BOOTSTRAP_ARTEFACT_PATH,

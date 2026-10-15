@@ -113,7 +113,14 @@ def run_evaluation(
     logger.info("Results saved to: %s", output_path)
 
     if check_drift_thresholds:
-        return apply_drift_thresholds(results, output_dir, timestamp)
+        return apply_drift_thresholds(
+            results,
+            output_dir,
+            timestamp,
+            diarization_capabilities={
+                adapter.name: dataset.supports_diarization and adapter.supports_diarization for adapter in adapters
+            },
+        )
     return 0
 
 
