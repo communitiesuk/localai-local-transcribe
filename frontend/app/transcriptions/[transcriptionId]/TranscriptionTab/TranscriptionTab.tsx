@@ -486,20 +486,22 @@ export function TranscriptionTab({
             )}
           </GovukButtonGroup>
 
-          {hasRecordings && (
+          {(hasRecordings || isLineEditMode) && (
             <div className="govuk-!-margin-bottom-2 govuk-!-padding-bottom-0 sticky top-0 bg-[var(--govuk-body-background-colour)] py-2">
-              <audio
-                controls
-                src={recordings[0].url}
-                className="w-full"
-                ref={audioRef}
-                onSeeked={delayedScroll}
-                onTimeUpdate={(e) => {
-                  if ((e.target as HTMLAudioElement).currentTime != null) {
-                    setTime((e.target as HTMLAudioElement).currentTime)
-                  }
-                }}
-              />
+              {hasRecordings && (
+                <audio
+                  controls
+                  src={recordings[0].url}
+                  className="w-full"
+                  ref={audioRef}
+                  onSeeked={delayedScroll}
+                  onTimeUpdate={(e) => {
+                    if ((e.target as HTMLAudioElement).currentTime != null) {
+                      setTime((e.target as HTMLAudioElement).currentTime)
+                    }
+                  }}
+                />
+              )}
               {isLineEditMode && (
                 <GovukButtonGroup
                   className="govuk-!-margin-bottom-4 govuk-!-margin-top-4"
