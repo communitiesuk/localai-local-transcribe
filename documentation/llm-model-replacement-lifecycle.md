@@ -183,6 +183,33 @@ flowchart LR
 
 Use input-token price as the main cost proxy because our prompts are large and outputs are small.
 
+<details>
+<summary>Example: what to report for score averages, variance and score `1` failures</summary>
+
+Use averages to show typical quality, standard deviation to show consistency, and score `1` results to show severe failures.
+
+| Model | Template | Examples | Accuracy mean | Accuracy standard deviation | Coverage mean | Coverage standard deviation | Score `1` count | Score `1` rate | Decision signal |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---|
+| Current | Chase | 40 | 4.2/5 | 0.6 | 4.0/5 | 0.7 | 1 | 2.5% | Baseline |
+| Candidate A | Chase | 40 | 4.3/5 | 0.5 | 4.1/5 | 0.5 | 0 | 0.0% | Best option: similar quality, fewer failures |
+| Candidate B | Chase | 40 | 4.5/5 | 1.2 | 4.2/5 | 1.1 | 4 | 10.0% | Risky: higher average, worse consistency |
+
+In this example, choose Candidate A over Candidate B. Candidate B scores higher on average, but has more severe failures and less stable output.
+
+Examples of real eval metrics to cite:
+
+| Eval | Useful metrics |
+|---|---|
+| Standard summarisation | `accuracy`, `coverage`, `readability`, `overall`, score `1` count/rate |
+| Bias | factual-vs-counterfactual score deltas, sentiment delta, 4/5 and SPC outcomes |
+| Security | `harmlessness`, `summarisation_adherence`, `refusal_robustness` |
+| Hallucination / citation | `hallucination_rate`, unsupported claim count |
+| Transcription | `wer`, `wder`, `speaker_count_accuracy`, `processing_speed_ratio` |
+
+Score `1` rate = number of raw judge scores of `1` divided by scored examples for that dimension. Report it per template as well as overall.
+
+</details>
+
 ## Decide
 
 - Prefer consistent output over a small mean-score increase.
