@@ -282,7 +282,7 @@ async def duplicate_template(
         }
         for question in questions
     ]
-        
+
     for _ in range(MAX_DUPLICATE_NAME_ATTEMPTS):
         template = UserTemplate(
             user_id=user_id,
@@ -339,7 +339,7 @@ async def duplicate_user_template(
         content=original_template.content,
         heading=original_template.heading,
         template_type=original_template.type,
-        questions=original_template.questions
+        questions=original_template.questions,
     )
 
 
