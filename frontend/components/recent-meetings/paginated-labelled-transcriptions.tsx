@@ -118,7 +118,7 @@ export const PaginatedLabelledTranscriptions = () => {
             role="region"
             aria-label="Labelled recordings"
             tabIndex={0}
-            className="overflow-x-auto focus-visible:[outline:3px_solid_var(--govuk-focus-colour)]"
+            className="relative overflow-x-auto focus-visible:[outline:3px_solid_var(--govuk-focus-colour)]"
           >
             <GovukTable>
               <GovukTableHead>
