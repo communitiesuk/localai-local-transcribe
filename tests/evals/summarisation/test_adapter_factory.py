@@ -4,9 +4,8 @@ import asyncio
 
 import pytest
 
-from common.azure_apim_auth import AzureStaticTokenProvider
+from common.azure_apim_auth import AzureClientSecretCredentialTokenProvider, AzureStaticTokenProvider
 from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
-from evals.summarisation.src.common.apim_token_provider import ThreadSafeClientSecretTokenProvider
 
 
 @pytest.mark.parametrize(
@@ -66,4 +65,4 @@ def test_build_azure_apim_adapter_uses_client_secret_when_configured(monkeypatch
 
     adapter = build_azure_apim_adapter()
 
-    assert isinstance(adapter._token_provider, ThreadSafeClientSecretTokenProvider)  # noqa: SLF001
+    assert isinstance(adapter._token_provider, AzureClientSecretCredentialTokenProvider)  # noqa: SLF001
