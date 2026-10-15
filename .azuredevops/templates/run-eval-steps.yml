@@ -51,12 +51,17 @@ steps:
       AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
       AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL)
       # These are set by the evals-pipeline-config variable group (secret variables must be mapped explicitly).
-      # NOTE: AZURE_APIM_ACCESS_TOKEN is a temporary solution used here in preference
-      # to client_secret auth. It will need revisiting, due to its short expiry.
-      AZURE_APIM_AUTH_METHOD: static_token
+      # The pipelines sign in to the AI Gateway as their own service principal, so each run obtains
+      # and refreshes its own token. Only the client secret is secret. The tenant id, client id and
+      # scope are mapped too, because values left unmapped fall back to the placeholders in
+      # .env.example, which is loaded by the command above.
+      AZURE_APIM_AUTH_METHOD: client_secret
+      AZURE_APIM_TENANT_ID: $(AZURE_APIM_TENANT_ID)
+      AZURE_APIM_CLIENT_ID: $(AZURE_APIM_CLIENT_ID)
+      AZURE_APIM_CLIENT_SECRET: $(AZURE_APIM_CLIENT_SECRET)
+      AZURE_APIM_SCOPE: $(AZURE_APIM_SCOPE)
       AZURE_APIM_URL: $(AZURE_APIM_URL)
       AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
-      AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
       AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
 
   # Azure DevOps retention is configured at run/pipeline level, not per artifact. Keep this

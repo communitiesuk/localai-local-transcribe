@@ -43,7 +43,10 @@ Mandatory values:
 | `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
 | `AZURE_APIM_URL` | APIM endpoint | No |
 | `AZURE_APIM_API_VERSION` | APIM API version | No |
-| `AZURE_APIM_ACCESS_TOKEN` | Temporary APIM bearer token | Yes |
+| `AZURE_APIM_TENANT_ID` | Tenant ID of the service principal used to sign in to the AI Gateway | No |
+| `AZURE_APIM_CLIENT_ID` | Application (client) ID of that service principal | No |
+| `AZURE_APIM_CLIENT_SECRET` | Client secret of that service principal. Check its expiry date | Yes |
+| `AZURE_APIM_SCOPE` | AI Gateway scope, for test `api://api.azc.test.communities.gov.uk/.default` | No |
 | `AZURE_APIM_SUBSCRIPTION_KEY` | APIM subscription key | Yes |
 
 Configurable values:
