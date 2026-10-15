@@ -10,6 +10,7 @@ import {
   GovukBody,
 } from '@/components/govuk'
 import RecordingControl from './recording-control'
+import { microphoneInUse } from '@/lib/microphone-in-use'
 import { UploadStatus } from '@/components/audio/upload-status'
 import { useStartTranscription } from '@/hooks/use-start-transcription'
 import { Controller, FormProvider } from 'react-hook-form'
@@ -157,6 +158,7 @@ function MicRecorderComponent({
           <RecordingControl
             stream={mediaRecorderStream}
             isRecording={isRecording}
+            microphoneLabel={microphoneInUse(audioDevices, mediaRecorderStream)}
             onStopRecording={stopRecording}
             onPauseStateChange={handlePauseStateChange}
           />

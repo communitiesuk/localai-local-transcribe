@@ -20,6 +20,7 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['versions'],
   }),
+  listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey: () => ['versions'],
   getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions: () => ({
     queryKey: ['guardrail-warning'],
   }),
@@ -30,6 +31,9 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
     () => ['minutes'],
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation: () => ({
     mutationKey: ['create-minute'],
+  }),
+  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
+    mutationKey: ['delete-minute-version'],
   }),
   createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
     mutationKey: ['create-minute-version'],
@@ -69,6 +73,7 @@ const configureQueries = (
     templates?: unknown
     versions?: unknown
     minute?: unknown
+    useDisabledQueryData?: boolean
   } = {}
 ) => {
   const defaultTemplatesResult = overrides.defaultTemplates ?? {
@@ -91,24 +96,30 @@ const configureQueries = (
     },
   }
 
-  const queryKeyToResponse = (key: string) => {
+  const queryKeyToResponse = (key: string, enabled = true) => {
     switch (key) {
       case 'default-templates':
         return defaultTemplatesResult
       case 'versions':
+        if (!enabled && !overrides.useDisabledQueryData) return { data: [] }
         return versionsResult
       case 'templates':
         return templatesResult
       case 'minute':
+        if (!enabled && !overrides.useDisabledQueryData) return { data: null }
         return minuteResult
       case 'guardrail-warning':
         return { data: { message: null } }
     }
     return undefined
   }
-  vi.mocked(useQuery).mockImplementation(((opts: { queryKey?: unknown[] }) =>
+  vi.mocked(useQuery).mockImplementation(((opts: {
+    queryKey?: unknown[]
+    enabled?: boolean
+  }) =>
     queryKeyToResponse(
-      opts?.queryKey?.[0] as string
+      opts?.queryKey?.[0] as string,
+      opts?.enabled
     )) as unknown as typeof useQuery)
 }
 
@@ -122,6 +133,7 @@ const renderTab = (
       transcription={transcription}
       onCancel={vi.fn()}
       onCreated={vi.fn()}
+      onFailedResultRemoved={vi.fn()}
       {...props}
     />
   )
@@ -284,20 +296,31 @@ describe('<NewDocumentTab />', () => {
     expect(screen.getByText('Generated version content')).toBeInTheDocument()
   })
 
-  it('shows an error banner and returns to the picker when generation fails', () => {
+  it('shows the standard failed document state when generation fails', () => {
+    const onCreated = vi.fn()
     mutateMock.mockImplementation((_vars, opts) =>
       opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
     )
-    configureQueries({ versions: { data: [{ status: 'failed' }] } })
-    renderTab()
+    configureQueries({ versions: { data: [{ id: 'v1', status: 'failed' }] } })
+    renderTab({ onCreated })
 
     selectAndCreate()
 
-    expect(setBannerMock).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: 'important' })
-    )
+    expect(onCreated).not.toHaveBeenCalled()
+    expect(screen.getByText('There is a problem')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: 'Choose a document template' })
+      screen.getByText(
+        'There was a problem processing your request. Create a new document to try again.'
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Document generation failed' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Try again' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Remove failed document' })
     ).toBeInTheDocument()
   })
 
@@ -333,6 +356,81 @@ describe('<NewDocumentTab />', () => {
 
     selectAndCreate()
 
+    expect(onActivityChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('shows the document view from the created minute id when generation completes', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    configureQueries({
+      versions: {
+        data: [
+          { status: 'completed', html_content: 'Generated version content' },
+        ],
+      },
+    })
+    const onActivityChange = vi.fn()
+    renderTab({ onActivityChange })
+
+    selectAndCreate()
+
+    expect(
+      screen.queryByText('Creating ‘General summary’…')
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Choose a document template' })
+    ).not.toBeInTheDocument()
+    expect(screen.getByText('Generated version content')).toBeInTheDocument()
+    expect(vi.mocked(useQuery)).not.toHaveBeenCalledWith(
+      expect.objectContaining({ queryKey: ['minute'] })
+    )
+    expect(onActivityChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('shows the failed document state from the created minute id when generation fails', () => {
+    mutateMock.mockImplementation((_vars, opts) =>
+      opts?.onSuccess?.({ minute_id: 'm1' }, _vars, undefined)
+    )
+    configureQueries({
+      versions: { data: [{ id: 'v1', status: 'failed' }] },
+    })
+    const onActivityChange = vi.fn()
+    renderTab({ onActivityChange })
+
+    selectAndCreate()
+
+    expect(
+      screen.queryByText('Creating ‘General summary’…')
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Choose a document template' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'There was a problem processing your request. Create a new document to try again.'
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Remove failed document' })
+    ).toBeInTheDocument()
+    expect(onActivityChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('stops creating when generation completes without a created minute id', () => {
+    vi.mocked(useMutation).mockReturnValue({
+      mutate: mutateMock,
+      isPending: true,
+    } as unknown as ReturnType<typeof useMutation>)
+    configureQueries({
+      versions: { data: [{ status: 'completed' }] },
+      minute: { data: null },
+      useDisabledQueryData: true,
+    })
+    const onActivityChange = vi.fn()
+    renderTab({ onActivityChange })
+
+    expect(screen.queryByText(/Creating/)).not.toBeInTheDocument()
     expect(onActivityChange).toHaveBeenLastCalledWith(false)
   })
 })

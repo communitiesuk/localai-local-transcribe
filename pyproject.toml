@@ -63,7 +63,7 @@ packages = [
     {include = "backend"},
     {include = "common"},
 ]
-requires-poetry = "=2.4.1"
+requires-poetry = "=2.5.1"
 
 # add common dependencies here
 [tool.poetry.dependencies]
@@ -96,7 +96,7 @@ orjson = "^3.11.9"
 notifications-python-client = "^12.1.0"
 
 [tool.poetry.group.backend.dependencies]
-pyjwt = "2.13.0"
+pyjwt = "2.15.1"
 posthog = "^6.6.1"
 uvicorn = "^0.31.0"
 apscheduler = "^3.11.0"
@@ -109,6 +109,8 @@ datasets = "^3.0.0"
 jiwer = "^3.0.0"
 soundfile = "^0.12.0"
 librosa = "^0.10.0"
+# Imported directly by core/metrics/diarization.py; was only transitive via librosa.
+scipy = "^1.17.1"
 
 [tool.poetry.group.evals-audio_generation.dependencies]
 elevenlabs = ">=2.35.0,<3.0.0"

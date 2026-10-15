@@ -6,11 +6,13 @@ export const DocumentTab = ({
   minute,
   onActivityChange,
   onCitationClicked,
+  onRemoved,
 }: {
   transcription: TranscriptionGetResponse
   minute: MinuteListItem
   onActivityChange?: (busy: boolean) => void
   onCitationClicked?: (citationIndex: number) => void
+  onRemoved: () => void
 }) => {
   return (
     <MinuteEditor
@@ -18,6 +20,7 @@ export const DocumentTab = ({
       minute={minute}
       onActivityChange={onActivityChange}
       onCitationClicked={onCitationClicked}
+      onRemoved={onRemoved}
     />
   )
 }

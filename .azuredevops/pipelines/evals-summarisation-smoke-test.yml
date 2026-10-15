@@ -13,7 +13,7 @@ parameters:
   - name: poetryVersion
     displayName: 'Poetry version'
     type: string
-    default: '2.4.1'
+    default: '2.5.1'
 
 pool:
   vmImage: ubuntu-latest

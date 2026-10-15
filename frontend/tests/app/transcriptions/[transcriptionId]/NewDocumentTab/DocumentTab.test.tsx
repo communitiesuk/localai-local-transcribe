@@ -20,11 +20,17 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions: () => ({
     queryKey: ['versions'],
   }),
+  listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey: () => ['versions'],
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey:
+    () => ['minutes'],
   getGuardrailWarningMinuteVersionsMinuteVersionIdGuardrailsGetOptions: () => ({
     queryKey: ['guardrail-warning'],
   }),
   createMinuteVersionMinutesMinuteIdVersionsPostMutation: () => ({
     mutationKey: ['create-minute-version'],
+  }),
+  deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
+    mutationKey: ['delete-minute-version'],
   }),
 }))
 
@@ -77,6 +83,7 @@ describe('<DocumentTab />', () => {
       <DocumentTab
         transcription={{ id: '1' } as TranscriptionGetResponse}
         minute={{ id: '1' } as MinuteListItem}
+        onRemoved={vi.fn()}
       />
     )
 

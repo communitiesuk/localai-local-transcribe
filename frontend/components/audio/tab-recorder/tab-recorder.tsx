@@ -14,6 +14,7 @@ import {
   MicrophonePermission,
 } from '@/components/audio/microphone-permission'
 import RecordingControl from '@/components/audio/recording-control'
+import { microphoneInUse } from '@/lib/microphone-in-use'
 import { UploadStatus } from '@/components/audio/upload-status'
 import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 import { recordAnalyticsEvent } from '@/lib/analytics'
@@ -110,6 +111,7 @@ function TabRecorder({
   const screenStreamRef = useRef<MediaStream | null>(null)
   const micStreamRef = useRef<MediaStream | null>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
+  const [micStream, setMicStream] = useState<MediaStream | null>(null)
   const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
 
   useLockNavigation(isRecording || !!recordedAudio)
@@ -133,6 +135,7 @@ function TabRecorder({
     micStreamRef.current = null
     mediaRecorderRef.current = null
     setStream(null)
+    setMicStream(null)
 
     setIsRecording(false)
     releaseWakeLock()
@@ -214,15 +217,18 @@ function TabRecorder({
       screenSource.connect(screenGain).connect(gainNode).connect(destination)
 
       try {
-        const micStream = await navigator.mediaDevices.getUserMedia({
+        const microphoneStream = await navigator.mediaDevices.getUserMedia({
           audio: { deviceId: selectedDeviceId },
         })
-        micStreamRef.current = micStream
-        const micSource = newAudioContext.createMediaStreamSource(micStream)
+        micStreamRef.current = microphoneStream
+        setMicStream(microphoneStream)
+        const micSource =
+          newAudioContext.createMediaStreamSource(microphoneStream)
         const micGain = newAudioContext.createGain()
         micGain.gain.value = 1.0
         micSource.connect(micGain).connect(gainNode).connect(destination)
       } catch (micError) {
+        setMicStream(null)
         console.warn(
           'Could not access microphone. Recording only tab audio.',
           micError
@@ -431,6 +437,8 @@ function TabRecorder({
             <RecordingControl
               stream={stream}
               isRecording={isRecording}
+              microphoneLabel={microphoneInUse(audioDevices, micStream)}
+              noMicrophone={!micStream}
               onStopRecording={() => {
                 onStopRecording()
                 stopRecording()
