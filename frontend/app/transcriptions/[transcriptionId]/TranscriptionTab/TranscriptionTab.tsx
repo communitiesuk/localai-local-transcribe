@@ -487,7 +487,7 @@ export function TranscriptionTab({
           </GovukButtonGroup>
 
           {hasRecordings && (
-            <div className="govuk-!-margin-bottom-2 sticky top-0 bg-[var(--govuk-body-background-colour)] py-2">
+            <div className="govuk-!-margin-bottom-2 govuk-!-padding-bottom-0 sticky top-0 bg-[var(--govuk-body-background-colour)] py-2">
               <audio
                 controls
                 src={recordings[0].url}
@@ -500,43 +500,43 @@ export function TranscriptionTab({
                   }
                 }}
               />
+              {isLineEditMode && (
+                <GovukButtonGroup
+                  className="govuk-!-margin-bottom-4 govuk-!-margin-top-4"
+                  id="line-edit-actions"
+                >
+                  <GovukButton
+                    type="button"
+                    variant="primary"
+                    onClick={saveLineEdit}
+                    disabled={
+                      !lineEditInProgress ||
+                      selectedLineIndex == null ||
+                      isSaving
+                    }
+                  >
+                    Save line edit
+                  </GovukButton>
+                  <GovukButton
+                    type="button"
+                    variant="warning"
+                    onClick={cancelLineEdit}
+                    disabled={!lineEditInProgress || isSaving}
+                  >
+                    Cancel line edit
+                  </GovukButton>
+                  <GovukButton
+                    type="button"
+                    onClick={finishEditing}
+                    variant="secondary"
+                  >
+                    Finish editing
+                  </GovukButton>
+                </GovukButtonGroup>
+              )}
+              <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-margin-bottom-0" />
             </div>
           )}
-
-          {isLineEditMode && (
-            <GovukButtonGroup
-              className="govuk-!-margin-bottom-4 [scroll-margin-top:5rem]"
-              id="line-edit-actions"
-            >
-              <GovukButton
-                type="button"
-                variant="primary"
-                onClick={saveLineEdit}
-                disabled={
-                  !lineEditInProgress || selectedLineIndex == null || isSaving
-                }
-              >
-                Save line edit
-              </GovukButton>
-              <GovukButton
-                type="button"
-                variant="warning"
-                onClick={cancelLineEdit}
-                disabled={!lineEditInProgress || isSaving}
-              >
-                Cancel line edit
-              </GovukButton>
-              <GovukButton
-                type="button"
-                onClick={finishEditing}
-                variant="secondary"
-              >
-                Finish editing
-              </GovukButton>
-            </GovukButtonGroup>
-          )}
-
-          <hr className="govuk-section-break govuk-section-break--m govuk-section-break--visible" />
 
           <div className="flex flex-col gap-6">
             {fields.map((field, index) => {
