@@ -26,7 +26,13 @@ DEFAULT_BOOTSTRAP_RESAMPLES = 10_000
 DEFAULT_RANDOM_SEED = 42
 DEFAULT_QUANTILES = (0.5, 0.9, 0.95, 0.99)
 
-AGGREGATABLE_METRIC_KEYS = ["wer", "wder", "speaker_count_accuracy", "processing_speed_ratio"]
+AGGREGATABLE_METRIC_KEYS = [
+    "wer",
+    "content_wer",
+    "wder",
+    "speaker_count_accuracy",
+    "processing_speed_ratio",
+]
 
 # Thresholds below are provisional for the baseline transcription eval config only.
 DRIFT_THRESHOLDS_ARE_AMI_PROXY_PLACEHOLDERS = True

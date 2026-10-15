@@ -23,6 +23,8 @@ class FakeServiceAdapter:
 
 
 class FakeAdapter:
+    supports_diarization = True
+
     def __init__(self, label: str, hyp: str, proc_sec: float = 0.25):
         self.name = label
         self.label = label
@@ -40,6 +42,8 @@ class FakeAdapter:
 
 
 class FakeDataset:
+    supports_diarization = True
+
     def __init__(self, samples: list[dict]):
         self._samples = []
         for idx, s in enumerate(samples):

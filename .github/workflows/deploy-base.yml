@@ -195,6 +195,10 @@ jobs:
               blocks: [
                 {
                   type: "section",
+                  text: { type: "mrkdwn", text: $text }
+                },
+                {
+                  type: "section",
                   fields: [
                     { type: "mrkdwn", text: ("*Status:* " + $status) },
                     { type: "mrkdwn", text: ("*Run:* <" + $run_url + "|View run>") }
