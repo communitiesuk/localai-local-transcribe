@@ -139,8 +139,8 @@ def test_accuracy_guardrail_prompt_maps_template_instructions_to_template_instru
 def test_accuracy_guardrail_prompt_uses_indexed_transcript_for_citation_checks():
     messages = get_accuracy_check_messages("Summary [1]", _TRANSCRIPT, 0.7)
 
-    assert "[0] Alice: Hello everyone." in messages[1]["content"]
-    assert "[1] Bob: Good morning." in messages[1]["content"]
+    assert "[0] Alice (recording offset +0s): Hello everyone." in messages[1]["content"]
+    assert "[1] Bob (recording offset +5s): Good morning." in messages[1]["content"]
     assert "If the summary uses bracketed transcript references like `[0]` or `[11-12]`" in messages[0]["content"]
 
 

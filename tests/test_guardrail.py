@@ -55,7 +55,7 @@ async def test_calculate_accuracy_score():
         assert kwargs["messages"][0]["role"] == "system"
         assert "Quality Assurance auditor" in kwargs["messages"][0]["content"]
         assert kwargs["messages"][1]["role"] == "user"
-        assert "A: Hello" in kwargs["messages"][1]["content"]
+        assert "A (recording offset +0s): Hello" in kwargs["messages"][1]["content"]
         assert kwargs["messages"][2]["role"] == "user"
         assert minute_text in kwargs["messages"][2]["content"]
 
