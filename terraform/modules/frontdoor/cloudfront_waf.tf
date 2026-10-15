@@ -101,13 +101,13 @@ resource "aws_wafv2_web_acl" "main" {
           not_statement {
             statement {
               or_statement {
+                # 1. Monitoring endpoint
                 statement {
-                  byte_match_statement {
+                  regex_match_statement {
                     field_to_match {
                       uri_path {}
                     }
-                    positional_constraint = "EXACTLY"
-                    search_string         = "/monitoring"
+                    regex_string = "^/monitoring/?$"
                     text_transformation {
                       priority = 0
                       type     = "URL_DECODE"
@@ -118,13 +118,13 @@ resource "aws_wafv2_web_acl" "main" {
                     }
                   }
                 }
+                # 2. Minutes versions endpoint (ALLOW LARGE PAYLOADS TO PASS TO RULE 4)
                 statement {
-                  byte_match_statement {
+                  regex_match_statement {
                     field_to_match {
                       uri_path {}
                     }
-                    positional_constraint = "EXACTLY"
-                    search_string         = "/monitoring/"
+                    regex_string = "^/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
                     text_transformation {
                       priority = 0
                       type     = "URL_DECODE"
@@ -132,6 +132,10 @@ resource "aws_wafv2_web_acl" "main" {
                     text_transformation {
                       priority = 1
                       type     = "NORMALIZE_PATH"
+                    }
+                    text_transformation {
+                      priority = 2
+                      type     = "LOWERCASE"
                     }
                   }
                 }
@@ -171,13 +175,13 @@ resource "aws_wafv2_web_acl" "main" {
 
         scope_down_statement {
           or_statement {
+            # 1. Monitoring endpoint
             statement {
-              byte_match_statement {
+              regex_match_statement {
                 field_to_match {
                   uri_path {}
                 }
-                positional_constraint = "EXACTLY"
-                search_string         = "/monitoring"
+                regex_string = "^/monitoring/?$"
                 text_transformation {
                   priority = 0
                   type     = "URL_DECODE"
@@ -188,13 +192,13 @@ resource "aws_wafv2_web_acl" "main" {
                 }
               }
             }
+            # 2. Minutes versions endpoint
             statement {
-              byte_match_statement {
+              regex_match_statement {
                 field_to_match {
                   uri_path {}
                 }
-                positional_constraint = "EXACTLY"
-                search_string         = "/monitoring/"
+                regex_string = "^/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
                 text_transformation {
                   priority = 0
                   type     = "URL_DECODE"
@@ -202,6 +206,10 @@ resource "aws_wafv2_web_acl" "main" {
                 text_transformation {
                   priority = 1
                   type     = "NORMALIZE_PATH"
+                }
+                text_transformation {
+                  priority = 2
+                  type     = "LOWERCASE"
                 }
               }
             }
