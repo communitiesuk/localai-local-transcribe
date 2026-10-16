@@ -13,15 +13,22 @@ def _format_recording_offset(seconds: float) -> str:
     return f"+{seconds}s"
 
 
-def _speaker_time_and_text(entry: DialogueEntry) -> str:
-    if "start_time" not in entry:
+def _speaker_offset_and_text(entry: DialogueEntry) -> str:
+    start_time = entry.get("start_time")
+    if not isinstance(start_time, int | float):
         return f"{entry['speaker']}: {entry['text']}"
-    return f"{entry['speaker']} (recording offset {_format_recording_offset(entry['start_time'])}): {entry['text']}"
+    return f"{entry['speaker']} (recording offset {_format_recording_offset(float(start_time))}): {entry['text']}"
 
 
 def transcript_as_speaker_and_utterance(transcript: list[DialogueEntry]) -> str:
-    return "\n".join([_speaker_time_and_text(entry) for entry in transcript])
+    return "\n".join([f"{item['speaker']}: {item['text']}" for item in transcript])
 
 
-def transcript_as_index_speaker_and_utterance(transcript: list[DialogueEntry]) -> str:
-    return "\n".join(f"[{i}] {_speaker_time_and_text(entry)}" for i, entry in enumerate(transcript))
+def transcript_as_index_speaker_and_utterance(
+    transcript: list[DialogueEntry],
+    *,
+    include_recording_offsets: bool = False,
+) -> str:
+    if include_recording_offsets:
+        return "\n".join(f"[{i}] {_speaker_offset_and_text(entry)}" for i, entry in enumerate(transcript))
+    return "\n".join(f"[{i}] {entry['speaker']}: {entry['text']}" for i, entry in enumerate(transcript))
