@@ -118,41 +118,24 @@ resource "aws_wafv2_web_acl" "main" {
                     }
                   }
                 }
-                # 2. POST minutes versions endpoint (ALLOW LARGE PAYLOADS TO PASS TO RULE 4)
+                # 2. Minutes versions endpoint (all methods; allow large payloads through rule 4)
                 statement {
-                  and_statement {
-                    statement {
-                      regex_match_statement {
-                        field_to_match {
-                          uri_path {}
-                        }
-                        regex_string = "^/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
-                        text_transformation {
-                          priority = 0
-                          type     = "URL_DECODE"
-                        }
-                        text_transformation {
-                          priority = 1
-                          type     = "NORMALIZE_PATH"
-                        }
-                        text_transformation {
-                          priority = 2
-                          type     = "LOWERCASE"
-                        }
-                      }
+                  regex_match_statement {
+                    field_to_match {
+                      uri_path {}
                     }
-                    statement {
-                      byte_match_statement {
-                        field_to_match {
-                          method {}
-                        }
-                        positional_constraint = "EXACTLY"
-                        search_string         = "POST"
-                        text_transformation {
-                          priority = 0
-                          type     = "NONE"
-                        }
-                      }
+                    regex_string = "^/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
+                    text_transformation {
+                      priority = 0
+                      type     = "URL_DECODE"
+                    }
+                    text_transformation {
+                      priority = 1
+                      type     = "NORMALIZE_PATH"
+                    }
+                    text_transformation {
+                      priority = 2
+                      type     = "LOWERCASE"
                     }
                   }
                 }
@@ -209,41 +192,24 @@ resource "aws_wafv2_web_acl" "main" {
                 }
               }
             }
-            # 2. POST minutes versions endpoint
+            # 2. Minutes versions endpoint (all methods)
             statement {
-              and_statement {
-                statement {
-                  regex_match_statement {
-                    field_to_match {
-                      uri_path {}
-                    }
-                    regex_string = "^/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
-                    text_transformation {
-                      priority = 0
-                      type     = "URL_DECODE"
-                    }
-                    text_transformation {
-                      priority = 1
-                      type     = "NORMALIZE_PATH"
-                    }
-                    text_transformation {
-                      priority = 2
-                      type     = "LOWERCASE"
-                    }
-                  }
+              regex_match_statement {
+                field_to_match {
+                  uri_path {}
                 }
-                statement {
-                  byte_match_statement {
-                    field_to_match {
-                      method {}
-                    }
-                    positional_constraint = "EXACTLY"
-                    search_string         = "POST"
-                    text_transformation {
-                      priority = 0
-                      type     = "NONE"
-                    }
-                  }
+                regex_string = "^/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+                text_transformation {
+                  priority = 1
+                  type     = "NORMALIZE_PATH"
+                }
+                text_transformation {
+                  priority = 2
+                  type     = "LOWERCASE"
                 }
               }
             }
