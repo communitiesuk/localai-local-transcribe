@@ -101,7 +101,6 @@ resource "aws_wafv2_web_acl" "main" {
           not_statement {
             statement {
               or_statement {
-                # 1. Monitoring endpoint
                 statement {
                   regex_match_statement {
                     field_to_match {
@@ -118,7 +117,6 @@ resource "aws_wafv2_web_acl" "main" {
                     }
                   }
                 }
-                # 2. Minutes versions endpoint (all methods; allow large payloads through rule 4)
                 statement {
                   regex_match_statement {
                     field_to_match {
@@ -175,7 +173,6 @@ resource "aws_wafv2_web_acl" "main" {
 
         scope_down_statement {
           or_statement {
-            # 1. Monitoring endpoint
             statement {
               regex_match_statement {
                 field_to_match {
@@ -192,7 +189,6 @@ resource "aws_wafv2_web_acl" "main" {
                 }
               }
             }
-            # 2. Minutes versions endpoint (all methods)
             statement {
               regex_match_statement {
                 field_to_match {
