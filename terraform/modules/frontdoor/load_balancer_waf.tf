@@ -99,6 +99,27 @@ resource "aws_wafv2_web_acl" "load_balancer" {
                     }
                   }
                 }
+                # Minute versions are evaluated by rule 4, which counts SizeRestrictions_BODY.
+                statement {
+                  regex_match_statement {
+                    field_to_match {
+                      uri_path {}
+                    }
+                    regex_string = "^/api/proxy/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
+                    text_transformation {
+                      priority = 0
+                      type     = "URL_DECODE"
+                    }
+                    text_transformation {
+                      priority = 1
+                      type     = "NORMALIZE_PATH"
+                    }
+                    text_transformation {
+                      priority = 2
+                      type     = "LOWERCASE"
+                    }
+                  }
+                }
               }
             }
           }
@@ -166,6 +187,27 @@ resource "aws_wafv2_web_acl" "load_balancer" {
                 text_transformation {
                   priority = 1
                   type     = "NORMALIZE_PATH"
+                }
+              }
+            }
+            # Minute version uploads can exceed the managed body-size limit; only SizeRestrictions_BODY is overridden.
+            statement {
+              regex_match_statement {
+                field_to_match {
+                  uri_path {}
+                }
+                regex_string = "^/api/proxy/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+                text_transformation {
+                  priority = 1
+                  type     = "NORMALIZE_PATH"
+                }
+                text_transformation {
+                  priority = 2
+                  type     = "LOWERCASE"
                 }
               }
             }

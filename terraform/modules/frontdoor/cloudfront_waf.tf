@@ -124,7 +124,7 @@ resource "aws_wafv2_web_acl" "main" {
                     field_to_match {
                       uri_path {}
                     }
-                    regex_string = "^/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
+                    regex_string = "^/api/proxy/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
                     text_transformation {
                       priority = 0
                       type     = "URL_DECODE"
@@ -198,7 +198,7 @@ resource "aws_wafv2_web_acl" "main" {
                 field_to_match {
                   uri_path {}
                 }
-                regex_string = "^/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
+                regex_string = "^/api/proxy/minutes/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/versions/?$"
                 text_transformation {
                   priority = 0
                   type     = "URL_DECODE"
