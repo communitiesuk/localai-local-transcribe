@@ -42,12 +42,14 @@ resource "azurerm_storage_account" "terraform_state" {
   # Create-time only: changing this forces replacement and destroys data.
   infrastructure_encryption_enabled = true
 
-  public_network_access_enabled = true
+  # State is reached only through its private endpoint, so no public address is allowed.
+  # The storage firewall does not gate the resource manager API, so this account can still
+  # be changed, and public access turned back on, from the Portal.
+  public_network_access_enabled = false
 
   network_rules {
     default_action = "Deny"
     bypass         = ["AzureServices"]
-    ip_rules       = distinct(var.mhclg_ip_rules)
   }
 
   # Harden defaults that do not require private endpoints.

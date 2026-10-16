@@ -47,34 +47,16 @@ provider "azurerm" {
 }
 
 locals {
-  adapt_ip_rules = distinct(var.adapt_ip_rules)
-  # TODO(AIILG-649): Confirm the Azure DevOps network route once we can test this in the
-  # Azure environment, then remove any allowlist entries that private networking makes
-  # unnecessary.
-  ado_ip_rules   = distinct(var.ado_ip_rules)
-  mhclg_ip_rules = distinct(var.mhclg_ip_rules)
-
   # Per-account settings. Hardening common to both is set once on the resource below so the
   # two accounts cannot drift apart.
   accounts = {
     sensitive = {
       name    = var.sensitive_storage_account_name
       purpose = "evals-input-and-debug"
-      # TODO(AIILG-649): Confirm whether these temporary Azure DevOps IP rules are still
-      # needed once the private networking shape is known in the Azure environment.
-      ip_rules = concat(local.adapt_ip_rules, local.ado_ip_rules)
-      # TODO(AIILG-649): Confirm when this can be disabled once the private endpoint
-      # configuration is known and tested in the Azure environment.
-      public_network_access_enabled = var.sensitive_public_network_access_enabled
     }
     results = {
       name    = var.results_storage_account_name
       purpose = "evals-results"
-      # TODO(AIILG-649): Confirm whether these temporary Azure DevOps IP rules are still
-      # needed once the private networking shape is known in the Azure environment.
-      ip_rules = concat(local.adapt_ip_rules, local.mhclg_ip_rules, local.ado_ip_rules)
-      # Results intentionally keep public network access so approved MHCLG devices can read them.
-      public_network_access_enabled = true
     }
   }
 
@@ -123,17 +105,14 @@ resource "azurerm_storage_account" "evals" {
   # assignments in rbac.tf are the only route to the data.
   shared_access_key_enabled = false
 
-  # TODO(AIILG-649): Keep this configurable until the Azure environment confirms what the
-  # private endpoint setup looks like. When set false, the public IP allowlist no longer
-  # provides access to the account.
-  public_network_access_enabled = each.value.public_network_access_enabled
+  # Both accounts are reached only through their private endpoints, so there is no public
+  # endpoint and no IP allowlist. Read access from MHCLG devices to results is added over
+  # private connectivity, not by reopening public access.
+  public_network_access_enabled = false
 
-  # Deny by default. With both allowlists empty, public network access is denied while the
-  # final private networking approach is still to be confirmed in the Azure environment.
   network_rules {
     default_action = "Deny"
     bypass         = var.network_rules_bypass
-    ip_rules       = each.value.ip_rules
   }
 
   # Cap how long a newly created SAS token may remain valid. With shared keys disabled only

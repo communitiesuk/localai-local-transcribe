@@ -17,19 +17,7 @@ environment_name    = "<environment-name>"
 # ado_federation_subject = "sc://<org>/<project>/evals-blob"
 
 # Network access.
-adapt_ip_rules = [
-  "<adapt-egress-ip-or-cidr>",
-]
-
-mhclg_ip_rules = [
-  "<mhclg-egress-ip-or-cidr>",
-]
-
-# ado_ip_rules = []
 # network_rules_bypass = []
-
-# TODO(AIILG-649): Confirm once the private endpoint setup is known in the Azure environment.
-# sensitive_public_network_access_enabled = false
 
 # Private endpoint subnet in the evals virtual network.
 private_endpoint_subnet_id = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
