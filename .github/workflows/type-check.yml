@@ -1,5 +1,3 @@
-# Put action within a raw block so that the curly bracket expressions aren't picked up by the cookiecutter
-#
 name: type-check
 
 env:
@@ -11,7 +9,7 @@ on:
   pull_request:
   push:
     branches: [main]
-    
+
 permissions:
   contents: read
 
