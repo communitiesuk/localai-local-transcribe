@@ -119,7 +119,7 @@ def write_report(report: list[dict[str, object]], filename: str, output_dir: Pat
 ENV_FILES = (Path(__file__).parent / ".env", REPO_ROOT / ".env")
 
 
-ENV_PREFIXES = ("PLAUSIBLE_", "POSTGRES_")
+ENV_PREFIXES = ("PLAUSIBLE_",)
 
 
 def load_env(paths: Iterable[Path] = ENV_FILES, prefixes: tuple[str, ...] = ENV_PREFIXES) -> None:
@@ -147,12 +147,6 @@ def main() -> None:
     parser.add_argument("--start", required=True, type=date.fromisoformat, help="Inclusive start date, YYYY-MM-DD")
     parser.add_argument("--end", required=True, type=date.fromisoformat, help="Inclusive end date, YYYY-MM-DD")
     parser.add_argument(
-        "--environment",
-        default="local",
-        help="'local' runs psql against the local database (see reporting/README.md); any other value (e.g. "
-        "development) goes through connect-to-aws-db.sh's tunnel to that environment (default: local)",
-    )
-    parser.add_argument(
         "--caseload",
         type=Path,
         help="CSV of estimated caseload (organisation_id, month, estimated_caseload); needed for measures 6 and 7",
@@ -179,7 +173,7 @@ def main() -> None:
         sys.stderr.write("No --caseload given: estimated caseload and percentages will be null for measures 6 and 7.\n")
 
     start, end = args.start.isoformat(), args.end.isoformat()
-    rows = fetch_event_rows(args.environment, start, end)
+    rows = fetch_event_rows(args.start, args.end)
     sources = Sources(
         count=partial(count_event, rows),
         monthly_counts=partial(monthly_counts, rows),

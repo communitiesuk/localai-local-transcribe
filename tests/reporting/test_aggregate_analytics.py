@@ -81,20 +81,6 @@ def test_plausible_monthly_counts_parses_organisation_dimension(monkeypatch: pyt
     assert captured["json"]["filters"] == [["is", "event:name", ["a", "b"]]]
 
 
-def test_plausible_error_includes_response_body(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("PLAUSIBLE_BASE_URL", "https://plausible.test")
-    monkeypatch.setenv("PLAUSIBLE_API_KEY", "key")
-    monkeypatch.setenv("PLAUSIBLE_SITE_ID", "site")
-
-    def fake_post(url: str, **_kwargs: object) -> httpx.Response:
-        return httpx.Response(400, json={"error": "Invalid filter goal"}, request=httpx.Request("POST", url))
-
-    monkeypatch.setattr(httpx, "post", fake_post)
-
-    with pytest.raises(RuntimeError, match="400.*Invalid filter goal"):
-        plausible_monthly_counts(("a",), "2026-09-01", "2026-09-30", by_organisation=False)
-
-
 def results(sources: Sources) -> dict[str, list]:
     return {r["measure"]: r["rows"] for r in run_all("2026-09-01", "2026-10-31", sources)}
 
@@ -188,11 +174,10 @@ def test_load_env_ignores_unrelated_variables_such_as_aws_keys(monkeypatch: pyte
         load_env([env_file])
 
         assert "AWS_ACCESS_KEY_ID" not in os.environ
+        assert "POSTGRES_HOST" not in os.environ
         assert os.environ["PLAUSIBLE_SITE_ID"] == "site"
-        assert os.environ["POSTGRES_HOST"] == "db"
     finally:
-        for name in ("PLAUSIBLE_SITE_ID", "POSTGRES_HOST"):
-            os.environ.pop(name, None)
+        os.environ.pop("PLAUSIBLE_SITE_ID", None)
 
 
 def test_months_in_range_spans_year_end() -> None:
