@@ -113,6 +113,8 @@ resource "azurerm_storage_account" "evals" {
   network_rules {
     default_action = "Deny"
     bypass         = var.network_rules_bypass
+    # Set explicitly because the provider keeps the live list when this is left out.
+    ip_rules = []
   }
 
   # Cap how long a newly created SAS token may remain valid. With shared keys disabled only

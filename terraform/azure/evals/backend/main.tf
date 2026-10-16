@@ -50,6 +50,8 @@ resource "azurerm_storage_account" "terraform_state" {
   network_rules {
     default_action = "Deny"
     bypass         = ["AzureServices"]
+    # Set explicitly because the provider keeps the live list when this is left out.
+    ip_rules = []
   }
 
   # Harden defaults that do not require private endpoints.
