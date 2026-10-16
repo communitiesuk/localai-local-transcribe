@@ -10,13 +10,13 @@ Provisions two storage accounts holding three private blob containers for pipeli
 
 ## Why two accounts
 
-Azure storage firewall rules — IP allowlists and private endpoints — are scoped to the storage account, not the container. AIILG-649 requires `input` and `debug` to be unreachable from MHCLG devices while `output` stays readable from them, at the network layer. The containers are therefore split across two accounts that differ only in their IP allowlist.
+Azure storage firewall rules and private endpoints are scoped to the storage account, not the container. AIILG-649 requires `input` and `debug` to be unreachable from MHCLG devices while `output` stays readable from them, at the network layer. The containers are therefore split across two accounts that differ only in the private endpoints that reach them.
 
 ## Controls
 
 | Control                                        | Where                                          |
 | ---------------------------------------------- | ---------------------------------------------- |
-| Deny by default, explicit IP allowlists        | `network_rules` in `main.tf`                   |
+| Deny by default, public access off            | `network_rules` in `main.tf`                   |
 | Private endpoint and private DNS for ADAPT      | `network.tf`                                   |
 | Shared access keys disabled                    | `shared_access_key_enabled = false`, `main.tf` |
 | Entra ID required for all data plane calls     | Follows from disabling shared keys             |
@@ -80,9 +80,7 @@ The evals accounts encrypt with a customer-managed key from the vault in `key-va
 
 ## Unknowns left as variables
 
-ADAPT, temporary Azure DevOps, and MHCLG egress addresses, the private endpoint subnet, and principal IDs are variables. Empty network values deny that route except trusted Azure services using strong authentication.
-
-IP allowlists support public IPv4 CIDR ranges. Use plain IPs for single-host entries.
+The private endpoint subnet and principal IDs are variables. Empty network values deny that route except trusted Azure services using strong authentication.
 
 ## Private endpoints
 
@@ -112,7 +110,7 @@ Still out of scope: Queue/Table diagnostic logging, a SIEM, and loading data int
 - Rights for the applying identity to create a Log Analytics workspace and diagnostic settings on the storage accounts
 - Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Three globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one sensitive, one results
-- MHCLG public egress IPs or CIDR ranges for machines that run `terraform init` / `plan` / `apply` against the state backend
+- A machine that reaches the state storage account's private endpoint, for `terraform init` / `plan` / `apply` against the state backend
 - **Storage Blob Data Contributor** on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init` / `plan` / `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
 - **User Access Administrator** (or Owner) on the resource group for the applying identity, because `rbac.tf` creates role assignments
 
@@ -147,7 +145,7 @@ Create one local var file for both Terraform roots:
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars: subscription_id, resource_group_name, environment_name,
-# IP allowlists, principal IDs, and any pipeline federation values.
+# private endpoint subnet, principal IDs, and any pipeline federation values.
 # Fixed Softwire sandbox names/defaults live in variables.tf and backend/variables.tf.
 nano terraform.tfvars
 ```
@@ -174,14 +172,14 @@ cd ..
 # Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
 # use_azuread_auth=true requires Storage Blob Data Contributor on the state storage
 # account or tfstate container for the applying identity, and the caller must connect
-# from an IP listed in backend/mhclg_ip_rules; without both, init fails.
+# through the state account's private endpoint; without both, init fails.
 terraform init -backend-config="resource_group_name=group-aiilgazuresandbox-sandbox" -backend-config="storage_account_name=ltevaltf" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate" -backend-config="use_azuread_auth=true"
 
 terraform plan -compact-warnings
 terraform apply -compact-warnings
 ```
 
-Cloud Shell egresses from an unpredictable IP, so blob data plane commands run there are denied once the firewall is on. This does not block Terraform: accounts, containers, and role assignments are all managed through the resource manager API, which the storage firewall does not gate. There is no allowlist entry for the applying machine, by design — read blobs from ADAPT instead. If you must check by hand in the sandbox, add the address to `adapt_ip_rules` so the exemption is visible in the diff, and remove it before reviewing access.
+Cloud Shell egresses from an unpredictable IP, so blob data plane commands run there are denied once the firewall is on. This does not block Terraform: accounts, containers, and role assignments are all managed through the resource manager API, which the storage firewall does not gate. Both accounts have public access off, so read blobs from ADAPT or the shared agents instead.
 
 ### Step 3: Verify
 
@@ -196,4 +194,4 @@ Then review the expected access matrix above: ADAPT should reach `input`, `debug
 
 ## Assured Azure environment
 
-Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including three new globally unique storage account names, the real ADAPT and MHCLG addresses, and the real principal IDs. The applying identity still needs **Storage Blob Data Contributor** on the state storage for `use_azuread_auth=true`, plus rights to create role assignments.
+Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including three new globally unique storage account names, and the real principal IDs. The applying identity still needs **Storage Blob Data Contributor** on the state storage for `use_azuread_auth=true`, plus rights to create role assignments.

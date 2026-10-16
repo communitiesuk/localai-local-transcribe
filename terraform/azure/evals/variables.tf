@@ -88,37 +88,11 @@ variable "ado_federation_subject" {
 }
 
 # Network access
-#
-# Public IPv4 addresses or CIDR ranges. Use plain IPs for single-host entries.
-
-variable "adapt_ip_rules" {
-  type        = list(string)
-  description = "Public egress IPs or CIDR ranges for ADAPT. Allowed on both accounts."
-  default     = []
-}
-
-variable "ado_ip_rules" {
-  type        = list(string)
-  description = "Temporary public egress IPs or CIDR ranges for Azure DevOps agents. Allowed on both accounts."
-  default     = []
-}
-
-variable "mhclg_ip_rules" {
-  type        = list(string)
-  description = "Public egress IPs or CIDR ranges for MHCLG devices. Allowed on the results account only."
-  default     = []
-}
 
 variable "network_rules_bypass" {
   type        = list(string)
   description = "Storage firewall bypass exemptions. Keep empty unless a named trusted Azure service needs access."
   default     = []
-}
-
-variable "sensitive_public_network_access_enabled" {
-  type        = bool
-  description = "Whether the input/debug account keeps a public endpoint. TODO(AIILG-649): confirm the final private endpoint setup in the Azure environment before setting false."
-  default     = true
 }
 
 # Private endpoint

@@ -133,13 +133,6 @@ resource_group_name = "${rg}"
 environment_name    = "${environment_name}"
 sensitive_storage_account_name = "${sensitive_account}"
 results_storage_account_name   = "${results_account}"
-# Test ADAPT and the shared agents reach both accounts through their private endpoints,
-# and results are read over private connectivity, so no public addresses are allowed.
-adapt_ip_rules = []
-mhclg_ip_rules = []
-ado_ip_rules   = []
-# Input and debug are reachable only through the sensitive account's private endpoint.
-sensitive_public_network_access_enabled = false
 # Subnet in the evals virtual network that holds both blob private endpoints.
 private_endpoint_subnet_id = "${private_endpoint_subnet_id}"
 # Federated credential that lets the evals-blob service connection sign in as evals-blob-id.
