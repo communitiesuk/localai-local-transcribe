@@ -7,9 +7,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential=12.12 && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir poetry==2.5.1 poetry-plugin-export==1.9.0
 WORKDIR /app
 COPY pyproject.toml poetry.lock README.md ./
+RUN POETRY_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['tool']['poetry']['requires-poetry'].lstrip('='))") && \
+    pip install --no-cache-dir "poetry==${POETRY_VERSION}" poetry-plugin-export==1.9.0
 
 # Install packages, strip debug symbols, and clean up pip/setuptools directly in Stage 1
 RUN poetry export -f requirements.txt --output requirements.txt --with backend --without dev --without-hashes && \

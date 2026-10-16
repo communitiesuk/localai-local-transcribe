@@ -2,7 +2,6 @@ name: type-check
 
 env:
   PYTHON_VERSION: "3.12"
-  POETRY_VERSION: "2.5.1"
 
 on:
   merge_group:
@@ -25,10 +24,14 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Read Poetry version from pyproject.toml
+        id: poetry-version
+        run: python -c 'import tomllib; print("version=" + tomllib.load(open("pyproject.toml", "rb"))["tool"]["poetry"]["requires-poetry"].lstrip("="))' >> "$GITHUB_OUTPUT"
+
       - name: Set up Poetry
         uses: abatilo/actions-poetry@v2
         with:
-          poetry-version: ${{ env.POETRY_VERSION }}
+          poetry-version: ${{ steps.poetry-version.outputs.version }}
 
       - name: Install dependencies
         run: |
