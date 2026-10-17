@@ -126,13 +126,13 @@ WER_DRIFT_THRESHOLDS = WerDriftThresholds(
 )
 
 # Baseline and review band follow evals/transcription/baseline/wder_bootstrap_ami_proxy.json
-# (corpus WDER and bootstrap p95 relative increase ≈ 0.05). Fail +15% sits clearly above
-# sampling uncertainty. Absolute floor 0.15 is a loose AMI disaster line only.
+# (corpus WDER and bootstrap p95 relative increase ≈ 0.19). Fail +30% sits clearly above
+# sampling uncertainty. Absolute floor 0.10 is a loose AMI disaster line only.
 WDER_DRIFT_THRESHOLDS = WderDriftThresholds(
-    baseline_corpus_wder=0.049162,
-    review_relative_increase=0.05,
-    fail_relative_increase=0.15,
-    absolute_floor=0.15,
+    baseline_corpus_wder=0.017720,
+    review_relative_increase=0.20,
+    fail_relative_increase=0.30,
+    absolute_floor=0.10,
 )
 
 # Speaker-count bands are absolute correct counts out of n_meetings (readable as 7/10, 6/10, ...).

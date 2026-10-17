@@ -9,6 +9,8 @@ __pycache__/
 .ipynb_checkpoints
 # *.ipynb
 .env
+reporting/aggregate_analytics/output/
+reporting/aggregate_analytics/input/
 Brewfile.lock.json
 *.pdf
 .mypy_cache
