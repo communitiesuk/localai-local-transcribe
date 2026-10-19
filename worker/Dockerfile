@@ -14,8 +14,9 @@ RUN apt-get update && \
 WORKDIR /app
 
 COPY pyproject.toml poetry.lock README.md ./
+COPY scripts/get-poetry-version.py scripts/get-poetry-version.py
 
-RUN POETRY_VERSION=$(python -c "import re, sys, tomllib; constraint = tomllib.load(open('pyproject.toml', 'rb'))['tool']['poetry']['requires-poetry']; match = re.fullmatch(r'=([0-9]+(?:\.[0-9]+)*(?:[A-Za-z0-9.+-]*)?)', constraint); sys.exit(f'Poetry version must be pinned exactly in pyproject.toml, for example requires-poetry = \"=2.5.1\"; got {constraint!r}') if not match else print(match.group(1))") && \
+RUN POETRY_VERSION=$(python scripts/get-poetry-version.py) && \
     pip install --no-cache-dir "poetry==${POETRY_VERSION}" poetry-plugin-export==1.9.0
 
 RUN poetry export \
