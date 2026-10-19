@@ -8,12 +8,16 @@ type TemplateDraft = {
 
 type TemplateDraftState = {
   draft: TemplateDraft | null
+  titleConflict: boolean
   setDraft: (draft: TemplateDraft) => void
+  setTitleConflict: (titleConflict: boolean) => void
   clearDraft: () => void
 }
 
 export const useTemplateDraftStore = create<TemplateDraftState>((set) => ({
   draft: null,
+  titleConflict: false,
   setDraft: (draft) => set({ draft }),
-  clearDraft: () => set({ draft: null }),
+  setTitleConflict: (titleConflict) => set({ titleConflict }),
+  clearDraft: () => set({ draft: null, titleConflict: false }),
 }))
