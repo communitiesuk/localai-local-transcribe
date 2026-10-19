@@ -1,0 +1,45 @@
+# Print the address an ADO agent uses to reach the evals private endpoints.
+#
+# Manual only. Run on pool vmss-shared. The address and its prefix are the source
+# range for the network security group on the private endpoint subnet (AIILG-1147).
+#
+# Reading the output:
+# - "source" is the address and prefix to allow. A prefix of 23 on 10.170.124.12
+#   means the range 10.170.124.0/23. The architecture session suggested that range
+#   and it has not been confirmed. Use the printed prefix, not the suggestion.
+# - The route lines are the raw record. "src" is the same address.
+# - Ignore a 172.17 address. That is a bridge inside the machine and does not
+#   reach the storage.
+#
+# This job does not sign in to Azure and does not read the pipeline variable group.
+# It does not touch the client secret change or the storage public access change.
+
+name: Evals agent address check
+
+trigger: none
+pr: none
+
+pool:
+  name: vmss-shared
+
+steps:
+  - checkout: none
+
+  - script: |
+      set -euo pipefail
+
+      # The results blob endpoint and the vault endpoint. Both sit on the private
+      # endpoint subnet. The route's src address is the one a network security
+      # group on that subnet would see.
+      for destination in 10.170.122.5 10.170.122.7; do
+        echo "route to ${destination}"
+        ip route get "${destination}"
+      done
+
+      echo "interface addresses"
+      ip -4 addr
+
+      source_address=$(ip route get 10.170.122.5 | awk '{ for (i = 1; i <= NF; i++) if ($i == "src") print $(i + 1) }')
+      prefix=$(ip -4 addr show | awk -v addr="${source_address}" '$2 ~ "^" addr "/" { split($2, parts, "/"); print parts[2]; exit }')
+      echo "source ${source_address}/${prefix}"
+    displayName: Print the ADO agent address used towards the evals endpoints
