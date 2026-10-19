@@ -1,5 +1,3 @@
-# Put action within a raw block so that the curly bracket expressions aren't picked up by the cookiecutter
-#
 name: tests
 
 env:
@@ -43,4 +41,3 @@ jobs:
   frontend_tests:
     uses: ./.github/workflows/frontend-tests.yml
     secrets: inherit
-

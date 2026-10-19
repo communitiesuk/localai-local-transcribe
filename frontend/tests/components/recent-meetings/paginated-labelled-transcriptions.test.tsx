@@ -53,6 +53,14 @@ describe('<PaginatedLabelledTranscriptions />', () => {
     expect(region).toContainElement(screen.getByRole('table'))
   })
 
+  it('positions the scrollable region so visually hidden cell content cannot escape it', () => {
+    render(<PaginatedLabelledTranscriptions />)
+
+    expect(
+      screen.getByRole('region', { name: 'Labelled recordings' })
+    ).toHaveClass('relative')
+  })
+
   it('gives the scrollable region a visible focus state', () => {
     render(<PaginatedLabelledTranscriptions />)
 
