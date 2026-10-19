@@ -45,7 +45,9 @@ jobs:
 
       - name: Read Poetry version from pyproject.toml
         id: poetry-version
-        run: echo "version=$(python scripts/get-poetry-version.py)" >> "$GITHUB_OUTPUT"
+        run: |
+          POETRY_VERSION=$(python scripts/get-poetry-version.py) || exit 1
+          echo "version=${POETRY_VERSION}" >> "$GITHUB_OUTPUT"
 
   backend_tests:
     needs: poetry_version
