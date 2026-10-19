@@ -23,7 +23,20 @@ steps:
       versionSpec: '${{ parameters.pythonVersion }}'
 
   - script: |
-      POETRY_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['tool']['poetry']['requires-poetry'].lstrip('='))")
+      POETRY_VERSION=$(
+        python <<'PY'
+      import re
+      import sys
+      import tomllib
+
+      constraint = tomllib.load(open("pyproject.toml", "rb"))["tool"]["poetry"]["requires-poetry"]
+      match = re.fullmatch(r"=([0-9]+(?:\.[0-9]+)*(?:[A-Za-z0-9.+-]*)?)", constraint)
+      if not match:
+          sys.exit(f'Poetry version must be pinned exactly in pyproject.toml, for example requires-poetry = "=2.5.1"; got {constraint!r}')
+
+      print(match.group(1))
+      PY
+      ) || exit 1
       echo "##vso[task.setvariable variable=POETRY_VERSION]${POETRY_VERSION}"
     displayName: 'Read Poetry version from pyproject.toml'
 
