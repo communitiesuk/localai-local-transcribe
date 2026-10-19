@@ -74,6 +74,10 @@ const TemplateEditorForm = ({
   templateId: string
 }) => {
   const draft = useTemplateDraftStore((store) => store.draft)
+  const titleConflict = useTemplateDraftStore((store) => store.titleConflict)
+  const setTitleConflict = useTemplateDraftStore(
+    (store) => store.setTitleConflict
+  )
 
   const form = useForm<TemplateData>({
     defaultValues: defaultValues,
@@ -86,6 +90,16 @@ const TemplateEditorForm = ({
       form.reset(draft.data, { keepDefaultValues: true })
     }
   }, [draft, templateId, form])
+
+  // Add in form errors if confirmation interstitial errored
+  useEffect(() => {
+    if (!titleConflict) return
+
+    form.setError('name', {
+      message: 'A template with this title already exists',
+    })
+    setTitleConflict(false)
+  }, [titleConflict, form, setTitleConflict])
 
   return (
     <FormProvider {...form}>
