@@ -9,6 +9,7 @@ from pathlib import Path
 import orjson
 import typer
 
+from common.azure_apim_auth import build_azure_apim_token_provider
 from evals.shared.blob_io import publish_run_outputs, stage_dataset
 from evals.shared.blob_storage import EvalBlobStorage
 from evals.summarisation.src.common import AppConfig, RunSummary, load_config, run_halted
@@ -131,6 +132,17 @@ def _fail_pipeline_if_citation_gate_failed(summary_path: Path) -> None:
             err=True,
         )
         raise typer.Exit(code=1)
+
+
+async def _require_ai_gateway_token() -> None:
+    """Fetch one AI Gateway token before the run reads any data.
+
+    A missing pipeline variable is not an empty string. .env.example fills it with a
+    placeholder, and Azure DevOps leaves an unmapped variable as the literal $(NAME).
+    The provider accepts both. Requesting a token rejects them here.
+    """
+    provider = build_azure_apim_token_provider()
+    await provider.get_token()
 
 
 async def _drain_pending_tasks() -> None:
@@ -261,6 +273,9 @@ def run(
     if cfg.run.eval_type not in {"standard", "bias", "security"}:
         msg = f"Unknown eval_type: {cfg.run.eval_type}. Must be 'standard', 'bias' or 'security'"
         raise ValueError(msg)
+
+    # Reject a placeholder or an unresolved $(VARIABLE) before any dataset is read.
+    asyncio.run(_require_ai_gateway_token())
 
     if cfg.run.eval_type == "security":
         asyncio.run(run_security_eval(cfg))
