@@ -13,9 +13,10 @@
 # ado-sh-shared0006LR, and the test ADAPT connector addresses 10.20.3.15 and 10.20.3.16.
 # The connector addresses are not confirmed.
 #
-# This group has no deny rule. Azure still applies its built-in virtual network allow, so other
-# callers can reach the endpoints after this apply. The deny comes in a later change, once these
-# allows have been checked from an ADO agent and from a test ADAPT session.
+# Two deny rules, priority 4000, cover every other inbound and outbound connection.
+# Azure checks the allows at 100 to 130 first, so those callers still match.
+# The built-in virtual network allow is priority 65000, so the deny is reached before it.
+# A caller that is not in the allow list is refused. A wrong connector address cuts off test ADAPT.
 #
 # The same callers are allowed to every endpoint, including the state account. A later
 # results-only route has to add its source on the results rules only.
@@ -96,6 +97,34 @@ resource "azurerm_network_security_group" "private_endpoints" {
       source_address_prefixes      = security_rule.value.source_address_prefixes
       destination_address_prefixes = security_rule.value.destination_address_prefixes
     }
+  }
+
+  # Priority 4000 is worse than the allows and better than Azure's built-in virtual network allow.
+  # Any protocol and any port, so a port other than 443 cannot slip through on that built-in allow.
+  security_rule {
+    name                       = "deny-all-inbound"
+    description                = "Deny all other inbound traffic to the private endpoint subnet."
+    priority                   = 4000
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "deny-all-outbound"
+    description                = "Deny all other outbound traffic from the private endpoint subnet."
+    priority                   = 4000
+    direction                  = "Outbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
   }
 
   tags = {
