@@ -56,7 +56,7 @@ class _RayTranscriptionService:
             messages = self.transcription_queue_service.receive_message(max_messages=1)
             for message, receipt_handle in messages:
                 try:
-                    logger.info("WORKER JOB STARTED: TRANSCRIPTION id=%s", message.id)
+                    logger.info("WORKER JOB STARTED: %s id=%s", message.type.name, message.id)
                     data = message.data if isinstance(message.data, TranscriptionJobMessageData) else None
                     match message.type:
                         case TaskType.TRANSCRIPTION:
@@ -73,23 +73,27 @@ class _RayTranscriptionService:
                             self.transcription_queue_service.deadletter_message(message, receipt_handle)
                             continue
                 except TranscriptionFailedError:
-                    logger.exception("WORKER JOB FAILED: TRANSCRIPTION id=%s", message.id)
+                    logger.exception("WORKER JOB FAILED: %s id=%s", message.type.name, message.id)
                 except Exception:
-                    logger.exception("WORKER JOB FAILED: TRANSCRIPTION id=%s - unexpected error", message.id)
+                    logger.exception("WORKER JOB FAILED: %s id=%s - unexpected error", message.type.name, message.id)
                     raise
                 else:
                     # sync jobs should have the transcript available immediately, async jobs may need to go on the queue
                     if transcription_job.transcript:
-                        logger.info("WORKER JOB COMPLETED: TRANSCRIPTION id=%s", message.id)
+                        logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
                     else:
                         try:
                             self.transcription_queue_service.publish_message(
                                 WorkerMessage(id=message.id, type=message.type, data=transcription_job)
                             )
                         except Exception:
-                            logger.exception("WORKER JOB FAILED: TRANSCRIPTION id=%s - requeue failed", message.id)
+                            logger.exception(
+                                "WORKER JOB FAILED: %s id=%s - requeue failed", message.type.name, message.id
+                            )
                             raise
-                        logger.info("WORKER JOB REQUEUED: TRANSCRIPTION id=%s - async job not ready", message.id)
+                        logger.info(
+                            "WORKER JOB REQUEUED: %s id=%s - async job not ready", message.type.name, message.id
+                        )
                 # Delete the message to prevent repeated processing
                 self.transcription_queue_service.complete_message(receipt_handle)
             self.heartbeat_path.touch()
@@ -140,17 +144,17 @@ class _RayLlmService:
 
     async def process_minute_task(self, message: WorkerMessage, receipt_handle: ReceiptHandle) -> None:
         try:
-            logger.info("WORKER JOB STARTED: MINUTE id=%s", message.id)
+            logger.info("WORKER JOB STARTED: %s id=%s", message.type.name, message.id)
 
             await MinuteHandlerService.process_minute_generation_message(message.id)
             # Delete the message to prevent repeated processing
-            logger.info("WORKER JOB COMPLETED: MINUTE id=%s", message.id)
+            logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
         except MinuteGenerationFailedError:
-            logger.exception("WORKER JOB FAILED: MINUTE id=%s", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s", message.type.name, message.id)
             # For handled errors we complete the message, unhandled errors are not caught
             self.queue_service.complete_message(receipt_handle)
         except Exception:
-            logger.exception("WORKER JOB FAILED: MINUTE id=%s - unexpected error", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s - unexpected error", message.type.name, message.id)
             raise
         else:
             # If no error then complete the message
@@ -158,35 +162,40 @@ class _RayLlmService:
 
     async def process_edit_task(self, message: WorkerMessage, receipt_handle: ReceiptHandle) -> None:
         try:
-            logger.info("WORKER JOB STARTED: EDIT id=%s", message.id)
+            logger.info("WORKER JOB STARTED: %s id=%s", message.type.name, message.id)
             if not isinstance(message.data, EditMessageData):
-                logger.error("WORKER JOB FAILED: EDIT id=%s - invalid data type %s", message.id, type(message.data))
+                logger.error(
+                    "WORKER JOB FAILED: %s id=%s - invalid data type %s",
+                    message.type.name,
+                    message.id,
+                    type(message.data),
+                )
                 self.queue_service.deadletter_message(message, receipt_handle)
                 return
             await MinuteHandlerService.process_minute_edit_message(
                 target_minute_version_id=message.id, source_minute_version_id=message.data.source_id
             )
 
-            logger.info("WORKER JOB COMPLETED: EDIT id=%s", message.id)
+            logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
         except MinuteGenerationFailedError:
-            logger.exception("WORKER JOB FAILED: EDIT id=%s", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s", message.type.name, message.id)
             self.queue_service.complete_message(receipt_handle=receipt_handle)
         except Exception:
-            logger.exception("WORKER JOB FAILED: EDIT id=%s - unexpected error", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s - unexpected error", message.type.name, message.id)
             raise
         else:
             self.queue_service.complete_message(receipt_handle=receipt_handle)
 
     async def process_interactive_task(self, message: WorkerMessage, receipt_handle: ReceiptHandle) -> None:
         try:
-            logger.info("WORKER JOB STARTED: INTERACTIVE id=%s", message.id)
+            logger.info("WORKER JOB STARTED: %s id=%s", message.type.name, message.id)
             await TranscriptionHandlerService.process_interactive_message(message.id)
-            logger.info("WORKER JOB COMPLETED: INTERACTIVE id=%s", message.id)
+            logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
         except InteractionFailedError:
-            logger.exception("WORKER JOB FAILED: INTERACTIVE id=%s", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s", message.type.name, message.id)
             self.queue_service.complete_message(receipt_handle=receipt_handle)
         except Exception:
-            logger.exception("WORKER JOB FAILED: INTERACTIVE id=%s - unexpected error", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s - unexpected error", message.type.name, message.id)
             raise
         else:
             self.queue_service.complete_message(receipt_handle=receipt_handle)
