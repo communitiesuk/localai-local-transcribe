@@ -32,11 +32,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 --ingroup nodejs nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Ensure a newly created Compose volume is writable by the runtime user.
+RUN mkdir -p /app/.next && chown nextjs:nodejs /app/.next
 
 USER nextjs
 EXPOSE 8081

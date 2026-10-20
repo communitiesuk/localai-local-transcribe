@@ -45,7 +45,7 @@ ENV NODE_ENV=production \
 
 # Security: Set up non-root boundaries
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 --ingroup nodejs nextjs
 
 # Copy essential production artifacts with consistent non-root ownership
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
@@ -61,6 +61,9 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
     /opt/yarn* \
     /usr/local/bin/yarn* \
     /usr/local/share/man/man1/npm*
+
+# Ensure a newly created Compose volume is writable by the runtime user.
+RUN mkdir -p /app/.next && chown nextjs:nodejs /app/.next
 
 USER nextjs
 
