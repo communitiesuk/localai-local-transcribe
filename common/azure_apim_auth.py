@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 from functools import cache
 from typing import Protocol
 
-from azure.identity.aio import ClientSecretCredential
+from azure.identity import ClientSecretCredential
 
 from common.settings import get_settings
 
@@ -28,20 +29,29 @@ class AzureStaticTokenProvider:
 
 
 class AzureClientSecretCredentialTokenProvider:
-    """Handles getting Azure Tokens via ClientSecretCredential."""
+    """Gets AI Gateway tokens with a client secret, and is safe to call from many threads.
+
+    The evaluation framework runs each model call in its own thread with its own event loop.
+    An asyncio lock and an asynchronous credential belong to a single event loop. A call waiting
+    on that lock from a second event loop is never woken, so it stalls until its timeout and
+    leaves a thread that stops the process from exiting. This provider uses the synchronous
+    credential and a threading lock instead. The credential keeps its own token cache and can be
+    called from any thread.
+    """
 
     def __init__(self, tenant_id: str, client_id: str, client_secret: str, scope: str) -> None:
-        self._refresh_lock = asyncio.Lock()
+        self._refresh_lock = threading.Lock()
         self._token: str | None = None
         self._token_valid: bool = False
         self._azure_credential = ClientSecretCredential(tenant_id, client_id, client_secret)
         self.scope = scope
 
-    async def _refresh_token(self) -> str:
-        async with self._refresh_lock:
+    def _refresh_token(self) -> str:
+        """Fetch a token if the local cache is empty or has been marked invalid."""
+        with self._refresh_lock:
             if self._token_valid and self._token:
                 return self._token
-            result = await self._azure_credential.get_token(self.scope)
+            result = self._azure_credential.get_token(self.scope)
             self._token = result.token
             self._token_valid = True
             return self._token
@@ -49,7 +59,8 @@ class AzureClientSecretCredentialTokenProvider:
     async def get_token(self) -> str:
         if self._token_valid and self._token:
             return self._token
-        return await self._refresh_token()
+        # The synchronous call blocks, so it runs in a worker thread to keep the event loop free.
+        return await asyncio.to_thread(self._refresh_token)
 
     async def invalidate_token(self) -> None:
         self._token_valid = False
