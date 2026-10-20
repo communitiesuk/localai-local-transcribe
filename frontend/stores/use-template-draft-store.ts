@@ -12,12 +12,28 @@ type TemplateDraftState = {
   setDraft: (draft: TemplateDraft) => void
   setTitleConflict: (titleConflict: boolean) => void
   clearDraft: () => void
+  handleRouteChange: (pathname: string) => void
 }
 
-export const useTemplateDraftStore = create<TemplateDraftState>((set) => ({
+export const useTemplateDraftStore = create<TemplateDraftState>((set, get) => ({
   draft: null,
   titleConflict: false,
   setDraft: (draft) => set({ draft }),
   setTitleConflict: (titleConflict) => set({ titleConflict }),
   clearDraft: () => set({ draft: null, titleConflict: false }),
+  handleRouteChange: (pathname) => {
+    const { draft, clearDraft } = get()
+
+    if (!draft) {
+      return
+    }
+
+    const editorPath = `/templates/${draft.templateId}`
+
+    if (pathname === editorPath || pathname.startsWith(`${editorPath}/`)) {
+      return
+    }
+
+    clearDraft()
+  },
 }))
