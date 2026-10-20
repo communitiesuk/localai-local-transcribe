@@ -3,12 +3,29 @@ from enum import StrEnum, auto
 from typing import TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, UniqueConstraint, false, text
+from sqlalchemy import (
+    TIMESTAMP,
+    Boolean,
+    Column,
+    Enum,
+    ForeignKey,
+    Index,
+    Text,
+    UniqueConstraint,
+    false,
+    literal_column,
+    text,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, CITEXT, JSONB
 from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
+
+from common.templates.name_normalisation import (
+    TEMPLATE_NAME_TRIM_CHARS_SQL,
+    USER_TEMPLATE_NORMALISED_NAME_UNIQUE_INDEX,
+)
 
 
 class DialogueEntry(TypedDict):
@@ -253,6 +270,14 @@ class TemplateQuestion(BaseTableMixin, table=True):
 
 class UserTemplate(BaseTableMixin, table=True):
     __tablename__ = "user_template"
+    __table_args__ = (
+        Index(
+            USER_TEMPLATE_NORMALISED_NAME_UNIQUE_INDEX,
+            "user_id",
+            literal_column(f"lower(btrim(name::text, {TEMPLATE_NAME_TRIM_CHARS_SQL}))"),
+            unique=True,
+        ),
+    )
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
 

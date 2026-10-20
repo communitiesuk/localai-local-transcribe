@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { Controller, useForm } from 'react-hook-form'
 import {
   GovukButton,
   GovukButtonGroup,
+  GovukCancelLink,
   GovukErrorSummary,
   GovukFormGroup,
   GovukHint,
@@ -100,9 +100,7 @@ export function EditDomainsForm({
         <GovukButton type="submit" disabled={isPending}>
           {isPending ? buttonPendingText : buttonText}
         </GovukButton>
-        <Link href={cancelHref} className="govuk-link">
-          Cancel
-        </Link>
+        <GovukCancelLink href={cancelHref} />
       </GovukButtonGroup>
     </form>
   )
