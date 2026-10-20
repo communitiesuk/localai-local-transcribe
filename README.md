@@ -38,9 +38,7 @@ This will build and run 5 containers:
 5. ElasticMQ to simulate AWS SQS
 
 The frontend, backend and worker containers run as non-root users: UID/GID
-`1001:1001`, `1000:1000` and `1000:1000`, respectively. The Compose
-configuration makes these identities explicit and preserves them when using
-`docker compose up --watch`.
+`1001:1001`, `1000:1000` and `1000:1000`, respectively.
 
 The backend and worker share `./.data` as `/static`. On Linux hosts, prepare
 this bind mount before the first start and repair ownership after files have
