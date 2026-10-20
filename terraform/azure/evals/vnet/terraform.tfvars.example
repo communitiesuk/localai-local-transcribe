@@ -1,5 +1,5 @@
 # Copy to terraform.tfvars in this directory. Do not commit terraform.tfvars.
-# Replace every placeholder before planning. The real prefixes stay in terraform.tfvars on test ADAPT.
+# Replace every placeholder before planning. The real prefixes stay in terraform.tfvars on test ADAPT. They can also be found on SharePoint.
 
 subscription_id     = "<azure-subscription-id>"
 resource_group_name = "<resource-group-name>"
