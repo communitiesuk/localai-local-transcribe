@@ -1,7 +1,8 @@
-# Evaluations virtual network and the subnet that will hold blob private endpoints.
+# Evaluations virtual network and the subnet that holds the private endpoints.
 # The network security group for that subnet is in nsg.tf.
-# Apply once from the test desktop with local state. Do not apply this root on vmss-shared:
-# that pool cannot reach the remote state account yet, and agent-local state is ephemeral.
+# Apply from test ADAPT with the local state for this root. Do not apply this root
+# from a shared Azure DevOps agent. That apply would not see this state and would
+# try to create the network again.
 #
 # Peering to the hub and the private endpoints themselves are not in this root.
 # Peering is a pair of objects and the Azure team creates the hub side.

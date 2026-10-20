@@ -11,7 +11,8 @@
 #
 # Callers are the ADO agent subnet 10.120.1.0/24, measured on 19 October 2026 from agent
 # ado-sh-shared0006LR, and the test ADAPT connector addresses 10.20.3.15 and 10.20.3.16.
-# The connector addresses are not confirmed.
+# After the deny rules, a test ADAPT blob read succeeded, so that session used one of
+# those two connector addresses. The read did not show that both connectors were used.
 #
 # Two deny rules, priority 4000, cover every other inbound and outbound connection.
 # Azure checks the allows at 100 to 130 first, so those callers still match.
@@ -99,8 +100,9 @@ resource "azurerm_network_security_group" "private_endpoints" {
     }
   }
 
-  # Priority 4000 is worse than the allows and better than Azure's built-in virtual network allow.
-  # Any protocol and any port, so a port other than 443 cannot slip through on that built-in allow.
+  # Priority 4000 is checked after the allows at 100 to 130 and before Azure's built-in
+  # virtual network allow at 65000. Any protocol and any port, so traffic on a port
+  # other than 443 is denied here, ahead of that built-in allow.
   security_rule {
     name                       = "deny-all-inbound"
     description                = "Deny all other inbound traffic to the private endpoint subnet."
