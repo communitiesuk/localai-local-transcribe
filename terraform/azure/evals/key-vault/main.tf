@@ -8,13 +8,14 @@
 # that role it cannot create the key. The pipeline grant-key-vault-roles command does
 # those assignments. Second apply: set create_storage_key = true and apply the key.
 #
-# Purge protection cannot be turned off once set. Public access stays on until a private
-# endpoint is proven. Trusted Microsoft services may bypass the firewall so Storage can
-# wrap and unwrap before Domain Name System is attached.
+# Purge protection cannot be turned off once set. Public data-plane access is off.
+# The private endpoint is the path in, proven from test ADAPT on 20 October 2026.
+# Trusted Microsoft services may still bypass the firewall, which is how Storage
+# wraps and unwraps the key.
 #
-# The key rotates itself once a year through its rotation policy. Apply the rotation
-# policy and vault logging while the vault is still public, because after the vault
-# lock-down the test desktop cannot reach the vault until Zscaler maps its private name.
+# The key rotates itself once a year through its rotation policy. Vault audit logs
+# go to the evals Log Analytics workspace. Test ADAPT reaches the vault through the
+# Zscaler mapping of its private name.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -51,12 +52,12 @@ resource "azurerm_key_vault" "evals_storage" {
   rbac_authorization_enabled    = true
   purge_protection_enabled      = true
   soft_delete_retention_days    = var.soft_delete_retention_days
-  public_network_access_enabled = true
+  public_network_access_enabled = false
 
-  # Allow until the vault private endpoint is proven. AzureServices lets Storage wrap
-  # and unwrap the account encryption key without a private name lookup.
+  # Private endpoint proven from test ADAPT on 20 October 2026.
+  # AzureServices stays so Storage can wrap and unwrap the key.
   network_acls {
-    default_action = "Allow"
+    default_action = "Deny"
     bypass         = "AzureServices"
   }
 
