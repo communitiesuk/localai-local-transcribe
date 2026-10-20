@@ -169,7 +169,10 @@ def get_accuracy_check_messages(
         {
             "role": "user",
             "content": render_prompt_template(
-                "transcript.j2", transcript=wrap_transcript(transcript_as_index_speaker_and_utterance(transcript))
+                "transcript.j2",
+                transcript=wrap_transcript(
+                    transcript_as_index_speaker_and_utterance(transcript, include_recording_offsets=True)
+                ),
             ),
         },
         {
@@ -228,7 +231,9 @@ def get_cite_claims_prompt(
             "role": "user",
             "content": render_prompt_template(
                 "cite_claims.j2",
-                transcript=wrap_transcript(transcript_as_index_speaker_and_utterance(transcript)),
+                transcript=wrap_transcript(
+                    transcript_as_index_speaker_and_utterance(transcript, include_recording_offsets=True)
+                ),
                 claims_text=claims_text,
                 initial_draft=wrap_meeting_summary(initial_draft),
             ),

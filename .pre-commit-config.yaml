@@ -12,7 +12,7 @@ repos:
   #   rev: v1.4.0
   #   hooks:
   #     - id: detect-secrets
-  #       exclude: (poetry.lock|.env.example|.env.test|^.github/workflows/|.cruft.json|aws_architecture)
+  #       exclude: (poetry.lock|.env.example|.env.test|^.github/workflows/|aws_architecture)
 
   - repo: local
     hooks:
@@ -33,7 +33,7 @@ repos:
       # - id: python-tests
       #   name: Run Python tests
       #   entry: poetry run pytest
-      #   language: system  
+      #   language: system
       #   types: [python]
       #   pass_filenames: false
 
@@ -45,16 +45,15 @@ repos:
         exclude: ^alembic/
       - id: ruff-format
 
-  
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.105.0
     hooks:
       - id: terraform_fmt
         name: Format terraform files
-        
+
       - id: terraform_validate
         name: Validate terraform files
-        exclude: '^terraform/modules/'
+        exclude: "^terraform/modules/"
         args:
-          - --hook-config=--retry-once-with-cleanup=true 
+          - --hook-config=--retry-once-with-cleanup=true
           - --tf-init-args=-backend=false
