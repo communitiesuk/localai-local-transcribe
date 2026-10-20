@@ -1,5 +1,5 @@
 # Key Vault that holds the customer-managed key for the two evaluations storage accounts.
-# Apply from the test desktop with local state. Creating the key is Key Vault data plane:
+# Apply from test ADAPT with local state. Creating the key is Key Vault data plane:
 # vmss-shared has no public egress, so do not create the key on that pool until a vault
 # private endpoint and hub Domain Name System exist.
 #
@@ -10,8 +10,8 @@
 #
 # Purge protection cannot be turned off once set. Public data-plane access is off.
 # The private endpoint is the path in, proven from test ADAPT on 20 October 2026.
-# Trusted Microsoft services may still bypass the firewall, which is how Storage
-# wraps and unwraps the key.
+# The AzureServices exception stays, so Azure Storage can still encrypt the
+# accounts with this customer-managed key.
 #
 # The key rotates itself once a year through its rotation policy. Vault audit logs
 # go to the evals Log Analytics workspace. Test ADAPT reaches the vault through the
@@ -55,7 +55,7 @@ resource "azurerm_key_vault" "evals_storage" {
   public_network_access_enabled = false
 
   # Private endpoint proven from test ADAPT on 20 October 2026.
-  # AzureServices stays so Storage can wrap and unwrap the key.
+  # AzureServices stays so Azure Storage can still encrypt the accounts with this key.
   network_acls {
     default_action = "Deny"
     bypass         = "AzureServices"

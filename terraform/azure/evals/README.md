@@ -86,7 +86,7 @@ The private endpoint subnet and principal IDs are variables. Empty network value
 
 `network.tf` creates one blob private endpoint per evals account, and one endpoint for the vault, in `private_endpoint_subnet_id`, the subnet created by `vnet/`. This root writes no Domain Name System records, because this subscription cannot write the hub `privatelink.blob.core.windows.net` and `privatelink.vaultcore.azure.net` zones. After an endpoint is created, the Azure team attaches it to its zone. Terraform ignores the zone group they add, so an apply does not remove it.
 
-The vault in `key-vault/` denies public data-plane access. Apply that root from the test desktop with its local state. The parent plan reads the key on every run through the vault private endpoint. The agents are not a trusted Microsoft service.
+The vault in `key-vault/` denies public data-plane access. A plan of the parent root reads the key through the vault private endpoint. The shared agents reach the vault through that endpoint. Azure Storage encrypts the accounts with the customer-managed key through the `AzureServices` firewall exception.
 
 ## Softwire Sandbox vs assured Azure environment
 
