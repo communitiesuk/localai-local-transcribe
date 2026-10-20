@@ -1,9 +1,18 @@
 # Copy to terraform.tfvars in this directory. Do not commit terraform.tfvars.
-# Address space is the range the Azure team allocated for test on 22 September 2026.
+# Replace every placeholder before planning. The real prefixes stay in terraform.tfvars on test ADAPT.
 
 subscription_id     = "<azure-subscription-id>"
 resource_group_name = "<resource-group-name>"
 location            = "uksouth"
 environment_name    = "test"
-address_space       = ["10.170.122.0/23"]
-subnet_prefix       = "10.170.122.0/23"
+address_space       = ["<virtual-network-prefix>"]
+subnet_prefix       = "<subnet-prefix>"
+
+allowed_caller_address_prefixes = ["<caller-prefix>"]
+
+private_endpoint_address_prefixes = {
+  state     = "<state-endpoint-prefix>"
+  results   = "<results-endpoint-prefix>"
+  sensitive = "<sensitive-endpoint-prefix>"
+  vault     = "<vault-endpoint-prefix>"
+}

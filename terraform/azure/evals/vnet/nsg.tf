@@ -9,10 +9,10 @@
 # Once an inbound connection is allowed, Azure permits the reply packets for that connection.
 # The outbound rule is the matching rule from the architecture session, for a connection opened by the endpoint.
 #
-# Callers are the ADO agent subnet 10.120.1.0/24, measured on 19 October 2026 from agent
-# ado-sh-shared0006LR, and the test ADAPT connector addresses 10.20.3.15 and 10.20.3.16.
+# Callers are the shared Azure DevOps agent subnet and the test ADAPT connector hosts.
+# Their prefixes are set in terraform.tfvars on test ADAPT. That file is not committed.
 # After the deny rules, a test ADAPT blob read succeeded, so that session used one of
-# those two connector addresses. The read did not show that both connectors were used.
+# the connector hosts. The read did not show that both hosts were used.
 #
 # Two deny rules, priority 4000, cover every other inbound and outbound connection.
 # Azure checks the allows at 100 to 130 first, so those callers still match.
@@ -23,33 +23,30 @@
 # results-only route has to add its source on the results rules only.
 
 locals {
-  # Addresses that may talk to the private endpoints.
-  # 10.120.1.0/24 is the whole ADO agent subnet. The scale set gives each agent its own address in that subnet.
-  # The two single addresses are connector machines. A rebuilt connector with a new address would miss these rules.
-  allowed_caller_address_prefixes = [
-    "10.120.1.0/24",
-    "10.20.3.15/32",
-    "10.20.3.16/32",
-  ]
+  # Prefixes that may open TCP port 443 to the private endpoints. Each shared agent
+  # has its own address inside the agent prefix. A connector host rebuilt with a new
+  # address is no longer covered until the variable is updated.
+  allowed_caller_address_prefixes = var.allowed_caller_address_prefixes
 
-  # Private addresses of the four endpoints on snet-tst-uks-aielt-pe-001.
-  # Priority is unique within a direction. The same number is used for the inbound and outbound rule of one endpoint.
-  # Gaps of 10 leave room to insert another allow. A later deny uses a higher number so these allows are checked first.
+  # Private address of each endpoint. Priority is unique within a direction.
+  # The same number is used for the inbound and outbound rule of one endpoint.
+  # Gaps of 10 leave room to insert another allow. The deny rules use a higher
+  # number so these allows are checked first.
   private_endpoint_targets = {
     state = {
-      address_prefix = "10.170.122.4/32"
+      address_prefix = var.private_endpoint_address_prefixes.state
       priority       = 100
     }
     results = {
-      address_prefix = "10.170.122.5/32"
+      address_prefix = var.private_endpoint_address_prefixes.results
       priority       = 110
     }
     sensitive = {
-      address_prefix = "10.170.122.6/32"
+      address_prefix = var.private_endpoint_address_prefixes.sensitive
       priority       = 120
     }
     vault = {
-      address_prefix = "10.170.122.7/32"
+      address_prefix = var.private_endpoint_address_prefixes.vault
       priority       = 130
     }
   }
