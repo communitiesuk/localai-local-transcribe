@@ -1,4 +1,5 @@
 # Evaluations virtual network and the subnet that will hold blob private endpoints.
+# The network security group for that subnet is in nsg.tf.
 # Apply once from the test desktop with local state. Do not apply this root on vmss-shared:
 # that pool cannot reach the remote state account yet, and agent-local state is ephemeral.
 #
@@ -41,6 +42,9 @@ resource "azurerm_subnet" "private_endpoints" {
   virtual_network_name = azurerm_virtual_network.evals.name
   address_prefixes     = [var.subnet_prefix]
 
-  # Private endpoints cannot be created in a subnet that still enforces network policies.
-  private_endpoint_network_policies = "Disabled"
+  # Enabled so the network security group on this subnet applies to private endpoint traffic.
+  # Azure ignores that group for traffic to the endpoints when this setting is Disabled.
+  # The same setting also honours a route table on private endpoint traffic. This subnet has no route table.
+  # Existing private endpoints stay in the subnet.
+  private_endpoint_network_policies = "Enabled"
 }
