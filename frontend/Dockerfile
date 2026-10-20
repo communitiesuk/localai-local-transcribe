@@ -62,9 +62,6 @@ RUN rm -rf /usr/local/lib/node_modules/npm \
     /usr/local/bin/yarn* \
     /usr/local/share/man/man1/npm*
 
-# Ensure a newly created Compose volume is writable by the runtime user.
-RUN mkdir -p /app/.next && chown nextjs:nodejs /app/.next
-
 USER nextjs
 
 EXPOSE 8081

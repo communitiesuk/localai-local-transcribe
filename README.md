@@ -51,14 +51,7 @@ mkdir -p .data
 sudo chown -R 1000:1000 .data
 ```
 
-Do not apply this to a database directory. Existing frontend cache files in
-the `next_data` named volume can be repaired without removing the volume or
-database data:
-
-```bash
-docker compose run --rm --user 0 --entrypoint /bin/chown frontend \
-  -R 1001:1001 /app/.next
-```
+Do not apply this to a database directory.
 
 #### LLM and Transcription Services
 
