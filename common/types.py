@@ -494,6 +494,11 @@ class TemplateResponse(BaseModel):
     questions: list[Question] | None
 
 
+class DuplicateTemplateResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
 class CreateUserTemplateRequest(BaseModel):
     name: str
     content: str
