@@ -29,7 +29,7 @@ Azure storage firewall rules and private endpoints are scoped to the storage acc
 
 Disabling shared access keys is what closes the Azure console bypass: with no account keys there is no account SAS and no "Access key" auth in the portal blob browser, so every read and write is an Entra ID call subject to the role assignments. This holds only while nobody has Owner, Contributor, or Storage Account Contributor on the resource group — those roles can re-enable keys. Keep them off it.
 
-Deployment is manual. There is no pipeline for this stack yet.
+The parent root is applied by the Azure DevOps pipeline on the shared agents. `backend/`, `vnet/`, and `key-vault/` are applied from test ADAPT with local state. See Apply below.
 
 ## Azure DevOps pipeline identity
 
@@ -37,7 +37,7 @@ Deployment is manual. There is no pipeline for this stack yet.
 reach the blobs — a **user-assigned managed identity** federated to an Azure DevOps service
 connection. `rbac.tf` grants it container-scoped data-plane roles: reader on `input`, contributor on
 `debug`, and contributor on `output`. A managed identity is used rather than an Entra app
-registration because the sandbox tenant blocks app creation for most users.
+registration.
 
 Federation needs the Issuer and Subject of the Azure DevOps service connection. Both are known before
 the connection exists: the Issuer is `https://vstoken.dev.azure.com/<org-guid>` and the Subject is
@@ -88,110 +88,26 @@ The private endpoint subnet and principal IDs are variables. Empty network value
 
 The vault in `key-vault/` denies public data-plane access. A plan of the parent root reads the key through the vault private endpoint. The shared agents reach the vault through that endpoint. Azure Storage encrypts the accounts with the customer-managed key through the `AzureServices` firewall exception.
 
-## Softwire Sandbox vs assured Azure environment
+## Logging
 
-| Topic                                                | Transferable as-is | Must adapt later                                        | Uncertain until assured env exists          |
-| ---------------------------------------------------- | ------------------ | ------------------------------------------------------- | ------------------------------------------- |
-| Two-account split and container names                | Yes                | Names only if platform mandates a prefix                | Whether metadata is required beyond names   |
-| Storage account shape (Standard, private containers) | Yes                | Replication via `account_replication_type`              | Final SKU and region                        |
-| Firewall, key disablement, SAS expiry, versioning    | Yes                | Retention days and SAS period if platform mandates other | Whether platform policy also enforces these |
-| Private endpoint shape                               | Yes                | Subnet, DNS zones, and who creates the endpoint         | Whether ADAPT owns the VNet                 |
-| RBAC role choices and container scoping              | Yes                | Every principal ID                                      | Whether groups exist to assign to           |
-| Remote state via `azurerm` backend                   | Pattern yes        | Resource group, state account name, key                 | Whether state lives in a platform sub       |
-| File and Blob diagnostic settings                    | Yes                | Workspace names follow `environment_name`               | Whether platform wants a central workspace  |
-| Tenant, subscription, IPs, and variable values       | No                 | Always                                                  | Naming convention                           |
-
-Still out of scope: Queue/Table diagnostic logging, a SIEM, and loading data into containers. File and Blob logs for the evals accounts go to `law-evals-<environment_name>`. File and Blob logs for the state account go to `law-evals-tfstate-<environment_name>`. If either name already exists in the resource group, import it before apply.
+Queue and Table diagnostic logging, a security information and event management system, and loading data into containers are still out of scope. File and Blob logs for the evals accounts go to `law-evals-<environment_name>`. File and Blob logs for the state account go to `law-evals-tfstate-<environment_name>`. If either name already exists in the resource group, import it before apply.
 
 ## Prerequisites
 
-- Access to the target Azure tenant and subscription (Softwire sandbox now; assured Azure environment later, which may be a different tenant)
-- An **existing** resource group you are allowed to create storage accounts in
+- Access to the test Azure tenant and subscription
+- An existing resource group you are allowed to create storage accounts in
 - Rights for the applying identity to create a Log Analytics workspace and diagnostic settings on the storage accounts
-- Azure Cloud Shell (Bash), or Azure CLI plus Terraform on a machine that can reach the subscription
 - Three globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one sensitive, one results
-- A machine that reaches the state storage account's private endpoint, for `terraform init` / `plan` / `apply` against the state backend
-- **Storage Blob Data Contributor** on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init` / `plan` / `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
-- **User Access Administrator** (or Owner) on the resource group for the applying identity, because `rbac.tf` creates role assignments
+- A machine that reaches the state storage account's private endpoint, for `terraform init`, `plan`, and `apply` against the state backend
+- Storage Blob Data Contributor on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init`, `plan`, and `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
+- User Access Administrator (or Owner) on the resource group for the applying identity, because `rbac.tf` creates role assignments
 
-## Cloud Shell apply (Softwire sandbox)
+## Apply
 
-Cloud Shell is already authenticated as the portal user. Confirm context first:
+The parent root is applied by the Azure DevOps pipeline on the shared agents. Remote state is the state storage account, container `tfstate`, key `evals-blob-containers.tfstate`. The applying identity needs Storage Blob Data Contributor on that state storage, and the shared agents reach it through the state private endpoint.
 
-```bash
-az account show
-az account list -o table
-az group list -o table
-```
+`backend/`, `vnet/`, and `key-vault/` are applied from test ADAPT. Each keeps its own local state on that profile. A copy of each state file is on SharePoint. If that profile is wiped, restore the copy before applying again.
 
-If you need a different subscription:
+Each root declares only the variables it uses. If a local file contains extra values from another root, Terraform ignores them and says so in a warning. `-compact-warnings` reduces that to a single summary line.
 
-```bash
-az account set --subscription "<subscription-id-or-name>"
-```
-
-Clone the repo. Using git from Cloud Shell:
-
-```bash
-cd $HOME
-git clone https://github.com/communitiesuk/localai-local-transcribe
-cd localai-local-transcribe/terraform/azure/evals
-```
-
-If Cloud Shell home storage was reset, clone again and recreate `terraform.tfvars` from the example. The evals stack remote state still lives in Azure; the backend stack uses local state, so a wiped shell may need `terraform import` of the existing state storage account and `tfstate` container before a further backend apply.
-
-Create one local var file for both Terraform roots:
-
-```bash
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars: subscription_id, resource_group_name, environment_name,
-# private endpoint subnet, principal IDs, and any pipeline federation values.
-# Fixed Softwire sandbox names/defaults live in variables.tf and backend/variables.tf.
-nano terraform.tfvars
-```
-
-Each root declares only the variables it uses. If a local file contains extra values from another root, Terraform ignores them and says so in a warning; `-compact-warnings` reduces that to a single summary line.
-
-### Step 1: Bootstrap remote state
-
-```bash
-cd backend
-
-terraform init
-terraform plan -compact-warnings -var-file=../terraform.tfvars
-terraform apply -compact-warnings -var-file=../terraform.tfvars
-```
-
-Note the outputs: `resource_group_name`, `storage_account_name`, `container_name`.
-
-### Step 2: Apply the evals stack
-
-```bash
-cd ..
-
-# Prefer a single line in Cloud Shell. Multiline backslashes can fail there.
-# use_azuread_auth=true requires Storage Blob Data Contributor on the state storage
-# account or tfstate container for the applying identity, and the caller must connect
-# through the state account's private endpoint; without both, init fails.
-terraform init -backend-config="resource_group_name=group-aiilgazuresandbox-sandbox" -backend-config="storage_account_name=ltevaltf" -backend-config="container_name=tfstate" -backend-config="key=evals-blob-containers.tfstate" -backend-config="use_azuread_auth=true"
-
-terraform plan -compact-warnings
-terraform apply -compact-warnings
-```
-
-Cloud Shell egresses from an unpredictable IP, so blob data plane commands run there are denied once the firewall is on. This does not block Terraform: accounts, containers, and role assignments are all managed through the resource manager API, which the storage firewall does not gate. Both accounts have public access off, so read blobs from ADAPT or the shared agents instead.
-
-### Step 3: Verify
-
-```bash
-az storage container list --account-name "<sensitive-account-name>" --auth-mode login -o table
-az storage container list --account-name "<results-account-name>" --auth-mode login -o table
-```
-
-You should see `input` and `debug` on the sensitive account, and `output` on the results one.
-
-Then review the expected access matrix above: ADAPT should reach `input`, `debug`, and `output`; MHCLG devices should reach only `output`; and identities without the container-scoped RBAC grants should be denied.
-
-## Assured Azure environment
-
-Run the same Steps 1 to 3 from scratch in the assured tenant and subscription. Sign into that tenant first if it differs from Softwire sandbox. Use new `terraform.tfvars` values, including three new globally unique storage account names, and the real principal IDs. The applying identity still needs **Storage Blob Data Contributor** on the state storage for `use_azuread_auth=true`, plus rights to create role assignments.
+Blob reads go through the private endpoints, from test ADAPT or the shared agents. The Evals blob access check pipeline lists `input`, `debug`, and `output`.

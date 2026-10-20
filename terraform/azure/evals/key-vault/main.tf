@@ -1,7 +1,5 @@
 # Key Vault that holds the customer-managed key for the two evaluations storage accounts.
-# Apply from test ADAPT with local state. Creating the key is Key Vault data plane:
-# vmss-shared has no public egress, so do not create the key on that pool until a vault
-# private endpoint and hub Domain Name System exist.
+# Apply from test ADAPT with local state. An apply from a shared agent would not see that state.
 #
 # First apply: vault only (create_storage_key = false). Privileged Identity Management
 # Contributor can create the vault. It cannot grant Key Vault Crypto Officer, and without

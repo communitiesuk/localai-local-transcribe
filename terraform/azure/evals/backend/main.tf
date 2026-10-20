@@ -1,16 +1,7 @@
 # Bootstrap remote Terraform state storage for the evals Azure stack.
-# Apply this once with a local backend before the parent stack can use azurerm remote state.
-#
-# Softwire sandbox vs assured Azure environment:
-# - Transferable: storage account plus tfstate container; versioning; soft delete; SAS expiry;
-#   auth defaults; manual plan/apply from Cloud Shell.
-# - Must adapt: tenant, subscription_id, resource_group_name, location,
-#   terraform_state_storage_account_name, environment_name. Assured may be a different tenant;
-#   use a new state storage account name.
-# - Uncertain until assured env exists: whether a dedicated resource group is provided,
-#   naming conventions, and whether state must live in a central platform subscription.
-# - Local terraform.tfstate for this bootstrap is gitignored. If Cloud Shell home is wiped,
-#   import the existing state storage account and tfstate container before applying again.
+# Apply this once from test ADAPT with local state, before the parent stack can use remote state.
+# The local terraform.tfstate is gitignored. A copy is kept on SharePoint.
+# If the test ADAPT profile is wiped, restore that copy before applying again.
 
 terraform {
   required_version = ">= 1.5.0"
