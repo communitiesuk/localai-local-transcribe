@@ -98,6 +98,13 @@ read -r DB_HOST DB_NAME < <(aws rds describe-db-instances \
   --db-instance-identifier "${ENVIRONMENT}-database" \
   --query "DBInstances[0].[Endpoint.Address,DBName]" --output text)
 
+# RDS for PostgreSQL always creates a database named 'postgres', even when no
+# DBName was set at instance creation (in which case describe-db-instances
+# reports it as the literal string "None").
+if [[ -z "$DB_NAME" || "$DB_NAME" == "None" ]]; then
+  DB_NAME="postgres"
+fi
+
 DB_USER="postgres"
 
 download_rds_certificate_bundle
