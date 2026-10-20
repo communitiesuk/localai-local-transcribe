@@ -341,7 +341,7 @@ resource "aws_cloudwatch_log_metric_filter" "database_connection_failed_worker" 
 resource "aws_cloudwatch_log_metric_filter" "worker_job_started" {
   log_group_name = var.worker_log_group_name
   name           = "worker-job-started-${var.environment_name}"
-  pattern        = "\"WORKER JOB:\" \"STARTED\""
+  pattern        = "\"WORKER JOB STARTED:\""
 
   metric_transformation {
     name      = "worker-job-started-${var.environment_name}"
@@ -353,7 +353,7 @@ resource "aws_cloudwatch_log_metric_filter" "worker_job_started" {
 resource "aws_cloudwatch_log_metric_filter" "worker_job_requeued" {
   log_group_name = var.worker_log_group_name
   name           = "worker-job-requeued-${var.environment_name}"
-  pattern        = "\"WORKER JOB:\" \"REQUEUED\""
+  pattern        = "\"WORKER JOB REQUEUED:\""
 
   metric_transformation {
     name      = "worker-job-requeued-${var.environment_name}"
@@ -365,7 +365,7 @@ resource "aws_cloudwatch_log_metric_filter" "worker_job_requeued" {
 resource "aws_cloudwatch_log_metric_filter" "worker_job_failed" {
   log_group_name = var.worker_log_group_name
   name           = "worker-job-failed-${var.environment_name}"
-  pattern        = "\"WORKER JOB:\" \"FAILED\""
+  pattern        = "\"WORKER JOB FAILED:\""
 
   metric_transformation {
     name      = "worker-job-failed-${var.environment_name}"

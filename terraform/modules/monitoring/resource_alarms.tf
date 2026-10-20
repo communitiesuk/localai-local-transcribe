@@ -372,8 +372,22 @@ resource "aws_cloudwatch_metric_alarm" "worker_job_failure_rate" {
   }
 
   metric_query {
+    id          = "attempts"
+    expression  = "FILL(started, 0) - FILL(requeued, 0)"
+    label       = "Completed attempts"
+    return_data = false
+  }
+
+  metric_query {
+    id          = "failures"
+    expression  = "FILL(failed, 0)"
+    label       = "Failures"
+    return_data = false
+  }
+
+  metric_query {
     id          = "rate"
-    expression  = "IF((FILL(started, 0) - FILL(requeued, 0)) >= ${var.worker_job_failure_rate_min_jobs}, (FILL(failed, 0) / (FILL(started, 0) - FILL(requeued, 0))) * 100, 0)"
+    expression  = "IF(attempts >= ${var.worker_job_failure_rate_min_jobs}, 100 * failures / attempts, 0)"
     label       = "Worker Job Failure Rate"
     return_data = true
   }
