@@ -13,10 +13,11 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry==2.5.1 poetry-plugin-export==1.9.0
-
 COPY pyproject.toml poetry.lock README.md ./
+COPY scripts/get-poetry-version.py scripts/get-poetry-version.py
+
+RUN POETRY_VERSION=$(python scripts/get-poetry-version.py) && \
+    pip install --no-cache-dir "poetry==${POETRY_VERSION}" poetry-plugin-export==1.9.0
 
 RUN poetry export \
       -f requirements.txt \

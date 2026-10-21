@@ -264,4 +264,7 @@ module "monitoring" {
   backend_log_group_name              = module.ecs.backend_log_group_name
   worker_log_group_name               = module.ecs.worker_log_group_name
 
+  worker_job_failure_rate_threshold  = 20
+  worker_job_failure_rate_min_jobs   = 10
+  worker_job_failure_count_threshold = 8
 }

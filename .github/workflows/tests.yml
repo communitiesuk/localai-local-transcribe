@@ -31,11 +31,30 @@ on:
   workflow_dispatch:
 
 jobs:
+  poetry_version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.poetry-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Read Poetry version from pyproject.toml
+        id: poetry-version
+        run: |
+          POETRY_VERSION=$(python scripts/get-poetry-version.py) || exit 1
+          echo "version=${POETRY_VERSION}" >> "$GITHUB_OUTPUT"
+
   backend_tests:
+    needs: poetry_version
     uses: ./.github/workflows/backend-tests.yml
     with:
       python_version: "3.12"
-      poetry_version: "2.5.1"
+      poetry_version: ${{ needs.poetry_version.outputs.version }}
     secrets: inherit
 
   frontend_tests:
