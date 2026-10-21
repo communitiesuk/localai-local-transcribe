@@ -15,12 +15,16 @@
 # the connector hosts. The read did not show that both hosts were used.
 #
 # Two deny rules, priority 4000, cover every other inbound and outbound connection.
-# Azure checks the allows at 100 to 130 first, so those callers still match.
+# Azure checks the allows at 100 to 140 first, so those callers still match.
 # The built-in virtual network allow is priority 65000, so the deny is reached before it.
 # A caller that is not in the allow list is refused. A wrong connector address cuts off test ADAPT.
 #
 # The same callers are allowed to every endpoint, including the state account. A later
 # results-only route has to add its source on the results rules only.
+#
+# The Azure Monitor endpoint for log queries holds several private addresses, not one. Its
+# rules list every address, taken from the parent root monitor_private_endpoint_ip_addresses
+# output after that endpoint exists.
 
 locals {
   # Prefixes that may open TCP port 443 to the private endpoints. Each shared agent
@@ -28,26 +32,30 @@ locals {
   # address is no longer covered until the variable is updated.
   allowed_caller_address_prefixes = var.allowed_caller_address_prefixes
 
-  # Private address of each endpoint. Priority is unique within a direction.
+  # Private addresses of each endpoint. Priority is unique within a direction.
   # The same number is used for the inbound and outbound rule of one endpoint.
   # Gaps of 10 leave room to insert another allow. The deny rules use a higher
   # number so these allows are checked first.
   private_endpoint_targets = {
     state = {
-      address_prefix = var.private_endpoint_address_prefixes.state
-      priority       = 100
+      address_prefixes = [var.private_endpoint_address_prefixes.state]
+      priority         = 100
     }
     results = {
-      address_prefix = var.private_endpoint_address_prefixes.results
-      priority       = 110
+      address_prefixes = [var.private_endpoint_address_prefixes.results]
+      priority         = 110
     }
     sensitive = {
-      address_prefix = var.private_endpoint_address_prefixes.sensitive
-      priority       = 120
+      address_prefixes = [var.private_endpoint_address_prefixes.sensitive]
+      priority         = 120
     }
     vault = {
-      address_prefix = var.private_endpoint_address_prefixes.vault
-      priority       = 130
+      address_prefixes = [var.private_endpoint_address_prefixes.vault]
+      priority         = 130
+    }
+    monitor = {
+      address_prefixes = var.monitor_private_endpoint_address_prefixes
+      priority         = 140
     }
   }
 
@@ -60,14 +68,14 @@ locals {
         priority                     = endpoint.priority
         direction                    = "Inbound"
         source_address_prefixes      = local.allowed_caller_address_prefixes
-        destination_address_prefixes = [endpoint.address_prefix]
+        destination_address_prefixes = endpoint.address_prefixes
       }
       "${endpoint_name}-outbound" = {
         name                         = "allow-${endpoint_name}-outbound"
         description                  = "Allow the ${endpoint_name} private endpoint to reach ADO agents and test ADAPT connectors on HTTPS."
         priority                     = endpoint.priority
         direction                    = "Outbound"
-        source_address_prefixes      = [endpoint.address_prefix]
+        source_address_prefixes      = endpoint.address_prefixes
         destination_address_prefixes = local.allowed_caller_address_prefixes
       }
     }
