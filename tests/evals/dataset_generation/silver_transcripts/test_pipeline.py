@@ -53,6 +53,10 @@ def _copy_cut(source, destination, _start, _end) -> None:
     """Stand in for cut_audio so segment logic can be tested without ffmpeg."""
     shutil.copyfile(source, destination)
 
+
+_REAL_CUT_AUDIO = SilverTranscriptPipeline.cut_audio
+
+
 @pytest.fixture
 def draft_setup(tmp_path, monkeypatch):
     input_dir = tmp_path / "input"
@@ -61,7 +65,9 @@ def draft_setup(tmp_path, monkeypatch):
     monkeypatch.setattr("evals.dataset_generation.silver_transcripts.src.pipeline.convert_to_mp3", shutil.copyfile)
     adapter = DraftAdapter()
     pipeline = SilverTranscriptPipeline(tmp_path / "work", adapter)
-    monkeypatch.setattr(pipeline, "cut_audio", _copy_cut)
+    # Patched on the class, not the instance, so it also covers the pipeline main() builds itself.
+    # Tests that exercise real encoding restore it and skip when ffmpeg is absent.
+    monkeypatch.setattr(SilverTranscriptPipeline, "cut_audio", staticmethod(_copy_cut))
     return input_dir, pipeline, adapter
 
 
@@ -128,7 +134,7 @@ def test_real_ffmpeg_generates_playable_audio_for_review(draft_setup, monkeypatc
     input_dir, pipeline, adapter = draft_setup
     soundfile.write(input_dir / "sample.wav", np.zeros((16000, 2)), 16000)
     monkeypatch.setattr("evals.dataset_generation.silver_transcripts.src.pipeline.convert_to_mp3", convert_to_mp3)
-    monkeypatch.setattr(pipeline, "cut_audio", SilverTranscriptPipeline.cut_audio)
+    monkeypatch.setattr(SilverTranscriptPipeline, "cut_audio", staticmethod(_REAL_CUT_AUDIO))
     sample_id = pipeline.generate_transcripts(input_dir)[0].sample_id
     audio, sample_rate = soundfile.read(pipeline.work_dir / "drafts" / sample_id / "audio.mp3")
     assert sample_rate == 16000
