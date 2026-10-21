@@ -49,6 +49,10 @@ class DraftAdapter(EvalsTranscriptionAdapter):
         return _result()
 
 
+def _copy_cut(source, destination, _start, _end) -> None:
+    """Stand in for cut_audio so segment logic can be tested without ffmpeg."""
+    shutil.copyfile(source, destination)
+
 @pytest.fixture
 def draft_setup(tmp_path, monkeypatch):
     input_dir = tmp_path / "input"
@@ -57,12 +61,8 @@ def draft_setup(tmp_path, monkeypatch):
     monkeypatch.setattr("evals.dataset_generation.silver_transcripts.src.pipeline.convert_to_mp3", shutil.copyfile)
     adapter = DraftAdapter()
     pipeline = SilverTranscriptPipeline(tmp_path / "work", adapter)
+    monkeypatch.setattr(pipeline, "cut_audio", _copy_cut)
     return input_dir, pipeline, adapter
-
-
-def _copy_cut(source, destination, _start, _end) -> None:
-    """Stand in for cut_audio so segment logic can be tested without ffmpeg."""
-    shutil.copyfile(source, destination)
 
 
 def test_generation_writes_segment_files(draft_setup):
@@ -128,6 +128,7 @@ def test_real_ffmpeg_generates_playable_audio_for_review(draft_setup, monkeypatc
     input_dir, pipeline, adapter = draft_setup
     soundfile.write(input_dir / "sample.wav", np.zeros((16000, 2)), 16000)
     monkeypatch.setattr("evals.dataset_generation.silver_transcripts.src.pipeline.convert_to_mp3", convert_to_mp3)
+    monkeypatch.setattr(pipeline, "cut_audio", SilverTranscriptPipeline.cut_audio)
     sample_id = pipeline.generate_transcripts(input_dir)[0].sample_id
     audio, sample_rate = soundfile.read(pipeline.work_dir / "drafts" / sample_id / "audio.mp3")
     assert sample_rate == 16000
@@ -402,7 +403,6 @@ def test_end_times_are_accepted_within_the_timestamp_tolerance(draft_setup, monk
             dialogue_entries=[{"speaker": "1", "text": "hi", "start_time": 0.0, "end_time": end_time}]
         ),
     )
-    monkeypatch.setattr(pipeline, "cut_audio", _copy_cut)
     record = pipeline.generate_transcripts(input_dir)[0]
     assert record.status == expected_status
     if expected_status == "failed":
