@@ -14,9 +14,9 @@
 # terraform.tfvars. The name is law-evals-<environment_name>. If a workspace with that name
 # already exists in the resource group, import it rather than creating a second one.
 #
-# Public internet ingestion and query are disabled to satisfy Wiz. After apply, logs
-# may not reach the workspace and the portal or Cloud Shell cannot query it until Azure
-# Monitor private link (AMPLS) exists. This stack does not create that private link.
+# Public internet ingestion and query are disabled to satisfy Wiz. Diagnostic settings
+# still deliver logs, because Azure sends them over its own private channel. Queries from
+# the portal or the command line need the Azure Monitor private link in monitor.tf.
 
 resource "azurerm_log_analytics_workspace" "evals" {
   name                = "law-evals-${var.environment_name}"
@@ -26,8 +26,8 @@ resource "azurerm_log_analytics_workspace" "evals" {
   retention_in_days   = 30
 
   # Wiz requires both of these false. Azure defaults them to true (public). With them false,
-  # diagnostic settings and log queries need Azure Monitor private link, which this stack
-  # does not provision. IaC scans pass; live send and query stay blocked until that link exists.
+  # log queries need the Azure Monitor private link in monitor.tf. Diagnostic settings are
+  # not affected.
   internet_ingestion_enabled = false
   internet_query_enabled     = false
 
