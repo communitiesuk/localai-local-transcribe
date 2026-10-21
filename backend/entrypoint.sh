@@ -14,7 +14,7 @@ run_migrations() {
 # Function to start the FastAPI application
 start_app() {
     echo "Starting FastAPI application..."
-    uvicorn backend.main:app --host 0.0.0.0 --port 8080 &
+    uvicorn backend.main:app --host 0.0.0.0 --port 8080 --no-server-header &
     PID=$!
     wait $PID
 }
