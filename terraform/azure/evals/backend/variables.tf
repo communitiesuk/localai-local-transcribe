@@ -44,3 +44,8 @@ variable "sas_expiration_period" {
   description = "Maximum lifetime for newly created shared access signatures, as DD.HH:MM:SS."
   default     = "07.00:00:00"
 }
+
+variable "shared_log_analytics_workspace_id" {
+  type        = string
+  description = "Resource ID of the shared Log Analytics workspace that Cyber can read. It is in another subscription, and its ID differs between test and production. The applying identity needs read and Microsoft.OperationalInsights/workspaces/sharedKeys/action on it, which the Monitoring Contributor role includes."
+}

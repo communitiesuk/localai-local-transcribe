@@ -124,3 +124,17 @@ resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault" {
     category = "AuditEvent"
   }
 }
+
+# Second copy of the vault audit events for the shared Log Analytics workspace that Cyber
+# can read. A diagnostic setting can name only one workspace, so this is a separate setting.
+# The shared workspace is in another subscription. The identity that applies this needs
+# read and sharedKeys/action on it, otherwise Azure refuses the setting with a 403.
+resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault_shared" {
+  name                       = "key-vault-audit-logging-shared"
+  target_resource_id         = azurerm_key_vault.evals_storage.id
+  log_analytics_workspace_id = var.shared_log_analytics_workspace_id
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+}

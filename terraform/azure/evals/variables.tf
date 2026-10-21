@@ -124,3 +124,10 @@ variable "results_reader_principal_ids" {
   description = "Object IDs allowed to read the output (results) container."
   default     = []
 }
+
+# Shared logging
+
+variable "shared_log_analytics_workspace_id" {
+  type        = string
+  description = "Resource ID of the shared Log Analytics workspace that Cyber can read. It is in another subscription, and its ID differs between test and production. The applying identity needs read and Microsoft.OperationalInsights/workspaces/sharedKeys/action on it, which the Monitoring Contributor role includes."
+}

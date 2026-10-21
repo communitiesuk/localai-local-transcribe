@@ -49,3 +49,8 @@ variable "soft_delete_retention_days" {
   description = "Days to retain a soft-deleted vault and its keys before they can be purged."
   default     = 90
 }
+
+variable "shared_log_analytics_workspace_id" {
+  type        = string
+  description = "Resource ID of the shared Log Analytics workspace that Cyber can read. It is in another subscription, and its ID differs between test and production. The applying identity needs read and Microsoft.OperationalInsights/workspaces/sharedKeys/action on it, which the Monitoring Contributor role includes."
+}
