@@ -126,8 +126,9 @@ variable. Images are built once in development and promoted with `crane copy`, a
 * Good, because a single, digest-identical image set is promoted unchanged.
 * Good, because no application code changes are needed, and pages retain their current rendering behaviour.
 * Good, because staging and production ECRs only contain promoted images.
-* Neutral, because production's public configuration values (Sentry DSN, Plausible domain) are present
-  in the development image; these are already exposed to browsers and are not secrets.
+* Bad, because production's public configuration values (Sentry DSN, Plausible domain) are present
+  in the development image; these are currently exposed to browsers and are not secrets, but that could change
+  in the future.
 * Bad, because the frontend image grows by roughly two additional standalone outputs, and frontend build time
   increases (mitigated by parallel stages).
 * Neutral, because a development image must still be copied to staging before the development ECR lifecycle policy

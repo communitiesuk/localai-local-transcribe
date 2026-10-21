@@ -25,7 +25,8 @@ What mechanism should we use to define, evaluate, and change feature flags?
 
 ## Decision Outcome
 
-{Pending}
+AWS AppConfig feature flags, because it supports even our nice-to-have use cases (fine-grained flags, runtime changes,
+A/B experiments) without the need for any new product assurance or procurement.
 
 ## Pros and Cons of the Options
 
