@@ -42,3 +42,18 @@ variable "subnet_prefix" {
   type        = string
   description = "Address prefix for the private-endpoint subnet. Must sit inside address_space."
 }
+
+variable "allowed_caller_address_prefixes" {
+  type        = list(string)
+  description = "Address prefixes allowed to open TCP port 443 to the private endpoints. One prefix per caller network or host."
+}
+
+variable "private_endpoint_address_prefixes" {
+  type = object({
+    state     = string
+    results   = string
+    sensitive = string
+    vault     = string
+  })
+  description = "Single-host prefix for each private endpoint on this subnet."
+}
