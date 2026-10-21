@@ -16,7 +16,7 @@ the three containers, the evals Log Analytics workspace, and the Azure DevOps pi
 
 ```bash
 cd terraform/azure/evals
-# state backend (once) — see evals/README.md Step 1 if not yet created
+# state backend (once). See evals/README.md, Apply.
 cd backend && terraform init && terraform apply && cd ..
 
 # main stack — init points at the tfstate container (needs Storage Blob Data Contributor on the state account)
@@ -40,7 +40,7 @@ resource_group_name             = "<resource-group>"
 location                        = "uksouth"
 sensitive_storage_account_name  = "<sensitive-account>"
 results_storage_account_name    = "<results-account>"
-environment_name                = "sandbox"
+environment_name                = "<environment-name>"
 ```
 
 ## 2. Upload synthetic input data

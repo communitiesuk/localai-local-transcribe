@@ -1,20 +1,19 @@
 # Key Vault that holds the customer-managed key for the two evaluations storage accounts.
-# Apply from the test desktop with local state. Creating the key is Key Vault data plane:
-# vmss-shared has no public egress, so do not create the key on that pool until a vault
-# private endpoint and hub Domain Name System exist.
+# Apply from test ADAPT with local state. An apply from a shared agent would not see that state.
 #
 # First apply: vault only (create_storage_key = false). Privileged Identity Management
 # Contributor can create the vault. It cannot grant Key Vault Crypto Officer, and without
 # that role it cannot create the key. The pipeline grant-key-vault-roles command does
 # those assignments. Second apply: set create_storage_key = true and apply the key.
 #
-# Purge protection cannot be turned off once set. Public access stays on until a private
-# endpoint is proven. Trusted Microsoft services may bypass the firewall so Storage can
-# wrap and unwrap before Domain Name System is attached.
+# Purge protection cannot be turned off once set. Public data-plane access is off.
+# The private endpoint is the path in, proven from test ADAPT on 20 October 2026.
+# The AzureServices exception stays, so Azure Storage can still encrypt the
+# accounts with this customer-managed key.
 #
-# The key rotates itself once a year through its rotation policy. Apply the rotation
-# policy and vault logging while the vault is still public, because after the vault
-# lock-down the test desktop cannot reach the vault until Zscaler maps its private name.
+# The key rotates itself once a year through its rotation policy. Vault audit logs
+# go to the evals Log Analytics workspace. Test ADAPT reaches the vault through the
+# Zscaler mapping of its private name.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -51,12 +50,12 @@ resource "azurerm_key_vault" "evals_storage" {
   rbac_authorization_enabled    = true
   purge_protection_enabled      = true
   soft_delete_retention_days    = var.soft_delete_retention_days
-  public_network_access_enabled = true
+  public_network_access_enabled = false
 
-  # Allow until the vault private endpoint is proven. AzureServices lets Storage wrap
-  # and unwrap the account encryption key without a private name lookup.
+  # Private endpoint proven from test ADAPT on 20 October 2026.
+  # AzureServices stays so Azure Storage can still encrypt the accounts with this key.
   network_acls {
-    default_action = "Allow"
+    default_action = "Deny"
     bypass         = "AzureServices"
   }
 
@@ -120,6 +119,20 @@ resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault" {
   name                       = "key-vault-audit-logging"
   target_resource_id         = azurerm_key_vault.evals_storage.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  enabled_log {
+    category = "AuditEvent"
+  }
+}
+
+# Second copy of the vault audit events for the shared Log Analytics workspace that Cyber
+# can read. A diagnostic setting can name only one workspace, so this is a separate setting.
+# The shared workspace is in another subscription. The identity that applies this needs
+# read and sharedKeys/action on it, otherwise Azure refuses the setting with a 403.
+resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault_shared" {
+  name                       = "key-vault-audit-logging-shared"
+  target_resource_id         = azurerm_key_vault.evals_storage.id
+  log_analytics_workspace_id = var.shared_log_analytics_workspace_id
 
   enabled_log {
     category = "AuditEvent"

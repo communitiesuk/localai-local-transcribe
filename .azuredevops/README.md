@@ -37,6 +37,7 @@ Mandatory values:
 | `EVALS_ADO_FEDERATION_ISSUER` | Issuer shown on the `evals-blob` service connection | No |
 | `EVALS_ADO_FEDERATION_SUBJECT` | Subject shown on the `evals-blob` service connection | No |
 | `EVALS_PRIVATE_ENDPOINT_SUBNET_ID` | Resource ID of the private endpoint subnet in the evals virtual network | No |
+| `EVALS_SHARED_LOG_ANALYTICS_WORKSPACE_ID` | Resource ID of the shared Log Analytics workspace that Cyber can read. The Terraform pipeline identity needs `Microsoft.OperationalInsights/workspaces/sharedKeys/action` on it | No |
 | `EVALS_KEY_VAULT_NAME` | Key Vault holding the storage key. Read only by `grant-key-vault-roles` | No |
 | `EVALS_SUPER_USER_OBJECT_ID` | Entra object ID given Key Vault Crypto Officer. Read only by `grant-key-vault-roles` | No |
 | `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |

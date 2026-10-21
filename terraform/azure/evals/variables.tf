@@ -30,12 +30,12 @@ variable "results_storage_account_name" {
 
 variable "environment_name" {
   type        = string
-  description = "Short environment label used in tags, for example sandbox or assured."
+  description = "Short environment label used in tags, for example test."
 }
 
 variable "account_replication_type" {
   type        = string
-  description = "Storage replication type. Use LRS for Softwire sandbox. Set GRS or GZRS later if assured-env policy requires geo-redundancy."
+  description = "Storage replication type. The test accounts use LRS."
   default     = "LRS"
 }
 
@@ -123,4 +123,11 @@ variable "results_reader_principal_ids" {
   type        = set(string)
   description = "Object IDs allowed to read the output (results) container."
   default     = []
+}
+
+# Shared logging
+
+variable "shared_log_analytics_workspace_id" {
+  type        = string
+  description = "Resource ID of the shared Log Analytics workspace that Cyber can read. It is in another subscription, and its ID differs between test and production. The applying identity needs read and Microsoft.OperationalInsights/workspaces/sharedKeys/action on it, which the Monitoring Contributor role includes."
 }

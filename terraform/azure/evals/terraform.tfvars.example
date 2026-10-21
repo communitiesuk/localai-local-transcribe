@@ -1,5 +1,5 @@
 # Example local access values for the evals Terraform roots.
-# Fixed sandbox names/defaults live in variables.tf and backend/variables.tf.
+# Names and other defaults live in variables.tf and backend/variables.tf.
 # Copy to terraform.tfvars in this directory; do not commit real subscription IDs,
 # resource group names, IPs, or object IDs.
 
@@ -21,6 +21,9 @@ environment_name    = "<environment-name>"
 
 # Private endpoint subnet in the evals virtual network.
 private_endpoint_subnet_id = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
+
+# Shared Log Analytics workspace that Cyber can read. It is in another subscription.
+shared_log_analytics_workspace_id = "/subscriptions/<shared-subscription-id>/resourceGroups/<shared-resource-group>/providers/Microsoft.OperationalInsights/workspaces/<shared-workspace-name>"
 
 # Team RBAC.
 # TODO(AIILG-649): Spike what we can do via Entra groups to make these less hardcoded.

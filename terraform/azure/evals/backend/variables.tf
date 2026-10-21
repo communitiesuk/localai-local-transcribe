@@ -24,12 +24,12 @@ variable "terraform_state_storage_account_name" {
 
 variable "environment_name" {
   type        = string
-  description = "Short environment label used in tags, for example Softwire sandbox or assured."
+  description = "Short environment label used in tags, for example test."
 }
 
 variable "account_replication_type" {
   type        = string
-  description = "Storage replication type. Use LRS for Softwire sandbox. Set GRS or GZRS later if assured-env policy requires geo-redundancy."
+  description = "Storage replication type. The test account uses LRS."
   default     = "LRS"
 }
 
@@ -43,4 +43,9 @@ variable "sas_expiration_period" {
   type        = string
   description = "Maximum lifetime for newly created shared access signatures, as DD.HH:MM:SS."
   default     = "07.00:00:00"
+}
+
+variable "shared_log_analytics_workspace_id" {
+  type        = string
+  description = "Resource ID of the shared Log Analytics workspace that Cyber can read. It is in another subscription, and its ID differs between test and production. The applying identity needs read and Microsoft.OperationalInsights/workspaces/sharedKeys/action on it, which the Monitoring Contributor role includes."
 }

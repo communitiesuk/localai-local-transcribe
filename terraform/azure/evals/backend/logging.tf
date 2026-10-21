@@ -83,3 +83,46 @@ resource "azurerm_monitor_diagnostic_setting" "terraform_state_blob" {
     category = "StorageDelete"
   }
 }
+
+# Second copy of the same logs for the shared Log Analytics workspace that Cyber can read.
+# A diagnostic setting can name only one workspace, so each target has a second setting.
+# The shared workspace is in another subscription. The identity that applies this needs
+# read and sharedKeys/action on it, otherwise Azure refuses these settings with a 403.
+
+resource "azurerm_monitor_diagnostic_setting" "terraform_state_file_shared" {
+  name                           = "file-service-logging-shared"
+  target_resource_id             = "${azurerm_storage_account.terraform_state.id}/fileServices/default"
+  log_analytics_workspace_id     = var.shared_log_analytics_workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "terraform_state_blob_shared" {
+  name                           = "blob-service-logging-shared"
+  target_resource_id             = "${azurerm_storage_account.terraform_state.id}/blobServices/default"
+  log_analytics_workspace_id     = var.shared_log_analytics_workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+}

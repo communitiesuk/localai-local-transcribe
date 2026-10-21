@@ -85,3 +85,51 @@ resource "azurerm_monitor_diagnostic_setting" "evals_blob" {
     category = "StorageDelete"
   }
 }
+
+# Second copy of the same logs for the shared Log Analytics workspace that Cyber can read.
+# A diagnostic setting can name only one workspace, so each target has a second setting.
+# The project workspace above keeps its copy, so the team has logs it can query itself.
+# The shared workspace is in another subscription. The identity that applies this needs
+# read and sharedKeys/action on it, otherwise Azure refuses these settings with a 403.
+
+resource "azurerm_monitor_diagnostic_setting" "evals_file_shared" {
+  for_each = azurerm_storage_account.evals
+
+  name                           = "file-service-logging-shared"
+  target_resource_id             = "${each.value.id}/fileServices/default"
+  log_analytics_workspace_id     = var.shared_log_analytics_workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "evals_blob_shared" {
+  for_each = azurerm_storage_account.evals
+
+  name                           = "blob-service-logging-shared"
+  target_resource_id             = "${each.value.id}/blobServices/default"
+  log_analytics_workspace_id     = var.shared_log_analytics_workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+}

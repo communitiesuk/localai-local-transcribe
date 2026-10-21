@@ -7,15 +7,6 @@
 #
 #   sensitive account holds input and debug. Reached only through its private endpoint.
 #   results account holds output. Reached through its private endpoint, public access kept.
-#
-# Softwire sandbox vs assured Azure environment:
-# - Transferable: the two-account split, container names, hardening defaults, private
-#   endpoint and RBAC shape, remote state via azurerm backend, manual plan/apply.
-# - Must adapt: tenant, subscription_id, resource_group_name, location, both storage
-#   account names, environment_name, all IP allowlists, the private endpoint subnet and
-#   DNS zones, all principal IDs, and backend -backend-config values.
-# - Uncertain: whether the platform mandates a naming prefix or a platform-owned resource
-#   group.
 
 terraform {
   required_version = ">= 1.5.0"
