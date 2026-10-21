@@ -22,6 +22,9 @@ environment_name    = "<environment-name>"
 # Private endpoint subnet in the evals virtual network.
 private_endpoint_subnet_id = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
 
+# Name of the Terraform state storage account created by backend/.
+terraform_state_storage_account_name = "<state-storage-account-name>"
+
 # Shared Log Analytics workspace that Cyber can read. It is in another subscription.
 shared_log_analytics_workspace_id = "/subscriptions/<shared-subscription-id>/resourceGroups/<shared-resource-group>/providers/Microsoft.OperationalInsights/workspaces/<shared-workspace-name>"
 

@@ -91,6 +91,15 @@ resource "azurerm_monitor_diagnostic_setting" "evals_blob" {
 # The project workspace above keeps its copy, so the team has logs it can query itself.
 # The shared workspace is in another subscription. The identity that applies this needs
 # read and sharedKeys/action on it, otherwise Azure refuses these settings with a 403.
+#
+# This root also owns the shared settings for the Terraform state account and the vault.
+# Those two resources are created by backend/ and key-vault/, whose state lives on test
+# ADAPT. A diagnostic setting only points at its target, so this root can create it from
+# the target's resource ID. That way the pipeline service principal, which already holds
+# the rights on the shared workspace, applies all of the shared copies and no personal
+# account needs them. The project workspace settings for those two targets stay in
+# backend/ and key-vault/. Do not add a "-shared" setting to either of those roots, or
+# two roots would manage the same name.
 
 resource "azurerm_monitor_diagnostic_setting" "evals_file_shared" {
   for_each = azurerm_storage_account.evals
@@ -131,5 +140,61 @@ resource "azurerm_monitor_diagnostic_setting" "evals_blob_shared" {
 
   enabled_log {
     category = "StorageDelete"
+  }
+}
+
+# Resource IDs of the two targets that other roots create. The state account ID is built
+# from its name, because the data source for a storage account would add calls that this
+# root does not need. Creating a diagnostic setting uses only Azure Resource Manager.
+locals {
+  terraform_state_storage_account_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Storage/storageAccounts/${var.terraform_state_storage_account_name}"
+}
+
+resource "azurerm_monitor_diagnostic_setting" "terraform_state_file_shared" {
+  name                           = "file-service-logging-shared"
+  target_resource_id             = "${local.terraform_state_storage_account_id}/fileServices/default"
+  log_analytics_workspace_id     = var.shared_log_analytics_workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "terraform_state_blob_shared" {
+  name                           = "blob-service-logging-shared"
+  target_resource_id             = "${local.terraform_state_storage_account_id}/blobServices/default"
+  log_analytics_workspace_id     = var.shared_log_analytics_workspace_id
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+}
+
+# The vault is found by the data source in storage_customer_managed_key.tf.
+resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault_shared" {
+  name                       = "key-vault-audit-logging-shared"
+  target_resource_id         = data.azurerm_key_vault.evals_storage.id
+  log_analytics_workspace_id = var.shared_log_analytics_workspace_id
+
+  enabled_log {
+    category = "AuditEvent"
   }
 }

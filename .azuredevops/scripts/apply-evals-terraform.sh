@@ -137,6 +137,8 @@ sensitive_storage_account_name = "${sensitive_account}"
 results_storage_account_name   = "${results_account}"
 # Subnet in the evals virtual network that holds both blob private endpoints.
 private_endpoint_subnet_id = "${private_endpoint_subnet_id}"
+# State account created by backend/. The shared diagnostic settings for it are in this root.
+terraform_state_storage_account_name = "${state_account}"
 # Shared Log Analytics workspace that Cyber can read. It is in another subscription.
 shared_log_analytics_workspace_id = "${shared_log_analytics_workspace_id}"
 # Federated credential that lets the evals-blob service connection sign in as evals-blob-id.
