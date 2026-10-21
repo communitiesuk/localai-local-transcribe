@@ -38,20 +38,24 @@ reporting/aggregate_analytics/run-with-tunnel.sh --environment development -- --
 
 Both dates are inclusive (UTC for database counts). `--caseload` is only needed for measures 6 and 7; without it their caseload and percentage are `null`.
 
-By default the report is printed to stdout. Either write it with `--output`, which takes a file name and saves it in `reporting/aggregate_analytics/output/` (created if missing):
+By default the report is printed to stdout as JSON. Use `--format` to write it to files instead, under `reporting/aggregate_analytics/output/<start>_to_<end>/` (created if missing), where `<start>_to_<end>` is the reporting period, e.g. `2026-09-01_to_2026-09-30`:
 
 ```bash
-poetry run python -m reporting.aggregate_analytics --start 2026-09-01 --end 2026-09-30 --output september.json
+poetry run python -m reporting.aggregate_analytics --start 2026-09-01 --end 2026-09-30 --format json
+# writes reporting/aggregate_analytics/output/2026-09-01_to_2026-09-30/report.json
+
+poetry run python -m reporting.aggregate_analytics --start 2026-09-01 --end 2026-09-30 --format csv
+# writes one reporting/aggregate_analytics/output/2026-09-01_to_2026-09-30/<measure>.csv file per measure
 ```
 
-or redirect stdout yourself (warnings go to stderr so stay out of the file; the directory must already exist):
+or redirect stdout yourself for JSON (warnings go to stderr so stay out of the file; the directory must already exist):
 
 ```bash
 mkdir -p reporting/aggregate_analytics/output
 poetry run python -m reporting.aggregate_analytics --start 2026-09-01 --end 2026-09-30 > reporting/aggregate_analytics/output/september.json
 ```
 
-Output is JSON, one entry per measure, each with a list of `rows`:
+JSON output is one entry per measure, each with a list of `rows`:
 
 ```json
 [
@@ -65,6 +69,8 @@ Output is JSON, one entry per measure, each with a list of `rows`:
 
 `percentage` is `null` when the denominator (or caseload) is missing or 0. The `numerator` and `denominator` keys carry the name of the event they count in brackets (for database counts restricted to a recording source, the source follows the event type, e.g. `numerator (TRANSCRIPTION_RECEIVED, live_recording)`).
 
+With `--format csv`, each measure is written as its own file (name derived from the measure, e.g. `audio_uploads_per_live_recording_start.csv`) because different measures have different columns (ratio measures have `numerator (...)`/`denominator (...)`/`percentage`; monthly measures have `month`/`count`; the caseload measures add `organisation_id`/`estimated_caseload`).
+
 ## Flags
 
 ### Report (`python -m reporting.aggregate_analytics`)
@@ -74,7 +80,7 @@ Output is JSON, one entry per measure, each with a list of `rows`:
 | `--start` | Yes | `--start 2026-09-01` | Inclusive start date, `YYYY-MM-DD`. |
 | `--end` | Yes | `--end 2026-09-30` | Inclusive end date, `YYYY-MM-DD`. Must not be before `--start`. |
 | `--caseload` | No | `--caseload reporting/aggregate_analytics/input/caseload.csv` | CSV of estimated caseload. Only needed for measures 6 and 7; without it their caseload and percentage are `null`. A relative path is resolved from the current directory (the repository root when using the wrapper). |
-| `--output` | No | `--output september.json` | File name (not a path) to write the JSON report to, inside `reporting/aggregate_analytics/output/` (created if missing). Without it the report goes to stdout. |
+| `--format` | No | `--format csv` | `json` or `csv`. Writes the report into `reporting/aggregate_analytics/output/<start>_to_<end>/` (created if missing): `json` writes a single `report.json`, `csv` writes one `<measure>.csv` file per measure. Without it the JSON report goes to stdout. |
 | `-h`, `--help` | No | `--help` | Show usage. |
 
 ### Tunnel wrapper (`run-with-tunnel.sh`)
@@ -89,7 +95,7 @@ Wrapper flags come first. Everything after a lone `--` is passed unchanged to th
 | `-h`, `--help` | No | `--help` | Show usage. |
 
 ```bash
-reporting/aggregate_analytics/run-with-tunnel.sh --environment production --local-port 5434 -- --start 2026-09-01 --end 2026-09-30 --output september.json
+reporting/aggregate_analytics/run-with-tunnel.sh --environment production --local-port 5434 -- --start 2026-09-01 --end 2026-09-30 --format csv
 ```
 
 ### Tunnel script (`connect-to-aws-db.sh`)
