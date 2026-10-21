@@ -127,6 +127,11 @@ variable "results_reader_principal_ids" {
 
 # Shared logging
 
+variable "terraform_state_storage_account_name" {
+  type        = string
+  description = "Name of the Terraform state storage account created by backend/. This root does not manage that account. It only needs the name to attach the shared diagnostic settings to it."
+}
+
 variable "shared_log_analytics_workspace_id" {
   type        = string
   description = "Resource ID of the shared Log Analytics workspace that Cyber can read. It is in another subscription, and its ID differs between test and production. The applying identity needs read and Microsoft.OperationalInsights/workspaces/sharedKeys/action on it, which the Monitoring Contributor role includes."
