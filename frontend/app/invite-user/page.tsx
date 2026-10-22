@@ -1,6 +1,6 @@
 'use client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
@@ -8,6 +8,7 @@ import { useOrganisation } from '@/hooks/use-organisation'
 import { UserRole } from '@/lib/utils'
 import isAllowedDomain from '@/utils/allowed-domains'
 import validateEmail from '@/utils/validate-email'
+import { useFocusHashTarget } from '@/hooks/use-focus-hash-target'
 import { Loader2 } from 'lucide-react'
 import { userExistsUsersUserExistsGet } from '@/lib/client'
 import {
@@ -62,12 +63,7 @@ export default function AdminAddUserPage() {
 
   const { data: organisation } = useOrganisation(inviteOrganisationId || '')
 
-  useEffect(() => {
-    const fieldId = window.location.hash.slice(1)
-    if (fieldId) {
-      document.getElementById(fieldId)?.focus()
-    }
-  }, [])
+  useFocusHashTarget(!userLoading && !userError)
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
