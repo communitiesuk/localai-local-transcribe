@@ -141,7 +141,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
         choice = response.choices[0]
 
-        self.choice_incomplete(choice, response)
+        self.log_if_finish_reason_is_length(choice, response)
 
         message_content = choice.message.content
 
@@ -287,15 +287,12 @@ class AzureAPIMModelAdapter(ModelAdapter):
         return 60
 
     @staticmethod
-    def choice_incomplete(
+    def log_if_finish_reason_is_length(
         choice: Choice,
         response: ChatCompletion,
-    ) -> bool:
+    ) -> None:
         if choice.finish_reason == "length":
             logger.warning(
                 ("APIM WARNING: max output tokens reached " "(response_id=%s)"),
                 response.id,
             )
-            return True
-
-        return False
