@@ -17,3 +17,10 @@ resource "aws_default_security_group" "main" {
   }
 
 }
+resource "aws_default_vpc" "main" {
+  force_destroy = true
+  tags = {
+    Name        = "local-transcribe-default-vpc-${var.environment_name}"
+    Description = "Default VPC for ${var.environment_name} environment"
+  }
+}
