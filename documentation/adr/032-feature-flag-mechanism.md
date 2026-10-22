@@ -64,7 +64,8 @@ supplied by the backend (e.g. organisation or user ID), including percentage spl
 * Bad, because A/B testing experiments have a cost ($0.90 per experiment-hour: ~$650 for a one month experiment)
 * Bad, because product/delivery team members would need AWS console access to each environment's account (including
   production) to change flags, or a custom wrapper would need building.
-* Bad, because it requires a local implementation for development and tests.
+* Neutral, because a local implementation for development and tests will need some thought, but the AppConfig Agent does
+  provide a local development mode in which is reads from a file instead of from AWS config.
 
 ### Database-backed flags, managed by developers
 
