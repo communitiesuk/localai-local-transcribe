@@ -7,3 +7,13 @@ resource "aws_vpc" "main" {
     Name = "local-transcribe-vpc-${var.environment_name}"
   }
 }
+
+resource "aws_default_security_group" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name        = "${var.environment_name}-default-sg-rules-restricted"
+    Description = "Locked default SG - no ingress or egress rules"
+  }
+
+}
