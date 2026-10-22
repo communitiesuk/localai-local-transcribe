@@ -66,7 +66,11 @@ class AMIDatasetLoader(DatasetProtocol):
         for row in dataset:
             meeting_id = row["meeting_id"]
             if meeting_id in required_meetings:
-                utterances_by_meeting[meeting_id].append(RawDatasetRow(**row))
+                # datasets 5 returns a decoder here. The row model expects the samples and sample rate.
+                audio = row["audio"]
+                utterance = dict(row)
+                utterance["audio"] = {"array": audio["array"], "sampling_rate": audio["sampling_rate"]}
+                utterances_by_meeting[meeting_id].append(RawDatasetRow(**utterance))
         return utterances_by_meeting
 
     @staticmethod
