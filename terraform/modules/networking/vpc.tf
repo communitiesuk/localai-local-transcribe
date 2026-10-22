@@ -7,7 +7,9 @@ resource "aws_vpc" "main" {
     Name = "local-transcribe-vpc-${var.environment_name}"
   }
 }
-
+data "aws_vpc" "default" {
+  default = true
+}
 resource "aws_default_security_group" "main" {
   vpc_id = aws_vpc.main.id
 
@@ -15,12 +17,12 @@ resource "aws_default_security_group" "main" {
     Name        = "${var.environment_name}-default-sg-rules-restricted"
     Description = "Locked default SG - no ingress or egress rules"
   }
-
 }
-resource "aws_default_vpc" "main" {
-  force_destroy = true
+
+resource "aws_default_security_group" "default" {
+  vpc_id = data.aws_vpc.default.id
   tags = {
-    Name        = "local-transcribe-default-vpc-${var.environment_name}"
-    Description = "Default VPC for ${var.environment_name} environment"
+    Name        = "${var.environment_name}-default-vpc-sg-rules-restricted"
+    Description = "Locked default VPC SG rules - no ingress or egress rules"
   }
 }
