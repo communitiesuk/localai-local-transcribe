@@ -1,10 +1,13 @@
-import { render, waitFor } from '@testing-library/react'
-import { useEffect, useState } from 'react'
+import { render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { useFocusHashTarget } from '@/hooks/use-focus-hash-target'
 
-const Page = () => {
-  useFocusHashTarget()
+const Page = ({ ready = true }: { ready?: boolean }) => {
+  useFocusHashTarget(ready)
+
+  if (!ready) {
+    return <p>Loading</p>
+  }
 
   return (
     <>
@@ -12,18 +15,6 @@ const Page = () => {
       <input id="second-field" />
     </>
   )
-}
-
-const LoadingPage = () => {
-  const [ready, setReady] = useState(false)
-
-  useFocusHashTarget(ready)
-
-  useEffect(() => {
-    setReady(true)
-  }, [])
-
-  return ready ? <input id="second-field" /> : <p>Loading</p>
 }
 
 const setHash = (hash: string) => {
@@ -43,16 +34,13 @@ describe('useFocusHashTarget', () => {
     expect(document.activeElement).toBe(document.getElementById('second-field'))
   })
 
-  it('focuses the field once it has rendered, not while the page is loading', async () => {
+  it('focuses the field once it has rendered, not while the page is loading', () => {
     setHash('#second-field')
 
-    render(<LoadingPage />)
+    const { rerender } = render(<Page ready={false} />)
+    rerender(<Page />)
 
-    await waitFor(() =>
-      expect(document.activeElement).toBe(
-        document.getElementById('second-field')
-      )
-    )
+    expect(document.activeElement).toBe(document.getElementById('second-field'))
   })
 
   it('leaves focus alone when there is no fragment', () => {
