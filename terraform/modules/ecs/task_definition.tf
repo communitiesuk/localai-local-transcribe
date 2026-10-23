@@ -239,10 +239,21 @@ resource "aws_ecs_task_definition" "backend" {
 
   container_definitions = jsonencode([
     {
-      name      = "backend"
-      essential = true
-      image     = var.backend_image_name
-      user      = "root" # TODO shouldn't be root - AIILG-508
+      name                   = "backend"
+      essential              = true
+      image                  = var.backend_image_name
+      user                   = "root" # TODO shouldn't be root - AIILG-508
+      readonlyRootFilesystem = true
+
+      linuxParameters = {
+        tmpfs = [
+          {
+            containerPath = "/tmp"
+            size          = var.backend_tmp_tmpfs_size_mib
+            mountOptions  = ["noexec", "nosuid", "nodev"]
+          }
+        ]
+      }
 
       portMappings = [
         {
@@ -304,10 +315,21 @@ resource "aws_ecs_task_definition" "worker" {
 
   container_definitions = jsonencode([
     {
-      name      = "worker"
-      essential = true
-      image     = var.worker_image_name
-      user      = "root" # TODO shouldn't be root - AIILG-508
+      name                   = "worker"
+      essential              = true
+      image                  = var.worker_image_name
+      user                   = "root" # TODO shouldn't be root - AIILG-508
+      readonlyRootFilesystem = true
+
+      linuxParameters = {
+        tmpfs = [
+          {
+            containerPath = "/tmp"
+            size          = var.worker_tmp_tmpfs_size_mib
+            mountOptions  = ["noexec", "nosuid", "nodev"]
+          }
+        ]
+      }
 
       logConfiguration = {
         logDriver = "awslogs"
@@ -325,6 +347,12 @@ resource "aws_ecs_task_definition" "worker" {
         {
           name  = "APP_NAME"
           value = "local-transcribe-worker"
+        },
+        {
+          # Fargate hard-caps /dev/shm at 64MB (sharedMemorySize is unsupported on Fargate),
+          # which is too small for Ray's object store. This lets Ray spill to /tmp instead.
+          name  = "RAY_OBJECT_STORE_ALLOW_SLOW_STORAGE"
+          value = "1"
         },
       ])
 

@@ -20,9 +20,10 @@ start_app() {
 }
 
 # rehydrate google account credentials
-mkdir -p /app/config/
-echo $GOOGLE_APPLICATION_CREDENTIALS_BASE64 | base64 -d > /app/config/google-credentials.json
-export GOOGLE_APPLICATION_CREDENTIALS=/app/config/google-credentials.json
+# written to /tmp (tmpfs-mounted) so this works on a read-only root filesystem
+GOOGLE_CREDENTIALS_PATH=/tmp/google-credentials.json
+echo "$GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d > "$GOOGLE_CREDENTIALS_PATH"
+export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_CREDENTIALS_PATH"
 
 # Main execution
 run_migrations
