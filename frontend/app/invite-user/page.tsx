@@ -7,6 +7,8 @@ import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { UserRole } from '@/lib/utils'
 import isAllowedDomain from '@/utils/allowed-domains'
+import validateEmail from '@/utils/validate-email'
+import { useFocusHashTarget } from '@/hooks/use-focus-hash-target'
 import { Loader2 } from 'lucide-react'
 import { userExistsUsersUserExistsGet } from '@/lib/client'
 import {
@@ -61,19 +63,24 @@ export default function AdminAddUserPage() {
 
   const { data: organisation } = useOrganisation(inviteOrganisationId || '')
 
+  useFocusHashTarget(!userLoading && !userError)
+
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     setNameError(null)
     setEvaluationIdError(null)
     setHasError(false)
 
+    const trimmedEmail = email.trim()
+
     if (!name.trim()) {
       setNameError('Enter a name')
       return
     }
 
-    if (!email.trim()) {
-      setErrorMessage('Enter an email address')
+    const emailError = validateEmail(trimmedEmail)
+    if (emailError) {
+      setErrorMessage(emailError)
       setHasError(true)
       return
     }
@@ -88,8 +95,8 @@ export default function AdminAddUserPage() {
       return
     }
 
-    if (!isAllowedDomain(email, organisation?.allowed_domains ?? [])) {
-      console.error(invalidDomainError, email)
+    if (!isAllowedDomain(trimmedEmail, organisation?.allowed_domains ?? [])) {
+      console.error(invalidDomainError, trimmedEmail)
       setErrorMessage(invalidDomainError)
       setHasError(true)
       return
@@ -97,7 +104,7 @@ export default function AdminAddUserPage() {
 
     const response = await userExistsUsersUserExistsGet({
       query: {
-        email,
+        email: trimmedEmail,
         organisation_id: inviteOrganisationId,
       },
     })
@@ -108,7 +115,7 @@ export default function AdminAddUserPage() {
       return
     }
 
-    setInviteDetails(name, email, evaluationId.trim())
+    setInviteDetails(name, trimmedEmail, evaluationId.trim())
     router.push(inviteUserConfirmHref)
   }
 
