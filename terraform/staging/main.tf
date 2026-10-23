@@ -47,6 +47,14 @@ provider "aws" {
   region = "us-east-1"
 }
 
+module "account_baseline" {
+  source = "../modules/account_baseline"
+
+  providers = {
+    aws.us-east-1 = aws.us-east-1
+  }
+}
+
 module "networking" {
   source                       = "../modules/networking"
   vpc_cidr_block               = "10.1.0.0/16"

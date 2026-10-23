@@ -1,4 +1,27 @@
 locals {
+  # ECS Exec (the embedded SSM Core Agent) requires write access to these paths at runtime.
+  # This is NOT officially documented/supported by AWS alongside readonlyRootFilesystem - see
+  # https://github.com/aws/containers-roadmap/issues/2824 and
+  # https://github.com/aws/containers-roadmap/issues/1359. These paths are community-reverse-engineered,
+  # not AWS-confirmed or version-pinned, and could silently break on a future ECS/SSM agent update.
+  ecs_exec_tmpfs_mounts = var.allow_exec ? [
+    {
+      containerPath = "/managed-agents"
+      size          = 64
+      mountOptions  = ["nosuid"]
+    },
+    {
+      containerPath = "/var/lib/amazon/ssm"
+      size          = 32
+      mountOptions  = ["nosuid"]
+    },
+    {
+      containerPath = "/var/log/amazon/ssm"
+      size          = 32
+      mountOptions  = ["nosuid"]
+    }
+  ] : []
+
   shared_worker_backend_environment_variables = [
     {
       name  = "ENVIRONMENT"
@@ -187,7 +210,7 @@ resource "aws_ecs_task_definition" "frontend" {
       name      = "frontend"
       essential = true
       image     = var.frontend_image_name
-      user      = "root" # TODO shouldn't be root - AIILG-508
+      user      = "1001:1001"
 
       portMappings = [
         {
@@ -242,17 +265,17 @@ resource "aws_ecs_task_definition" "backend" {
       name                   = "backend"
       essential              = true
       image                  = var.backend_image_name
-      user                   = "root" # TODO shouldn't be root - AIILG-508
+      user                   = "1000:1000"
       readonlyRootFilesystem = true
 
       linuxParameters = {
-        tmpfs = [
+        tmpfs = concat([
           {
             containerPath = "/tmp"
             size          = var.backend_tmp_tmpfs_size_mib
-            mountOptions  = ["noexec", "nosuid", "nodev"]
+            mountOptions  = ["noexec", "nosuid", "nodev", "mode=1777"]
           }
-        ]
+        ], local.ecs_exec_tmpfs_mounts)
       }
 
       portMappings = [
@@ -318,17 +341,17 @@ resource "aws_ecs_task_definition" "worker" {
       name                   = "worker"
       essential              = true
       image                  = var.worker_image_name
-      user                   = "root" # TODO shouldn't be root - AIILG-508
+      user                   = "1000:1000"
       readonlyRootFilesystem = true
 
       linuxParameters = {
-        tmpfs = [
+        tmpfs = concat([
           {
             containerPath = "/tmp"
             size          = var.worker_tmp_tmpfs_size_mib
-            mountOptions  = ["noexec", "nosuid", "nodev"]
+            mountOptions  = ["noexec", "nosuid", "nodev", "mode=1777"]
           }
-        ]
+        ], local.ecs_exec_tmpfs_mounts)
       }
 
       logConfiguration = {
