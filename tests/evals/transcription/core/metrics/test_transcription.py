@@ -14,7 +14,7 @@ from evals.transcription.src.core.metrics import compute_wer_metrics
     ],
 )
 def test_compute_wer_metrics_empty_reference_raises_error(reference, hypothesis):
-    with pytest.raises(ValueError, match=".*"):
+    with pytest.raises(ValueError, match=r".*"):
         compute_wer_metrics(reference, hypothesis)
 
 
