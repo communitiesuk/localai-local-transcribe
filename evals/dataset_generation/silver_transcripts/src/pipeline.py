@@ -127,7 +127,7 @@ class SilverTranscriptPipeline:
                 meeting_metadata.append(self._process_sample(source, relative_path, sample_id))
             except CutoffMismatchError:
                 raise
-            except Exception as error:
+            except Exception as error:  # noqa: BLE001 - one bad sample must not stop the folder
                 logger.error("Could not process %s: %s", source, _error_message(error))
                 meeting_metadata.append(self._failure_metadata(relative_path, sample_id, error=error))
         return meeting_metadata
@@ -209,7 +209,7 @@ class SilverTranscriptPipeline:
             )
             self._write_segments(audio_path, draft_dir, utterances, completed_metadata)
             meeting_metadata = completed_metadata
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - record per-sample conversion/transcription failures
             meeting_metadata.error = _error_message(error)
             logger.error("Could not generate %s: %s", source, meeting_metadata.error)
         _save_metadata(metadata_path, meeting_metadata)
@@ -265,7 +265,7 @@ class SilverTranscriptPipeline:
             else:
                 try:
                     await storage_service.delete(key)
-                except Exception as error:  # noqa: BLE001
+                except Exception as error:  # noqa: BLE001 - cleanup must not mask the transcription result
                     logger.warning("Could not delete temporary batch audio %s: %s", key, error)
 
     @staticmethod
