@@ -194,7 +194,8 @@ resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault_shared" {
   target_resource_id         = data.azurerm_key_vault.evals_storage.id
   log_analytics_workspace_id = var.shared_log_analytics_workspace_id
 
+  # Matches the project workspace setting in key-vault/main.tf, so both copies hold the same categories.
   enabled_log {
-    category = "AuditEvent"
+    category_group = "allLogs"
   }
 }
