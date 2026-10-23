@@ -44,7 +44,7 @@ def run_pipeline(
     records = pipeline.generate_transcripts(input_dir)
     for record in records:
         logger.info("%s: %s", record.sample_id, record.status)
-    logger.info("Processed %d inputs; review the transcript.txt and audio.mp3 files under segments/", len(records))
+    logger.info("Processed %d inputs; review the audio.txt and audio.mp3 files under segments/", len(records))
     return 1 if any(record.status == "failed" for record in records) else 0
 
 

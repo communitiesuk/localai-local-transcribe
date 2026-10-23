@@ -1,17 +1,22 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
 from itertools import pairwise
 from pathlib import Path
+from types import SimpleNamespace
 
+import httpx
 import numpy as np
 import pytest
 import soundfile
 from ffmpeg import Error as FFmpegError
+from tenacity import Future, RetryError
 
 from common.audio.ffmpeg import convert_to_mp3
 from common.services.transcription_services.azure_stt_base import convert_to_dialogue_entries
+from evals.dataset_generation.silver_transcripts.src import pipeline as pipeline_module
 from evals.dataset_generation.silver_transcripts.src.main import main
 from evals.dataset_generation.silver_transcripts.src.models import MeetingMetadata
 from evals.dataset_generation.silver_transcripts.src.pipeline import (
@@ -79,10 +84,10 @@ def test_generation_writes_segment_files(draft_setup):
     assert records[0].status == "completed"
     assert records[0].engine == "test_engine"
     meeting_dir = pipeline.work_dir / "drafts" / sample_id
-    assert not (meeting_dir / "transcript.txt").exists()
-    assert (meeting_dir / "draft.txt").read_text() == "the original draft\n"
-    (folder / "transcript.txt").write_text("the corrected reference", encoding="utf-8")
-    assert (folder / "transcript.txt").read_text() == "the corrected reference"
+    assert not (meeting_dir / "audio.txt").exists()
+    assert (meeting_dir / "draft.txt").read_text() == "Speaker 1: the original draft\n"
+    (folder / "audio.txt").write_text("the corrected reference", encoding="utf-8")
+    assert (folder / "audio.txt").read_text() == "the corrected reference"
     provenance = json.loads((folder / "metadata.json").read_text())
     assert provenance["status"] == "completed"
     assert not {"standard", "source_sha256", "audio_sha256", "draft_sha256", "dialogue_entries"} & provenance.keys()
@@ -93,7 +98,7 @@ def test_generation_writes_segment_files(draft_setup):
 def test_rerunning_generation_preserves_review_edits(draft_setup):
     input_dir, pipeline, adapter = draft_setup
     first = pipeline.generate_transcripts(input_dir)
-    transcript = pipeline.work_dir / "drafts" / first[0].sample_id / "segments" / "segment_0000" / "transcript.txt"
+    transcript = pipeline.work_dir / "drafts" / first[0].sample_id / "segments" / "segment_0000" / "audio.txt"
     transcript.write_text("review edits", encoding="utf-8")
     assert pipeline.generate_transcripts(input_dir) == first
     assert transcript.read_text() == "review edits"
@@ -325,7 +330,7 @@ def test_regeneration_replaces_segments_a_previous_run_left_behind(draft_setup, 
         metadata = json.loads(metadata_path.read_text()) | {"status": "failed"}
         metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
     segments = draft_dir / "segments"
-    (segments / "segment_0000" / "transcript.txt").write_text("stale text", encoding="utf-8")
+    (segments / "segment_0000" / "audio.txt").write_text("stale text", encoding="utf-8")
     (segments / "segment_0009").mkdir()
 
     record = pipeline.generate_transcripts(input_dir)[0]
@@ -334,7 +339,7 @@ def test_regeneration_replaces_segments_a_previous_run_left_behind(draft_setup, 
     assert record.segment_count == 1
     # The stale folder from the longer previous run is gone, not merged into the new set.
     assert sorted(path.name for path in segments.iterdir()) == ["segment_0000"]
-    assert (segments / "segment_0000" / "transcript.txt").read_text() == "the original draft\n"
+    assert (segments / "segment_0000" / "audio.txt").read_text() == "Speaker 1: the original draft\n"
     assert adapter.calls == 2
 
 
@@ -365,9 +370,9 @@ def test_missing_utterances_records_failed_generation(draft_setup, monkeypatch):
 def test_generation_writes_multiple_chunks_with_source_timestamps(draft_setup, monkeypatch):
     input_dir, pipeline, adapter = draft_setup
     entries = [
+        {"speaker": "1", "text": "third", "start_time": 610.0, "end_time": 620.0, "confidence": 0.9},
         {"speaker": "1", "text": "first", "start_time": 10.0, "end_time": 310.0, "confidence": 0.6},
         {"speaker": "2", "text": "second", "start_time": 310.0, "end_time": 610.0, "confidence": 1.0},
-        {"speaker": "1", "text": "third", "start_time": 610.0, "end_time": 620.0, "confidence": 0.9},
     ]
     monkeypatch.setattr(
         adapter,
@@ -385,8 +390,13 @@ def test_generation_writes_multiple_chunks_with_source_timestamps(draft_setup, m
     record = pipeline.generate_transcripts(input_dir)[0]
     assert record.segment_count == 2
     assert cuts == [(10, 610), (610, 620)]
+    draft = pipeline.work_dir / "drafts" / record.sample_id / "draft.txt"
+    assert draft.read_text() == "Speaker 1: first\nSpeaker 2: second\nSpeaker 1: third\n"
     outputs = sorted((pipeline.work_dir / "drafts" / record.sample_id / "segments").iterdir())
-    assert [(output / "transcript.txt").read_text() for output in outputs] == ["first second\n", "third\n"]
+    assert [(output / "audio.txt").read_text() for output in outputs] == [
+        "Speaker 1: first\nSpeaker 2: second\n",
+        "Speaker 1: third\n",
+    ]
     metadata = json.loads((outputs[0] / "metadata.json").read_text())
     assert "segment_count" not in metadata
     assert metadata["mean_utterance_confidence"] == pytest.approx(0.8)
@@ -433,6 +443,223 @@ def test_mixed_batch_records_each_sample_independently(draft_setup, monkeypatch)
 
 
 @pytest.mark.parametrize(
+    ("entries", "expected_text", "delete_fails"),
+    [
+        ([{"speaker": "1", "text": "hello", "start_time": 0.0, "end_time": 1.0, "confidence": 0.9}], "hello", False),
+        ([], "", False),
+        ([{"speaker": "1", "text": "hello", "start_time": 0.0, "end_time": 1.0, "confidence": 0.9}], "hello", True),
+    ],
+)
+def test_azure_batch_path_uploads_polls_and_deletes_temporary_audio(
+    tmp_path, monkeypatch, caplog, entries, expected_text, delete_fails
+):
+    audio_path = tmp_path / "audio.mp3"
+    audio_path.write_bytes(b"fake audio")
+    calls = {"uploads": [], "checks": 0, "deletes": []}
+
+    class FakeStorage:
+        name = "s3"
+
+        async def upload(self, key, path):
+            calls["uploads"].append((key, path))
+
+        async def delete(self, key):
+            calls["deletes"].append(key)
+            if delete_fails:
+                message = "storage delete failed"
+                raise OSError(message)
+
+    async def fake_start(_adapter, recording):
+        assert recording.s3_file_key == calls["uploads"][0][0]
+        return SimpleNamespace(job_name="job")
+
+    async def fake_check(_adapter, _job):
+        calls["checks"] += 1
+        if calls["checks"] == 1:
+            return SimpleNamespace(job_status="Running", transcript=None)
+        return SimpleNamespace(
+            job_status="Succeeded",
+            transcript=entries,
+        )
+
+    monkeypatch.setattr(pipeline_module, "get_storage_service", lambda _name: FakeStorage())
+    monkeypatch.setattr(pipeline_module, "BATCH_TRANSCRIPTION_POLL_SECONDS", 0)
+    monkeypatch.setattr(pipeline_module.AzureBatchTranscriptionAdapter, "start", classmethod(fake_start))
+    monkeypatch.setattr(pipeline_module.AzureBatchTranscriptionAdapter, "check", classmethod(fake_check))
+
+    pipeline = SilverTranscriptPipeline(tmp_path / "work")
+    result = asyncio.run(pipeline._transcribe_with_azure_batch(audio_path, 7200))  # noqa: SLF001
+
+    assert result.text == expected_text
+    if entries:
+        assert result.dialogue_entries[0]["confidence"] == pytest.approx(0.9)
+    assert len(calls["uploads"]) == 1
+    assert calls["checks"] == 2
+    assert calls["deletes"] == [calls["uploads"][0][0]]
+    if delete_fails:
+        assert "Could not delete temporary batch audio" in caplog.text
+
+
+def test_batch_timeout_retains_audio_for_the_running_job(tmp_path, monkeypatch, caplog):
+    audio_path = tmp_path / "audio.mp3"
+    audio_path.write_bytes(b"fake audio")
+    calls = {"deletes": [], "checks": 0}
+
+    class FakeStorage:
+        name = "s3"
+
+        async def upload(self, _key, _path):
+            pass
+
+        async def delete(self, key):
+            calls["deletes"].append(key)
+
+    async def fake_start(_adapter, _recording):
+        return SimpleNamespace(job_name="job")
+
+    async def fake_check(_adapter, _job):
+        calls["checks"] += 1
+        return SimpleNamespace(job_status="Running", transcript=None)
+
+    monkeypatch.setattr(pipeline_module, "get_storage_service", lambda _name: FakeStorage())
+    monkeypatch.setattr(pipeline_module, "MIN_BATCH_TRANSCRIPTION_TIMEOUT_SECONDS", 0)
+    monkeypatch.setattr(pipeline_module.AzureBatchTranscriptionAdapter, "start", classmethod(fake_start))
+    monkeypatch.setattr(pipeline_module.AzureBatchTranscriptionAdapter, "check", classmethod(fake_check))
+
+    pipeline = SilverTranscriptPipeline(tmp_path / "work")
+    with pytest.raises(TimeoutError, match="did not complete within 0 minutes"):
+        asyncio.run(pipeline._transcribe_with_azure_batch(audio_path, 0))  # noqa: SLF001
+
+    assert calls["checks"] == 0
+    assert calls["deletes"] == []
+    assert "Retaining silver-transcripts/" in caplog.text
+
+
+def test_batch_path_rejects_local_storage_before_upload(tmp_path, monkeypatch):
+    audio_path = tmp_path / "audio.mp3"
+    audio_path.write_bytes(b"fake audio")
+
+    class LocalStorage:
+        name = "local"
+
+        async def upload(self, _key, _path):
+            pytest.fail("local storage must be rejected before upload")
+
+    monkeypatch.setattr(pipeline_module, "get_storage_service", lambda _name: LocalStorage())
+    pipeline = SilverTranscriptPipeline(tmp_path / "work")
+
+    with pytest.raises(ValueError, match="STORAGE_SERVICE_NAME=local"):
+        asyncio.run(pipeline._transcribe_with_azure_batch(audio_path, 7200))  # noqa: SLF001
+
+
+def test_transcription_rejects_audio_over_batch_limit(tmp_path):
+    pipeline = SilverTranscriptPipeline(tmp_path / "work")
+
+    with pytest.raises(ValueError, match="supports up to 4 hours"):
+        pipeline._transcribe(Path("audio.mp3"), pipeline_module.MAX_BATCH_TRANSCRIPTION_SECONDS + 1, True)  # noqa: SLF001
+
+
+def _exhausted_retry(cause: BaseException, attempts: int = 5) -> RetryError:
+    """Build what tenacity raises once a retrying call has spent all of its attempts."""
+    attempt = Future(attempts)
+    attempt.set_exception(cause)
+    return RetryError(attempt)
+
+
+def _only_failure(records: list[MeetingMetadata]) -> MeetingMetadata:
+    failures = [record for record in records if record.status == "failed"]
+    assert len(failures) == 1
+    return failures[0]
+
+
+def test_exhausted_service_retries_are_recorded_and_the_batch_continues(draft_setup, monkeypatch):
+    # The service adapter retries and then raises tenacity's RetryError, which is none of the
+    # exception types a transcription failure was once expected to arrive as.
+    input_dir, pipeline, adapter = draft_setup
+    shutil.copyfile(input_dir / "sample.wav", input_dir / "broken.wav")
+
+    def transcribe(wav_path: str) -> TranscriptionResult:
+        if "/broken-" in wav_path:
+            raise _exhausted_retry(httpx.ConnectError("azure is unreachable"))
+        return _result()
+
+    monkeypatch.setattr(adapter, "transcribe", transcribe)
+    records = pipeline.generate_transcripts(input_dir)
+
+    assert {record.source_audio: record.status for record in records} == {
+        "broken.wav": "failed",
+        "sample.wav": "completed",
+    }
+    failed = _only_failure(records)
+    # The cause, not tenacity's wrapper: its repr names a Future at a memory address instead.
+    assert failed.error == "azure is unreachable (after 5 attempts)"
+    saved = json.loads((pipeline.work_dir / "drafts" / failed.sample_id / "metadata.json").read_text())
+    assert saved["error"] == failed.error
+
+
+@pytest.mark.parametrize("cause", [TypeError("unexpected type"), KeyError("missing"), ZeroDivisionError("nope")])
+def test_an_unlisted_service_error_is_recorded_and_the_batch_continues(draft_setup, monkeypatch, cause):
+    # Containment must not depend on naming the exception types the service can raise.
+    input_dir, pipeline, adapter = draft_setup
+    shutil.copyfile(input_dir / "sample.wav", input_dir / "broken.wav")
+
+    def transcribe(wav_path: str) -> TranscriptionResult:
+        if "/broken-" in wav_path:
+            raise cause
+        return _result()
+
+    monkeypatch.setattr(adapter, "transcribe", transcribe)
+    records = pipeline.generate_transcripts(input_dir)
+
+    assert {record.source_audio: record.status for record in records} == {
+        "broken.wav": "failed",
+        "sample.wav": "completed",
+    }
+    assert _only_failure(records).error
+
+
+@pytest.mark.parametrize("status", ["pending_review", "approved"])
+def test_a_status_from_an_earlier_version_fails_only_its_own_sample(draft_setup, status):
+    # Statuses are edited by hand, so an unknown one must neither abandon the batch nor cost the
+    # draft it was written in: its author needs the file intact to correct it.
+    input_dir, pipeline, adapter = draft_setup
+    first = pipeline.generate_transcripts(input_dir)
+    path = pipeline.work_dir / "drafts" / first[0].sample_id / "metadata.json"
+    path.write_text(json.dumps(json.loads(path.read_text()) | {"status": status}), encoding="utf-8")
+    original_bytes = path.read_bytes()
+    shutil.copyfile(input_dir / "sample.wav", input_dir / "later.wav")
+
+    records = pipeline.generate_transcripts(input_dir)
+
+    assert {record.source_audio: record.status for record in records} == {
+        "sample.wav": "failed",
+        "later.wav": "completed",
+    }
+    assert path.read_bytes() == original_bytes
+    assert "status" in _only_failure(records).error
+    assert adapter.calls == 2
+
+
+@pytest.mark.parametrize("content", ["not json at all", "", '{"status": "completed"}'])
+def test_unreadable_draft_metadata_fails_only_its_own_sample(draft_setup, content):
+    input_dir, pipeline, adapter = draft_setup
+    first = pipeline.generate_transcripts(input_dir)
+    path = pipeline.work_dir / "drafts" / first[0].sample_id / "metadata.json"
+    path.write_text(content, encoding="utf-8")
+    shutil.copyfile(input_dir / "sample.wav", input_dir / "later.wav")
+
+    records = pipeline.generate_transcripts(input_dir)
+
+    assert {record.source_audio: record.status for record in records} == {
+        "sample.wav": "failed",
+        "later.wav": "completed",
+    }
+    assert path.read_text() == content
+    assert _only_failure(records).error
+    assert adapter.calls == 2
+
+
+@pytest.mark.parametrize(
     "disturbance",
     ["segments_moved_away", "segment_folder_gone", "audio_gone", "transcript_gone", "segment_metadata_corrupt"],
 )
@@ -450,7 +677,7 @@ def test_completed_drafts_resume_quietly_once_segments_have_moved_on(draft_setup
     elif disturbance == "audio_gone":
         (folder / "audio.mp3").unlink()
     elif disturbance == "transcript_gone":
-        (folder / "transcript.txt").unlink()
+        (folder / "audio.txt").unlink()
     else:
         (folder / "metadata.json").write_text('{"unexpected": true}', encoding="utf-8")
 
@@ -552,6 +779,29 @@ def test_smoke_config_runs_generation_with_relative_paths(draft_setup, monkeypat
     assert adapter.calls == 1
 
 
+def test_main_uses_patched_adapter_for_long_input_without_calling_azure_batch(draft_setup, monkeypatch, tmp_path):
+    _input_dir, _pipeline, adapter = draft_setup
+    config = _write_config(tmp_path / "configs", "input_dir: ../input\nwork_dir: ../long_output\n")
+    monkeypatch.setattr(
+        "evals.dataset_generation.silver_transcripts.src.pipeline.ServiceTranscriptionAdapter",
+        lambda _service: adapter,
+    )
+    monkeypatch.setattr(
+        "evals.dataset_generation.silver_transcripts.src.pipeline.soundfile.info",
+        lambda _path: SimpleNamespace(frames=7201, samplerate=1),
+    )
+    monkeypatch.setattr("sys.argv", ["main", "--config", str(config)])
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 0
+    assert adapter.calls == 1
+    records = list((tmp_path / "long_output" / "drafts").glob("*/metadata.json"))
+    metadata = json.loads(records[0].read_text())
+    assert metadata["engine"] == "test_engine"
+
+
 def test_recorded_generation_failure_exits_non_zero(draft_setup, monkeypatch, tmp_path):
     _input_dir, _pipeline, adapter = draft_setup
     adapter.fail = True
@@ -568,6 +818,27 @@ def test_recorded_generation_failure_exits_non_zero(draft_setup, monkeypatch, tm
     assert error.value.code == 1
     metadata_paths = list((tmp_path / "failed_output" / "drafts").glob("*/metadata.json"))
     assert json.loads(metadata_paths[0].read_text())["status"] == "failed"
+
+
+def test_a_skipped_sample_exits_non_zero(draft_setup, monkeypatch, tmp_path):
+    _input_dir, _pipeline, adapter = draft_setup
+    config = _write_config(tmp_path / "configs", "input_dir: ../input\nwork_dir: ../legacy_output\n")
+    sample_id = SilverTranscriptPipeline._sample_id("sample.wav", "sample")  # noqa: SLF001
+    draft_dir = tmp_path / "legacy_output" / "drafts" / sample_id
+    draft_dir.mkdir(parents=True)
+    (draft_dir / "metadata.json").write_text('{"status": "approved"}', encoding="utf-8")
+    monkeypatch.setattr(
+        "evals.dataset_generation.silver_transcripts.src.pipeline.ServiceTranscriptionAdapter",
+        lambda _service: adapter,
+    )
+    monkeypatch.setattr("sys.argv", ["main", "--config", str(config)])
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 1
+    assert adapter.calls == 0
+    assert json.loads((draft_dir / "metadata.json").read_text()) == {"status": "approved"}
 
 
 def test_generate_reports_a_missing_config(monkeypatch, tmp_path):
