@@ -77,7 +77,7 @@ GROUP BY council
 ORDER BY council;
 """
 
-# 2. Template Summaries Breakdown
+## 2. Template Summaries Breakdown (Accurate labeling + Privacy safe)
 QUERY_SUMMARIES = """
 SELECT
   CASE
@@ -88,22 +88,25 @@ SELECT
     WHEN ae.evaluation_id ILIKE '%YOR%' THEN 'York'
   END AS council,
   CASE
+    -- User-created/custom template:
     WHEN ae.event_metadata ->> 'template_id' IS NOT NULL
-      THEN COALESCE(ut.name, 'Unknown or deleted')
-    ELSE COALESCE(m.template_name, 'Unknown or deleted')
+      THEN 'Custom Template'
+    -- Known ready-made template from system:
+    WHEN m.template_name IS NOT NULL
+      THEN m.template_name
+    -- Missing, orphaned, or purged templates:
+    ELSE 'Unknown / Deleted'
   END AS template,
   COUNT(DISTINCT ae.source_id) AS summaries
 FROM analytics_event ae
 LEFT JOIN minute_version mv ON mv.id = ae.source_id
 LEFT JOIN minute m ON m.id = mv.minute_id
-LEFT JOIN user_template ut ON ut.id::text = ae.event_metadata ->> 'template_id'
 WHERE ae.event_type = 'SUMMARY_RECEIVED'
   AND ae.evaluation_id ~* '(HAR|BIR|MAI|TRA|YOR)'
 GROUP BY council, template
 ORDER BY council, summaries DESC;
 """
 
-# 3. User Adoption and TOU Acceptance (Your New Query)
 # 3. User Adoption and TOU Acceptance
 QUERY_USERS = """
 SELECT
