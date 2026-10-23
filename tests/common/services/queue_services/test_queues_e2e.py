@@ -30,7 +30,7 @@ pytestmark = [costs_money]
 
 
 @pytest.fixture
-def worker_service() -> Generator[WorkerService, Any, None]:
+def worker_service() -> Generator[WorkerService, Any]:
     worker_service = create_worker_service()
     yield worker_service
     ray.shutdown()

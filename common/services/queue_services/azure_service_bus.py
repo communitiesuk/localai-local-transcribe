@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def get_sb_client() -> Generator[ServiceBusClient, None, None]:
+def get_sb_client() -> Generator[ServiceBusClient]:
     if not settings.AZURE_SB_CONNECTION_STRING:
         msg = "AZURE_SB_CONNECTION_STRING must be set"
         raise ValueError(msg)

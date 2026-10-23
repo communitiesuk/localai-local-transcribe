@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def get_client() -> AsyncGenerator[ContainerClient, None]:
+async def get_client() -> AsyncGenerator[ContainerClient]:
     if not settings.AZURE_BLOB_CONNECTION_STRING:
         msg = "AZURE_BLOB_CONNECTION_STRING must be set"
         raise ValueError(msg)

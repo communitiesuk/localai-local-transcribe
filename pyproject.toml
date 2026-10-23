@@ -6,7 +6,7 @@ authors = [
 license = "MIT"
 readme = "README.md"
 version = "2.0.0"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.13,<3.14"
 dynamic = [ "dependencies" ]
 
 [tool.pytest.ini_options]
@@ -187,7 +187,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 line-length = 120
-target-version = 'py312'
+target-version = 'py313'
 fix = true
 
 [tool.ruff.lint]

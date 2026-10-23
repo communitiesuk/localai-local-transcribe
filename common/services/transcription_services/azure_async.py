@@ -27,7 +27,7 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 @contextmanager
-def get_client() -> Generator[ContainerClient, None, None]:
+def get_client() -> Generator[ContainerClient]:
     if not settings.AZURE_BLOB_CONNECTION_STRING:
         msg = "AZURE_BLOB_CONNECTION_STRING must be set"
         raise ValueError(msg)
