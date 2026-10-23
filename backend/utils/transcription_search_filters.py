@@ -90,8 +90,8 @@ def _transcription_search_filters(
             )
         )
     elif date_of_recording_day or date_of_recording_month or date_of_recording_year:
-        date_of_recording_column = cast(ColumnElement[Any], col(Transcription.date_of_recording))
-        created_datetime_column = cast(ColumnElement[Any], col(Transcription.created_datetime))
+        date_of_recording_column = cast("ColumnElement[Any]", col(Transcription.date_of_recording))
+        created_datetime_column = cast("ColumnElement[Any]", col(Transcription.created_datetime))
         recorded_date_filters = _date_part_filters(
             date_of_recording_column,
             day=date_of_recording_day,

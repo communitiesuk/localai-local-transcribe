@@ -54,7 +54,7 @@ class AudioFileHandler:
         except soundfile.SoundFileError as error:
             message = f"Could not decode audio at {path}: {error}"
             raise CorruptAudioError(message) from error
-        return cast(np.ndarray, audio), int(sample_rate)
+        return cast("np.ndarray", audio), int(sample_rate)
 
     def write(self, path: Path, audio: np.ndarray, sample_rate: int) -> None:
         """
