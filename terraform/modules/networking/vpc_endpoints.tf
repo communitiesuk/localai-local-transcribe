@@ -57,6 +57,25 @@ data "aws_vpc_endpoint_service" "s3" {
   service_type = "Interface"
 }
 
+data "aws_vpc_endpoint_service" "s3_gateway" {
+  service      = "s3"
+  service_type = "Gateway"
+}
+
+resource "aws_vpc_endpoint" "s3_gateway" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = data.aws_vpc_endpoint_service.s3_gateway.service_name
+  vpc_endpoint_type = "Gateway"
+
+  route_table_ids = [
+    aws_route_table.to_nat_gateway.id,
+  ]
+
+  tags = {
+    Name = "s3-gateway-endpoint-${var.environment_name}"
+  }
+}
+
 resource "aws_vpc_endpoint" "s3_endpoint" {
   vpc_id              = aws_vpc.main.id
   service_name        = data.aws_vpc_endpoint_service.s3.service_name
