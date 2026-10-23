@@ -97,11 +97,13 @@
     "vitest": "^4.1.11"
   },
   "overridesReason": {
-    "js-yaml": "Patch js-yaml CPU DoS CVEs CVE-2026-59869 and CVE-2026-84375 via transitive @hey-api/eslint deps."
+    "js-yaml": "Patch js-yaml CPU DoS CVEs CVE-2026-59869 and CVE-2026-84375 via transitive @hey-api/eslint deps.",
+    "postcss-selector-parser": "Patch quadratic-complexity CPU exhaustion GHSA-rj75-hqrm-r3gf. @tailwindcss/typography hard-pins 6.0.10 even on its latest release, so an override is the only route until upstream bumps it."
   },
   "overrides": {
     "js-yaml": "^4.3.2",
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.10",
+    "postcss-selector-parser": "^7.1.6"
   },
   "engines": {
     "node": ">=24"
