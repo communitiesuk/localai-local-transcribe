@@ -35,6 +35,21 @@ output "key_vault_private_endpoint_ip_address" {
   value       = azurerm_private_endpoint.key_vault.private_service_connection[0].private_ip_address
 }
 
+output "monitor_private_endpoint_id" {
+  description = "Resource ID of the Azure Monitor private endpoint. Give this to the Azure team to attach to the hub Azure Monitor private zones."
+  value       = azurerm_private_endpoint.monitor.id
+}
+
+output "monitor_private_endpoint_dns_names" {
+  description = "Azure Monitor names the endpoint answers for, with the private addresses behind each. Give these to the Azure team for the hub zones and to Zscaler for the query names."
+  value       = { for config in azurerm_private_endpoint.monitor.custom_dns_configs : config.fqdn => config.ip_addresses }
+}
+
+output "monitor_private_endpoint_ip_addresses" {
+  description = "Every private address the Azure Monitor endpoint holds. The network security group in vnet/ needs an allow for each one."
+  value       = distinct(flatten([for config in azurerm_private_endpoint.monitor.custom_dns_configs : config.ip_addresses]))
+}
+
 output "pipeline_identity_client_id" {
   description = "Client ID of the pipeline managed identity. Use as the Service Principal Id when creating the Azure DevOps service connection."
   value       = azurerm_user_assigned_identity.pipeline.client_id

@@ -16,3 +16,6 @@ private_endpoint_address_prefixes = {
   sensitive = "<sensitive-endpoint-prefix>"
   vault     = "<vault-endpoint-prefix>"
 }
+
+# One prefix per private address of the Azure Monitor endpoint. The endpoint holds several.
+monitor_private_endpoint_address_prefixes = ["<monitor-endpoint-prefix>"]

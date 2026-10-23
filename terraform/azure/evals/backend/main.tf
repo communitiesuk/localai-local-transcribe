@@ -96,3 +96,40 @@ resource "azurerm_storage_container" "terraform_state" {
   storage_account_id    = azurerm_storage_account.terraform_state.id
   container_access_type = "private"
 }
+
+# Private endpoint for the state account. It is kept in this root, with local state, and not in
+# the parent root. The parent root keeps its remote state on this account and reads it through
+# this endpoint on every plan and apply. If the pipeline replaced the endpoint mid-apply, it would
+# lose its route to its own state.
+#
+# The endpoint was first created from test ADAPT on 22 September 2026 by a separate root,
+# state-pe/. It is brought into this root with terraform import, so nothing is recreated.
+#
+# Domain Name System is not in this root. This identity cannot write the hub
+# privatelink.blob.core.windows.net zone. The Azure team attaches the endpoint to that
+# zone after it exists.
+resource "azurerm_private_endpoint" "state_blob" {
+  name                = "pe-${azurerm_storage_account.terraform_state.name}-blob"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  subnet_id           = var.private_endpoint_subnet_id
+
+  private_service_connection {
+    name                           = "psc-${azurerm_storage_account.terraform_state.name}-blob"
+    private_connection_resource_id = azurerm_storage_account.terraform_state.id
+    subresource_names              = ["blob"]
+    is_manual_connection           = false
+  }
+
+  tags = {
+    purpose     = "evals-terraform-state"
+    workload    = "evals"
+    environment = var.environment_name
+  }
+
+  # The Azure team adds the hub DNS zone group outside Terraform. Without this, an apply
+  # would remove it and the account name would stop resolving to the private address.
+  lifecycle {
+    ignore_changes = [private_dns_zone_group]
+  }
+}

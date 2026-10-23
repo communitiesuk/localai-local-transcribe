@@ -90,6 +90,8 @@ The vault in `key-vault/` denies public data-plane access. A plan of the parent 
 
 ## Logging
 
+Every File and Blob log, and the vault audit events, also go to the shared Log Analytics workspace that Cyber can read. That is a second diagnostic setting on each target, so the project workspaces keep their copy. The shared workspace is in another subscription, set by `shared_log_analytics_workspace_id`. The identity that applies each root needs read and `Microsoft.OperationalInsights/workspaces/sharedKeys/action` on it. The parent root creates every shared copy, including those for the state account and the vault, so only the pipeline service principal needs those rights. The project workspace settings for the state account stay in `backend/logging.tf`, and those for the vault stay in `key-vault/main.tf`. Do not add a shared setting to those two roots.
+
 Queue and Table diagnostic logging, a security information and event management system, and loading data into containers are still out of scope. File and Blob logs for the evals accounts go to `law-evals-<environment_name>`. File and Blob logs for the state account go to `law-evals-tfstate-<environment_name>`. If either name already exists in the resource group, import it before apply.
 
 ## Prerequisites
