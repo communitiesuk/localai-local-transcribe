@@ -23,7 +23,10 @@ variable "push_worker_ecr_image_policy_arn" {
 }
 
 variable "deployment_branch" {
-  description = "Git branch that GitHub Actions may assume the deploy roles from"
+  description = "Git branch that GitHub Actions may assume the deploy roles from. Must be one of: development, staging, or production"
   type        = string
-  default     = "development"
+  validation {
+    condition     = contains(["development", "staging", "production"], var.deployment_branch)
+    error_message = "Deployment branch must be one of: development, staging, production"
+  }
 }
