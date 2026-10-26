@@ -1,5 +1,6 @@
 """Load ordinary audio files paired with same-name UTF-8 reference transcripts."""
 
+import re
 from pathlib import Path
 
 import soundfile
@@ -8,6 +9,17 @@ from evals.transcription.src.core.benchmark_dataset_source import BenchmarkDatas
 from evals.transcription.src.models import AudioSample, DatasetItem, DatasetRequest
 
 AUDIO_SUFFIXES = {".wav", ".flac", ".ogg", ".mp3"}
+DIARIZED_LINE_PREFIX = re.compile(r"^\s*Speaker [^:\r\n]+:\s*", re.IGNORECASE)
+
+
+def _reference_text(path: Path) -> str:
+    """Read a reference, removing generated speaker labels when every line is diarized."""
+    text = path.read_text(encoding="utf-8").strip()
+    lines = text.splitlines()
+    content_lines = [line for line in lines if line.strip()]
+    if content_lines and all(DIARIZED_LINE_PREFIX.match(line) for line in content_lines):
+        return "\n".join(DIARIZED_LINE_PREFIX.sub("", line, count=1) for line in lines).strip()
+    return text
 
 
 class AudioFilesDataset:
@@ -36,7 +48,7 @@ class AudioFilesDataset:
         for audio_path in self.paths:
             reference_path = audio_path.with_suffix(".txt")
             try:
-                self.references.append(reference_path.read_text(encoding="utf-8").strip())
+                self.references.append(_reference_text(reference_path))
             except FileNotFoundError as error:
                 message = f"Missing reference transcript {reference_path} for audio file {audio_path}"
                 raise FileNotFoundError(message) from error

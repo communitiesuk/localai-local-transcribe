@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum, auto
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -29,6 +29,7 @@ from common.templates.name_normalisation import (
 
 
 class DialogueEntry(TypedDict):
+    confidence: NotRequired[float]
     speaker: str
     text: str
     start_time: float

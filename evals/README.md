@@ -486,3 +486,11 @@ File format:
 - Background audio is automatically looped or trimmed to match speech length
 - Volume is adjusted using a predefined offset (config variable ```background_volume_offset```)
 - File names are normalized using the base name (prefix before _)
+
+
+## Silver reference transcripts
+
+Generate Azure transcripts and audio segments from existing recordings for human annotation.
+Each segment folder contains its audio, editable transcript and metadata. The pipeline runs locally
+using directories set in a YAML config. See [the silver transcript pipeline](dataset_generation/silver_transcripts/README.md)
+for configuration and usage.
