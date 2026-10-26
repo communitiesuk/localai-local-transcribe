@@ -16,15 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def get_client() -> AsyncGenerator[ContainerClient, None]:
+async def get_client(container_name: str | None = None) -> AsyncGenerator[ContainerClient, None]:
     if not settings.AZURE_BLOB_CONNECTION_STRING:
         msg = "AZURE_BLOB_CONNECTION_STRING must be set"
         raise ValueError(msg)
-    if not settings.AZURE_UPLOADS_CONTAINER_NAME:
+    target_container = container_name or settings.AZURE_UPLOADS_CONTAINER_NAME
+    if not target_container:
         msg = "AZURE_UPLOADS_CONTAINER_NAME must be set"
         raise ValueError(msg)
     async with ContainerClient.from_connection_string(
-        settings.AZURE_BLOB_CONNECTION_STRING, settings.AZURE_UPLOADS_CONTAINER_NAME
+        settings.AZURE_BLOB_CONNECTION_STRING, target_container
     ) as container_client:
         yield container_client
 
@@ -89,3 +90,11 @@ class AzureBlobStorageService(StorageService):
         async with get_client() as container_client:
             blob_client = container_client.get_blob_client(blob=key)
             await blob_client.delete_blob()
+
+    @classmethod
+    async def list_blob_names(cls, *, prefix: str | None = None, container_name: str | None = None) -> list[str]:
+        blob_names: list[str] = []
+        async with get_client(container_name) as container_client:
+            async for blob in container_client.list_blobs(name_starts_with=prefix):
+                blob_names.append(blob.name)
+        return blob_names

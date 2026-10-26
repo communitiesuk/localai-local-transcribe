@@ -1,0 +1,88 @@
+# Silver transcript generation from Azure Blob Storage — manual-run only.
+
+name: Silver Transcript Generation
+
+trigger: none
+pr: none
+
+parameters:
+  - name: pythonVersion
+    displayName: 'Python version'
+    type: string
+    default: '3.12'
+  - name: inputPrefix
+    displayName: 'Input folder/prefix in uploads container'
+    type: string
+    default: ''
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  SILVER_INPUT_DIR: '$(Build.SourcesDirectory)/evals/dataset_generation/silver_transcripts/input/azure'
+  SILVER_OUTPUT_DIR: '$(Build.ArtifactStagingDirectory)/silver-transcripts-output'
+  SILVER_CONFIG_PATH: '$(Build.SourcesDirectory)/evals/dataset_generation/silver_transcripts/configs/azure-devops.generated.yaml'
+
+steps:
+  - checkout: self
+
+  - script: |
+      POETRY_VERSION=$(python scripts/get-poetry-version.py) || exit 1
+      echo "##vso[task.setvariable variable=POETRY_VERSION]${POETRY_VERSION}"
+    displayName: 'Read Poetry version from pyproject.toml'
+
+  - template: ../templates/setup-python-poetry.yml
+    parameters:
+      pythonVersion: ${{ parameters.pythonVersion }}
+      poetryVersion: $(POETRY_VERSION)
+
+  - script: poetry sync --no-root --no-ansi --with evals-transcription,evals-dataset-generation
+    displayName: 'Install dependencies'
+
+  - script: >
+      poetry run python -m evals.dataset_generation.silver_transcripts.src.blob_input
+      --destination "$(SILVER_INPUT_DIR)"
+      --prefix "${{ parameters.inputPrefix }}"
+    displayName: 'Download recordings from uploads container'
+    env:
+      AZURE_BLOB_CONNECTION_STRING: $(AZURE_BLOB_CONNECTION_STRING)
+      AZURE_UPLOADS_CONTAINER_NAME: $(AZURE_UPLOADS_CONTAINER_NAME)
+
+  - script: |
+      mkdir -p "$(SILVER_OUTPUT_DIR)"
+      cat > "$(SILVER_CONFIG_PATH)" <<EOF
+      input_dir: $(SILVER_INPUT_DIR)
+      work_dir: $(SILVER_OUTPUT_DIR)
+      segment_duration_seconds: null
+      EOF
+      echo "Generated config at $(SILVER_CONFIG_PATH)"
+    displayName: 'Create silver transcript config for this run'
+
+  - script: poetry run python -m evals.dataset_generation.silver_transcripts.src.main --config "$(SILVER_CONFIG_PATH)"
+    displayName: 'Run silver transcript generator'
+    env:
+      ENVIRONMENT: test
+      STORAGE_SERVICE_NAME: $(STORAGE_SERVICE_NAME)
+      AZURE_BLOB_CONNECTION_STRING: $(AZURE_BLOB_CONNECTION_STRING)
+      AZURE_UPLOADS_CONTAINER_NAME: $(AZURE_UPLOADS_CONTAINER_NAME)
+      AZURE_TRANSCRIPTION_CONTAINER_NAME: $(AZURE_TRANSCRIPTION_CONTAINER_NAME)
+      AZURE_APIM_URL: $(AZURE_APIM_URL)
+      AZURE_APIM_API_VERSION: $(AZURE_APIM_API_VERSION)
+      AZURE_APIM_SUBSCRIPTION_KEY: $(AZURE_APIM_SUBSCRIPTION_KEY)
+      AZURE_APIM_AUTH_METHOD: $(AZURE_APIM_AUTH_METHOD)
+      AZURE_APIM_TENANT_ID: $(AZURE_APIM_TENANT_ID)
+      AZURE_APIM_CLIENT_ID: $(AZURE_APIM_CLIENT_ID)
+      AZURE_APIM_CLIENT_SECRET: $(AZURE_APIM_CLIENT_SECRET)
+      AZURE_APIM_SCOPE: $(AZURE_APIM_SCOPE)
+      AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
+
+  - script: mkdir -p "$(SILVER_OUTPUT_DIR)"
+    displayName: 'Ensure artifact dir exists'
+    condition: always()
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Upload silver transcript drafts and segments'
+    condition: always()
+    inputs:
+      artifactName: silver-transcripts-output
+      targetPath: $(SILVER_OUTPUT_DIR)

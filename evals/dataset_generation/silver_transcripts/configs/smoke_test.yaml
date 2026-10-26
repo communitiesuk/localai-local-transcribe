@@ -1,0 +1,3 @@
+input_dir: ../input/smoke
+work_dir: ../output/smoke
+segment_duration_seconds: null
