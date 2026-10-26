@@ -132,6 +132,17 @@ def test_audio_files_directory_default_and_override(tmp_path, monkeypatch, overr
     assert dataset[0].audio.path == str((source_dir / "sample.wav").resolve())
 
 
+def test_audio_files_loader_strips_diarization_labels_from_wer_reference(tmp_path):
+    soundfile.write(tmp_path / "sample.wav", np.zeros(160), 16000)
+    (tmp_path / "sample.txt").write_text(
+        "Speaker 1: Hello there.\nSpeaker 2: Welcome to the meeting.", encoding="utf-8"
+    )
+
+    dataset = load_benchmark_dataset(1, dataset_name="audio_files", input_dir=tmp_path)
+
+    assert dataset[0].text == "Hello there.\nWelcome to the meeting."
+
+
 @pytest.mark.parametrize("override", [False, True])
 def test_english_dialects_source_directory_default_and_override(tmp_path, monkeypatch, override):
     monkeypatch.setattr("evals.transcription.src.core.benchmark_dataset_source.INPUT_DIR", tmp_path)
