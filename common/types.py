@@ -418,6 +418,7 @@ class TranscriptionJobMessageData(BaseModel):
         description="job name to identify asynchronous jobs. Not used in case of synchronous jobs",
         default="synchronous",
     )
+    job_status: str | None = Field(description="Current status of an asynchronous job", default=None)
     transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
 
 

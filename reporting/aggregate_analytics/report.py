@@ -1,6 +1,8 @@
 import argparse
+import csv
 import json
 import os
+import re
 import sys
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
@@ -105,15 +107,45 @@ def run_all(start: str, end: str, sources: Sources) -> list[dict[str, object]]:
 OUTPUT_DIR = Path(__file__).parent / "output"
 
 
+def report_folder_name(start: str, end: str) -> str:
+    """Folder name for a reporting period's output files, e.g. '2026-09-01_to_2026-09-30'."""
+    return f"{start}_to_{end}"
+
+
 def write_report(report: list[dict[str, object]], filename: str, output_dir: Path = OUTPUT_DIR) -> Path:
     """Write the report as JSON into output_dir, creating it if needed."""
     if Path(filename).name != filename:
-        msg = "--output must be a file name, not a path; it is written inside the output directory"
+        msg = "filename must be a file name, not a path; it is written inside the output directory"
         raise ValueError(msg)
     output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / filename
     path.write_text(json.dumps(report, indent=2) + "\n")
     return path
+
+
+def slugify(name: str) -> str:
+    """Turn a measure name into a safe, lowercase, underscore-separated file name stem."""
+    return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+
+
+def write_csv_reports(report: list[dict[str, object]], output_dir: Path = OUTPUT_DIR) -> list[Path]:
+    """Write one CSV file per measure into output_dir, creating it if needed.
+
+    Each measure's rows share one set of columns (e.g. ratio measures have numerator/denominator/percentage,
+    monthly measures have month/count), so they are written as separate files rather than one combined CSV.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for entry in report:
+        rows: list[Row] = entry["rows"]  # type: ignore[assignment]
+        path = output_dir / f"{slugify(str(entry['measure']))}.csv"
+        with path.open("w", newline="") as f:
+            if rows:
+                writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+                writer.writeheader()
+                writer.writerows(rows)
+        paths.append(path)
+    return paths
 
 
 ENV_FILES = (Path(__file__).parent / ".env", REPO_ROOT / ".env")
@@ -152,16 +184,14 @@ def main() -> None:
         help="CSV of estimated caseload (organisation_id, month, estimated_caseload); needed for measures 6 and 7",
     )
     parser.add_argument(
-        "--output",
-        metavar="FILENAME",
-        help="Write the JSON report to this file name inside reporting/aggregate_analytics/output/ "
-        "(created if missing) instead of stdout",
+        "--format",
+        choices=["json", "csv"],
+        help="Write the report into reporting/aggregate_analytics/output/<start>_to_<end>/ (created if missing) "
+        "instead of stdout: 'json' writes a single report.json, 'csv' writes one <measure>.csv file per measure",
     )
     args = parser.parse_args()
     if args.end < args.start:
         parser.error("--end must not be before --start")
-    if args.output and Path(args.output).name != args.output:
-        parser.error("--output must be a file name, not a path")
     if missing := missing_env():
         parser.error(
             f"missing environment variables: {', '.join(missing)}. "
@@ -181,7 +211,12 @@ def main() -> None:
     )
 
     report = run_all(start, end, sources)
-    if args.output:
-        sys.stderr.write(f"Report written to {write_report(report, args.output)}\n")
+    if args.format == "json":
+        run_dir = OUTPUT_DIR / report_folder_name(start, end)
+        sys.stderr.write(f"Report written to {write_report(report, 'report.json', run_dir)}\n")
+    elif args.format == "csv":
+        run_dir = OUTPUT_DIR / report_folder_name(start, end)
+        paths = write_csv_reports(report, run_dir)
+        sys.stderr.write(f"Report written to {len(paths)} file(s) in {run_dir}\n")
     else:
         sys.stdout.write(json.dumps(report, indent=2) + "\n")

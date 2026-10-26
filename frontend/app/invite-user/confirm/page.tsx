@@ -10,18 +10,74 @@ import { createUserUsersPostMutation } from '@/lib/client/@tanstack/react-query.
 import { Loader2 } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { GovukErrorSummary } from '@/components/govuk'
+import { EMAIL_FORMAT_MESSAGE } from '@/utils/validate-email'
 
-export function getInviteErrorMessage(error: unknown): string {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'detail' in error &&
-    typeof error.detail === 'string'
-  ) {
-    return error.detail
+type InviteErrorField = 'email' | 'evaluationId'
+
+export type InviteError = {
+  message: string
+  field?: InviteErrorField
+}
+
+const FIELD_ANCHORS: Record<InviteErrorField, string> = {
+  email: 'invitee-email-address',
+  evaluationId: 'invitee-evaluation-id',
+}
+
+const SERVICE_FAILURE_MESSAGE = 'Could not send the invitation. Try again.'
+
+const fieldFromMessage = (message: string): InviteErrorField | undefined => {
+  if (/email|domain/i.test(message)) {
+    return 'email'
   }
 
-  return 'Could not send the invitation. Try again.'
+  if (/evaluation/i.test(message)) {
+    return 'evaluationId'
+  }
+
+  return undefined
+}
+
+const fieldFromLocation = (location: unknown): InviteErrorField | undefined => {
+  if (!Array.isArray(location)) {
+    return undefined
+  }
+
+  if (location.includes('email')) {
+    return 'email'
+  }
+
+  if (location.includes('evaluation_id')) {
+    return 'evaluationId'
+  }
+
+  return undefined
+}
+
+export function getInviteError(error: unknown): InviteError {
+  if (typeof error === 'object' && error !== null && 'detail' in error) {
+    const { detail } = error as { detail: unknown }
+
+    if (typeof detail === 'string') {
+      return { message: detail, field: fieldFromMessage(detail) }
+    }
+
+    if (Array.isArray(detail)) {
+      const field = detail
+        .map((item) => fieldFromLocation(item?.loc))
+        .find(Boolean)
+
+      if (field === 'email') {
+        return { message: EMAIL_FORMAT_MESSAGE, field }
+      }
+
+      if (field === 'evaluationId') {
+        return { message: 'Enter an evaluation ID', field }
+      }
+    }
+  }
+
+  return { message: SERVICE_FAILURE_MESSAGE }
 }
 
 export default function AdminAddUserConfirmPage() {
@@ -29,7 +85,7 @@ export default function AdminAddUserConfirmPage() {
   const searchParams = useSearchParams()
   const { name, email, evaluationId, clearInviteDetails } = useInviteUserStore()
   const submitInProgress = useRef(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<InviteError | null>(null)
 
   const {
     currentUser,
@@ -82,7 +138,7 @@ export default function AdminAddUserConfirmPage() {
         name,
         email,
       })
-      setSubmitError('Could not send the invitation. Try again.')
+      setSubmitError({ message: SERVICE_FAILURE_MESSAGE })
       submitInProgress.current = false
       return
     }
@@ -121,7 +177,7 @@ export default function AdminAddUserConfirmPage() {
       } catch (error) {
         submitInProgress.current = false
         console.error('Failed to create user:', error)
-        setSubmitError(getInviteErrorMessage(error))
+        setSubmitError(getInviteError(error))
       }
     } else if (is_LA_Admin) {
       try {
@@ -138,7 +194,7 @@ export default function AdminAddUserConfirmPage() {
       } catch (error) {
         submitInProgress.current = false
         console.error('Failed to create user:', error)
-        setSubmitError(getInviteErrorMessage(error))
+        setSubmitError(getInviteError(error))
       }
     }
   }
@@ -152,7 +208,12 @@ export default function AdminAddUserConfirmPage() {
         {submitError && (
           <GovukErrorSummary
             errorList={[
-              { href: '/invite-user#invitee-evaluation-id', text: submitError },
+              {
+                href: submitError.field
+                  ? `${inviteUserHref}#${FIELD_ANCHORS[submitError.field]}`
+                  : undefined,
+                text: submitError.message,
+              },
             ]}
           />
         )}

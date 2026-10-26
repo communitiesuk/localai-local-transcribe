@@ -6,7 +6,17 @@ import pytest
 
 from reporting.aggregate_analytics.caseload import load_caseload
 from reporting.aggregate_analytics.measures import Count
-from reporting.aggregate_analytics.report import Sources, load_env, missing_env, months_in_range, run_all, write_report
+from reporting.aggregate_analytics.report import (
+    Sources,
+    load_env,
+    missing_env,
+    months_in_range,
+    report_folder_name,
+    run_all,
+    slugify,
+    write_csv_reports,
+    write_report,
+)
 from reporting.aggregate_analytics.sources import plausible_monthly_counts
 
 
@@ -27,6 +37,35 @@ def test_write_report_creates_directory(tmp_path: Path) -> None:
 def test_write_report_rejects_paths(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="file name"):
         write_report([], "../escape.json", tmp_path)
+
+
+def test_report_folder_name() -> None:
+    assert report_folder_name("2026-09-01", "2026-09-30") == "2026-09-01_to_2026-09-30"
+
+
+def test_slugify() -> None:
+    assert slugify("Audio uploads per live recording start") == "audio_uploads_per_live_recording_start"
+
+
+def test_write_csv_reports_creates_one_file_per_measure(tmp_path: Path) -> None:
+    out_dir = tmp_path / "missing" / "output"
+    report = [
+        {"measure": "Ratio measure", "rows": [{"numerator (a)": 5, "denominator (b)": 10, "percentage": 50.0}]},
+        {"measure": "Monthly measure", "rows": [{"month": "2026-09", "count": 3}]},
+    ]
+
+    paths = write_csv_reports(report, out_dir)
+
+    assert paths == [out_dir / "ratio_measure.csv", out_dir / "monthly_measure.csv"]
+    assert (out_dir / "ratio_measure.csv").read_text() == "numerator (a),denominator (b),percentage\n5,10,50.0\n"
+    assert (out_dir / "monthly_measure.csv").read_text() == "month,count\n2026-09,3\n"
+
+
+def test_write_csv_reports_handles_empty_rows(tmp_path: Path) -> None:
+    paths = write_csv_reports([{"measure": "Empty measure", "rows": []}], tmp_path)
+
+    assert (tmp_path / "empty_measure.csv").read_text() == ""
+    assert paths == [tmp_path / "empty_measure.csv"]
 
 
 ORG_A = "11111111-1111-1111-1111-111111111111"

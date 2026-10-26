@@ -170,15 +170,19 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
 
     @classmethod
     def get_dialogue_entries(cls, phrases: dict[str, Any]) -> list[DialogueEntry]:
-        return [
-            DialogueEntry(
-                speaker=str(entry["speaker"]),
-                text=entry["nBest"][0]["display"],
-                start_time=float(entry["offsetMilliseconds"]) / 1000,
-                end_time=(float(entry["offsetMilliseconds"]) + float(entry["durationMilliseconds"])) / 1000,
+        entries = []
+        for phrase in phrases["recognizedPhrases"]:
+            best_result = phrase["nBest"][0]
+            entry = DialogueEntry(
+                speaker=str(phrase["speaker"]),
+                text=best_result["display"],
+                start_time=float(phrase["offsetMilliseconds"]) / 1000,
+                end_time=(float(phrase["offsetMilliseconds"]) + float(phrase["durationMilliseconds"])) / 1000,
             )
-            for entry in phrases["recognizedPhrases"]
-        ]
+            if best_result.get("confidence") is not None:
+                entry["confidence"] = float(best_result["confidence"])
+            entries.append(entry)
+        return entries
 
     @classmethod
     @retry(
@@ -190,6 +194,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
         cls, data: TranscriptionJobMessageData, retry_count: int = 5, retry_delay: int = 5
     ) -> TranscriptionJobMessageData:
         # Poll for completion
+        job_status = data.job_status
         for _ in range(retry_count):
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
                 job_response = await make_stt_request(
@@ -202,7 +207,8 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
                 job_status = job_data.get("status", None)
                 match job_status:
                     case "Succeeded":
-                        return await cls.get_results(job_data["links"]["files"], data)
+                        result = await cls.get_results(job_data["links"]["files"], data)
+                        return result.model_copy(update={"job_status": job_status})
                     case "Failed":
                         msg = f"Transcription job failed: {job_data.get('statusMessage', 'Unknown error')}"
                         raise ValueError(msg)
@@ -211,7 +217,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
                         raise ValueError(msg)
                     case _:
                         await asyncio.sleep(retry_delay)
-        return data
+        return data.model_copy(update={"job_status": job_status})
 
     @classmethod
     def is_available(cls) -> bool:
