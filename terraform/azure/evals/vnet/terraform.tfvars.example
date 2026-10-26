@@ -8,6 +8,8 @@ environment_name    = "test"
 address_space       = ["<virtual-network-prefix>"]
 subnet_prefix       = "<subnet-prefix>"
 
+# Connector hosts, and the vmss-shared prefix until that pool is shut down.
+# The ado-vmss-latest subnet 10.170.128.0/25 is added in nsg.tf, so it does not go in this list.
 allowed_caller_address_prefixes = ["<caller-prefix>"]
 
 private_endpoint_address_prefixes = {
