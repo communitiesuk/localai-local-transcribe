@@ -13,7 +13,11 @@ from evals.dataset_generation.silver_transcripts.src.main import run_pipeline
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Download recordings from uploads storage and run silver generation.")
-    parser.add_argument("--prefix", default="", help="Optional folder/prefix inside AZURE_UPLOADS_CONTAINER_NAME")
+    parser.add_argument(
+        "--prefix",
+        default="transcription/",
+        help="Folder/prefix inside AZURE_UPLOADS_CONTAINER_NAME (default: transcription/)",
+    )
     parser.add_argument(
         "--input-dir",
         type=Path,

@@ -9,11 +9,14 @@ from pathlib import Path
 
 from common.services.storage_services.azure_blob import AzureBlobStorageService
 
+DEFAULT_INPUT_PREFIX = "transcription/"
 
-async def download_recordings(*, destination_dir: Path, prefix: str = "") -> int:
-    selected = await AzureBlobStorageService.list_blob_names(prefix=prefix or None)
+
+async def download_recordings(*, destination_dir: Path, prefix: str = DEFAULT_INPUT_PREFIX) -> int:
+    selected_prefix = prefix.strip() or DEFAULT_INPUT_PREFIX
+    selected = await AzureBlobStorageService.list_blob_names(prefix=selected_prefix)
     if not selected:
-        message = "No blobs found in AZURE_UPLOADS_CONTAINER_NAME for the selected prefix"
+        message = f"No blobs found in AZURE_UPLOADS_CONTAINER_NAME for prefix '{selected_prefix}'"
         raise ValueError(message)
 
     for blob_name in selected:
@@ -26,7 +29,11 @@ async def download_recordings(*, destination_dir: Path, prefix: str = "") -> int
 def main() -> None:
     parser = argparse.ArgumentParser(description="Download recordings from AZURE_UPLOADS_CONTAINER_NAME.")
     parser.add_argument("--destination", type=Path, required=True, help="Local destination directory")
-    parser.add_argument("--prefix", default="", help="Folder/prefix within the uploads container")
+    parser.add_argument(
+        "--prefix",
+        default=DEFAULT_INPUT_PREFIX,
+        help="Folder/prefix within the uploads container (default: transcription/)",
+    )
     args = parser.parse_args()
 
     destination = args.destination.expanduser().resolve()

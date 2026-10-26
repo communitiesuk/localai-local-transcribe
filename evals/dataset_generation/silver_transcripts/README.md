@@ -14,7 +14,7 @@ Use `.azuredevops/pipelines/evals-silver-transcripts.yml` for manual runs in tes
 
 Run-time parameters:
 
-- `inputPrefix` (optional): folder/prefix inside the uploads container (`AZURE_UPLOADS_CONTAINER_NAME`).
+- `inputPrefix` (optional): folder/prefix inside the uploads container (`AZURE_UPLOADS_CONTAINER_NAME`), default `transcription/`.
 
 The pipeline downloads recordings from the same uploads container used by transcription (`AZURE_UPLOADS_CONTAINER_NAME`) into a local agent directory via the shared Python Azure Blob storage components, writes a run-specific silver config with that local `input_dir`, runs the generator with test Azure credentials, and always publishes the `silver-transcripts-output` pipeline artifact (including failed runs). It sets `segment_duration_seconds: null` so each recording is kept as one full segment.
 
@@ -27,6 +27,8 @@ If you have credentials locally, you can run the same flow without Azure DevOps:
 ```bash
 poetry run python -m evals.dataset_generation.silver_transcripts.src.local_run --prefix "your/folder/"
 ```
+
+If omitted, `--prefix` defaults to `transcription/`.
 
 Required environment variables are the same storage/transcription ones used above (for short files, batch-specific settings are only needed if a recording exceeds the synchronous limit).
 

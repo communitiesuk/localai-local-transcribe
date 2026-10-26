@@ -13,7 +13,7 @@ parameters:
   - name: inputPrefix
     displayName: 'Input folder/prefix in uploads container'
     type: string
-    default: ''
+    default: 'transcription/'
 
 pool:
   vmImage: ubuntu-latest
