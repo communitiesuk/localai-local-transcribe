@@ -1,12 +1,12 @@
 # Analytics events export
 
-Full export of the first-party `analytics_event` and `organisation` tables, with no date filtering - every event type, all dates. Writes `analytics_events.csv` and `organisations.csv` into `reporting/analytics_events/output/`.
+Full export of the first-party `analytics_event` and `organisation` tables, with no date filtering - every event type, all dates. Writes `analytics_events_<timestamp>.csv` and `organisations_<timestamp>.csv` into `reporting/analytics_events/output/`, where `<timestamp>` is the UTC run time as `YYYY-MM-DD_HH-MM` (shared by both files from the same run).
 
 ## Columns
 
-`analytics_events.csv`: `id, occurred_datetime (UTC), event_type, evaluation_id, organisation_id, recording_id, source_id, edit_type, recording_source, template_id, transcription_id, audio_duration_seconds`. The last five come from `event_metadata` (JSONB) and are blank/null when not captured for a given event type.
+`analytics_events_<timestamp>.csv`: `id, occurred_datetime (UTC), event_type, evaluation_id, organisation_id, recording_id, source_id, edit_type, recording_source, template_id, transcription_id, audio_duration_seconds`. The last five come from `event_metadata` (JSONB) and are blank/null when not captured for a given event type.
 
-`organisations.csv`: `organisation_id, organisation_name`.
+`organisations_<timestamp>.csv`: `organisation_id, organisation_name`.
 
 ## Running
 

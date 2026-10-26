@@ -1,4 +1,5 @@
 import csv
+from datetime import UTC, datetime
 from pathlib import Path
 
 from reporting.analytics_events.database import ANALYTICS_EVENTS_QUERY, ORGANISATIONS_QUERY, fetch_rows
@@ -21,8 +22,10 @@ def write_csv(rows: list[dict[str, object]], filename: str, output_dir: Path = O
 
 
 def main() -> None:
-    write_csv(fetch_rows(ANALYTICS_EVENTS_QUERY), "analytics_events.csv")
-    write_csv(fetch_rows(ORGANISATIONS_QUERY), "organisations.csv")
+    # Shared between both files so a single run's exports are easy to pair up.
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%d_%H-%M")
+    write_csv(fetch_rows(ANALYTICS_EVENTS_QUERY), f"analytics_events_{timestamp}.csv")
+    write_csv(fetch_rows(ORGANISATIONS_QUERY), f"organisations_{timestamp}.csv")
 
 
 if __name__ == "__main__":
