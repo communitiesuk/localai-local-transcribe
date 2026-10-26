@@ -88,20 +88,26 @@ SELECT
     WHEN ae.evaluation_id ILIKE '%YOR%' THEN 'York'
   END AS council,
   CASE
-    -- User-created/custom template:
+    -- User-created/custom template. The event carries an immutable snapshot of the
+    -- template id, so these stay classified here even after the template is deleted.
+    -- We never surface the name itself, which is user-authored content.
     WHEN ae.event_metadata ->> 'template_id' IS NOT NULL
       THEN 'Custom Template'
     -- Known ready-made template from system:
     WHEN m.template_name IS NOT NULL
       THEN m.template_name
-    -- Missing, orphaned, or purged templates:
-    ELSE 'Unknown / Deleted'
+    -- The summary itself is gone: data retention deletes transcriptions (cascading to
+    -- minute/minute_version) after each user's data_retention_days, while analytics
+    -- events are kept for 12 months. The event survives; the record naming the template
+    -- does not. The template is fine -- we just can no longer tell which one was used.
+    ELSE 'Summary deleted (template unknown)'
   END AS template,
   COUNT(DISTINCT ae.source_id) AS summaries
 FROM analytics_event ae
 LEFT JOIN minute_version mv ON mv.id = ae.source_id
 LEFT JOIN minute m ON m.id = mv.minute_id
 WHERE ae.event_type = 'SUMMARY_RECEIVED'
+  AND ae.source_id IS NOT NULL
   AND ae.evaluation_id ~* '(HAR|BIR|MAI|TRA|YOR)'
 GROUP BY council, template
 ORDER BY council, summaries DESC;
@@ -164,7 +170,7 @@ def build_users_figure(df_users):
     # Rename for cleaner legend
     df_melted["Status"] = df_melted["Status"].map({
         "total_users": "Total Registered",
-        "accepted_terms": "Accepted Terms"
+        "accepted_terms": "Accepted Terms of Use"
     })
 
     # Grey = everyone registered, blue = the subset who accepted the terms
@@ -174,7 +180,7 @@ def build_users_figure(df_users):
         y="Count",
         color="Status",
         barmode="group",
-        color_discrete_map={"Total Registered": "#94a3b8", "Accepted Terms": "#2563eb"},
+        color_discrete_map={"Total Registered": "#94a3b8", "Accepted Terms of Use": "#2563eb"},
         title="User Onboarding by Council",
         text="Count"
     )
@@ -241,6 +247,16 @@ def format_summaries_table(df_summaries):
         "template": "Template",
         "summaries": "Summaries",
     })
+
+
+# Shown under the template table in both the dashboard and the exported report, so
+# readers do not mistake the fallback bucket for a data-quality problem.
+TEMPLATE_NOTE = (
+    "“Custom Template” covers user-authored templates, whose names are deliberately not shown. "
+    "“Summary deleted (template unknown)” means the summary has since been removed by data "
+    "retention, so the template it used is no longer recoverable — expect this bucket to grow "
+    "with the age of the reporting window."
+)
 
 
 def generate_html_report(df_users, df_transcriptions, df_summaries):
@@ -325,7 +341,7 @@ def generate_html_report(df_users, df_transcriptions, df_summaries):
                     <p class="card-value">{total_u}</p>
                 </div>
                 <div class="card">
-                    <p class="card-title">Accepted Terms (TOU)</p>
+                    <p class="card-title">Accepted Terms of Use</p>
                     <p class="card-value" style="color: #2563eb;">{total_tou} <span class="card-sub">({tou_rate})</span></p>
                 </div>
                 <div class="card">
@@ -361,6 +377,7 @@ def generate_html_report(df_users, df_transcriptions, df_summaries):
                     <div class="table-container">
                         {format_summaries_table(df_summaries).to_html(index=False, classes="report-table")}
                     </div>
+                    <p class="card-sub" style="margin: 12px 0 0 0;">{TEMPLATE_NOTE}</p>
                 </div>
             </div>
             
@@ -530,3 +547,4 @@ if 'data' in st.session_state:
     with table_col2:
         st.subheader("📝 Summary Breakdown by Template")
         st.dataframe(format_summaries_table(df_summaries), hide_index=True)
+        st.caption(TEMPLATE_NOTE)
