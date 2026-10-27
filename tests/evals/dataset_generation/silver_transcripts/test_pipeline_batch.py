@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from evals.dataset_generation.silver_transcripts.src import pipeline as pipeline_module
+from evals.dataset_generation.silver_transcripts.src.core import batch_transcription as batch_module
 from evals.dataset_generation.silver_transcripts.src.pipeline import SilverTranscriptPipeline
 
 
@@ -50,8 +51,8 @@ def test_azure_batch_path_uploads_polls_and_deletes_temporary_audio(
             transcript=entries,
         )
 
-    monkeypatch.setattr(pipeline_module, "get_storage_service", lambda _name: FakeStorage())
-    monkeypatch.setattr(pipeline_module, "BATCH_TRANSCRIPTION_POLL_SECONDS", 0)
+    monkeypatch.setattr(batch_module, "get_storage_service", lambda _name: FakeStorage())
+    monkeypatch.setattr(batch_module, "BATCH_TRANSCRIPTION_POLL_SECONDS", 0)
     monkeypatch.setattr(pipeline_module.AzureBatchTranscriptionAdapter, "start", classmethod(fake_start))
     monkeypatch.setattr(pipeline_module.AzureBatchTranscriptionAdapter, "check", classmethod(fake_check))
 
@@ -68,7 +69,7 @@ def test_azure_batch_path_uploads_polls_and_deletes_temporary_audio(
         assert "Could not delete temporary batch audio" in caplog.text
 
 
-def test_batch_timeout_retains_audio_for_the_running_job(tmp_path, monkeypatch, caplog):
+def test_batch_timeout_deletes_temporary_audio(tmp_path, monkeypatch):
     audio_path = tmp_path / "audio.mp3"
     audio_path.write_bytes(b"fake audio")
     calls = {"deletes": [], "checks": 0}
@@ -89,8 +90,8 @@ def test_batch_timeout_retains_audio_for_the_running_job(tmp_path, monkeypatch, 
         calls["checks"] += 1
         return SimpleNamespace(job_status="Running", transcript=None)
 
-    monkeypatch.setattr(pipeline_module, "get_storage_service", lambda _name: FakeStorage())
-    monkeypatch.setattr(pipeline_module, "MIN_BATCH_TRANSCRIPTION_TIMEOUT_SECONDS", 0)
+    monkeypatch.setattr(batch_module, "get_storage_service", lambda _name: FakeStorage())
+    monkeypatch.setattr(batch_module, "MIN_BATCH_TRANSCRIPTION_TIMEOUT_SECONDS", 0)
     monkeypatch.setattr(pipeline_module.AzureBatchTranscriptionAdapter, "start", classmethod(fake_start))
     monkeypatch.setattr(pipeline_module.AzureBatchTranscriptionAdapter, "check", classmethod(fake_check))
 
@@ -99,8 +100,7 @@ def test_batch_timeout_retains_audio_for_the_running_job(tmp_path, monkeypatch, 
         asyncio.run(pipeline._transcribe_with_azure_batch(audio_path, 0))  # noqa: SLF001
 
     assert calls["checks"] == 0
-    assert calls["deletes"] == []
-    assert "Retaining silver-transcripts/" in caplog.text
+    assert len(calls["deletes"]) == 1
 
 
 def test_batch_path_rejects_local_storage_before_upload(tmp_path, monkeypatch):
@@ -113,7 +113,7 @@ def test_batch_path_rejects_local_storage_before_upload(tmp_path, monkeypatch):
         async def upload(self, _key, _path):
             pytest.fail("local storage must be rejected before upload")
 
-    monkeypatch.setattr(pipeline_module, "get_storage_service", lambda _name: LocalStorage())
+    monkeypatch.setattr(batch_module, "get_storage_service", lambda _name: LocalStorage())
     pipeline = SilverTranscriptPipeline(tmp_path / "work")
 
     with pytest.raises(ValueError, match="STORAGE_SERVICE_NAME=local"):

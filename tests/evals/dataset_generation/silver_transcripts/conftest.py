@@ -28,4 +28,3 @@ def draft_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, 
     # Tests that exercise real encoding restore it and skip when ffmpeg is absent.
     monkeypatch.setattr(SilverTranscriptPipeline, "cut_audio", staticmethod(_copy_cut))
     return input_dir, pipeline, adapter
-

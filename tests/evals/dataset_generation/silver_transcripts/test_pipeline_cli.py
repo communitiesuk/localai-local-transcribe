@@ -118,4 +118,3 @@ def test_generate_requires_an_input_dir_in_the_config(monkeypatch, tmp_path):
 
     with pytest.raises(ValueError, match="input_dir must be specified"):
         main()
-

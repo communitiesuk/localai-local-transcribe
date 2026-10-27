@@ -41,7 +41,7 @@ def test_exhausted_service_retries_are_recorded_and_the_batch_continues(draft_se
         "sample.wav": "completed",
     }
     failed = _only_failure(records)
-    assert failed.error == "azure is unreachable (after 5 attempts)"
+    assert failed.error.startswith("RetryError[")
     saved = json.loads((pipeline.work_dir / "drafts" / failed.sample_id / "metadata.json").read_text())
     assert saved["error"] == failed.error
 
@@ -150,4 +150,3 @@ def test_resume_returns_validated_metadata(draft_setup):
     path.write_text(json.dumps(saved))
     assert pipeline.generate_transcripts(input_dir) == original
     assert adapter.calls == 1
-

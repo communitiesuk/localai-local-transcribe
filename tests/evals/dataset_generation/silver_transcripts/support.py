@@ -30,4 +30,3 @@ class DraftAdapter(EvalsTranscriptionAdapter):
         if self.fail:
             return result_factory("", debug_info={"error": "service failed"})
         return result_factory()
-

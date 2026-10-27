@@ -10,8 +10,8 @@ import soundfile
 from ffmpeg import Error as FFmpegError
 
 from common.audio.ffmpeg import convert_to_mp3
+from evals.dataset_generation.silver_transcripts.src.core.ids import MAX_SAMPLE_NAME_LENGTH
 from evals.dataset_generation.silver_transcripts.src.pipeline import (
-    MAX_SAMPLE_NAME_LENGTH,
     SilverTranscriptPipeline,
 )
 from tests.evals.dataset_generation.silver_transcripts.support import result_factory
