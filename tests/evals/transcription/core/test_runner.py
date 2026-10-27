@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
 import pytest
@@ -62,6 +63,32 @@ def test_run_engines_parallel_bookkeeping(tmp_path):
     assert samples[1].example_id == "1"
     assert samples[0].engine_version == "A"
     assert samples[0].metrics["processing_speed_ratio"] == pytest.approx(0.25)
+
+
+def test_run_engines_parallel_reports_unavailable_diarization_metrics_as_null(tmp_path):
+    wav_path = tmp_path / "a.wav"
+    wav_path.write_bytes(b"RIFFfake")
+    dataset = FakeDataset([{"text": "hello world", "audio": {"path": str(wav_path)}}])
+    adapter = FakeAdapter("TextOnly", "hello world")
+    adapter.supports_diarization = False
+
+    results = run_engines_parallel(
+        adapters=[adapter],
+        indices=[0],
+        dataset=dataset,
+        wav_write_fn=lambda ex, _idx: ex.audio.path,
+        duration_fn=lambda _path: 2.0,
+        run_id="test_run",
+        timestamp="20240101_120000",
+        dataset_version="FakeDataset_v0",
+        dataset_split="test",
+    )
+
+    sample = results[0].samples[0]
+    assert sample.metrics["wer"] == 0.0
+    assert "wder" not in sample.metrics
+    assert "speaker_count_accuracy" not in sample.metrics
+    assert sample.hypothesis_dialogue_entries is None
 
 
 @pytest.mark.parametrize(
@@ -223,8 +250,6 @@ def test_run_engines_parallel_multiple_adapters(tmp_path):
 
 
 def test_run_engines_parallel_respects_max_workers(tmp_path):
-    from concurrent.futures import ThreadPoolExecutor
-
     wav_a = tmp_path / "a.wav"
     wav_a.write_bytes(b"RIFFfake")
 

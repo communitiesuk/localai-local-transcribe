@@ -339,7 +339,7 @@ class MinuteHandlerService:
                 generated = await cls.generate_full_minutes(minute)
         html_result = mistune.html(generated.text)
         return MinuteAndHallucinations(
-            text=cast(str, html_result),
+            text=cast("str", html_result),
             total_claims=generated.total_claims,
             hallucinations=generated.hallucinations,
             template_prompt_version=generated.template_prompt_version,

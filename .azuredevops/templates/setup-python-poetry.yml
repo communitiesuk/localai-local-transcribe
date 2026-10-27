@@ -3,10 +3,10 @@
 parameters:
   - name: pythonVersion
     type: string
-    default: '3.12'
+    default: '3.14'
   - name: poetryVersion
     type: string
-    default: '2.4.1'
+    default: '2.5.1'
 
 steps:
   - script: |
@@ -21,8 +21,10 @@ steps:
     inputs:
       versionSpec: '${{ parameters.pythonVersion }}'
 
-  - script: pip install poetry==${{ parameters.poetryVersion }}
-    displayName: 'Install Poetry ${{ parameters.poetryVersion }}'
+  - script: |
+      echo "Installing Poetry ${{ parameters.poetryVersion }}"
+      pip install poetry==${{ parameters.poetryVersion }}
+    displayName: 'Install Poetry'
 
   - script: poetry config virtualenvs.in-project true
     displayName: 'Configure Poetry to create .venv in project'

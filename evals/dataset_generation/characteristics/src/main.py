@@ -11,6 +11,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 WORKDIR = Path(__file__).resolve().parent.parent
+ROOT_DIR = Path(__file__).resolve().parents[4]
 
 
 async def main() -> None:
@@ -27,9 +28,8 @@ async def main() -> None:
     config_path = WORKDIR / "configs" / args.config
     config = load_config(config_path)
 
-    root_dir = Path(__file__).resolve().parents[4]
-    input_dir = root_dir / config.dataset.input_dir
-    output_dir = root_dir / config.run.output_dir
+    input_dir = ROOT_DIR / config.dataset.input_dir
+    output_dir = ROOT_DIR / config.run.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
     if not input_dir.exists():
@@ -42,7 +42,7 @@ async def main() -> None:
     for file_path in input_dir.iterdir():
         if file_path.is_file() and file_path.suffix in [".txt", ".json"]:
             try:
-                result = await process_file(file_path, config, root_dir)
+                result = await process_file(file_path, config, ROOT_DIR)
 
                 output_file = output_dir / f"{file_path.stem}_output.json"
                 output_file.write_text(json.dumps(result.model_dump(), indent=2))
