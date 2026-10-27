@@ -18,7 +18,7 @@
 # the connector hosts. The read did not show that both hosts were used.
 #
 # Two deny rules, priority 4000, cover every other inbound and outbound connection.
-# Azure checks the allows at 100 to 140 first, so those callers still match.
+# Azure checks the allows at 100 to 130 first, so those callers still match.
 # The built-in virtual network allow is priority 65000, so the deny is reached before it.
 # A caller that is not in the allow list is refused. A wrong connector address cuts off test ADAPT.
 #

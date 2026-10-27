@@ -11,9 +11,10 @@
 # The AzureServices exception stays, so Azure Storage can still encrypt the
 # accounts with this customer-managed key.
 #
-# The key rotates itself once a year through its rotation policy. Vault audit logs
-# go to the evals Log Analytics workspace. Test ADAPT reaches the vault through the
-# Zscaler mapping of its private name.
+# The key rotates itself once a year through its rotation policy. Vault logs are
+# sent by the parent root, in logging.tf, to the shared Log Analytics workspace.
+# The setting uses the allLogs category group. Test ADAPT reaches the vault through
+# the Zscaler mapping of its private name.
 
 terraform {
   required_version = ">= 1.5.0"

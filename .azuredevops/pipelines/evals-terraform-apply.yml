@@ -3,8 +3,8 @@
 # Manual only until a plan has been reviewed. Microsoft-hosted agents cannot be
 # allowed through the storage firewall, so this job uses the self-hosted pool
 # ado-vmss-latest. The pool vmss-shared is shut down at 17:00 on 28 October 2026.
-# The pool still needs a firewall allow (subnet or static egress) before
-# terraform init can read remote state.
+# The pool reaches the state account through its private endpoint. terraform init
+# reads the remote state on that path.
 
 name: Evals Terraform
 

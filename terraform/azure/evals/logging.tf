@@ -26,6 +26,10 @@
 #
 # Azure delivers diagnostic logs over its own private channel. No Azure Monitor private
 # link is required for delivery.
+#
+# Dedicated on every storage setting in this file stores Blob and File rows in their own
+# tables. Azure Storage requires that destination type. A later plan can show this value
+# being set again, because Azure does not report it back.
 
 resource "azurerm_monitor_diagnostic_setting" "evals_file_shared" {
   for_each = azurerm_storage_account.evals
@@ -69,9 +73,9 @@ resource "azurerm_monitor_diagnostic_setting" "evals_blob_shared" {
   }
 }
 
-# Resource IDs of the two targets that other roots create. The state account ID is built
-# from its name, because the data source for a storage account would add calls that this
-# root does not need. Creating a diagnostic setting uses only Azure Resource Manager.
+# The state account is created by backend/, so this root builds its resource ID from the
+# account name. A storage account data source would call the blob endpoint, which this
+# root does not need. The vault ID comes from the data source in storage_customer_managed_key.tf.
 locals {
   terraform_state_storage_account_id = "/subscriptions/${var.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Storage/storageAccounts/${var.terraform_state_storage_account_name}"
 }
