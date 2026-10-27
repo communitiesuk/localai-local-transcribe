@@ -7,6 +7,11 @@ import { useOrganisation } from '@/hooks/use-organisation'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import { userExistsUsersUserExistsGet } from '@/lib/client'
 import { UserRole } from '@/lib/utils'
+import {
+  EMAIL_FORMAT_MESSAGE,
+  EMAIL_LENGTH_MESSAGE,
+  EMAIL_LOCAL_PART_LENGTH_MESSAGE,
+} from '@/utils/validate-email'
 
 const mockPush = vi.fn()
 let searchParams = new URLSearchParams()
@@ -126,6 +131,69 @@ describe('Invite new user page', () => {
     expect(screen.getByText('Enter a name')).toBeInTheDocument()
     expect(screen.getByLabelText('Name')).not.toBeRequired()
     expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('shows a format error when the email address is malformed', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(screen.getByLabelText('Email address'), 'test.user')
+    await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(screen.getByText(EMAIL_FORMAT_MESSAGE)).toBeInTheDocument()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('distinguishes an over long local part from a malformed address', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(
+      screen.getByLabelText('Email address'),
+      `${'a'.repeat(65)}@example.com`
+    )
+    await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(
+      screen.getByText(EMAIL_LOCAL_PART_LENGTH_MESSAGE)
+    ).toBeInTheDocument()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('reports an address that is too long overall', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(
+      screen.getByLabelText('Email address'),
+      `test.user@${'b'.repeat(240)}.example.com`
+    )
+    await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(screen.getByText(EMAIL_LENGTH_MESSAGE)).toBeInTheDocument()
+    expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('does not reject an address for surrounding whitespace', async () => {
+    const user = userEvent.setup()
+    render(<AdminAddUserPage />)
+
+    await user.type(screen.getByLabelText('Name'), 'Test User')
+    await user.type(
+      screen.getByLabelText('Email address'),
+      '  test.user@example.com  '
+    )
+    await user.type(screen.getByLabelText('Evaluation ID'), 'EVAL-001')
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    await waitFor(() => expect(mockPush).toHaveBeenCalled())
+    expect(useInviteUserStore.getState().email).toBe('test.user@example.com')
   })
 
   it('shows the GOV.UK error when the email is empty', async () => {

@@ -173,7 +173,7 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def validate_govnotify(self) -> "Settings":
+    def validate_govnotify(self) -> Settings:
         if self.EMAIL_SERVICE == "gov_notify":
             if not self.GOVNOTIFY_API_KEY:
                 error_text = "GOVNOTIFY_API_KEY must be set when EMAIL_SERVICE='gov_notify'"

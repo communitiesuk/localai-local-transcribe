@@ -3,12 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMutation } from '@tanstack/react-query'
 import AdminAddUserConfirmPage, {
-  getInviteErrorMessage,
+  getInviteError,
 } from '@/app/invite-user/confirm/page'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import { UserRole } from '@/lib/utils'
+import { EMAIL_FORMAT_MESSAGE } from '@/utils/validate-email'
 
 const mockPush = vi.fn()
 const mockReplace = vi.fn()
@@ -39,31 +40,50 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 
 const GENERIC_MESSAGE = 'Could not send the invitation. Try again.'
 
-describe('getInviteErrorMessage', () => {
+describe('getInviteError', () => {
   it('returns the specific detail thrown by the client', () => {
     const error = {
       detail: 'This evaluation ID is already in use.',
     }
 
-    expect(getInviteErrorMessage(error)).toBe(
-      'This evaluation ID is already in use.'
-    )
+    expect(getInviteError(error)).toEqual({
+      message: 'This evaluation ID is already in use.',
+      field: 'evaluationId',
+    })
   })
 
-  it('falls back to the generic message when there is no detail', () => {
-    expect(getInviteErrorMessage(new Error('network failure'))).toBe(
-      GENERIC_MESSAGE
-    )
+  it('anchors a duplicate email detail to the email field', () => {
+    const error = {
+      detail: "A user with email 'test.user@example.com' already exists",
+    }
+
+    expect(getInviteError(error).field).toBe('email')
   })
 
-  it('falls back to the generic message when the detail is not a string', () => {
-    expect(getInviteErrorMessage({ detail: [{ msg: 'bad' }] })).toBe(
-      GENERIC_MESSAGE
-    )
+  it('turns a validation error on the email into a useful field message', () => {
+    const error = {
+      detail: [
+        {
+          loc: ['body', 'email'],
+          msg: 'value is not a valid email address: An email address must have an @-sign.',
+        },
+      ],
+    }
+
+    expect(getInviteError(error)).toEqual({
+      message: EMAIL_FORMAT_MESSAGE,
+      field: 'email',
+    })
   })
 
-  it('falls back to the generic message for null', () => {
-    expect(getInviteErrorMessage(null)).toBe(GENERIC_MESSAGE)
+  it('reports a service failure without a field when the client throws', () => {
+    expect(getInviteError(new Error('network failure'))).toEqual({
+      message: GENERIC_MESSAGE,
+    })
+  })
+
+  it('reports a service failure for null', () => {
+    expect(getInviteError(null)).toEqual({ message: GENERIC_MESSAGE })
   })
 })
 
@@ -131,6 +151,37 @@ describe('<AdminAddUserConfirmPage /> as a support admin with no organisation of
     expect(mockPush).toHaveBeenCalledWith(
       `/user-management?organisationId=${selectedOrganisationId}`
     )
+  })
+
+  it('points the error summary at the email field when the address is rejected', async () => {
+    mockMutateAsync.mockRejectedValueOnce({
+      detail: [{ loc: ['body', 'email'], msg: 'value is not a valid email' }],
+    })
+    const user = userEvent.setup()
+    render(<AdminAddUserConfirmPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    const summaryLink = await screen.findByRole('link', {
+      name: EMAIL_FORMAT_MESSAGE,
+    })
+    expect(summaryLink).toHaveAttribute(
+      'href',
+      `/invite-user?organisationId=${selectedOrganisationId}#invitee-email-address`
+    )
+  })
+
+  it('shows a service failure without a field link when the request fails', async () => {
+    mockMutateAsync.mockRejectedValueOnce(new Error('network failure'))
+    const user = userEvent.setup()
+    render(<AdminAddUserConfirmPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    expect(await screen.findByText(GENERIC_MESSAGE)).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: GENERIC_MESSAGE })
+    ).not.toBeInTheDocument()
   })
 
   it('links back to the invite form with the selected organisation when cancelling', () => {
