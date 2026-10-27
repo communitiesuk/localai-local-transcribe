@@ -1,8 +1,9 @@
 # Plan or apply terraform/azure/evals using a dedicated Azure Resource Manager
 # service connection for Terraform (not the evals-blob workload identity).
 # Manual only until a plan has been reviewed. Microsoft-hosted agents cannot be
-# allowed through the storage firewall, so this job uses the shared scale-set
-# pool. The pool still needs a firewall allow (subnet or static egress) before
+# allowed through the storage firewall, so this job uses the self-hosted pool
+# ado-vmss-latest. The pool vmss-shared is shut down at 17:00 on 28 October 2026.
+# The pool still needs a firewall allow (subnet or static egress) before
 # terraform init can read remote state.
 
 name: Evals Terraform
@@ -23,8 +24,9 @@ parameters:
       - apply
       - grant-key-vault-roles
 
+# ado-vmss-latest replaces vmss-shared. The old pool is shut down at 17:00 on 28 October 2026.
 pool:
-  name: vmss-shared
+  name: ado-vmss-latest
 
 steps:
   - checkout: self
