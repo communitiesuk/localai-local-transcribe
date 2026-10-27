@@ -19,8 +19,8 @@ import ffmpeg
 import soundfile
 from tenacity import RetryError
 
-from common.audio.ffmpeg import MP3_ENCODING_OPTIONS, convert_to_mp3
-from common.database.postgres_models import DialogueEntry, Recording
+from common.audio.ffmpeg import convert_to_mp3
+from common.database.postgres_models import Recording
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.azure import AzureSpeechAdapter
 from common.services.transcription_services.azure_async import AzureBatchTranscriptionAdapter
@@ -28,7 +28,7 @@ from common.settings import get_settings
 from evals.dataset_generation.silver_transcripts.src.config import DEFAULT_SEGMENT_DURATION_SECONDS
 from evals.dataset_generation.silver_transcripts.src.models import MeetingMetadata, SegmentMetadata
 from evals.transcription.src.adapters.base import EvalsTranscriptionAdapter, ServiceTranscriptionAdapter
-from evals.transcription.src.models import TranscriptionResult
+from evals.transcription.src.models import DialogueEntry, TranscriptionResult
 
 logger = logging.getLogger(__name__)
 TIMESTAMP_TOLERANCE_SECONDS = 0.05
@@ -38,6 +38,11 @@ MAX_SYNCHRONOUS_TRANSCRIPTION_SECONDS = AzureSpeechAdapter.max_audio_length
 MAX_BATCH_TRANSCRIPTION_SECONDS = AzureBatchTranscriptionAdapter.max_audio_length
 BATCH_TRANSCRIPTION_POLL_SECONDS = 5
 MIN_BATCH_TRANSCRIPTION_TIMEOUT_SECONDS = 1800
+MP3_ENCODING_OPTIONS = {
+    "acodec": "libmp3lame",
+    "audio_bitrate": "192k",
+    "ac": 1,
+}
 
 
 class SegmentDurationMismatchError(ValueError):
@@ -243,7 +248,7 @@ class SilverTranscriptPipeline:
             while time.monotonic() - started_at < timeout_seconds:
                 await asyncio.sleep(BATCH_TRANSCRIPTION_POLL_SECONDS)
                 job = await AzureBatchTranscriptionAdapter.check(job)
-                if job.job_status == "Succeeded":
+                if job.transcript is not None:
                     job_completed = True
                     entries = job.transcript or []
                     return TranscriptionResult(

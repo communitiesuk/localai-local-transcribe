@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from common.database.postgres_models import DialogueEntry
+from common.types import DialogueEntry
 
 AudioArray = NDArray[np.floating]
 

@@ -1,22 +1,26 @@
-"""Run silver transcript generation locally from recordings in the uploads bucket."""
+"""Run silver transcript generation locally from recordings in eval input storage."""
 
 from __future__ import annotations
 
 import argparse
-import asyncio
+import logging
 import shutil
 from pathlib import Path
 
 from evals.dataset_generation.silver_transcripts.src.blob_input import download_recordings
 from evals.dataset_generation.silver_transcripts.src.main import run_pipeline
 
+logger = logging.getLogger(__name__)
+
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Download recordings from uploads storage and run silver generation.")
+    parser = argparse.ArgumentParser(
+        description="Download recordings from eval input storage and run silver generation."
+    )
     parser.add_argument(
         "--prefix",
         default="transcription/",
-        help="Folder/prefix inside AZURE_UPLOADS_CONTAINER_NAME (default: transcription/)",
+        help="Folder/prefix inside the eval input container (default: transcription/)",
     )
     parser.add_argument(
         "--input-dir",
@@ -39,8 +43,8 @@ def main() -> None:
         shutil.rmtree(input_dir)
     input_dir.mkdir(parents=True, exist_ok=True)
 
-    downloaded = asyncio.run(download_recordings(destination_dir=input_dir, prefix=args.prefix))
-    print(f"Downloaded {downloaded} recording(s) to {input_dir}")
+    downloaded = download_recordings(destination_dir=input_dir, prefix=args.prefix)
+    logger.info("Downloaded %s recording(s) to %s", downloaded, input_dir)
     exit_code = run_pipeline(input_dir=input_dir, work_dir=work_dir, segment_duration_seconds=None)
     raise SystemExit(exit_code)
 

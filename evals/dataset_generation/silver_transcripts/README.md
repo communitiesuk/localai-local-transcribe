@@ -14,11 +14,11 @@ Use `.azuredevops/pipelines/evals-silver-transcripts.yml` for manual runs in tes
 
 Run-time parameters:
 
-- `inputPrefix` (optional): folder/prefix inside the uploads container (`AZURE_UPLOADS_CONTAINER_NAME`), default `transcription/`.
+- `inputPrefix` (optional): folder/prefix inside the evals `input` container, default `transcription/`.
 
-The pipeline downloads recordings from the same uploads container used by transcription (`AZURE_UPLOADS_CONTAINER_NAME`) into a local agent directory via the shared Python Azure Blob storage components, writes a run-specific silver config with that local `input_dir`, runs the generator with test Azure credentials, and always publishes the `silver-transcripts-output` pipeline artifact (including failed runs). It sets `segment_duration_seconds: null` so each recording is kept as one full segment.
+The pipeline uses the same eval blob-loading path as the transcription eval pipeline (`EvalBlobStorage` + `stage_dataset_prefix`), downloads recordings from the evals `input` container into a local agent directory, writes a run-specific silver config with that local `input_dir`, runs the generator with test Azure credentials, and always publishes the `silver-transcripts-output` pipeline artifact (including failed runs). It sets `segment_duration_seconds: null` so each recording is kept as one full segment.
 
-Keep credentials in secret pipeline variables or a variable group/service connection. The pipeline expects these variables at run time (secrets where applicable): `AZURE_BLOB_CONNECTION_STRING`, `STORAGE_SERVICE_NAME`, `AZURE_UPLOADS_CONTAINER_NAME`, `AZURE_TRANSCRIPTION_CONTAINER_NAME`, `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_SUBSCRIPTION_KEY`, `AZURE_APIM_AUTH_METHOD`, and either `AZURE_APIM_ACCESS_TOKEN` or the client-secret set (`AZURE_APIM_TENANT_ID`, `AZURE_APIM_CLIENT_ID`, `AZURE_APIM_CLIENT_SECRET`, `AZURE_APIM_SCOPE`).
+Keep credentials in secret pipeline variables or a variable group/service connection. The pipeline expects these variables at run time (secrets where applicable): `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL`, `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL`, `STORAGE_SERVICE_NAME`, `AZURE_BLOB_CONNECTION_STRING`, `AZURE_UPLOADS_CONTAINER_NAME`, `AZURE_TRANSCRIPTION_CONTAINER_NAME`, `AZURE_APIM_URL`, `AZURE_APIM_API_VERSION`, `AZURE_APIM_SUBSCRIPTION_KEY`, `AZURE_APIM_AUTH_METHOD`, and either `AZURE_APIM_ACCESS_TOKEN` or the client-secret set (`AZURE_APIM_TENANT_ID`, `AZURE_APIM_CLIENT_ID`, `AZURE_APIM_CLIENT_SECRET`, `AZURE_APIM_SCOPE`).
 
 ## Local end-to-end run from bucket
 
@@ -30,7 +30,7 @@ poetry run python -m evals.dataset_generation.silver_transcripts.src.local_run -
 
 If omitted, `--prefix` defaults to `transcription/`.
 
-Required environment variables are the same storage/transcription ones used above (for short files, batch-specific settings are only needed if a recording exceeds the synchronous limit).
+Required environment variables are the same storage/transcription ones used above, including the eval storage account URLs (`AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` and `AZURE_EVALS_RESULTS_STORAGE_ACCOUNT_URL`) for input loading.
 
 Generation uses Azure credentials and ffmpeg. Every source is converted to mono MP3 at 192 kbps using the same helper as transcription evaluation. Sources up to two hours use synchronous Azure transcription. Sources over two hours and up to four hours use the existing Azure batch adapter: the MP3 is uploaded to the configured storage service, submitted for asynchronous transcription, then deleted after a result is retrieved. Polling allows at least 30 minutes and scales to twice the recording duration. If a submitted job does not complete, its uploaded audio is retained so the running job can still access it. This requires S3 or Azure Blob storage so Azure can fetch the uploaded audio; `STORAGE_SERVICE_NAME=local` is not supported for batch transcription. Recordings over four hours fail with a recorded error. Supported extensions are `.wav`, `.flac`, `.ogg`, `.mp3`, `.m4a` and `.aac`, discovered recursively. Keep the work directory outside the input directory.
 

@@ -7,9 +7,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from common.database.postgres_models import DialogueEntry
 from evals.dataset_generation.silver_transcripts.src.config import DEFAULT_SEGMENT_DURATION_SECONDS
-from evals.transcription.src.models import TranscriptionResult
+from evals.transcription.src.models import DialogueEntry, TranscriptionResult
 
 
 class MeetingMetadata(BaseModel):
@@ -60,7 +59,7 @@ class MeetingMetadata(BaseModel):
         Utterances the engine did not score are excluded, so the aggregates are null when
         nothing was scored.
         """
-        scores = [score for entry in utterances if (score := entry.get("confidence")) is not None]
+        scores = [float(score) for entry in utterances if isinstance((score := entry.get("confidence")), int | float)]
         return len(scores), mean(scores) if scores else None, pstdev(scores) if scores else None
 
 

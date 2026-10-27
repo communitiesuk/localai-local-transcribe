@@ -3,7 +3,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
-from typing import Literal
+from typing import Literal, NotRequired, TypedDict
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -11,7 +11,6 @@ from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
 from common.database.postgres_models import (
     ContentSource,
-    DialogueEntry,
     JobStatus,
     TemplateType,
     UserRole,
@@ -21,6 +20,14 @@ DOMAIN_REGEX = re.compile(
     r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z-]{0,61}[a-z]$",
     re.IGNORECASE,
 )
+
+
+class DialogueEntry(TypedDict):
+    speaker: str
+    text: str
+    start_time: float
+    end_time: float
+    confidence: NotRequired[float]
 
 
 def validate_fqdn_list(domains: list[str]) -> list[str]:
