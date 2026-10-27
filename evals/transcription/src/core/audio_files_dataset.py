@@ -5,10 +5,8 @@ from pathlib import Path
 
 import numpy as np
 
-from common.constants import TARGET_SAMPLE_RATE
+from common.constants import SUPPORTED_AUDIO_SUFFIXES, TARGET_SAMPLE_RATE
 from evals.transcription.src.models import AudioFilesDatasetSample, AudioSample
-
-AUDIO_SUFFIXES = {".aac", ".flac", ".m4a", ".mp3", ".ogg", ".wav", ".webm", ".wma"}
 
 
 class AudioFilesDataset:
@@ -31,7 +29,7 @@ class AudioFilesDataset:
 
 
 def load_audio_files_dataset(input_dir: Path, limit: int | None = None) -> AudioFilesDataset:
-    audio_paths = sorted(path for path in input_dir.rglob("*") if path.suffix.lower() in AUDIO_SUFFIXES)
+    audio_paths = sorted(path for path in input_dir.rglob("*") if path.suffix.lower() in SUPPORTED_AUDIO_SUFFIXES)
     if limit is not None:
         audio_paths = audio_paths[:limit]
     if not audio_paths:

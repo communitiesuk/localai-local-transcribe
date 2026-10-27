@@ -1,6 +1,7 @@
 TARGET_SAMPLE_RATE = 16000
 MONO_CHANNELS = 1
 SUPPORTED_FORMATS = {".mp3"}
+SUPPORTED_AUDIO_SUFFIXES = {".aac", ".flac", ".m4a", ".mp3", ".ogg", ".wav", ".webm", ".wma"}
 WORDS_PER_MINUTE = 150
 
 # Keep in step with MAX_AGENDA_LENGTH in frontend/lib/constants.ts.

@@ -20,6 +20,7 @@ import soundfile
 from tenacity import RetryError
 
 from common.audio.ffmpeg import convert_to_mp3
+from common.constants import SUPPORTED_AUDIO_SUFFIXES
 from common.database.postgres_models import Recording
 from common.services.storage_services import get_storage_service
 from common.services.transcription_services.azure import AzureSpeechAdapter
@@ -32,7 +33,6 @@ from evals.transcription.src.models import DialogueEntry, TranscriptionResult
 
 logger = logging.getLogger(__name__)
 TIMESTAMP_TOLERANCE_SECONDS = 0.05
-AUDIO_SUFFIXES = {".wav", ".flac", ".ogg", ".mp3", ".m4a", ".aac"}
 MAX_SAMPLE_NAME_LENGTH = 60
 MAX_SYNCHRONOUS_TRANSCRIPTION_SECONDS = AzureSpeechAdapter.max_audio_length
 MAX_BATCH_TRANSCRIPTION_SECONDS = AzureBatchTranscriptionAdapter.max_audio_length
@@ -111,7 +111,7 @@ class SilverTranscriptPipeline:
             message = "work_dir must be outside input_dir so generated audio is not discovered as input"
             raise ValueError(message)
         audio_sources = sorted(
-            path for path in input_dir.rglob("*") if path.is_file() and path.suffix.lower() in AUDIO_SUFFIXES
+            path for path in input_dir.rglob("*") if path.is_file() and path.suffix.lower() in SUPPORTED_AUDIO_SUFFIXES
         )
         if not audio_sources:
             message = f"No supported audio files found in {input_dir}"
@@ -200,14 +200,18 @@ class SilverTranscriptPipeline:
             if transcript_result.debug_info.get("error") or not transcript_result.text.strip():
                 message = str(transcript_result.debug_info.get("error") or "The engine returned an empty transcript")
                 raise RuntimeError(message)
-            utterances = self.sort_utterances(transcript_result.dialogue_entries)
-            transcript = self._format_diarized_transcript(utterances)
+            segment_utterance_groups = self.group_utterances(transcript_result.dialogue_entries)
+            transcript = self._format_diarized_transcript(segment_utterance_groups[0])
             (draft_dir / "draft.txt").write_text(transcript, encoding="utf-8")
-            completed_metadata = MeetingMetadata.from_transcription(
-                source=meeting_metadata,
-                result=transcript_result,
+            completed_metadata = MeetingMetadata(
+                sample_id=meeting_metadata.sample_id,
+                source_audio=meeting_metadata.source_audio,
+                segment_duration_seconds=meeting_metadata.segment_duration_seconds,
+                engine=meeting_metadata.engine,
+                generated_at=meeting_metadata.generated_at,
+                status="completed",
             )
-            self._write_segments(audio_path, draft_dir, utterances, completed_metadata)
+            self._write_segments(audio_path, draft_dir, segment_utterance_groups, completed_metadata)
             meeting_metadata = completed_metadata
         except Exception as error:  # noqa: BLE001 - record per-sample conversion/transcription failures
             meeting_metadata.error = _error_message(error)
@@ -278,7 +282,7 @@ class SilverTranscriptPipeline:
         """
         Keep the whole recording in one segment.
         """
-        ordered = SilverTranscriptPipeline.sort_utterances(utterances)
+        ordered = sorted(utterances, key=lambda item: item["start_time"])
         for entry in ordered:
             utterance_start, utterance_end = entry["start_time"], entry["end_time"]
             if not (
@@ -290,11 +294,6 @@ class SilverTranscriptPipeline:
             message = "Utterance timestamps are required to generate audio segments"
             raise ValueError(message)
         return [ordered]
-
-    @staticmethod
-    def sort_utterances(utterances: list[DialogueEntry]) -> list[DialogueEntry]:
-        """Return utterances in source-time order, preserving original order for ties."""
-        return sorted(utterances, key=lambda item: item["start_time"])
 
     @staticmethod
     def cut_audio(source: Path, destination: Path, start: float, end: float) -> None:
@@ -309,7 +308,11 @@ class SilverTranscriptPipeline:
             converted.replace(destination)
 
     def _write_segments(
-        self, audio_path: Path, draft_dir: Path, utterances: list[DialogueEntry], meeting_metadata: MeetingMetadata
+        self,
+        audio_path: Path,
+        draft_dir: Path,
+        segment_utterance_groups: list[list[DialogueEntry]],
+        meeting_metadata: MeetingMetadata,
     ) -> None:
         """
         Split utterances into review segments, cut matching audio clips, and write per-segment
@@ -318,10 +321,13 @@ class SilverTranscriptPipeline:
         Segments are first staged in a temporary directory and then atomically moved into place.
         Raises ValueError if utterance timestamps are invalid or exceed the source audio duration.
         """
-        segment_utterance_groups = self.group_utterances(utterances)
         audio_info = soundfile.info(audio_path)
         duration = audio_info.frames / audio_info.samplerate
-        if any(entry["end_time"] > duration + TIMESTAMP_TOLERANCE_SECONDS for entry in utterances):
+        if any(
+            entry["end_time"] > duration + TIMESTAMP_TOLERANCE_SECONDS
+            for segment_utterances in segment_utterance_groups
+            for entry in segment_utterances
+        ):
             message = "Utterance timestamps exceed the audio duration"
             raise ValueError(message)
         meeting_metadata.segment_count = len(segment_utterance_groups)
@@ -338,12 +344,14 @@ class SilverTranscriptPipeline:
                 (segment_dir / "audio.txt").write_text(segment_text, encoding="utf-8")
                 _save_metadata(
                     segment_dir / "metadata.json",
-                    SegmentMetadata.from_utterances(
-                        meeting_metadata,
-                        sample_id=f"{draft_dir.name}_{segment_dir.name}",
-                        utterances=segment_utterances,
-                        source_start_seconds=segment_start,
-                        source_end_seconds=segment_end,
+                    SegmentMetadata.model_validate(
+                        {
+                            **meeting_metadata.model_dump(exclude_unset=True, exclude={"segment_count"}),
+                            "sample_id": f"{draft_dir.name}_{segment_dir.name}",
+                            "meeting_id": meeting_metadata.sample_id,
+                            "source_start_seconds": segment_start,
+                            "source_end_seconds": segment_end,
+                        }
                     ),
                 )
             destination = draft_dir / "segments"

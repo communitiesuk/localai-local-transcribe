@@ -206,11 +206,8 @@ def test_sample_id_falls_back_when_the_stem_sanitises_to_nothing():
     assert SilverTranscriptPipeline._sample_id("meetings/.wav", "").startswith("audio-")  # noqa: SLF001
 
 
-@pytest.mark.parametrize(
-    ("confidences", "expected_mean", "expected_std"),
-    [([0.6, 1.0, None], 0.8, 0.2), ([0.7], 0.7, 0.0), ([None], None, None)],
-)
-def test_utterance_segments_and_confidence_metadata(draft_setup, monkeypatch, confidences, expected_mean, expected_std):
+@pytest.mark.parametrize("confidences", [[0.6, 1.0, None], [0.7], [None]])
+def test_utterance_segments_do_not_store_confidence_metrics(draft_setup, monkeypatch, confidences):
     input_dir, pipeline, adapter = draft_setup
     soundfile.write(input_dir / "sample.wav", np.zeros(16000 * len(confidences)), 16000)
     utterances = []
@@ -232,13 +229,10 @@ def test_utterance_segments_and_confidence_metadata(draft_setup, monkeypatch, co
         ),
     )
     record = pipeline.generate_transcripts(input_dir)[0]
-    assert record.utterance_count == len(confidences)
-    assert record.scored_utterance_count == sum(score is not None for score in confidences)
-    for field, expected in (("mean_utterance_confidence", expected_mean), ("std_utterance_confidence", expected_std)):
-        if expected is None:
-            assert getattr(record, field) is None
-        else:
-            assert getattr(record, field) == pytest.approx(expected)
+    assert record.status == "completed"
+    metadata = json.loads((pipeline.work_dir / "drafts" / record.sample_id / "metadata.json").read_text())
+    for field in ("utterance_count", "scored_utterance_count", "mean_utterance_confidence", "std_utterance_confidence"):
+        assert field not in metadata
     # Utterance detail is summarised into the metadata statistics; it is not kept as its own file.
     draft_dir = pipeline.work_dir / "drafts" / record.sample_id
     assert not (draft_dir / "utterances.json").exists()
@@ -352,8 +346,8 @@ def test_generation_writes_multiple_chunks_with_source_timestamps(draft_setup, m
     ]
     metadata = json.loads((outputs[0] / "metadata.json").read_text())
     assert "segment_count" not in metadata
-    assert metadata["mean_utterance_confidence"] == pytest.approx(0.8333333333333334)
-    assert metadata["std_utterance_confidence"] == pytest.approx(0.16996731711975951)
+    for field in ("utterance_count", "scored_utterance_count", "mean_utterance_confidence", "std_utterance_confidence"):
+        assert field not in metadata
     assert metadata["source_start_seconds"] == 10
     assert metadata["source_end_seconds"] == 620
 
@@ -687,17 +681,6 @@ def test_resume_returns_validated_metadata(draft_setup):
     path.write_text(json.dumps(saved))
     assert pipeline.generate_transcripts(input_dir) == original
     assert adapter.calls == 1
-
-
-@pytest.mark.parametrize(
-    ("scores", "expected"),
-    [([None, 0.0, 1.0], (2, 0.5, 0.5)), ([None], (0, None, None))],
-)
-def test_confidence_statistics_ignore_explicit_nulls(scores, expected):
-    utterances = [
-        {"speaker": "1", "text": "hello", "start_time": 0, "end_time": 1, "confidence": score} for score in scores
-    ]
-    assert MeetingMetadata.confidence_statistics(utterances) == expected
 
 
 def _write_config(config_dir: Path, body: str) -> Path:
