@@ -71,11 +71,12 @@ steps:
 
   - script: mkdir -p "$(SILVER_OUTPUT_DIR)"
     displayName: 'Ensure artifact dir exists'
-    condition: always()
+    condition: succeededOrFailed()
 
   - task: PublishPipelineArtifact@1
     displayName: 'Upload silver transcript drafts and segments'
-    condition: always()
+    condition: succeededOrFailed()
     inputs:
-      artifactName: silver-transcripts-output
+      artifact: silver-transcripts-output
       targetPath: $(SILVER_OUTPUT_DIR)
+      publishLocation: 'pipeline'
