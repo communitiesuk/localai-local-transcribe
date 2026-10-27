@@ -1,5 +1,3 @@
-"""Download selected blob recordings to a local directory for silver transcript generation."""
-
 from __future__ import annotations
 
 import argparse
@@ -14,11 +12,19 @@ DEFAULT_INPUT_PREFIX = "transcription/"
 logger = logging.getLogger(__name__)
 
 
-def download_recordings(*, destination_dir: Path, prefix: str = DEFAULT_INPUT_PREFIX) -> int:
-    selected_prefix = prefix.strip() or DEFAULT_INPUT_PREFIX
-    blob = EvalBlobStorage.from_account_urls()
-    stage_dataset_prefix(blob, selected_prefix, destination_dir)
-    return sum(1 for path in destination_dir.rglob("*") if path.is_file())
+def stage_transcription_input_prefix(
+    *,
+    destination_dir: Path,
+    prefix: str | None,
+    restricted_account_url: str | None = None,
+    shared_account_url: str | None = None,
+) -> Path:
+    selected_prefix = (prefix or DEFAULT_INPUT_PREFIX).strip() or DEFAULT_INPUT_PREFIX
+    blob = EvalBlobStorage.from_account_urls(
+        restricted_account_url=restricted_account_url,
+        shared_account_url=shared_account_url,
+    )
+    return stage_dataset_prefix(blob, selected_prefix, destination_dir)
 
 
 def main() -> None:
@@ -36,10 +42,8 @@ def main() -> None:
         shutil.rmtree(destination)
     destination.mkdir(parents=True, exist_ok=True)
 
-    downloaded = download_recordings(
-        destination_dir=destination,
-        prefix=args.prefix,
-    )
+    stage_transcription_input_prefix(destination_dir=destination, prefix=args.prefix)
+    downloaded = sum(1 for path in destination.rglob("*") if path.is_file())
     logger.info("Downloaded %s recording(s) from evals input container.", downloaded)
 
 

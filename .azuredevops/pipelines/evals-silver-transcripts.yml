@@ -43,7 +43,7 @@ steps:
       scriptLocation: inlineScript
       inlineScript: |
         mkdir -p "$(SILVER_OUTPUT_DIR)"
-        poetry run python -m evals.dataset_generation.silver_transcripts.src.blob_input \
+        poetry run python -m evals.shared.blob_input \
           --destination "$(SILVER_INPUT_DIR)" \
           --prefix "${{ parameters.inputPrefix }}"
         cat > "$(SILVER_CONFIG_PATH)" <<EOF

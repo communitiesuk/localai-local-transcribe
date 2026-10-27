@@ -15,7 +15,8 @@ import yaml
 
 from common.audio.ffmpeg import get_duration
 from common.settings import get_settings
-from evals.shared.blob_io import publish_run_outputs, stage_dataset_prefix
+from evals.shared.blob_input import stage_transcription_input_prefix
+from evals.shared.blob_io import publish_run_outputs
 from evals.shared.blob_storage import EvalBlobStorage
 from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
 from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
@@ -214,7 +215,12 @@ def _run_blob_evaluation(config: EvaluationConfig, results_artifact_dir: Path | 
 
     with tempfile.TemporaryDirectory(prefix="evals-transcription-") as staging:
         staging_dir = Path(staging)
-        input_dir = stage_dataset_prefix(blob, config.blob.input_prefix, staging_dir / "input")
+        input_dir = stage_transcription_input_prefix(
+            destination_dir=staging_dir / "input",
+            prefix=config.blob.input_prefix,
+            restricted_account_url=config.blob.restricted_account_url,
+            shared_account_url=config.blob.shared_account_url,
+        )
         dataset_loader = config.dataset_loader or "audio_files"
         dataset = _load_dataset(
             dataset_loader,
