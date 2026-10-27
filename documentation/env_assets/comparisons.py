@@ -133,7 +133,7 @@ def display() -> None:
     _section("Section 8: Combined Impact per 1-Hour Meeting")
     print("  (ASR CO₂e at GBR 217 g/kWh; LLM CO₂e at GBR 217 g/kWh; energy via EcoLogits [25])\n")
     print(f"  {'Template':<30} {'Energy (Wh)':>20} {'CO₂e (g)':>20} {'ASR%':>6} {'LLM%':>6}")
-    print(f"  {'-'*30} {'-'*20} {'-'*20} {'-'*6} {'-'*6}")
+    print(f"  {'-' * 30} {'-' * 20} {'-' * 20} {'-' * 6} {'-' * 6}")
     for name, inv, tr in [
         ("Basic Minutes", "4", llm["basic_minutes"]),
         ("Short 'n' Sweet (no citations)", "4", llm["executive_summary"]),
@@ -265,7 +265,7 @@ def display() -> None:
     print(
         f"  {'Cost layer':<{w}} {'CO₂e':>8}  {'Car':>8}  {'Flight':>10}  {'Homeworking':>13}  {'TV (100 W)':>12}  {'Household':>12}"
     )
-    print(f"  {'-'*w} {'-'*8}  {'-'*8}  {'-'*10}  {'-'*13}  {'-'*12}  {'-'*12}")
+    print(f"  {'-' * w} {'-' * 8}  {'-' * 8}  {'-' * 10}  {'-' * 13}  {'-' * 12}  {'-' * 12}")
     print(
         f"  {'LLM+ASR training, per user (proxy)':<{w}} {training_co2e:>6.1f} g  {c_train['metres']:>6.0f} m  {f_train['metres']:>8.0f} m  {hw_train['minutes']:>10.1f} min  {tv_train_co2e['minutes']:>9.1f} min  {hh_train_co2e['minutes']:>9.1f} min"
     )

@@ -93,8 +93,7 @@ def classify_wer_drift(
             metric="corpus_wer",
             outcome="floor",
             detail=(
-                f"corpus WER {observed_corpus_wer:.6f} is at or above absolute floor "
-                f"{thresholds.absolute_floor:.6f}"
+                f"corpus WER {observed_corpus_wer:.6f} is at or above absolute floor {thresholds.absolute_floor:.6f}"
             ),
             observed=observed_corpus_wer,
         )
@@ -140,8 +139,7 @@ def classify_wder_drift(
             metric="corpus_wder",
             outcome="floor",
             detail=(
-                f"corpus WDER {observed_corpus_wder:.6f} is at or above absolute floor "
-                f"{thresholds.absolute_floor:.6f}"
+                f"corpus WDER {observed_corpus_wder:.6f} is at or above absolute floor {thresholds.absolute_floor:.6f}"
             ),
             observed=observed_corpus_wder,
         )

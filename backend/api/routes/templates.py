@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import html
 import re
 from typing import TypedDict
@@ -222,7 +222,7 @@ async def edit_user_template(
         for remaining_question in questions:
             await session.delete(remaining_question)
 
-    template.updated_datetime = datetime.datetime.now(tz=datetime.UTC)
+    template.updated_datetime = dt.datetime.now(tz=dt.UTC)
     await commit_or_raise_template_name_conflict(session)
 
 

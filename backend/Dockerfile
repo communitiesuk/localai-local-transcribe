@@ -1,7 +1,7 @@
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential=12.12 && \
@@ -27,7 +27,7 @@ RUN poetry export -f requirements.txt --output requirements.txt --with backend -
 # ==========================================
 # Stage 2: Runner
 # ==========================================
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
@@ -47,7 +47,7 @@ ADD --chown=appuser:appuser --chmod=0444 \
     /app/config/rds-ca-bundle.pem
 
 # Copy only the site-packages from the builder stage to the runner stage
-COPY --from=builder /app/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /app/site-packages /usr/local/lib/python3.14/site-packages
 
 # Copy only what the backend needs to run directly to /app
 COPY --chown=appuser:appuser backend/ backend/
@@ -61,10 +61,10 @@ RUN chmod +x backend/entrypoint.sh
 
 # Set PATH so executables in site-packages/bin (like alembic, uvicorn) are found.
 # site-packages now lives at the default interpreter path
-# (/usr/local/lib/python3.12/site-packages), so PYTHONPATH no longer needs to
+# (/usr/local/lib/python3.14/site-packages), so PYTHONPATH no longer needs to
 # point there - Python finds it automatically. PYTHONPATH=/app is what makes
 # our own backend/common/alembic source importable.
-ENV PATH="/usr/local/lib/python3.12/site-packages/bin:${PATH}" \
+ENV PATH="/usr/local/lib/python3.14/site-packages/bin:${PATH}" \
     PYTHONPATH=/app
 
 USER appuser

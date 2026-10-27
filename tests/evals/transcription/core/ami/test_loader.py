@@ -128,7 +128,7 @@ def test_ami_dataset_loader_dataset_split_none_when_no_params(tmp_path):
 def test_ami_dataset_loader_getitem_raises_on_invalid_index(tmp_path):
     loader = AMIDatasetLoader(cache_dir=tmp_path, num_samples=5)
 
-    with pytest.raises(IndexError, match="Sample index .* out of range"):
+    with pytest.raises(IndexError, match=r"Sample index .* out of range"):
         loader[0]
 
 
