@@ -60,19 +60,16 @@ def is_new_login(user: User) -> bool:
     return datetime.now(UTC) - user.last_login > timedelta(minutes=LOGIN_SESSION_GAP_MINUTES)
 
 
-async def record_login(session: SQLSessionDep, user: User, email: str) -> bool:
+async def record_login(session: SQLSessionDep, user: User, email: str) -> None:
     """Record a new login: updates first_login/last_login and the user's auth email. Only call when
-    is_new_login(user) is True. Returns whether this was the user's very first login.
+    is_new_login(user) is True.
     """
     now = datetime.now(UTC)
-    is_first_login = user.first_login is None
-    if is_first_login:
+    if user.first_login is None:
         user.first_login = now
     user.last_login = now
 
     await record_user_auth_email(session=session, user=user, email=email)
-
-    return is_first_login
 
 
 async def get_current_user(
@@ -139,7 +136,8 @@ async def get_current_user(
         # heuristic, so that routine request traffic doesn't masquerade as repeated logins.
         is_first_login = False
         if is_new_login(user):
-            is_first_login = await record_login(session, user, email)
+            is_first_login = user.first_login is None
+            await record_login(session, user, email)
             needs_commit = True
 
         if needs_commit:
