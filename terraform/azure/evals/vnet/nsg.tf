@@ -25,10 +25,6 @@
 # The same callers are allowed to every endpoint, including the state account. A later
 # results-only route has to add its source on the results rules only.
 #
-# The Azure Monitor endpoint for log queries holds several private addresses, not one. Its
-# rules list every address, taken from the parent root monitor_private_endpoint_ip_addresses
-# output after that endpoint exists.
-
 locals {
   # Subnet of the replacement self-hosted agent pool ado-vmss-latest in test.
   # The production pool uses 10.140.82.0/25 and is not a caller of this test network.
@@ -65,10 +61,6 @@ locals {
     vault = {
       address_prefixes = [var.private_endpoint_address_prefixes.vault]
       priority         = 130
-    }
-    monitor = {
-      address_prefixes = var.monitor_private_endpoint_address_prefixes
-      priority         = 140
     }
   }
 

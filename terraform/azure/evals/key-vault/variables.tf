@@ -39,11 +39,6 @@ variable "create_storage_key" {
   default     = false
 }
 
-variable "log_analytics_workspace_id" {
-  type        = string
-  description = "Resource ID of the evals Log Analytics workspace (law-evals-<environment>) that receives vault audit events. Created by the parent evals root."
-}
-
 variable "soft_delete_retention_days" {
   type        = number
   description = "Days to retain a soft-deleted vault and its keys before they can be purged."

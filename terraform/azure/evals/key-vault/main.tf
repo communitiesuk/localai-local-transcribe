@@ -112,17 +112,3 @@ resource "azurerm_key_vault_key" "evals_storage" {
     environment = var.environment_name
   }
 }
-
-# Sends every vault access (key reads, wraps, unwraps, rotations and permission changes)
-# to the evals Log Analytics workspace created by the parent evals root.
-# The allLogs group covers every log category the vault offers, which is what Wiz checks for.
-# Retention is set on the workspace, because a setting that sends to Log Analytics has none of its own.
-resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault" {
-  name                       = "key-vault-audit-logging"
-  target_resource_id         = azurerm_key_vault.evals_storage.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
-
-  enabled_log {
-    category_group = "allLogs"
-  }
-}

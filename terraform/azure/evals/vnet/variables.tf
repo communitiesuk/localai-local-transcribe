@@ -57,8 +57,3 @@ variable "private_endpoint_address_prefixes" {
   })
   description = "Single-host prefix for each private endpoint on this subnet."
 }
-
-variable "monitor_private_endpoint_address_prefixes" {
-  type        = list(string)
-  description = "Single-host prefix for every private address of the Azure Monitor endpoint. Take them from the parent root monitor_private_endpoint_ip_addresses output."
-}
