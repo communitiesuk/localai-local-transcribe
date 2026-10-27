@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
+from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter, build_bedrock_apim_adapter
 
 
 @pytest.mark.parametrize(
@@ -49,4 +49,41 @@ def test_build_azure_apim_adapter_success(monkeypatch):
     assert adapter._subscription_key == "test-subscription-key-456"  # noqa: SLF001
     assert client is not None
     assert str(client.base_url).rstrip("/") == f"{base_url.rstrip('/')}/{model_name}"
+    assert "Ocp-Apim-Subscription-Key" in client.default_headers
+
+
+@pytest.mark.parametrize(
+    ("url", "token", "key", "expected_error"),
+    [
+        ("", "token", "key", "AZURE_APIM_BEDROCK_URL is required"),
+        ("https://example.com", "", "key", "AZURE_APIM_ACCESS_TOKEN is required"),
+        ("https://example.com", "token", "", "AZURE_APIM_SUBSCRIPTION_KEY is required"),
+    ],
+)
+def test_build_bedrock_apim_adapter_raises_when_missing_env_var(monkeypatch, url, token, key, expected_error):
+    monkeypatch.setenv("AZURE_APIM_BEDROCK_URL", url)
+    monkeypatch.setenv("AZURE_APIM_ACCESS_TOKEN", token)
+    monkeypatch.setenv("AZURE_APIM_SUBSCRIPTION_KEY", key)
+
+    with pytest.raises(ValueError, match=expected_error):
+        build_bedrock_apim_adapter()
+
+
+def test_build_bedrock_apim_adapter_success(monkeypatch):
+    base_url = "https://api.aws.aigateway.test.communities.gov.uk/localtranscribe/"
+    model_name = "haiku-4-5"
+
+    monkeypatch.setenv("AZURE_APIM_BEDROCK_URL", base_url)
+    monkeypatch.setenv("AZURE_APIM_ACCESS_TOKEN", "test-access-token-123")
+    monkeypatch.setenv("AZURE_APIM_SUBSCRIPTION_KEY", "test-subscription-key-456")
+    monkeypatch.setenv("BEST_LLM_MODEL_NAME", model_name)
+
+    adapter = build_bedrock_apim_adapter()
+    client = asyncio.run(adapter._get_apim_client())  # noqa: SLF001
+
+    assert adapter._model == model_name  # noqa: SLF001
+    assert adapter._url == base_url  # noqa: SLF001
+    assert adapter._subscription_key == "test-subscription-key-456"  # noqa: SLF001
+    assert client is not None
+    assert str(client.base_url).rstrip("/") == f"{base_url.rstrip('/')}/{model_name}/bedrock"
     assert "Ocp-Apim-Subscription-Key" in client.default_headers

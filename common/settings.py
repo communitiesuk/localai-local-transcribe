@@ -91,6 +91,11 @@ class Settings(BaseSettings):
     AZURE_APIM_SCOPE: str | None = Field(description="OAuth scope for APIM client secret auth", default=None)
     # if using 'static_token' for AZURE_APIM_AUTH_METHOD
     AZURE_APIM_ACCESS_TOKEN: str | None = Field(description="Access token for Azure APIM", default=None)
+    # if using 'bedrock_apim' (AWS Bedrock models, e.g. Claude Haiku/Sonnet, behind Azure APIM's "localtranscribe"
+    # product). Reuses AZURE_APIM_SUBSCRIPTION_KEY/AZURE_APIM_AUTH_METHOD and the related settings above for auth.
+    AZURE_APIM_BEDROCK_URL: str | None = Field(
+        description="Base URL for Minute's Azure APIM Bedrock (Anthropic Messages API) route.", default=None
+    )
     # if using Gemini
     GOOGLE_APPLICATION_CREDENTIALS: str | None = Field(
         description="Path to Google Cloud service account credentials JSON file", default=None
@@ -110,8 +115,8 @@ class Settings(BaseSettings):
     )
 
     FAST_LLM_PROVIDER: str = Field(
-        description="Fast LLM provider to use. Currently 'openai', 'azure_apim', and 'gemini' are supported. Note that "
-        "this should be used for low complexity LLM tasks, like AI edits.",
+        description="Fast LLM provider to use. Currently 'openai', 'azure_apim', 'bedrock_apim', and 'gemini' are "
+        "supported. Note that this should be used for low complexity LLM tasks, like AI edits.",
         default="azure_apim",
     )
     FAST_LLM_MODEL_NAME: str = Field(
@@ -119,8 +124,8 @@ class Settings(BaseSettings):
         default="gpt-5-nano",
     )
     BEST_LLM_PROVIDER: str = Field(
-        description="Best LLM provider to use. Currently 'openai', 'azure_apim', and 'gemini' are supported. Note that "
-        "this should be used for higher complexity LLM tasks, like initial minute generation.",
+        description="Best LLM provider to use. Currently 'openai', 'azure_apim', 'bedrock_apim', and 'gemini' are "
+        "supported. Note that this should be used for higher complexity LLM tasks, like initial minute generation.",
         default="azure_apim",
     )
     BEST_LLM_MODEL_NAME: str = Field(
