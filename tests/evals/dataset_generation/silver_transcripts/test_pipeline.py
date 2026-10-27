@@ -14,7 +14,6 @@ from ffmpeg import Error as FFmpegError
 from tenacity import Future, RetryError
 
 from common.audio.ffmpeg import convert_to_mp3
-from common.services.transcription_services.azure_stt_base import convert_to_dialogue_entries
 from evals.dataset_generation.silver_transcripts.src import pipeline as pipeline_module
 from evals.dataset_generation.silver_transcripts.src.main import main
 from evals.dataset_generation.silver_transcripts.src.models import MeetingMetadata
@@ -214,17 +213,17 @@ def test_sample_id_falls_back_when_the_stem_sanitises_to_nothing():
 def test_utterance_segments_and_confidence_metadata(draft_setup, monkeypatch, confidences, expected_mean, expected_std):
     input_dir, pipeline, adapter = draft_setup
     soundfile.write(input_dir / "sample.wav", np.zeros(16000 * len(confidences)), 16000)
-    phrases = [
-        {
-            "speaker": 1,
+    utterances = []
+    for index, confidence in enumerate(confidences):
+        utterance = {
+            "speaker": "1",
             "text": "hello",
-            "offsetMilliseconds": index * 1000,
-            "durationMilliseconds": 1000,
-            "confidence": confidence,
+            "start_time": float(index),
+            "end_time": float(index + 1),
         }
-        for index, confidence in enumerate(confidences)
-    ]
-    utterances = convert_to_dialogue_entries(phrases)
+        if confidence is not None:
+            utterance["confidence"] = confidence
+        utterances.append(utterance)
     monkeypatch.setattr(
         adapter,
         "transcribe",

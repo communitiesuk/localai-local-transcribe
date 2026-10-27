@@ -5,8 +5,8 @@ from typing import Any
 import httpx
 
 from common.azure_apim_auth import AzureTokenProvider, build_azure_apim_token_provider
+from common.database.postgres_models import DialogueEntry
 from common.settings import get_settings
-from common.types import DialogueEntry
 
 TOO_MANY_REQUESTS = 429
 HTTP_UNAUTHORIZED = 401
@@ -59,17 +59,12 @@ def stt_is_available() -> bool:
 
 
 def convert_to_dialogue_entries(phrases: list[dict[str, Any]]) -> list[DialogueEntry]:
-    dialogue_entries: list[DialogueEntry] = []
-    for entry in phrases:
-        dialogue_entry: DialogueEntry = {
-            "speaker": str(entry["speaker"]),
-            "text": entry["text"],
-            "start_time": float(entry["offsetMilliseconds"]) / 1000,
-            "end_time": (float(entry["offsetMilliseconds"]) + float(entry["durationMilliseconds"])) / 1000,
-        }
-        confidence = entry.get("confidence")
-        if isinstance(confidence, int | float):
-            dialogue_entry["confidence"] = float(confidence)
-        dialogue_entries.append(dialogue_entry)
-
-    return dialogue_entries
+    return [
+        DialogueEntry(
+            speaker=str(entry["speaker"]),
+            text=entry["text"],
+            start_time=float(entry["offsetMilliseconds"]) / 1000,
+            end_time=(float(entry["offsetMilliseconds"]) + float(entry["durationMilliseconds"])) / 1000,
+        )
+        for entry in phrases
+    ]
