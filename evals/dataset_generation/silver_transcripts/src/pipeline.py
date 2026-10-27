@@ -16,8 +16,8 @@ from common.audio.ffmpeg import convert_to_mp3
 from common.constants import SUPPORTED_AUDIO_SUFFIXES
 from common.services.transcription_services.azure import AzureSpeechAdapter
 from common.services.transcription_services.azure_async import AzureBatchTranscriptionAdapter
+from common.services.transcription_services.azure_batch_runner import run_azure_batch_transcription
 from evals.dataset_generation.silver_transcripts.src.config import DEFAULT_SEGMENT_DURATION_SECONDS
-from evals.dataset_generation.silver_transcripts.src.core.batch_transcription import transcribe_with_azure_batch
 from evals.dataset_generation.silver_transcripts.src.core.ids import build_sample_id
 from evals.dataset_generation.silver_transcripts.src.core.segments import (
     cut_audio,
@@ -197,11 +197,17 @@ class SilverTranscriptPipeline:
         if duration > MAX_BATCH_TRANSCRIPTION_SECONDS:
             message = f"Recording is {duration / 3600:.1f} hours long; Azure batch transcription supports up to 4 hours"
             raise ValueError(message)
-        return asyncio.run(transcribe_with_azure_batch(audio_path, duration))
+        return asyncio.run(self._transcribe_with_azure_batch(audio_path, duration))
 
     async def _transcribe_with_azure_batch(self, audio_path: Path, duration: float) -> TranscriptionResult:
-        """Compatibility wrapper around the extracted batch helper."""
-        return await transcribe_with_azure_batch(audio_path, duration)
+        """Compatibility wrapper around the shared batch helper."""
+        entries, elapsed = await run_azure_batch_transcription(audio_path, duration)
+        return TranscriptionResult(
+            text=" ".join(entry["text"] for entry in entries).strip(),
+            duration_sec=elapsed,
+            debug_info={},
+            dialogue_entries=entries,
+        )
 
     @staticmethod
     def _format_diarized_transcript(utterances: list[DialogueEntry]) -> str:

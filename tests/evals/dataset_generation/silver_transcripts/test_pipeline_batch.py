@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from common.services.transcription_services import azure_batch_runner as batch_module
 from evals.dataset_generation.silver_transcripts.src import pipeline as pipeline_module
-from evals.dataset_generation.silver_transcripts.src.core import batch_transcription as batch_module
 from evals.dataset_generation.silver_transcripts.src.pipeline import SilverTranscriptPipeline
 
 
