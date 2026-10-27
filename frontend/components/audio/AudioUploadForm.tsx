@@ -4,15 +4,25 @@ import { GovukButton, GovukFormGroup, GovukHint } from '@/components/govuk'
 import { useStartTranscription } from '@/hooks/use-start-transcription'
 import { recordAnalyticsEvent } from '@/lib/analytics'
 import {
+  ACCEPTED_UPLOAD_FORMATS,
   MAX_UPLOAD_FILE_SIZE_BYTES,
   MAX_UPLOAD_FILE_SIZE_LABEL,
 } from '@/lib/constants'
+import * as Sentry from '@sentry/nextjs'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Dropzone, { type FileRejection } from 'react-dropzone'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import { Controller, FormProvider } from 'react-hook-form'
+
+export const UNSUPPORTED_FORMAT_MESSAGE =
+  'The selected file must be a supported audio or video format, for example MP3, WAV, M4A, MP4 or MOV'
+
+const extensionOf = (fileName: string) => {
+  const index = fileName.lastIndexOf('.')
+  return index === -1 ? 'none' : fileName.slice(index).toLowerCase()
+}
 
 export const AudioUploadForm = () => {
   const router = useRouter()
@@ -25,11 +35,30 @@ export const AudioUploadForm = () => {
     const isTooLarge = rejections.some((rejection) =>
       rejection.errors.some((error) => error.code === 'file-too-large')
     )
-    setFileError(
-      isTooLarge
-        ? `The selected file must be smaller than ${MAX_UPLOAD_FILE_SIZE_LABEL}`
-        : 'The selected file must be an audio or video file'
+
+    if (isTooLarge) {
+      setFileError(
+        `The selected file must be smaller than ${MAX_UPLOAD_FILE_SIZE_LABEL}`
+      )
+      return
+    }
+
+    const unsupported = rejections.find((rejection) =>
+      rejection.errors.some((error) => error.code === 'file-invalid-type')
     )
+
+    if (unsupported) {
+      Sentry.captureException(new Error('Unsupported upload file format'), {
+        extra: {
+          fileType: unsupported.file.type || 'unknown',
+          fileExtension: extensionOf(unsupported.file.name),
+        },
+      })
+      setFileError(UNSUPPORTED_FORMAT_MESSAGE)
+      return
+    }
+
+    setFileError('The selected file must be an audio or video file')
   }
 
   const handleSubmit = form.handleSubmit((formValues) => {
@@ -61,10 +90,7 @@ export const AudioUploadForm = () => {
                   }
                 }}
                 onDropRejected={handleDropRejected}
-                accept={{
-                  'audio/*': [],
-                  'video/*': [],
-                }}
+                accept={ACCEPTED_UPLOAD_FORMATS}
                 maxSize={MAX_UPLOAD_FILE_SIZE_BYTES}
                 multiple={false}
                 noClick
