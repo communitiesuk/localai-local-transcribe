@@ -9,6 +9,7 @@ on:
 
 env:
   TERRAFORM_VERSION: ~>1.14.0
+  PYTHON_VERSION: "3.14"
 
 permissions:
   contents: read
@@ -24,6 +25,8 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - uses: actions/setup-python@v3
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: "lts/*"

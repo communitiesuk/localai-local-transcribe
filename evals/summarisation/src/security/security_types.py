@@ -9,7 +9,9 @@ from evals.summarisation.src.common.schemas import MetricResult
 from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
 
-class InjectionLevel(str, Enum):
+# Kept as (str, Enum) rather than StrEnum: StrEnum changes f-string/str() output from
+# "InjectionLevel.BENIGN" to "benign", which would alter generated scenario IDs.
+class InjectionLevel(str, Enum):  # noqa: UP042
     """Severity of the instruction injected into a scenario transcript."""
 
     BENIGN = "benign"

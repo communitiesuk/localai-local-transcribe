@@ -9,7 +9,7 @@ parameters:
   - name: pythonVersion
     displayName: 'Python version'
     type: string
-    default: '3.12'
+    default: '3.14'
 
 pool:
   vmImage: ubuntu-latest

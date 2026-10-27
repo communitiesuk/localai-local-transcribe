@@ -20,7 +20,7 @@ def _iterate_aligned_equal_chunks(
     ref_pairs: list[tuple[str, str]],
     hyp_pairs: list[tuple[str, str]],
     alignment_result: jiwer.WordOutput,
-) -> Generator[tuple[tuple[str, str], tuple[str, str]], None, None]:
+) -> Generator[tuple[tuple[str, str], tuple[str, str]]]:
     """
     Iterate through aligned equal chunks, yielding matched reference and hypothesis pairs.
     """

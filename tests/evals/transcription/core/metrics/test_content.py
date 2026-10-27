@@ -61,7 +61,7 @@ def test_standard_content_wer_by_dialect():
             "sample_metadata": {"group": "welsh_female", "dialect": "welsh", "gender": "female"},
         }
     ]
-    rows, summary = _evaluate_samples(samples)
+    rows, _summary = _evaluate_samples(samples)
     group = _wer_by_group(rows)["welsh_female"]
     assert group["corpus_content_wer"] == pytest.approx(0.5)
     assert group["content_wer"]["mean"] == pytest.approx(0.5)
