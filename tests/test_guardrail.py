@@ -49,7 +49,7 @@ async def test_calculate_accuracy_score():
 
         # Verify LLM called correctly
         mock_chatbot.structured_chat.assert_called_once()
-        args, kwargs = mock_chatbot.structured_chat.call_args
+        _args, kwargs = mock_chatbot.structured_chat.call_args
         assert kwargs["response_format"] == GuardrailScore
         assert len(kwargs["messages"]) == 3
         assert kwargs["messages"][0]["role"] == "system"

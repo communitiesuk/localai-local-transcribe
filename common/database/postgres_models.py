@@ -74,9 +74,9 @@ class MinuteVersion(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     minute_id: UUID = Field(foreign_key="minute.id", ondelete="CASCADE")
-    minute: Mapped["Minute"] = Relationship(back_populates="minute_versions")
+    minute: Mapped[Minute] = Relationship(back_populates="minute_versions")
     html_content: str = Field(default="", sa_column_kwargs={"server_default": ""})
-    guardrail_results: Mapped[list["GuardrailResult"]] = Relationship(
+    guardrail_results: Mapped[list[GuardrailResult]] = Relationship(
         back_populates="minute_version", cascade_delete=True
     )
     status: JobStatus = Field(
@@ -99,14 +99,14 @@ class Minute(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     transcription_id: UUID = Field(foreign_key="transcription.id", ondelete="CASCADE")
-    transcription: Mapped["Transcription"] = Relationship(back_populates="minutes")
+    transcription: Mapped[Transcription] = Relationship(back_populates="minutes")
     template_name: str = Field(default="General")
     user_template_id: UUID | None = Field(
         foreign_key="user_template.id", nullable=True, ondelete="SET NULL", default=None
     )
-    user_template: "UserTemplate" = Relationship(back_populates="minutes")
+    user_template: UserTemplate = Relationship(back_populates="minutes")
     agenda: str | None = Field(nullable=True, default=None)
-    minute_versions: Mapped[list["MinuteVersion"]] = Relationship(
+    minute_versions: Mapped[list[MinuteVersion]] = Relationship(
         back_populates="minute",
         cascade_delete=True,
         sa_relationship_kwargs={"order_by": col(MinuteVersion.created_datetime).desc()},
@@ -121,7 +121,7 @@ class Organisation(BaseTableMixin, table=True):
     allowed_domains: list[str] = Field(
         default_factory=list, sa_column=Column(ARRAY(Text), nullable=False, server_default=text("ARRAY[]::TEXT[]"))
     )
-    users: list["User"] = Relationship(back_populates="organisation")
+    users: list[User] = Relationship(back_populates="organisation")
 
 
 # Main models with table=True for DB tables
@@ -153,7 +153,7 @@ class User(BaseTableMixin, table=True):
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
     evaluation_id: str | None = Field(default=None, nullable=True, unique=True)
     data_retention_days: int = Field(default=30)
-    transcriptions: list["Transcription"] = Relationship(back_populates="user")
+    transcriptions: list[Transcription] = Relationship(back_populates="user")
     roles: list[UserRole] = Field(
         default_factory=lambda: [UserRole.STANDARD_USER],
         sa_column=Column(
@@ -197,7 +197,7 @@ class Recording(BaseTableMixin, table=True):
     )
     file_created_at: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL", index=True)
-    transcription: "Transcription" = Relationship(back_populates="recordings")
+    transcription: Transcription = Relationship(back_populates="recordings")
 
 
 class Chat(BaseTableMixin, table=True):
@@ -205,7 +205,7 @@ class Chat(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     transcription_id: UUID = Field(foreign_key="transcription.id", ondelete="CASCADE")
-    transcription: Mapped["Transcription"] = Relationship(back_populates="chat")
+    transcription: Mapped[Transcription] = Relationship(back_populates="chat")
     user_content: str = Field(default=None)
     assistant_content: str | None = Field(default=None)
     status: JobStatus = Field(
@@ -266,7 +266,7 @@ class TemplateQuestion(BaseTableMixin, table=True):
     format_instructions: str = Field(default="", sa_column_kwargs={"server_default": ""})
 
     user_template_id: UUID = Field(foreign_key="user_template.id", ondelete="CASCADE")
-    user_template: "UserTemplate" = Relationship(back_populates="questions")
+    user_template: UserTemplate = Relationship(back_populates="questions")
 
 
 class UserTemplate(BaseTableMixin, table=True):
@@ -315,7 +315,7 @@ class GuardrailResult(BaseTableMixin, table=True):
         foreign_key="minute_version.id",
         ondelete="CASCADE",
     )
-    minute_version: "MinuteVersion" = Relationship(back_populates="guardrail_results")
+    minute_version: MinuteVersion = Relationship(back_populates="guardrail_results")
 
     passed: bool = Field(description="Whether the guardrail check passed")
     score: float | None = Field(
@@ -330,7 +330,7 @@ class GuardrailResult(BaseTableMixin, table=True):
         default=None,
         description="Error message if the guardrail check failed",
     )
-    failure_categories: Mapped[list["GuardrailFailureCategory"]] = Relationship(
+    failure_categories: Mapped[list[GuardrailFailureCategory]] = Relationship(
         back_populates="guardrail_result", cascade_delete=True
     )
 
@@ -346,7 +346,7 @@ class GuardrailFailureCategory(BaseTableMixin, table=True):
         foreign_key="guardrail_result.id",
         ondelete="CASCADE",
     )
-    guardrail_result: "GuardrailResult" = Relationship(back_populates="failure_categories")
+    guardrail_result: GuardrailResult = Relationship(back_populates="failure_categories")
 
     category: str = Field(index=True, description="Failure category emitted by the guardrail")
     mode: str = Field(description="Specific failure mode within the category")

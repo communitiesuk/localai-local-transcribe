@@ -176,7 +176,7 @@ def _engine_output(samples: list[SampleRow], processing_speed_ratio: float) -> E
 def _meetings_at_corpus_wer(target_corpus_wer: float, correct_speaker_meetings: int) -> list[SampleRow]:
     """Build ten meetings whose corpus WER equals ``target_corpus_wer``."""
     reference_words_per_meeting = 1_000
-    errors_per_meeting = int(round(target_corpus_wer * reference_words_per_meeting))
+    errors_per_meeting = round(target_corpus_wer * reference_words_per_meeting)
     hits = reference_words_per_meeting - errors_per_meeting
     samples: list[SampleRow] = []
     for index in range(SPEAKER_COUNT_DRIFT_THRESHOLDS.n_meetings):

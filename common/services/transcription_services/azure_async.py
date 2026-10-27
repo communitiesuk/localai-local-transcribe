@@ -1,5 +1,5 @@
 import asyncio
-import datetime
+import datetime as dt
 import json
 import logging
 import uuid
@@ -27,7 +27,7 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 @contextmanager
-def get_client() -> Generator[ContainerClient, None, None]:
+def get_client() -> Generator[ContainerClient]:
     if not settings.AZURE_BLOB_CONNECTION_STRING:
         msg = "AZURE_BLOB_CONNECTION_STRING must be set"
         raise ValueError(msg)
@@ -227,8 +227,8 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
     def get_azure_container_sas(
         cls, container_client: ContainerClient, container_permissions: ContainerSasPermissions, expiry_days: int = 1
     ) -> str:
-        start_time = datetime.datetime.now(datetime.UTC)
-        expiry_time = start_time + datetime.timedelta(days=expiry_days)
+        start_time = dt.datetime.now(dt.UTC)
+        expiry_time = start_time + dt.timedelta(days=expiry_days)
         return generate_container_sas(
             account_name=container_client.account_name,
             container_name=container_client.container_name,
