@@ -10,6 +10,7 @@ import {
   GovukButton,
   GovukWarningText,
   GovukBackLink,
+  GovukCancelLink,
 } from '@/components/govuk'
 import {
   getUserUsersMeGetOptions,
@@ -41,8 +42,11 @@ export default function UserPageDelete(props: {
     }),
   })
 
+  const userManagementHref = targetUser?.organisation_id
+    ? `/user-management?organisationId=${encodeURIComponent(targetUser.organisation_id)}`
+    : '/user-management'
   const redirectPath =
-    currentUser?.id === targetUser?.id ? '/' : '/user-management' // go to hompage if user deletes themself
+    currentUser?.id === targetUser?.id ? '/' : userManagementHref // go to homepage if user deletes themself
 
   const { mutate: deleteUser, isPending: deletePending } = useMutation({
     ...deleteUserUsersUserIdDeleteMutation(),
@@ -102,9 +106,7 @@ export default function UserPageDelete(props: {
           {deletePending ? 'Deleting account...' : 'Delete account'}
         </GovukButton>
 
-        <a className="govuk-link" href={`/user-management/users/${userId}`}>
-          Cancel
-        </a>
+        <GovukCancelLink href={`/user-management/users/${userId}`} />
       </div>
     </>
   )

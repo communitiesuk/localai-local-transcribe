@@ -59,7 +59,7 @@ def _make_service(**kwargs: Any) -> tuple[_FakeService, Any]:
 
 
 def test_download_blob_writes_file(tmp_path: Path) -> None:
-    service, patcher = _make_service(blobs={("input", "summarisation/standard/data.jsonl"): b"line1\nline2\n"})
+    _service, patcher = _make_service(blobs={("input", "summarisation/standard/data.jsonl"): b"line1\nline2\n"})
     dest = tmp_path / "nested" / "data.jsonl"
     with patcher, patch("evals.shared.blob_storage.DefaultAzureCredential"):
         blob = EvalBlobStorage(
@@ -149,7 +149,7 @@ def test_from_account_urls_raises_without_both_account_urls() -> None:
             clear=False,
         ),
         patch("evals.shared.blob_storage.DefaultAzureCredential"),
-        pytest.raises(ValueError, match="restricted_account_url.*shared_account_url"),
+        pytest.raises(ValueError, match=r"restricted_account_url.*shared_account_url"),
     ):
         EvalBlobStorage.from_account_urls()
 
@@ -192,7 +192,7 @@ def test_download_prefix_writes_relative_files(tmp_path):
 
 
 def test_download_prefix_rejects_paths_outside_destination(tmp_path):
-    service, patcher = _make_service(
+    _service, patcher = _make_service(
         blobs={
             ("input", "transcription/smoke-test/ami/../../escape.txt"): b"bad",
         }

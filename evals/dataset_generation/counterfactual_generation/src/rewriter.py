@@ -113,8 +113,7 @@ class CounterfactualRewriter:
         """
         if axis_change.axis != characteristic_detection.axis:
             msg = (
-                f"Axis mismatch: change requests {axis_change.axis} "
-                f"but detection found {characteristic_detection.axis}"
+                f"Axis mismatch: change requests {axis_change.axis} but detection found {characteristic_detection.axis}"
             )
             raise ValueError(msg)
 

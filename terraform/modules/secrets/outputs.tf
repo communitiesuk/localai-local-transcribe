@@ -63,3 +63,9 @@ output "govnotify_invite_template_id_arn" {
   description = "ARN of the SSM parameter containing the GovNotify invite template ID"
   value       = aws_ssm_parameter.govnotify_invite_template_id.arn
 }
+
+output "govnotify_invite_no_organisation_template_id_arn" {
+  description = "ARN of the SSM parameter containing the GovNotify no organisation invite template ID"
+  value       = aws_ssm_parameter.govnotify_invite_no_organisation_template_id.arn
+}
+

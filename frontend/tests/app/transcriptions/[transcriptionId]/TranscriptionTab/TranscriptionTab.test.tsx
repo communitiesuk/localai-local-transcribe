@@ -1,4 +1,10 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -8,12 +14,15 @@ import {
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
 import type { TranscriptionGetResponse } from '@/lib/client'
 import { DialogueEntry } from '@/lib/client'
+import userEvent from '@testing-library/user-event'
 
 const updateDialogueEntryTextMock = vi.fn()
 const updateDialogueEntrySpeakerMock = vi.fn()
+const renameSpeakerEverywhereMock = vi.fn()
 const setBannerMock = vi.fn()
 const clearBannerMock = vi.fn()
 const onLineEditErrorMock = vi.fn()
+const onDialogueEntryFocusLost = vi.fn()
 
 vi.mock('@/hooks/use-update-transcription-speakers', () => ({
   useUpdateTranscription: () => ({
@@ -21,7 +30,7 @@ vi.mock('@/hooks/use-update-transcription-speakers', () => ({
     updateTitle: vi.fn(),
   }),
   useUpdateTranscriptionSpeakers: () => ({
-    renameSpeakerEverywhere: vi.fn(),
+    renameSpeakerEverywhere: renameSpeakerEverywhereMock,
     updateDialogueEntrySpeaker: updateDialogueEntrySpeakerMock,
   }),
 }))
@@ -53,22 +62,6 @@ vi.mock('@/components/ui/copy-button', () => ({
   ),
 }))
 
-vi.mock('@/components/recordings/copy-transcript-button', () => ({
-  CopyTranscriptButton: ({ disabled }: { disabled?: boolean }) => (
-    <button type="button" disabled={disabled}>
-      Copy transcript
-    </button>
-  ),
-}))
-
-vi.mock('@/components/recordings/download-transcript-button', () => ({
-  DownloadTranscriptButton: ({ disabled }: { disabled?: boolean }) => (
-    <button type="button" disabled={disabled}>
-      Download transcript
-    </button>
-  ),
-}))
-
 vi.mock('@/stores/use-banner-store', () => ({
   useBannerStore: () => ({
     setBanner: setBannerMock,
@@ -80,14 +73,39 @@ vi.mock('posthog-js', () => ({
   default: { capture: vi.fn() },
 }))
 
+// Mock scrollIntoView as it's not present in JSDom
+window.HTMLElement.prototype.scrollIntoView = () => {}
+
 const renderTab = (transcription: TranscriptionGetResponse) =>
   render(
     <TranscriptionTab
       transcription={transcription}
       onLineEditError={onLineEditErrorMock}
-      onTranscriptCopied={() => {}}
-      onTranscriptDownloaded={() => {}}
-      onDismissBanner={() => {}}
+    />
+  )
+
+const renderTabWithDismissBanner = (
+  transcription: TranscriptionGetResponse,
+  onDismissBanner: () => void
+) =>
+  render(
+    <TranscriptionTab
+      transcription={transcription}
+      onLineEditError={onLineEditErrorMock}
+      onDismissBanner={onDismissBanner}
+    />
+  )
+
+const renderTabWithDialogueEntryFocused = (
+  transcription: TranscriptionGetResponse,
+  dialogueEntryIndex: number
+) =>
+  render(
+    <TranscriptionTab
+      transcription={transcription}
+      onLineEditError={onLineEditErrorMock}
+      dialogueEntryIndexToFocus={dialogueEntryIndex}
+      onDialogueEntryFocusLost={onDialogueEntryFocusLost}
     />
   )
 
@@ -439,12 +457,15 @@ describe('TranscriptionTab single speaker rename', () => {
   it('sends the original speaker name as expected_speaker, not the optimistically updated one', async () => {
     renderTab(transcription)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Edit transcript' }))
-    fireEvent.click(screen.getByText('Alice:'))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
 
     const input = screen.getByRole('textbox')
     fireEvent.change(input, { target: { value: 'Bob' } })
-    fireEvent.click(screen.getByText('Update this occurrence'))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update this occurrence' })
+    )
 
     await waitFor(() => {
       expect(updateDialogueEntrySpeakerMock).toHaveBeenCalledWith(0, {
@@ -454,6 +475,105 @@ describe('TranscriptionTab single speaker rename', () => {
         expected_end_time: 1,
       })
     })
+  })
+
+  it('clears existing banners when opening the speaker edit modal', () => {
+    const onDismissBanner = vi.fn()
+    renderTabWithDismissBanner(transcription, onDismissBanner)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+
+    expect(
+      screen.getByRole('heading', { name: "Edit 'Alice'" })
+    ).toBeInTheDocument()
+    expect(onDismissBanner).toHaveBeenCalledOnce()
+  })
+
+  it('closes the speaker edit modal when cancelling with no changes', () => {
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('shows an error in the speaker edit modal and keeps it open when updating one occurrence fails', async () => {
+    updateDialogueEntrySpeakerMock.mockRejectedValueOnce(new Error('Conflict'))
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update this occurrence' })
+    )
+
+    const dialog = screen.getByRole('dialog')
+    expect(
+      await within(dialog).findByText(
+        'One or more speaker names could not be updated, please try again.'
+      )
+    ).toBeInTheDocument()
+    expect(setBannerMock).not.toHaveBeenCalled()
+    expect(dialog).toBeInTheDocument()
+    expect(screen.getByRole('textbox')).toHaveValue('Bob')
+  })
+
+  it('shows an error in the speaker edit modal and keeps it open when updating all occurrences fails', async () => {
+    renameSpeakerEverywhereMock.mockRejectedValueOnce(new Error('Conflict'))
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
+
+    const dialog = screen.getByRole('dialog')
+    expect(
+      await within(dialog).findByText(
+        'One or more speaker names could not be updated, please try again.'
+      )
+    ).toBeInTheDocument()
+    expect(setBannerMock).not.toHaveBeenCalled()
+    expect(dialog).toBeInTheDocument()
+    expect(screen.getByRole('textbox')).toHaveValue('Bob')
+  })
+
+  it('clears the speaker edit modal error when cancelling after a failed update', async () => {
+    renameSpeakerEverywhereMock.mockRejectedValueOnce(new Error('Conflict'))
+    renderTab(transcription)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Edit speaker name Alice' })
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
+
+    expect(
+      await screen.findByText(
+        'One or more speaker names could not be updated, please try again.'
+      )
+    ).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(
+      screen.queryByText(
+        'One or more speaker names could not be updated, please try again.'
+      )
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
 
@@ -501,5 +621,58 @@ describe('TranscriptionTab full edit flow', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Finish editing' }))
     expect(clearBannerMock).toHaveBeenCalled()
+  })
+})
+
+describe('Transcription tab focus dialogue entry', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('focuses dialogue entry with given index on load', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
+  })
+
+  it('makes dialogue entry no longer focusable after initial focus is lost', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
+
+    // click the other dialogue entry
+    await userEvent.click(screen.getByTestId('dialogue-entry-0'))
+
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+
+    await userEvent.click(dialogue_entry)
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+  })
+
+  it('calls on focus lost after dialogue entry loses focus', async () => {
+    const dialog_entry_id = twoEntryTranscription.dialogue_entries!.length - 1
+
+    renderTabWithDialogueEntryFocused(twoEntryTranscription, dialog_entry_id)
+
+    const dialogue_entry = screen.getByTestId(
+      `dialogue-entry-${dialog_entry_id}`
+    )
+    await waitFor(() => expect(dialogue_entry).toHaveFocus())
+    expect(onDialogueEntryFocusLost).not.toHaveBeenCalled()
+
+    // click the other dialogue entry
+    await userEvent.click(screen.getByTestId('dialogue-entry-0'))
+
+    await waitFor(() => expect(dialogue_entry).not.toHaveFocus())
+
+    expect(onDialogueEntryFocusLost).toHaveBeenCalledOnce()
   })
 })

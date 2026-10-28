@@ -20,10 +20,12 @@ RUN npm run generate-client
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG NEXT_PUBLIC_POSTHOG_API_KEY
 ARG NEXT_PUBLIC_ENVIRONMENT
+ARG NEXT_PUBLIC_PLAUSIBLE_DOMAIN
 
 # Only export variables required by Next.js client bundle
 ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN \
     NEXT_PUBLIC_POSTHOG_API_KEY=$NEXT_PUBLIC_POSTHOG_API_KEY \
+    NEXT_PUBLIC_PLAUSIBLE_DOMAIN=$NEXT_PUBLIC_PLAUSIBLE_DOMAIN \
     NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
 
 # SENTRY_AUTH_TOKEN is mounted as a secret during build
@@ -43,7 +45,7 @@ ENV NODE_ENV=production \
 
 # Security: Set up non-root boundaries
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
+    adduser --system --uid 1001 --ingroup nodejs nextjs
 
 # Copy essential production artifacts with consistent non-root ownership
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public

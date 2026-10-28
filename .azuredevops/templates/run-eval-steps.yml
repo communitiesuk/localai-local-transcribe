@@ -3,10 +3,10 @@
 parameters:
   - name: pythonVersion
     type: string
-    default: '3.12'
+    default: '3.14'
   - name: poetryVersion
     type: string
-    default: '2.4.1'
+    default: '2.5.1'
   - name: poetryDependencyGroup
     type: string
     default: 'evals-summarisation'

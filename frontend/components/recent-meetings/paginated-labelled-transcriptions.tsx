@@ -14,6 +14,10 @@ import {
   GovukTableRow,
 } from '@/components/govuk/table'
 import { GovukPagination } from '@/components/govuk/pagination'
+import {
+  hrefWithParams,
+  recordingSearchQueryFromSearchParams,
+} from '@/components/recent-meetings/search-recording-params'
 
 export const getPageNumbers = (
   currentPage: number,
@@ -34,6 +38,14 @@ export const getPageNumbers = (
   return pages
 }
 
+// Dates of birth are stored as midnight timestamps; only the date part is meaningful.
+// Rearranged from the string rather than via Date to avoid timezone day shifts.
+export const formatDateOfBirth = (date: string | null | undefined) => {
+  if (!date) return '—'
+  const [year, month, day] = date.slice(0, 10).split('-')
+  return `${day}/${month}/${year}`
+}
+
 export const PaginatedLabelledTranscriptions = () => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -41,13 +53,14 @@ export const PaginatedLabelledTranscriptions = () => {
   const currentPage = Number(searchParams.get('page')) || 1
   const pageSize = 10
   const sort = searchParams.get('sort') === 'oldest' ? 'oldest' : 'newest'
+  const searchQuery = recordingSearchQueryFromSearchParams(searchParams)
   const {
     data: paginatedResponse,
     isLoading,
     error,
   } = useQuery({
     ...listLabelledTranscriptionsTranscriptionsLabelledGetOptions({
-      query: { page: currentPage, page_size: pageSize, sort },
+      query: { page: currentPage, page_size: pageSize, sort, ...searchQuery },
     }),
     refetchInterval: (query) =>
       !!query.state.data &&
@@ -60,7 +73,9 @@ export const PaginatedLabelledTranscriptions = () => {
   })
 
   if (paginatedResponse && paginatedResponse.total_pages < currentPage) {
-    router.replace(pathname + `?page=${paginatedResponse.total_pages}`)
+    const params = new URLSearchParams(searchParams)
+    params.set('page', String(paginatedResponse.total_pages))
+    router.replace(hrefWithParams(pathname, params))
   }
   const transcriptions = paginatedResponse?.items || []
   const totalPages = paginatedResponse?.total_pages || 1
@@ -95,68 +110,77 @@ export const PaginatedLabelledTranscriptions = () => {
         </div>
       ) : transcriptions.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <div className="text-gray-500">No labelled recordings found</div>
+          <div className="text-gray-500">No recordings to display</div>
         </div>
       ) : (
         <>
-          <GovukTable>
-            <GovukTableHead>
-              <GovukTableRow>
-                <GovukTableHeaderCell>Name</GovukTableHeaderCell>
-                <GovukTableHeaderCell className="text-nowrap">
-                  Case ID
-                </GovukTableHeaderCell>
-                <GovukTableHeaderCell className="govuk-!-width-one-third">
-                  Subject
-                </GovukTableHeaderCell>
-                <GovukTableHeaderCell className="text-nowrap">
-                  Date of birth
-                </GovukTableHeaderCell>
-                <GovukTableHeaderCell className="text-nowrap">
-                  Date recorded
-                </GovukTableHeaderCell>
-                <GovukTableHeaderCell>
-                  <span className={'govuk-visually-hidden'}>
-                    Link to recording
-                  </span>
-                </GovukTableHeaderCell>
-              </GovukTableRow>
-            </GovukTableHead>
-            <GovukTableBody>
-              {transcriptions.map((transcription) => (
-                <GovukTableRow key={transcription.id}>
-                  <GovukTableCell>{transcription.client_name}</GovukTableCell>
-                  <GovukTableCell>{transcription.case_id}</GovukTableCell>
-                  <GovukTableCell>{transcription.title}</GovukTableCell>
-                  <GovukTableCell>
-                    {transcription.client_date_of_birth}
-                  </GovukTableCell>
-                  <GovukTableCell>
-                    {formatRecordedDate(
-                      transcription.date_of_recording ??
-                        transcription.created_datetime
-                    )}
-                  </GovukTableCell>
-                  <GovukTableCell>
-                    <Link
-                      className="govuk-link"
-                      href={`/transcriptions/${transcription.id}`}
-                    >
-                      View
-                    </Link>
-                  </GovukTableCell>
+          <div
+            role="region"
+            aria-label="Labelled recordings"
+            tabIndex={0}
+            className="relative overflow-x-auto focus-visible:[outline:3px_solid_var(--govuk-focus-colour)]"
+          >
+            <GovukTable>
+              <GovukTableHead>
+                <GovukTableRow>
+                  <GovukTableHeaderCell>Name</GovukTableHeaderCell>
+                  <GovukTableHeaderCell className="text-nowrap">
+                    Case ID
+                  </GovukTableHeaderCell>
+                  <GovukTableHeaderCell className="govuk-!-width-one-third">
+                    Subject
+                  </GovukTableHeaderCell>
+                  <GovukTableHeaderCell className="text-nowrap">
+                    Date of birth
+                  </GovukTableHeaderCell>
+                  <GovukTableHeaderCell className="text-nowrap">
+                    Date recorded
+                  </GovukTableHeaderCell>
+                  <GovukTableHeaderCell>
+                    <span className={'govuk-visually-hidden'}>
+                      Link to recording
+                    </span>
+                  </GovukTableHeaderCell>
                 </GovukTableRow>
-              ))}
-            </GovukTableBody>
-          </GovukTable>
+              </GovukTableHead>
+              <GovukTableBody>
+                {transcriptions.map((transcription) => (
+                  <GovukTableRow key={transcription.id}>
+                    <GovukTableCell>{transcription.client_name}</GovukTableCell>
+                    <GovukTableCell>{transcription.case_id}</GovukTableCell>
+                    <GovukTableCell>{transcription.title}</GovukTableCell>
+                    <GovukTableCell className="whitespace-nowrap">
+                      {formatDateOfBirth(transcription.client_date_of_birth)}
+                    </GovukTableCell>
+                    <GovukTableCell className="whitespace-nowrap">
+                      {formatRecordedDate(
+                        transcription.date_of_recording ??
+                          transcription.created_datetime
+                      )}
+                    </GovukTableCell>
+                    <GovukTableCell className="whitespace-nowrap">
+                      <Link
+                        className="govuk-link"
+                        href={`/transcriptions/${transcription.id}`}
+                      >
+                        View
+                      </Link>
+                    </GovukTableCell>
+                  </GovukTableRow>
+                ))}
+              </GovukTableBody>
+            </GovukTable>
+          </div>
           {(totalPages ?? 0) > 1 && (
             <div className="flex justify-center">
               <GovukPagination
                 currentPage={currentPage}
                 totalPages={totalPages!}
-                getHref={(pageNumber: number) =>
-                  pathname + `?page=${pageNumber}`
-                }
+                getHref={(pageNumber: number) => {
+                  const params = new URLSearchParams(searchParams)
+                  params.set('page', String(pageNumber))
+                  return hrefWithParams(pathname, params)
+                }}
               />
             </div>
           )}

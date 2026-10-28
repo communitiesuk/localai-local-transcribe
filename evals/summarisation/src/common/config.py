@@ -55,7 +55,7 @@ class DatasetConfig(BaseModel):
     config: str | None = None
     dialogue_field: str = "dialogue"
     reference_summary_field: str = "summary"
-    source: Literal["huggingface", "blob"] = "huggingface"
+    source: Literal["huggingface", "blob", "local_dir"] = "huggingface"
     blob_path: str | None = None
 
 

@@ -5,12 +5,15 @@ from unittest.mock import Mock
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from backend.api.routes.templates import (
     create_user_template,
     delete_user_template,
+    duplicate_default_template,
     duplicate_user_template,
     edit_user_template,
+    get_default_template_content,
     get_user_template,
     get_user_templates,
 )
@@ -24,7 +27,9 @@ async def test_get_templates_success(override_user, override_session):
     async with get_test_client() as ac:
         response = await ac.get("/templates")
         assert response.status_code == 200
-        assert len(response.json()) == len(TemplateManager.templates)
+        templates = response.json()
+        assert len(templates) == len(TemplateManager.templates)
+        assert all(template["id"].startswith("default-") for template in templates)
 
 
 @pytest.mark.asyncio
@@ -102,6 +107,25 @@ async def test_create_user_template_duplicate_title(mock_session, mock_user, moc
 
 
 @pytest.mark.asyncio
+async def test_create_user_template_unique_constraint_race_returns_conflict(mock_session, mock_user, mock_request):
+    exec_result = Mock()
+    exec_result.first.return_value = None
+    mock_session.exec.return_value = exec_result
+
+    mock_session.commit.side_effect = IntegrityError(
+        "statement",
+        "params",
+        Exception("uq_user_template_user_id_normalised_name"),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await create_user_template(mock_user, mock_session, mock_request)
+
+    assert exc_info.value.status_code == 409
+    mock_session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_edit_user_template_success(mock_session, mock_user, mock_user_template, mock_request):
     exec_result = Mock()
     exec_result.first.return_value = mock_user_template
@@ -109,7 +133,10 @@ async def test_edit_user_template_success(mock_session, mock_user, mock_user_tem
     exec_q = Mock()
     exec_q.all.return_value = []
 
-    mock_session.exec.side_effect = [exec_result, exec_q]
+    conflict_result = Mock()
+    conflict_result.first.return_value = None
+
+    mock_session.exec.side_effect = [exec_result, conflict_result, exec_q]
 
     original_datetime = mock_user_template.updated_datetime
 
@@ -129,6 +156,42 @@ async def test_edit_user_template_success(mock_session, mock_user, mock_user_tem
     mock_session.delete.assert_not_called()
 
     assert mock_user_template.updated_datetime > original_datetime
+
+
+@pytest.mark.asyncio
+async def test_edit_user_template_allows_unchanged_title(mock_session, mock_user, mock_user_template, mock_request):
+    mock_request.name = "test template"
+    mock_request.questions = None
+
+    template_result = Mock()
+    template_result.first.return_value = mock_user_template
+
+    conflict_result = Mock()
+    conflict_result.first.return_value = None
+
+    mock_session.exec.side_effect = [template_result, conflict_result]
+
+    await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
+
+    assert mock_user_template.name == "test template"
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_edit_user_template_duplicate_title(mock_session, mock_user, mock_user_template, mock_request):
+    template_result = Mock()
+    template_result.first.return_value = mock_user_template
+
+    conflict_result = Mock()
+    conflict_result.first.return_value = Mock()
+
+    mock_session.exec.side_effect = [template_result, conflict_result]
+
+    with pytest.raises(HTTPException) as exc_info:
+        await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
+
+    assert exc_info.value.status_code == 409
+    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -170,11 +233,15 @@ async def test_delete_user_template_not_found(mock_session, mock_user):
 
 @pytest.mark.asyncio
 async def test_duplicate_user_template_success(mock_session, mock_user, mock_user_template):
-    exec_result = Mock()
-    exec_result.first.return_value = mock_user_template
-    mock_session.exec.return_value = exec_result
+    template_result = Mock()
+    template_result.first.return_value = mock_user_template
 
-    await duplicate_user_template(mock_user, mock_session, mock_user_template.id)
+    existing_names_result = Mock()
+    existing_names_result.all.return_value = [mock_user_template.name]
+
+    mock_session.exec.side_effect = [template_result, existing_names_result]
+
+    response = await duplicate_user_template(mock_user, mock_session, mock_user_template.id)
 
     mock_session.add.assert_called()
     mock_session.commit.assert_awaited()
@@ -184,6 +251,28 @@ async def test_duplicate_user_template_success(mock_session, mock_user, mock_use
     assert duplicated_template.name == mock_user_template.name + duplicated_name_suffix
     assert duplicated_template.content == mock_user_template.content
     assert duplicated_template.description == mock_user_template.description
+    assert response.id == duplicated_template.id
+    assert response.name == duplicated_template.name
+
+
+@pytest.mark.asyncio
+async def test_duplicate_user_template_uses_counter_when_copy_exists(mock_session, mock_user, mock_user_template):
+    template_result = Mock()
+    template_result.first.return_value = mock_user_template
+
+    existing_names_result = Mock()
+    existing_names_result.all.return_value = [
+        "Test Template",
+        "Test Template (Copy)",
+    ]
+
+    mock_session.exec.side_effect = [template_result, existing_names_result]
+
+    response = await duplicate_user_template(mock_user, mock_session, mock_user_template.id)
+
+    duplicated_template = mock_session.add.call_args.args[0]
+    assert duplicated_template.name == "Test Template (Copy 2)"
+    assert response.name == "Test Template (Copy 2)"
 
 
 @pytest.mark.asyncio
@@ -195,6 +284,102 @@ async def test_duplicate_user_template_not_found(mock_session, mock_user):
     with pytest.raises(HTTPException) as exc_info:
         await duplicate_user_template(mock_user, mock_session, uuid.uuid4())
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_duplicate_default_template_success(mocker, mock_session, mock_user):
+    template_id = "default-general"
+    template_name = "General"
+    mocker.patch(
+        "backend.api.routes.templates.get_templates",
+        return_value=[SimpleNamespace(id=template_id, name=template_name)],
+    )
+
+    class DefaultTemplate:
+        name = template_name
+        description = "Standard meeting summary"
+
+        @classmethod
+        def prompt(cls, _transcript, _agenda):
+            return [
+                {"role": "system", "content": "Write a standard meeting summary"},
+                {"role": "user", "content": "transcript"},
+            ]
+
+    get_template = mocker.patch(
+        "backend.api.routes.templates.TemplateManager.get_template",
+        return_value=DefaultTemplate,
+    )
+
+    existing_names_result = Mock()
+    existing_names_result.all.return_value = [template_name]
+    mock_session.exec.return_value = existing_names_result
+
+    await duplicate_default_template(mock_user, mock_session, template_id)
+
+    get_template.assert_called_once_with(template_name)
+    mock_session.add.assert_called_once()
+    mock_session.commit.assert_awaited()
+
+    duplicated_template = mock_session.add.call_args.args[0]
+    assert duplicated_template.user_id == mock_user.id
+    assert duplicated_template.name == "General (Copy)"
+    assert duplicated_template.description == "Standard meeting summary"
+    assert duplicated_template.content == "<p>Write a standard meeting summary</p>"
+    assert duplicated_template.heading == "General"
+
+
+def test_get_default_template_content_preserves_prompt_line_breaks_as_html():
+    class DefaultTemplate:
+        name = "Readable"
+        description = "Fallback description"
+
+        @classmethod
+        def prompt(cls, _transcript, _agenda):
+            return [
+                {
+                    "role": "system",
+                    "content": "\n".join(
+                        [
+                            "<role>",
+                            "You are helping write a template.",
+                            "</role>",
+                            "",
+                            "<output_format>",
+                            "# Section",
+                            "- First item",
+                            "- Second item",
+                            "</output_format>",
+                        ]
+                    ),
+                }
+            ]
+
+    content = get_default_template_content(DefaultTemplate)
+
+    assert content == "\n".join(
+        [
+            "<p>&lt;role&gt;</p>",
+            "<p>You are helping write a template.</p>",
+            "<p>&lt;/role&gt;</p>",
+            "<p>&lt;output_format&gt;</p>",
+            "<h1>Section</h1>",
+            "<ul><li>First item</li><li>Second item</li></ul>",
+            "<p>&lt;/output_format&gt;</p>",
+        ]
+    )
+
+
+@pytest.mark.asyncio
+async def test_duplicate_default_template_not_found(mocker, mock_session, mock_user):
+    mocker.patch("backend.api.routes.templates.get_templates", return_value=[])
+
+    with pytest.raises(HTTPException) as exc_info:
+        await duplicate_default_template(mock_user, mock_session, "Hidden")
+
+    assert exc_info.value.status_code == 404
+    mock_session.add.assert_not_called()
+    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -241,7 +426,10 @@ async def test_edit_user_template_adds_new_question_when_no_id(
     exec_q = Mock()
     exec_q.all.return_value = []
 
-    mock_session.exec.side_effect = [exec_result, exec_q]
+    conflict_result = Mock()
+    conflict_result.first.return_value = None
+
+    mock_session.exec.side_effect = [exec_result, conflict_result, exec_q]
 
     await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
 

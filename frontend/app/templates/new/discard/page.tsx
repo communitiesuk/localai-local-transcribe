@@ -3,14 +3,17 @@
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
 import { useTemplateCreateStore } from '@/stores/use-template-create-store'
 import { useRouter } from 'next/navigation'
+import { useDestination } from '@/hooks/use-destination'
 
 export default function DiscardTemplatePage() {
   const router = useRouter()
   const clear = useTemplateCreateStore((store) => store.clear)
 
+  const destination = useDestination('/templates')
+
   const handleDiscard = () => {
     clear()
-    router.push('/templates')
+    router.push(destination)
   }
 
   return (

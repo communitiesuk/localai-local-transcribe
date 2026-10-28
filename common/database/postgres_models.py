@@ -1,17 +1,35 @@
 from datetime import UTC, datetime
 from enum import StrEnum, auto
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 from uuid import UUID, uuid4
 
-from sqlalchemy import TIMESTAMP, Boolean, Column, Enum, ForeignKey, Text, false, text
+from sqlalchemy import (
+    TIMESTAMP,
+    Boolean,
+    Column,
+    Enum,
+    ForeignKey,
+    Index,
+    Text,
+    UniqueConstraint,
+    false,
+    literal_column,
+    text,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, CITEXT, JSONB
 from sqlalchemy.dialects.postgresql import UUID as SAUUID
 from sqlalchemy.orm import Mapped
 from sqlalchemy.sql.functions import now
 from sqlmodel import Field, Relationship, SQLModel, col, func
 
+from common.templates.name_normalisation import (
+    TEMPLATE_NAME_TRIM_CHARS_SQL,
+    USER_TEMPLATE_NORMALISED_NAME_UNIQUE_INDEX,
+)
+
 
 class DialogueEntry(TypedDict):
+    confidence: NotRequired[float]
     speaker: str
     text: str
     start_time: float
@@ -19,8 +37,8 @@ class DialogueEntry(TypedDict):
 
 
 # Create factory functions for columns to avoid reusing column objects
-def created_datetime_column() -> Column[datetime]:
-    return Column(TIMESTAMP(timezone=True), nullable=False, server_default=now(), default=None)
+def created_datetime_column(*, index: bool = False) -> Column[datetime]:
+    return Column(TIMESTAMP(timezone=True), nullable=False, server_default=now(), default=None, index=index)
 
 
 def updated_datetime_column() -> Column[datetime]:
@@ -56,15 +74,16 @@ class MinuteVersion(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     minute_id: UUID = Field(foreign_key="minute.id", ondelete="CASCADE")
-    minute: Mapped["Minute"] = Relationship(back_populates="minute_versions")
+    minute: Mapped[Minute] = Relationship(back_populates="minute_versions")
     html_content: str = Field(default="", sa_column_kwargs={"server_default": ""})
-    guardrail_results: Mapped[list["GuardrailResult"]] = Relationship(
+    guardrail_results: Mapped[list[GuardrailResult]] = Relationship(
         back_populates="minute_version", cascade_delete=True
     )
     status: JobStatus = Field(
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
     )
     error: str | None = None
+    template_prompt_version: str | None = Field(default=None, nullable=True)
     ai_edit_instructions: str | None = Field(
         default=None, description="If the content source is an AI edit, store the instruction here"
     )
@@ -80,14 +99,14 @@ class Minute(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     transcription_id: UUID = Field(foreign_key="transcription.id", ondelete="CASCADE")
-    transcription: Mapped["Transcription"] = Relationship(back_populates="minutes")
+    transcription: Mapped[Transcription] = Relationship(back_populates="minutes")
     template_name: str = Field(default="General")
     user_template_id: UUID | None = Field(
         foreign_key="user_template.id", nullable=True, ondelete="SET NULL", default=None
     )
-    user_template: "UserTemplate" = Relationship(back_populates="minutes")
+    user_template: UserTemplate = Relationship(back_populates="minutes")
     agenda: str | None = Field(nullable=True, default=None)
-    minute_versions: Mapped[list["MinuteVersion"]] = Relationship(
+    minute_versions: Mapped[list[MinuteVersion]] = Relationship(
         back_populates="minute",
         cascade_delete=True,
         sa_relationship_kwargs={"order_by": col(MinuteVersion.created_datetime).desc()},
@@ -102,7 +121,7 @@ class Organisation(BaseTableMixin, table=True):
     allowed_domains: list[str] = Field(
         default_factory=list, sa_column=Column(ARRAY(Text), nullable=False, server_default=text("ARRAY[]::TEXT[]"))
     )
-    users: list["User"] = Relationship(back_populates="organisation")
+    users: list[User] = Relationship(back_populates="organisation")
 
 
 # Main models with table=True for DB tables
@@ -128,10 +147,13 @@ class User(BaseTableMixin, table=True):
     last_login: datetime = Field(
         default_factory=lambda: datetime.now(UTC), sa_column=Column(TIMESTAMP(timezone=True), nullable=False)
     )
+
+    first_login: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
     name: str | None = Field(default=None, nullable=True)
     email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
+    evaluation_id: str | None = Field(default=None, nullable=True, unique=True)
     data_retention_days: int = Field(default=30)
-    transcriptions: list["Transcription"] = Relationship(back_populates="user")
+    transcriptions: list[Transcription] = Relationship(back_populates="user")
     roles: list[UserRole] = Field(
         default_factory=lambda: [UserRole.STANDARD_USER],
         sa_column=Column(
@@ -145,6 +167,24 @@ class User(BaseTableMixin, table=True):
         sa_column=Column(SAUUID, ForeignKey("organisation.id"), nullable=True),
     )
     organisation: Organisation | None = Relationship(back_populates="users")
+    needs_to_update_sub: bool = Field(
+        default=False,
+        sa_column=Column(Boolean, nullable=False, server_default=false()),
+    )
+
+
+class UserAuthEmail(BaseTableMixin, table=True):
+    __tablename__ = "user_auth_email"
+
+    user_id: UUID = Field(foreign_key="user.id", ondelete="CASCADE", nullable=False)
+    email: str = Field(sa_column=Column(CITEXT, nullable=False, unique=True))
+
+
+class RecordingSource(StrEnum):
+    """How the audio reached us. Null on recordings created before this was captured."""
+
+    LIVE_RECORDING = auto()
+    DIRECT_UPLOAD = auto()
 
 
 class Recording(BaseTableMixin, table=True):
@@ -152,9 +192,12 @@ class Recording(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     user_id: UUID = Field(foreign_key="user.id", nullable=False)
     s3_file_key: str
+    source: RecordingSource | None = Field(
+        default=None, sa_column=Column(Enum(RecordingSource, name="recordingsource"), nullable=True)
+    )
     file_created_at: datetime | None = Field(default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True))
-    transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL")
-    transcription: "Transcription" = Relationship(back_populates="recordings")
+    transcription_id: UUID | None = Field(default=None, foreign_key="transcription.id", ondelete="SET NULL", index=True)
+    transcription: Transcription = Relationship(back_populates="recordings")
 
 
 class Chat(BaseTableMixin, table=True):
@@ -162,7 +205,7 @@ class Chat(BaseTableMixin, table=True):
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
     transcription_id: UUID = Field(foreign_key="transcription.id", ondelete="CASCADE")
-    transcription: Mapped["Transcription"] = Relationship(back_populates="chat")
+    transcription: Mapped[Transcription] = Relationship(back_populates="chat")
     user_content: str = Field(default=None)
     assistant_content: str | None = Field(default=None)
     status: JobStatus = Field(
@@ -223,11 +266,19 @@ class TemplateQuestion(BaseTableMixin, table=True):
     format_instructions: str = Field(default="", sa_column_kwargs={"server_default": ""})
 
     user_template_id: UUID = Field(foreign_key="user_template.id", ondelete="CASCADE")
-    user_template: "UserTemplate" = Relationship(back_populates="questions")
+    user_template: UserTemplate = Relationship(back_populates="questions")
 
 
 class UserTemplate(BaseTableMixin, table=True):
     __tablename__ = "user_template"
+    __table_args__ = (
+        Index(
+            USER_TEMPLATE_NORMALISED_NAME_UNIQUE_INDEX,
+            "user_id",
+            literal_column(f"lower(btrim(name::text, {TEMPLATE_NAME_TRIM_CHARS_SQL}))"),
+            unique=True,
+        ),
+    )
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
     updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
 
@@ -264,7 +315,7 @@ class GuardrailResult(BaseTableMixin, table=True):
         foreign_key="minute_version.id",
         ondelete="CASCADE",
     )
-    minute_version: "MinuteVersion" = Relationship(back_populates="guardrail_results")
+    minute_version: MinuteVersion = Relationship(back_populates="guardrail_results")
 
     passed: bool = Field(description="Whether the guardrail check passed")
     score: float | None = Field(
@@ -279,3 +330,82 @@ class GuardrailResult(BaseTableMixin, table=True):
         default=None,
         description="Error message if the guardrail check failed",
     )
+    failure_categories: Mapped[list[GuardrailFailureCategory]] = Relationship(
+        back_populates="guardrail_result", cascade_delete=True
+    )
+
+
+class GuardrailFailureCategory(BaseTableMixin, table=True):
+    __tablename__ = "guardrail_failure_category"
+
+    created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
+    updated_datetime: datetime = Field(sa_column=updated_datetime_column(), default=None)
+
+    guardrail_result_id: UUID | None = Field(
+        default=None,
+        foreign_key="guardrail_result.id",
+        ondelete="CASCADE",
+    )
+    guardrail_result: GuardrailResult = Relationship(back_populates="failure_categories")
+
+    category: str = Field(index=True, description="Failure category emitted by the guardrail")
+    mode: str = Field(description="Specific failure mode within the category")
+    explanation: str | None = Field(
+        default=None,
+        description="Evidence explaining this failure",
+    )
+
+
+class AnalyticsEventType(StrEnum):
+    USER_INVITED = auto()
+    USER_FIRST_AUTHENTICATED = auto()
+    USER_DELETED = auto()
+    AUDIO_UPLOAD_STARTED = auto()
+    AUDIO_UPLOAD_COMPLETED = auto()
+    SUMMARY_RECEIVED = auto()
+    TRANSCRIPTION_RECEIVED = auto()
+    TRANSCRIPTION_EDIT_SUBMITTED = auto()
+
+
+class TranscriptionEditType(StrEnum):
+    """The kind of edit made to a transcription, recorded as part of a TRANSCRIPTION_EDIT_SUBMITTED analytics event."""
+
+    DIALOGUE_ENTRY = auto()
+    # The two name edits differ only in scope: one occurrence of a speaker's name, or every occurrence of it.
+    # Neither renames other speakers.
+    SINGLE_INSTANCE_OF_NAME = auto()
+    ALL_INSTANCES_OF_NAME = auto()
+
+
+ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT = "uq_analytics_event_event_type_source_id"
+
+
+class AnalyticsEventMetadata(TypedDict, total=False):
+    """Optional detail stored in `AnalyticsEvent.event_metadata` for event-specific metadata."""
+
+    audio_duration_seconds: float
+    edit_type: TranscriptionEditType
+    recording_source: RecordingSource
+    # Both stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
+    transcription_id: str
+    template_id: str | None
+
+
+class AnalyticsEvent(BaseTableMixin, table=True):
+    """Stores events with evaluation_id/recording_id as opaque IDs so they remain reportable after deletes."""
+
+    __tablename__ = "analytics_event"
+    __table_args__ = (UniqueConstraint("event_type", "source_id", name=ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT),)
+
+    occurred_datetime: datetime = Field(sa_column=created_datetime_column(index=True), default=None)
+    event_type: AnalyticsEventType = Field(
+        sa_column=Column(Enum(AnalyticsEventType, name="analyticseventtype"), nullable=False)
+    )
+    evaluation_id: str = Field(index=True)
+    recording_id: UUID | None = Field(default=None, index=True)
+    organisation_id: UUID | None = Field(default=None, index=True)
+    # Idempotency key for events that may be retried for the same underlying object. Keep it separate from
+    # recording_id, because a recording can legitimately generate multiple edit events. NULL means no de-duplication
+    # is needed.
+    source_id: UUID | None = Field(default=None)
+    event_metadata: AnalyticsEventMetadata | None = Field(default=None, sa_column=Column(JSONB))

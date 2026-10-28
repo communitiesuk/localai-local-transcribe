@@ -4,7 +4,7 @@ import { ServiceNav } from '@/components/layout/service-nav'
 
 let mockPathname = '/'
 const mockPush = vi.fn()
-let mockLockNavigation: string | boolean = false
+let mockLockNavigation: string | boolean | ((href: string) => void) = false
 const mockSetLockNavigation = vi.fn()
 let mockUserRoles: string[] | undefined = []
 
@@ -156,5 +156,22 @@ describe('<ServiceNav />', () => {
 
     expect(mockSetLockNavigation).toHaveBeenCalledWith(false)
     expect(mockPush).toHaveBeenCalledWith('/templates')
+  })
+
+  it('calls lockNavigation on navigate when is a function', () => {
+    const mockLockFunction = vi.fn()
+    mockPathname = '/'
+    mockUserRoles = ['standard_user']
+    mockLockNavigation = mockLockFunction
+    render(<ServiceNav />)
+
+    fireEvent.click(screen.getByText('Templates'))
+
+    expect(mockLockFunction).toHaveBeenCalledWith('/templates')
+    expect(mockSetLockNavigation).toHaveBeenCalledWith(false)
+    expect(mockPush).not.toHaveBeenCalled()
+    expect(
+      screen.queryByText('Are you sure you want to leave the page?')
+    ).not.toBeInTheDocument()
   })
 })

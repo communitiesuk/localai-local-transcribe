@@ -1,4 +1,3 @@
-# flake8: noqa: E501
 from common.database.postgres_models import DialogueEntry
 from common.prompts import build_prompt_injection_aware_system_message, get_transcript_messages
 from common.templates.types import SimpleTemplate
@@ -7,9 +6,12 @@ from common.types import AgendaUsage
 
 
 class ExecutiveSummary(SimpleTemplate):
-    name = "Short 'n' Sweet"
+    # TODO(AIILG-929): Update the environmental impact docs and calculators to use "Quick Note".
+    # https://mhclgdigital.atlassian.net/browse/AIILG-929
+    name = "Quick Note"
     category = "Common"
     description = "Executive summary of the meeting + action items"
+    prompt_version = "0.1.0"
     citations_required = False
     agenda_usage = AgendaUsage.NOT_USED
 

@@ -20,9 +20,10 @@ from evals.shared.blob_storage import EvalBlobStorage
 from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
 from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
 from evals.transcription.src.core.dataset import (
+    DEFAULT_DATASET_NAME,
+    load_benchmark_dataset,
     prepare_audio_for_transcription,
 )
-from evals.transcription.src.core.dataset_loaders import DATASET_LOADER_REGISTRY
 from evals.transcription.src.core.results import save_results, save_summary_results
 from evals.transcription.src.core.runner import run_engines_parallel
 from evals.transcription.src.drift import apply_drift_thresholds
@@ -48,11 +49,13 @@ class EvaluationRunOutcome:
 def run_evaluation_with_outputs(
     num_samples: int | None = None,
     sample_duration_fraction: float | None = None,
-    dataset_loader: str = "ami",
+    dataset_name: str = DEFAULT_DATASET_NAME,
     prepare_only: bool = False,
     max_workers: int | None = None,
     adapter_names: list[str] | None = None,
     check_drift_thresholds: bool = False,
+    samples_per_group: int | None = None,
+    input_dir: Path | None = None,
     *,
     dataset: DatasetProtocol | None = None,
     output_dir: Path | None = None,
@@ -70,9 +73,18 @@ def run_evaluation_with_outputs(
 
     logger.info("Loading dataset...")
     if dataset is None:
-        dataset = _load_dataset(dataset_loader, None, num_samples, sample_duration_fraction)
+        dataset = load_benchmark_dataset(
+            num_samples=num_samples,
+            sample_duration_fraction=sample_duration_fraction,
+            dataset_name=dataset_name,
+            samples_per_group=samples_per_group,
+            input_dir=input_dir,
+        )
 
     indices = list(range(len(dataset)))
+    if not indices:
+        message = f"Dataset {dataset_name!r} produced no samples; check sampling options and cached metadata."
+        raise ValueError(message)
     logger.info("Loaded %d samples from the dataset", len(indices))
 
     if prepare_only:
@@ -125,7 +137,18 @@ def run_evaluation_with_outputs(
         )
     logger.info("Results saved to: %s", detailed_results_path)
 
-    exit_code = apply_drift_thresholds(results, run_output_dir, timestamp) if check_drift_thresholds else 0
+    exit_code = (
+        apply_drift_thresholds(
+            results,
+            run_output_dir,
+            timestamp,
+            diarization_capabilities={
+                adapter.name: dataset.supports_diarization and adapter.supports_diarization for adapter in adapters
+            },
+        )
+        if check_drift_thresholds
+        else 0
+    )
     return EvaluationRunOutcome(
         exit_code=exit_code,
         run_id=run_id,
@@ -138,21 +161,25 @@ def run_evaluation_with_outputs(
 def run_evaluation(
     num_samples: int | None = None,
     sample_duration_fraction: float | None = None,
-    dataset_loader: str = "ami",
+    dataset_name: str = DEFAULT_DATASET_NAME,
     prepare_only: bool = False,
     max_workers: int | None = None,
     adapter_names: list[str] | None = None,
     check_drift_thresholds: bool = False,
+    samples_per_group: int | None = None,
+    input_dir: Path | None = None,
 ) -> int:
     """Run eval and return an exit code."""
     return run_evaluation_with_outputs(
         num_samples=num_samples,
         sample_duration_fraction=sample_duration_fraction,
-        dataset_loader=dataset_loader,
+        dataset_name=dataset_name,
         prepare_only=prepare_only,
         max_workers=max_workers,
         adapter_names=adapter_names,
         check_drift_thresholds=check_drift_thresholds,
+        samples_per_group=samples_per_group,
+        input_dir=input_dir,
     ).exit_code
 
 
@@ -185,24 +212,6 @@ def _stage_results_artifact(run_output_dir: Path, results_artifact_dir: Path | N
         shutil.copy2(src, dest)
 
 
-def _load_dataset(
-    loader_name: str,
-    input_dir: Path | None,
-    num_samples: int | None,
-    sample_duration_fraction: float | None,
-) -> DatasetProtocol:
-    try:
-        loader = DATASET_LOADER_REGISTRY[loader_name]
-    except KeyError as exc:
-        msg = f"Unknown dataset loader: {loader_name}"
-        raise ValueError(msg) from exc
-    return loader.load(
-        input_dir=input_dir,
-        num_samples=num_samples,
-        sample_duration_fraction=sample_duration_fraction,
-    )
-
-
 def _run_blob_evaluation(config: EvaluationConfig, results_artifact_dir: Path | None) -> int:
     if config.blob.input_prefix is None:
         msg = "blob.input_prefix is required when blob.enabled is true"
@@ -215,12 +224,12 @@ def _run_blob_evaluation(config: EvaluationConfig, results_artifact_dir: Path | 
     with tempfile.TemporaryDirectory(prefix="evals-transcription-") as staging:
         staging_dir = Path(staging)
         input_dir = stage_dataset_prefix(blob, config.blob.input_prefix, staging_dir / "input")
-        dataset_loader = config.dataset_loader or "audio_files"
-        dataset = _load_dataset(
-            dataset_loader,
-            input_dir,
-            config.num_samples,
-            config.sample_duration_fraction,
+        dataset = load_benchmark_dataset(
+            dataset_name=config.dataset or config.dataset_loader or "audio_files",
+            input_dir=input_dir,
+            num_samples=config.num_samples,
+            sample_duration_fraction=config.sample_duration_fraction,
+            samples_per_group=config.samples_per_group,
         )
         outcome = _run_from_config(
             config,
@@ -252,11 +261,13 @@ def _run_from_config(
     return run_evaluation_with_outputs(
         num_samples=config.num_samples,
         sample_duration_fraction=config.sample_duration_fraction,
-        dataset_loader=config.dataset_loader or "ami",
+        dataset_name=config.dataset or config.dataset_loader or DEFAULT_DATASET_NAME,
         prepare_only=config.prepare_only,
         max_workers=config.max_workers,
         adapter_names=config.adapters,
         check_drift_thresholds=config.check_drift_thresholds,
+        samples_per_group=config.samples_per_group,
+        input_dir=config.input_dir,
         dataset=dataset,
         output_dir=output_dir,
         structured_output=structured_output,
@@ -288,6 +299,8 @@ def main() -> None:
     config = load_config(config_path)
     logger.info("Loaded config from: %s", config_path)
 
+    if config.input_dir is not None:
+        config.input_dir = (config_path.parent / config.input_dir.expanduser()).resolve()
     results_artifact_dir = Path(args.results_artifact_dir) if args.results_artifact_dir is not None else None
     if config.blob.enabled:
         exit_code = _run_blob_evaluation(config, results_artifact_dir)

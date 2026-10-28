@@ -76,8 +76,8 @@ const mockCurrentUser: GetUserResponse = {
   name: 'Test User',
   email: 'test.user@maidstone.gov.uk',
   data_retention_days: 30,
-  roles: ['local_authority_admin'],
-  organisation_id: 'org-1',
+  roles: ['mhclg_support_admin'],
+  organisation_id: null,
 }
 
 const buildOrganisation = (organisationId: string): OrganisationResponse => ({
@@ -93,8 +93,9 @@ const buildOrganisation = (organisationId: string): OrganisationResponse => ({
 
 const mockOrganisationQuery = (
   data: OrganisationResponse | undefined,
-  isLoading = false
-) => ({ data, isLoading }) as ReturnType<typeof useOrganisation>
+  isLoading = false,
+  isError = false
+) => ({ data, isLoading, isError }) as ReturnType<typeof useOrganisation>
 
 describe('<EditApprovedDomainsPage />', () => {
   const mockMutateAsync = vi.fn()
@@ -267,7 +268,9 @@ describe('<EditApprovedDomainsPage />', () => {
         title: 'Approved domains updated',
       })
     )
-    expect(mockPush).toHaveBeenCalledWith('/user-management')
+    expect(mockPush).toHaveBeenCalledWith(
+      '/user-management?organisationId=org-1'
+    )
   })
 
   it('shows a validation error and does not submit when all domains are removed', async () => {
@@ -284,6 +287,48 @@ describe('<EditApprovedDomainsPage />', () => {
       screen.getAllByText('Enter at least one approved domain')
     ).not.toHaveLength(0)
     expect(mockMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('shows a validation error when domain is invalid', async () => {
+    renderPage()
+
+    const textarea = screen.getByLabelText('Approved domains', {
+      exact: false,
+    })
+    await userEvent.clear(textarea)
+    await userEvent.type(textarea, 'not-a-domain')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText(
+        'Enter approved domains in the correct format, like communities.gov.uk'
+      )
+    ).toBeInTheDocument()
+    expect(mockMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('only revalidates the domains on submit', async () => {
+    renderPage()
+
+    const textarea = screen.getByLabelText('Approved domains', {
+      exact: false,
+    })
+    await userEvent.clear(textarea)
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(
+      screen.getByText('Enter at least one approved domain')
+    ).toBeInTheDocument()
+
+    await userEvent.type(textarea, 'not-a-domain')
+
+    expect(
+      screen.getByText('Enter at least one approved domain')
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Enter approved domains in the correct format/)
+    ).not.toBeInTheDocument()
   })
 
   it('shows a conflict banner and refetches instead of navigating away when the domains were changed elsewhere', async () => {
@@ -308,16 +353,31 @@ describe('<EditApprovedDomainsPage />', () => {
     renderPage()
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute(
       'href',
-      '/user-management'
+      '/user-management?organisationId=org-1'
     )
   })
 
-  it('shows authorization error when LOCAL_AUTHORITY_ADMIN tries to access different organisation', () => {
-    renderPage({ organisationId: 'different-org' })
+  it('shows authorization error when a local authority admin tries to access the edit page', () => {
+    vi.mocked(useAuthorisedUser).mockReturnValue({
+      currentUser: {
+        ...mockCurrentUser,
+        roles: ['local_authority_admin'],
+        organisation_id: 'org-1',
+      },
+      isAllowed: false,
+      isLoading: false,
+      isError: false,
+    })
+
+    renderPage()
+
+    expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
     expect(
-      screen.getByText(
-        /You are not authorised to edit domains for this organisation/i
-      )
-    ).toBeInTheDocument()
+      screen.queryByRole('heading', { name: 'Edit approved domains' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Save' })
+    ).not.toBeInTheDocument()
+    expect(useOrganisation).toHaveBeenCalledWith('org-1', false)
   })
 })

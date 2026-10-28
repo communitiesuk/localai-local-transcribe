@@ -5,8 +5,9 @@ import { GovukButton, GovukButtonGroup, GovukHeading } from '@/components/govuk'
 import { useTemplateCreateStore } from '@/stores/use-template-create-store'
 import { TemplateData } from '@/types/templates'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { useLockNavigation } from '@/hooks/use-lock-navigation-context'
 
 const EMPTY_TEMPLATE: TemplateData = {
   name: '',
@@ -29,10 +30,16 @@ export default function NewTemplatePage() {
   )
 
   const form = useForm<TemplateData>({
-    // Re-hydrate input stashed before the confirmation interstitial, so
-    // cancelling it returns here with everything intact.
-    defaultValues: draft ?? EMPTY_TEMPLATE,
+    defaultValues: EMPTY_TEMPLATE,
   })
+
+  // Re-hydrate input stashed before the confirmation interstitial, so
+  // cancelling it returns here with everything intact.
+  useEffect(() => {
+    if (draft) {
+      form.reset(draft, { keepDefaultValues: true })
+    }
+  }, [draft, form])
 
   // If the interstitial returned back with a duplicate-title rejection, flag
   // it on the field, then consume it so it doesn't reappear.
@@ -49,10 +56,18 @@ export default function NewTemplatePage() {
     router.push('/templates/new/confirm')
   }
 
-  const onCancel = () => {
-    setDraft(form.getValues())
-    router.push('/templates/new/discard')
-  }
+  const onCancel = useCallback(
+    (finalDestination?: string) => {
+      setDraft(form.getValues())
+      router.push(
+        '/templates/new/discard' +
+          `${finalDestination ? '?destination=' + encodeURIComponent(finalDestination) : ''}`
+      )
+    },
+    [setDraft, form, router]
+  )
+
+  useLockNavigation(form.formState.isDirty ? onCancel : false)
 
   const actions = (
     <div>
@@ -61,7 +76,7 @@ export default function NewTemplatePage() {
         <GovukButton type="submit" className="govuk-!-margin-bottom-0">
           Create template
         </GovukButton>
-        <GovukButton variant="link" onClick={onCancel}>
+        <GovukButton variant="link" onClick={() => onCancel()}>
           Cancel
         </GovukButton>
       </GovukButtonGroup>

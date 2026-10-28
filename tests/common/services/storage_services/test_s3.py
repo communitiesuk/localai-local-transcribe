@@ -117,9 +117,29 @@ async def test_generate_presigned_url_get_object(
         Params={
             "Bucket": mock_data_s3_bucket,
             "Key": object_key,
-            "ResponseContentDisposition": f"attachment; filename={file_name}",
+            "ResponseContentDisposition": (f"attachment; filename=\"{file_name}\"; filename*=UTF-8''{file_name}"),
         },
         ExpiresIn=3600,
+    )
+
+
+@pytest.mark.asyncio
+async def test_generate_presigned_url_get_object_with_non_ascii_filename(
+    mock_s3_client_ctx,  # noqa: ARG001
+    mock_s3_client,
+):
+    """S3 rejects header values it cannot represent in ISO-8859-1."""
+    mock_s3_client.generate_presigned_url.return_value = "https://example.com/get"
+
+    await S3StorageService.generate_presigned_url_get_object(
+        "test/key", filename="Alpha \u2014 Adoption & Model.mp3", expiry_seconds=3600
+    )
+
+    disposition = mock_s3_client.generate_presigned_url.call_args.kwargs["Params"]["ResponseContentDisposition"]
+    disposition.encode("iso-8859-1")
+    assert disposition == (
+        'attachment; filename="Alpha Adoption & Model.mp3"; '
+        "filename*=UTF-8''Alpha%20%E2%80%94%20Adoption%20%26%20Model.mp3"
     )
 
 

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 import soundfile as sf
 
+from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
 from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
 from evals.transcription.src.evaluate import run_evaluation
 from tests.evals.transcription.conftest import FakeDataset
@@ -53,7 +54,7 @@ def setup_evaluation(tmp_path, monkeypatch):
             AZURE_APIM_ACCESS_TOKEN="token",
         )
         monkeypatch.setattr("evals.transcription.src.evaluate.settings", fake_settings)
-        monkeypatch.setattr("evals.transcription.src.evaluate._load_dataset", lambda *_args: dataset)
+        monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_kwargs: dataset)
         monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: audio_duration)
         monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
         monkeypatch.setattr("evals.transcription.src.evaluate.ADAPTER_REGISTRY", fake_registry)
@@ -158,8 +159,6 @@ def test_adapter_contracts(tmp_path, monkeypatch, adapter_name, monkeypatch_targ
     wav_file = tmp_path / "test.wav"
     sf.write(wav_file, [0.0, 0.0], 16000, subtype="PCM_16")
 
-    from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
-
     adapter_class = ADAPTER_REGISTRY[adapter_name]
     adapter = ServiceTranscriptionAdapter(adapter_class)
     result = adapter.transcribe(str(wav_file))
@@ -180,7 +179,7 @@ def test_run_evaluation_requires_azure_credentials(monkeypatch, tmp_path):
         raise ValueError(msg)
 
     monkeypatch.setattr("common.services.transcription_services.azure.make_stt_request", fake_make_stt_request)
-    monkeypatch.setattr("evals.transcription.src.evaluate._load_dataset", lambda *_args: dataset)
+    monkeypatch.setattr("evals.transcription.src.evaluate.load_benchmark_dataset", lambda **_kwargs: dataset)
     monkeypatch.setattr("evals.transcription.src.evaluate.get_duration", lambda _: 1.0)
     monkeypatch.setattr("evals.transcription.src.evaluate.WORKDIR", Path(tmp_path))
 

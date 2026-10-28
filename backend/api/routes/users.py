@@ -2,8 +2,10 @@ import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
+import sentry_sdk
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import EmailStr
+from sqlalchemy.exc import IntegrityError
 
 from backend.api.dependencies import (
     OrganisationAdminDep,
@@ -12,11 +14,13 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
+from backend.services.emails import EmailSendError, get_email_sender
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from backend.utils.queries import get_paginated_users, get_user_by_email
+from backend.utils.queries import get_paginated_users, get_user_by_email, get_user_by_evaluation_id
 from common.auth import is_admin_for_org, is_system_admin
-from common.database.postgres_models import Organisation, User, UserRole
+from common.database.postgres_models import AnalyticsEventType, Organisation, User, UserRole
+from common.services.analytics_service import record_analytics_event
 from common.types import (
     DataRetentionUpdateResponse,
     GetUserResponse,
@@ -29,6 +33,11 @@ from common.types import (
 users_router = APIRouter(prefix="/users", tags=["Users"])
 
 logger = logging.getLogger(__name__)
+
+email_sender = get_email_sender()
+
+EVALUATION_ID_UNIQUE_CONSTRAINT = "uq_user_evaluation_id"
+EVALUATION_ID_IN_USE_DETAIL = "This evaluation ID is already in use."
 
 
 @users_router.get("/me")
@@ -105,6 +114,11 @@ async def create_user(
     if is_existing_user:
         raise HTTPException(status_code=409, detail=f"A user with email '{data.email}' already exists")
 
+    is_existing_evaluation_id = await get_user_by_evaluation_id(session, data.evaluation_id)
+    if is_existing_evaluation_id:
+        # The evaluation ID is never echoed back, so it stays out of the detail.
+        raise HTTPException(status_code=409, detail=EVALUATION_ID_IN_USE_DETAIL)
+
     email_domain = data.email.split("@")[1]
     lowered_allowed_domains = [domain.lower() for domain in organisation.allowed_domains]
     if email_domain not in lowered_allowed_domains:
@@ -112,11 +126,33 @@ async def create_user(
             status_code=400, detail=f"An email of domain '{email_domain}' is not associated with this organisation"
         )
 
-    new_user = User(name=data.name, email=data.email, organisation_id=organisation.id)
+    new_user = User(
+        name=data.name,
+        email=data.email,
+        evaluation_id=data.evaluation_id,
+        organisation_id=organisation.id,
+    )
 
     session.add(new_user)
-    await session.commit()
+    try:
+        await session.commit()
+    except IntegrityError as error:
+        await session.rollback()
+        # A concurrent request may have taken the evaluation ID between the check above and the commit.
+        if EVALUATION_ID_UNIQUE_CONSTRAINT in str(error.orig):
+            raise HTTPException(status_code=409, detail=EVALUATION_ID_IN_USE_DETAIL) from error
+        raise
     await session.refresh(new_user)
+
+    try:
+        org_name = None if is_system_admin(user) else organisation.name
+        email_sender.send_invite_email(data.email, data.name, org_name)
+    except EmailSendError as e:
+        sentry_sdk.capture_exception(e)
+
+    await record_analytics_event(
+        session, AnalyticsEventType.USER_INVITED, new_user.evaluation_id, new_user.organisation_id
+    )
 
     return to_user_response(new_user)
 
@@ -205,8 +241,15 @@ async def delete_user(session: SQLSessionDep, user: UserDep, target_user: Target
         if not is_admin_for_org(user, organisation):
             raise HTTPException(status_code=404, detail="User not found")
 
+    deleted_user_evaluation_id = target_user.evaluation_id
+    deleted_user_organisation_id = target_user.organisation_id
+
     await session.delete(target_user)
     await session.commit()
+
+    await record_analytics_event(
+        session, AnalyticsEventType.USER_DELETED, deleted_user_evaluation_id, deleted_user_organisation_id
+    )
 
 
 @users_router.get("/user/exists", response_model=UserExistsResponse)

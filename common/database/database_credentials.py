@@ -60,8 +60,17 @@ def attach_dynamic_credentials(engine: Engine | AsyncEngine, credential_provider
 
     @event.listens_for(target_engine, "do_connect")
     def _do_connect(dialect: Dialect, _: object, cargs: tuple[Any, ...], cparams: dict[str, Any]) -> Any:
-        credentials = credential_provider.get_credentials()
+        try:
+            credentials = credential_provider.get_credentials()
+        except Exception:
+            logger.error("DB_CREDENTIAL_RENEWAL_FAILED")  # cloudwatch metric filter pattern, as below
+            raise
+
         cparams["user"] = credentials.username
         cparams["password"] = credentials.password
 
-        return dialect.connect(*cargs, **cparams)
+        try:
+            return dialect.connect(*cargs, **cparams)
+        except Exception:
+            logger.error("DB_CONNECTION_FAILED")
+            raise

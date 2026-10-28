@@ -1,22 +1,20 @@
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler  # type: ignore[import-untyped]
-from sqlmodel import and_, col, func, select, update
+from sqlalchemy import delete, text
+from sqlalchemy.engine import CursorResult
+from sqlmodel import and_, func, select, update
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from common.database.postgres_database import async_engine
-from common.database.postgres_models import JobStatus, MinuteVersion, Recording, Transcription, User
-from common.services.storage_services import get_storage_service
-from common.settings import get_settings
+from common.database.postgres_models import AnalyticsEvent, JobStatus, MinuteVersion, Recording, Transcription, User
+from common.services.storage_services.audio_deletion import delete_recording_file_and_row
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-settings = get_settings()
-
-storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 async def cleanup_failed_records() -> None:
@@ -61,41 +59,55 @@ async def cleanup_old_records() -> None:
         transcriptions = (await session.exec(statement)).all()
         logger.info("Deleting %d transcriptions.", len(transcriptions))
         for transcription in transcriptions:
+            recordings = (
+                await session.exec(select(Recording).where(Recording.transcription_id == transcription.id))
+            ).all()
+            recording_deletions = [await delete_recording_file_and_row(session, recording) for recording in recordings]
+            if not all(recording_deletions):
+                logger.error(
+                    "Skipping deletion of transcription %s because recording deletion failed",
+                    transcription.id,
+                )
+                continue
             await session.delete(transcription)
         await session.commit()
 
 
-async def delete_orphan_records() -> None:
-    logger.info("Starting recording clean up")
+async def cleanup_analytics_events() -> None:
+    """Delete first-party events at least 12 calendar months old, safely across containers."""
+    logger.info("Starting first-party analytics retention cleanup")
+    # Calendar arithmetic in UTC avoids session time zones changing month-end/DST boundaries.
+    cutoff = func.timezone("UTC", func.timezone("UTC", func.now()) - text("INTERVAL '12 months'"))
     async with AsyncSession(async_engine) as session:
-        orphan_recording_query = select(Recording).where(col(Recording.transcription_id).is_(None))
-        recordings = (await session.exec(orphan_recording_query)).all()
-        logger.info("Found %d Recordings with no Transcription.", len(recordings))
-        for recording in recordings:
-            try:
-                exists = await storage_service.check_object_exists(recording.s3_file_key)
-                if exists:
-                    await storage_service.delete(recording.s3_file_key)
-            except Exception as e:  # noqa: BLE001
-                msg = f"Error deleting recording {recording.id}. Will keep record in database: {e}"
-                logger.error(msg)
-            else:
-                await session.delete(recording)
+        result = cast(
+            "CursorResult[Any]",
+            await session.execute(
+                delete(AnalyticsEvent)
+                .where(AnalyticsEvent.occurred_datetime <= cutoff)
+                .execution_options(synchronize_session=False)
+            ),
+        )
         await session.commit()
-
-    logger.info("Data retention cleanup process completed")
+        logger.info("Deleted %d expired first-party analytics events", result.rowcount)
 
 
 async def cleanup_jobs() -> None:
     await cleanup_old_records()
-    await delete_orphan_records()
     await cleanup_failed_records()
 
 
 async def init_cleanup_scheduler() -> None:
-    """Initialize the scheduler to run cleanup daily."""
-    next_run_time = datetime.now(tz=UTC).replace(hour=23, minute=0, second=0, microsecond=0)
+    """Initialize the scheduler to run cleanup at midnight, 6am, noon and 6pm (UTC)."""
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(cleanup_jobs, "interval", days=1, next_run_time=next_run_time)
+    scheduler.add_job(cleanup_jobs, "cron", hour="0,6,12,18", minute=0, timezone=UTC)
+    scheduler.add_job(
+        cleanup_analytics_events,
+        "cron",
+        hour=23,
+        minute=0,
+        timezone=UTC,
+        max_instances=1,
+        coalesce=True,
+    )
     scheduler.start()
     logger.info("cleanup scheduler initialized")

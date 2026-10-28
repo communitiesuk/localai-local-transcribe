@@ -20,25 +20,33 @@ describe('<InLineEditForm />', () => {
 
   it('renders Update and Cancel buttons', () => {
     render(<InLineEditForm {...defaultProps} />)
-    expect(screen.getByRole('button', { name: 'Update' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
   })
 
   it('disables Update when value is unchanged', () => {
     render(<InLineEditForm {...defaultProps} />)
-    expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    ).toBeDisabled()
   })
 
   it('enables Update once the value changes', () => {
     render(<InLineEditForm {...defaultProps} />)
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
-    expect(screen.getByRole('button', { name: 'Update' })).toBeEnabled()
+    expect(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    ).toBeEnabled()
   })
 
   it('calls onUpdate with the current value when Update is clicked', () => {
     render(<InLineEditForm {...defaultProps} />)
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     expect(defaultProps.onUpdate).toHaveBeenCalledWith('Bob')
   })
 
@@ -68,6 +76,26 @@ describe('<InLineEditForm />', () => {
   it('disables Update when the value is empty or whitespace only', () => {
     render(<InLineEditForm {...defaultProps} />)
     fireEvent.change(screen.getByRole('textbox'), { target: { value: '   ' } })
-    expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    ).toBeDisabled()
+  })
+
+  it('renders and calls an optional secondary update action', () => {
+    const onSecondaryUpdate = vi.fn()
+    render(
+      <InLineEditForm
+        {...defaultProps}
+        secondaryUpdate={{
+          label: 'Update this occurrence',
+          onUpdate: onSecondaryUpdate,
+        }}
+      />
+    )
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Bob' } })
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update this occurrence' })
+    )
+    expect(onSecondaryUpdate).toHaveBeenCalledWith('Bob')
   })
 })

@@ -4,6 +4,10 @@
 // So here we add it.
 declare interface Window {
   webkitAudioContext: typeof AudioContext
+  // experimental method
+  showSaveFilePicker?: (
+    options?: SaveFilePickerOptions
+  ) => Promise<FileSystemFileHandle>
 }
 
 // govuk-frontend v6.1 ships no .d.ts files. Declare the parts we use.

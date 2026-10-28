@@ -2,6 +2,8 @@
 
 Config-driven eval runner for DialogSum-style conversational summarization.
 
+For the end-to-end flow, exact metrics and threshold links, see [`../documentation/evals-flow.md`](../documentation/evals-flow.md).
+
 **Important: Run all commands from project root.**
 
 ## Setup
@@ -147,7 +149,7 @@ scenario; a judge failure stops the run.
 
 # Transcription Evaluation
 
-Compares transcription services using the AMI Corpus (auto-downloaded to `input/ami/`).
+Compares transcription services using the AMI Corpus, loaded automatically through Hugging Face.
 
 **Important: Run all commands from project root.**
 
@@ -183,6 +185,64 @@ poetry run python evals/transcription/src/evaluate.py --config evals/transcripti
 ```
 
 `summary.json` goes to `output`; detailed files go to `debug`.
+
+The dataset defaults to AMI. Set `input_dir` to override its cache directory:
+
+```yaml
+dataset: ami
+input_dir: ~/datasets/ami
+num_samples: 2
+sample_duration_fraction: 0.1
+```
+
+Relative `input_dir` paths resolve from the YAML file's directory. The default is
+`evals/transcription/input/ami/`, with the datasets Arrow cache under `raw/` and
+prepared mono MP3 audio, transcripts, and diarization under `processed/`.
+AMI supports `num_samples` and `sample_duration_fraction`; `samples_per_group` is unsupported.
+
+`input_dir` relocates the Arrow and processed caches. Hugging Face Hub source blobs remain
+in the Hub cache (normally `~/.cache/huggingface/hub`, controlled separately by `HF_HOME`
+or `HF_HUB_CACHE`). Existing Hub downloads can be reused without fetching the corpus again.
+Each different `input_dir` builds its own Arrow and processed caches, so its first run can
+still take longer and require additional disk space. Processed cache keys include the exact
+duration cutoff; older processed entries are rebuilt.
+
+Additional datasets are selected through the same source registry:
+
+- `dataset: english_dialects` loads all published dialect/gender groups. Its default
+  dataset directory is `evals/transcription/input/english_dialects/`. Both default and
+  configured directories use `raw/` for Arrow data and `processed/mono_mp3_v1/` for audio.
+  `input_dir` always selects the dataset root, matching AMI.
+- `dataset: audio_files` reads audio files paired with same-name UTF-8 `.txt` references.
+  Its default source directory is `evals/transcription/input/custom/`.
+
+Both datasets omit diarization metrics. Drift checks skip unavailable speaker metrics.
+English Dialects uses the shared `AudioFileHandler` for conversion and cache reuse.
+
+Every transcription evaluation outputs `content_wer` alongside standard WER, for all
+adapters and datasets. It uses the same text normalisation and excludes conservative
+non-lexical fillers (such as "um", "uh", and "hmm") from both transcripts; meaningful
+responses such as "yeah", "okay", and "right" remain scored. Each sample includes
+content edit counts, and engine summaries include content WER statistics and
+`corpus_content_wer` (total content errors divided by total content reference words).
+
+When a reference contains no content words at all (for example an utterance that
+normalises to just "um um"), the per-sample rate is undefined, so `content_wer` is
+omitted from that sample and does not distort the mean. Its edit counts are still exact
+and still feed `corpus_content_wer`, so spurious hypothesis words remain penalised.
+`corpus_content_wer` is `null` only when no reference in the run has content words.
+
+For English Dialects, `num_samples` is a total budget distributed in rounds across
+non-empty dialect/gender groups, with speaker-balanced selection inside each group.
+A budget of at least 11 covers all 11 published groups, when each has recordings.
+Smaller budgets cover that many groups in a reproducibly shuffled order (seed 42),
+independent of the supplied subset order. Use
+`samples_per_group` instead for a fixed number from every group; do not combine it
+with `num_samples`.
+
+Content WER complements standard WER when comparing APIs that omit fillers such as
+"erm" and "um". Dialect/gender groups include content WER statistics and corpus scores
+alongside standard WER. All metrics are written to the normal results file.
 
 # Dataset Generation
 
@@ -464,3 +524,11 @@ File format:
 - Background audio is automatically looped or trimmed to match speech length
 - Volume is adjusted using a predefined offset (config variable ```background_volume_offset```)
 - File names are normalized using the base name (prefix before _)
+
+
+## Silver reference transcripts
+
+Generate Azure transcripts and audio segments from existing recordings for human annotation.
+Each segment folder contains its audio, editable transcript and metadata. The pipeline runs locally
+using directories set in a YAML config. See [the silver transcript pipeline](dataset_generation/silver_transcripts/README.md)
+for configuration and usage.

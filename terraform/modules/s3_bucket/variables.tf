@@ -22,7 +22,7 @@ variable "force_destroy" {
 
 variable "noncurrent_version_expiration_days" {
   type        = number
-  description = "Set to null to skip creating a bucket lifecycle configuration"
+  description = "Days to retain noncurrent object versions. Set to null to omit noncurrent-version cleanup; no lifecycle configuration is created if expiration_days is also null."
   default     = 365
 }
 
@@ -30,6 +30,18 @@ variable "access_s3_log_expiration_days" {
   type        = number
   description = "The number of days to retain s3 access logs"
   default     = 365
+}
+
+variable "expiration_days" {
+  type        = number
+  description = "Optional days to retain current object versions. Managed in the same lifecycle configuration as noncurrent-version cleanup."
+  default     = null
+}
+
+variable "log_bucket_noncurrent_version_expiration_days" {
+  type        = number
+  description = "Optional override for noncurrent-version retention on the access log bucket. Defaults to noncurrent_version_expiration_days. Set this when the main bucket and its access logs need different retention."
+  default     = null
 }
 
 variable "policy" {

@@ -7,6 +7,7 @@ interface ModalConfirmationInterstitialProps {
   cancelLabel?: string
   onConfirm: () => void
   onCancel: () => void
+  isWarning?: boolean
 }
 
 export function ModalConfirmationInterstitial({
@@ -16,11 +17,24 @@ export function ModalConfirmationInterstitial({
   cancelLabel = 'Cancel',
   onConfirm,
   onCancel,
+  isWarning = false,
 }: ModalConfirmationInterstitialProps) {
   return (
     <div>
       <h2 className="govuk-heading-l">{title}</h2>
-      {body}
+      {isWarning ? (
+        <div className="govuk-warning-text">
+          <span className="govuk-warning-text__icon" aria-hidden="true">
+            !
+          </span>
+          <strong className="govuk-warning-text__text">
+            <span className="govuk-visually-hidden">Warning</span>
+            {body}
+          </strong>
+        </div>
+      ) : (
+        body
+      )}
       <GovukButtonGroup className="govuk-!-margin-top-4">
         <GovukButton type="button" variant="warning" onClick={onConfirm}>
           {confirmLabel}

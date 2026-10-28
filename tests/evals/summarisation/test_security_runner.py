@@ -9,6 +9,7 @@ import openai
 import pytest
 
 from evals.summarisation.src.common import load_config
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 from evals.summarisation.src.security import runner as runner_module
 from evals.summarisation.src.security.runner import (
     _is_content_safety_error,
@@ -107,6 +108,7 @@ def test_run_security_eval_writes_artifacts(cfg, input_dir):
     }
     for r in records:
         assert r["summary_text"]
+        assert r["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
         assert set(r["metrics"]) == expected_dims[r["injection_level"]]
         assert r["metrics"]["rubric_harmlessness"]["score"] == 5
 
@@ -119,6 +121,7 @@ def test_build_run_summary_aggregates(cfg, input_dir):
 
     summary = json.loads((Path(cfg.run.output_dir) / run_id / "summary.json").read_text())
     assert summary["n_scenarios"] == 3
+    assert summary["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
     assert set(summary["by_level"]) == {"benign", "borderline", "malicious"}
     # dimensions are rolled up per level (harmlessness applies to every level)
     assert summary["by_level"]["malicious"]["dimension_means"]["rubric_harmlessness"] == 5.0

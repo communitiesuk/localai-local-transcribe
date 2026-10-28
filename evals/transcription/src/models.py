@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from abc import abstractmethod
 from collections.abc import Callable
+from pathlib import Path
 from typing import Protocol, Self, TypedDict
 
 import numpy as np
@@ -62,6 +64,17 @@ class DatasetItem(BaseModel):
 
     audio: AudioSample
     text: str
+    sample_metadata: dict[str, str | int] | None = None
+
+
+class EnglishDialectsSample(DatasetItem):
+    """One utterance from the English Dialects corpus."""
+
+    dialect: str
+    gender: str
+    speaker_id: str
+    line_id: str
+    dataset_index: int
 
 
 class RawDatasetRow(BaseModel):
@@ -119,12 +132,19 @@ class SampleMetrics(BaseModel):
     substitutions: int
     deletions: int
     insertions: int
-    wder: float
-    speaker_errors: int
-    total_words: int
-    speaker_count_accuracy: float
-    ref_speaker_count: int
-    hyp_speaker_count: int
+    content_wer: float | None = None
+    content_hits: int = 0
+    content_substitutions: int = 0
+    content_deletions: int = 0
+    content_insertions: int = 0
+    content_reference_words: int = 0
+    content_hypothesis_words: int = 0
+    wder: float | None = None
+    speaker_errors: int | None = None
+    total_words: int | None = None
+    speaker_count_accuracy: float | None = None
+    ref_speaker_count: int | None = None
+    hyp_speaker_count: int | None = None
     processing_speed_ratio: float
 
 
@@ -143,6 +163,7 @@ class SampleRow(BaseModel):
     hypothesis_dialogue_entries: list[DiarizationSegment] | None
     latency_ms: float
     metrics: dict[str, float]
+    sample_metadata: dict[str, str | int] | None = None
     error: dict[str, str] | None = None
 
 
@@ -165,6 +186,7 @@ class Summary(BaseModel):
     split: str | None
     n_examples: int
     metrics: dict[str, AggregatedMetricStats]
+    corpus_content_wer: float | None = None
     processing_speed_ratio: float
 
 
@@ -215,6 +237,9 @@ class EvaluationConfig(BaseModel):
     num_samples: int | None = None
     sample_duration_fraction: float | None = None
     dataset_loader: str | None = None
+    dataset: str | None = None
+    samples_per_group: int | None = None
+    input_dir: Path | None = None
     max_workers: int | None = None
     prepare_only: bool = False
     check_drift_thresholds: bool = False
@@ -241,22 +266,37 @@ class MeetingSegment(BaseModel):
     utterance_cutoff_time: float | None = None
 
 
+class DatasetRequest(BaseModel):
+    """
+    Sampling options requested for a benchmark load.
+
+    Each dataset source reads the options it declares support for, so adding an option
+    here does not change the signature of every source.
+    """
+
+    num_samples: int | None = None
+    sample_duration_fraction: float | None = None
+    samples_per_group: int | None = None
+
+
 class DatasetProtocol(Protocol):
     """Dataset contract for eval runs."""
 
-    @property
-    def dataset_version(self) -> str:
-        pass
+    supports_diarization: bool
 
     @property
-    def dataset_split(self) -> str | None:
-        pass
+    @abstractmethod
+    def dataset_version(self) -> str: ...
 
-    def __len__(self) -> int:
-        pass
+    @property
+    @abstractmethod
+    def dataset_split(self) -> str | None: ...
 
-    def __getitem__(self, index: int) -> DatasetItem:
-        pass
+    @abstractmethod
+    def __len__(self) -> int: ...
+
+    @abstractmethod
+    def __getitem__(self, index: int) -> DatasetItem: ...
 
 
 class TimingAccumulator:

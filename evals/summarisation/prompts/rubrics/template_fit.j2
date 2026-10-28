@@ -1,16 +1,18 @@
 ### Dimension: Template Adherence & Completeness
 
-The summary fills the required sections and fields of the selected template, with the right level of detail for that template.
+The summary follows the required sections and fields of the selected template, with the right level of detail for the evidence available in the transcript.
 
-Score this dimension relative to what the chosen summary template requires. If a template does not capture a particular element (e.g. actions), do not penalise for its absence — score based on the clarity of any such elements that are present.
+Score this dimension relative to what the chosen summary template requires and what the transcript actually contains. A field should be treated as completed when it is populated with supported transcript evidence, left blank where the template explicitly requires blanks for missing evidence, or marked "Information not found in transcript", "Not stated", or equivalent where the template asks for a missing-information marker. Do not penalise a template for refusing to invent required details that are absent from the transcript.
+
+If the transcript is outside the template's intended workflow, judge whether the summary still follows the template's missing-data rules faithfully. A mostly empty or missing-data form can be an excellent template fit when the transcript does not provide the requested details. Penalise unsupported invented values, dropped required headings, inconsistent missing-data treatment, or failing to fill fields whose evidence is actually present.
 
 #### Score Definitions:
 
-- **Score 5 — Excellent:** Template is followed precisely; all required sections and fields are populated with clear, proportionate detail and no obvious gaps for the intended use case.
-- **Score 4 — Good:** All required sections and fields are completed to an appropriate level of detail for the template; only minor optional detail is missing.
-- **Score 3 — Adequate:** All required template sections are present; minor omissions within sections remain, but the template intent is met.
-- **Score 2 — Poor:** One or more required sections are incomplete or missing important required fields; several template expectations are not met.
-- **Score 1 — Unacceptable:** Template is not followed or key required sections are missing or empty; the output would not be usable in the intended workflow.
+- **Score 5 — Excellent:** Template is followed precisely; all required sections and fields are either populated with supported evidence or correctly marked/left empty according to the template's missing-data instructions.
+- **Score 4 — Good:** Required sections and fields are completed appropriately for the available evidence; only minor optional detail or minor missing-data consistency issues remain.
+- **Score 3 — Adequate:** Required template sections are present and the intent is met, but some fields with transcript evidence are missed or missing-data treatment is uneven.
+- **Score 2 — Poor:** One or more required sections are incomplete, several evidenced fields are not captured, or missing-data handling makes the output hard to use.
+- **Score 1 — Unacceptable:** Template is not followed, key required sections are missing, unsupported details are invented, or the output would not be usable in the intended workflow.
 
 **Hallucination Gate:** No — review is not automatically triggered by low scores on this dimension alone, unless combined with failures in critical dimensions.
 
@@ -47,3 +49,50 @@ Actions
 PHP for customer 6655321 Martins J DOB 14/2/89. Stuff happened with the neighbour, police called. Actions assigned to various parties.
 ```
 
+**Scenario:** A fixed-field template contains many required fields, but the transcript only supports two of them. Good output keeps the template and marks the rest missing rather than inventing values.
+
+**Transcript Excerpt:**
+```text
+Housing Officer (00:01:00): I have your name as Maya Patel and phone number as 07123 456789. We have not discussed address, income, rent, or arrears today.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+- Tenant(s) Name(s): Maya Patel
+- Contact Number: 07123 456789
+- Address: Information not found in transcript
+- Weekly Rent: Information not found in transcript
+- Rent arrears: Information not found in transcript
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+- Tenant(s) Name(s): Maya Patel
+- Contact Number: 07123 456789
+- Address: 1 Council Road
+- Weekly Rent: £120
+- Rent arrears: None
+```
+
+**Scenario:** A PHP template instructs unsupported fields to be left blank, and the transcript contains no PHP or housing-plan evidence.
+
+**Good Summary (Score ≥ 4):**
+```text
+# 1. Applicant details and case officer
+- Case ID:
+- Officer name:
+- Applicant name:
+
+# 5. Actions the Council Will Take
+
+# 6. Actions the Applicant Must Take
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+# 1. Applicant details and case officer
+- Applicant name: Samuel
+
+# 5. Actions the Council Will Take
+Action 1: Open a homelessness application.
+```

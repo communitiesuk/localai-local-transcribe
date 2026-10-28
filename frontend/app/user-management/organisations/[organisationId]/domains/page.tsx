@@ -6,11 +6,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
-import { GovukBackLink, GovukNotificationBanner } from '@/components/govuk'
+import {
+  GovukBackLink,
+  GovukNotificationBanner,
+  GovukSectionBreak,
+} from '@/components/govuk'
 import {
   EditDomainsForm,
   EditDomainsFormData,
 } from '@/components/organisations/domains-form'
+import DomainsDetails from '@/components/organisations/domains-details'
 
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { useOrganisation } from '@/hooks/use-organisation'
@@ -34,13 +39,18 @@ export default function EditApprovedDomainsPage(props: {
 
   const { organisationId } = use(props.params)
 
-  const { currentUser, isLoading: userLoading } = useAuthorisedUser([
-    UserRole.MHCLG_SUPPORT_ADMIN,
-    UserRole.LOCAL_AUTHORITY_ADMIN,
-  ])
+  const {
+    currentUser,
+    isAllowed,
+    isLoading: userLoading,
+    isError: userError,
+  } = useAuthorisedUser([UserRole.MHCLG_SUPPORT_ADMIN])
 
-  const { data: organisation, isLoading: organisationLoading } =
-    useOrganisation(organisationId)
+  const {
+    data: organisation,
+    isLoading: organisationLoading,
+    isError: organisationError,
+  } = useOrganisation(organisationId, !userLoading && isAllowed)
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: async (variables: {
@@ -80,7 +90,7 @@ export default function EditApprovedDomainsPage(props: {
         title: 'Approved domains updated',
         message: `Successfully updated approved domains for '${updatedOrganisation.name}' at ${formatCurrentDateTime()}`,
       })
-      router.push('/user-management')
+      router.push(`/user-management?organisationId=${updatedOrganisation.id}`)
     },
     onError: (error) => {
       if (error instanceof DomainsUpdateConflictError) {
@@ -117,7 +127,7 @@ export default function EditApprovedDomainsPage(props: {
     [mutateAsync, organisation]
   )
 
-  if (userLoading || organisationLoading || !organisation) {
+  if (userLoading) {
     return (
       <div className="govuk-body flex items-center gap-2">
         <Loader2 className="animate-spin" />
@@ -126,16 +136,25 @@ export default function EditApprovedDomainsPage(props: {
     )
   }
 
-  if (
-    currentUser?.roles?.includes(UserRole.LOCAL_AUTHORITY_ADMIN) &&
-    currentUser.organisation_id?.toLowerCase() !== organisationId.toLowerCase()
-  ) {
+  if (userError || !currentUser) {
+    throw new Error('Unable to load user')
+  }
+
+  if (!isAllowed) {
+    return null
+  }
+
+  if (organisationLoading) {
     return (
       <div className="govuk-body flex items-center gap-2">
         <Loader2 className="animate-spin" />
-        You are not authorised to edit domains for this organisation.
+        Loading...
       </div>
     )
+  }
+
+  if (organisationError || !organisation) {
+    return <p>Error: Failed to load organisation.</p>
   }
 
   return (
@@ -158,7 +177,10 @@ export default function EditApprovedDomainsPage(props: {
         defaultValues={organisation.allowed_domains}
         onSubmit={onSubmit}
         isPending={isPending}
+        cancelHref={`/user-management?organisationId=${organisation.id}`}
       />
+      <GovukSectionBreak size="l" />
+      <DomainsDetails />
     </>
   )
 }

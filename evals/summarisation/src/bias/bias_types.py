@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from common.database.postgres_models import DialogueEntry
 from evals.summarisation.src.bias.four_fifths_types import FourFifthsCheck
 from evals.summarisation.src.bias.spc_types import SPCCheck
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
 
 class OriginalTranscript(BaseModel):
@@ -111,6 +112,7 @@ class CounterfactualEvalRecord(BaseModel):
     hypothesis_summaries_counterfactual: list[str]
     hypothesis_model: str
     prompt_version: str
+    judge_criteria_version: str = JUDGE_CRITERIA_VERSION
 
     protected_characteristic: str
     axis_of_change: str
@@ -165,6 +167,7 @@ class ComparisonResult(BaseModel):
     num_iterations: int
     hypothesis_model: str
     prompt_version: str
+    judge_criteria_version: str = JUDGE_CRITERIA_VERSION
 
 
 class BiasEvalResults(BaseModel):
@@ -177,6 +180,7 @@ class BiasEvalResults(BaseModel):
     dataset_version: str
     engine_version: str
     prompt_version: str
+    judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     num_iterations: int
 
     comparisons: list[ComparisonResult]
@@ -194,6 +198,7 @@ class CounterfactualRunSummary(BaseModel):
     dataset_version: str
     engine_version: str
     prompt_version: str
+    judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     n_comparisons: int
 
     by_characteristic_and_axis: dict[str, dict[str, Any]]

@@ -1,11 +1,12 @@
+import logging
 import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum, auto
-from typing import Literal
+from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator, model_validator
 
 from common.canaries import strip_boundary_metadata
 from common.constants import MAX_AGENDA_LENGTH
@@ -13,14 +14,18 @@ from common.database.postgres_models import (
     ContentSource,
     DialogueEntry,
     JobStatus,
+    RecordingSource,
     TemplateType,
     UserRole,
 )
+from common.settings import get_settings
 
 DOMAIN_REGEX = re.compile(
     r"^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z-]{0,61}[a-z]$",
     re.IGNORECASE,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def validate_fqdn_list(domains: list[str]) -> list[str]:
@@ -74,20 +79,17 @@ class UnlabelledTranscriptionsResponse(BaseModel):
 
 class TranscriptionCreateRequest(BaseModel):
     recording_id: uuid.UUID
-    template_name: str
-    template_id: uuid.UUID | None = None
-    agenda: str | None = Field(default=None, max_length=MAX_AGENDA_LENGTH)
     title: str | None = None
-
-
-class TranscriptionOnlyCreateRequest(BaseModel):
-    recording_id: uuid.UUID
-    title: str | None = None
+    audio_duration_seconds: float | None = Field(
+        default=None,
+        description="Client-measured audio duration in seconds, recorded as first-party analytics metadata.",
+    )
 
 
 class RecordingCreateRequest(BaseModel):
     file_extension: str
     file_created_at: datetime | None = None
+    source: RecordingSource | None = None
 
 
 class RecordingCreateResponse(BaseModel):
@@ -112,6 +114,7 @@ class UpdateTranscriptionMetadataRequest(BaseModel):
     case_id: str | None
     subject: str | None
     client_date_of_birth: datetime | None
+    date_of_recording: datetime | None
 
 
 class RenameSpeakerRequest(BaseModel):
@@ -158,7 +161,17 @@ class ChatCreateResponse(BaseModel):
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
+    evaluation_id: str = Field(min_length=1)
     organisation_id: uuid.UUID
+
+    @field_validator("evaluation_id")
+    @classmethod
+    def _strip_evaluation_id(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            message = "Evaluation ID must contain at least one non-whitespace character"
+            raise ValueError(message)
+        return stripped
 
 
 class UserUpdateRoles(BaseModel):
@@ -187,7 +200,7 @@ class PaginatedUsersResponse(BaseModel):
     total_pages: int
 
 
-type DataRetentionOptions = Literal[1, 7, 30]
+type DataRetentionOptions = Annotated[int, Field(strict=True, ge=1, le=30)]
 
 
 class DataRetentionUpdateResponse(BaseModel):
@@ -201,6 +214,7 @@ class TranscriptionGetResponse(BaseModel):
     status: JobStatus
     created_datetime: datetime
     date_of_recording: datetime | None = None
+    is_upload: bool = False
     client_name: str | None
     case_id: str | None
     client_date_of_birth: datetime | None
@@ -246,12 +260,8 @@ class MinutesPatchRequest(BaseModel):
     html_content: str | None = None
 
 
-class GuardrailResultResponse(BaseModel):
-    id: uuid.UUID
-    passed: bool
-    score: float | None
-    reasoning: str | None
-    error: str | None
+class GuardrailWarningResponse(BaseModel):
+    message: str | None
 
 
 class LLMHallucination(BaseModel):
@@ -259,9 +269,105 @@ class LLMHallucination(BaseModel):
     hallucination_reason: str | None = Field(description="Reason the claim was flagged", default=None)
 
 
+class FailureCategory(StrEnum):
+    FACTUAL_INTEGRITY = auto()
+    REQUIRED_CONTENT_AND_STRUCTURE = auto()
+    EDIT_SAFETY_AND_INTENT = auto()
+    DATA_PROTECTION = auto()
+    INSTRUCTION_INTEGRITY = auto()
+    EVIDENCE_AND_CITATION_QUALITY = auto()
+
+
+class GuardrailAction(StrEnum):
+    ORIGINAL_GENERATION = auto()
+    AI_EDIT = auto()
+
+
+class FailureMode(StrEnum):
+    INVENTED_DECISION = auto()
+    REVERSED_MEANING = auto()
+    NO_EVIDENCE_FOR_CLAIM = auto()
+    ATTRIBUTION_NOT_EVIDENCED = auto()
+    NUMERIC_DATE_ERROR = auto()
+    CRITICAL_OMISSION = auto()
+    MISSING_ACTION = auto()
+    MISSING_REQUIRED_SECTION = auto()
+    UNSAFE_EDIT = auto()
+    EDIT_DID_WRONG_TASK = auto()
+    PERSONAL_DATA_INCLUDED = auto()
+    TRANSCRIPT_INSTRUCTION_FOLLOWED = auto()
+    TEMPLATE_INSTRUCTION_FOLLOWED = auto()
+    NO_QUOTE_FOR_CLAIM = auto()
+    WRONG_QUOTE = auto()
+    WEAK_TRANSCRIPT_SUPPORT = auto()
+
+
+class FailureDetail(BaseModel):
+    mode: FailureMode
+    explanation: str | None = Field(
+        default=None,
+        description="Specific evidence explaining this failure, e.g. a quote or reference from the transcript "
+        "or minute and why it constitutes this failure mode",
+    )
+
+    _VALID_MODES_BY_CATEGORY: ClassVar[dict[FailureCategory, set[FailureMode]]] = {
+        FailureCategory.FACTUAL_INTEGRITY: {
+            FailureMode.INVENTED_DECISION,
+            FailureMode.REVERSED_MEANING,
+            FailureMode.NO_EVIDENCE_FOR_CLAIM,
+            FailureMode.ATTRIBUTION_NOT_EVIDENCED,
+            FailureMode.NUMERIC_DATE_ERROR,
+            FailureMode.WEAK_TRANSCRIPT_SUPPORT,
+        },
+        FailureCategory.REQUIRED_CONTENT_AND_STRUCTURE: {
+            FailureMode.CRITICAL_OMISSION,
+            FailureMode.MISSING_ACTION,
+            FailureMode.MISSING_REQUIRED_SECTION,
+        },
+        FailureCategory.EDIT_SAFETY_AND_INTENT: {
+            FailureMode.UNSAFE_EDIT,
+            FailureMode.EDIT_DID_WRONG_TASK,
+        },
+        FailureCategory.DATA_PROTECTION: {
+            FailureMode.PERSONAL_DATA_INCLUDED,
+        },
+        FailureCategory.INSTRUCTION_INTEGRITY: {
+            FailureMode.TRANSCRIPT_INSTRUCTION_FOLLOWED,
+            FailureMode.TEMPLATE_INSTRUCTION_FOLLOWED,
+        },
+        FailureCategory.EVIDENCE_AND_CITATION_QUALITY: {
+            FailureMode.NO_QUOTE_FOR_CLAIM,
+            FailureMode.WRONG_QUOTE,
+        },
+    }
+
+    _CATEGORY_BY_MODE: ClassVar[dict[FailureMode, FailureCategory]] = {
+        mode: category for category, modes in _VALID_MODES_BY_CATEGORY.items() for mode in modes
+    }
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def category(self) -> FailureCategory:
+        """Category derived from the selected failure mode."""
+        return self._CATEGORY_BY_MODE[self.mode]
+
+
 class GuardrailScore(BaseModel):
     score: float = Field(description="Confidence score between 0.0 and 1.0")
     reasoning: str = Field(description="Reasoning for the score")
+    categories: list[FailureDetail] = Field(description="List of failure details that contributed to the score")
+
+    @model_validator(mode="after")
+    def _warn_if_failing_score_has_no_categories(self) -> GuardrailScore:
+        threshold = get_settings().GUARDRAIL_THRESHOLD
+        if self.score < threshold and not self.categories:
+            logger.warning(
+                "GuardrailScore of %.2f is below the guardrail threshold of %.2f but no failure categories "
+                "were provided",
+                self.score,
+                threshold,
+            )
+        return self
 
 
 class MinuteVersionResponse(BaseModel):
@@ -274,7 +380,6 @@ class MinuteVersionResponse(BaseModel):
     ai_edit_instructions: str | None
     content_source: ContentSource
     too_short: bool = False
-    guardrail_results: list[GuardrailResultResponse] = []
 
 
 class SpeakerPrediction(BaseModel):
@@ -301,7 +406,6 @@ class TaskType(IntEnum):
     MINUTE = 2
     EDIT = 3
     INTERACTIVE = 4
-    TRANSCRIPTION_ONLY = 5
 
 
 class EditMessageData(BaseModel):
@@ -314,6 +418,7 @@ class TranscriptionJobMessageData(BaseModel):
         description="job name to identify asynchronous jobs. Not used in case of synchronous jobs",
         default="synchronous",
     )
+    job_status: str | None = Field(description="Current status of an asynchronous job", default=None)
     transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
 
 
@@ -328,6 +433,8 @@ class MinuteAndHallucinations:
     text: str
     total_claims: int
     hallucinations: list[LLMHallucination]
+    template_prompt_version: str | None = None
+    citation_quality_applicable: bool = False
 
     def __post_init__(self) -> None:
         self.text = strip_boundary_metadata(self.text)
@@ -351,6 +458,7 @@ class TranscriptionSortOrder(StrEnum):
 
 
 class TemplateMetadata(BaseModel):
+    id: str
     name: str
     description: str
     category: str
@@ -385,6 +493,11 @@ class TemplateResponse(BaseModel):
     description: str
     type: TemplateType
     questions: list[Question] | None
+
+
+class DuplicateTemplateResponse(BaseModel):
+    id: uuid.UUID
+    name: str
 
 
 class CreateUserTemplateRequest(BaseModel):

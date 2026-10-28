@@ -3,17 +3,50 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
+from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import col, select
 
 from backend.api.dependencies.get_session import SQLSessionDep
 from common.auth import get_user_info
-from common.database.postgres_models import User
+from common.database.postgres_models import AnalyticsEventType, User, UserAuthEmail
+from common.services.analytics_service import record_analytics_event
 from common.services.exceptions import MissingAuthTokenError
-from common.settings import get_settings
-
-settings = get_settings()
 
 logger = logging.getLogger(__name__)
+
+
+async def get_user_by_email_if_needs_to_update_sub(
+    session: SQLSessionDep,
+    email: str,
+) -> User | None:
+    statement = (
+        select(User)
+        .join(UserAuthEmail, col(UserAuthEmail.user_id) == col(User.id))
+        .where(
+            col(User.needs_to_update_sub).is_(True),  # flag set manually outside of code
+            UserAuthEmail.email == email,
+        )
+    )
+
+    return (await session.exec(statement)).first()
+
+
+async def record_user_auth_email(
+    session: SQLSessionDep,
+    user: User,
+    email: str,
+) -> None:
+    statement = select(UserAuthEmail).where(UserAuthEmail.email == email)
+    existing_auth_email = (await session.exec(statement)).first()
+
+    if not existing_auth_email:
+        insert_statement = (
+            insert(UserAuthEmail)
+            .values(user_id=user.id, email=email)
+            # Handle race condition when single user makes multiple requests
+            .on_conflict_do_nothing(index_elements=["email"])
+        )
+        await session.exec(insert_statement)
 
 
 async def get_current_user(
@@ -46,8 +79,15 @@ async def get_current_user(
             logger.info("User %s does not have the required permissions", email)
             raise unauthorised_error
 
-        statement = select(User).where(User.subject_id == subject_id)
-        user = (await session.exec(statement)).first()
+        # If IA has changed the subs, match on email and update to new sub
+        user = await get_user_by_email_if_needs_to_update_sub(session, email)
+        if user:
+            user.subject_id = subject_id
+            user.needs_to_update_sub = False
+
+        if not user:
+            statement = select(User).where(User.subject_id == subject_id)
+            user = (await session.exec(statement)).first()
 
         if not user:
             # Try to find user by email address, this is a fallback for legacy
@@ -64,12 +104,25 @@ async def get_current_user(
         # Update subject_id if it has changed (e.g. legacy account matched by email)
         if user.subject_id != subject_id:
             user.subject_id = subject_id
-            session.add(user)
-            await session.commit()
-            await session.refresh(user)
 
-        user.last_login = datetime.now(UTC)
+        # A user is authenticated on every request (the ALB re-mints the JWT each time), so there is no login
+        # boundary we can observe here. Rather than approximate one, record a single event the first time a user
+        # authenticates; repeat usage is derivable from the timestamps on the events for their actual actions.
+        now = datetime.now(UTC)
+        is_first_login = user.first_login is None
+        if is_first_login:
+            user.first_login = now
+        user.last_login = now
+
+        await record_user_auth_email(session=session, user=user, email=email)
+        session.add(user)
         await session.commit()
+        await session.refresh(user)
+
+        if is_first_login:
+            await record_analytics_event(
+                session, AnalyticsEventType.USER_FIRST_AUTHENTICATED, user.evaluation_id, user.organisation_id
+            )
 
         return user
     except MissingAuthTokenError as e:
@@ -95,13 +148,11 @@ PendingTouUserDep = Annotated[User, Depends(get_current_user)]
 
 
 async def require_accepted_tou(user: PendingTouUserDep) -> User:
-    # TODO(@unassigned): check TOU accepted once AIILG-764 implemented
-    # https://mhclgdigital.atlassian.net/browse/AIILG-764
-    # if not user.accepted_tou:
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail="Terms of use must be accepted",
-    #     )
+    if not user.accepted_tou:
+        raise HTTPException(
+            status_code=403,
+            detail="Terms of use must be accepted",
+        )
 
     return user
 

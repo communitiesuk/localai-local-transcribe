@@ -12,6 +12,7 @@ from evals.summarisation.src.common.schemas import (
     GenerationConfig,
     MetricResult,
 )
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
 
 def test_metric_result_contract_validates_score_bounds():
@@ -63,6 +64,7 @@ def test_eval_record_contract_serializes_to_json():
     assert deserialized["example"]["example_id"] == example_id
     assert deserialized["candidate"]["model"] == model_name
     assert deserialized["metrics"]["accuracy"]["score"] == accuracy_score
+    assert deserialized["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
 
 
 def test_eval_record_contract_handles_optional_reference_summary():

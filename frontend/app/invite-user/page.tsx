@@ -1,5 +1,5 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
@@ -7,11 +7,20 @@ import { useInviteUserStore } from '@/stores/use-invite-user-store'
 import { useOrganisation } from '@/hooks/use-organisation'
 import { UserRole } from '@/lib/utils'
 import isAllowedDomain from '@/utils/allowed-domains'
+import validateEmail from '@/utils/validate-email'
+import { useFocusHashTarget } from '@/hooks/use-focus-hash-target'
 import { Loader2 } from 'lucide-react'
 import { userExistsUsersUserExistsGet } from '@/lib/client'
+import {
+  GovukFormGroup,
+  GovukHint,
+  GovukInput,
+  GovukLabel,
+} from '@/components/govuk'
 
 export default function AdminAddUserPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const invalidDomainError =
     'Please enter an email address with a valid domain for your organisation.'
   const existingEmailError = 'This email is already registered with an account'
@@ -19,14 +28,19 @@ export default function AdminAddUserPage() {
   const {
     name: storedName,
     email: storedEmail,
-    organisationId,
+    evaluationId: storedEvaluationId,
     setInviteDetails,
     clearInviteDetails,
   } = useInviteUserStore()
   const [name, setName] = useState(storedName)
   const [email, setEmail] = useState(storedEmail)
+  const [evaluationId, setEvaluationId] = useState(storedEvaluationId)
   const [hasError, setHasError] = useState(false)
   const [errorMessage, setErrorMessage] = useState(invalidDomainError)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [evaluationIdError, setEvaluationIdError] = useState<string | null>(
+    null
+  )
 
   const {
     currentUser,
@@ -37,19 +51,52 @@ export default function AdminAddUserPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const { data: organisation } = useOrganisation(
-    organisationId || currentUser?.organisation_id || ''
-  )
+  const selectedOrganisationId = searchParams.get('organisationId') ?? ''
+  const inviteOrganisationId =
+    selectedOrganisationId || currentUser?.organisation_id
+  const userManagementHref = selectedOrganisationId
+    ? `/user-management?organisationId=${encodeURIComponent(selectedOrganisationId)}`
+    : '/user-management'
+  const inviteUserConfirmHref = selectedOrganisationId
+    ? `/invite-user/confirm?organisationId=${encodeURIComponent(selectedOrganisationId)}`
+    : '/invite-user/confirm'
+
+  const { data: organisation } = useOrganisation(inviteOrganisationId || '')
+
+  useFocusHashTarget(!userLoading && !userError)
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setNameError(null)
+    setEvaluationIdError(null)
+    setHasError(false)
 
-    if (!currentUser?.organisation_id) {
+    const trimmedEmail = email.trim()
+
+    if (!name.trim()) {
+      setNameError('Enter a name')
       return
     }
 
-    if (!isAllowedDomain(email, organisation?.allowed_domains ?? [])) {
-      console.error(invalidDomainError, email)
+    const emailError = validateEmail(trimmedEmail)
+    if (emailError) {
+      setErrorMessage(emailError)
+      setHasError(true)
+      return
+    }
+
+    if (!evaluationId.trim()) {
+      setEvaluationIdError('Enter an evaluation ID')
+      return
+    }
+
+    if (!inviteOrganisationId) {
+      router.push('/user-management')
+      return
+    }
+
+    if (!isAllowedDomain(trimmedEmail, organisation?.allowed_domains ?? [])) {
+      console.error(invalidDomainError, trimmedEmail)
       setErrorMessage(invalidDomainError)
       setHasError(true)
       return
@@ -57,8 +104,8 @@ export default function AdminAddUserPage() {
 
     const response = await userExistsUsersUserExistsGet({
       query: {
-        email,
-        organisation_id: currentUser.organisation_id,
+        email: trimmedEmail,
+        organisation_id: inviteOrganisationId,
       },
     })
 
@@ -68,8 +115,8 @@ export default function AdminAddUserPage() {
       return
     }
 
-    setInviteDetails(name, email, organisationId)
-    router.push('/invite-user/confirm')
+    setInviteDetails(name, trimmedEmail, evaluationId.trim())
+    router.push(inviteUserConfirmHref)
   }
 
   const handleCancel = (e: React.SyntheticEvent<HTMLAnchorElement>) => {
@@ -77,6 +124,7 @@ export default function AdminAddUserPage() {
     clearInviteDetails()
     setErrorMessage('')
     setHasError(false)
+    router.push(userManagementHref)
   }
 
   if (userLoading) return <Loader2 className="animate-spin" />
@@ -85,25 +133,40 @@ export default function AdminAddUserPage() {
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} noValidate>
         <fieldset className="govuk-fieldset">
           <legend className="govuk-fieldset__legend govuk-fieldset__legend--l">
             <h1 className="govuk-fieldset__heading">Invite new user</h1>
           </legend>
 
-          <div className="govuk-form-group">
+          <div
+            className={cn(
+              'govuk-form-group',
+              nameError && 'govuk-form-group--error'
+            )}
+          >
             <label className="govuk-label" htmlFor="invitee-name">
               Name
             </label>
+            {nameError && (
+              <p id="invitee-name-error" className="govuk-error-message">
+                <span className="govuk-visually-hidden">Error:</span>
+                {nameError}
+              </p>
+            )}
             <input
-              className="govuk-input govuk-input--width-30"
+              className={cn(
+                'govuk-input govuk-input--width-30',
+                nameError && 'govuk-input--error'
+              )}
               id="invitee-name"
               name="name"
               type="text"
               spellCheck="false"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
+              aria-invalid={nameError ? true : undefined}
+              aria-describedby={nameError ? 'invitee-name-error' : undefined}
             />
           </div>
 
@@ -138,12 +201,48 @@ export default function AdminAddUserPage() {
               spellCheck="false"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={hasError ? true : undefined}
               aria-describedby={
                 hasError ? 'invitee-email-address-error' : undefined
               }
-              required
             />
           </div>
+
+          <GovukFormGroup hasError={!!evaluationIdError}>
+            <GovukLabel htmlFor="invitee-evaluation-id">
+              Evaluation ID
+            </GovukLabel>
+            <GovukHint id="invitee-evaluation-id-hint">
+              Use an evaluation ID from the list the Local Transcribe team
+              provided for your organisation. It cannot be an ID that is already
+              in use, and you will not be able to see it in Local Transcribe
+              again.
+            </GovukHint>
+            {evaluationIdError && (
+              <p
+                id="invitee-evaluation-id-error"
+                className="govuk-error-message"
+              >
+                <span className="govuk-visually-hidden">Error:</span>
+                {evaluationIdError}
+              </p>
+            )}
+            <GovukInput
+              id="invitee-evaluation-id"
+              name="evaluationId"
+              type="text"
+              spellCheck="false"
+              className="govuk-input--width-20"
+              value={evaluationId}
+              onChange={(e) => setEvaluationId(e.target.value)}
+              aria-invalid={evaluationIdError ? true : undefined}
+              aria-describedby={
+                evaluationIdError
+                  ? 'invitee-evaluation-id-hint invitee-evaluation-id-error'
+                  : 'invitee-evaluation-id-hint'
+              }
+            />
+          </GovukFormGroup>
 
           <div
             style={{
@@ -162,7 +261,7 @@ export default function AdminAddUserPage() {
             </button>
 
             <a
-              href="/admin/users"
+              href={userManagementHref}
               className="govuk-link"
               onClick={handleCancel}
             >
