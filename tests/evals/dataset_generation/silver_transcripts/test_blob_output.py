@@ -60,9 +60,21 @@ def test_cli_passes_output_directory_and_run_id(tmp_path: Path, monkeypatch: pyt
 def test_pipeline_publishes_partial_outputs_after_generation_failure() -> None:
     pipeline_path = Path(__file__).resolve().parents[4] / ".azuredevops/pipelines/evals-silver-transcripts.yml"
     pipeline = yaml.safe_load(pipeline_path.read_text(encoding="utf-8"))
-    generation, upload = [step for step in pipeline["steps"] if step.get("task") == "AzureCLI@2"]
+    job = pipeline["jobs"][0]
+    generation, upload = [step for step in job["steps"] if step.get("task") == "AzureCLI@2"]
 
+    assert job["pool"]["name"] == "ado-vmss-latest"
+    assert job["timeoutInMinutes"] == 360
+    setup = next(step for step in job["steps"] if step.get("template") == "../templates/setup-python-poetry.yml")
+    assert setup["parameters"]["freeDiskSpace"] is False
+    template = yaml.safe_load((pipeline_path.parent / setup["template"]).read_text(encoding="utf-8"))
+    assert "${{ if eq(parameters.freeDiskSpace, true) }}" in template["steps"][0]
+    assert generation["env"]["AZURE_APIM_AUTH_METHOD"] == "client_secret"
+    assert "STORAGE_SERVICE_NAME" not in generation["env"]
     assert "##vso[task.setvariable variable=silverOutputReady]true" in generation["inputs"]["inlineScript"]
     assert upload["condition"] == "and(succeededOrFailed(), eq(variables['silverOutputReady'], 'true'))"
     assert "evals.dataset_generation.silver_transcripts.src.blob_output" in upload["inputs"]["inlineScript"]
     assert "$(Build.BuildId)" in upload["inputs"]["inlineScript"]
+    assert not any(
+        step.get("task", "").startswith(("PublishPipelineArtifact@", "PublishBuildArtifacts@")) for step in job["steps"]
+    )
