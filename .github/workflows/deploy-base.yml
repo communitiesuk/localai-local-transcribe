@@ -31,7 +31,7 @@ env:
 jobs:
   build:
     name: Build and push ${{ matrix.service }}
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     strategy:
       matrix:
         service: [frontend, backend, worker]
@@ -87,7 +87,7 @@ jobs:
 
   plan:
     name: Terraform plan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: build
     concurrency: tfstate-${{ inputs.environment }}
     outputs:
@@ -129,7 +129,7 @@ jobs:
 
   apply:
     name: Terraform apply
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: plan
     if: needs.plan.outputs.exitcode == 2
     concurrency: tfstate-${{ inputs.environment }}
@@ -158,7 +158,7 @@ jobs:
    
   notify-slack:
     name: Notify Slack
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: [build, plan, apply]
     if: always()
     steps:
