@@ -44,3 +44,7 @@ poetry run python -m evals.dataset_generation.silver_transcripts.src.main --conf
 This calls Azure and writes to `output/smoke/drafts/` under this directory. The code default is a 10-minute cutoff, but `smoke_test.yaml` overrides it to 60 seconds, so a recording longer than two minutes should exercise multiple chunks (continuous overlap can extend a chunk to twice the cutoff).
 
 Set `cutoff_seconds: 300` in the YAML config for approximately five-minute segments. It must be a positive finite number; whole utterances and overlapping speech can exceed the target. When changing the cutoff, use a new `work_dir` or move existing drafts aside before regenerating.
+
+## Azure DevOps
+
+The manual `evals-silver-transcripts.yml` pipeline downloads recordings from the restricted input container (default prefix `transcription/`), runs the same generator and publishes drafts and segments as an artifact. Its default cutoff is 60 seconds and can be changed when starting the run. The artifact contains audio and transcripts: use appropriate access controls and retention for the input data.
