@@ -7,18 +7,18 @@ locals {
   ecs_exec_tmpfs_mounts = var.allow_exec ? [
     {
       containerPath = "/managed-agents"
-      size          = 64
-      mountOptions  = ["nosuid"]
+      sourceVolume  = "managed-agents"
+      readOnly      = false
     },
     {
       containerPath = "/var/lib/amazon/ssm"
-      size          = 32
-      mountOptions  = ["nosuid"]
+      sourceVolume  = "var-lib-amazon-ssm"
+      readOnly      = false
     },
     {
       containerPath = "/var/log/amazon/ssm"
-      size          = 32
-      mountOptions  = ["nosuid"]
+      sourceVolume  = "var-log-amazon-ssm"
+      readOnly      = false
     }
   ] : []
 
@@ -260,6 +260,13 @@ resource "aws_ecs_task_definition" "backend" {
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.backend_ecs_task.arn
 
+  dynamic "volume" {
+    for_each = var.allow_exec ? ["managed-agents", "var-lib-amazon-ssm", "var-log-amazon-ssm"] : []
+    content {
+      name = volume.value
+    }
+  }
+
   container_definitions = jsonencode([
     {
       name                   = "backend"
@@ -268,16 +275,7 @@ resource "aws_ecs_task_definition" "backend" {
       user                   = "1000:1000"
       readonlyRootFilesystem = true
 
-      linuxParameters = {
-        tmpfs = concat([
-          {
-            containerPath = "/tmp"
-            size          = var.backend_tmp_tmpfs_size_mib
-            mountOptions  = ["noexec", "nosuid", "nodev", "mode=1777"]
-          }
-        ], local.ecs_exec_tmpfs_mounts)
-      }
-
+      mountPoints = local.ecs_exec_tmpfs_mounts
       portMappings = [
         {
           protocol      = "tcp"
@@ -336,6 +334,13 @@ resource "aws_ecs_task_definition" "worker" {
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.worker_ecs_task.arn
 
+  dynamic "volume" {
+    for_each = var.allow_exec ? ["managed-agents", "var-lib-amazon-ssm", "var-log-amazon-ssm"] : []
+    content {
+      name = volume.value
+    }
+  }
+
   container_definitions = jsonencode([
     {
       name                   = "worker"
@@ -344,15 +349,8 @@ resource "aws_ecs_task_definition" "worker" {
       user                   = "1000:1000"
       readonlyRootFilesystem = true
 
-      linuxParameters = {
-        tmpfs = concat([
-          {
-            containerPath = "/tmp"
-            size          = var.worker_tmp_tmpfs_size_mib
-            mountOptions  = ["noexec", "nosuid", "nodev", "mode=1777"]
-          }
-        ], local.ecs_exec_tmpfs_mounts)
-      }
+      mountPoints = local.ecs_exec_tmpfs_mounts
+
 
       logConfiguration = {
         logDriver = "awslogs"

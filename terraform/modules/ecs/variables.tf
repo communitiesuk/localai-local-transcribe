@@ -169,18 +169,6 @@ variable "worker_task_memory" {
   default     = 4096
 }
 
-variable "backend_tmp_tmpfs_size_mib" {
-  description = "Size (MiB) of the in-memory tmpfs mounted at /tmp on the backend container (counts against backend_task_memory)"
-  type        = number
-  default     = 256
-}
-
-variable "worker_tmp_tmpfs_size_mib" {
-  description = "Size (MiB) of the in-memory tmpfs mounted at /tmp on the worker container (counts against worker_task_memory); sized for Ray's session files plus in-flight audio download/conversion temp files"
-  type        = number
-  default     = 2048
-}
-
 variable "alb_arn" {
   description = "ARN of the Application Load Balancer, used for JWT signer validation"
   type        = string

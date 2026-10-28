@@ -40,18 +40,6 @@ variable "worker_task_memory" {
   default     = 8192
 }
 
-variable "backend_tmp_tmpfs_size_mib" {
-  description = "Size (MiB) of the in-memory tmpfs mounted at /tmp on the backend container - prod"
-  type        = number
-  default     = 256
-}
-
-variable "worker_tmp_tmpfs_size_mib" {
-  description = "Size (MiB) of the in-memory tmpfs mounted at /tmp on the worker container - prod"
-  type        = number
-  default     = 2048
-}
-
 variable "frontend_task_cpu" {
   description = "CPU units for the frontend ECS task definition"
   type        = number
