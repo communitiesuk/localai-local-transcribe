@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from common.apim_auth import AzureTokenProvider
 
 from .base import ModelAdapter
-from .llm_constants import MAX_COMPLETION_TOKENS
+from .llm_constants import MAX_COMPLETION_TOKENS, STRUCTURED_OUTPUT_TOOL_NAME
 from .message_utils import convert_to_anthropic_messages
 
 logger = logging.getLogger(__name__)
@@ -104,13 +104,11 @@ class BedrockAPIMModelAdapter(ModelAdapter):
     ) -> T:
         system, anthropic_messages = convert_to_anthropic_messages(messages)
 
-        tool_name = "extract_" + re.sub(r"(?<!^)(?=[A-Z])", "_", response_format.__name__).lower()
-
         tool = ToolParam(
-            name=tool_name,
+            name=STRUCTURED_OUTPUT_TOOL_NAME,
             input_schema=response_format.model_json_schema(),
         )
-        tool_choice = ToolChoiceToolParam(type="tool", name=tool_name)
+        tool_choice = ToolChoiceToolParam(type="tool", name=STRUCTURED_OUTPUT_TOOL_NAME)
 
         async def call() -> Message:
             client = await self._get_apim_client()
@@ -130,7 +128,7 @@ class BedrockAPIMModelAdapter(ModelAdapter):
 
         self.log_if_stop_reason_is_max_tokens(response)
 
-        tool_input = self._extract_tool_input(response, tool_name)
+        tool_input = self._extract_tool_input(response, STRUCTURED_OUTPUT_TOOL_NAME)
 
         logger.info("BEDROCK APIM SUCCESS: structured_chat")
 

@@ -6,6 +6,7 @@ from anthropic import APIConnectionError, AuthenticationError, BadRequestError, 
 from pydantic import BaseModel
 
 from common.llm.adapters.bedrock_apim import BedrockAPIMModelAdapter
+from common.llm.adapters.llm_constants import STRUCTURED_OUTPUT_TOOL_NAME
 
 _MODULE = "common.llm.adapters.bedrock_apim"
 
@@ -26,7 +27,9 @@ def _text_message(text: str, stop_reason: str = "end_turn") -> MagicMock:
     return message
 
 
-def _tool_use_message(tool_input: dict, stop_reason: str = "tool_use", tool_name: str = "extract_house") -> MagicMock:
+def _tool_use_message(
+    tool_input: dict, stop_reason: str = "tool_use", tool_name: str = STRUCTURED_OUTPUT_TOOL_NAME
+) -> MagicMock:
     block = MagicMock()
     block.type = "tool_use"
     block.name = tool_name
@@ -141,8 +144,8 @@ async def test_structured_chat_forces_tool_use_and_parses_input(mock_token_provi
 
     assert result == House(color="red", bedrooms=3)
     _, kwargs = mock_client.messages.create.call_args
-    assert kwargs["tool_choice"] == {"type": "tool", "name": "extract_house"}
-    assert kwargs["tools"][0]["name"] == "extract_house"
+    assert kwargs["tool_choice"] == {"type": "tool", "name": STRUCTURED_OUTPUT_TOOL_NAME}
+    assert kwargs["tools"][0]["name"] == STRUCTURED_OUTPUT_TOOL_NAME
     assert kwargs["tools"][0]["input_schema"] == House.model_json_schema()
 
 
