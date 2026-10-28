@@ -150,9 +150,9 @@ def run_engines_parallel(
             example_id=str(index),
             engine_version=label,
             reference_transcript=ref_raw,
-            reference_dialogue_entries=ref_diar_dicts if ref_diar_dicts else None,
+            reference_dialogue_entries=ref_diar_dicts or None,
             hypothesis_transcript=hyp_raw,
-            hypothesis_dialogue_entries=hyp_diar_dicts if hyp_diar_dicts else None,
+            hypothesis_dialogue_entries=hyp_diar_dicts or None,
             latency_ms=process_seconds * 1000,
             # Omit inapplicable metrics rather than writing nulls: the data contract's
             # transcription_eval_metric_result table is keyed by metric_name, so "not

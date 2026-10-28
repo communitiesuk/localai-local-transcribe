@@ -248,7 +248,6 @@ attrs = ">=17.3.0"
 frozenlist = ">=1.1.1"
 multidict = ">=4.5,<7.0"
 propcache = ">=0.2.0"
-typing_extensions = {version = ">=4.4", markers = "python_version < \"3.13\""}
 yarl = ">=1.25.1,<2.0"
 
 [package.extras]
@@ -295,7 +294,6 @@ files = [
 
 [package.dependencies]
 frozenlist = ">=1.1.0"
-typing-extensions = {version = ">=4.2", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "alembic"
@@ -323,7 +321,7 @@ version = "0.0.4"
 description = "Document parameters, class attributes, return types, and variables inline, with Annotated."
 optional = false
 python-versions = ">=3.8"
-groups = ["main", "dev", "evals-summarisation", "evals-transcription"]
+groups = ["main", "evals-summarisation"]
 files = [
     {file = "annotated_doc-0.0.4-py3-none-any.whl", hash = "sha256:571ac1dc6991c450b25a9c2d84a3705e2ae7a53467b5d111c24fa8baabbed320"},
     {file = "annotated_doc-0.0.4.tar.gz", hash = "sha256:fbcda96e87e9c92ad167c2e53839e57503ecfda18804ea28102353485033faa4"},
@@ -355,7 +353,6 @@ files = [
 
 [package.dependencies]
 idna = ">=2.8"
-typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 
 [package.extras]
 trio = ["trio (>=0.32.0)"]
@@ -509,6 +506,65 @@ files = [
 ]
 
 [[package]]
+name = "audioop-lts"
+version = "0.2.2"
+description = "LTS Port of Python audioop"
+optional = false
+python-versions = ">=3.13"
+groups = ["evals-transcription"]
+files = [
+    {file = "audioop_lts-0.2.2-cp313-abi3-macosx_10_13_universal2.whl", hash = "sha256:fd3d4602dc64914d462924a08c1a9816435a2155d74f325853c1f1ac3b2d9800"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-macosx_10_13_x86_64.whl", hash = "sha256:550c114a8df0aafe9a05442a1162dfc8fec37e9af1d625ae6060fed6e756f303"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-macosx_11_0_arm64.whl", hash = "sha256:9a13dc409f2564de15dd68be65b462ba0dde01b19663720c68c1140c782d1d75"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:51c916108c56aa6e426ce611946f901badac950ee2ddaf302b7ed35d9958970d"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:47eba38322370347b1c47024defbd36374a211e8dd5b0dcbce7b34fdb6f8847b"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:ba7c3a7e5f23e215cb271516197030c32aef2e754252c4c70a50aaff7031a2c8"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:def246fe9e180626731b26e89816e79aae2276f825420a07b4a647abaa84becc"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-manylinux_2_31_riscv64.manylinux_2_39_riscv64.whl", hash = "sha256:e160bf9df356d841bb6c180eeeea1834085464626dc1b68fa4e1d59070affdc3"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:4b4cd51a57b698b2d06cb9993b7ac8dfe89a3b2878e96bc7948e9f19ff51dba6"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-musllinux_1_2_ppc64le.whl", hash = "sha256:4a53aa7c16a60a6857e6b0b165261436396ef7293f8b5c9c828a3a203147ed4a"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-musllinux_1_2_riscv64.whl", hash = "sha256:3fc38008969796f0f689f1453722a0f463da1b8a6fbee11987830bfbb664f623"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-musllinux_1_2_s390x.whl", hash = "sha256:15ab25dd3e620790f40e9ead897f91e79c0d3ce65fe193c8ed6c26cffdd24be7"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:03f061a1915538fd96272bac9551841859dbb2e3bf73ebe4a23ef043766f5449"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-win32.whl", hash = "sha256:3bcddaaf6cc5935a300a8387c99f7a7fbbe212a11568ec6cf6e4bc458c048636"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-win_amd64.whl", hash = "sha256:a2c2a947fae7d1062ef08c4e369e0ba2086049a5e598fda41122535557012e9e"},
+    {file = "audioop_lts-0.2.2-cp313-abi3-win_arm64.whl", hash = "sha256:5f93a5db13927a37d2d09637ccca4b2b6b48c19cd9eda7b17a2e9f77edee6a6f"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-macosx_10_13_universal2.whl", hash = "sha256:73f80bf4cd5d2ca7814da30a120de1f9408ee0619cc75da87d0641273d202a09"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-macosx_10_13_x86_64.whl", hash = "sha256:106753a83a25ee4d6f473f2be6b0966fc1c9af7e0017192f5531a3e7463dce58"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:fbdd522624141e40948ab3e8cdae6e04c748d78710e9f0f8d4dae2750831de19"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:143fad0311e8209ece30a8dbddab3b65ab419cbe8c0dde6e8828da25999be911"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:dfbbc74ec68a0fd08cfec1f4b5e8cca3d3cd7de5501b01c4b5d209995033cde9"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:cfcac6aa6f42397471e4943e0feb2244549db5c5d01efcd02725b96af417f3fe"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:752d76472d9804ac60f0078c79cdae8b956f293177acd2316cd1e15149aee132"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-manylinux_2_31_riscv64.manylinux_2_39_riscv64.whl", hash = "sha256:83c381767e2cc10e93e40281a04852facc4cd9334550e0f392f72d1c0a9c5753"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:c0022283e9556e0f3643b7c3c03f05063ca72b3063291834cca43234f20c60bb"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-musllinux_1_2_ppc64le.whl", hash = "sha256:a2d4f1513d63c795e82948e1305f31a6d530626e5f9f2605408b300ae6095093"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-musllinux_1_2_riscv64.whl", hash = "sha256:c9c8e68d8b4a56fda8c025e538e639f8c5953f5073886b596c93ec9b620055e7"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-musllinux_1_2_s390x.whl", hash = "sha256:96f19de485a2925314f5020e85911fb447ff5fbef56e8c7c6927851b95533a1c"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:e541c3ef484852ef36545f66209444c48b28661e864ccadb29daddb6a4b8e5f5"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-win32.whl", hash = "sha256:d5e73fa573e273e4f2e5ff96f9043858a5e9311e94ffefd88a3186a910c70917"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-win_amd64.whl", hash = "sha256:9191d68659eda01e448188f60364c7763a7ca6653ed3f87ebb165822153a8547"},
+    {file = "audioop_lts-0.2.2-cp313-cp313t-win_arm64.whl", hash = "sha256:c174e322bb5783c099aaf87faeb240c8d210686b04bd61dfd05a8e5a83d88969"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-macosx_10_13_universal2.whl", hash = "sha256:f9ee9b52f5f857fbaf9d605a360884f034c92c1c23021fb90b2e39b8e64bede6"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-macosx_10_13_x86_64.whl", hash = "sha256:49ee1a41738a23e98d98b937a0638357a2477bc99e61b0f768a8f654f45d9b7a"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:5b00be98ccd0fc123dcfad31d50030d25fcf31488cde9e61692029cd7394733b"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:a6d2e0f9f7a69403e388894d4ca5ada5c47230716a03f2847cfc7bd1ecb589d6"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f9b0b8a03ef474f56d1a842af1a2e01398b8f7654009823c6d9e0ecff4d5cfbf"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:2b267b70747d82125f1a021506565bdc5609a2b24bcb4773c16d79d2bb260bbd"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:0337d658f9b81f4cd0fdb1f47635070cc084871a3d4646d9de74fdf4e7c3d24a"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-manylinux_2_31_riscv64.manylinux_2_39_riscv64.whl", hash = "sha256:167d3b62586faef8b6b2275c3218796b12621a60e43f7e9d5845d627b9c9b80e"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:0d9385e96f9f6da847f4d571ce3cb15b5091140edf3db97276872647ce37efd7"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-musllinux_1_2_ppc64le.whl", hash = "sha256:48159d96962674eccdca9a3df280e864e8ac75e40a577cc97c5c42667ffabfc5"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-musllinux_1_2_riscv64.whl", hash = "sha256:8fefe5868cd082db1186f2837d64cfbfa78b548ea0d0543e9b28935ccce81ce9"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-musllinux_1_2_s390x.whl", hash = "sha256:58cf54380c3884fb49fdd37dfb7a772632b6701d28edd3e2904743c5e1773602"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:088327f00488cdeed296edd9215ca159f3a5a5034741465789cad403fcf4bec0"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-win32.whl", hash = "sha256:068aa17a38b4e0e7de771c62c60bbca2455924b67a8814f3b0dee92b5820c0b3"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-win_amd64.whl", hash = "sha256:a5bf613e96f49712073de86f20dbdd4014ca18efd4d34ed18c75bd808337851b"},
+    {file = "audioop_lts-0.2.2-cp314-cp314t-win_arm64.whl", hash = "sha256:b492c3b040153e68b9fdaff5913305aaaba5bb433d8a7f73d5cf6a64ed3cc1dd"},
+    {file = "audioop_lts-0.2.2.tar.gz", hash = "sha256:64d0c62d88e67b98a1a5e71987b7aa7b5bcffc7dcee65b635823dbdd0a8dbbd0"},
+]
+
+[[package]]
 name = "audioread"
 version = "3.1.0"
 description = "Multi-library, cross-platform audio decoding."
@@ -519,6 +575,10 @@ files = [
     {file = "audioread-3.1.0-py3-none-any.whl", hash = "sha256:b30d1df6c5d3de5dcef0fb0e256f6ea17bdcf5f979408df0297d8a408e2971b4"},
     {file = "audioread-3.1.0.tar.gz", hash = "sha256:1c4ab2f2972764c896a8ac61ac53e261c8d29f0c6ccd652f84e18f08a4cab190"},
 ]
+
+[package.dependencies]
+standard-aifc = {version = "*", markers = "python_version >= \"3.13\""}
+standard-sunau = {version = "*", markers = "python_version >= \"3.13\""}
 
 [package.extras]
 gi = ["pygobject (>=3.54.2,<4.0.0)"]
@@ -1033,18 +1093,15 @@ files = [
 
 [[package]]
 name = "click"
-version = "8.3.3"
+version = "8.5.0"
 description = "Composable command line interface toolkit"
 optional = false
 python-versions = ">=3.10"
 groups = ["backend", "dev", "evals-summarisation", "evals-transcription", "worker"]
 files = [
-    {file = "click-8.3.3-py3-none-any.whl", hash = "sha256:a2bf429bb3033c89fa4936ffb35d5cb471e3719e1f3c8a7c3fff0b8314305613"},
-    {file = "click-8.3.3.tar.gz", hash = "sha256:398329ad4837b2ff7cbe1dd166a4c0f8900c3ca3a218de04466f38f6497f18a2"},
+    {file = "click-8.5.0-py3-none-any.whl", hash = "sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"},
+    {file = "click-8.5.0.tar.gz", hash = "sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34"},
 ]
-
-[package.dependencies]
-colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "cloudpickle"
@@ -1064,12 +1121,12 @@ version = "0.4.6"
 description = "Cross-platform colored terminal text."
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
-groups = ["main", "backend", "dev", "evals-summarisation", "evals-transcription", "worker"]
+groups = ["main", "dev", "evals-summarisation", "evals-transcription", "worker"]
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
-markers = {main = "platform_system == \"Windows\"", backend = "platform_system == \"Windows\"", dev = "platform_system == \"Windows\" or sys_platform == \"win32\"", evals-summarisation = "platform_system == \"Windows\"", evals-transcription = "platform_system == \"Windows\"", worker = "platform_system == \"Windows\""}
+markers = {main = "platform_system == \"Windows\"", dev = "platform_system == \"Windows\" or sys_platform == \"win32\"", evals-summarisation = "platform_system == \"Windows\"", evals-transcription = "platform_system == \"Windows\"", worker = "platform_system == \"Windows\""}
 
 [[package]]
 name = "colorful"
@@ -1384,29 +1441,27 @@ sanitizer = ["nvidia-cuda-sanitizer-api (==13.0.85.*) ; sys_platform == \"linux\
 
 [[package]]
 name = "datasets"
-version = "5.0.1"
+version = "5.1.0"
 description = "HuggingFace community-driven open-source library of datasets"
 optional = false
 python-versions = ">=3.10.0"
 groups = ["evals-summarisation", "evals-transcription"]
 files = [
-    {file = "datasets-5.0.1-py3-none-any.whl", hash = "sha256:9fbf73688f8c18f7529b4fe592abd04015f81d1e58001e4bac73ffb2b39d7cc4"},
-    {file = "datasets-5.0.1.tar.gz", hash = "sha256:ce22bb851efd7494f08aad33b940803784434f6e77763d00679a0dc45fcf686a"},
+    {file = "datasets-5.1.0-py3-none-any.whl", hash = "sha256:86fd08b280485aab82894d2c81842c4151d93b575efea0054315104cb7bc3cec"},
+    {file = "datasets-5.1.0.tar.gz", hash = "sha256:1561347daa8841b51351ef2ad1647b4ee4af406852c0f7bd1df587ac1ca7888e"},
 ]
 
 [package.dependencies]
 dill = ">=0.3.0,<0.4.2"
 filelock = "*"
-fsspec = {version = ">=2023.1.0,<=2026.6.0", extras = ["http"]}
-httpx = "<1.0.0"
-huggingface-hub = ">=0.25.0,<2.0"
+fsspec = {version = ">=2023.1.0,<=2026.7.0", extras = ["http"]}
+huggingface-hub = ">=1.31.0,<3.0"
 multiprocess = "<0.70.20"
 numpy = ">=1.17"
 packaging = "*"
 pandas = "*"
-pyarrow = ">=21.0.0"
+pyarrow = ">=24.0.0"
 pyyaml = ">=5.1"
-requests = ">=2.32.2"
 torch = {version = ">=2.8.0", optional = true, markers = "extra == \"audio\""}
 torchcodec = {version = ">=0.6.0", optional = true, markers = "extra == \"audio\""}
 tqdm = ">=4.66.3"
@@ -1415,7 +1470,8 @@ xxhash = "*"
 [package.extras]
 audio = ["torch (>=2.8.0)", "torchcodec (>=0.6.0)"]
 benchmarks = ["tensorflow (==2.12.0)", "torch (==2.0.1)", "transformers (==4.30.1)"]
-dev = ["Pillow (>=9.4.0)", "absl-py", "aiohttp", "decorator", "elasticsearch (>=7.17.12,<8.0.0)", "faiss-cpu (>=1.8.0.post1)", "h5py", "jax (>=0.3.14) ; sys_platform != \"win32\"", "jaxlib (>=0.3.14) ; sys_platform != \"win32\"", "joblib (<1.3.0)", "joblibspark ; python_version < \"3.14\"", "lz4 ; python_version < \"3.14\"", "moto[server]", "nibabel (>=5.3.1)", "numba (>=0.56.4) ; python_version < \"3.14\"", "polars[timezone] (>=0.20.0)", "protobuf (<4.0.0)", "py7zr", "pyiceberg[pyarrow,sql-sqlite]", "pylance", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "rarfile (>=4.0)", "ruff (>=0.3.0)", "sqlalchemy", "teich (==0.1.5)", "tensorflow (>=2.16.0) ; python_version >= \"3.10\" and sys_platform != \"win32\" and python_version < \"3.14\"", "tensorflow (>=2.6.0)", "tensorflow (>=2.6.0) ; python_version < \"3.10\" and sys_platform != \"win32\"", "tiktoken", "torch", "torch (>=2.8.0)", "torchcodec (>=0.7.0) ; python_version < \"3.14\"", "torchdata", "transformers", "transformers (>=4.42.0)", "trimesh (>=4.10.0)", "zstandard"]
+bio = ["biopython (>=1.80)"]
+dev = ["Pillow (>=9.4.0)", "absl-py", "aiohttp", "biopython (>=1.80)", "decorator", "elasticsearch (>=7.17.12,<8.0.0)", "faiss-cpu (>=1.8.0.post1)", "h5py", "jax (>=0.3.14) ; sys_platform != \"win32\"", "jaxlib (>=0.3.14) ; sys_platform != \"win32\"", "joblib (<1.3.0)", "joblibspark ; python_version < \"3.14\"", "lz4 ; python_version < \"3.14\"", "moto[server]", "nibabel (>=5.3.1)", "numba (>=0.56.4) ; python_version < \"3.14\"", "polars[timezone] (>=0.20.0)", "protobuf (<4.0.0) ; python_version < \"3.14\"", "py7zr", "pyiceberg[pyarrow,sql-sqlite]", "pylance", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "rarfile (>=4.0)", "ruff (>=0.3.0)", "sqlalchemy", "teich (==0.1.5)", "tensorflow (>=2.16.0) ; python_version >= \"3.10\" and sys_platform != \"win32\" and python_version < \"3.14\"", "tensorflow (>=2.6.0)", "tensorflow (>=2.6.0) ; python_version < \"3.10\" and sys_platform != \"win32\"", "tiktoken", "tomli (>=1.1.0) ; python_version < \"3.11\"", "torch", "torch (>=2.8.0)", "torchcodec (>=0.7.0) ; python_version < \"3.14\"", "torchdata", "transformers", "transformers (>=4.42.0)", "trimesh (>=4.10.0)", "vortex-data ; python_version >= \"3.11\" and sys_platform != \"win32\"", "zstandard"]
 docs = ["tensorflow (>=2.6.0)", "torch", "transformers"]
 iceberg = ["pyiceberg (>=0.7.0)"]
 jax = ["jax (>=0.3.14)", "jaxlib (>=0.3.14)"]
@@ -1425,8 +1481,8 @@ pdfs = ["pdfplumber (>=0.11.4)"]
 quality = ["ruff (>=0.3.0)"]
 tensorflow = ["tensorflow (>=2.6.0)"]
 tensorflow-gpu = ["tensorflow (>=2.6.0)"]
-tests = ["Pillow (>=9.4.0)", "absl-py", "aiohttp", "decorator", "elasticsearch (>=7.17.12,<8.0.0)", "faiss-cpu (>=1.8.0.post1)", "h5py", "jax (>=0.3.14) ; sys_platform != \"win32\"", "jaxlib (>=0.3.14) ; sys_platform != \"win32\"", "joblib (<1.3.0)", "joblibspark ; python_version < \"3.14\"", "lz4 ; python_version < \"3.14\"", "moto[server]", "nibabel (>=5.3.1)", "numba (>=0.56.4) ; python_version < \"3.14\"", "polars[timezone] (>=0.20.0)", "protobuf (<4.0.0)", "py7zr", "pyiceberg[pyarrow,sql-sqlite]", "pylance", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "rarfile (>=4.0)", "sqlalchemy", "teich (==0.1.5)", "tensorflow (>=2.16.0) ; python_version >= \"3.10\" and sys_platform != \"win32\" and python_version < \"3.14\"", "tensorflow (>=2.6.0) ; python_version < \"3.10\" and sys_platform != \"win32\"", "tiktoken", "torch (>=2.8.0)", "torchcodec (>=0.7.0) ; python_version < \"3.14\"", "torchdata", "transformers (>=4.42.0)", "trimesh (>=4.10.0)", "zstandard"]
-tests-numpy2 = ["Pillow (>=9.4.0)", "absl-py", "aiohttp", "decorator", "elasticsearch (>=7.17.12,<8.0.0)", "h5py", "jax (>=0.3.14) ; sys_platform != \"win32\"", "jaxlib (>=0.3.14) ; sys_platform != \"win32\"", "joblib (<1.3.0)", "joblibspark ; python_version < \"3.14\"", "lz4 ; python_version < \"3.14\"", "moto[server]", "nibabel (>=5.3.1)", "numba (>=0.56.4) ; python_version < \"3.14\"", "polars[timezone] (>=0.20.0)", "protobuf (<4.0.0)", "py7zr", "pyiceberg[pyarrow,sql-sqlite]", "pylance", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "rarfile (>=4.0)", "sqlalchemy", "teich (==0.1.5)", "tiktoken", "torch (>=2.8.0)", "torchcodec (>=0.7.0) ; python_version < \"3.14\"", "torchdata", "transformers (>=4.42.0)", "trimesh (>=4.10.0)", "zstandard"]
+tests = ["Pillow (>=9.4.0)", "absl-py", "aiohttp", "biopython (>=1.80)", "decorator", "elasticsearch (>=7.17.12,<8.0.0)", "faiss-cpu (>=1.8.0.post1)", "h5py", "jax (>=0.3.14) ; sys_platform != \"win32\"", "jaxlib (>=0.3.14) ; sys_platform != \"win32\"", "joblib (<1.3.0)", "joblibspark ; python_version < \"3.14\"", "lz4 ; python_version < \"3.14\"", "moto[server]", "nibabel (>=5.3.1)", "numba (>=0.56.4) ; python_version < \"3.14\"", "polars[timezone] (>=0.20.0)", "protobuf (<4.0.0) ; python_version < \"3.14\"", "py7zr", "pyiceberg[pyarrow,sql-sqlite]", "pylance", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "rarfile (>=4.0)", "sqlalchemy", "teich (==0.1.5)", "tensorflow (>=2.16.0) ; python_version >= \"3.10\" and sys_platform != \"win32\" and python_version < \"3.14\"", "tensorflow (>=2.6.0) ; python_version < \"3.10\" and sys_platform != \"win32\"", "tiktoken", "tomli (>=1.1.0) ; python_version < \"3.11\"", "torch (>=2.8.0)", "torchcodec (>=0.7.0) ; python_version < \"3.14\"", "torchdata", "transformers (>=4.42.0)", "trimesh (>=4.10.0)", "vortex-data ; python_version >= \"3.11\" and sys_platform != \"win32\"", "zstandard"]
+tests-numpy2 = ["Pillow (>=9.4.0)", "absl-py", "aiohttp", "biopython (>=1.80)", "decorator", "elasticsearch (>=7.17.12,<8.0.0)", "h5py", "jax (>=0.3.14) ; sys_platform != \"win32\"", "jaxlib (>=0.3.14) ; sys_platform != \"win32\"", "joblib (<1.3.0)", "joblibspark ; python_version < \"3.14\"", "lz4 ; python_version < \"3.14\"", "moto[server]", "nibabel (>=5.3.1)", "numba (>=0.56.4) ; python_version < \"3.14\"", "polars[timezone] (>=0.20.0)", "protobuf (<4.0.0) ; python_version < \"3.14\"", "py7zr", "pyiceberg[pyarrow,sql-sqlite]", "pylance", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "rarfile (>=4.0)", "sqlalchemy", "teich (==0.1.5)", "tiktoken", "tomli (>=1.1.0) ; python_version < \"3.11\"", "torch (>=2.8.0)", "torchcodec (>=0.7.0) ; python_version < \"3.14\"", "torchdata", "transformers (>=4.42.0)", "trimesh (>=4.10.0)", "vortex-data ; python_version >= \"3.11\" and sys_platform != \"win32\"", "zstandard"]
 torch = ["torch"]
 vision = ["Pillow (>=9.4.0)"]
 
@@ -1965,14 +2021,14 @@ files = [
 
 [[package]]
 name = "fsspec"
-version = "2025.3.0"
+version = "2026.7.0"
 description = "File-system specification"
 optional = false
-python-versions = ">=3.8"
-groups = ["dev", "evals-summarisation", "evals-transcription"]
+python-versions = ">=3.10"
+groups = ["main", "dev", "evals-summarisation", "evals-transcription"]
 files = [
-    {file = "fsspec-2025.3.0-py3-none-any.whl", hash = "sha256:efb87af3efa9103f94ca91a7f8cb7a4df91af9f74fc106c9c7ea0efd7277c1b3"},
-    {file = "fsspec-2025.3.0.tar.gz", hash = "sha256:a935fd1ea872591f2b5148907d103488fc523295e6c64b835cfad8c3eca44972"},
+    {file = "fsspec-2026.7.0-py3-none-any.whl", hash = "sha256:b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279"},
+    {file = "fsspec-2026.7.0.tar.gz", hash = "sha256:c803c40f4cf860b49dea58ee3e1c33cb9c790520e233537e1340049f89b82a88"},
 ]
 
 [package.dependencies]
@@ -1983,27 +2039,27 @@ abfs = ["adlfs"]
 adl = ["adlfs"]
 arrow = ["pyarrow (>=1)"]
 dask = ["dask", "distributed"]
-dev = ["pre-commit", "ruff"]
+dev = ["pre-commit", "ruff (>=0.5)"]
 doc = ["numpydoc", "sphinx", "sphinx-design", "sphinx-rtd-theme", "yarl"]
 dropbox = ["dropbox", "dropboxdrivefs", "requests"]
-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "dask", "distributed", "dropbox", "dropboxdrivefs", "fusepy", "gcsfs", "libarchive-c", "ocifs", "panel", "paramiko", "pyarrow (>=1)", "pygit2", "requests", "s3fs", "smbprotocol", "tqdm"]
+full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "dask", "distributed", "dropbox", "dropboxdrivefs", "fusepy", "gcsfs (>=2026.4.0)", "libarchive-c", "ocifs", "panel", "paramiko", "pyarrow (>=1)", "pygit2", "requests", "s3fs (>=2026.6.0)", "smbprotocol", "tqdm"]
 fuse = ["fusepy"]
-gcs = ["gcsfs"]
+gcs = ["gcsfs (>=2026.4.0)"]
 git = ["pygit2"]
 github = ["requests"]
-gs = ["gcsfs"]
+gs = ["gcsfs (>=2026.4.0)"]
 gui = ["panel"]
 hdfs = ["pyarrow (>=1)"]
 http = ["aiohttp (!=4.0.0a0,!=4.0.0a1)"]
 libarchive = ["libarchive-c"]
 oci = ["ocifs"]
-s3 = ["s3fs"]
+s3 = ["s3fs (>=2026.6.0)"]
 sftp = ["paramiko"]
 smb = ["smbprotocol"]
 ssh = ["paramiko"]
 test = ["aiohttp (!=4.0.0a0,!=4.0.0a1)", "numpy", "pytest", "pytest-asyncio (!=0.22.0)", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-recording", "pytest-rerunfailures", "requests"]
 test-downstream = ["aiobotocore (>=2.5.4,<3.0.0)", "dask[dataframe,test]", "moto[server] (>4,<5)", "pytest-timeout", "xarray"]
-test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "cloudpickle", "dask", "distributed", "dropbox", "dropboxdrivefs", "fastparquet", "fusepy", "gcsfs", "jinja2", "kerchunk", "libarchive-c", "lz4", "notebook", "numpy", "ocifs", "pandas", "panel", "paramiko", "pyarrow", "pyarrow (>=1)", "pyftpdlib", "pygit2", "pytest", "pytest-asyncio (!=0.22.0)", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-recording", "pytest-rerunfailures", "python-snappy", "requests", "smbprotocol", "tqdm", "urllib3", "zarr", "zstandard"]
+test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "backports-zstd ; python_version < \"3.14\"", "cloudpickle", "dask", "distributed", "dropbox", "dropboxdrivefs", "fastparquet", "fusepy", "gcsfs (>=2026.4.0)", "jinja2", "kerchunk", "libarchive-c", "lz4", "notebook", "numpy", "ocifs", "pandas (<3.0.0)", "panel", "paramiko", "pyarrow (>=1)", "pyftpdlib", "pygit2", "pytest", "pytest-asyncio (!=0.22.0)", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-recording", "pytest-rerunfailures", "python-snappy", "requests", "s3fs (>=2026.6.0)", "smbprotocol", "tqdm", "urllib3", "zarr (<3.2.0)", "zstandard ; python_version < \"3.14\""]
 tqdm = ["tqdm"]
 
 [[package]]
@@ -2051,7 +2107,7 @@ files = [
 [package.dependencies]
 google-auth = ">=2.14.1,<3.0.0"
 googleapis-common-protos = ">=1.63.2,<2.0.0"
-proto-plus = ">=1.22.3,<2.0.0"
+proto-plus = {version = ">=1.25.0,<2.0.0", markers = "python_version >= \"3.13\""}
 protobuf = ">=4.25.8,<8.0.0"
 requests = ">=2.20.0,<3.0.0"
 
@@ -2309,38 +2365,30 @@ files = [
 
 [[package]]
 name = "hf-xet"
-version = "1.5.0"
+version = "1.7.0"
 description = "Fast transfer of large files with the Hugging Face Hub."
 optional = false
 python-versions = ">=3.8"
 groups = ["dev", "evals-summarisation", "evals-transcription"]
 markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"arm64\") or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\""
 files = [
-    {file = "hf_xet-1.5.0-cp313-cp313t-macosx_10_12_x86_64.whl", hash = "sha256:7d70fe2ce97b9db73b9c9b9c81fe3693640aec83416a966c446afea54acfae3c"},
-    {file = "hf_xet-1.5.0-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:73a0dae8c71de3b0633a45c73f4a4a5ed09e94b43441d82981a781d4f12baa42"},
-    {file = "hf_xet-1.5.0-cp313-cp313t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:a60290ec57e9b71767fba7c3645ddafdd0759974b540441510c629c6db6db24a"},
-    {file = "hf_xet-1.5.0-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:e5de0f6deada0dada870bb376a11bcd1f08abf3a968a6d118f33e72d1b1eb480"},
-    {file = "hf_xet-1.5.0-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:c799d49f1a5544a0ef7591c0ee75e0d6b93d6f56dc7a4979f59f7518d2872216"},
-    {file = "hf_xet-1.5.0-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:2baea1b0b989e5c152fe81425f7745ddc8901280ba3d97c98d8cdece7b706c60"},
-    {file = "hf_xet-1.5.0-cp313-cp313t-win_amd64.whl", hash = "sha256:526345b3ed45f374f6317349df489167606736c876241ba984105afe7fd4839d"},
-    {file = "hf_xet-1.5.0-cp313-cp313t-win_arm64.whl", hash = "sha256:786d28e2eb8315d5035544b9d137b4a842d600c434bb91bf7d0d953cce906ad4"},
-    {file = "hf_xet-1.5.0-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:872d5601e6deea30d15865ede55d29eac6daf5a534ab417b99b6ef6b076dd96c"},
-    {file = "hf_xet-1.5.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:9929561f5abf4581c8ea79587881dfef6b8abb2a0d8a51915936fc2a614f4e73"},
-    {file = "hf_xet-1.5.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:f7b7bbae318e583a86fb21e5a4a175d6721d628a2874f4bd022d0e660c32a682"},
-    {file = "hf_xet-1.5.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:cf7b2dc6f31a4ea754bb50f74cde482dcf5d366d184076d8530b9872787f3761"},
-    {file = "hf_xet-1.5.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:8dbcbab554c9ef158ef2c991545c3e970ddd8cc7acdcd0a78c5a41095dab4ded"},
-    {file = "hf_xet-1.5.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:5906bf7718d3636dc13402914736abe723492cb730f744834f5f5b67d3a12702"},
-    {file = "hf_xet-1.5.0-cp314-cp314t-win_amd64.whl", hash = "sha256:5f3dc2248fc01cc0a00cd392ab497f1ca373fcbc7e3f2da1f452480b384e839e"},
-    {file = "hf_xet-1.5.0-cp314-cp314t-win_arm64.whl", hash = "sha256:b285cea1b5bab46b758772716ba8d6854a1a0310fed1c249d678a8b38601e5a0"},
-    {file = "hf_xet-1.5.0-cp37-abi3-macosx_10_12_x86_64.whl", hash = "sha256:dad0dc84e941b8ba3c860659fe1fdc35c049d47cce293f003287757e971a8f56"},
-    {file = "hf_xet-1.5.0-cp37-abi3-macosx_11_0_arm64.whl", hash = "sha256:fd6e5a9b0fdac4ed03ed45ef79254a655b1aaab514a02202617fbf643f5fdf7a"},
-    {file = "hf_xet-1.5.0-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:3531b1823a0e6d77d80f9ed15ca0e00f0d115094f8ac033d5cae88f4564cc949"},
-    {file = "hf_xet-1.5.0-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:9a0ee58cd18d5ea799f7ed11290bbccbe56bdd8b1d97ca74b9cc49a3945d7a3b"},
-    {file = "hf_xet-1.5.0-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:1e60df5a42e9bed8628b6416af2cba4cba57ae9f02de226a06b020d98e1aab18"},
-    {file = "hf_xet-1.5.0-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:4b35549ce62601b84da4ff9b24d970032ace3d4430f52d91bcbb26c901d6c690"},
-    {file = "hf_xet-1.5.0-cp37-abi3-win_amd64.whl", hash = "sha256:2806c7c17b4d23f8d88f7c4814f838c3b6150773fe339c20af23e1cfaf2797e4"},
-    {file = "hf_xet-1.5.0-cp37-abi3-win_arm64.whl", hash = "sha256:b6c9df403040248c76d808d3e047d64db2d923bae593eb244c41e425cf6cd7be"},
-    {file = "hf_xet-1.5.0.tar.gz", hash = "sha256:e0fb0a34d9f406eed88233e829a67ec016bec5af19e480eac65a233ea289a948"},
+    {file = "hf_xet-1.7.0-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:fa029678be1ba7f953c409b0b27bf15cc69cd1c9b3a674fbd78856ebefca1052"},
+    {file = "hf_xet-1.7.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:57bc157b8b7fe3bee9dcb9af7f3da8de41801c3b31a9ef68a77a33c6a6be382f"},
+    {file = "hf_xet-1.7.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:87dab080f8f7d32781c2586904e3603f4e60d09bfc727706c3ae419e0829beeb"},
+    {file = "hf_xet-1.7.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:b01fe18dbbd151a2403d2c64ed30dc6547b00d6babab9a617d77c7acdb81ee66"},
+    {file = "hf_xet-1.7.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:4ee5e05a627f5ab5bad7a86582277d645556ea1e199903aae19e033a392aa13a"},
+    {file = "hf_xet-1.7.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:19c0e64f14175ccb6a1aff69e0d2ab9ec5269a560e6687abaf2b3fa4f73de7cd"},
+    {file = "hf_xet-1.7.0-cp314-cp314t-win_amd64.whl", hash = "sha256:757168feb5679647c0bb13ee5d0faebe799c4dff9051419885a566ebd79f949d"},
+    {file = "hf_xet-1.7.0-cp314-cp314t-win_arm64.whl", hash = "sha256:b91569d5f1b61c34b043687da02c05dd3604f3d329e7868510bf3f7971599006"},
+    {file = "hf_xet-1.7.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:e3e88a7a75d7d95cbee1f37dc31341d6201124cf21c6c4b1dfab8ccba9b09e0f"},
+    {file = "hf_xet-1.7.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:59fba37039233c7fcbe196817d6cdcf1b40dfb17b410f229d85b0cf0a1848da4"},
+    {file = "hf_xet-1.7.0-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:2814a6e999d13464c4d679b788cc5d784eb5a4edfc638a31f10e9a11ab531ef8"},
+    {file = "hf_xet-1.7.0-cp38-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:fcfd6c22418e57dd5b3aea649e813b2e2cfb2aebf317b210d90f1fe4b3018b52"},
+    {file = "hf_xet-1.7.0-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:80f79dae613ce9e0ea1fd1ae15616ca9ac74aed4c770aabc199c4f03ebecc863"},
+    {file = "hf_xet-1.7.0-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:0a9e802f33bf50c851abe45fc5380e61f959e2d369647d6742b79ad9d6c27cab"},
+    {file = "hf_xet-1.7.0-cp38-abi3-win_amd64.whl", hash = "sha256:2b7bb5727889b0f2436dbaaad8fc4c3e66b8240d992716989e0c086b4278b1bc"},
+    {file = "hf_xet-1.7.0-cp38-abi3-win_arm64.whl", hash = "sha256:acc3851cf2576a8fb2ae926da863f4efabe21303cf292e9a44332802ab0dcc6a"},
+    {file = "hf_xet-1.7.0.tar.gz", hash = "sha256:d406ec79053c0871817f700c2ac8c36ba0d87f9c34b7458b0f0063bb218b0466"},
 ]
 
 [package.extras]
@@ -2395,37 +2443,37 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "huggingface-hub"
-version = "1.16.1"
+version = "1.33.0"
 description = "Client library to download and publish models, datasets and other repos on the huggingface.co hub"
 optional = false
 python-versions = ">=3.10.0"
 groups = ["dev", "evals-summarisation", "evals-transcription"]
 files = [
-    {file = "huggingface_hub-1.16.1-py3-none-any.whl", hash = "sha256:64340de934b9ce37857ef85a82de72f5629e8a270f9119eabb12bf495eb53c22"},
-    {file = "huggingface_hub-1.16.1.tar.gz", hash = "sha256:7f1dc4c5ec21aed69be630ad0c3378616be16f3de1a47b141c0e812965d9c832"},
+    {file = "huggingface_hub-1.33.0-py3-none-any.whl", hash = "sha256:04e434b06e100eddbce9a6e817d72693a7884b10a79bd67ab48080d5c07eb899"},
+    {file = "huggingface_hub-1.33.0.tar.gz", hash = "sha256:367be21a201db9523eddf8aeac7048f2602c1b308691c97640d5e72ed188007e"},
 ]
 
 [package.dependencies]
+click = ">=8.4.2,<9.0.0"
 filelock = ">=3.10.0"
 fsspec = ">=2023.5.0"
-hf-xet = {version = ">=1.4.3,<2.0.0", markers = "platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\""}
+hf-xet = {version = ">=1.6.0,<2.0.0", markers = "platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\""}
 httpx = ">=0.23.0,<1"
 packaging = ">=20.9"
 pyyaml = ">=5.1"
 tqdm = ">=4.42.1"
-typer = ">=0.20.0"
 typing-extensions = ">=4.1.0"
 
 [package.extras]
-all = ["Jinja2", "Pillow", "authlib (>=1.3.2)", "duckdb", "fastapi", "fastapi", "httpx", "itsdangerous", "jedi", "libcst (>=1.4.0)", "mypy (==1.15.0)", "numpy", "pytest (>=8.4.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures (<16.0)", "pytest-vcr", "pytest-xdist", "ruff (>=0.9.0)", "soundfile", "ty", "types-PyYAML", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
-dev = ["Jinja2", "Pillow", "authlib (>=1.3.2)", "duckdb", "fastapi", "fastapi", "httpx", "itsdangerous", "jedi", "libcst (>=1.4.0)", "mypy (==1.15.0)", "numpy", "pytest (>=8.4.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures (<16.0)", "pytest-vcr", "pytest-xdist", "ruff (>=0.9.0)", "soundfile", "ty", "types-PyYAML", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
+all = ["Jinja2", "Pillow", "authlib (>=1.3.2)", "duckdb", "fastapi", "fastapi", "httpx", "itsdangerous", "jedi", "libcst (>=1.4.0)", "mypy (==1.15.0)", "numpy", "pytest (>=8.4.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures (>=16.2)", "pytest-vcr", "pytest-xdist", "ruff (>=0.9.0)", "soundfile", "ty", "types-PyYAML", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
+dev = ["Jinja2", "Pillow", "authlib (>=1.3.2)", "duckdb", "fastapi", "fastapi", "httpx", "itsdangerous", "jedi", "libcst (>=1.4.0)", "mypy (==1.15.0)", "numpy", "pytest (>=8.4.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures (>=16.2)", "pytest-vcr", "pytest-xdist", "ruff (>=0.9.0)", "soundfile", "ty", "types-PyYAML", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)", "urllib3 (<2.0)"]
 fastai = ["fastai (>=2.4)", "fastcore (>=1.3.27)", "toml"]
 gradio = ["gradio (>=5.0.0)", "requests"]
-hf-xet = ["hf-xet (>=1.4.3,<2.0.0)"]
-mcp = ["mcp (>=1.8.0)"]
+hf-xet = ["hf-xet (>=1.6.0,<2.0.0)"]
+mcp = ["mcp (>=1.9.4,<2.0.0)"]
 oauth = ["authlib (>=1.3.2)", "fastapi", "httpx", "itsdangerous"]
 quality = ["libcst (>=1.4.0)", "mypy (==1.15.0)", "ruff (>=0.9.0)", "ty"]
-testing = ["Jinja2", "Pillow", "authlib (>=1.3.2)", "duckdb", "fastapi", "fastapi", "httpx", "itsdangerous", "jedi", "numpy", "pytest (>=8.4.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures (<16.0)", "pytest-vcr", "pytest-xdist", "soundfile", "urllib3 (<2.0)"]
+testing = ["Jinja2", "Pillow", "authlib (>=1.3.2)", "duckdb", "fastapi", "fastapi", "httpx", "itsdangerous", "jedi", "numpy", "pytest (>=8.4.2)", "pytest-asyncio", "pytest-cov", "pytest-env", "pytest-mock", "pytest-rerunfailures (>=16.2)", "pytest-vcr", "pytest-xdist", "soundfile", "urllib3 (<2.0)"]
 torch = ["safetensors[torch]", "torch"]
 typing = ["types-PyYAML", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3", "typing-extensions (>=4.8.0)"]
 
@@ -3246,14 +3294,20 @@ files = [
 
 [[package]]
 name = "litellm"
-version = "1.88.6"
+version = "1.97.0"
 description = "Library to easily interface with LLM API providers"
 optional = false
-python-versions = "<3.14,>=3.10"
+python-versions = "<3.15,>=3.10"
 groups = ["dev", "evals-summarisation"]
 files = [
-    {file = "litellm-1.88.6-py3-none-any.whl", hash = "sha256:8c01f7e9aebded5b3509128be648518a2ec4f1feb8dfb87a539895091651898b"},
-    {file = "litellm-1.88.6.tar.gz", hash = "sha256:07d947dfe92f137d5296c40285dbcf97cb405b4300d73c0feda48d76468d6eb4"},
+    {file = "litellm-1.97.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:ff401dd5d66f54b9b474f0652c419fb7bf883fbf5ca64c0bc363acdc98b758b5"},
+    {file = "litellm-1.97.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:2983b40ed5d8b1bcbbfbc0d66fefa21b04db91b87c05dd680ae77cba74e561ef"},
+    {file = "litellm-1.97.0-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:e3a1f70d693716b4e8a8108f0a464b0e2c555e274ddbb8ef89c4c59c80be14ed"},
+    {file = "litellm-1.97.0-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:5b56dce7df44a6a9e6caf5379de2578a8cb82831ceabd3d71cc99b370a1015e7"},
+    {file = "litellm-1.97.0-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:6b360ddc3162c2ed39b64d3f9957a7af70cd9c60cf71f7a4dfa355a0bf05bebc"},
+    {file = "litellm-1.97.0-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:3c4f1dd45e14127f2303769a7ae79482697823e329ae503513d014ceea4dd704"},
+    {file = "litellm-1.97.0-cp310-abi3-win_amd64.whl", hash = "sha256:dce3377207234fc5c5b275a5e234ba056a5051fd178ae8e9a6aeb5d056f12095"},
+    {file = "litellm-1.97.0.tar.gz", hash = "sha256:6f7ce326a2e5385ef850e0b0768d41f502ec79278860090a838511cea067b067"},
 ]
 
 [package.dependencies]
@@ -3266,18 +3320,22 @@ jinja2 = ">=3.1.6,<4.0"
 jsonschema = ">=4.0.0,<5.0"
 openai = ">=2.20.0,<3.0.0"
 pydantic = ">=2.10.0,<3.0.0"
+pydantic-settings = ">=2.14.1,<3.0"
 python-dotenv = ">=1.0.0,<2.0"
 tiktoken = ">=0.8.0,<1.0"
 tokenizers = ">=0.21.0,<1.0"
 
 [package.extras]
+bedrock-realtime = ["aws-sdk-bedrock-runtime (>=0.7.0,<0.8.0) ; python_full_version >= \"3.12.0\""]
 caching = ["diskcache (>=5.6.3,<6.0)"]
-extra-proxy = ["a2a-sdk (>=0.3.24,<1.0)", "azure-identity (>=1.25.2,<2.0)", "azure-keyvault-secrets (>=4.10.0,<5.0)", "google-cloud-iam (>=2.19.1,<3.0)", "google-cloud-kms (>=2.24.2,<3.0)", "prisma (>=0.11.0,<1.0)", "redisvl (>=0.4.1,<1.0) ; python_full_version < \"3.14.0\"", "resend (>=2.23.0,<3.0)"]
+cli = ["inquirerpy (>=0.3.4,<1.0)", "pyyaml (>=6.0.3,<7.0)", "requests (>=2.32.0,<3.0)", "rich (>=13.9.4,<14.0)"]
+extra-proxy = ["a2a-sdk (>=1.1.0,<2.0)", "azure-identity (>=1.25.2,<2.0)", "azure-keyvault-secrets (>=4.10.0,<5.0)", "google-cloud-iam (>=2.19.1,<3.0)", "google-cloud-kms (>=2.24.2,<3.0)", "prisma (>=0.11.0,<1.0)", "redisvl (>=0.4.1,<1.0)", "resend (>=2.23.0,<3.0)"]
 google = ["google-cloud-aiplatform (>=1.133.0,<2.0)"]
 grpc = ["grpcio (==1.78.0)"]
 mlflow = ["mlflow (>=3.11.1,<4.0)"]
-proxy = ["apscheduler (>=3.11.2,<4.0)", "azure-identity (>=1.25.2,<2.0)", "azure-storage-blob (>=12.28.0,<13.0)", "backoff (>=2.2.1,<3.0)", "boto3 (>=1.43.1,<2.0)", "cryptography (>=50.0.0,<51.0)", "fastapi (>=0.136.3,<1.0)", "fastapi-sso (>=0.19.0,<1.0)", "granian (>=2.7.4,<3.0)", "gunicorn (>=23.0.0,<24.0)", "litellm-enterprise (==0.1.42.post1)", "litellm-proxy-extras (==0.4.73)", "mcp (>=1.26.0,<2.0)", "orjson (>=3.11.6,<4.0)", "polars (>=1.38.1,<2.0)", "pydantic-settings (>=2.14.1,<3.0)", "pyjwt (>=2.13.0,<3.0)", "pynacl (>=1.6.2,<2.0)", "pyroscope-io (>=0.8.16,<1.0) ; sys_platform != \"win32\"", "python-multipart (>=0.0.27,<1.0)", "pyyaml (>=6.0.3,<7.0)", "restrictedpython (>=8.1,<9.0)", "rich (>=13.9.4,<14.0)", "rq (>=2.7.0,<3.0)", "soundfile (>=0.12.1,<1.0)", "starlette (>=1.0.1,<2.0)", "uvicorn (>=0.33.0,<1.0)", "uvloop (>=0.21.0,<1.0) ; sys_platform != \"win32\"", "websockets (>=15.0.1,<16.0)"]
-proxy-runtime = ["anthropic[vertex] (>=0.84.0,<1.0)", "azure-ai-contentsafety (>=1.0.0,<2.0)", "azure-storage-file-datalake (>=12.20.0,<13.0)", "ddtrace (>=4.8.2,<5.0)", "detect-secrets (>=1.5.0,<2.0)", "google-cloud-aiplatform (>=1.133.0,<2.0)", "google-genai (>=1.37.0,<2.0)", "grpcio (==1.78.0)", "langfuse (>=2.59.7,<3.0)", "llm-sandbox (>=0.3.39,<1.0)", "mangum (>=0.17.0,<1.0)", "opentelemetry-api (==1.28.0)", "opentelemetry-exporter-otlp (==1.28.0)", "opentelemetry-instrumentation-fastapi (==0.49b0)", "opentelemetry-sdk (==1.28.0)", "prometheus-client (>=0.20.0,<1.0)", "pypdf (>=6.12.0,<7.0) ; python_full_version < \"3.14.0\"", "sentry-sdk (>=2.21.0,<3.0)"]
+proxy = ["apscheduler (>=3.11.2,<4.0)", "azure-identity (>=1.25.2,<2.0)", "azure-storage-blob (>=12.28.0,<13.0)", "backoff (>=2.2.1,<3.0)", "boto3 (>=1.43.1,<2.0)", "cryptography (>=49.0.0,<51.0)", "expression (>=5.6.0,<6.0)", "fastapi (>=0.136.3,<1.0)", "fastapi-sso (>=0.19.0,<1.0)", "granian (>=2.7.4,<3.0)", "gunicorn (>=23.0.0,<24.0)", "hiredis (>=3.0.0,<4.0)", "inquirerpy (>=0.3.4,<1.0)", "litellm-enterprise (==0.1.54)", "litellm-proxy-extras (==0.4.84)", "mcp (>=1.28.1,<2.0)", "orjson (>=3.11.6,<4.0)", "polars (>=1.38.1,<2.0)", "pyjwt (>=2.13.0,<3.0)", "pynacl (>=1.6.2,<2.0)", "pyroscope-io (>=0.8.16,<1.0) ; sys_platform != \"win32\"", "python-multipart (>=0.0.27,<1.0)", "pyyaml (>=6.0.3,<7.0)", "restrictedpython (>=8.1,<9.0)", "rich (>=13.9.4,<14.0)", "rq (>=2.7.0,<3.0)", "soundfile (>=0.12.1,<1.0)", "starlette (>=1.0.1,<2.0)", "uvicorn (>=0.33.0,<1.0)", "uvloop (>=0.21.0,<1.0) ; sys_platform != \"win32\"", "websockets (>=15.0.1,<16.0)"]
+proxy-runtime = ["anthropic[vertex] (>=0.84.0,<1.0)", "azure-ai-contentsafety (>=1.0.0,<2.0)", "azure-storage-file-datalake (>=12.20.0,<13.0)", "ddtrace (>=4.8.2,<5.0)", "detect-secrets (>=1.5.0,<2.0)", "google-cloud-aiplatform (>=1.133.0,<2.0)", "google-genai (>=1.37.0,<2.0)", "grpcio (==1.78.0)", "langfuse (>=2.59.7,<3.0)", "llm-sandbox (>=0.3.39,<1.0)", "mangum (>=0.17.0,<1.0)", "opentelemetry-api (==1.28.0)", "opentelemetry-exporter-otlp (==1.28.0)", "opentelemetry-instrumentation-fastapi (==0.49b0)", "opentelemetry-sdk (==1.28.0)", "prometheus-client (>=0.20.0,<1.0)", "pypdf (>=6.12.0,<7.0)", "sentry-sdk (>=2.21.0,<3.0)"]
+saml = ["python3-saml (>=1.16.0,<2.0)"]
 semantic-router = ["aurelio-sdk (>=0.0.19,<1.0) ; python_full_version < \"3.14.0\"", "semantic-router (>=0.1.15,<1.0) ; python_full_version < \"3.14.0\""]
 stt-nvidia-riva = ["audioread (>=3.0.1)", "numpy (>=1.26.0)", "nvidia-riva-client (>=2.15.0)", "soundfile (>=0.12.1)"]
 utils = ["numpydoc (>=1.8.0,<2.0)"]
@@ -3343,7 +3401,7 @@ version = "4.2.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
 optional = false
 python-versions = ">=3.10"
-groups = ["dev", "evals-summarisation", "evals-transcription"]
+groups = ["dev", "evals-summarisation"]
 files = [
     {file = "markdown_it_py-4.2.0-py3-none-any.whl", hash = "sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"},
     {file = "markdown_it_py-4.2.0.tar.gz", hash = "sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49"},
@@ -3500,7 +3558,7 @@ version = "0.1.2"
 description = "Markdown URL utilities"
 optional = false
 python-versions = ">=3.7"
-groups = ["dev", "evals-summarisation", "evals-transcription"]
+groups = ["dev", "evals-summarisation"]
 files = [
     {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
     {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
@@ -3988,14 +4046,14 @@ files = [
 
 [[package]]
 name = "networkx"
-version = "3.6.1"
+version = "3.6"
 description = "Python package for creating and manipulating graphs and networks"
 optional = false
-python-versions = "!=3.14.1,>=3.11"
+python-versions = ">=3.11"
 groups = ["evals-summarisation", "evals-transcription"]
 files = [
-    {file = "networkx-3.6.1-py3-none-any.whl", hash = "sha256:d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762"},
-    {file = "networkx-3.6.1.tar.gz", hash = "sha256:26b7c357accc0c8cde558ad486283728b65b6a95d85ee1cd66bafab4c8168509"},
+    {file = "networkx-3.6-py3-none-any.whl", hash = "sha256:cdb395b105806062473d3be36458d8f1459a4e4b98e236a66c3a48996e07684f"},
+    {file = "networkx-3.6.tar.gz", hash = "sha256:285276002ad1f7f7da0f7b42f004bcba70d381e936559166363707fdad3d72ad"},
 ]
 
 [package.extras]
@@ -4441,14 +4499,14 @@ files = [
 
 [[package]]
 name = "opentelemetry-api"
-version = "1.42.1"
+version = "1.45.1"
 description = "OpenTelemetry Python API"
 optional = false
 python-versions = ">=3.10"
 groups = ["worker"]
 files = [
-    {file = "opentelemetry_api-1.42.1-py3-none-any.whl", hash = "sha256:51a69edacadbc03a8950ace1c4c21099cacc538820ac2c9e36277e78cebba714"},
-    {file = "opentelemetry_api-1.42.1.tar.gz", hash = "sha256:56c63bea9f77b62856be8c47600474acad853b2924b99b1687c4cb6297166716"},
+    {file = "opentelemetry_api-1.45.1-py3-none-any.whl", hash = "sha256:b31553efa588ae44bc306f863c785c5333a9ecc091248c6ee68b4b6c87fdedfb"},
+    {file = "opentelemetry_api-1.45.1.tar.gz", hash = "sha256:aa38ed19bcc084ba42782a73255b3582283eced7ad6dddbd6695189e69adfb75"},
 ]
 
 [package.dependencies]
@@ -4456,19 +4514,19 @@ typing-extensions = ">=4.5.0"
 
 [[package]]
 name = "opentelemetry-exporter-prometheus"
-version = "0.63b1"
+version = "0.66b1"
 description = "Prometheus Metric Exporter for OpenTelemetry"
 optional = false
 python-versions = ">=3.10"
 groups = ["worker"]
 files = [
-    {file = "opentelemetry_exporter_prometheus-0.63b1-py3-none-any.whl", hash = "sha256:0efd00aa6b1939345ddcc6de141b83ebffa2b4401a37a68f880e54217602701d"},
-    {file = "opentelemetry_exporter_prometheus-0.63b1.tar.gz", hash = "sha256:31902e22c89431058a95b6dcdb644f9309f226aa4872cc755f0a780d2895e97f"},
+    {file = "opentelemetry_exporter_prometheus-0.66b1-py3-none-any.whl", hash = "sha256:a938e6af7295d5bacf82da9ca845cab9a9cb1c5f565abe39f54ef8bf511c05d9"},
+    {file = "opentelemetry_exporter_prometheus-0.66b1.tar.gz", hash = "sha256:1c702a0cc7a1b8c5e1f3f246aeb4273dbd707179af30dbb66182a75e16a06ed8"},
 ]
 
 [package.dependencies]
 opentelemetry-api = ">=1.12,<2.0"
-opentelemetry-sdk = ">=1.42.1,<1.43.0"
+opentelemetry-sdk = ">=1.45.1,<1.46.0"
 prometheus-client = ">=0.5.0,<1.0.0"
 
 [[package]]
@@ -4488,38 +4546,38 @@ protobuf = ">=5.0,<7.0"
 
 [[package]]
 name = "opentelemetry-sdk"
-version = "1.42.1"
+version = "1.45.1"
 description = "OpenTelemetry Python SDK"
 optional = false
 python-versions = ">=3.10"
 groups = ["worker"]
 files = [
-    {file = "opentelemetry_sdk-1.42.1-py3-none-any.whl", hash = "sha256:083cd4bbfaa5aa7b5a9e552430d9951219967cfb27aa61feb13a77aba1fc839d"},
-    {file = "opentelemetry_sdk-1.42.1.tar.gz", hash = "sha256:8c834e8f8c9ba4171d4ec843d0cb8a67e4c7394d3f9e9297e582cbd9456ddbf7"},
+    {file = "opentelemetry_sdk-1.45.1-py3-none-any.whl", hash = "sha256:c604c11dc429810812348989115fa44bd558772a3d7442afc43d024f2c250ca4"},
+    {file = "opentelemetry_sdk-1.45.1.tar.gz", hash = "sha256:63d24a6ca645019a631e6a51999c73e93adcac1196ca640b8ae78a7cc4762bf3"},
 ]
 
 [package.dependencies]
-opentelemetry-api = "1.42.1"
-opentelemetry-semantic-conventions = "0.63b1"
+opentelemetry-api = "1.45.1"
+opentelemetry-semantic-conventions = "0.66b1"
 typing-extensions = ">=4.5.0"
 
 [package.extras]
-file-configuration = ["jsonschema (>=4.0)", "pyyaml (>=6.0)"]
+file-configuration = ["opentelemetry-configuration (==0.66b1)"]
 
 [[package]]
 name = "opentelemetry-semantic-conventions"
-version = "0.63b1"
+version = "0.66b1"
 description = "OpenTelemetry Semantic Conventions"
 optional = false
 python-versions = ">=3.10"
 groups = ["worker"]
 files = [
-    {file = "opentelemetry_semantic_conventions-0.63b1-py3-none-any.whl", hash = "sha256:dfe5ef4dee82586b746f522b818ceb298d00b3d59f660042bd79404bff8d0682"},
-    {file = "opentelemetry_semantic_conventions-0.63b1.tar.gz", hash = "sha256:3daf963611334b365e98a57438183eb012d3bfb40b2d931a9af613476b8701a9"},
+    {file = "opentelemetry_semantic_conventions-0.66b1-py3-none-any.whl", hash = "sha256:d4cddeb4315490b35213f55e2bdc9ac54bb1e4d318927475bed62b35545e581b"},
+    {file = "opentelemetry_semantic_conventions-0.66b1.tar.gz", hash = "sha256:497ca63bf383723411e8eaf60c8779e9877633c936bb641080adab59d0eb6ec8"},
 ]
 
 [package.dependencies]
-opentelemetry-api = "1.42.1"
+opentelemetry-api = "1.45.1"
 typing-extensions = ">=4.5.0"
 
 [[package]]
@@ -5613,7 +5671,7 @@ version = "2.14.2"
 description = "Settings management using Pydantic"
 optional = false
 python-versions = ">=3.10"
-groups = ["main"]
+groups = ["main", "dev", "evals-summarisation"]
 files = [
     {file = "pydantic_settings-2.14.2-py3-none-any.whl", hash = "sha256:a20c97b37910b6550d5ea50fbcc2d4187defe58cd57070b73863d069419c9440"},
     {file = "pydantic_settings-2.14.2.tar.gz", hash = "sha256:c19dd64b19097f1de80184f0cc7b0272a13ae6e170cbf240a3e27e381ed14a5f"},
@@ -5667,7 +5725,7 @@ version = "2.20.0"
 description = "Pygments is a syntax highlighting package written in Python."
 optional = false
 python-versions = ">=3.9"
-groups = ["dev", "evals-summarisation", "evals-transcription"]
+groups = ["dev", "evals-summarisation"]
 files = [
     {file = "pygments-2.20.0-py3-none-any.whl", hash = "sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176"},
     {file = "pygments-2.20.0.tar.gz", hash = "sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f"},
@@ -5730,7 +5788,6 @@ files = [
 
 [package.dependencies]
 pytest = ">=8.4,<10"
-typing-extensions = {version = ">=4.12", markers = "python_version < \"3.13\""}
 
 [package.extras]
 docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1)", "sphinx-tabs (>=3.5)"]
@@ -6260,7 +6317,7 @@ packaging = ">=24.2"
 prometheus_client = {version = ">=0.7.1", optional = true, markers = "extra == \"default\""}
 protobuf = ">=3.20.3"
 py-spy = {version = ">=0.4.0", optional = true, markers = "python_version >= \"3.12\" and extra == \"default\""}
-pydantic = {version = ">=2.5.0,<3", optional = true, markers = "python_version < \"3.14\" and extra == \"default\""}
+pydantic = {version = ">=2.13.0,<3", optional = true, markers = "python_version >= \"3.14\" and extra == \"default\""}
 pyyaml = "*"
 requests = "*"
 smart_open = {version = "*", optional = true, markers = "extra == \"default\""}
@@ -6300,7 +6357,6 @@ files = [
 [package.dependencies]
 attrs = ">=22.2.0"
 rpds-py = ">=0.7.0"
-typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "regex"
@@ -6469,7 +6525,7 @@ version = "14.3.3"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 optional = false
 python-versions = ">=3.8.0"
-groups = ["dev", "evals-summarisation", "evals-transcription"]
+groups = ["dev", "evals-summarisation"]
 files = [
     {file = "rich-14.3.3-py3-none-any.whl", hash = "sha256:793431c1f8619afa7d3b52b2cdec859562b950ea0d4b6b505397612db8d5362d"},
     {file = "rich-14.3.3.tar.gz", hash = "sha256:b8daa0b9e4eef54dd8cf7c86c03713f53241884e814f4e2f5fb342fe520f639b"},
@@ -6624,30 +6680,30 @@ files = [
 
 [[package]]
 name = "ruff"
-version = "0.8.2"
+version = "0.17.2"
 description = "An extremely fast Python linter and code formatter, written in Rust."
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
 files = [
-    {file = "ruff-0.8.2-py3-none-linux_armv6l.whl", hash = "sha256:c49ab4da37e7c457105aadfd2725e24305ff9bc908487a9bf8d548c6dad8bb3d"},
-    {file = "ruff-0.8.2-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:ec016beb69ac16be416c435828be702ee694c0d722505f9c1f35e1b9c0cc1bf5"},
-    {file = "ruff-0.8.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:f05cdf8d050b30e2ba55c9b09330b51f9f97d36d4673213679b965d25a785f3c"},
-    {file = "ruff-0.8.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:60f578c11feb1d3d257b2fb043ddb47501ab4816e7e221fbb0077f0d5d4e7b6f"},
-    {file = "ruff-0.8.2-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:cbd5cf9b0ae8f30eebc7b360171bd50f59ab29d39f06a670b3e4501a36ba5897"},
-    {file = "ruff-0.8.2-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:b402ddee3d777683de60ff76da801fa7e5e8a71038f57ee53e903afbcefdaa58"},
-    {file = "ruff-0.8.2-py3-none-manylinux_2_17_ppc64.manylinux2014_ppc64.whl", hash = "sha256:705832cd7d85605cb7858d8a13d75993c8f3ef1397b0831289109e953d833d29"},
-    {file = "ruff-0.8.2-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:32096b41aaf7a5cc095fa45b4167b890e4c8d3fd217603f3634c92a541de7248"},
-    {file = "ruff-0.8.2-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:e769083da9439508833cfc7c23e351e1809e67f47c50248250ce1ac52c21fb93"},
-    {file = "ruff-0.8.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5fe716592ae8a376c2673fdfc1f5c0c193a6d0411f90a496863c99cd9e2ae25d"},
-    {file = "ruff-0.8.2-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:81c148825277e737493242b44c5388a300584d73d5774defa9245aaef55448b0"},
-    {file = "ruff-0.8.2-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:d261d7850c8367704874847d95febc698a950bf061c9475d4a8b7689adc4f7fa"},
-    {file = "ruff-0.8.2-py3-none-musllinux_1_2_i686.whl", hash = "sha256:1ca4e3a87496dc07d2427b7dd7ffa88a1e597c28dad65ae6433ecb9f2e4f022f"},
-    {file = "ruff-0.8.2-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:729850feed82ef2440aa27946ab39c18cb4a8889c1128a6d589ffa028ddcfc22"},
-    {file = "ruff-0.8.2-py3-none-win32.whl", hash = "sha256:ac42caaa0411d6a7d9594363294416e0e48fc1279e1b0e948391695db2b3d5b1"},
-    {file = "ruff-0.8.2-py3-none-win_amd64.whl", hash = "sha256:2aae99ec70abf43372612a838d97bfe77d45146254568d94926e8ed5bbb409ea"},
-    {file = "ruff-0.8.2-py3-none-win_arm64.whl", hash = "sha256:fb88e2a506b70cfbc2de6fae6681c4f944f7dd5f2fe87233a7233d888bad73e8"},
-    {file = "ruff-0.8.2.tar.gz", hash = "sha256:b84f4f414dda8ac7f75075c1fa0b905ac0ff25361f42e6d5da681a465e0f78e5"},
+    {file = "ruff-0.17.2-py3-none-linux_armv6l.whl", hash = "sha256:96a65e755d8dba094707fb23ab602111d9a31ec2835b3a6992a1914a8fcb211e"},
+    {file = "ruff-0.17.2-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:39c5b55c960515cdb32be16e69efb5734c589c06a0eb38a22694524a336b889d"},
+    {file = "ruff-0.17.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:92a80d2f44584dabb0189b3a6c393e37e525e04942838482010575cb81945be7"},
+    {file = "ruff-0.17.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b7d0906677d89bbf3cf73cde64b5bbe2ab35df3ae43e49ee2627301e91265bac"},
+    {file = "ruff-0.17.2-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:7cfd783590edf2b77317882631900f6a13ea2e8eacefe6ebf2370d2715299160"},
+    {file = "ruff-0.17.2-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:122258f6ecde0e0dd1bb60b24263c3edde4338caf723fca711cc729f9bfd414a"},
+    {file = "ruff-0.17.2-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:7f8fba429d6ac4128ab29cfb8fa6240d2fa671d04adf7f84d3b22fc7b6b6bea4"},
+    {file = "ruff-0.17.2-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:583bd67bb9e7061dd09bc46a0a884bae2bbd214dbcd48e509813612619683869"},
+    {file = "ruff-0.17.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c60f93fec7142dba5b8f487f94bf2f6231dae24dc11e4c48648347c8b0720004"},
+    {file = "ruff-0.17.2-py3-none-manylinux_2_31_riscv64.whl", hash = "sha256:c555a877f8f41447e318101cfefea9bf12dfa9f82eedf90c376e57e069f917d0"},
+    {file = "ruff-0.17.2-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:ba405cbd5ec7bda1f555d5e52be1fd68d02608d4d95d24591bdac92cfacb579f"},
+    {file = "ruff-0.17.2-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:8c21b4ab24485358f17291a4f8dc5399b834e963b8efedd920fe4fdb02081bb4"},
+    {file = "ruff-0.17.2-py3-none-musllinux_1_2_i686.whl", hash = "sha256:5875a16b0de70b43cb81eabea5ae5e8f5d1b2fd1b5e6ed07f80cfe5019d0bd5a"},
+    {file = "ruff-0.17.2-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:2d086be452eed686aa51271ecf2cbe5037956517cc6ee39a17b4489ac12f8bbe"},
+    {file = "ruff-0.17.2-py3-none-win32.whl", hash = "sha256:6bce7d1f5165701ae18f5df85c65afe78cddfa6c5fb4b9bdb0014d60388f3edd"},
+    {file = "ruff-0.17.2-py3-none-win_amd64.whl", hash = "sha256:1b59d447f197bef9ef48a22ba1a6016137753c6099e9bac9c36eb566e422424c"},
+    {file = "ruff-0.17.2-py3-none-win_arm64.whl", hash = "sha256:195ad918027f817c119310ca89a42d347887dfc28934aaa869325e9c5dc9d962"},
+    {file = "ruff-0.17.2.tar.gz", hash = "sha256:84d632402d14c23b488f941db23712d6736a013225162062d34558c3f3c780eb"},
 ]
 
 [[package]]
@@ -6943,7 +6999,7 @@ version = "1.5.4"
 description = "Tool to Detect Surrounding Shell"
 optional = false
 python-versions = ">=3.7"
-groups = ["dev", "evals-summarisation", "evals-transcription"]
+groups = ["evals-summarisation"]
 files = [
     {file = "shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"},
     {file = "shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de"},
@@ -7212,6 +7268,49 @@ pure-eval = "*"
 tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
+name = "standard-aifc"
+version = "3.13.0"
+description = "Standard library aifc redistribution. \"dead battery\"."
+optional = false
+python-versions = "*"
+groups = ["evals-transcription"]
+files = [
+    {file = "standard_aifc-3.13.0-py3-none-any.whl", hash = "sha256:f7ae09cc57de1224a0dd8e3eb8f73830be7c3d0bc485de4c1f82b4a7f645ac66"},
+    {file = "standard_aifc-3.13.0.tar.gz", hash = "sha256:64e249c7cb4b3daf2fdba4e95721f811bde8bdfc43ad9f936589b7bb2fae2e43"},
+]
+
+[package.dependencies]
+audioop-lts = {version = "*", markers = "python_version >= \"3.13\""}
+standard-chunk = {version = "*", markers = "python_version >= \"3.13\""}
+
+[[package]]
+name = "standard-chunk"
+version = "3.13.0"
+description = "Standard library chunk redistribution. \"dead battery\"."
+optional = false
+python-versions = "*"
+groups = ["evals-transcription"]
+files = [
+    {file = "standard_chunk-3.13.0-py3-none-any.whl", hash = "sha256:17880a26c285189c644bd5bd8f8ed2bdb795d216e3293e6dbe55bbd848e2982c"},
+    {file = "standard_chunk-3.13.0.tar.gz", hash = "sha256:4ac345d37d7e686d2755e01836b8d98eda0d1a3ee90375e597ae43aaf064d654"},
+]
+
+[[package]]
+name = "standard-sunau"
+version = "3.13.0"
+description = "Standard library sunau redistribution. \"dead battery\"."
+optional = false
+python-versions = "*"
+groups = ["evals-transcription"]
+files = [
+    {file = "standard_sunau-3.13.0-py3-none-any.whl", hash = "sha256:53af624a9529c41062f4c2fd33837f297f3baa196b0cfceffea6555654602622"},
+    {file = "standard_sunau-3.13.0.tar.gz", hash = "sha256:b319a1ac95a09a2378a8442f403c66f4fd4b36616d6df6ae82b8e536ee790908"},
+]
+
+[package.dependencies]
+audioop-lts = {version = "*", markers = "python_version >= \"3.13\""}
+
+[[package]]
 name = "starlette"
 version = "1.3.1"
 description = "The little ASGI library that shines."
@@ -7225,7 +7324,6 @@ files = [
 
 [package.dependencies]
 anyio = ">=3.6.2,<5"
-typing-extensions = {version = ">=4.10.0", markers = "python_version < \"3.13\""}
 
 [package.extras]
 full = ["httpx (>=0.27.0,<0.29.0)", "httpx2 (>=2.0.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
@@ -7667,7 +7765,7 @@ version = "0.25.1"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
 python-versions = ">=3.10"
-groups = ["dev", "evals-summarisation", "evals-transcription"]
+groups = ["evals-summarisation"]
 files = [
     {file = "typer-0.25.1-py3-none-any.whl", hash = "sha256:75caa44ed46a03fb2dab8808753ffacdbfea88495e74c85a28c5eefcf5f39c89"},
     {file = "typer-0.25.1.tar.gz", hash = "sha256:9616eb8853a09ffeabab1698952f33c6f29ffdbceb4eaeecf571880e8d7664cc"},
@@ -9602,14 +9700,14 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.5.0)
 
 [[package]]
 name = "virtualenv"
-version = "21.14.9"
+version = "21.14.13"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev", "worker"]
 files = [
-    {file = "virtualenv-21.14.9-py3-none-any.whl", hash = "sha256:ac51744da66ae56ff814b087d65096c94de698ec520adc624b108b679655809b"},
-    {file = "virtualenv-21.14.9.tar.gz", hash = "sha256:4d1bee354cd81c820da3bee56e38be3426490f8d1fc54e10ea5b2072ebad8ef8"},
+    {file = "virtualenv-21.14.13-py3-none-any.whl", hash = "sha256:5fbb04138a4861580b78ba9110d529a26bc48fcc93c8ec36bc0202eeed96a788"},
+    {file = "virtualenv-21.14.13.tar.gz", hash = "sha256:de5307ba4b9a0001d9c8ea02832d38f63ca432880f416c1bface61c4323fd905"},
 ]
 
 [package.dependencies]
@@ -10285,5 +10383,5 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.12,<3.13"
-content-hash = "60bf296c34f2de819b30d1cef5f3c7243eee7ed1928bcb13f84374180c8dda31"
+python-versions = ">=3.14,<3.15"
+content-hash = "8396e6a8a765d46b45f144f0ff158dac3977b89fb863f9b4fd8bc6b0c32430d4"

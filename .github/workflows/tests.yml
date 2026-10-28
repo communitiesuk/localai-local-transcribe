@@ -41,7 +41,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       - name: Read Poetry version from pyproject.toml
         id: poetry-version
@@ -53,7 +53,7 @@ jobs:
     needs: poetry_version
     uses: ./.github/workflows/backend-tests.yml
     with:
-      python_version: "3.12"
+      python_version: "3.14"
       poetry_version: ${{ needs.poetry_version.outputs.version }}
     secrets: inherit
 

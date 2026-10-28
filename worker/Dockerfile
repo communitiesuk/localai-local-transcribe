@@ -1,7 +1,7 @@
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -48,7 +48,7 @@ RUN find /opt/site-packages -name "*.so" -exec strip --strip-unneeded {} + && \
 # ==========================================
 # Stage 2: Runner
 # ==========================================
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -77,7 +77,7 @@ ADD --chown=appuser:appuser --chmod=0444 \
     /app/config/rds-ca-bundle.pem
 
 # Copy built site-packages from builder (already pre-cleaned & stripped)
-COPY --from=builder /opt/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /opt/site-packages /usr/local/lib/python3.14/site-packages
 
 # Copy runtime code cleanly directly to /app (No duplication in site-packages)
 COPY --chown=appuser:appuser common/ common/

@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 import math
 import uuid
@@ -147,11 +147,11 @@ async def list_labelled_transcriptions(
     client_name: Annotated[str | None, Query(description="Filter by client name")] = None,
     case_id: Annotated[str | None, Query(description="Filter by case ID")] = None,
     subject: Annotated[str | None, Query(description="Filter by subject")] = None,
-    date_of_recording: Annotated[datetime.date | None, Query(description="Filter by date recorded")] = None,
+    date_of_recording: Annotated[dt.date | None, Query(description="Filter by date recorded")] = None,
     date_of_recording_day: Annotated[int | None, Query(ge=1, le=31, description="Filter by recorded day")] = None,
     date_of_recording_month: Annotated[int | None, Query(ge=1, le=12, description="Filter by recorded month")] = None,
     date_of_recording_year: Annotated[int | None, Query(ge=1, description="Filter by recorded year")] = None,
-    client_date_of_birth: Annotated[datetime.date | None, Query(description="Filter by client date of birth")] = None,
+    client_date_of_birth: Annotated[dt.date | None, Query(description="Filter by client date of birth")] = None,
 ) -> LabelledTranscriptionsResponse:
     """Get paginated metadata for labelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -229,11 +229,11 @@ async def list_unlabelled_transcriptions(
     client_name: Annotated[str | None, Query(description="Filter by client name")] = None,
     case_id: Annotated[str | None, Query(description="Filter by case ID")] = None,
     subject: Annotated[str | None, Query(description="Filter by subject")] = None,
-    date_of_recording: Annotated[datetime.date | None, Query(description="Filter by date recorded")] = None,
+    date_of_recording: Annotated[dt.date | None, Query(description="Filter by date recorded")] = None,
     date_of_recording_day: Annotated[int | None, Query(ge=1, le=31, description="Filter by recorded day")] = None,
     date_of_recording_month: Annotated[int | None, Query(ge=1, le=12, description="Filter by recorded month")] = None,
     date_of_recording_year: Annotated[int | None, Query(ge=1, description="Filter by recorded year")] = None,
-    client_date_of_birth: Annotated[datetime.date | None, Query(description="Filter by client date of birth")] = None,
+    client_date_of_birth: Annotated[dt.date | None, Query(description="Filter by client date of birth")] = None,
 ) -> UnlabelledTranscriptionsResponse:
     """Get metadata for unlabelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -332,7 +332,7 @@ async def create_transcription(
         user_id=current_user.id,
         title=request.title,
         date_of_recording=(
-            recording.file_created_at.astimezone(datetime.UTC).replace(tzinfo=None)
+            recording.file_created_at.astimezone(dt.UTC).replace(tzinfo=None)
             if recording.file_created_at is not None
             else None
         ),
@@ -462,7 +462,7 @@ async def update_transcription_metadata(
     )
     transcription.title = request.subject
 
-    transcription.updated_datetime = datetime.datetime.now(tz=datetime.UTC)
+    transcription.updated_datetime = dt.datetime.now(tz=dt.UTC)
     await session.commit()
 
 
