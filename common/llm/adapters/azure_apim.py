@@ -47,12 +47,12 @@ class AzureAPIMModelAdapter(ModelAdapter):
         self._cached_async_apim_client: AsyncOpenAI | None = None
 
     async def _get_apim_client(self) -> AsyncOpenAI:
-        logger.info("APIM CLIENT: retrieving APIM client token")
+        logger.info("AZURE APIM CLIENT: retrieving APIM client token")
 
         token = await self._token_provider.get_token()
 
         if self._cached_async_apim_client is None or self._cached_async_apim_client.api_key != token:
-            logger.info("APIM CLIENT: creating new AsyncOpenAI client")
+            logger.info("AZURE APIM CLIENT: creating new AsyncOpenAI client")
 
             self._cached_async_apim_client = AsyncOpenAI(
                 base_url=self._url + self._model,
@@ -82,7 +82,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 extra_query={"api-version": self._api_version},
             )
 
-        logger.info("APIM REQUEST: structured_chat")
+        logger.info("AZURE APIM REQUEST: structured_chat")
 
         response = await self._call_with_retry(
             call,
@@ -95,7 +95,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
             error_msg = "Azure APIM response.parsed is None"
 
             logger.error(
-                "APIM FAILURE: structured_chat - %s",
+                "AZURE APIM FAILURE: structured_chat - %s",
                 error_msg,
             )
 
@@ -105,13 +105,13 @@ class AzureAPIMModelAdapter(ModelAdapter):
             error_msg = f"Azure APIM parsed response is not of type {response_format}"
 
             logger.error(
-                "APIM FAILURE: structured_chat - %s",
+                "AZURE APIM FAILURE: structured_chat - %s",
                 error_msg,
             )
 
             raise TypeError(error_msg)
 
-        logger.info("APIM SUCCESS: structured_chat")
+        logger.info("AZURE APIM SUCCESS: structured_chat")
 
         return parsed
 
@@ -132,7 +132,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 extra_query={"api-version": self._api_version},
             )
 
-        logger.info("APIM REQUEST: chat")
+        logger.info("AZURE APIM REQUEST: chat")
 
         response = await self._call_with_retry(
             call,
@@ -149,7 +149,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
             error_msg = "Azure APIM message.content is None"
 
             logger.error(
-                "APIM FAILURE: chat - %s",
+                "AZURE APIM FAILURE: chat - %s",
                 error_msg,
             )
 
@@ -159,13 +159,13 @@ class AzureAPIMModelAdapter(ModelAdapter):
             error_msg = f"Azure APIM message.content is not a string: {type(message_content)}"
 
             logger.error(
-                "APIM FAILURE: chat - %s",
+                "AZURE APIM FAILURE: chat - %s",
                 error_msg,
             )
 
             raise TypeError(error_msg)
 
-        logger.info("APIM SUCCESS: chat")
+        logger.info("AZURE APIM SUCCESS: chat")
 
         return message_content
 
@@ -182,7 +182,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 wait_time = self._extract_retry_after(error)
 
                 logger.warning(
-                    ("APIM RETRY: %s - rate limit hit (attempt %d/%d), retrying in %ds"),
+                    ("AZURE APIM RETRY: %s - rate limit hit (attempt %d/%d), retrying in %ds"),
                     method_name,
                     attempt + 1,
                     MAX_RETRIES,
@@ -191,7 +191,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
                 if attempt == MAX_RETRIES - 1:
                     logger.error(
-                        "APIM FAILURE: %s - max retries exceeded due to rate limiting",
+                        "AZURE APIM FAILURE: %s - max retries exceeded due to rate limiting",
                         method_name,
                     )
                     raise
@@ -200,7 +200,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
             except AuthenticationError:
                 logger.warning(
-                    ("APIM RETRY: %s - authentication error, refreshing token and retrying (attempt %d/%d)"),
+                    ("AZURE APIM RETRY: %s - authentication error, refreshing token and retrying (attempt %d/%d)"),
                     method_name,
                     attempt + 1,
                     MAX_RETRIES,
@@ -212,7 +212,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
                 if attempt == MAX_RETRIES - 1:
                     logger.error(
-                        ("APIM FAILURE: %s - max retries exceeded due to authentication errors"),
+                        ("AZURE APIM FAILURE: %s - max retries exceeded due to authentication errors"),
                         method_name,
                     )
                     raise
@@ -221,12 +221,12 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 # A 400 (e.g. Azure's content-safety filter rejecting the request) is a definitive,
                 # deterministic rejection of this exact request — retrying it identically would
                 # only waste time on a call that will fail the same way every time.
-                logger.warning("APIM FAILURE: %s - BadRequestError is not retryable", method_name)
+                logger.warning("AZURE APIM FAILURE: %s - BadRequestError is not retryable", method_name)
                 raise
 
             except (APIConnectionError, APIError, APITimeoutError) as error:
                 logger.warning(
-                    ("APIM RETRY: %s - %s: %s (attempt %d/%d)"),
+                    ("AZURE APIM RETRY: %s - %s: %s (attempt %d/%d)"),
                     method_name,
                     type(error).__name__,
                     str(error),
@@ -236,7 +236,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
                 if attempt == MAX_RETRIES - 1:
                     logger.error(
-                        ("APIM FAILURE: %s - %s after maximum retries: %s"),
+                        ("AZURE APIM FAILURE: %s - %s after maximum retries: %s"),
                         method_name,
                         type(error).__name__,
                         str(error),
@@ -247,7 +247,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
         error_msg = f"{method_name} - maximum retries exhausted"
 
         logger.error(
-            "APIM FAILURE: %s",
+            "AZURE APIM FAILURE: %s",
             error_msg,
         )
 
@@ -267,7 +267,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
             except ValueError:
                 logger.warning(
-                    ("APIM WARNING: failed to parse Retry-After header: %s"),
+                    ("AZURE APIM WARNING: failed to parse Retry-After header: %s"),
                     retry_after_header,
                 )
 
@@ -282,7 +282,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
         if match:
             return int(match.group(1))
 
-        logger.warning("APIM WARNING: could not determine retry-after value, defaulting to 60 seconds")
+        logger.warning("AZURE APIM WARNING: could not determine retry-after value, defaulting to 60 seconds")
 
         return 60
 
@@ -293,6 +293,6 @@ class AzureAPIMModelAdapter(ModelAdapter):
     ) -> None:
         if choice.finish_reason == "length":
             logger.warning(
-                ("APIM WARNING: max output tokens reached (response_id=%s)"),
+                ("AZURE APIM WARNING: max output tokens reached (response_id=%s)"),
                 response.id,
             )
