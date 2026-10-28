@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from common.azure_apim_auth import AzureStaticTokenProvider
+from common.apim_auth import AzureStaticTokenProvider
 from common.llm.adapters import AzureAPIMModelAdapter, BedrockAPIMModelAdapter
 from common.settings import get_settings
 

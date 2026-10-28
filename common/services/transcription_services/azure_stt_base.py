@@ -4,7 +4,7 @@ from typing import Any
 
 import httpx
 
-from common.azure_apim_auth import AzureTokenProvider, build_azure_apim_token_provider
+from common.apim_auth import AzureTokenProvider, build_apim_token_provider
 from common.database.postgres_models import DialogueEntry
 from common.settings import get_settings
 
@@ -16,7 +16,7 @@ settings = get_settings()
 
 @cache
 def get_stt_token_provider() -> AzureTokenProvider:
-    return build_azure_apim_token_provider()
+    return build_apim_token_provider()
 
 
 async def make_stt_request(

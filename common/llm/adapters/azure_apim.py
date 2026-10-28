@@ -17,7 +17,7 @@ from openai import (
 from openai.types.chat import ChatCompletion, ParsedChatCompletion
 from openai.types.chat.chat_completion import Choice
 
-from common.azure_apim_auth import AzureTokenProvider
+from common.apim_auth import AzureTokenProvider
 from common.settings import get_settings
 
 from .base import ModelAdapter

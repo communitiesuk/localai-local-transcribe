@@ -19,7 +19,7 @@ from anthropic import (
 from anthropic.types import Message, ToolChoiceToolParam, ToolParam
 from pydantic import BaseModel
 
-from common.azure_apim_auth import AzureTokenProvider
+from common.apim_auth import AzureTokenProvider
 
 from .base import ModelAdapter
 from .llm_constants import MAX_COMPLETION_TOKENS

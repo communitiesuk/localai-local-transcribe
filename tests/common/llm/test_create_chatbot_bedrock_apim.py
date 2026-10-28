@@ -29,7 +29,7 @@ def test_create_chatbot_raises_without_subscription_key():
 def test_create_chatbot_builds_bedrock_apim_adapter():
     with (
         patch(f"{_MODULE}.settings") as mock_settings,
-        patch(f"{_MODULE}.build_azure_apim_token_provider", return_value=MagicMock()) as mock_build_token_provider,
+        patch(f"{_MODULE}.build_apim_token_provider", return_value=MagicMock()) as mock_build_token_provider,
     ):
         mock_settings.AZURE_APIM_BEDROCK_URL = "https://apim.example.com/localtranscribe/"
         mock_settings.AZURE_APIM_SUBSCRIPTION_KEY = "sub-key"

@@ -12,7 +12,7 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from common.azure_apim_auth import build_azure_apim_token_provider
+from common.apim_auth import build_apim_token_provider
 from common.llm.adapters import (
     AzureAPIMModelAdapter,
     BedrockAPIMModelAdapter,
@@ -125,7 +125,7 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
             msg = "AZURE_APIM_SUBSCRIPTION_KEY is required for azure_apim model"
             raise ValueError(msg)
 
-        token_provider = build_azure_apim_token_provider()
+        token_provider = build_apim_token_provider()
 
         return ChatBot(
             AzureAPIMModelAdapter(
@@ -144,7 +144,7 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
             msg = "AZURE_APIM_SUBSCRIPTION_KEY is required for bedrock_apim model"
             raise ValueError(msg)
 
-        token_provider = build_azure_apim_token_provider()
+        token_provider = build_apim_token_provider()
 
         return ChatBot(
             BedrockAPIMModelAdapter(

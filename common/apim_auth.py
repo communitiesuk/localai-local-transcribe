@@ -63,7 +63,7 @@ def get_azure_client_secret_token_provider(
     return AzureClientSecretCredentialTokenProvider(tenant_id, client_id, client_secret, scope)
 
 
-def build_azure_apim_token_provider() -> AzureTokenProvider:
+def build_apim_token_provider() -> AzureTokenProvider:
     """Factory that builds the appropriate APIM token provider based on settings."""
     settings = get_settings()
     if settings.AZURE_APIM_AUTH_METHOD == "client_secret":
