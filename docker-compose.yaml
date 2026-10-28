@@ -8,9 +8,6 @@ services:
       - "8080:8080"
     env_file:
       - path: .env
-    read_only: true
-    tmpfs:
-      - /tmp:noexec,nosuid,nodev,size=256m
     environment:
       - POSTGRES_HOST=db
       - STORAGE_SERVICE_NAME=local

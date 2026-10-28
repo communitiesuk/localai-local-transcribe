@@ -194,8 +194,6 @@ module "ecs" {
   backend_task_memory  = var.backend_task_memory
   worker_task_memory   = var.worker_task_memory
 
-
-
   frontend_task_cpu = var.frontend_task_cpu
   backend_task_cpu  = var.backend_task_cpu
   worker_task_cpu   = var.worker_task_cpu

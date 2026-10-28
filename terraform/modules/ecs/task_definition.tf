@@ -260,22 +260,14 @@ resource "aws_ecs_task_definition" "backend" {
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.backend_ecs_task.arn
 
-  dynamic "volume" {
-    for_each = var.allow_exec ? ["managed-agents", "var-lib-amazon-ssm", "var-log-amazon-ssm"] : []
-    content {
-      name = volume.value
-    }
-  }
 
   container_definitions = jsonencode([
     {
-      name                   = "backend"
-      essential              = true
-      image                  = var.backend_image_name
-      user                   = "1000:1000"
-      readonlyRootFilesystem = true
+      name      = "backend"
+      essential = true
+      image     = var.backend_image_name
+      user      = "1000:1000"
 
-      mountPoints = local.ecs_exec_tmpfs_mounts
       portMappings = [
         {
           protocol      = "tcp"
@@ -368,12 +360,6 @@ resource "aws_ecs_task_definition" "worker" {
         {
           name  = "APP_NAME"
           value = "local-transcribe-worker"
-        },
-        {
-          # Fargate hard-caps /dev/shm at 64MB (sharedMemorySize is unsupported on Fargate),
-          # which is too small for Ray's object store. This lets Ray spill to /tmp instead.
-          name  = "RAY_OBJECT_STORE_ALLOW_SLOW_STORAGE"
-          value = "1"
         },
       ])
 
