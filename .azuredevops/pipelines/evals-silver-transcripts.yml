@@ -44,6 +44,7 @@ steps:
         output_dir="$(Build.ArtifactStagingDirectory)/silver-transcripts-output"
         config_path="$(Agent.TempDirectory)/silver-config-$(Build.BuildId).yaml"
         mkdir -p "$output_dir"
+        echo "##vso[task.setvariable variable=silverOutputReady]true"
         poetry run python -c "import dotenv, runpy; dotenv.load_dotenv('.env.example', override=False); runpy.run_module('evals.shared.blob_input', run_name='__main__')" \
           --destination "$input_dir" --prefix "$SILVER_INPUT_PREFIX"
         printf 'input_dir: "%s"\nwork_dir: "%s"\ncutoff_seconds: %s\n' \
@@ -68,6 +69,20 @@ steps:
       AZURE_APIM_CLIENT_SECRET: $(AZURE_APIM_CLIENT_SECRET)
       AZURE_APIM_SCOPE: $(AZURE_APIM_SCOPE)
       AZURE_APIM_ACCESS_TOKEN: $(AZURE_APIM_ACCESS_TOKEN)
+
+  - task: AzureCLI@2
+    displayName: 'Publish silver drafts and segments to debug storage'
+    condition: and(succeededOrFailed(), eq(variables['silverOutputReady'], 'true'))
+    inputs:
+      azureSubscription: $(EVALS_AZURE_SERVICE_CONNECTION)
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        poetry run python -m evals.dataset_generation.silver_transcripts.src.blob_output \
+          --output-dir "$(Build.ArtifactStagingDirectory)/silver-transcripts-output" \
+          --run-id "$(Build.BuildId)"
+    env:
+      AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)
 
   # This artifact contains audio and transcripts; restrict access and retention accordingly.
   - task: PublishPipelineArtifact@1
