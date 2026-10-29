@@ -10,24 +10,30 @@ from sqlalchemy.orm import selectinload
 from common.convert_american_to_british_spelling import convert_american_to_british_spelling
 from common.database.postgres_database import SessionLocal
 from common.database.postgres_models import (
+    AnalyticsEventType,
     DialogueEntry,
+    GuardrailFailureCategory,
     GuardrailResult,
     JobStatus,
     Minute,
     MinuteVersion,
+    Transcription,
     UserTemplate,
 )
 from common.format_transcript import transcript_as_speaker_and_utterance
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import (
+    GUARDRAIL_PROMPT_VERSION,
     get_accuracy_check_messages,
     get_ai_edit_initial_messages,
     get_basic_minutes_prompt,
 )
+from common.services.analytics_service import record_analytics_event_sync
 from common.services.template_manager import TemplateManager
 from common.settings import get_settings
 from common.templates.user_template import generate_user_template
 from common.types import (
+    GuardrailAction,
     GuardrailScore,
     MeetingType,
     MinuteAndHallucinations,
@@ -36,6 +42,10 @@ from common.types import (
 settings = get_settings()
 
 logger = logging.getLogger(__name__)
+
+
+def _with_guardrail_prompt_version(reasoning: str) -> str:
+    return f"{reasoning}\nPROMPT_VERSION={GUARDRAIL_PROMPT_VERSION}"
 
 
 class MinuteGenerationFailedError(Exception):
@@ -55,7 +65,18 @@ class MinuteHandlerService:
                 minute_version_id=minute_version_id,
                 passed=passed,
                 score=score.score,
-                reasoning=score.reasoning,
+                reasoning=_with_guardrail_prompt_version(score.reasoning),
+                failure_categories=[]
+                if passed
+                else [
+                    GuardrailFailureCategory(
+                        category=detail.category.value,
+                        mode=detail.mode.value,
+                        explanation=detail.explanation,
+                    )
+                    for detail in score.categories
+                    if not passed
+                ],
             )
             session.add(guardrail_result)
             session.commit()
@@ -67,7 +88,7 @@ class MinuteHandlerService:
                 minute_version_id=minute_version_id,
                 passed=False,
                 score=0.0,
-                reasoning="System Error: Could not verify accuracy.",
+                reasoning=_with_guardrail_prompt_version("System Error: Could not verify accuracy."),
                 error=error_message,
             )
             session.add(guardrail_result)
@@ -79,6 +100,7 @@ class MinuteHandlerService:
         html_content: str | None = None,
         status: JobStatus | None = None,
         error: str | None = None,
+        template_prompt_version: str | None = None,
     ) -> None:
         with SessionLocal() as session:
             minute_version = session.get(MinuteVersion, minute_version_id)
@@ -92,6 +114,8 @@ class MinuteHandlerService:
                 minute_version.status = status
             if error:
                 minute_version.error = error
+            if template_prompt_version is not None:
+                minute_version.template_prompt_version = template_prompt_version
             session.add(minute_version)
             session.commit()
 
@@ -105,7 +129,11 @@ class MinuteHandlerService:
             minute_version = session.get(
                 MinuteVersion,
                 minute_version_id,
-                options=[selectinload(MinuteVersion.minute).selectinload(Minute.transcription)],
+                options=[
+                    selectinload(MinuteVersion.minute)
+                    .selectinload(Minute.transcription)
+                    .selectinload(Transcription.user)  # type: ignore[arg-type]
+                ],
             )
             if not minute_version:
                 msg = f"MinuteVersion not found for id: {minute_version_id}"
@@ -145,6 +173,9 @@ class MinuteHandlerService:
         content: str,
         transcript: list[DialogueEntry],
         label: str,
+        citation_quality_applicable: bool = True,
+        action: GuardrailAction = GuardrailAction.ORIGINAL_GENERATION,
+        edit_instructions: str | None = None,
     ) -> None:
         """Helper to run accuracy check and handle result/error logging."""
         word_count = cls._calculate_word_count(transcript)
@@ -158,6 +189,9 @@ class MinuteHandlerService:
             accuracy_score = await cls.calculate_accuracy_score(
                 minute=content,
                 transcript=transcript,
+                citation_quality_applicable=citation_quality_applicable,
+                action=action,
+                edit_instructions=edit_instructions,
             )
             cls.save_guardrail_result(minute_version_id, accuracy_score)
             logger.info("%s: Saved guardrail result for %s: %s", minute_id, label, accuracy_score)
@@ -189,13 +223,33 @@ class MinuteHandlerService:
                 content=html_content,
                 transcript=dialogue_entries,
                 label="generation",
+                citation_quality_applicable=result.citation_quality_applicable,
+                action=GuardrailAction.ORIGINAL_GENERATION,
             )
 
             cls.update_minute_version(
                 minute_version.id,
                 html_content=html_content,
                 status=JobStatus.COMPLETED,
+                template_prompt_version=result.template_prompt_version,
             )
+
+            minute = minute_version.minute
+            event_user = minute.transcription.user
+            with SessionLocal() as session:
+                record_analytics_event_sync(
+                    session,
+                    AnalyticsEventType.SUMMARY_RECEIVED,
+                    event_user.evaluation_id if event_user else None,
+                    event_user.organisation_id if event_user else None,
+                    # The queue message is acknowledged after this write, so a crash in between redelivers it. Keying
+                    # on the minute version makes the retry a no-op rather than a duplicate event.
+                    source_id=minute_version.id,
+                    event_metadata={
+                        "transcription_id": str(minute.transcription_id),
+                        "template_id": str(minute.user_template_id) if minute.user_template_id else None,
+                    },
+                )
 
         except Exception as e:
             logger.exception(
@@ -240,6 +294,8 @@ class MinuteHandlerService:
                 content=generated.text,
                 transcript=transcript,
                 label="edit",
+                action=GuardrailAction.AI_EDIT,
+                edit_instructions=target_minute_version.ai_edit_instructions,
             )
 
             cls.update_minute_version(
@@ -283,7 +339,11 @@ class MinuteHandlerService:
                 generated = await cls.generate_full_minutes(minute)
         html_result = mistune.html(generated.text)
         return MinuteAndHallucinations(
-            text=cast(str, html_result), total_claims=generated.total_claims, hallucinations=generated.hallucinations
+            text=cast("str", html_result),
+            total_claims=generated.total_claims,
+            hallucinations=generated.hallucinations,
+            template_prompt_version=generated.template_prompt_version,
+            citation_quality_applicable=generated.citation_quality_applicable,
         )
 
     @classmethod
@@ -302,6 +362,8 @@ class MinuteHandlerService:
             text=convert_american_to_british_spelling(generated.text),
             total_claims=generated.total_claims,
             hallucinations=generated.hallucinations,
+            template_prompt_version=generated.template_prompt_version,
+            citation_quality_applicable=generated.citation_quality_applicable,
         )
 
     @classmethod
@@ -357,9 +419,19 @@ class MinuteHandlerService:
         cls,
         minute: str,
         transcript: list[DialogueEntry],
+        citation_quality_applicable: bool = True,
+        action: GuardrailAction = GuardrailAction.ORIGINAL_GENERATION,
+        edit_instructions: str | None = None,
     ) -> GuardrailScore:
         chatbot = create_default_chatbot(FastOrBestLLM.FAST)
         return await chatbot.structured_chat(
-            messages=get_accuracy_check_messages(minute, transcript),
+            messages=get_accuracy_check_messages(
+                minute,
+                transcript,
+                settings.GUARDRAIL_THRESHOLD,
+                citation_quality_applicable=citation_quality_applicable,
+                action=action,
+                edit_instructions=edit_instructions,
+            ),
             response_format=GuardrailScore,
         )

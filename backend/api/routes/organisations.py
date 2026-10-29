@@ -98,13 +98,13 @@ async def update_organisation(
     session: SQLSessionDep,
     user: UserDep,
 ) -> OrganisationResponse:
-    """Update an organisation's allowed email domains. Accessible to system admins or the organisation's own admin."""
+    """Update an organisation's allowed email domains. Only accessible to system admins."""
+    if not is_system_admin(user):
+        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
+
     org = await session.get(Organisation, organisation_id)
     if not org:
         raise HTTPException(status_code=404, detail="Organisation not found")
-
-    if not is_admin_for_org(user, org):
-        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
     if org.updated_datetime != request.updated_datetime:
         raise HTTPException(

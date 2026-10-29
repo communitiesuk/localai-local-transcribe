@@ -1,15 +1,4 @@
-import {
-  AgendaUsage,
-  CreateQuestion,
-  Question,
-  TemplateType,
-} from '@/lib/client'
-
-export type Template = {
-  id: string | null
-  name: string
-  agenda_usage: AgendaUsage
-}
+import { CreateQuestion, Question, TemplateType } from '@/lib/client'
 
 export type TemplateData = {
   name: string

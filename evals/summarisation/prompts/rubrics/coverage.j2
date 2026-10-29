@@ -1,16 +1,18 @@
 ### Dimension: Transcript Factual Completeness (Material Coverage)
 
-The summary captures the material factual content of the transcript — including decisions, actions, risks, constraints, and salient discussion points — regardless of whether the selected template explicitly asks for it. This is a transcript-relative measure of omission severity.
+The summary captures the material factual content of the transcript that is relevant to the selected summary template — including decisions, actions, risks, constraints, and salient discussion points where that template asks for them. This is a faithful-usefulness measure, not a requirement to turn every template into a general meeting minute.
 
-Score this dimension against the transcript regardless of template. Partial or low-quality transcripts should not be penalised where the summary accurately reflects the available content.
+Score this dimension against the transcript and template together. A summary must never invent information to improve coverage. For form-style or fixed-field templates, do not penalise blank fields, "Information not found in transcript", "Not stated", or equivalent missing-information markers where the transcript genuinely does not contain that field's data. Penalise only omissions of material transcript content that the selected template could reasonably capture, or cases where missing-information markers hide information that is actually present.
+
+If the transcript is clearly outside the selected template's intended workflow, a faithful form output may contain little or no narrative content without being poor. In that case, score the summary highly when it correctly leaves unsupported fields blank or marks them as missing. Do not lower the score just because the summary does not cover off-template transcript content; lower it only if the summary misses template-relevant evidence that is present, invents details, or falsely marks present information as missing.
 
 #### Score Definitions:
 
-- **Score 5 — Excellent:** Material coverage is comprehensive: all decisions, actions, dependencies, risks, and salient context are captured at an appropriate level of detail.
-- **Score 4 — Good:** All key decisions, actions, risks, and constraints are captured; only minor context or low-importance detail is omitted.
-- **Score 3 — Adequate:** Most material items are covered; some non-trivial omissions or compression remain, but the reader still has a broadly correct understanding of what happened.
-- **Score 2 — Poor:** At least one material item is omitted or substantially under-represented.
-- **Score 1 — Unacceptable:** Major material omissions: key decisions, actions, risks, or constraints are missing such that the reader would form an incorrect or dangerously incomplete understanding.
+- **Score 5 — Excellent:** All material transcript content relevant to the selected template is captured at an appropriate level of detail; fields not supported by the transcript are clearly left blank or marked as missing without invention. If there is no template-relevant content in the transcript, a faithful empty/missing-data form can still score 5.
+- **Score 4 — Good:** All key template-relevant decisions, actions, risks, constraints, and factual fields are captured; only minor context or low-importance detail is omitted.
+- **Score 3 — Adequate:** Most template-relevant material is covered; some non-trivial omissions or compression remain, but the reader still has a broadly correct understanding of what the template can support from the transcript.
+- **Score 2 — Poor:** At least one material item relevant to the template is omitted or substantially under-represented, or several fields are marked missing despite evidence being present.
+- **Score 1 — Unacceptable:** Major template-relevant omissions cause an incorrect or dangerously incomplete understanding, or the summary largely ignores relevant transcript evidence that the selected template asks for.
 
 **Hallucination Gate:** No — review is not automatically triggered by low scores on this dimension alone, unless combined with failures in critical dimensions.
 
@@ -35,3 +37,52 @@ The meeting confirmed that on 2 April police were called following a 999 call by
 The meeting was a general catch-up about the customer's wellbeing. He said he had been a bit tense of late and the team discussed supporting him going forward.
 ```
 
+**Scenario:** A strict housing application form is used on a transcript that does not contain address, income, tenure, eligibility, or housing-need evidence. The summary should not invent those fields, and it should not be penalised for omitting unrelated off-template chat.
+
+**Transcript Excerpt:**
+```text
+Applicant (00:01:00): I wanted to ask how long the housing application usually takes, but I do not have my documents with me today.
+Housing Officer (00:01:20): That's fine. We can only record details you provide, and you can send documents later.
+```
+
+**Good Summary (Score ≥ 4):**
+```text
+# Housing Application Form
+- Current Address: Information not found in transcript
+- Income: Information not found in transcript
+- Stated connection: Information not found in transcript
+- Other details: Applicant asked about application timescales and was told documents can be sent later.
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+# Housing Application Form
+- Current Address: 12 High Street
+- Income: £28,000
+- Stated connection: Lives and works locally
+```
+
+**Scenario:** A homelessness triage form is used on a purely social transcript. No homelessness, eligibility, domestic abuse, contact, income, medical, transport, pet, or risk information is present.
+
+**Good Summary (Score ≥ 4):**
+```text
+# Homelessness
+Information not found in transcript
+
+# Applicant details
+- Name: Information not found in transcript
+- Mobile: Information not found in transcript
+
+# DA Soft Approach Assessment
+## Domestic abuse disclosure
+Information not found in transcript
+```
+
+**Bad Summary (Score ≤ 2):**
+```text
+# Homelessness
+Applicant is homeless and needs emergency accommodation.
+
+# DA Soft Approach Assessment
+Applicant is at risk from domestic abuse.
+```

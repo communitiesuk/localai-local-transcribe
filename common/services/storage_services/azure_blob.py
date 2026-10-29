@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -8,7 +8,7 @@ import aiofiles
 from azure.storage.blob import BlobSasPermissions, generate_blob_sas
 from azure.storage.blob.aio import ContainerClient
 
-from common.services.storage_services.base import StorageService
+from common.services.storage_services.base import StorageService, build_content_disposition
 from common.settings import get_settings
 
 settings = get_settings()
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def get_client() -> AsyncGenerator[ContainerClient, None]:
+async def get_client() -> AsyncGenerator[ContainerClient]:
     if not settings.AZURE_BLOB_CONNECTION_STRING:
         msg = "AZURE_BLOB_CONNECTION_STRING must be set"
         raise ValueError(msg)
@@ -49,8 +49,8 @@ class AzureBlobStorageService(StorageService):
     @classmethod
     async def generate_presigned_url_put_object(cls, key: str, expiry_seconds: int) -> str:
         async with get_client() as container_client:
-            start_time = datetime.datetime.now(datetime.UTC)
-            expiry_time = start_time + datetime.timedelta(seconds=expiry_seconds)
+            start_time = dt.datetime.now(dt.UTC)
+            expiry_time = start_time + dt.timedelta(seconds=expiry_seconds)
             sas_token = generate_blob_sas(
                 blob_name=key,
                 account_name=container_client.account_name,
@@ -64,8 +64,8 @@ class AzureBlobStorageService(StorageService):
     @classmethod
     async def generate_presigned_url_get_object(cls, key: str, filename: str, expiry_seconds: int) -> str:
         async with get_client() as container_client:
-            start_time = datetime.datetime.now(datetime.UTC)
-            expiry_time = start_time + datetime.timedelta(seconds=expiry_seconds)
+            start_time = dt.datetime.now(dt.UTC)
+            expiry_time = start_time + dt.timedelta(seconds=expiry_seconds)
             sas_token = generate_blob_sas(
                 blob_name=key,
                 account_name=container_client.account_name,
@@ -73,7 +73,7 @@ class AzureBlobStorageService(StorageService):
                 account_key=container_client.credential.account_key,
                 permission=BlobSasPermissions(read=True),
                 expiry=expiry_time,
-                content_disposition=f"attachment; filename={filename}",
+                content_disposition=build_content_disposition(filename),
             )
             return f"{container_client.url}?{sas_token}"
 

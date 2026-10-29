@@ -5,8 +5,8 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from backend.api.dependencies.get_current_user import get_current_user
-from common.database.postgres_models import User
+from backend.api.dependencies.get_current_user import get_current_user, require_accepted_tou
+from common.database.postgres_models import AnalyticsEventType, User
 from common.services.exceptions import MissingAuthTokenError
 
 TEST_EMAIL = "test@local-transcribe.com"
@@ -25,6 +25,12 @@ def session():
     return session
 
 
+def make_exec_result(first_value):
+    result = Mock()
+    result.first.return_value = first_value
+    return result
+
+
 def make_mock_get_user_info(email: str = TEST_EMAIL, is_authorised: bool = True, subject_id: str = TEST_SUBJECT_ID):
     mock_auth_info = Mock(email=email, is_authorised=is_authorised, subject_id=subject_id)
     return Mock(return_value=mock_auth_info)
@@ -41,10 +47,14 @@ async def test_get_current_user_existing_user(monkeypatch, session):
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
         last_login=existing_last_login,
+        first_login=existing_last_login,  # already authenticated before, so no analytics event is recorded
     )
-    mock_result = Mock()
-    mock_result.first.return_value = mock_user
-    session.exec.return_value = mock_result  # return mock user as a db result
+
+    session.exec.side_effect = [
+        make_exec_result(None),  # no changed sub match
+        make_exec_result(mock_user),  # match by subject_id
+        make_exec_result(Mock()),  # UserAuthEmail lookup
+    ]
 
     # patch in JWT decoding
     mock_get_user_info = make_mock_get_user_info()
@@ -65,11 +75,117 @@ async def test_get_current_user_existing_user(monkeypatch, session):
     assert session.commit.await_count == 1
     assert user.last_login > existing_last_login
 
-    # check the query filtered by subject_id
-    executed_statement = session.exec.call_args.args[0]
+    # check the query filtered by subject_id (the second exec call)
+    executed_statement = session.exec.await_args_list[1].args[0]
     compiled = executed_statement.compile()
     assert "subject_id" in str(compiled)
     assert TEST_SUBJECT_ID in compiled.params.values()
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_records_analytics_event_on_first_login(monkeypatch, session):
+    mock_user = User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=TEST_SUBJECT_ID,
+        evaluation_id="EVAL-001",
+        organisation_id=uuid4(),
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+        first_login=None,  # never authenticated before
+    )
+    mock_result = Mock()
+    mock_result.first.return_value = mock_user
+    session.exec.return_value = mock_result
+
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        make_mock_get_user_info(),
+    )
+    mock_record_event = AsyncMock()
+    monkeypatch.setattr("backend.api.dependencies.get_current_user.record_analytics_event", mock_record_event)
+
+    await get_current_user(session=session, x_amzn_oidc_data=TEST_TOKEN)
+
+    mock_record_event.assert_awaited_once_with(
+        session, AnalyticsEventType.USER_FIRST_AUTHENTICATED, "EVAL-001", mock_user.organisation_id
+    )
+    assert mock_user.first_login is not None
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_does_not_record_analytics_event_on_subsequent_logins(monkeypatch, session):
+    original_first_login = datetime.now(UTC)
+    mock_user = User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=TEST_SUBJECT_ID,
+        evaluation_id="EVAL-001",
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+        first_login=original_first_login,
+    )
+    mock_result = Mock()
+    mock_result.first.return_value = mock_user
+    session.exec.return_value = mock_result
+
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        make_mock_get_user_info(),
+    )
+    mock_record_event = AsyncMock()
+    monkeypatch.setattr("backend.api.dependencies.get_current_user.record_analytics_event", mock_record_event)
+
+    await get_current_user(session=session, x_amzn_oidc_data=TEST_TOKEN)
+
+    mock_record_event.assert_not_awaited()
+    assert mock_user.first_login == original_first_login
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_updates_subject_id_when_ia_subject_changed(monkeypatch, session):
+    old_subject_id = "old_subject_id"
+    new_subject_id = "new_subject_id"
+    mock_user = User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=old_subject_id,
+        needs_to_update_sub=True,
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+    )
+
+    session.exec.side_effect = [
+        make_exec_result(mock_user),  # IA changed sub match
+        make_exec_result(Mock()),  # UserAuthEmail lookup
+    ]
+
+    mock_get_user_info = make_mock_get_user_info(subject_id=new_subject_id)
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        mock_get_user_info,
+    )
+
+    user = await get_current_user(
+        session=session,
+        x_amzn_oidc_data=TEST_TOKEN,
+    )
+
+    assert user.email == mock_user.email
+    assert user.subject_id == new_subject_id
+    assert user.needs_to_update_sub is False
+    assert session.commit.await_count == 1
+
+    # check the query is IA changed sub lookup (the first exec call)
+    changed_sub_statement = session.exec.await_args_list[0].args[0]
+    compiled = changed_sub_statement.compile()
+    compiled_statement = str(compiled)
+    assert "user_auth_email" in compiled_statement
+    assert "needs_to_update_sub" in compiled_statement
+    assert TEST_EMAIL in compiled.params.values()
 
 
 @pytest.mark.asyncio
@@ -81,12 +197,15 @@ async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch
         data_retention_days=30,
         created_datetime=datetime.now(UTC),
         updated_datetime=datetime.now(UTC),
+        first_login=datetime.now(UTC),
     )
-    mock_result = Mock()
-    # first returns no match, then returns the user
-    # as the first query matches on subject id, and the second on email
-    mock_result.first.side_effect = [None, mock_user]
-    session.exec.return_value = mock_result
+
+    session.exec.side_effect = [
+        make_exec_result(None),  # no changed sub match
+        make_exec_result(None),  # no subject_id match
+        make_exec_result(mock_user),  # fallback legacy email match returns user
+        make_exec_result(Mock()),  # UserAuthEmail lookup
+    ]
 
     # patch in JWT decoding
     mock_get_user_info = make_mock_get_user_info()
@@ -104,10 +223,10 @@ async def test_get_current_user_falls_back_to_email_if_no_subject_id(monkeypatch
     assert user.email == mock_user.email
     assert user.subject_id == TEST_SUBJECT_ID
     mock_get_user_info.assert_called_once_with(TEST_TOKEN)
-    assert session.commit.await_count == 2
+    assert session.commit.await_count == 1
 
-    # check the query filtered by email
-    executed_statement = session.exec.call_args.args[0]
+    # check the query filtered by email (the third exec call)
+    executed_statement = session.exec.await_args_list[2].args[0]
     compiled = executed_statement.compile()
     assert "email" in str(compiled)
     assert user.email in compiled.params.values()
@@ -219,3 +338,33 @@ async def test_get_current_user_unhandled_exception(monkeypatch, session):
         )
 
     assert exception.value.status_code == 500
+
+
+def make_user(*, accepted_tou: bool) -> User:
+    return User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=TEST_SUBJECT_ID,
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+        accepted_tou=accepted_tou,
+    )
+
+
+@pytest.mark.asyncio
+async def test_require_accepted_tou_returns_user_when_accepted():
+    user = make_user(accepted_tou=True)
+
+    assert await require_accepted_tou(user) is user
+
+
+@pytest.mark.asyncio
+async def test_require_accepted_tou_rejects_user_when_not_accepted():
+    user = make_user(accepted_tou=False)
+
+    with pytest.raises(HTTPException) as exception:
+        await require_accepted_tou(user)
+
+    assert exception.value.status_code == 403
+    assert exception.value.detail == "Terms of use must be accepted"

@@ -36,7 +36,6 @@ export default defineConfig([
       'components/ui/**',
       'components/audio/discard-dialog.tsx',
       'components/recent-meetings/**',
-      'components/template-select/**',
       'components/layout/**',
       'app/transcriptions/**',
       'app/templates/components/editor/editor-toolbar.tsx',

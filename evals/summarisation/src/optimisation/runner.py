@@ -21,7 +21,7 @@ from common.database.postgres_models import DialogueEntry
 from common.llm.adapters.llm_constants import MAX_COMPLETION_TOKENS as MAX_TOKENS
 from common.llm.adapters.llm_constants import TEMPERATURE
 from common.settings import get_settings
-from evals.summarisation.prompts import DIMENSIONS
+from evals.summarisation.prompts import DIMENSIONS, JUDGE_CRITERIA_VERSION
 from evals.summarisation.src.common import (
     AppConfig,
     DialogExample,
@@ -59,7 +59,7 @@ def _utc_now() -> datetime:
 
 
 def _elapsed_ms(start_s: float, end_s: float) -> int:
-    return int(round((end_s - start_s) * 1000))
+    return round((end_s - start_s) * 1000)
 
 
 def _p50(values: list[int]) -> int:
@@ -148,7 +148,10 @@ def load_dspy_devset(
         if split is None:
             msg = "run.split must be specified when dataset.source is 'huggingface'"
             raise ValueError(msg)
-        ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
+        if cfg.dataset.source == "local_dir":
+            ds = load_dataset("json", data_dir=str(Path(cfg.dataset.name)))
+        else:
+            ds = load_dataset(cfg.dataset.name, cfg.dataset.config)
         split_rows = ds[split]
         if limit is not None:
             split_rows = split_rows.select(range(min(limit, len(split_rows))))
@@ -304,6 +307,7 @@ class EvalRun:
                 reference_summary=ex.reference_summary,
                 candidate=pred.candidate,
                 metrics=metrics_out,
+                judge_criteria_version=JUDGE_CRITERIA_VERSION,
             )
             run.state.records.append(record)
             _maybe_flush_records(run.results_path, run.state.records, flush_every=10)
@@ -453,6 +457,7 @@ def _build_run_summary(
         "split": split,
         "n": len(devset),
         "overall": overall,
+        "judge_criteria_version": JUDGE_CRITERIA_VERSION,
         "metrics": metrics_summary,
         # Recorded so a dimension missing from `metrics` reads as deliberately out of scope for this
         # summary path, not as a dimension that silently failed to produce a score.

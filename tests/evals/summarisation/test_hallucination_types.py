@@ -31,7 +31,7 @@ def test_classified_statement_invalid_label_rejected():
         ClassifiedStatement(
             hallucination_text="x",
             citation_indices=[],
-            hallucination_type=cast(SupportLabel, "Invalid"),
+            hallucination_type=cast("SupportLabel", "Invalid"),
             hallucination_reason="r",
         )
 

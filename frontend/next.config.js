@@ -2,6 +2,17 @@ import { withSentryConfig } from '@sentry/nextjs'
 
 let nextConfig = {
   output: 'standalone',
+  async headers() {
+    return [
+      {
+        // By default: cache nothing in shared caches (e.g. CloudFront) and require (etag) revalidation
+        // The exception is static assets, which can be cached more aggressively (Next defaults to `public,
+        // max-age=31536000, immutable`)
+        source: '/:path((?!_next/static/).*)',
+        headers: [{ key: 'Cache-Control', value: 'private, no-cache' }],
+      },
+    ]
+  },
   sassOptions: {
     includePaths: ['./node_modules'],
     quietDeps: true,

@@ -1,9 +1,9 @@
 variable "environment_name" {
-  description = "must be one of: development, or staging"
+  description = "must be one of: development, staging, or production"
   type        = string
   validation {
-    condition     = contains(["development", "staging"], var.environment_name)
-    error_message = "Environment must be one of: development, staging"
+    condition     = contains(["development", "staging", "production"], var.environment_name)
+    error_message = "Environment must be one of: development, staging, production"
   }
 }
 
@@ -94,4 +94,22 @@ variable "abort_incomplete_multipart_upload_days" {
   type        = number
   description = "Days after initiation to abort incomplete multipart uploads."
   default     = 7
+}
+
+variable "worker_job_failure_rate_threshold" {
+  description = "Worker job failure rate (%) per 15-minute window above which a window counts as breaching"
+  type        = number
+  default     = 25
+}
+
+variable "worker_job_failure_rate_min_jobs" {
+  description = "Minimum real jobs (started - requeued) in a 15-minute window before the failure rate is evaluated"
+  type        = number
+  default     = 4
+}
+
+variable "worker_job_failure_count_threshold" {
+  description = "Worker job failures per 15-minute window at or above which a window counts as breaching"
+  type        = number
+  default     = 3
 }

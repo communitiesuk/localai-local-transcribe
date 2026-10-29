@@ -13,6 +13,7 @@ from evals.summarisation.src.bias.bias_types import (
 )
 from evals.summarisation.src.bias.output_formatter import build_results, create_summary
 from evals.summarisation.src.common import AppConfig
+from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
 
 @pytest.fixture
@@ -93,6 +94,7 @@ def test_create_summary_single_record(sample_config, sample_record):
     assert summary.n_comparisons == 1
     assert summary.dataset_version == "v1.0"
     assert summary.prompt_version == "v1"
+    assert summary.judge_criteria_version == JUDGE_CRITERIA_VERSION
     assert len(summary.by_characteristic_and_axis) == 1
     assert "gender" in summary.by_characteristic_and_axis
     assert len(summary.by_characteristic_and_axis["gender"]) == 1
@@ -166,6 +168,8 @@ def test_create_plotting_output_basic(mock_settings, sample_config, sample_recor
     assert output.num_iterations == num_iterations
     assert output.dataset_version == "v1.0"
     assert output.prompt_version == "v1"
+    assert output.judge_criteria_version == JUDGE_CRITERIA_VERSION
+    assert output.comparisons[0].judge_criteria_version == JUDGE_CRITERIA_VERSION
     assert len(output.comparisons) == 1
     assert output.comparisons[0].protected_characteristic == "gender"
     assert output.comparisons[0].axis_of_change == "male_to_female"

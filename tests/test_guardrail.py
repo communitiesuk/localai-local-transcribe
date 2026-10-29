@@ -3,15 +3,32 @@ from uuid import uuid4
 
 import pytest
 
-from common.database.postgres_models import GuardrailResult, JobStatus
+from common.database.postgres_models import ContentSource, GuardrailFailureCategory, GuardrailResult, JobStatus
+from common.guardrail_messages import (
+    EDIT_SAFETY_AND_INTENT_MESSAGE,
+    FACTUAL_INTEGRITY_MESSAGE,
+    MULTIPLE_FAILURES_MESSAGE,
+    OPERATIONAL_SIGNALS_MESSAGE,
+    get_guardrail_warning_message,
+    get_guardrail_warning_message_for_results,
+)
+from common.prompts import GUARDRAIL_PROMPT_VERSION, get_accuracy_check_messages
 from common.services.minute_handler_service import MinuteHandlerService
-from common.types import GuardrailScore, MeetingType, MinuteAndHallucinations
+from common.types import (
+    FailureCategory,
+    FailureDetail,
+    FailureMode,
+    GuardrailAction,
+    GuardrailScore,
+    MeetingType,
+    MinuteAndHallucinations,
+)
 
 
 @pytest.mark.asyncio
 async def test_calculate_accuracy_score():
     # Mock the chatbot and its response
-    mock_score = GuardrailScore(score=0.95, reasoning="Excellent summary")
+    mock_score = GuardrailScore(score=0.95, reasoning="Excellent summary", categories=[])
 
     with patch("common.services.minute_handler_service.create_default_chatbot") as mock_create_chatbot:
         mock_chatbot = MagicMock()
@@ -32,13 +49,13 @@ async def test_calculate_accuracy_score():
 
         # Verify LLM called correctly
         mock_chatbot.structured_chat.assert_called_once()
-        args, kwargs = mock_chatbot.structured_chat.call_args
+        _args, kwargs = mock_chatbot.structured_chat.call_args
         assert kwargs["response_format"] == GuardrailScore
         assert len(kwargs["messages"]) == 3
         assert kwargs["messages"][0]["role"] == "system"
         assert "Quality Assurance auditor" in kwargs["messages"][0]["content"]
         assert kwargs["messages"][1]["role"] == "user"
-        assert "A: Hello" in kwargs["messages"][1]["content"]
+        assert "A (recording offset +0s): Hello" in kwargs["messages"][1]["content"]
         assert kwargs["messages"][2]["role"] == "user"
         assert minute_text in kwargs["messages"][2]["content"]
 
@@ -49,7 +66,7 @@ def test_save_guardrail_result(mock_session_local):
     mock_session_local.return_value.__enter__.return_value = mock_session
 
     minute_version_id = "123e4567-e89b-12d3-a456-426614174000"
-    score = GuardrailScore(score=0.8, reasoning="Good")
+    score = GuardrailScore(score=0.8, reasoning="Good", categories=[])
 
     MinuteHandlerService.save_guardrail_result(minute_version_id, score)
 
@@ -59,7 +76,7 @@ def test_save_guardrail_result(mock_session_local):
     assert isinstance(saved_obj, GuardrailResult)
     assert str(saved_obj.minute_version_id) == minute_version_id
     assert saved_obj.score == 0.8
-    assert saved_obj.reasoning == "Good"
+    assert saved_obj.reasoning == f"Good\nPROMPT_VERSION={GUARDRAIL_PROMPT_VERSION}"
     assert saved_obj.passed is True
     assert saved_obj.error is None
 
@@ -83,8 +100,77 @@ def test_save_guardrail_error(mock_session_local):
     assert str(saved_obj.minute_version_id) == minute_version_id
     assert saved_obj.passed is False
     assert saved_obj.error == error_msg
+    assert saved_obj.reasoning == f"System Error: Could not verify accuracy.\nPROMPT_VERSION={GUARDRAIL_PROMPT_VERSION}"
 
     mock_session.commit.assert_called_once()
+
+
+@patch("common.services.minute_handler_service.SessionLocal")
+def test_save_guardrail_result_persists_failure_categories(mock_session_local):
+    mock_session = MagicMock()
+    mock_session_local.return_value.__enter__.return_value = mock_session
+
+    minute_version_id = "123e4567-e89b-12d3-a456-426614174000"
+    detail = FailureDetail(
+        mode=FailureMode.INVENTED_DECISION,
+        explanation="No vote occurred in the transcript.",
+    )
+    score = GuardrailScore(score=0.3, reasoning="Fabricated decision", categories=[detail])
+
+    MinuteHandlerService.save_guardrail_result(minute_version_id, score)
+
+    saved_obj = mock_session.add.call_args[0][0]
+    assert isinstance(saved_obj, GuardrailResult)
+    assert len(saved_obj.failure_categories) == 1
+    failure = saved_obj.failure_categories[0]
+    assert isinstance(failure, GuardrailFailureCategory)
+    assert failure.category == "factual_integrity"
+    assert failure.mode == "invented_decision"
+    assert failure.explanation == "No vote occurred in the transcript."
+
+
+@patch("common.services.minute_handler_service.SessionLocal")
+def test_save_guardrail_result_ignores_categories_when_passing(mock_session_local):
+    mock_session = MagicMock()
+    mock_session_local.return_value.__enter__.return_value = mock_session
+
+    detail = FailureDetail(mode=FailureMode.INVENTED_DECISION)
+    score = GuardrailScore(score=0.8, reasoning="Good enough", categories=[detail])
+
+    MinuteHandlerService.save_guardrail_result(uuid4(), score)
+
+    saved_obj = mock_session.add.call_args[0][0]
+    assert isinstance(saved_obj, GuardrailResult)
+    assert saved_obj.failure_categories == []
+
+
+def test_original_guardrail_prompt_excludes_ai_edit_categories():
+    messages = get_accuracy_check_messages(
+        "Meeting summary",
+        [{"speaker": "A", "text": "Hello", "start_time": 0.0, "end_time": 1.0}],
+        0.7,
+    )
+
+    system_prompt = messages[0]["content"]
+    assert "edit_safety_and_intent" not in system_prompt
+    assert "Unsafe edit" not in system_prompt
+    assert "Edit did wrong task" not in system_prompt
+
+
+def test_ai_edit_guardrail_prompt_includes_ai_edit_categories_and_instruction():
+    messages = get_accuracy_check_messages(
+        "Meeting summary",
+        [{"speaker": "A", "text": "Hello", "start_time": 0.0, "end_time": 1.0}],
+        0.7,
+        action=GuardrailAction.AI_EDIT,
+        edit_instructions="Shorten this",
+    )
+
+    system_prompt = messages[0]["content"]
+    assert "edit_safety_and_intent" in system_prompt
+    assert "Unsafe edit" in system_prompt
+    assert "Edit did wrong task" in system_prompt
+    assert "Shorten this" in messages[-1]["content"]
 
 
 @pytest.mark.asyncio
@@ -118,19 +204,29 @@ async def test_process_minute_generation_runs_guardrails():
             text="<html>Minutes</html>",
             total_claims=0,
             hallucinations=[],
+            citation_quality_applicable=False,
         )
 
-        mock_score = GuardrailScore(score=0.9, reasoning="Good")
+        mock_score = GuardrailScore(score=0.9, reasoning="Good", categories=[])
         mock_calc_score.return_value = mock_score
 
         # Execute
         await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
 
         # Verify
-        mock_calc_score.assert_called_once()
+        mock_calc_score.assert_called_once_with(
+            minute="<html>Minutes</html>",
+            transcript=mock_minute_version.minute.transcription.dialogue_entries,
+            citation_quality_applicable=False,
+            action=GuardrailAction.ORIGINAL_GENERATION,
+            edit_instructions=None,
+        )
         mock_save_result.assert_called_once_with(mock_minute_version.id, mock_score)
         mock_update_mv.assert_called_with(
-            mock_minute_version.id, html_content="<html>Minutes</html>", status=JobStatus.COMPLETED
+            mock_minute_version.id,
+            html_content="<html>Minutes</html>",
+            status=JobStatus.COMPLETED,
+            template_prompt_version=None,
         )
 
 
@@ -178,5 +274,184 @@ async def test_process_minute_generation_handles_exception():
         mock_save_error.assert_called_once()
         # Should still complete effectively
         mock_update_mv.assert_called_with(
-            mock_minute_version.id, html_content="<html>Minutes</html>", status=JobStatus.COMPLETED
+            mock_minute_version.id,
+            html_content="<html>Minutes</html>",
+            status=JobStatus.COMPLETED,
+            template_prompt_version=None,
         )
+
+
+def test_guardrail_score_with_failure_categories_round_trips():
+    """A GuardrailScore with populated failure details preserves category/mode/explanation."""
+    detail = FailureDetail(
+        mode=FailureMode.INVENTED_DECISION,
+        explanation="The minute states the application was approved but no vote occurred in the transcript.",
+    )
+    score = GuardrailScore(score=0.3, reasoning="Found a fabricated decision", categories=[detail])
+
+    assert score.categories == [detail]
+    assert score.categories[0].category == FailureCategory.FACTUAL_INTEGRITY
+    assert score.categories[0].mode == FailureMode.INVENTED_DECISION
+    assert score.categories[0].explanation
+
+
+def test_failure_detail_derives_category_from_mode():
+    """Category is derived from the selected failure mode."""
+    detail = FailureDetail(mode=FailureMode.INVENTED_DECISION, explanation="Evidence text")
+
+    assert detail.category == FailureCategory.FACTUAL_INTEGRITY
+    assert detail.mode == FailureMode.INVENTED_DECISION
+
+
+def test_failure_detail_schema_does_not_ask_for_category():
+    """The LLM selects a mode; the category is derived in code."""
+    properties = GuardrailScore.model_json_schema()["$defs"]["FailureDetail"]["properties"]
+
+    assert "mode" in properties
+    assert "category" not in properties
+
+
+def test_failure_detail_explanation_defaults_to_none():
+    """Detailed explanation is optional — omitting it should not block validation."""
+    detail = FailureDetail(mode=FailureMode.INVENTED_DECISION)
+
+    assert detail.explanation is None
+
+
+def test_guardrail_score_logs_warning_when_failing_score_has_no_categories(caplog):
+    """A failing score with no failure categories should log a warning, not raise."""
+    failing_score = 0.2
+    with caplog.at_level("WARNING", logger="common.types"):
+        score = GuardrailScore(score=failing_score, reasoning="Inaccurate summary", categories=[])
+
+    assert score.categories == []
+    assert caplog.records[0].levelname == "WARNING"
+    assert f"GuardrailScore of {failing_score:.2f} is below the guardrail threshold" in caplog.records[0].message
+    assert "no failure categories were provided" in caplog.records[0].message
+
+
+def test_all_failure_modes_are_categorized():
+    """Defensive test to ensure that all FailureMode values have a corresponding category mapping."""
+    assert set(FailureMode) == set(FailureDetail._CATEGORY_BY_MODE.keys())  # noqa: SLF001
+
+
+def test_personal_data_failure_mode_maps_to_data_protection():
+    """Personal data should have its own failure category."""
+    detail = FailureDetail(mode=FailureMode.PERSONAL_DATA_INCLUDED)
+
+    assert detail.category == FailureCategory.DATA_PROTECTION
+
+
+def test_transcript_instruction_failure_mode_maps_to_instruction_integrity():
+    """Transcript injection compliance should use the shared instruction-integrity category."""
+    detail = FailureDetail(mode=FailureMode.TRANSCRIPT_INSTRUCTION_FOLLOWED)
+
+    assert detail.category == FailureCategory.INSTRUCTION_INTEGRITY
+
+
+def test_template_instruction_failure_mode_maps_to_instruction_integrity():
+    """Template injection compliance should use the shared instruction-integrity category."""
+    detail = FailureDetail(mode=FailureMode.TEMPLATE_INSTRUCTION_FOLLOWED)
+
+    assert detail.category == FailureCategory.INSTRUCTION_INTEGRITY
+
+
+def test_no_quote_for_claim_maps_to_evidence_and_citation_quality():
+    """Missing citations should remain citation-quality failures."""
+    detail = FailureDetail(mode=FailureMode.NO_QUOTE_FOR_CLAIM)
+
+    assert detail.category == FailureCategory.EVIDENCE_AND_CITATION_QUALITY
+
+
+def test_weak_transcript_support_maps_to_factual_integrity():
+    """Weak source support should sit with other transcript-faithfulness failure modes."""
+    detail = FailureDetail(mode=FailureMode.WEAK_TRANSCRIPT_SUPPORT)
+
+    assert detail.category == FailureCategory.FACTUAL_INTEGRITY
+
+
+def test_guardrail_warning_message_returns_none_for_manual_edit():
+    warning_message = get_guardrail_warning_message(
+        content_source=ContentSource.MANUAL_EDIT,
+        categories={FailureCategory.FACTUAL_INTEGRITY.value},
+    )
+
+    assert warning_message is None
+
+
+def test_guardrail_warning_message_collapses_modes_in_one_category():
+    warning_message = get_guardrail_warning_message(
+        content_source=ContentSource.INITIAL_GENERATION,
+        categories={FailureCategory.FACTUAL_INTEGRITY.value},
+    )
+
+    assert warning_message == FACTUAL_INTEGRITY_MESSAGE
+
+
+def test_guardrail_warning_message_uses_multiple_message_for_original_version():
+    warning_message = get_guardrail_warning_message(
+        content_source=ContentSource.INITIAL_GENERATION,
+        categories={
+            FailureCategory.FACTUAL_INTEGRITY.value,
+            FailureCategory.DATA_PROTECTION.value,
+        },
+    )
+
+    assert warning_message == MULTIPLE_FAILURES_MESSAGE
+
+
+def test_guardrail_warning_message_uses_edit_message_for_ai_edit_with_clean_previous_version():
+    warning_message = get_guardrail_warning_message(
+        content_source=ContentSource.AI_EDIT,
+        categories={
+            FailureCategory.FACTUAL_INTEGRITY.value,
+            FailureCategory.DATA_PROTECTION.value,
+        },
+    )
+
+    assert warning_message == EDIT_SAFETY_AND_INTENT_MESSAGE
+
+
+def test_guardrail_warning_message_uses_multiple_message_for_ai_edit_with_problem_previous_version():
+    warning_message = get_guardrail_warning_message(
+        content_source=ContentSource.AI_EDIT,
+        categories={
+            FailureCategory.FACTUAL_INTEGRITY.value,
+            FailureCategory.DATA_PROTECTION.value,
+        },
+        previous_version_has_issues=True,
+    )
+
+    assert warning_message == MULTIPLE_FAILURES_MESSAGE
+
+
+def test_guardrail_warning_message_uses_operational_message_for_process_failure():
+    warning_message = get_guardrail_warning_message(
+        content_source=ContentSource.INITIAL_GENERATION,
+        categories=set(),
+        guardrail_failed=True,
+    )
+
+    assert warning_message == OPERATIONAL_SIGNALS_MESSAGE
+
+
+def test_guardrail_warning_message_for_results_uses_failure_categories_from_guardrail_result():
+    guardrail_results = [
+        GuardrailResult(
+            passed=False,
+            error=None,
+            failure_categories=[
+                GuardrailFailureCategory(
+                    category=FailureCategory.FACTUAL_INTEGRITY.value,
+                    mode=FailureMode.INVENTED_DECISION.value,
+                )
+            ],
+        )
+    ]
+
+    warning_message = get_guardrail_warning_message_for_results(
+        content_source=ContentSource.INITIAL_GENERATION,
+        guardrail_results=guardrail_results,
+    )
+
+    assert warning_message == FACTUAL_INTEGRITY_MESSAGE

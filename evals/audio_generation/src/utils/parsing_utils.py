@@ -87,4 +87,4 @@ def parse_args() -> AudioArgs:
 
     args = parser.parse_args(namespace=AudioArgs())
 
-    return cast(AudioArgs, args)
+    return cast("AudioArgs", args)

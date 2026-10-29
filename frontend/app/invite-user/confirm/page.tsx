@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthorisedUser } from '@/hooks/use-authorised-user'
 import { hasAnyRole, UserRole } from '@/lib/utils'
 import { useInviteUserStore } from '@/stores/use-invite-user-store'
@@ -9,12 +9,83 @@ import { useOrganisation } from '@/hooks/use-organisation'
 import { createUserUsersPostMutation } from '@/lib/client/@tanstack/react-query.gen'
 import { Loader2 } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
+import { GovukErrorSummary } from '@/components/govuk'
+import { EMAIL_FORMAT_MESSAGE } from '@/utils/validate-email'
+
+type InviteErrorField = 'email' | 'evaluationId'
+
+export type InviteError = {
+  message: string
+  field?: InviteErrorField
+}
+
+const FIELD_ANCHORS: Record<InviteErrorField, string> = {
+  email: 'invitee-email-address',
+  evaluationId: 'invitee-evaluation-id',
+}
+
+const SERVICE_FAILURE_MESSAGE = 'Could not send the invitation. Try again.'
+
+const fieldFromMessage = (message: string): InviteErrorField | undefined => {
+  if (/email|domain/i.test(message)) {
+    return 'email'
+  }
+
+  if (/evaluation/i.test(message)) {
+    return 'evaluationId'
+  }
+
+  return undefined
+}
+
+const fieldFromLocation = (location: unknown): InviteErrorField | undefined => {
+  if (!Array.isArray(location)) {
+    return undefined
+  }
+
+  if (location.includes('email')) {
+    return 'email'
+  }
+
+  if (location.includes('evaluation_id')) {
+    return 'evaluationId'
+  }
+
+  return undefined
+}
+
+export function getInviteError(error: unknown): InviteError {
+  if (typeof error === 'object' && error !== null && 'detail' in error) {
+    const { detail } = error as { detail: unknown }
+
+    if (typeof detail === 'string') {
+      return { message: detail, field: fieldFromMessage(detail) }
+    }
+
+    if (Array.isArray(detail)) {
+      const field = detail
+        .map((item) => fieldFromLocation(item?.loc))
+        .find(Boolean)
+
+      if (field === 'email') {
+        return { message: EMAIL_FORMAT_MESSAGE, field }
+      }
+
+      if (field === 'evaluationId') {
+        return { message: 'Enter an evaluation ID', field }
+      }
+    }
+  }
+
+  return { message: SERVICE_FAILURE_MESSAGE }
+}
 
 export default function AdminAddUserConfirmPage() {
   const router = useRouter()
-  const { name, email, organisationId, clearInviteDetails } =
-    useInviteUserStore()
+  const searchParams = useSearchParams()
+  const { name, email, evaluationId, clearInviteDetails } = useInviteUserStore()
   const submitInProgress = useRef(false)
+  const [submitError, setSubmitError] = useState<InviteError | null>(null)
 
   const {
     currentUser,
@@ -25,20 +96,28 @@ export default function AdminAddUserConfirmPage() {
     UserRole.MHCLG_SUPPORT_ADMIN,
   ])
 
-  const { data: organisation } = useOrganisation(
-    currentUser?.organisation_id ?? ''
-  )
+  const selectedOrganisationId = searchParams.get('organisationId') ?? ''
+  const inviteOrganisationId =
+    selectedOrganisationId || currentUser?.organisation_id || ''
+
+  const { data: organisation } = useOrganisation(inviteOrganisationId)
+  const userManagementHref = selectedOrganisationId
+    ? `/user-management?organisationId=${encodeURIComponent(selectedOrganisationId)}`
+    : '/user-management'
+  const inviteUserHref = selectedOrganisationId
+    ? `/invite-user?organisationId=${encodeURIComponent(selectedOrganisationId)}`
+    : '/invite-user/'
 
   const createUserMutation = useMutation(createUserUsersPostMutation())
 
   useEffect(() => {
     if (submitInProgress.current) return
-    if (!name || !email) {
-      router.replace('/invite-user')
+    if (!name || !email || !evaluationId) {
+      router.replace(inviteUserHref)
     }
-  }, [name, email, router])
+  }, [inviteUserHref, name, email, evaluationId, router])
 
-  if (!name || !email || !organisation?.id) {
+  if (!name || !email || !evaluationId || !organisation?.id) {
     return <Loader2 className="animate-spin" />
   }
 
@@ -51,13 +130,15 @@ export default function AdminAddUserConfirmPage() {
 
   const handleCreateUser = async () => {
     submitInProgress.current = true
+    setSubmitError(null)
     if (!is_Support_Admin && !is_LA_Admin) return
 
-    if (!name || !email) {
+    if (!name || !email || !evaluationId) {
       console.error('Missing required fields for user creation:', {
         name,
         email,
       })
+      setSubmitError({ message: SERVICE_FAILURE_MESSAGE })
       submitInProgress.current = false
       return
     }
@@ -66,11 +147,11 @@ export default function AdminAddUserConfirmPage() {
       console.log('Creating user as Support Admin:', {
         name,
         email,
-        organisationId,
+        organisationId: selectedOrganisationId,
       })
 
       try {
-        if (!organisationId) {
+        if (!selectedOrganisationId) {
           console.error(
             'Organisation ID is missing for Support Admin user creation.'
           )
@@ -78,39 +159,42 @@ export default function AdminAddUserConfirmPage() {
           return
         }
 
-        console.log('Creating user with organisation ID:', organisationId)
+        console.log(
+          'Creating user with organisation ID:',
+          selectedOrganisationId
+        )
 
         await createUserMutation.mutateAsync({
           body: {
             name: name,
             email: email,
-            organisation_id: organisationId,
+            evaluation_id: evaluationId,
+            organisation_id: selectedOrganisationId,
           },
         })
-        router.push('/user-management')
+        router.push(userManagementHref)
         clearInviteDetails()
       } catch (error) {
         submitInProgress.current = false
         console.error('Failed to create user:', error)
-        // Awaiting error logic from UCD
+        setSubmitError(getInviteError(error))
       }
-    }
-
-    if (is_LA_Admin) {
+    } else if (is_LA_Admin) {
       try {
         await createUserMutation.mutateAsync({
           body: {
             name: name,
             email: email,
+            evaluation_id: evaluationId,
             organisation_id: organisation?.id,
           },
         })
-        router.push('/user-management')
+        router.push(userManagementHref)
         clearInviteDetails()
       } catch (error) {
         submitInProgress.current = false
         console.error('Failed to create user:', error)
-        // Awaiting error logic from UCD
+        setSubmitError(getInviteError(error))
       }
     }
   }
@@ -121,6 +205,19 @@ export default function AdminAddUserConfirmPage() {
       {userError && <p>Error: Failed to load users.</p>}
 
       <div>
+        {submitError && (
+          <GovukErrorSummary
+            errorList={[
+              {
+                href: submitError.field
+                  ? `${inviteUserHref}#${FIELD_ANCHORS[submitError.field]}`
+                  : undefined,
+                text: submitError.message,
+              },
+            ]}
+          />
+        )}
+
         <h1 className="govuk-heading-l">Invite new user</h1>
         <div className="govuk-grid-row">
           <div className="govuk-grid-column-three-quarters">
@@ -172,7 +269,7 @@ export default function AdminAddUserConfirmPage() {
             Invite
           </button>
 
-          <a href="/invite-user/" className="govuk-link">
+          <a href={inviteUserHref} className="govuk-link">
             Cancel
           </a>
         </div>

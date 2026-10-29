@@ -22,6 +22,15 @@ else:
 class Settings(BaseSettings):
     POSTGRES_HOST: str = Field(description="PostgreSQL database host")
     POSTGRES_PORT: int = Field(description="PostgreSQL database port")
+    POSTGRES_HOSTADDR: str | None = Field(
+        description="IP to connect to instead of resolving POSTGRES_HOST (e.g. 127.0.0.1 via an SSM tunnel). "
+        "POSTGRES_HOST is still used for IAM tokens and TLS verification",
+        default=None,
+    )
+    POSTGRES_IAM_PORT: int | None = Field(
+        description="Port the IAM auth token is generated for when it differs from POSTGRES_PORT (tunnel local port)",
+        default=None,
+    )
     POSTGRES_DB: str = Field(description="PostgreSQL database name")
     POSTGRES_USER: str | None = Field(description="PostgreSQL database user", default=None)
     POSTGRES_PASSWORD: str | None = Field(description="PostgreSQL database password", default=None)
@@ -156,14 +165,23 @@ class Settings(BaseSettings):
         description="Use the GovNotify website to create an email template and copy in the template ID.", default=None
     )
 
+    GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID: str | None = Field(
+        description="Use the GovNotify website to create an email template and copy in the template ID. For inviters "
+        "with no organisation.",
+        default=None,
+    )
+
     @model_validator(mode="after")
-    def validate_govnotify(self) -> "Settings":
+    def validate_govnotify(self) -> Settings:
         if self.EMAIL_SERVICE == "gov_notify":
             if not self.GOVNOTIFY_API_KEY:
                 error_text = "GOVNOTIFY_API_KEY must be set when EMAIL_SERVICE='gov_notify'"
                 raise ValueError(error_text)
             if not self.GOVNOTIFY_INVITE_TEMPLATE_ID:
                 error_text = "GOVNOTIFY_INVITE_TEMPLATE_ID must be set when EMAIL_SERVICE='gov_notify'"
+                raise ValueError(error_text)
+            if not self.GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID:
+                error_text = "GOVNOTIFY_INVITE_NO_ORGANISATION_TEMPLATE_ID must be set when EMAIL_SERVICE='gov_notify'"
                 raise ValueError(error_text)
         return self
 

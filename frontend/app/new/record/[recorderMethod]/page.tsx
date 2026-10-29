@@ -1,13 +1,15 @@
 'use client'
 
 import { useParams } from 'next/navigation'
+import { useEffect } from 'react'
 import { MicRecorderForm } from '@/components/audio/mic-recorder'
 import { TabRecorderForm } from '@/components/audio/tab-recorder/tab-recorder'
-import { GovukBackLink, GovukHeading } from '@/components/govuk'
+import { GovukHeading } from '@/components/govuk'
+import { GovukBackLinkWithLockNav } from '@/components/layout/govuk-back-link-with-lock-nav'
+import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 import {
-  useRecordingUiStore,
+  useRecordingUIStore,
   type RecordingState,
-  type RecordingUiStore,
 } from '@/stores/use-recording-ui-store'
 import { notFound } from 'next/navigation'
 
@@ -19,16 +21,53 @@ const titleMapper: Record<RecordingState, string | boolean> = {
   starting: false,
   recording: 'Recording in progress',
   paused: 'Recording paused',
-  stopped: false,
+  stopConfirm: 'Are you sure you want to stop recording?',
+  stopping: 'Are you sure you want to stop recording?',
+}
+
+const statesWithBackLink: RecordingState[] = [
+  'idle',
+  'recording',
+  'paused',
+  'stopping',
+]
+
+const navLockMessage =
+  'You have a recording that has not been uploaded. Your recording will be discarded if you do not upload it.'
+
+function RecordingIcon({ state }: { state: RecordingState }) {
+  const colour =
+    state === 'recording' ? '#D4351C' : state === 'paused' ? '#B1B4B6' : null
+
+  if (!colour) {
+    return null
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      xmlns="http://www.w3.org/2000/svg"
+      width="40"
+      height="40"
+      viewBox="0 0 40 40"
+      fill="none"
+    >
+      <circle cx="20" cy="20" r="19" stroke={colour} strokeWidth="2" />
+      <circle cx="20" cy="20" r="12" fill={colour} />
+    </svg>
+  )
 }
 
 export default function RecordPage() {
   const params = useParams<{ recorderMethod: RecorderMethod }>()
   const recorderMethod = params.recorderMethod
+  const { recordingUIState, resetRecordingUI } = useRecordingUIStore()
+  const uploadStatus = useUploadRecordingStore((store) => store.status)
 
-  const recordingState = useRecordingUiStore(
-    (state: RecordingUiStore) => state.recordingState
-  )
+  useEffect(() => {
+    resetRecordingUI()
+  }, [resetRecordingUI])
 
   const recorderForm =
     recorderMethod === 'in-person' ? <MicRecorderForm /> : <TabRecorderForm />
@@ -39,9 +78,22 @@ export default function RecordPage() {
 
   return (
     <div>
-      {recordingState !== 'starting' && <GovukBackLink href="/" />}
-      {titleMapper[recordingState] && (
-        <GovukHeading>{titleMapper[recordingState]}</GovukHeading>
+      {statesWithBackLink.includes(recordingUIState) && (
+        <GovukBackLinkWithLockNav
+          href="/"
+          message={navLockMessage}
+          onLeave={() => {
+            const store = useUploadRecordingStore.getState()
+            store.cancelRequest()
+            store.reset()
+          }}
+        />
+      )}
+      {uploadStatus === 'idle' && titleMapper[recordingUIState] && (
+        <div className="flex gap-2">
+          <RecordingIcon state={recordingUIState} />
+          <GovukHeading>{titleMapper[recordingUIState]}</GovukHeading>
+        </div>
       )}
       {recorderForm}
     </div>

@@ -149,7 +149,7 @@ async def test_generate_presigned_url_get_object(mocker, mock_client_ctx, mock_c
     kwargs = mock_generate_sas.call_args.kwargs
     assert kwargs["blob_name"] == object_key
     assert kwargs["container_name"] == mock_container_client.container_name
-    assert kwargs["content_disposition"] == f"attachment; filename={file_name}"
+    assert kwargs["content_disposition"] == f"attachment; filename=\"{file_name}\"; filename*=UTF-8''{file_name}"
     permissions = kwargs["permission"]
     assert permissions.read is True
     assert permissions.write is False

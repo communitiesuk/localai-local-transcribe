@@ -29,6 +29,6 @@ output "load_balancer_certificate_validation" {
 }
 
 output "nat_gateway_ip" {
-  value       = module.networking.nat_gateway_ip
+  value       = module.networking.nat_gateway_ips
   description = "The IP address of the NAT gateway"
 }

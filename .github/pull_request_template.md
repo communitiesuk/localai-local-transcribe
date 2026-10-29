@@ -20,6 +20,12 @@ https://mhclgdigital.atlassian.net/browse/AIILG-XXX
 - **Automated**:
 - **Manual**:
 
+## Prompt versioning (if applicable)
+
+<!-- If a versioned prompt or its prompt-building code changed, bump the relevant internal prompt_version and mention it here. Otherwise, delete this section. -->
+
+- **Prompt versions updated**:
+
 ## Screenshots / UI (optional)
 
 <!-- Before/after if this changes UI. -->

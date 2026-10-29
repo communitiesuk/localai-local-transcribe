@@ -61,6 +61,109 @@
             "description": "Sort order for date recorded"
           },
           {
+            "name": "client_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by client name",
+              "title": "Client Name"
+            },
+            "description": "Filter by client name"
+          },
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by case ID",
+              "title": "Case Id"
+            },
+            "description": "Filter by case ID"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by subject",
+              "title": "Subject"
+            },
+            "description": "Filter by subject"
+          },
+          {
+            "name": "date_of_recording",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by date recorded",
+              "title": "Date Of Recording"
+            },
+            "description": "Filter by date recorded"
+          },
+          {
+            "name": "date_of_recording_day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 31, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded day",
+              "title": "Date Of Recording Day"
+            },
+            "description": "Filter by recorded day"
+          },
+          {
+            "name": "date_of_recording_month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 12, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded month",
+              "title": "Date Of Recording Month"
+            },
+            "description": "Filter by recorded month"
+          },
+          {
+            "name": "date_of_recording_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded year",
+              "title": "Date Of Recording Year"
+            },
+            "description": "Filter by recorded year"
+          },
+          {
+            "name": "client_date_of_birth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by client date of birth",
+              "title": "Client Date Of Birth"
+            },
+            "description": "Filter by client date of birth"
+          },
+          {
             "name": "x-amzn-oidc-data",
             "in": "header",
             "required": false,
@@ -109,6 +212,109 @@
               "default": "newest"
             },
             "description": "Sort order for date recorded"
+          },
+          {
+            "name": "client_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by client name",
+              "title": "Client Name"
+            },
+            "description": "Filter by client name"
+          },
+          {
+            "name": "case_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by case ID",
+              "title": "Case Id"
+            },
+            "description": "Filter by case ID"
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "description": "Filter by subject",
+              "title": "Subject"
+            },
+            "description": "Filter by subject"
+          },
+          {
+            "name": "date_of_recording",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by date recorded",
+              "title": "Date Of Recording"
+            },
+            "description": "Filter by date recorded"
+          },
+          {
+            "name": "date_of_recording_day",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 31, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded day",
+              "title": "Date Of Recording Day"
+            },
+            "description": "Filter by recorded day"
+          },
+          {
+            "name": "date_of_recording_month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "maximum": 12, "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded month",
+              "title": "Date Of Recording Month"
+            },
+            "description": "Filter by recorded month"
+          },
+          {
+            "name": "date_of_recording_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "integer", "minimum": 1 },
+                { "type": "null" }
+              ],
+              "description": "Filter by recorded year",
+              "title": "Date Of Recording Year"
+            },
+            "description": "Filter by recorded year"
+          },
+          {
+            "name": "client_date_of_birth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "format": "date" },
+                { "type": "null" }
+              ],
+              "description": "Filter by client date of birth",
+              "title": "Client Date Of Birth"
+            },
+            "description": "Filter by client date of birth"
           },
           {
             "name": "x-amzn-oidc-data",
@@ -175,55 +381,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecordingCreateResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/transcriptions-only": {
-      "post": {
-        "tags": ["Transcriptions"],
-        "summary": "Create Transcription Only",
-        "description": "transcription without creating an associated Minute",
-        "operationId": "create_transcription_only_transcriptions_only_post",
-        "parameters": [
-          {
-            "name": "x-amzn-oidc-data",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [{ "type": "string" }, { "type": "null" }],
-              "title": "X-Amzn-Oidc-Data"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TranscriptionOnlyCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranscriptionCreateResponse"
                 }
               }
             }
@@ -1464,6 +1621,54 @@
         }
       }
     },
+    "/minute_versions/{minute_version_id}/guardrails": {
+      "get": {
+        "tags": ["Minutes"],
+        "summary": "Get Guardrail Warning",
+        "operationId": "get_guardrail_warning_minute_versions__minute_version_id__guardrails_get",
+        "parameters": [
+          {
+            "name": "minute_version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Minute Version Id"
+            }
+          },
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuardrailWarningResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/templates": {
       "get": {
         "tags": ["Templates"],
@@ -1750,7 +1955,57 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": { "application/json": { "schema": {} } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateTemplateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/templates/{template_name}/duplicate": {
+      "post": {
+        "tags": ["Templates"],
+        "summary": "Duplicate Default Template",
+        "operationId": "duplicate_default_template_templates__template_name__duplicate_post",
+        "parameters": [
+          {
+            "name": "template_name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Template Name" }
+          },
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateTemplateResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -2173,7 +2428,7 @@
       "patch": {
         "tags": ["Organisations"],
         "summary": "Update Organisation",
-        "description": "Update an organisation's allowed email domains. Accessible to system admins or the organisation's own admin.",
+        "description": "Update an organisation's allowed email domains. Only accessible to system admins.",
         "operationId": "update_organisation_organisations__organisation_id__patch",
         "parameters": [
           {
@@ -2434,7 +2689,11 @@
         "required": ["name", "content", "description", "type"],
         "title": "CreateUserTemplateRequest"
       },
-      "DataRetentionOptions": { "type": "integer", "enum": [1, 7, 30] },
+      "DataRetentionOptions": {
+        "type": "integer",
+        "maximum": 30.0,
+        "minimum": 1.0
+      },
       "DataRetentionUpdateResponse": {
         "properties": {
           "data_retention_days": {
@@ -2455,6 +2714,15 @@
         "type": "object",
         "required": ["speaker", "text", "start_time", "end_time"],
         "title": "DialogueEntry"
+      },
+      "DuplicateTemplateResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "name": { "type": "string", "title": "Name" }
+        },
+        "type": "object",
+        "required": ["id", "name"],
+        "title": "DuplicateTemplateResponse"
       },
       "GetUserResponse": {
         "properties": {
@@ -2514,26 +2782,16 @@
         ],
         "title": "GetUserResponse"
       },
-      "GuardrailResultResponse": {
+      "GuardrailWarningResponse": {
         "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "passed": { "type": "boolean", "title": "Passed" },
-          "score": {
-            "anyOf": [{ "type": "number" }, { "type": "null" }],
-            "title": "Score"
-          },
-          "reasoning": {
+          "message": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Reasoning"
-          },
-          "error": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Error"
+            "title": "Message"
           }
         },
         "type": "object",
-        "required": ["id", "passed", "score", "reasoning", "error"],
-        "title": "GuardrailResultResponse"
+        "required": ["message"],
+        "title": "GuardrailWarningResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -2723,6 +2981,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Error"
           },
+          "template_prompt_version": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Template Prompt Version"
+          },
           "ai_edit_instructions": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Ai Edit Instructions",
@@ -2785,12 +3047,6 @@
             "type": "boolean",
             "title": "Too Short",
             "default": false
-          },
-          "guardrail_results": {
-            "items": { "$ref": "#/components/schemas/GuardrailResultResponse" },
-            "type": "array",
-            "title": "Guardrail Results",
-            "default": []
           }
         },
         "type": "object",
@@ -2978,6 +3234,12 @@
               { "type": "null" }
             ],
             "title": "File Created At"
+          },
+          "source": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RecordingSource" },
+              { "type": "null" }
+            ]
           }
         },
         "type": "object",
@@ -2992,6 +3254,12 @@
         "type": "object",
         "required": ["id", "upload_url"],
         "title": "RecordingCreateResponse"
+      },
+      "RecordingSource": {
+        "type": "string",
+        "enum": ["live_recording", "direct_upload"],
+        "title": "RecordingSource",
+        "description": "How the audio reached us. Null on recordings created before this was captured."
       },
       "RenameSpeakerRequest": {
         "properties": {
@@ -3019,13 +3287,14 @@
       },
       "TemplateMetadata": {
         "properties": {
+          "id": { "type": "string", "title": "Id" },
           "name": { "type": "string", "title": "Name" },
           "description": { "type": "string", "title": "Description" },
           "category": { "type": "string", "title": "Category" },
           "agenda_usage": { "$ref": "#/components/schemas/AgendaUsage" }
         },
         "type": "object",
-        "required": ["name", "description", "category", "agenda_usage"],
+        "required": ["id", "name", "description", "category", "agenda_usage"],
         "title": "TemplateMetadata"
       },
       "TemplateResponse": {
@@ -3077,28 +3346,18 @@
             "format": "uuid",
             "title": "Recording Id"
           },
-          "template_name": { "type": "string", "title": "Template Name" },
-          "template_id": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Template Id"
-          },
-          "agenda": {
-            "anyOf": [
-              { "type": "string", "maxLength": 500 },
-              { "type": "null" }
-            ],
-            "title": "Agenda"
-          },
           "title": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Title"
+          },
+          "audio_duration_seconds": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Audio Duration Seconds",
+            "description": "Client-measured audio duration in seconds, recorded as first-party analytics metadata."
           }
         },
         "type": "object",
-        "required": ["recording_id", "template_name"],
+        "required": ["recording_id"],
         "title": "TranscriptionCreateRequest"
       },
       "TranscriptionCreateResponse": {
@@ -3139,6 +3398,11 @@
             ],
             "title": "Date Of Recording"
           },
+          "is_upload": {
+            "type": "boolean",
+            "title": "Is Upload",
+            "default": false
+          },
           "client_name": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Client Name"
@@ -3167,22 +3431,6 @@
           "client_date_of_birth"
         ],
         "title": "TranscriptionGetResponse"
-      },
-      "TranscriptionOnlyCreateRequest": {
-        "properties": {
-          "recording_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Recording Id"
-          },
-          "title": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Title"
-          }
-        },
-        "type": "object",
-        "required": ["recording_id"],
-        "title": "TranscriptionOnlyCreateRequest"
       },
       "TranscriptionSortOrder": {
         "type": "string",
@@ -3291,6 +3539,13 @@
               { "type": "null" }
             ],
             "title": "Client Date Of Birth"
+          },
+          "date_of_recording": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Recording"
           }
         },
         "type": "object",
@@ -3298,7 +3553,8 @@
           "client_name",
           "case_id",
           "subject",
-          "client_date_of_birth"
+          "client_date_of_birth",
+          "date_of_recording"
         ],
         "title": "UpdateTranscriptionMetadataRequest"
       },
@@ -3316,6 +3572,11 @@
         "properties": {
           "name": { "type": "string", "title": "Name" },
           "email": { "type": "string", "format": "email", "title": "Email" },
+          "evaluation_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Evaluation Id"
+          },
           "organisation_id": {
             "type": "string",
             "format": "uuid",
@@ -3323,7 +3584,7 @@
           }
         },
         "type": "object",
-        "required": ["name", "email", "organisation_id"],
+        "required": ["name", "email", "evaluation_id", "organisation_id"],
         "title": "UserCreate"
       },
       "UserExistsResponse": {

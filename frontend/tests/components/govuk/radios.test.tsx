@@ -122,6 +122,36 @@ describe('<GovukRadios />', () => {
     inputs.forEach((input) => expect(input.disabled).toBe(true))
   })
 
+  it('renders conditional content after its radio and wires controlled visibility', () => {
+    const options = [
+      { label: 'Preset', value: 'preset' },
+      {
+        label: 'Custom',
+        value: 'custom',
+        conditional: (
+          <label>
+            Days
+            <input />
+          </label>
+        ),
+      },
+    ]
+    const { container, rerender } = render(
+      <GovukRadios name="period" options={options} value="preset" />
+    )
+    const radio = screen.getByLabelText('Custom')
+    const conditional = container.querySelector('#period-2-conditional')
+    expect(radio).toHaveAttribute('aria-controls', 'period-2-conditional')
+    expect(conditional).not.toBeVisible()
+    expect(conditional?.previousElementSibling).toHaveClass(
+      'govuk-radios__item'
+    )
+    rerender(<GovukRadios name="period" options={options} value="custom" />)
+    expect(conditional).toBeVisible()
+    expect(conditional).toHaveClass('govuk-radios__conditional')
+    expect(conditional).not.toHaveClass('govuk-radios__conditional--hidden')
+  })
+
   it('composes className without clobbering the canonical govuk-radios class', () => {
     const { container } = render(
       <GovukRadios name="example" options={options} className="mt-2" />

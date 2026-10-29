@@ -106,6 +106,7 @@ export function GovukTableCell({
     <td
       className={cn(
         'govuk-table__cell',
+        '[overflow-wrap:anywhere]',
         isNumeric && 'govuk-table__cell--numeric',
         className
       )}

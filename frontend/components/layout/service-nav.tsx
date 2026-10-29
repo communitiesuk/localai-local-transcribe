@@ -20,6 +20,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
 import { cn } from '@/lib/utils'
+import { useClearDisplayedBannerOnRouteChange } from '@/components/banner-notification'
 
 interface NavItem {
   name: string
@@ -89,6 +90,22 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   }
 
   if (lockNavigation) {
+    if (typeof lockNavigation === 'function') {
+      return (
+        <Link
+          href={href}
+          className="govuk-service-navigation__link"
+          aria-current={ariaCurrent}
+          onClick={(e) => {
+            e.preventDefault()
+            lockNavigation(href)
+            setLockNavigation(false)
+          }}
+        >
+          {children}
+        </Link>
+      )
+    }
     return (
       <AlertDialog>
         <AlertDialogTrigger asChild>
@@ -149,16 +166,14 @@ function SafeLink({ href, children, ariaCurrent }: SafeLinkProps) {
   )
 }
 
-// Empirically determined: the narrowest width at which all six nav items
-// ('User management' being the longest) fit on a single row without wrapping.
-// Not a standard GOV.UK breakpoint — chosen to match this nav's content.
-const MOBILE_BREAKPOINT = 923
+const MOBILE_BREAKPOINT = 1020
 
 export function ServiceNav() {
   const pathname = usePathname()
   const { data: user } = useQuery(getUserUsersMeGetOptions())
   const [isMobile, setIsMobile] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  useClearDisplayedBannerOnRouteChange()
 
   useEffect(() => {
     const handleResize = () => {
@@ -179,6 +194,10 @@ export function ServiceNav() {
   const visibleItems = navItems.filter(
     (item) => !item.isAdminOnly || hasAdminRole
   )
+
+  if (pathname?.startsWith('/terms-of-use')) {
+    return null
+  }
 
   return (
     <section

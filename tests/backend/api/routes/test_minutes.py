@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy.dialects import postgresql
 
 from backend.api.routes.minutes import (
     create_minute,
@@ -14,6 +15,7 @@ from backend.api.routes.minutes import (
     list_minute_versions,
     list_minutes_for_transcription,
 )
+from common.database.postgres_models import JobStatus
 
 
 @pytest.mark.asyncio
@@ -30,9 +32,13 @@ async def test_list_minutes_for_transcription_success(mock_session, mock_minute,
 
     result = await list_minutes_for_transcription(minute.transcription_id, mock_session, mock_user)
 
+    statement = mock_session.exec.await_args.args[0]
+    compiled_statement = str(statement.compile(dialect=postgresql.dialect()))
+
     assert len(result) == 1
     assert result[0].id == minute.id
     assert result[0].template_name == minute.template_name
+    assert "ORDER BY minute.created_datetime ASC" in compiled_statement
 
 
 @pytest.mark.asyncio
@@ -58,6 +64,10 @@ async def test_create_minute_success(mocker, mock_session, mock_minute, mock_min
 
     mocker.patch("backend.api.routes.minutes.Minute", return_value=minute)
     mocker.patch("backend.api.routes.minutes.MinuteVersion", return_value=minute_version)
+    mocker.patch(
+        "backend.api.routes.minutes.has_pending_minute_version_for_transcription",
+        new=AsyncMock(return_value=False),
+    )
 
     llm = mocker.patch("backend.api.routes.minutes.llm_queue_service")
 
@@ -76,6 +86,32 @@ async def test_create_minute_success(mocker, mock_session, mock_minute, mock_min
     llm.publish_message.assert_called()
     assert result.minute_id == minute.id
     assert result.id == minute_version.id
+
+
+@pytest.mark.asyncio
+async def test_create_minute_pending_document_exists(mocker, mock_session, mock_minute, mock_user):
+    """Test create_minute raises 409 when a minute version is already pending for the transcript."""
+    transcription = Mock()
+    transcription.user_id = mock_user.id
+    mock_session.get.return_value = transcription
+
+    mocker.patch(
+        "backend.api.routes.minutes.has_pending_minute_version_for_transcription",
+        new=AsyncMock(return_value=True),
+    )
+
+    request = SimpleNamespace(template_name="T", template_id=None, agenda="A")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await create_minute(
+            transcription_id=mock_minute.transcription_id,
+            request=request,
+            session=mock_session,
+            user=mock_user,
+        )
+    assert exc_info.value.status_code == 409
+    mock_session.add.assert_not_called()
+    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -199,6 +235,68 @@ async def test_delete_minute_version_success(
     exec_result = Mock()
     exec_result.first.return_value = minute_version
     mock_session.exec.return_value = exec_result
+
+    await delete_minute_version(minute_version.id, mock_session, mock_user)
+
+    mock_session.delete.assert_awaited_once_with(minute_version)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_minute_version_deletes_parent_minute_for_only_failed_version(
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
+):
+    transcription = mock_transcription
+    transcription.user_id = mock_user.id
+
+    minute = mock_minute
+    minute.transcription = transcription
+    minute.transcription_id = transcription.id
+    minute.minute_versions = [mock_minute_version]
+
+    minute_version = mock_minute_version
+    minute_version.minute = minute
+    minute_version.minute_id = minute.id
+    minute_version.status = JobStatus.FAILED
+
+    exec_result = Mock()
+    exec_result.first.return_value = minute_version
+    lock_result = Mock()
+    sibling_result = Mock()
+    sibling_result.first.return_value = None
+    mock_session.exec.side_effect = [exec_result, lock_result, sibling_result]
+
+    await delete_minute_version(minute_version.id, mock_session, mock_user)
+
+    mock_session.delete.assert_awaited_once_with(minute)
+    mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_minute_version_preserves_minute_when_failed_version_has_successful_sibling(
+    mock_session, mock_minute, mock_minute_version, mock_transcription, mock_user
+):
+    transcription = mock_transcription
+    transcription.user_id = mock_user.id
+
+    minute = mock_minute
+    minute.transcription = transcription
+    minute.transcription_id = transcription.id
+
+    minute_version = mock_minute_version
+    minute_version.minute = minute
+    minute_version.minute_id = minute.id
+    minute_version.status = JobStatus.FAILED
+    successful_version = Mock()
+    successful_version.id = uuid.uuid4()
+    successful_version.status = JobStatus.COMPLETED
+
+    exec_result = Mock()
+    exec_result.first.return_value = minute_version
+    lock_result = Mock()
+    sibling_result = Mock()
+    sibling_result.first.return_value = successful_version.id
+    mock_session.exec.side_effect = [exec_result, lock_result, sibling_result]
 
     await delete_minute_version(minute_version.id, mock_session, mock_user)
 

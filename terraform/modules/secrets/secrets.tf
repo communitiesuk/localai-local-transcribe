@@ -118,6 +118,18 @@ resource "aws_ssm_parameter" "govnotify_invite_template_id" {
   }
 }
 
+resource "aws_ssm_parameter" "govnotify_invite_no_organisation_template_id" {
+  type        = "SecureString"
+  key_id      = aws_kms_key.local_transcribe_secrets.arn
+  name        = "/local-transcribe/govnotify/invite_no_organisation_template_id"
+  description = "GovNotify invite no organisation email template ID"
+  value       = "placeholder" # Update value in SSM - Do not hardcode
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
 resource "aws_secretsmanager_secret" "database_password" {
   name                    = "tf-${var.environment_name}-local-transcribe-database-password"
   description             = "Password for local-transcribe backend database user"

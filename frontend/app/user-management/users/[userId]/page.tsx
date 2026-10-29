@@ -65,9 +65,13 @@ export default function UserPage(props: {
     throw new Error('Unable to load user')
   }
 
+  const userManagementHref = targetUser?.organisation_id
+    ? `/user-management?organisationId=${encodeURIComponent(targetUser.organisation_id)}`
+    : '/user-management'
+
   return (
     <>
-      <GovukBackLink href="/user-management" />
+      <GovukBackLink href={userManagementHref} />
       <GovukHeading>Edit user permissions</GovukHeading>
 
       <div>
@@ -156,6 +160,9 @@ function RolesForm({ user }: { user: GetUserResponse }) {
   const setBanner = useBannerStore((store) => store.setBanner)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const defaultRole = getDefaultAssignableRole(user.roles)
+  const userManagementHref = user.organisation_id
+    ? `/user-management?organisationId=${encodeURIComponent(user.organisation_id)}`
+    : '/user-management'
 
   const form = useForm<UserRoleForm>({
     defaultValues: {
@@ -199,12 +206,13 @@ function RolesForm({ user }: { user: GetUserResponse }) {
         title: 'Success',
         message: `Permissions for ${user.name ?? user.email} saved at ${formatCurrentDateTime()}`,
       })
-      router.replace('/user-management')
+      router.replace(userManagementHref)
     },
     [
       user.id,
       user.name,
       user.email,
+      userManagementHref,
       setBanner,
       mutateAsync,
       queryClient,

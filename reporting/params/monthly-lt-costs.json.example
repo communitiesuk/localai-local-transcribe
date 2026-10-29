@@ -1,0 +1,4 @@
+[
+  { "month": "2020-01-01", "monthly_lt_cost": 12345.67 },
+  { "month": "2020-02-01", "monthly_lt_cost": 23456.78 }
+]

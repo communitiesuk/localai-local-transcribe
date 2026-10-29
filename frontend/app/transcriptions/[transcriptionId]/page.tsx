@@ -2,43 +2,32 @@
 
 import { use, useCallback, useEffect, useRef, useState } from 'react'
 import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
-import { MinuteTab } from '@/app/transcriptions/[transcriptionId]/MinuteTab/MinuteTab'
-import { NewMinuteDialog } from '@/app/transcriptions/[transcriptionId]/MinuteTab/NewMinuteDialog'
+import { DocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/DocumentTab'
+import { NewDocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/NewDocumentTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
-import { DownloadButton } from '@/components/download-button'
+import { RecordingDetails } from '@/app/transcriptions/[transcriptionId]/RecordingDetails'
+import { isTranscriptionProcessing } from '@/app/transcriptions/[transcriptionId]/TranscriptionStatus'
+import { StatusNotificationPage } from '@/app/transcriptions/[transcriptionId]/TranscriptionHeader'
 import {
-  GovukBackLink,
   GovukButton,
-  GovukButtonGroup,
-  GovukDateInput,
-  GovukDetails,
   GovukErrorSummary,
-  GovukFormGroup,
   GovukHeading,
-  GovukInput,
-  GovukLabel,
-  GovukNotificationBanner,
+  GovukModalDialogue,
   GovukTabs,
 } from '@/components/govuk'
-import { StatusBadge } from '@/components/status-icon'
-import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
-import { TranscriptionGetResponse } from '@/lib/client'
 import {
-  getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions,
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
-  getTranscriptionTranscriptionsTranscriptionIdGetQueryKey,
-  updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation,
+  listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 import { FeatureFlags } from '@/lib/feature-flags'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
 import { useFeatureFlagEnabled } from 'posthog-js/react'
-import { redirect, useRouter } from 'next/navigation'
-import { TranscriptionDetailsData } from '@/types/transcriptions'
-import { FormProvider, useForm } from 'react-hook-form'
+import { redirect, useSearchParams } from 'next/navigation'
 import { BannerNotification } from '@/components/banner-notification'
 import { useBannerStore } from '@/stores/use-banner-store'
-import { useTranscriptionDetailsDraftStore } from '@/stores/use-transcription-details-draft-store'
+import type { ErrorItem } from '@/components/govuk/error-summary'
+import { ModalConfirmationInterstitial } from '@/components/govuk/modal-confirmation-interstitial'
 
 export default function TranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -47,13 +36,46 @@ export default function TranscriptionPage(props: {
 
   const { transcriptionId } = params
 
-  const { setBanner, clearBanner } = useBannerStore()
+  const searchParams = useSearchParams()
+  const shouldOpenDetails = searchParams.get('details') === 'open'
 
   const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
   const [lineEditError, setLineEditError] = useState<string | null>(null)
+  const [recordingDetailsErrors, setRecordingDetailsErrors] = useState<
+    ErrorItem[]
+  >([])
   const errorSummaryRef = useRef<HTMLDivElement | null>(null)
+  const { setBanner, clearBanner } = useBannerStore()
 
   const [isTranscriptEditing, setIsTranscriptEditing] = useState(false)
+  const transcriptionTabRef = useRef<{
+    discardChanges: () => void
+    tryFinishEdit: () => boolean
+  } | null>(null)
+
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
+    useState(false)
+  const [
+    showUnsavedChangesDialogConfirmAction,
+    setShowUnsavedChangesDialogConfirmAction,
+  ] = useState<(() => void) | null>(null)
+
+  const [activeTab, setActiveTab] = useState('transcript')
+  const [draftTabs, setDraftTabs] = useState<
+    { id: string; label: string; minuteId: string | null }[]
+  >([])
+  const [busyTabs, setBusyTabs] = useState<Record<string, boolean>>({})
+  const documentCounter = useRef(0)
+
+  const setTabBusy = useCallback((tabId: string, busy: boolean) => {
+    setBusyTabs((prev) =>
+      prev[tabId] === busy ? prev : { ...prev, [tabId]: busy }
+    )
+  }, [])
+
+  const [dialogueEntryIndexToFocus, setDialogueEntryIndexToFocus] = useState<
+    number | null
+  >(null)
 
   const handleLineEditError = useCallback((error: string | null) => {
     setLineEditError(error)
@@ -73,12 +95,15 @@ export default function TranscriptionPage(props: {
       path: { transcription_id: transcriptionId },
     }),
     refetchInterval: (query) =>
-      query.state.data?.status &&
-      ['awaiting_start', 'in_progress'].includes(query.state.data.status)
-        ? 2000
-        : false,
+      isTranscriptionProcessing(query.state.data?.status) ? 2000 : false,
     refetchOnWindowFocus: false,
   })
+
+  const { data: documents = [] } = useQuery(
+    listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions({
+      path: { transcription_id: transcriptionId },
+    })
+  )
 
   if (!transcription && !isLoading) {
     redirect('/')
@@ -110,56 +135,126 @@ export default function TranscriptionPage(props: {
   const date = new Date(dateString)
   const dateLabel = `${date.toDateString()} at ${date.toLocaleTimeString()}`
   const recordingDate = date.toLocaleDateString('en-GB')
-  const dateTimeLabel = `${date.toLocaleDateString('en-GB')} at ${date.toLocaleTimeString('en-GB')}`
+  const dateTimeLabel = `${date.toLocaleDateString('en-GB')} at ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`
+  const isProcessing = isTranscriptionProcessing(transcription.status)
 
-  if (
-    transcription.status &&
-    ['awaiting_start', 'in_progress'].includes(transcription.status)
-  ) {
+  if (isProcessing) {
     return (
-      <div>
-        <TranscriptionHeader
-          transcription={transcription}
-          dateLabel={dateLabel}
-        />
-        <GovukNotificationBanner title="Processing">
-          <p className="govuk-notification-banner__heading">
-            Your transcription is being processed. You can close the tab and
-            come back later.
-          </p>
-        </GovukNotificationBanner>
-        <AudioPlayer transcriptionId={transcription.id} />
-      </div>
+      <StatusNotificationPage
+        transcription={transcription}
+        dateLabel={dateLabel}
+        title="Processing"
+      >
+        Your transcription is being processed. You can close the tab and come
+        back later.
+      </StatusNotificationPage>
     )
   }
 
   if (transcription.status == 'failed') {
     return (
-      <div>
-        <TranscriptionHeader
-          transcription={transcription}
-          dateLabel={dateLabel}
-        />
-        <GovukNotificationBanner title="Transcription failed">
-          <p className="govuk-notification-banner__heading">
-            Something went wrong with your transcription. You may need to try
-            again.
-          </p>
-        </GovukNotificationBanner>
-        <AudioPlayer transcriptionId={transcription.id} />
-      </div>
+      <StatusNotificationPage
+        transcription={transcription}
+        dateLabel={dateLabel}
+        title="Transcription failed"
+      >
+        Something went wrong with your transcription. You may need to try again.
+      </StatusNotificationPage>
     )
   }
+
+  const handleCreateDocument = () => {
+    clearBanner()
+    const id = `new-document-${documentCounter.current++}`
+    setDraftTabs((prev) => [
+      ...prev,
+      { id, label: 'New document', minuteId: null },
+    ])
+    setActiveTab(id)
+  }
+
+  const handleTabChange = (tab: string) => {
+    if (
+      activeTab === 'transcript' &&
+      activeTab !== tab &&
+      transcriptionTabRef.current &&
+      isTranscriptEditing
+    ) {
+      if (!transcriptionTabRef.current.tryFinishEdit()) {
+        setShowUnsavedChangesDialog(true)
+        setShowUnsavedChangesDialogConfirmAction(() => () => {
+          transcriptionTabRef.current?.discardChanges()
+          setShowUnsavedChangesDialog(false)
+          clearBanner()
+          setActiveTab(tab)
+        })
+        return
+      }
+    }
+
+    clearBanner()
+    setActiveTab(tab)
+  }
+
+  const removeDraftTab = (id: string) => {
+    setDraftTabs((prev) => prev.filter((tab) => tab.id !== id))
+    setBusyTabs((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setActiveTab('transcript')
+  }
+
+  const handleMinuteCreated = (id: string, minuteId: string) => {
+    setDraftTabs((prev) =>
+      prev.map((tab) => (tab.id === id ? { ...tab, minuteId } : tab))
+    )
+  }
+
+  const handleDocumentCreated = (id: string, templateName: string) => {
+    setDraftTabs((prev) =>
+      prev.map((tab) => (tab.id === id ? { ...tab, label: templateName } : tab))
+    )
+  }
+
+  const handleCitationClicked = (citationIndex: number) => {
+    if (
+      !transcription.dialogue_entries ||
+      citationIndex < 0 ||
+      citationIndex >= transcription.dialogue_entries.length
+    ) {
+      setBanner({
+        variant: 'important',
+        title: 'Important',
+        message: `Quote [${citationIndex}] is not attributed to anything in the transcript`,
+      })
+      return
+    }
+
+    handleTabChange('transcript')
+    setDialogueEntryIndexToFocus(citationIndex) // citation indices match dialogue entry indices
+  }
+
+  // Persisted document tabs, minus any doc still shown by its in-session draft tab.
+  const draftMinuteIds = new Set(
+    draftTabs.flatMap((tab) => (tab.minuteId ? [tab.minuteId] : []))
+  )
+  const documentTabs = documents.filter((doc) => !draftMinuteIds.has(doc.id!))
+  const isAnyDocumentBusy = Object.values(busyTabs).some(Boolean)
+
   return (
     <div className="flex w-full flex-col">
-      <GovukBackLink href="/transcriptions" className="govuk-!-margin-top-0">
-        Back
-      </GovukBackLink>
       <BannerNotification />
-      {lineEditError && (
+      {(lineEditError || recordingDetailsErrors.length > 0) && (
         <GovukErrorSummary
           ref={errorSummaryRef}
-          errorList={[{ href: '#line-edit-actions', text: lineEditError }]}
+          errorList={[
+            ...(lineEditError
+              ? [{ href: '#line-edit-actions', text: lineEditError }]
+              : []),
+            ...recordingDetailsErrors,
+          ]}
         />
       )}
       <GovukHeading as="h1" size="xl" className="govuk-!-margin-bottom-2">
@@ -168,265 +263,88 @@ export default function TranscriptionPage(props: {
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
       <RecordingDetails
         dateTimeLabel={dateTimeLabel}
+        defaultOpen={shouldOpenDetails}
         transcription={transcription}
+        onErrorListChange={setRecordingDetailsErrors}
       />
       <hr className="govuk-section-break govuk-section-break--visible govuk-!-margin-top-2 govuk-!-margin-bottom-2" />
       <div>
-        <NewMinuteDialog
-          transcriptionId={transcription.id!}
-          trigger={
-            <GovukButton type="button" disabled={isTranscriptEditing}>
-              Create document
-            </GovukButton>
-          }
-        />
+        <GovukButton
+          type="button"
+          disabled={isTranscriptEditing || isAnyDocumentBusy}
+          onClick={handleCreateDocument}
+        >
+          Create document
+        </GovukButton>
       </div>
-      <GovukTabs id="transcription-tabs" className="govuk-!-margin-top-4">
+      <GovukModalDialogue
+        open={showUnsavedChangesDialog}
+        onClose={() => setShowUnsavedChangesDialog(false)}
+      >
+        <ModalConfirmationInterstitial
+          title="Discard changes to transcript?"
+          body="If you continue, your unsaved changes to the current line edit will be lost."
+          confirmLabel="Discard changes"
+          cancelLabel="Cancel"
+          onConfirm={showUnsavedChangesDialogConfirmAction ?? (() => {})}
+          onCancel={() => setShowUnsavedChangesDialog(false)}
+          isWarning={true}
+        />
+      </GovukModalDialogue>
+      <GovukTabs
+        id="transcription-tabs"
+        className="govuk-!-margin-top-4"
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      >
         <GovukTabs.Panel id="transcript" label="Transcript">
           <TranscriptionTab
+            ref={transcriptionTabRef}
             transcription={transcription}
-            onTranscriptCopied={() =>
-              setBanner({
-                variant: 'success',
-                title: 'Success',
-                message: 'Transcript copied to clipboard.',
-              })
-            }
-            onTranscriptDownloaded={() =>
-              setBanner({
-                variant: 'success',
-                title: 'Success',
-                message: 'Transcript downloaded.',
-              })
-            }
-            onDismissBanner={clearBanner}
             onLineEditError={handleLineEditError}
             onEditModeChange={setIsTranscriptEditing}
+            onDismissBanner={clearBanner}
+            dialogueEntryIndexToFocus={dialogueEntryIndexToFocus ?? undefined}
+            onDialogueEntryFocusLost={() => setDialogueEntryIndexToFocus(null)}
           />
-        </GovukTabs.Panel>
-        <GovukTabs.Panel id="meeting-summary" label="Meeting summary">
-          <MinuteTab transcription={transcription} />
         </GovukTabs.Panel>
         {isChatEnabled && (
           <GovukTabs.Panel id="chat" label="Chat with your meeting">
             <ChatTab transcription={transcription} />
           </GovukTabs.Panel>
         )}
-      </GovukTabs>
-    </div>
-  )
-}
-
-const RecordingDetails = ({
-  dateTimeLabel,
-  transcription,
-}: {
-  dateTimeLabel: string
-  transcription: TranscriptionGetResponse
-}) => {
-  const { draft, setDraft, clearDraft } = useTranscriptionDetailsDraftStore()
-  const [open, setOpen] = useState(
-    (draft?.transcriptionId === transcription.id && draft?.isOpen) ?? false
-  )
-  const router = useRouter()
-
-  let clientDateOfBirth: Date | null = null
-  if (transcription.client_date_of_birth) {
-    clientDateOfBirth = new Date(transcription.client_date_of_birth)
-  }
-
-  const form = useForm<TranscriptionDetailsData>({
-    reValidateMode: 'onSubmit',
-    defaultValues: {
-      clientName: transcription.client_name || '',
-      caseId: transcription.case_id || '',
-      subject: transcription.title || '',
-      clientDateOfBirth: {
-        day: clientDateOfBirth?.getUTCDate().toString() || '',
-        month: clientDateOfBirth
-          ? (clientDateOfBirth.getUTCMonth() + 1).toString()
-          : '',
-        year: clientDateOfBirth?.getUTCFullYear().toString() || '',
-      },
-    },
-  })
-
-  useEffect(() => {
-    if (draft?.transcriptionId === transcription.id) {
-      form.reset(draft.data, { keepDefaultValues: true })
-    }
-  }, [draft, transcription.id, form])
-
-  const { errors, isSubmitted } = form.formState
-  const errorList = [
-    errors.clientDateOfBirth?.message && {
-      href: '#client-dob-day',
-      text: errors.clientDateOfBirth.message,
-    },
-  ].filter(Boolean) as { href: string; text: string }[]
-
-  const setBanner = useBannerStore((store) => store.setBanner)
-
-  const queryClient = useQueryClient()
-
-  const { mutate } = useMutation({
-    ...updateTranscriptionMetadataTranscriptionsTranscriptionIdDetailsPutMutation(),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getTranscriptionTranscriptionsTranscriptionIdGetQueryKey({
-          path: { transcription_id: transcription.id },
-        }),
-      })
-      setBanner({
-        variant: 'success',
-        title: 'Success',
-        message: 'Recording details updated',
-      })
-      clearDraft()
-      form.reset(form.getValues())
-    },
-    onError: () => {
-      setBanner({
-        variant: 'important',
-        title: 'There is a problem',
-        message: 'Failed to update recording details, please try again.',
-      })
-    },
-  })
-
-  const handleSave = (data: TranscriptionDetailsData) => {
-    let dateOfBirth: Date | null = null
-    if (
-      data.clientDateOfBirth.day &&
-      data.clientDateOfBirth.month &&
-      data.clientDateOfBirth.year
-    ) {
-      dateOfBirth = new Date(
-        Date.UTC(
-          parseInt(data.clientDateOfBirth.year),
-          parseInt(data.clientDateOfBirth.month) - 1,
-          parseInt(data.clientDateOfBirth.day)
-        )
-      )
-    }
-
-    mutate({
-      path: { transcription_id: transcription.id },
-      body: {
-        client_name: data.clientName || null,
-        case_id: data.caseId || null,
-        subject: data.subject || null,
-        client_date_of_birth: dateOfBirth ? dateOfBirth.toISOString() : null,
-      },
-    })
-  }
-
-  return (
-    <>
-      <GovukHeading as="h2" size="s" className="govuk-!-margin-bottom-2">
-        Recording details
-      </GovukHeading>
-      <GovukDetails
-        open={open}
-        summary={open ? 'Hide' : 'Show'}
-        onToggle={(e) => setOpen(e.currentTarget.open)}
-      >
-        {isSubmitted && errorList.length > 0 && (
-          <GovukErrorSummary errorList={errorList} />
-        )}
-        <p className="govuk-body govuk-!-margin-bottom-1">Date recorded:</p>
-        <p className="govuk-body govuk-!-font-weight-bold">{dateTimeLabel}</p>
-        <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(handleSave)} noValidate>
-            <GovukFormGroup>
-              <GovukLabel htmlFor="client-name">
-                Client name (optional)
-              </GovukLabel>
-              <GovukInput id="client-name" {...form.register('clientName')} />
-            </GovukFormGroup>
-            <GovukFormGroup>
-              <GovukLabel htmlFor="case-id">Case ID (optional)</GovukLabel>
-              <GovukInput id="case-id" {...form.register('caseId')} />
-            </GovukFormGroup>
-            <GovukFormGroup>
-              <GovukLabel htmlFor="subject">Subject (optional)</GovukLabel>
-              <GovukInput id="subject" {...form.register('subject')} />
-            </GovukFormGroup>
-            <GovukDateInput
-              id="client-dob"
-              legend="Client date of birth (optional)"
-              control={form.control}
-              name={'clientDateOfBirth'}
-              mustBePastOrFuture={'past'}
-              description={"client's date of birth"}
+        {documentTabs.map((doc) => (
+          <GovukTabs.Panel key={doc.id} id={doc.id!} label={doc.template_name}>
+            <DocumentTab
+              transcription={transcription}
+              minute={doc}
+              onActivityChange={(busy) => setTabBusy(doc.id!, busy)}
+              onCitationClicked={handleCitationClicked}
+              onRemoved={() => {
+                setTabBusy(doc.id!, false)
+                setActiveTab('transcript')
+              }}
             />
-            <GovukButtonGroup>
-              <GovukButton
-                type="submit"
-                variant="secondary"
-                className="govuk-!-margin-bottom-2"
-                disabled={!form.formState.isDirty}
-              >
-                Update details
-              </GovukButton>
-              <GovukButton
-                type="button"
-                variant="warning"
-                className="govuk-!-margin-bottom-0"
-                onClick={() => {
-                  setDraft({
-                    transcriptionId: transcription.id,
-                    data: form.getValues(),
-                    isOpen: open,
-                  })
-                  router.push(`${transcription.id}/delete`)
-                }}
-              >
-                Delete recording
-              </GovukButton>
-            </GovukButtonGroup>
-          </form>
-        </FormProvider>
-      </GovukDetails>
-    </>
-  )
-}
-
-const TranscriptionHeader = ({
-  transcription,
-  dateLabel,
-}: {
-  transcription: TranscriptionGetResponse
-  dateLabel: string
-}) => (
-  <>
-    <TranscriptionTitleEditor
-      title={transcription.title}
-      transcriptionId={transcription.id}
-      status={transcription.status}
-    />
-    <div className="govuk-!-margin-bottom-4 flex items-center gap-2">
-      <StatusBadge status={transcription.status} />
-      <span className="govuk-body-s govuk-!-margin-bottom-0">{dateLabel}</span>
-    </div>
-  </>
-)
-
-const AudioPlayer = ({ transcriptionId }: { transcriptionId: string }) => {
-  const { data: recordings } = useQuery({
-    ...getRecordingsForTranscriptionTranscriptionsTranscriptionIdRecordingsGetOptions(
-      { path: { transcription_id: transcriptionId } }
-    ),
-  })
-  if (!recordings || recordings.length == 0) {
-    return null
-  }
-  return (
-    <div className="mb-2 flex w-full max-w-3xl flex-col gap-2 rounded border bg-white p-2">
-      <audio controls src={recordings[0].url} className="w-full" />
-      <div className="flex justify-end">
-        <DownloadButton recordings={recordings} />
-      </div>
+          </GovukTabs.Panel>
+        ))}
+        {draftTabs.map((tab) => (
+          <GovukTabs.Panel key={tab.id} id={tab.id} label={tab.label}>
+            <NewDocumentTab
+              transcription={transcription}
+              onCancel={() => removeDraftTab(tab.id)}
+              onMinuteCreated={(minuteId) =>
+                handleMinuteCreated(tab.id, minuteId)
+              }
+              onFailedResultRemoved={() => removeDraftTab(tab.id)}
+              onCreated={(templateName) =>
+                handleDocumentCreated(tab.id, templateName)
+              }
+              onActivityChange={(busy) => setTabBusy(tab.id, busy)}
+              onCitationClicked={handleCitationClicked}
+            />
+          </GovukTabs.Panel>
+        ))}
+      </GovukTabs>
     </div>
   )
 }

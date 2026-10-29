@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 import math
 import uuid
@@ -11,15 +11,19 @@ from sqlmodel import col, func, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
+from backend.utils.transcription_search_filters import _transcription_search_filters
 from common.database.postgres_models import (
+    AnalyticsEventType,
     DialogueEntry,
-    Minute,
-    MinuteVersion,
     Recording,
     Transcription,
+    TranscriptionEditType,
+    User,
 )
+from common.services.analytics_service import record_analytics_event
 from common.services.queue_services import get_queue_service
 from common.services.storage_services import get_storage_service
+from common.services.storage_services.audio_deletion import delete_recording_file_and_row
 from common.settings import get_settings
 from common.types import (
     LabelledTranscriptionMetadata,
@@ -32,7 +36,6 @@ from common.types import (
     TranscriptionCreateRequest,
     TranscriptionCreateResponse,
     TranscriptionGetResponse,
-    TranscriptionOnlyCreateRequest,
     TranscriptionSortOrder,
     UnlabelledTranscriptionMetadata,
     UnlabelledTranscriptionsResponse,
@@ -65,6 +68,38 @@ async def _get_owned_transcription_or_404(
     if not transcription or transcription.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Transcription not found")
     return transcription
+
+
+async def _get_original_recording_id(session: SQLSessionDep, transcription_id: uuid.UUID) -> uuid.UUID | None:
+    """Return the id of the earliest (originally uploaded) Recording for a transcription, if any.
+
+    A transcription can have more than one Recording (e.g. a re-encoded copy added during processing), so we use
+    the earliest one - the recording the user originally uploaded.
+    """
+    result = await session.exec(
+        select(Recording.id)
+        .where(Recording.transcription_id == transcription_id)
+        .order_by(col(Recording.created_datetime))
+    )
+    return result.first()
+
+
+async def _record_transcription_edit_analytics_event(
+    session: SQLSessionDep,
+    current_user: User,
+    transcription_id: uuid.UUID,
+    edit_type: TranscriptionEditType,
+) -> None:
+    recording_id = await _get_original_recording_id(session, transcription_id) if current_user.evaluation_id else None
+    await record_analytics_event(
+        session,
+        AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
+        current_user.evaluation_id,
+        current_user.organisation_id,
+        recording_id=recording_id,
+        # TranscriptionEditType is a StrEnum, so this serialises to the same JSON as edit_type.value
+        event_metadata={"edit_type": edit_type},
+    )
 
 
 def _get_dialogue_entries(transcription: Transcription) -> list[DialogueEntry]:
@@ -109,6 +144,14 @@ async def list_labelled_transcriptions(
     sort: Annotated[
         TranscriptionSortOrder, Query(description="Sort order for date recorded")
     ] = TranscriptionSortOrder.newest,
+    client_name: Annotated[str | None, Query(description="Filter by client name")] = None,
+    case_id: Annotated[str | None, Query(description="Filter by case ID")] = None,
+    subject: Annotated[str | None, Query(description="Filter by subject")] = None,
+    date_of_recording: Annotated[dt.date | None, Query(description="Filter by date recorded")] = None,
+    date_of_recording_day: Annotated[int | None, Query(ge=1, le=31, description="Filter by recorded day")] = None,
+    date_of_recording_month: Annotated[int | None, Query(ge=1, le=12, description="Filter by recorded month")] = None,
+    date_of_recording_year: Annotated[int | None, Query(ge=1, description="Filter by recorded year")] = None,
+    client_date_of_birth: Annotated[dt.date | None, Query(description="Filter by client date of birth")] = None,
 ) -> LabelledTranscriptionsResponse:
     """Get paginated metadata for labelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -117,9 +160,22 @@ async def list_labelled_transcriptions(
         col(Transcription.client_name).is_not(None),
         col(Transcription.case_id).is_not(None),
     )
+    search_filters = _transcription_search_filters(
+        client_name=client_name,
+        case_id=case_id,
+        subject=subject,
+        date_of_recording=date_of_recording,
+        date_of_recording_day=date_of_recording_day,
+        date_of_recording_month=date_of_recording_month,
+        date_of_recording_year=date_of_recording_year,
+        client_date_of_birth=client_date_of_birth,
+    )
 
     count_statement = (
-        select(func.count(col(Transcription.id))).where(Transcription.user_id == current_user.id).where(labelled_filter)
+        select(func.count(col(Transcription.id)))
+        .where(Transcription.user_id == current_user.id)
+        .where(labelled_filter)
+        .where(*search_filters)
     )
     count_result = await session.exec(count_statement)
     total_count = count_result.one()
@@ -129,6 +185,7 @@ async def list_labelled_transcriptions(
         select(Transcription)
         .where(Transcription.user_id == current_user.id)
         .where(labelled_filter)
+        .where(*search_filters)
         .order_by(_created_datetime_order(sort))
         .offset(offset)
         .limit(page_size)
@@ -169,6 +226,14 @@ async def list_unlabelled_transcriptions(
     sort: Annotated[
         TranscriptionSortOrder, Query(description="Sort order for date recorded")
     ] = TranscriptionSortOrder.newest,
+    client_name: Annotated[str | None, Query(description="Filter by client name")] = None,
+    case_id: Annotated[str | None, Query(description="Filter by case ID")] = None,
+    subject: Annotated[str | None, Query(description="Filter by subject")] = None,
+    date_of_recording: Annotated[dt.date | None, Query(description="Filter by date recorded")] = None,
+    date_of_recording_day: Annotated[int | None, Query(ge=1, le=31, description="Filter by recorded day")] = None,
+    date_of_recording_month: Annotated[int | None, Query(ge=1, le=12, description="Filter by recorded month")] = None,
+    date_of_recording_year: Annotated[int | None, Query(ge=1, description="Filter by recorded year")] = None,
+    client_date_of_birth: Annotated[dt.date | None, Query(description="Filter by client date of birth")] = None,
 ) -> UnlabelledTranscriptionsResponse:
     """Get metadata for unlabelled transcriptions for the current user."""
     labelled_filter = or_(
@@ -177,11 +242,22 @@ async def list_unlabelled_transcriptions(
         col(Transcription.client_name).is_not(None),
         col(Transcription.case_id).is_not(None),
     )
+    search_filters = _transcription_search_filters(
+        client_name=client_name,
+        case_id=case_id,
+        subject=subject,
+        date_of_recording=date_of_recording,
+        date_of_recording_day=date_of_recording_day,
+        date_of_recording_month=date_of_recording_month,
+        date_of_recording_year=date_of_recording_year,
+        client_date_of_birth=client_date_of_birth,
+    )
 
     count_statement = (
         select(func.count(col(Transcription.id)))
         .where(Transcription.user_id == current_user.id)
         .where(not_(labelled_filter))
+        .where(*search_filters)
     )
     count_result = await session.exec(count_statement)
     total_count = count_result.one()
@@ -190,6 +266,7 @@ async def list_unlabelled_transcriptions(
         select(Transcription)
         .where(Transcription.user_id == current_user.id)
         .where(not_(labelled_filter))
+        .where(*search_filters)
         .order_by(_created_datetime_order(sort))
     )
     result = await session.exec(statement)
@@ -219,39 +296,26 @@ async def create_recording(
     recording_id = uuid.uuid4()
     file_name = f"{recording_id}.{request.file_extension}"
     user_upload_s3_file_key = get_file_s3_key(user.email, file_name)
-    recording = Recording(user_id=user.id, s3_file_key=user_upload_s3_file_key, file_created_at=request.file_created_at)
+    recording = Recording(
+        user_id=user.id,
+        s3_file_key=user_upload_s3_file_key,
+        file_created_at=request.file_created_at,
+        source=request.source,
+    )
     session.add(recording)
     await session.commit()
     presigned_url = await storage_service.generate_presigned_url_put_object(user_upload_s3_file_key, 3600)
     await session.refresh(recording)
+
+    await record_analytics_event(
+        session,
+        AnalyticsEventType.AUDIO_UPLOAD_STARTED,
+        user.evaluation_id,
+        user.organisation_id,
+        recording_id=recording.id,
+    )
+
     return RecordingCreateResponse(id=recording.id, upload_url=presigned_url)
-
-
-@transcriptions_router.post("/transcriptions-only", response_model=TranscriptionCreateResponse, status_code=201)
-async def create_transcription_only(
-    request: TranscriptionOnlyCreateRequest,
-    session: SQLSessionDep,
-    current_user: UserDep,
-) -> TranscriptionCreateResponse:
-    """transcription without creating an associated Minute"""
-    recording = await session.get(Recording, request.recording_id)
-    if not recording or recording.user_id != current_user.id:
-        raise HTTPException(404, detail="Recording not found")
-    transcription = Transcription(user_id=current_user.id, title=request.title)
-
-    if not await storage_service.check_object_exists(recording.s3_file_key):
-        raise HTTPException(
-            status_code=404,
-            detail=f"Recording file not found in S3: {recording.s3_file_key}",
-        )
-
-    session.add(transcription)
-    recording.transcription_id = transcription.id
-    await session.commit()
-    await session.refresh(transcription)
-    transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION_ONLY))
-
-    return TranscriptionCreateResponse(id=transcription.id)
 
 
 @transcriptions_router.post("/transcriptions", response_model=TranscriptionCreateResponse, status_code=201)
@@ -264,7 +328,15 @@ async def create_transcription(
     recording = await session.get(Recording, request.recording_id)
     if not recording or recording.user_id != current_user.id:
         raise HTTPException(404, detail="Recording not found")
-    transcription = Transcription(user_id=current_user.id, title=request.title)
+    transcription = Transcription(
+        user_id=current_user.id,
+        title=request.title,
+        date_of_recording=(
+            recording.file_created_at.astimezone(dt.UTC).replace(tzinfo=None)
+            if recording.file_created_at is not None
+            else None
+        ),
+    )
 
     if not await storage_service.check_object_exists(recording.s3_file_key):
         raise HTTPException(
@@ -272,19 +344,25 @@ async def create_transcription(
             detail=f"Recording file not found in S3: {recording.s3_file_key}",
         )
 
-    minute = Minute(
-        template_name=request.template_name,
-        user_template_id=request.template_id,
-        agenda=request.agenda,
-        transcription_id=transcription.id,
-    )
-    minute_version = MinuteVersion(minute_id=minute.id)
     session.add(transcription)
-    session.add(minute)
-    session.add(minute_version)
     recording.transcription_id = transcription.id
     await session.commit()
-    transcription_queue_service.publish_message(WorkerMessage(id=minute.id, type=TaskType.TRANSCRIPTION))
+
+    await record_analytics_event(
+        session,
+        AnalyticsEventType.AUDIO_UPLOAD_COMPLETED,
+        current_user.evaluation_id,
+        current_user.organisation_id,
+        recording_id=recording.id,
+        source_id=recording.id,
+        event_metadata=(
+            {"audio_duration_seconds": request.audio_duration_seconds}
+            if request.audio_duration_seconds is not None
+            else None
+        ),
+    )
+
+    transcription_queue_service.publish_message(WorkerMessage(id=transcription.id, type=TaskType.TRANSCRIPTION))
 
     return TranscriptionCreateResponse(id=transcription.id)
 
@@ -297,6 +375,8 @@ async def get_transcription(
 ) -> TranscriptionGetResponse:
     """Get a specific transcription by ID."""
     transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
+    result = await session.exec(select(Recording.file_created_at).where(Recording.transcription_id == transcription.id))
+    is_upload = any(file_created_at is not None for file_created_at in result.all())
     return TranscriptionGetResponse(
         id=transcription.id,
         status=transcription.status,
@@ -304,6 +384,7 @@ async def get_transcription(
         title=transcription.title,
         created_datetime=transcription.created_datetime,
         date_of_recording=transcription.date_of_recording,
+        is_upload=is_upload,
         client_name=transcription.client_name,
         case_id=transcription.case_id,
         client_date_of_birth=transcription.client_date_of_birth,
@@ -376,9 +457,12 @@ async def update_transcription_metadata(
     transcription.client_date_of_birth = (
         request.client_date_of_birth.replace(tzinfo=None) if request.client_date_of_birth is not None else None
     )
+    transcription.date_of_recording = (
+        request.date_of_recording.replace(tzinfo=None) if request.date_of_recording is not None else None
+    )
     transcription.title = request.subject
 
-    transcription.updated_datetime = datetime.datetime.now(tz=datetime.UTC)
+    transcription.updated_datetime = dt.datetime.now(tz=dt.UTC)
     await session.commit()
 
 
@@ -402,6 +486,10 @@ async def rename_speaker_everywhere(
         for entry in dialogue_entries
     ]
     await session.commit()
+
+    await _record_transcription_edit_analytics_event(
+        session, current_user, transcription_id, TranscriptionEditType.ALL_INSTANCES_OF_NAME
+    )
 
 
 @transcriptions_router.patch(
@@ -435,6 +523,10 @@ async def update_dialogue_entry_speaker(
     ]
     await session.commit()
 
+    await _record_transcription_edit_analytics_event(
+        session, current_user, transcription_id, TranscriptionEditType.SINGLE_INSTANCE_OF_NAME
+    )
+
 
 @transcriptions_router.patch("/transcriptions/{transcription_id}/dialogue-entries/{entry_index}/text", status_code=204)
 async def update_dialogue_entry_text(
@@ -466,6 +558,10 @@ async def update_dialogue_entry_text(
     ]
     await session.commit()
 
+    await _record_transcription_edit_analytics_event(
+        session, current_user, transcription_id, TranscriptionEditType.DIALOGUE_ENTRY
+    )
+
 
 @transcriptions_router.delete("/transcriptions/{transcription_id}", status_code=204)
 async def delete_transcription(transcription_id: uuid.UUID, session: SQLSessionDep, current_user: UserDep) -> None:
@@ -473,6 +569,11 @@ async def delete_transcription(transcription_id: uuid.UUID, session: SQLSessionD
     # First check if the transcription exists and belongs to the user
     transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
 
-    # Delete the transcription
+    recordings = (await session.exec(select(Recording).where(Recording.transcription_id == transcription.id))).all()
+    for recording in recordings:
+        deleted = await delete_recording_file_and_row(session, recording)
+        if not deleted:
+            raise HTTPException(status_code=500, detail="Could not delete recording file")
+
     await session.delete(transcription)
     await session.commit()

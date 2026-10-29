@@ -91,7 +91,7 @@ def run_hallucination_eval(
         "fail": outcome_counts.get("fail", 0),
     }
 
-    summary: dict[str, str | int | float | None | dict[str, float] | dict[str, int]] = {
+    summary: dict[str, str | int | float | dict[str, float] | dict[str, int] | None] = {
         "run_id": run_id,
         "timestamp": datetime.now(UTC).isoformat(),
         "template_name": cfg.prompts.summarizer_template_name,

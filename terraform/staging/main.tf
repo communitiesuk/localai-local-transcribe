@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~>6.5"
+      version = "= 6.68.0"
     }
   }
 
@@ -45,6 +45,14 @@ provider "aws" {
 provider "aws" {
   alias  = "us-east-1"
   region = "us-east-1"
+}
+
+module "account_baseline" {
+  source = "../modules/account_baseline"
+
+  providers = {
+    aws.us-east-1 = aws.us-east-1
+  }
 }
 
 module "networking" {
@@ -93,6 +101,8 @@ module "frontdoor" {
     "37.200.119.11/32",
     "185.10.12.32/28",
     "176.65.68.112/28",
+    # Accessibility audit (temporarily allowed)
+    "194.75.245.154/32",
   ]
 
   # Cyberfort (temporarily allowed for pen testing)
@@ -126,6 +136,7 @@ module "github_actions_access" {
   source = "../modules/github_actions_access"
 
   environment_name                   = local.environment_name
+  deployment_branch                  = "staging"
   push_frontend_ecr_image_policy_arn = module.ecr.push_frontend_ecr_image_policy_arn
   push_backend_ecr_image_policy_arn  = module.ecr.push_backend_ecr_image_policy_arn
   push_worker_ecr_image_policy_arn   = module.ecr.push_worker_ecr_image_policy_arn
@@ -231,8 +242,9 @@ module "ecs" {
   azure_apim_subscription_key_arn = module.secrets.azure_apim_subscription_key_arn
   sentry_dsn_arn                  = module.secrets.sentry_dsn_arn
 
-  govnotify_api_key_arn            = module.secrets.govnotify_api_key_arn
-  govnotify_invite_template_id_arn = module.secrets.govnotify_invite_template_id_arn
+  govnotify_api_key_arn                            = module.secrets.govnotify_api_key_arn
+  govnotify_invite_template_id_arn                 = module.secrets.govnotify_invite_template_id_arn
+  govnotify_invite_no_organisation_template_id_arn = module.secrets.govnotify_invite_no_organisation_template_id_arn
 }
 
 module "uploads_bucket" {

@@ -14,4 +14,4 @@ class TranscriptGenerationConfig(BaseModel):
 
     @property
     def speaker_ids(self) -> list[str]:
-        return [f"speaker_{i+1}" for i in range(self.num_speakers)]
+        return [f"speaker_{i + 1}" for i in range(self.num_speakers)]

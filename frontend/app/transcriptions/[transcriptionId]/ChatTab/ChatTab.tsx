@@ -259,8 +259,7 @@ export function ChatTab({
           <span className="text-sm">
             Use this chat interface to ask questions or extract information
             about the meeting. Note that the responses here will not modify your
-            Meeting summary (use AI Edit under the Meeting summary tab for
-            that).
+            documents (use AI Edit in a document tab for that).
           </span>
         </div>
         <AlertDialog>

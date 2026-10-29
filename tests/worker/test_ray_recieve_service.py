@@ -14,7 +14,6 @@ TEST_ID = uuid4()
 TEST_SOURCE_ID = uuid4()
 MINUTE_MESSAGE = WorkerMessage(id=TEST_ID, type=TaskType.MINUTE, data=None)
 TRANSCRIPTION_MESSAGE = WorkerMessage(id=TEST_ID, type=TaskType.TRANSCRIPTION, data=None)
-TRANSCRIPTION_ONLY_MESSAGE = WorkerMessage(id=TEST_ID, type=TaskType.TRANSCRIPTION_ONLY, data=None)
 EDIT_MESSAGE = WorkerMessage(id=TEST_ID, type=TaskType.EDIT, data=EditMessageData(source_id=TEST_SOURCE_ID))
 TEST_DIALOGUE: list[DialogueEntry] = [
     {"speaker": "Alice", "text": "Hello", "start_time": 0.0, "end_time": 1.0},
@@ -48,7 +47,7 @@ def llm_service(llm_queue, stopped):
 
 
 @pytest.mark.asyncio
-async def test_process_with_transcript(transcription_service, transcription_queue, llm_queue, monkeypatch):
+async def test_process_with_transcript_complete(transcription_service, transcription_queue, monkeypatch):
     transcription_queue.receive_message.return_value = [(TRANSCRIPTION_MESSAGE, RECEIPT_HANDLE)]
 
     transcription_job = TranscriptionJobMessageData(
@@ -67,8 +66,7 @@ async def test_process_with_transcript(transcription_service, transcription_queu
 
     await transcription_service.process()
 
-    # check llm job is queued and current transcription job is completed
-    llm_queue.publish_message.assert_called_once()
+    # check current transcription job is completed
     transcription_queue.publish_message.assert_not_called()
     transcription_queue.complete_message.assert_called_once_with(RECEIPT_HANDLE)
 
@@ -95,7 +93,7 @@ async def test_process_without_transcript_requeue(transcription_service, transcr
 
 
 @pytest.mark.asyncio
-async def test_process_failed_transcript(transcription_service, transcription_queue, llm_queue, monkeypatch):
+async def test_process_transcript_failed(transcription_service, transcription_queue, llm_queue, monkeypatch):
     transcription_queue.receive_message.return_value = [(TRANSCRIPTION_MESSAGE, RECEIPT_HANDLE)]
 
     monkeypatch.setattr(
@@ -108,53 +106,6 @@ async def test_process_failed_transcript(transcription_service, transcription_qu
     # check nothing is queued
     llm_queue.publish_message.assert_not_called()
     transcription_queue.publish_message.assert_not_called()
-    transcription_queue.complete_message.assert_called_once_with(RECEIPT_HANDLE)
-
-
-@pytest.mark.asyncio
-async def test_process_transcription_only_with_transcript_does_not_queue_minute(
-    transcription_service, transcription_queue, llm_queue, monkeypatch
-):
-    transcription_queue.receive_message.return_value = [(TRANSCRIPTION_ONLY_MESSAGE, RECEIPT_HANDLE)]
-
-    transcription_job = TranscriptionJobMessageData(
-        transcription_service="service",
-        transcript=TEST_DIALOGUE,
-    )
-    handler = AsyncMock(return_value=transcription_job)
-    monkeypatch.setattr(
-        "worker.ray_recieve_service.TranscriptionHandlerService.process_transcription_only",
-        handler,
-    )
-
-    await transcription_service.process()
-
-    llm_queue.publish_message.assert_not_called()
-    transcription_queue.publish_message.assert_not_called()
-    transcription_queue.complete_message.assert_called_once_with(RECEIPT_HANDLE)
-
-
-@pytest.mark.asyncio
-async def test_process_transcription_only_without_transcript_requeues_same_task_type(
-    transcription_service, transcription_queue, llm_queue, monkeypatch
-):
-    transcription_queue.receive_message.return_value = [(TRANSCRIPTION_ONLY_MESSAGE, RECEIPT_HANDLE)]
-
-    transcription_job = TranscriptionJobMessageData(
-        transcription_service="service",
-        transcript=None,
-    )
-    monkeypatch.setattr(
-        "worker.ray_recieve_service.TranscriptionHandlerService.process_transcription_only",
-        AsyncMock(return_value=transcription_job),
-    )
-
-    await transcription_service.process()
-
-    llm_queue.publish_message.assert_not_called()
-    transcription_queue.publish_message.assert_called_once_with(
-        WorkerMessage(id=TEST_ID, type=TaskType.TRANSCRIPTION_ONLY, data=transcription_job)
-    )
     transcription_queue.complete_message.assert_called_once_with(RECEIPT_HANDLE)
 
 

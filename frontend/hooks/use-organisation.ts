@@ -4,14 +4,14 @@ import {
   listOrganisationsOrganisationsGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
 
-export function useOrganisation(organisationId: string) {
+export function useOrganisation(organisationId: string, isEnabled = true) {
   return useQuery({
     ...getOrganisationOrganisationsOrganisationIdGetOptions({
       path: {
         organisation_id: organisationId,
       },
     }),
-    enabled: !!organisationId,
+    enabled: isEnabled && !!organisationId,
   })
 }
 

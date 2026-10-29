@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 
 from common.database.postgres_models import (
+    AnalyticsEventType,
     DialogueEntry,
     JobStatus,
     Minute,
@@ -96,6 +97,7 @@ def test_update_minute_version_updates_fields(mock_session, mock_minute_version)
     ctx, session = mock_session
     content = "<p>html content</p>"
     new_status = JobStatus.COMPLETED
+    template_prompt_version = "0.1.0"
 
     with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
         MinuteHandlerService.update_minute_version(
@@ -103,10 +105,12 @@ def test_update_minute_version_updates_fields(mock_session, mock_minute_version)
             html_content=content,
             status=new_status,
             error=None,
+            template_prompt_version=template_prompt_version,
         )
 
     assert mock_minute_version.html_content == content
     assert mock_minute_version.status == new_status
+    assert mock_minute_version.template_prompt_version == template_prompt_version
     session.add.assert_called_once_with(mock_minute_version)
     session.commit.assert_called_once()
 
@@ -318,13 +322,21 @@ async def test_generate_minutes_standard(mocker, mock_dialogue_entry, mock_minut
     mocker.patch.object(
         MinuteHandlerService,
         "generate_full_minutes",
-        AsyncMock(return_value=MinuteAndHallucinations(text=output, total_claims=0, hallucinations=[])),
+        AsyncMock(
+            return_value=MinuteAndHallucinations(
+                text=output,
+                total_claims=0,
+                hallucinations=[],
+                template_prompt_version="0.1.0",
+            )
+        ),
     )
     mocker.patch("common.services.minute_handler_service.mistune.html", return_value=f"<p>{output}</p>")
 
     result = await MinuteHandlerService.generate_minutes(MeetingType.standard, mock_minute)
 
     assert result.text == f"<p>{output}</p>"
+    assert result.template_prompt_version == "0.1.0"
 
 
 @pytest.mark.asyncio
@@ -376,6 +388,29 @@ async def test_generate_full_minutes_uses_default_template(mocker, mock_minute):
 
 
 @pytest.mark.asyncio
+async def test_generate_full_minutes_preserves_default_template_prompt_version(mocker, mock_minute):
+    output = "expected_result"
+
+    mock_template = AsyncMock()
+    mock_template.generate = AsyncMock(
+        return_value=MinuteAndHallucinations(
+            text="result",
+            total_claims=0,
+            hallucinations=[],
+            template_prompt_version="0.1.0",
+        )
+    )
+    mock_minute.user_template_id = None
+    mocker.patch("common.services.minute_handler_service.TemplateManager.get_template", return_value=mock_template)
+    mocker.patch("common.services.minute_handler_service.convert_american_to_british_spelling", return_value=output)
+
+    result = await MinuteHandlerService.generate_full_minutes(mock_minute)
+
+    assert result.text == output
+    assert result.template_prompt_version == "0.1.0"
+
+
+@pytest.mark.asyncio
 async def test_generate_minute_from_user_template_success(mocker, mock_session, mock_minute, mock_transcription):
     output = "minute contents"
     ctx, session = mock_session
@@ -413,6 +448,15 @@ async def test_process_minute_generation_message_success(
 ):
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
+    mock_minute.transcription.user = User(
+        id=uuid4(),
+        email=mock_email,
+        evaluation_id="EVAL-001",
+        organisation_id=uuid4(),
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+    )
     dialogue = "<p>the family table</p>"
 
     mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
@@ -423,13 +467,34 @@ async def test_process_minute_generation_message_success(
         AsyncMock(return_value=MinuteAndHallucinations(text=dialogue, total_claims=0, hallucinations=[])),
     )
     mocker.patch.object(MinuteHandlerService, "update_minute_version")
+    session_ctx = MagicMock()
+    mock_session = Mock()
+    session_ctx.__enter__ = Mock(return_value=mock_session)
+    session_ctx.__exit__ = Mock(return_value=None)
 
-    await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
+    with (
+        patch("common.services.minute_handler_service.SessionLocal", return_value=session_ctx),
+        patch("common.services.minute_handler_service.record_analytics_event_sync") as mock_record_event,
+    ):
+        await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
 
     MinuteHandlerService.update_minute_version.assert_called_once_with(
         mock_minute_version.id,
         html_content=dialogue,
         status=JobStatus.COMPLETED,
+        template_prompt_version=None,
+    )
+    mock_record_event.assert_called_once_with(
+        mock_session,
+        AnalyticsEventType.SUMMARY_RECEIVED,
+        "EVAL-001",
+        mock_minute.transcription.user.organisation_id,
+        # keyed on the minute version so a redelivered queue message doesn't duplicate the event
+        source_id=mock_minute_version.id,
+        event_metadata={
+            "transcription_id": str(mock_minute.transcription_id),
+            "template_id": str(mock_minute.user_template_id),
+        },
     )
 
 

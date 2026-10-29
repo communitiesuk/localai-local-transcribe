@@ -143,7 +143,7 @@ const SpeakerEditorModal = ({
     for (const [original, updated] of pendingChanges.entries()) {
       try {
         await onSaveSpeaker(original, updated)
-      } catch (error) {
+      } catch {
         setBanner({
           message: `One or more speaker names could not be updated, please try again.`,
           variant: 'important',

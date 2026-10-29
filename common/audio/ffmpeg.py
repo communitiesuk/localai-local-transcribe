@@ -8,6 +8,12 @@ from common.constants import MONO_CHANNELS, SUPPORTED_FORMATS
 
 logger = logging.getLogger(__name__)
 
+MP3_ENCODING_OPTIONS = {
+    "acodec": "libmp3lame",
+    "audio_bitrate": "192k",
+    "ac": MONO_CHANNELS,
+}
+
 
 def convert_to_mp3(input_file_path: Path, output_path: Path | None = None) -> Path:
     """
@@ -39,14 +45,7 @@ def convert_to_mp3(input_file_path: Path, output_path: Path | None = None) -> Pa
 
         input_stream = ffmpeg.input(input_file_path)
 
-        output_args = {
-            "acodec": "libmp3lame",
-            "loglevel": "warning",
-            "audio_bitrate": "192k",
-            "ac": MONO_CHANNELS,
-        }
-
-        output_stream = ffmpeg.output(input_stream, str(output_path), **output_args)
+        output_stream = ffmpeg.output(input_stream, str(output_path), loglevel="warning", **MP3_ENCODING_OPTIONS)
         ffmpeg.run(output_stream, overwrite_output=True)
         logger.info("FFmpeg command completed successfully")
 

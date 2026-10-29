@@ -1,100 +1,96 @@
 # Evals flow
 
-## Steps:
+Short map of the current offline eval system. Runnable details live in [`../evals/README.md`](../evals/README.md).
 
-### 1. Transcription and Diarization
-```mermaid
-flowchart LR
-  classDef data fill:#eef6ff,stroke:#1d4ed8,stroke-width:1px,color:#0f172a;
-  classDef process fill:#ecfdf5,stroke:#047857,stroke-width:1px,color:#052e16;
+Related eval docs:
 
-  A[Audio recording]:::data
+- [`../evals/README.md`](../evals/README.md): commands, configs and outputs for summarisation, transcription, dataset generation and audio generation evals.
+- [`../evals/dataset_generation/data_for_testing/README.md`](../evals/dataset_generation/data_for_testing/README.md): creating annotated test data.
+- [`../evals/dataset_generation/counterfactual_generation/bias_july_counterfactuals_for_eval/README.md`](../evals/dataset_generation/counterfactual_generation/bias_july_counterfactuals_for_eval/README.md): bias counterfactual dataset notes.
 
-  P1[Transcription]:::process
-  P2[Diarization]:::process
-
-  D2[Diarized transcript]:::data
-
-  A --> P1 --> D2
-  A --> P2 --> D2
-```
-
-### 2. Summarization
-
-
+## Flow
 
 ```mermaid
-flowchart LR
-  classDef data fill:#eef6ff,stroke:#1d4ed8,stroke-width:1px,color:#0f172a;
-  classDef process fill:#ecfdf5,stroke:#047857,stroke-width:1px,color:#052e16;
+flowchart TD
+  RD[Real dialogue / diarised transcript + template]
+  SD[Synthetic dialogue / diarised transcript + template]
+  PI[Prompt-injection scenarios + template]
+  I1[Audio + reference transcript]
+  CF[Counterfactual transcript pairs]
 
-  D2[Diarized transcript]:::data
-  T1[Summary template]:::data
+  G1[Synthetic transcript generation]
+  G2[Characteristic detection]
+  G3[Counterfactual rewrite]
+  S[Standard summarisation eval*]
+  J[LLM rubric judges]
+  H[Hallucination / citation check]
+  P[Prompt-injection eval]
+  B[Counterfactual bias eval*]
+  RS[Regard + sentiment scoring]
+  BT[4/5 + SPC thresholds]
+  T[Transcription eval*]
 
-  P3[Summarisation]:::process
+  SR[Summarisation results + summary JSON]
+  HR[Hallucination / citation results]
+  PR[Prompt-injection results]
+  BR[Counterfactual bias results]
+  TR[Transcription results]
 
-  S1[Summary]:::data
+  G1 --> SD
+  SD --> G2
+  RD --> G2
+  G2 --> G3
+  G3 --> CF
 
-  D2 --> P3
-  T1 --> P3
-  P3 --> S1
+  RD --> S
+  SD --> S
+  S --> J --> SR
+  S --> H --> HR
+
+  PI --> P --> PR
+  CF --> B --> RS --> BT --> BR
+  I1 --> T --> TR
+
+  classDef input fill:#e8f3ff,stroke:#1f77b4,color:#111;
+  classDef process fill:#fff4cc,stroke:#b7791f,color:#111;
+  classDef output fill:#e7f6e7,stroke:#2f855a,color:#111;
+  class RD,SD,PI,I1,CF input;
+  class G1,G2,G3,S,J,H,P,B,RS,BT,T process;
+  class SR,HR,PR,BR,TR output;
 ```
 
-### 3. Statistics reporting
-```mermaid
-flowchart LR
-  classDef data fill:#eef6ff,stroke:#1d4ed8,stroke-width:1px,color:#0f172a;
-  classDef process fill:#ecfdf5,stroke:#047857,stroke-width:1px,color:#052e16;
+There are three broad input types: real or synthetic dialogue/diarised transcripts with a summary template for summarisation quality, counterfactual transcript pairs for bias checks, and audio with reference transcripts for transcription quality. Standard summarisation, prompt-injection, counterfactual bias and transcription produce separate result outputs; standard summarisation can also emit hallucination/citation outputs when that check is enabled.
 
-  S1[Summary 1]:::data
-  S2[Summary 2]:::data
-  S3[Summary n]:::data
-  P4[Eval run statistics]:::process
-  O1[Eval statistics report]:::data
+## What each eval measures
 
-  S1 --> P4 --> O1
-  S2 --> P4
-  S3 --> P4
-```
+| Area | Purpose | Primary metrics | Output |
+|---|---|---|---|
+| **Standard summarisation*** | Main regression check for summary quality on dialogue plus optional reference summary. | LLM-judge `accuracy`, `coverage`, `readability`, optionally `numerical_accuracy`, `template_fit`, `action_clarity`, `professional_tone`, `auditability`; `overall` score. | `results.jsonl`, `summary.json`, optional `hallucination_inputs.json` |
+| Transcription* | Checks speech-to-text and speaker attribution against AMI references. | `wer`, `wder`, `speaker_count_accuracy`, `processing_speed_ratio`. | Per-sample rows and run summary in `evals/transcription/output/` |
+| Counterfactual bias* | Checks whether summaries change when protected characteristics are rewritten. | Judge-score deltas, sentiment delta, optional Regard negative-score delta; aggregate deltas by characteristic/axis. | `evals/summarisation/output/bias/<run_id>/` |
+| Bias thresholds | Turns bias measurements into pass/fail signals. | SPC checks and 4/5-rule checks. | Attached to bias `results.jsonl` |
+| Hallucination / citation | Checks whether summary claims are supported by transcript citations. | `hallucination_rate`, `citation_outcome`, supported vs unsupported claim counts. | Hallucination report + citation outcome rollup |
+| Security / prompt injection | Checks whether transcript or template injections change summariser behaviour. | `harmlessness`, `summarisation_adherence`, `refusal_robustness`. | `evals/summarisation/output/security/<run_id>/` |
 
-## Data involved
-- Audio recordings with multiple speakers
-- Diarized Transcriptions
-- Summary Templates
-- Summaries
-- Output: eval statistics report
+`*` Regular evaluation pipeline planned on `feat/evals-pipeline`.
 
-### Eval datasets
-- Aiming for ~100 eval examples (data points), otherwise as many as possible
-- Data points should cover a wide range of features (speaker count, scenarios, noise level, accents, etc.)
+## Standard summarisation eval
 
-- Ideally: Each eval data point contains:
-    - an audio recording with multiple speakers
-    - a diarized transcription produced by a human
-    - a summary template
-    - a gold summary (produced by a human)
-- At minimum:
-    - an audio recording with multiple speakers
-    - a diarized transcription created by an AI
-    - a summary template
-    - an approved summary generated by an AI
+This is the main regression check for summary quality: generate a summary for each dialogue, then score it against selected judge dimensions. It is config-driven (`evals/summarisation/configs/smoke-test.yaml` by default) so the selected dataset split and aggregate metrics are recorded in `summary.json`.
 
-### Metrics
+Judges are rubric prompts run as separate single-dimension LLM calls. Each judge sees the transcript, candidate summary and one target dimension, returns a 1-5 score plus rationale, and the eval stores the score normalised to 0-1. Citation quality (`auditability`) is skipped when the selected summary template cannot produce citations.
 
-- Transcription: Word Error Rate (WER), Jaccard Error Rate (JER)
-- Diarization: Diarization Error Rate (WDER)
-- Summarization: LLM-as-judge on multiple criteria (faithfulness, coherence, *bias*, etc.)
+## Threshold work
 
-#### Bias
+Current threshold docs:
 
-We are planning on creating a bias dataset, where we are interested in using real transcripts and systematically modifying protected characteristics (e.g. names, gender) to assess how summary accuracy and faithfulness change.
+- [LLM judge score thresholds](eval_thresholds/llm-judge-score-thresholds.md): provisional pass/review/fail bands for judge dimensions.
+- [Claim citation rate thresholds](eval_thresholds/claim-citation-rate-thresholds.md): provisional `pass >= 0.95`, `review >= 0.85`, otherwise fail.
+- [Transcription metric drift thresholds](eval_thresholds/transcription-metric-drift-thresholds.md): AMI-proxy drift gates for WER, WDER, speaker-count accuracy and processing speed.
+- [ADR-024 bias thresholding](adr/024-bias-thresholding.md): bias uses the 4/5 rule as the floor and SPC as the drift/regression signal.
 
-### Storage and processing
+## Data
 
-Eval datasets and results are stored in an S3 bucket within MHCLG AWS account.
+Datasets should cover varied speaker counts, meeting types, audio quality, accents and protected-characteristic axes. Ideal records have human reference transcripts and summaries; minimum viable records can use approved AI-generated transcripts/summaries.
 
-Processing happens in a secure environment within the same AWS account.
-
-We propose to access restrict the access to the dataset data to engineers and analysts working on improving the system.
-
-The statistical results of the evals that do not contain any sensitive information should be able to be made publicly available.
+Eval inputs and sensitive outputs should remain in controlled storage. Aggregate metric reports that contain no sensitive content can be published.

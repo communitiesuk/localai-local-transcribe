@@ -8,6 +8,7 @@ import {
   useEffect,
   useState,
 } from 'react'
+import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 
 // Define the type for recording items
 export type RecordingDbItem = {
@@ -167,10 +168,20 @@ export function RecordingDbProvider({ children }: RecordingDbProviderProps) {
   )
 }
 
-// Hook to use the recording database context
+const noopRecordingDbContext: RecordingDbContextType = {
+  addRecording: async () => undefined,
+  removeRecording: async () => {},
+  getRecording: async () => undefined,
+  updateRecording: async () => {},
+  listRecordings: async () => [],
+}
+
 export function useRecordingDb() {
   const context = useContext(RecordingDbContext)
   if (context === undefined) {
+    if (!OFFLINE_RECORDINGS_ENABLED) {
+      return noopRecordingDbContext
+    }
     throw new Error('useRecordingDb must be used within a RecordingDbProvider')
   }
   return context

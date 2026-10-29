@@ -1,7 +1,7 @@
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.12-slim AS builder
+FROM python:3.14-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -13,10 +13,11 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-# Install Poetry
-RUN pip install --no-cache-dir poetry==2.4.1 poetry-plugin-export==1.9.0
+COPY pyproject.toml poetry.lock README.md ./
+COPY scripts/get-poetry-version.py scripts/get-poetry-version.py
 
-COPY pyproject.toml README.md ./
+RUN POETRY_VERSION=$(python scripts/get-poetry-version.py) && \
+    pip install --no-cache-dir "poetry==${POETRY_VERSION}" poetry-plugin-export==1.9.0
 
 RUN poetry export \
       -f requirements.txt \
@@ -40,12 +41,14 @@ RUN find /opt/site-packages -name "*.so" -exec strip --strip-unneeded {} + && \
            /opt/site-packages/wheel* \
 # 3. Clean up pycaches and test directories
     && find /opt/site-packages -type d -name "__pycache__" -prune -exec rm -rf {} + \
-    && find /opt/site-packages -type d -name "tests" -prune -exec rm -rf {} +
+    && find /opt/site-packages -type d -name "tests" -prune -exec rm -rf {} + \
+# 4. Remove Ray's Java runtime. This worker only creates Python actors; removing the jars prevents unnecessary vuln detections
+    && rm -rf /opt/site-packages/ray/jars
 
 # ==========================================
 # Stage 2: Runner
 # ==========================================
-FROM python:3.12-slim
+FROM python:3.14-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -74,7 +77,7 @@ ADD --chown=appuser:appuser --chmod=0444 \
     /app/config/rds-ca-bundle.pem
 
 # Copy built site-packages from builder (already pre-cleaned & stripped)
-COPY --from=builder /opt/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /opt/site-packages /usr/local/lib/python3.14/site-packages
 
 # Copy runtime code cleanly directly to /app (No duplication in site-packages)
 COPY --chown=appuser:appuser common/ common/

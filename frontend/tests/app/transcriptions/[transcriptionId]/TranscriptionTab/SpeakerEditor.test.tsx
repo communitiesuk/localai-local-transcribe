@@ -77,7 +77,9 @@ describe('<SpeakerEditor />', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Alicia' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(
       screen.getByRole('heading', { name: 'Discard changes?' })
@@ -91,7 +93,9 @@ describe('<SpeakerEditor />', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Alicia' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(screen.getByText('Alicia')).toBeInTheDocument()
@@ -105,7 +109,9 @@ describe('<SpeakerEditor />', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Alicia' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -125,7 +131,9 @@ describe('<SpeakerEditor />', () => {
     const { openModal } = setup()
     openModal()
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
-    expect(screen.getByRole('button', { name: 'Update' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    ).toBeDisabled()
   })
 
   it('Update saves the pending name and returns to the list view', () => {
@@ -135,7 +143,9 @@ describe('<SpeakerEditor />', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Alicia' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     expect(screen.getByText('Alicia')).toBeInTheDocument()
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Done' })).toBeEnabled()
@@ -148,12 +158,16 @@ describe('<SpeakerEditor />', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Alicia' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Alice' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     expect(screen.getByRole('button', { name: 'Done' })).toBeDisabled()
   })
 
@@ -164,7 +178,9 @@ describe('<SpeakerEditor />', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Alicia' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0])
     expect(screen.getByRole('textbox')).toHaveValue('Alicia')
     expect(
@@ -216,7 +232,9 @@ describe('<SpeakerEditor />', () => {
     fireEvent.change(screen.getByRole('textbox'), {
       target: { value: 'Alicia' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Update' }))
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Update all occurrences' })
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
     await waitFor(() => {
       expect(onSaveSpeaker).toHaveBeenCalledWith('Alice', 'Alicia')

@@ -10,6 +10,15 @@ from common.types import TemplateMetadata
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_TEMPLATE_ID_PREFIX = "default-"
+
+
+def default_template_id(name: str) -> str:
+    """Return the stable frontend/API id for a code-backed default template."""
+    slug = "".join(character.lower() if character.isalnum() else "-" for character in name.strip())
+    slug_parts = [part for part in slug.split("-") if part]
+    return f"{DEFAULT_TEMPLATE_ID_PREFIX}{'-'.join(slug_parts) or 'template'}"
+
 
 class TemplateManager:
     templates: typing.ClassVar[dict[str, type[Template]]] = {}
@@ -41,6 +50,7 @@ class TemplateManager:
         """Get a template instance by name."""
         return [
             TemplateMetadata(
+                id=default_template_id(template.name),
                 name=template.name,
                 description=template.description,
                 category=template.category,

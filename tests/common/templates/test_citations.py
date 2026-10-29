@@ -140,9 +140,7 @@ async def test_cite_claims_strips_boundary_metadata_from_cited_summary():
     claims = ["The budget is £1m"]
     transcript = []
     response = CitationResult(
-        cited_summary=(
-            "BEGIN meeting-summary 05f5b6d9\n" "<p>The budget is £1m[1].</p>\n" "END meeting-summary 05f5b6d9"
-        ),
+        cited_summary=("BEGIN meeting-summary 05f5b6d9\n<p>The budget is £1m[1].</p>\nEND meeting-summary 05f5b6d9"),
         claim_citations=[ClaimCitation(claim="The budget is £1m", citation_indices=[1])],
     )
 

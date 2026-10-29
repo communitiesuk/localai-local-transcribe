@@ -19,6 +19,8 @@ from evals.dataset_generation.data_for_testing.src.constants import (
 )
 from evals.dataset_generation.data_for_testing.src.types import CharacteristicKey, SpanContext, SpanKey
 
+logger = logging.getLogger(__name__)
+
 
 class AxisTransformation(BaseModel):
     axis: str
@@ -139,7 +141,7 @@ async def evaluate_counterfactual(
                 rewritten_texts = await _rewrite_transcript(chatbot, dialogue_texts, axis_transform, span_contexts)
                 if len(rewritten_texts) == len(dialogue_entries):
                     break
-                logging.warning(
+                logger.warning(
                     "Count mismatch for %s axis (got %d, expected %d), retry %d/%d",
                     axis_transform.axis,
                     len(rewritten_texts),

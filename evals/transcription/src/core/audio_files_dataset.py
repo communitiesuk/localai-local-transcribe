@@ -1,73 +1,88 @@
-from __future__ import annotations
+"""Load ordinary audio files paired with same-name UTF-8 reference transcripts."""
 
 import json
+import re
 from pathlib import Path
 
-import numpy as np
+import soundfile
 
-from common.constants import TARGET_SAMPLE_RATE
-from evals.transcription.src.models import AudioFilesDatasetSample, AudioSample
+from evals.transcription.src.core.benchmark_dataset_source import BenchmarkDatasetSource
+from evals.transcription.src.models import AudioFilesDatasetSample, AudioSample, DatasetRequest
 
 AUDIO_SUFFIXES = {".aac", ".flac", ".m4a", ".mp3", ".ogg", ".wav", ".webm", ".wma"}
+DIARIZED_LINE_PREFIX = re.compile(r"^\s*Speaker [^:\r\n]+:\s*", re.IGNORECASE)
+
+
+def _reference_text(path: Path) -> str:
+    """Read a reference, removing generated speaker labels when every line is diarized."""
+    text = path.read_text(encoding="utf-8").strip()
+    lines = text.splitlines()
+    content_lines = [line for line in lines if line.strip()]
+    if content_lines and all(DIARIZED_LINE_PREFIX.match(line) for line in content_lines):
+        return "\n".join(DIARIZED_LINE_PREFIX.sub("", line, count=1) for line in lines).strip()
+    return text
 
 
 class AudioFilesDataset:
-    def __init__(self, samples: list[AudioFilesDatasetSample]) -> None:
-        self._samples = samples
+    """Ordered audio/text pairs, with audio decoded on access."""
 
-    @property
-    def dataset_version(self) -> str:
-        return "audio_files_v0"
+    dataset_split = None
 
-    @property
-    def dataset_split(self) -> str | None:
-        return f"n{len(self._samples)}"
+    def __init__(self, input_dir: Path, num_samples: int | None = None):
+        if not input_dir.is_dir():
+            raise NotADirectoryError(input_dir)
+        if num_samples is not None and num_samples <= 0:
+            msg = "num_samples must be greater than zero"
+            raise ValueError(msg)
+        self.paths = sorted(p for p in input_dir.rglob("*") if p.is_file() and p.suffix.lower() in AUDIO_SUFFIXES)
+        if not self.paths:
+            msg = f"No supported audio files found in {input_dir}"
+            raise ValueError(msg)
+        if num_samples is not None:
+            self.paths = self.paths[:num_samples]
+        self.dataset_version = f"audio_files:{input_dir.resolve()}"
+        self.references: list[str] = []
+        self.diarizations: list[list[dict]] = []
+        for audio_path in self.paths:
+            reference_path = audio_path.with_suffix(".txt")
+            try:
+                self.references.append(_reference_text(reference_path))
+            except FileNotFoundError as error:
+                message = f"Missing reference transcript {reference_path} for audio file {audio_path}"
+                raise FileNotFoundError(message) from error
+            diarization_path = audio_path.with_name(f"{audio_path.stem}_ref_diarization.json")
+            if diarization_path.is_file():
+                data = json.loads(diarization_path.read_text(encoding="utf-8"))
+                if not isinstance(data, list):
+                    msg = f"Reference diarization must be a list: {diarization_path}"
+                    raise TypeError(msg)
+                self.diarizations.append(data)
+            else:
+                self.diarizations.append([])
+        self.supports_diarization = all(self.diarizations)
 
     def __len__(self) -> int:
-        return len(self._samples)
+        return len(self.paths)
 
     def __getitem__(self, index: int) -> AudioFilesDatasetSample:
-        return self._samples[index]
+        if index < 0 or index >= len(self):
+            raise IndexError(index)
+        path = self.paths[index]
+        audio, sample_rate = soundfile.read(path, dtype="float32")
+        return AudioFilesDatasetSample(
+            audio=AudioSample(array=audio, sampling_rate=sample_rate, path=str(path.resolve())),
+            text=self.references[index],
+            file_id=path.stem,
+            dataset_index=index,
+            reference_diarization=self.diarizations[index],
+        )
 
 
-def load_audio_files_dataset(input_dir: Path, limit: int | None = None) -> AudioFilesDataset:
-    audio_paths = sorted(path for path in input_dir.rglob("*") if path.suffix.lower() in AUDIO_SUFFIXES)
-    if limit is not None:
-        audio_paths = audio_paths[:limit]
-    if not audio_paths:
-        msg = f"No audio files found in {input_dir}"
-        raise ValueError(msg)
-    return AudioFilesDataset([_sample_from_audio(path, idx) for idx, path in enumerate(audio_paths)])
+class AudioFilesSource(BenchmarkDatasetSource):
+    """Load local audio/reference pairs from the configured source directory."""
 
+    name = "audio_files"
+    default_subdir = "custom"
 
-def _sample_from_audio(audio_path: Path, index: int) -> AudioFilesDatasetSample:
-    transcript_path = audio_path.with_suffix(".txt")
-    if not transcript_path.is_file():
-        msg = f"Missing reference transcript: {transcript_path}"
-        raise FileNotFoundError(msg)
-
-    text = transcript_path.read_text(encoding="utf-8").strip()
-    diarization = _load_diarization(audio_path, text)
-    return AudioFilesDatasetSample(
-        audio=AudioSample(
-            array=np.array([], dtype=np.float32),
-            sampling_rate=TARGET_SAMPLE_RATE,
-            path=str(audio_path),
-        ),
-        text=text,
-        file_id=audio_path.stem,
-        dataset_index=index,
-        reference_diarization=diarization,
-    )
-
-
-def _load_diarization(audio_path: Path, text: str) -> list[dict]:
-    diarization_path = audio_path.with_name(f"{audio_path.stem}_ref_diarization.json")
-    if diarization_path.is_file():
-        with diarization_path.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-        if not isinstance(data, list):
-            msg = f"Reference diarization must be a list: {diarization_path}"
-            raise TypeError(msg)
-        return data
-    return [{"speaker": "Speaker 1", "text": text, "start_time": 0.0, "end_time": 0.0}]
+    def _load(self, request: DatasetRequest) -> AudioFilesDataset:
+        return AudioFilesDataset(self.cache_dir, request.num_samples)

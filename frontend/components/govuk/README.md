@@ -68,6 +68,11 @@ Everything else (button, input, label, radio, checkbox, select, tabs, card, badg
 
 `GovukErrorSummary` accepts `errorList={[{ href: '#field', text: '…' }]}`.
 
+`GovukRadios` options can include `conditional` content. The wrapper reveals
+that content only when its radio is selected, using GOV.UK conditional markup
+and associated ARIA controls. Visibility is controlled by React, not a second
+GOV.UK JavaScript radio initializer.
+
 ## Adding a new wrapper
 
 1. Find the [GOV.UK Design System HTML reference](https://design-system.service.gov.uk/components/) for the component.
