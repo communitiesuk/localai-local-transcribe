@@ -20,7 +20,6 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import posthog from 'posthog-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import {
@@ -438,9 +437,6 @@ export function MinuteEditor({
                 title: 'Success',
                 message: `'${minute.template_name}' copied to clipboard`,
               })
-              posthog.capture('editor_content_copied', {
-                contentLength: contentToCopy.length,
-              })
             }}
             action="copy"
             subject="document"
@@ -453,10 +449,6 @@ export function MinuteEditor({
                 variant: 'success',
                 title: 'Success',
                 message: `'${minute.template_name}' downloaded`,
-              })
-              posthog.capture('minutes_downloaded', {
-                format: 'word',
-                version_id: displayedMinuteVersion?.id,
               })
             }}
             action="download"

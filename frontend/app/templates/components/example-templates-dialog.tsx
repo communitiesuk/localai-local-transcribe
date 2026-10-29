@@ -9,7 +9,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { TemplateData } from '@/types/templates'
-import posthog from 'posthog-js'
 import { useState } from 'react'
 
 interface ExampleTemplatesDialogProps {
@@ -32,9 +31,6 @@ export function ExampleTemplatesDialog({
     onSelectTemplate(template)
     setOpen(false)
     setSelectedValue(undefined)
-    posthog.capture('template_example_selected', {
-      example_name: template.name,
-    })
   }
 
   const radioOptions = examples.map((template) => ({

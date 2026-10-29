@@ -8,8 +8,6 @@ import type {
   TranscriptionGetResponse,
 } from '@/lib/client'
 
-vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }))
-
 vi.mock(
   '@/app/transcriptions/[transcriptionId]/MinuteTab/components/editor/tiptap-editor',
   () => ({

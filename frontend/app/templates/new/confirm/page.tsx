@@ -12,7 +12,6 @@ import { useTemplateCreateStore } from '@/stores/use-template-create-store'
 import * as Sentry from '@sentry/nextjs'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
-import posthog from 'posthog-js'
 import { useEffect, useRef, useState } from 'react'
 
 const CONFLICT_STATUS = 409
@@ -53,7 +52,6 @@ export default function CreateTemplateConfirmPage() {
         title: 'Success',
         message: `'${draft?.name}' created`,
       })
-      posthog.capture('template_created')
       clear()
       router.push('/templates')
     },

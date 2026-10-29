@@ -44,7 +44,6 @@ export default defineConfig([
       'components/transcription-title-editor.tsx',
       'components/status-icon.tsx',
       'components/download-button.tsx',
-      'components/posthog-banner.tsx',
       'app/support/page.tsx',
       'app/privacy/page.tsx',
       'app/page.tsx',
