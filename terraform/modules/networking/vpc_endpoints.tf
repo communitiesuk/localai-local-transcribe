@@ -51,15 +51,14 @@ resource "aws_vpc_endpoint" "vpc_endpoints" {
   private_dns_enabled = true
 }
 
-# s3 requires additional options due to there also being a 'gateway' VPC endpoint for s3
-data "aws_vpc_endpoint_service" "s3" {
-  service      = "s3"
-  service_type = "Interface"
-}
-
 data "aws_vpc_endpoint_service" "s3_gateway" {
   service      = "s3"
   service_type = "Gateway"
+}
+
+moved {
+  from = aws_vpc_endpoint.s3_endpoint
+  to   = aws_vpc_endpoint.s3_gateway
 }
 
 resource "aws_vpc_endpoint" "s3_gateway" {
@@ -71,19 +70,11 @@ resource "aws_vpc_endpoint" "s3_gateway" {
     aws_route_table.to_nat_gateway.id,
   ]
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   tags = {
     Name = "s3-gateway-endpoint-${var.environment_name}"
-  }
-}
-
-resource "aws_vpc_endpoint" "s3_endpoint" {
-  vpc_id              = aws_vpc.main.id
-  service_name        = data.aws_vpc_endpoint_service.s3.service_name
-  vpc_endpoint_type   = "Interface"
-  subnet_ids          = aws_subnet.private_subnet[*].id
-  security_group_ids  = [aws_security_group.aws_service_vpc_endpoints.id]
-  private_dns_enabled = true
-  dns_options {
-    private_dns_only_for_inbound_resolver_endpoint = false
   }
 }
