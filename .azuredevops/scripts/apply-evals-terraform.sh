@@ -21,13 +21,12 @@
 #
 # Also required for plan and apply: EVALS_INPUT_WRITER_PRINCIPAL_IDS,
 # EVALS_DEBUG_READER_PRINCIPAL_IDS, EVALS_RESULTS_READER_PRINCIPAL_IDS,
-# EVALS_DEBUG_WRITER_PRINCIPAL_IDS, EVALS_RESULTS_WRITER_PRINCIPAL_IDS. These lists
+# EVALS_DEBUG_AND_OUTPUT_WRITER_PRINCIPAL_IDS. These lists
 # decide which people can use the evaluation containers from test ADAPT:
-#   EVALS_INPUT_WRITER_PRINCIPAL_IDS   - can upload, change and delete test data in input
-#   EVALS_DEBUG_READER_PRINCIPAL_IDS   - can read debug files in debug
-#   EVALS_RESULTS_READER_PRINCIPAL_IDS - can read evals results in output
-#   EVALS_DEBUG_WRITER_PRINCIPAL_IDS   - can upload, change and delete debug files in debug
-#   EVALS_RESULTS_WRITER_PRINCIPAL_IDS - can upload, change and delete evals results in output
+#   EVALS_INPUT_WRITER_PRINCIPAL_IDS              - can upload, change and delete test data in input
+#   EVALS_DEBUG_READER_PRINCIPAL_IDS              - can read debug files in debug
+#   EVALS_RESULTS_READER_PRINCIPAL_IDS            - can read evals results in output
+#   EVALS_DEBUG_AND_OUTPUT_WRITER_PRINCIPAL_IDS   - can upload, change and delete blobs in debug and in output
 # The evaluation pipelines do not depend on these lists. Their own identity has
 # separate, fixed roles.
 #
@@ -105,8 +104,7 @@ shared_log_analytics_workspace_id="${EVALS_SHARED_LOG_ANALYTICS_WORKSPACE_ID:?}"
 input_writer_ids="${EVALS_INPUT_WRITER_PRINCIPAL_IDS:?}"
 debug_reader_ids="${EVALS_DEBUG_READER_PRINCIPAL_IDS:?}"
 results_reader_ids="${EVALS_RESULTS_READER_PRINCIPAL_IDS:?}"
-debug_writer_ids="${EVALS_DEBUG_WRITER_PRINCIPAL_IDS:?}"
-results_writer_ids="${EVALS_RESULTS_WRITER_PRINCIPAL_IDS:?}"
+debug_and_output_writer_ids="${EVALS_DEBUG_AND_OUTPUT_WRITER_PRINCIPAL_IDS:?}"
 
 scope="/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Storage/storageAccounts/${state_account}"
 
@@ -153,8 +151,7 @@ ado_federation_subject = "${federation_subject}"
 input_writer_principal_ids   = ${input_writer_ids}
 debug_reader_principal_ids   = ${debug_reader_ids}
 results_reader_principal_ids = ${results_reader_ids}
-debug_writer_principal_ids   = ${debug_writer_ids}
-results_writer_principal_ids = ${results_writer_ids}
+debug_and_output_writer_principal_ids = ${debug_and_output_writer_ids}
 EOF
 
 curl -fsSL "https://releases.hashicorp.com/terraform/1.16.2/terraform_1.16.2_linux_amd64.zip" -o /tmp/tf.zip

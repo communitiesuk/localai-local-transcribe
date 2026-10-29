@@ -33,5 +33,4 @@ shared_log_analytics_workspace_id = "/subscriptions/<shared-subscription-id>/res
 # input_writer_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
 # debug_reader_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
 # results_reader_principal_ids = ["00000000-0000-0000-0000-000000000000"]
-# debug_writer_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
-# results_writer_principal_ids = ["00000000-0000-0000-0000-000000000000"]
+# debug_and_output_writer_principal_ids = ["00000000-0000-0000-0000-000000000000"]

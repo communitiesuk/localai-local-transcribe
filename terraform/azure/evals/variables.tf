@@ -125,15 +125,9 @@ variable "results_reader_principal_ids" {
   default     = []
 }
 
-variable "debug_writer_principal_ids" {
+variable "debug_and_output_writer_principal_ids" {
   type        = set(string)
-  description = "Object IDs allowed to read, write and delete blobs in the debug container. An ad hoc evals run on test ADAPT writes here."
-  default     = []
-}
-
-variable "results_writer_principal_ids" {
-  type        = set(string)
-  description = "Object IDs allowed to read, write and delete blobs in the output container. An ad hoc evals run on test ADAPT writes here."
+  description = "Object IDs allowed to read, write and delete blobs in both the debug container and the output container. An ad hoc evals run on test ADAPT writes both, so one list grants both roles."
   default     = []
 }
 

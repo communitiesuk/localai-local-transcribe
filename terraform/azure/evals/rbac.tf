@@ -48,14 +48,14 @@ locals {
       role      = "Storage Blob Data Reader"
       principal = id
     } },
-    # Ad hoc evals runs write debug and output. These lists are separate from the reader
-    # lists, so an object ID that can only read does not gain write.
-    { for id in var.debug_writer_principal_ids : "debug-writer-${id}" => {
+    # One list grants write on both containers. An ad hoc run writes debug and output
+    # together, and Contributor already includes read, so these IDs stay off the reader lists.
+    { for id in var.debug_and_output_writer_principal_ids : "debug-writer-${id}" => {
       container = "debug"
       role      = "Storage Blob Data Contributor"
       principal = id
     } },
-    { for id in var.results_writer_principal_ids : "results-writer-${id}" => {
+    { for id in var.debug_and_output_writer_principal_ids : "results-writer-${id}" => {
       container = "output"
       role      = "Storage Blob Data Contributor"
       principal = id
