@@ -4,7 +4,6 @@ import { GovukModalDialogue } from '@/components/govuk/modal-dialogue'
 import { GovukNotificationBanner } from '@/components/govuk/notification-banner'
 import { EditSpeakerIcon } from '@/components/icons/edit-speaker-icon'
 import { useBannerStore } from '@/stores/use-banner-store'
-import posthog from 'posthog-js'
 import { useCallback, useState } from 'react'
 
 export const SpeakerNameInlineEditor = ({
@@ -53,9 +52,6 @@ export const SpeakerNameInlineEditor = ({
           variant: 'success',
           title: 'Success',
         })
-        posthog.capture('speaker_name_edited_in_transcript', {
-          update_type: 'all_occurrences',
-        })
       } catch {
         setErrorMessage(
           `One or more speaker names could not be updated, please try again.`
@@ -79,10 +75,6 @@ export const SpeakerNameInlineEditor = ({
           message: 'Speaker name updated',
           variant: 'success',
           title: 'Success',
-        })
-        posthog.capture('speaker_name_edited_in_transcript', {
-          update_type: 'single_occurrence',
-          entry_index: index,
         })
       } catch {
         setErrorMessage(

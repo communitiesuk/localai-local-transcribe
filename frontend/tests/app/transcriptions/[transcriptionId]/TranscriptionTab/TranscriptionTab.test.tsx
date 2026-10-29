@@ -69,10 +69,6 @@ vi.mock('@/stores/use-banner-store', () => ({
   }),
 }))
 
-vi.mock('posthog-js', () => ({
-  default: { capture: vi.fn() },
-}))
-
 // Mock scrollIntoView as it's not present in JSDom
 window.HTMLElement.prototype.scrollIntoView = () => {}
 

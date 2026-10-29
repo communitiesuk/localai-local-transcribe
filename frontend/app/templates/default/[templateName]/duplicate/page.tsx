@@ -10,7 +10,6 @@ import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import posthog from 'posthog-js'
 import { use } from 'react'
 
 export default function DuplicateDefaultTemplatePage(props: {
@@ -38,7 +37,6 @@ export default function DuplicateDefaultTemplatePage(props: {
         title: 'Success',
         message: `‘${duplicatedTemplate.name}’ created`,
       })
-      posthog.capture('template_duplicated', { template_source: 'default' })
       router.push('/templates')
     },
   })

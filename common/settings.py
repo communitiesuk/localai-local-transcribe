@@ -190,14 +190,9 @@ class Settings(BaseSettings):
     RAY_DASHBOARD_HOST: str = Field(description="Ray dashboard host IP address", default="127.0.0.1")
 
     BETA_TEMPLATE_NAMES: list[str] = Field(
-        description="List of template names available in beta. These are currently made available via a Posthog feature"
-        " flag",
+        description="List of template names available in beta",
         default_factory=list,
     )
-
-    # if using posthog
-    POSTHOG_API_KEY: str | None = Field(description="PostHog API key for analytics", default=None)
-    POSTHOG_HOST: str = Field(description="PostHog service host URL", default="https://eu.i.posthog.com")
 
     GUARDRAIL_THRESHOLD: float = Field(
         default=0.7,
