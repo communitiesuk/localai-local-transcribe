@@ -58,8 +58,9 @@ services:
       - type: bind
         source: ./.data
         target: /static
+    read_only: true
     tmpfs:
-      - /tmp
+      - /tmp:noexec,nosuid,nodev,size=512m
     environment:
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
