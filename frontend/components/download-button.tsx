@@ -13,8 +13,7 @@ export const DownloadButton = ({
 }: {
   recordings: SingleRecording[]
 }) => {
-  const onClick = (recording: SingleRecording) => () => {
-  }
+  const onClick = (recording: SingleRecording) => () => {}
   if (recordings.length == 1) {
     return (
       <Button asChild variant="link" onClick={onClick(recordings[0])}>

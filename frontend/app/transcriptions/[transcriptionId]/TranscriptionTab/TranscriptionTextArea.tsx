@@ -52,7 +52,6 @@ export const TranscriptionTextArea = ({
                 if (newText !== field.value) {
                   // Rollback is handled in the parent callback; prevent unhandled rejections from blur events.
                   void onSaveText(index, newText, field.value).catch(() => {})
-
                 }
               }}
               onKeyDown={(e) => {
