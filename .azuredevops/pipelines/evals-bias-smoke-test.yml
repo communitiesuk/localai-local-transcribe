@@ -38,8 +38,9 @@ jobs:
     dependsOn: fortnightly_schedule_gate
     condition: and(succeeded(), eq(dependencies.fortnightly_schedule_gate.outputs['set_schedule_gate.shouldRun'], 'true'))
     timeoutInMinutes: 60
+    # ado-vmss-latest replaces vmss-shared. The old pool is shut down at 17:00 on 28 October 2026.
     pool:
-      name: vmss-shared
+      name: ado-vmss-latest
     steps:
       - template: ../templates/run-eval-steps.yml
         parameters:

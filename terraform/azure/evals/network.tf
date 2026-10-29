@@ -4,7 +4,7 @@
 # Domain Name System is not in this root. This subscription cannot write the hub
 # privatelink.blob.core.windows.net or privatelink.vaultcore.azure.net zones. The Azure team
 # attaches each endpoint to its hub zone after it exists, the same as the state account
-# endpoint in state-pe/.
+# endpoint in backend/.
 
 resource "azurerm_private_endpoint" "blob" {
   for_each = local.accounts

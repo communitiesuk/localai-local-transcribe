@@ -17,8 +17,9 @@ parameters:
     type: string
     default: 'transcription-eval-results'
 
+# ado-vmss-latest replaces vmss-shared. The old pool is shut down at 17:00 on 28 October 2026.
 pool:
-  name: vmss-shared
+  name: ado-vmss-latest
 
 steps:
   - template: ../templates/run-eval-steps.yml

@@ -9,8 +9,11 @@
 # Once an inbound connection is allowed, Azure permits the reply packets for that connection.
 # The outbound rule is the matching rule from the architecture session, for a connection opened by the endpoint.
 #
-# Callers are the shared Azure DevOps agent subnet and the test ADAPT connector hosts.
-# Their prefixes are set in terraform.tfvars on test ADAPT. That file is not committed.
+# Callers are the Azure DevOps agent subnets and the test ADAPT connector hosts.
+# The connector prefixes, and the prefix for the pool vmss-shared, are set in
+# terraform.tfvars on test ADAPT. That file is not committed. The replacement
+# pool ado-vmss-latest uses subnet 10.170.128.0/25, which is added in the local
+# below. vmss-shared is shut down at 17:00 on 28 October 2026.
 # After the deny rules, a test ADAPT blob read succeeded, so that session used one of
 # the connector hosts. The read did not show that both hosts were used.
 #
@@ -21,33 +24,43 @@
 #
 # The same callers are allowed to every endpoint, including the state account. A later
 # results-only route has to add its source on the results rules only.
-
+#
 locals {
-  # Prefixes that may open TCP port 443 to the private endpoints. Each shared agent
-  # has its own address inside the agent prefix. A connector host rebuilt with a new
-  # address is no longer covered until the variable is updated.
-  allowed_caller_address_prefixes = var.allowed_caller_address_prefixes
+  # Subnet of the replacement self-hosted agent pool ado-vmss-latest in test.
+  # The production pool uses 10.140.82.0/25 and is not a caller of this test network.
+  # distinct() keeps one copy if this prefix is later written into terraform.tfvars as well.
+  ado_vmss_latest_subnet_prefix = "10.170.128.0/25"
 
-  # Private address of each endpoint. Priority is unique within a direction.
+  # Prefixes that may open TCP port 443 to the private endpoints. Each agent
+  # has its own address inside its pool prefix. A connector host rebuilt with a new
+  # address is no longer covered until the variable is updated. The vmss-shared
+  # prefix stays in the variable until that pool is shut down, so both pools work
+  # during the changeover.
+  allowed_caller_address_prefixes = distinct(concat(
+    var.allowed_caller_address_prefixes,
+    [local.ado_vmss_latest_subnet_prefix],
+  ))
+
+  # Private addresses of each endpoint. Priority is unique within a direction.
   # The same number is used for the inbound and outbound rule of one endpoint.
   # Gaps of 10 leave room to insert another allow. The deny rules use a higher
   # number so these allows are checked first.
   private_endpoint_targets = {
     state = {
-      address_prefix = var.private_endpoint_address_prefixes.state
-      priority       = 100
+      address_prefixes = [var.private_endpoint_address_prefixes.state]
+      priority         = 100
     }
     results = {
-      address_prefix = var.private_endpoint_address_prefixes.results
-      priority       = 110
+      address_prefixes = [var.private_endpoint_address_prefixes.results]
+      priority         = 110
     }
     sensitive = {
-      address_prefix = var.private_endpoint_address_prefixes.sensitive
-      priority       = 120
+      address_prefixes = [var.private_endpoint_address_prefixes.sensitive]
+      priority         = 120
     }
     vault = {
-      address_prefix = var.private_endpoint_address_prefixes.vault
-      priority       = 130
+      address_prefixes = [var.private_endpoint_address_prefixes.vault]
+      priority         = 130
     }
   }
 
@@ -60,14 +73,14 @@ locals {
         priority                     = endpoint.priority
         direction                    = "Inbound"
         source_address_prefixes      = local.allowed_caller_address_prefixes
-        destination_address_prefixes = [endpoint.address_prefix]
+        destination_address_prefixes = endpoint.address_prefixes
       }
       "${endpoint_name}-outbound" = {
         name                         = "allow-${endpoint_name}-outbound"
         description                  = "Allow the ${endpoint_name} private endpoint to reach ADO agents and test ADAPT connectors on HTTPS."
         priority                     = endpoint.priority
         direction                    = "Outbound"
-        source_address_prefixes      = [endpoint.address_prefix]
+        source_address_prefixes      = endpoint.address_prefixes
         destination_address_prefixes = local.allowed_caller_address_prefixes
       }
     }

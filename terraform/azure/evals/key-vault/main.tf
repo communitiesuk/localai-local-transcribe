@@ -11,9 +11,10 @@
 # The AzureServices exception stays, so Azure Storage can still encrypt the
 # accounts with this customer-managed key.
 #
-# The key rotates itself once a year through its rotation policy. Vault audit logs
-# go to the evals Log Analytics workspace. Test ADAPT reaches the vault through the
-# Zscaler mapping of its private name.
+# The key rotates itself once a year through its rotation policy. Vault logs are
+# sent by the parent root, in logging.tf, to the shared Log Analytics workspace.
+# The setting uses the allLogs category group. Test ADAPT reaches the vault through
+# the Zscaler mapping of its private name.
 
 terraform {
   required_version = ">= 1.5.0"
@@ -110,17 +111,5 @@ resource "azurerm_key_vault_key" "evals_storage" {
     purpose     = "evals-storage-customer-managed-key"
     workload    = "evals"
     environment = var.environment_name
-  }
-}
-
-# Sends every vault access (key reads, wraps, unwraps, rotations and permission changes)
-# to the evals Log Analytics workspace created by the parent evals root.
-resource "azurerm_monitor_diagnostic_setting" "evals_storage_vault" {
-  name                       = "key-vault-audit-logging"
-  target_resource_id         = azurerm_key_vault.evals_storage.id
-  log_analytics_workspace_id = var.log_analytics_workspace_id
-
-  enabled_log {
-    category = "AuditEvent"
   }
 }

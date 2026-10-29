@@ -39,6 +39,11 @@ variable "soft_delete_retention_days" {
   default     = 14
 }
 
+variable "private_endpoint_subnet_id" {
+  type        = string
+  description = "Resource ID of the private-endpoint subnet in the evaluations virtual network. The state account endpoint is placed in it."
+}
+
 variable "sas_expiration_period" {
   type        = string
   description = "Maximum lifetime for newly created shared access signatures, as DD.HH:MM:SS."

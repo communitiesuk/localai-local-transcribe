@@ -124,3 +124,15 @@ variable "results_reader_principal_ids" {
   description = "Object IDs allowed to read the output (results) container."
   default     = []
 }
+
+# Shared logging
+
+variable "terraform_state_storage_account_name" {
+  type        = string
+  description = "Name of the Terraform state storage account created by backend/. This root does not manage that account. It only needs the name to attach the shared diagnostic settings to it."
+}
+
+variable "shared_log_analytics_workspace_id" {
+  type        = string
+  description = "Resource ID of the shared Log Analytics workspace that receives every evals diagnostic log. Cyber and the team both read it. It is in another subscription, and its ID differs between test and production. The applying identity needs read and Microsoft.OperationalInsights/workspaces/sharedKeys/action on it, which the Monitoring Contributor role includes."
+}

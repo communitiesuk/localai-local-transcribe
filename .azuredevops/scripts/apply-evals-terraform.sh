@@ -11,7 +11,8 @@
 # EVALS_RESOURCE_GROUP_NAME, EVALS_STATE_STORAGE_ACCOUNT_NAME,
 # EVALS_ENVIRONMENT_NAME, EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME,
 # EVALS_RESULTS_STORAGE_ACCOUNT_NAME, EVALS_ADO_FEDERATION_ISSUER,
-# EVALS_ADO_FEDERATION_SUBJECT, EVALS_PRIVATE_ENDPOINT_SUBNET_ID.
+# EVALS_ADO_FEDERATION_SUBJECT, EVALS_PRIVATE_ENDPOINT_SUBNET_ID,
+# EVALS_SHARED_LOG_ANALYTICS_WORKSPACE_ID.
 #
 # The two federation values are the Issuer and Subject that Azure DevOps shows on
 # the evals-blob service connection. They are required on every plan and apply.
@@ -97,6 +98,7 @@ results_account="${EVALS_RESULTS_STORAGE_ACCOUNT_NAME:?}"
 federation_issuer="${EVALS_ADO_FEDERATION_ISSUER:?}"
 federation_subject="${EVALS_ADO_FEDERATION_SUBJECT:?}"
 private_endpoint_subnet_id="${EVALS_PRIVATE_ENDPOINT_SUBNET_ID:?}"
+shared_log_analytics_workspace_id="${EVALS_SHARED_LOG_ANALYTICS_WORKSPACE_ID:?}"
 input_writer_ids="${EVALS_INPUT_WRITER_PRINCIPAL_IDS:?}"
 debug_reader_ids="${EVALS_DEBUG_READER_PRINCIPAL_IDS:?}"
 results_reader_ids="${EVALS_RESULTS_READER_PRINCIPAL_IDS:?}"
@@ -135,6 +137,10 @@ sensitive_storage_account_name = "${sensitive_account}"
 results_storage_account_name   = "${results_account}"
 # Subnet in the evals virtual network that holds both blob private endpoints.
 private_endpoint_subnet_id = "${private_endpoint_subnet_id}"
+# State account created by backend/. The shared diagnostic settings for it are in this root.
+terraform_state_storage_account_name = "${state_account}"
+# Shared Log Analytics workspace that Cyber can read. It is in another subscription.
+shared_log_analytics_workspace_id = "${shared_log_analytics_workspace_id}"
 # Federated credential that lets the evals-blob service connection sign in as evals-blob-id.
 ado_federation_issuer  = "${federation_issuer}"
 ado_federation_subject = "${federation_subject}"

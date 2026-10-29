@@ -70,9 +70,8 @@ The evals accounts encrypt with a customer-managed key from the vault in `key-va
 | Path               | Role                                                               |
 | ------------------ | ------------------------------------------------------------------ |
 | `backend/`         | One-time bootstrap of remote Terraform state storage               |
-| `backend/logging.tf` | Log Analytics workspace and File and Blob diagnostic settings for state |
 | `main.tf`          | Both storage accounts, the three containers, firewall rules        |
-| `logging.tf`       | Log Analytics workspace and File and Blob diagnostic settings      |
+| `logging.tf`       | File, Blob and vault diagnostic settings to the shared workspace   |
 | `network.tf`       | Blob private endpoints                                             |
 | `rbac.tf`          | Container-scoped role assignments                                  |
 | `variables.tf`     | Input variables (required values plus optional hardening defaults) |
@@ -90,13 +89,15 @@ The vault in `key-vault/` denies public data-plane access. A plan of the parent 
 
 ## Logging
 
-Queue and Table diagnostic logging, a security information and event management system, and loading data into containers are still out of scope. File and Blob logs for the evals accounts go to `law-evals-<environment_name>`. File and Blob logs for the state account go to `law-evals-tfstate-<environment_name>`. If either name already exists in the resource group, import it before apply.
+Every File and Blob read, write and delete on the three storage accounts, and every vault log category, go to the shared Log Analytics workspace that Cyber reads and that the team queries from outside test ADAPT. The workspace is in another subscription, set by `shared_log_analytics_workspace_id`. The identity that applies this root needs read and `Microsoft.OperationalInsights/workspaces/sharedKeys/action` on it. The parent root creates all seven settings, including those for the state account and the vault, so only the pipeline service principal needs those rights. Do not add a logging setting to `backend/` or `key-vault/`. The setting names end in `-shared` and must not be renamed, or Terraform would delete and recreate them.
+
+Queue and Table diagnostic logging, a security information and event management system, and loading data into containers are still out of scope.
 
 ## Prerequisites
 
 - Access to the test Azure tenant and subscription
 - An existing resource group you are allowed to create storage accounts in
-- Rights for the applying identity to create a Log Analytics workspace and diagnostic settings on the storage accounts
+- Rights for the applying identity to create diagnostic settings that send to the shared Log Analytics workspace
 - Three globally unique storage account names (3 to 24 lowercase letters and digits): one for Terraform state, one sensitive, one results
 - A machine that reaches the state storage account's private endpoint, for `terraform init`, `plan`, and `apply` against the state backend
 - Storage Blob Data Contributor on the state storage account (or `tfstate` container) for the identity that runs evals `terraform init`, `plan`, and `apply`, because remote state uses Entra ID (`use_azuread_auth=true`)
