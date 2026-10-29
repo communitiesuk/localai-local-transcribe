@@ -358,7 +358,7 @@ class GuardrailScore(BaseModel):
     categories: list[FailureDetail] = Field(description="List of failure details that contributed to the score")
 
     @model_validator(mode="after")
-    def _warn_if_failing_score_has_no_categories(self) -> "GuardrailScore":
+    def _warn_if_failing_score_has_no_categories(self) -> GuardrailScore:
         threshold = get_settings().GUARDRAIL_THRESHOLD
         if self.score < threshold and not self.categories:
             logger.warning(

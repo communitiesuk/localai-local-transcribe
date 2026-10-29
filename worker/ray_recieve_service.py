@@ -133,7 +133,7 @@ class _RayLlmService:
                         )
                         self.queue_service.deadletter_message(message, receipt_handle)
             if len(tasks) > 0:
-                done, pending = await asyncio.wait(tasks)
+                done, _pending = await asyncio.wait(tasks)
                 for task in done:
                     try:
                         task.result()
