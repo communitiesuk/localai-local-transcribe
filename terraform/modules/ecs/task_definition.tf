@@ -1,4 +1,27 @@
 locals {
+  # ECS Exec (the embedded SSM Core Agent) requires write access to these paths at runtime.
+  # This is NOT officially documented/supported by AWS alongside readonlyRootFilesystem - see
+  # https://github.com/aws/containers-roadmap/issues/2824 and
+  # https://github.com/aws/containers-roadmap/issues/1359. These paths are community-reverse-engineered,
+  # not AWS-confirmed or version-pinned, and could silently break on a future ECS/SSM agent update.
+  ecs_exec_tmpfs_mounts = var.allow_exec ? [
+    {
+      containerPath = "/managed-agents"
+      sourceVolume  = "managed-agents"
+      readOnly      = false
+    },
+    {
+      containerPath = "/var/lib/amazon/ssm"
+      sourceVolume  = "var-lib-amazon-ssm"
+      readOnly      = false
+    },
+    {
+      containerPath = "/var/log/amazon/ssm"
+      sourceVolume  = "var-log-amazon-ssm"
+      readOnly      = false
+    }
+  ] : []
+
   shared_worker_backend_environment_variables = [
     {
       name  = "ENVIRONMENT"
@@ -237,6 +260,7 @@ resource "aws_ecs_task_definition" "backend" {
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.backend_ecs_task.arn
 
+
   container_definitions = jsonencode([
     {
       name      = "backend"
@@ -302,12 +326,23 @@ resource "aws_ecs_task_definition" "worker" {
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.worker_ecs_task.arn
 
+  dynamic "volume" {
+    for_each = var.allow_exec ? ["managed-agents", "var-lib-amazon-ssm", "var-log-amazon-ssm"] : []
+    content {
+      name = volume.value
+    }
+  }
+
   container_definitions = jsonencode([
     {
-      name      = "worker"
-      essential = true
-      image     = var.worker_image_name
-      user      = "1000:1000"
+      name                   = "worker"
+      essential              = true
+      image                  = var.worker_image_name
+      user                   = "1000:1000"
+      readonlyRootFilesystem = true
+
+      mountPoints = local.ecs_exec_tmpfs_mounts
+
 
       logConfiguration = {
         logDriver = "awslogs"
