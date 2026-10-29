@@ -28,7 +28,6 @@ Use `@/components/ui/*` only when govuk-frontend has no equivalent:
 | `accordion.tsx`                | `@radix-ui/react-accordion`    | Expandable sections (support page)                 |
 | `collapsible.tsx`              | `@radix-ui/react-collapsible`  | Show/hide regions                                  |
 | `sonner.tsx`                   | Sonner                         | Toast notifications (`<Toaster />` in root layout) |
-| `citation-popover-wrapper.tsx` | Popover + custom               | Citation previews in editor / chat                 |
 | TipTap editor menus            | Radix / ProseMirror            | Rich-text toolbar (no GDS pattern)                 |
 
 Everything else (button, input, label, radio, checkbox, select, tabs, card, badge, alert, separator) has a GOV.UK Design System equivalent — use or add a `govuk/` wrapper instead.
