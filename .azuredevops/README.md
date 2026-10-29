@@ -41,6 +41,8 @@ Mandatory values:
 | `EVALS_INPUT_WRITER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can upload, change and delete blobs in `input`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
 | `EVALS_DEBUG_READER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can read `debug`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
 | `EVALS_RESULTS_READER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can read `output`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
+| `EVALS_DEBUG_WRITER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can upload, change and delete blobs in `debug`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
+| `EVALS_RESULTS_WRITER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can upload, change and delete blobs in `output`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
 | `EVALS_KEY_VAULT_NAME` | Key Vault holding the storage key. Read only by `grant-key-vault-roles` | No |
 | `EVALS_SUPER_USER_OBJECT_ID` | Entra object ID given Key Vault Crypto Officer. Read only by `grant-key-vault-roles` | No |
 | `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
