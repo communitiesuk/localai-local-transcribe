@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
+from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter, build_bedrock_apim_adapter
 from evals.summarisation.src.common.config import AppConfig, HallucinationConfig, load_config
 from evals.summarisation.src.common.jsonl import write_jsonl
 from evals.summarisation.src.common.langchain_adapter import LangChainModelAdapter
@@ -29,6 +29,7 @@ __all__ = [
     "MetricResult",
     "RunSummary",
     "build_azure_apim_adapter",
+    "build_bedrock_apim_adapter",
     "build_metrics",
     "call_llm_judge_parallel",
     "citation_markers",

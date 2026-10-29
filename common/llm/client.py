@@ -12,8 +12,14 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from common.azure_apim_auth import build_azure_apim_token_provider
-from common.llm.adapters import AzureAPIMModelAdapter, GeminiModelAdapter, ModelAdapter, OpenAIModelAdapter
+from common.apim_auth import build_apim_token_provider
+from common.llm.adapters import (
+    AzureAPIMModelAdapter,
+    BedrockAPIMModelAdapter,
+    GeminiModelAdapter,
+    ModelAdapter,
+    OpenAIModelAdapter,
+)
 from common.settings import get_settings
 
 settings = get_settings()
@@ -69,12 +75,12 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
     Creates and returns a chatbot instance based on the specified model type and name.
 
     This function initializes a ChatBot instance by selecting the appropriate model adapter
-    based on the provided model type. It supports "openai", "azure_apim" and "gemini" model types.
-    If an unsupported model type is specified, a ValueError is raised.
+    based on the provided model type. It supports "openai", "azure_apim", "bedrock_apim" and
+    "gemini" model types. If an unsupported model type is specified, a ValueError is raised.
 
     Args:
         model_type: A string specifying the type of the model. Supported values are "openai",
-            "azure_apim" and "gemini".
+            "azure_apim", "bedrock_apim" and "gemini".
         model_name: A string indicating the name of the model to be used.
         temperature: The temperature to use for the model.
 
@@ -119,13 +125,31 @@ def create_chatbot(model_type: str, model_name: str, temperature: float) -> Chat
             msg = "AZURE_APIM_SUBSCRIPTION_KEY is required for azure_apim model"
             raise ValueError(msg)
 
-        token_provider = build_azure_apim_token_provider()
+        token_provider = build_apim_token_provider()
 
         return ChatBot(
             AzureAPIMModelAdapter(
                 url=settings.AZURE_APIM_URL,
                 model=model_name,
                 api_version=settings.AZURE_APIM_API_VERSION,
+                token_provider=token_provider,
+                subscription_key=settings.AZURE_APIM_SUBSCRIPTION_KEY,
+            )
+        )
+    elif model_type == "bedrock_apim":
+        if not settings.AZURE_APIM_BEDROCK_URL:
+            msg = "AZURE_APIM_BEDROCK_URL is required for bedrock_apim model"
+            raise ValueError(msg)
+        if not settings.AZURE_APIM_SUBSCRIPTION_KEY:
+            msg = "AZURE_APIM_SUBSCRIPTION_KEY is required for bedrock_apim model"
+            raise ValueError(msg)
+
+        token_provider = build_apim_token_provider()
+
+        return ChatBot(
+            BedrockAPIMModelAdapter(
+                url=settings.AZURE_APIM_BEDROCK_URL,
+                model=model_name,
                 token_provider=token_provider,
                 subscription_key=settings.AZURE_APIM_SUBSCRIPTION_KEY,
             )
