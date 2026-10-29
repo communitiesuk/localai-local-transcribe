@@ -42,7 +42,7 @@ jobs:
       # Staging, generation and publishing to debug storage all happen in one process (main.py),
       # the same way evals.transcription.src.evaluate stages and publishes its own blob runs.
       - task: AzureCLI@2
-        displayName: 'Generate and publish silver transcripts'
+        displayName: 'Run silver transcript generation (blob)'
         inputs:
           azureSubscription: $(EVALS_AZURE_SERVICE_CONNECTION)
           scriptType: bash
