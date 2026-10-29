@@ -99,7 +99,6 @@ for SERVICE in "${SERVICES[@]}"; do
 
   if [[ "$SERVICE" == "frontend" ]]; then
     BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_SENTRY_DSN=${SENTRY_DSN:-}")
-    BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_POSTHOG_API_KEY=${POSTHOG_API_KEY:-}")
     BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_ENVIRONMENT=${ENVIRONMENT:-}")
     BUILD_ARGS+=(--build-arg "NEXT_PUBLIC_PLAUSIBLE_DOMAIN=${NEXT_PUBLIC_PLAUSIBLE_DOMAIN:-}")
 

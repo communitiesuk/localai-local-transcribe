@@ -58,7 +58,6 @@ async def commit_or_raise_template_name_conflict(session: SQLSessionDep) -> None
 def get_templates(user: UserDep) -> list[TemplateMetadata]:  # noqa: ARG001
     """Get metadata for all templates."""
     # currently we have no beta templates. Uncomment this code to enable this feature
-    # if posthog_client and posthog_client.get_feature_flag("beta-templates", user.email):
     #     return all_template_metadata
     # else:
     #     return ga_only_template_metadata

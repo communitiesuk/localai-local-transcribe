@@ -1,7 +1,6 @@
 'use client'
 
 import { use, useCallback, useEffect, useRef, useState } from 'react'
-import ChatTab from '@/app/transcriptions/[transcriptionId]/ChatTab/ChatTab'
 import { DocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/DocumentTab'
 import { NewDocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/NewDocumentTab'
 import { TranscriptionTab } from '@/app/transcriptions/[transcriptionId]/TranscriptionTab/TranscriptionTab'
@@ -19,10 +18,8 @@ import {
   getTranscriptionTranscriptionsTranscriptionIdGetOptions,
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions,
 } from '@/lib/client/@tanstack/react-query.gen'
-import { FeatureFlags } from '@/lib/feature-flags'
 import { useQuery } from '@tanstack/react-query'
 import { LoaderCircle } from 'lucide-react'
-import { useFeatureFlagEnabled } from 'posthog-js/react'
 import { redirect, useSearchParams } from 'next/navigation'
 import { BannerNotification } from '@/components/banner-notification'
 import { useBannerStore } from '@/stores/use-banner-store'
@@ -39,7 +36,6 @@ export default function TranscriptionPage(props: {
   const searchParams = useSearchParams()
   const shouldOpenDetails = searchParams.get('details') === 'open'
 
-  const isChatEnabled = useFeatureFlagEnabled(FeatureFlags.ChatEnabled)
   const [lineEditError, setLineEditError] = useState<string | null>(null)
   const [recordingDetailsErrors, setRecordingDetailsErrors] = useState<
     ErrorItem[]
@@ -308,11 +304,6 @@ export default function TranscriptionPage(props: {
             onDialogueEntryFocusLost={() => setDialogueEntryIndexToFocus(null)}
           />
         </GovukTabs.Panel>
-        {isChatEnabled && (
-          <GovukTabs.Panel id="chat" label="Chat with your meeting">
-            <ChatTab transcription={transcription} />
-          </GovukTabs.Panel>
-        )}
         {documentTabs.map((doc) => (
           <GovukTabs.Panel key={doc.id} id={doc.id!} label={doc.template_name}>
             <DocumentTab

@@ -25,7 +25,6 @@ import {
   useState,
 } from 'react'
 import { FormProvider, useFieldArray, useForm, useWatch } from 'react-hook-form'
-import posthog from 'posthog-js'
 
 export type DialogueEntryForm = {
   entries: DialogueEntry[]
@@ -457,9 +456,6 @@ export function TranscriptionTab({
                   variant: 'success',
                   title: 'Success',
                   message: `'${transcription.title}' copied to clipboard`,
-                })
-                posthog.capture('editor_content_copied', {
-                  contentLength: transcriptionString.length,
                 })
               }}
               disabled={isLineEditMode}

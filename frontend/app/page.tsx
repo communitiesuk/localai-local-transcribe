@@ -1,4 +1,3 @@
-import { PosthogBanner } from '@/components/posthog-banner'
 import { BannerNotification } from '@/components/banner-notification'
 import {
   GovukBody,
@@ -12,7 +11,6 @@ import { OrganisationHeading } from '@/components/organisation-heading'
 export default function Home() {
   return (
     <div className="govuk-grid-row flex justify-center">
-      <PosthogBanner />
       <div className="govuk-grid-column-three-quarters">
         <BannerNotification />
         <OrganisationHeading />

@@ -4,8 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { NewDocumentTab } from '@/app/transcriptions/[transcriptionId]/NewDocumentTab/NewDocumentTab'
 import type { TranscriptionGetResponse } from '@/lib/client'
 
-vi.mock('posthog-js', () => ({ default: { capture: vi.fn() } }))
-
 const setBannerMock = vi.hoisted(() => vi.fn())
 vi.mock('@/stores/use-banner-store', () => ({
   useBannerStore: (selector?: (s: { setBanner: unknown }) => unknown) =>
