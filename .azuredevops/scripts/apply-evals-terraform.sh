@@ -31,9 +31,9 @@
 # separate, fixed roles.
 #
 # Each value is a Terraform list of Entra ID object IDs, for example
-# ["id-one", "id-two"], or [] for nobody. Use the object ID of the person's test
-# tenant Super User account, or of an Entra ID group (as of 6 October 2026 we do
-# not yet have one). The values are written into terraform.tfvars exactly as given.
+# ["id-one", "id-two"], or [] for nobody. Prefer a group object ID, so a membership
+# change does not need a Terraform apply. The values are written into
+# terraform.tfvars exactly as given.
 #
 # The values stay in the variable group between runs, so nothing needs to be
 # re-entered. Change them only when the people who need access change. Every plan
