@@ -50,20 +50,19 @@ class EvalBlobStorage:
         self,
         *,
         restricted_account_url: str,
-        shared_account_url: str,
+        shared_account_url: str | None = None,
         credential: TokenCredential | None = None,
     ) -> None:
-        if not restricted_account_url or not shared_account_url:
-            msg = "Set both restricted_account_url and shared_account_url."
+        if not restricted_account_url:
+            msg = "Set restricted_account_url."
             raise ValueError(msg)
         credential = credential or DefaultAzureCredential()
         self._restricted_service = BlobServiceClient(
             account_url=restricted_account_url,
             credential=credential,
         )
-        self._shared_service = BlobServiceClient(
-            account_url=shared_account_url,
-            credential=credential,
+        self._shared_service = (
+            BlobServiceClient(account_url=shared_account_url, credential=credential) if shared_account_url else None
         )
 
     @classmethod
@@ -73,15 +72,16 @@ class EvalBlobStorage:
         restricted_account_url: str | None = None,
         shared_account_url: str | None = None,
         credential: TokenCredential | None = None,
+        require_shared: bool = True,
     ) -> EvalBlobStorage:
         restricted_account_url = _non_empty(restricted_account_url) or _non_empty(os.getenv(RESTRICTED_ACCOUNT_ENV_VAR))
         shared_account_url = _non_empty(shared_account_url) or _non_empty(os.getenv(SHARED_ACCOUNT_ENV_VAR))
 
-        if restricted_account_url is None or shared_account_url is None:
-            msg = (
-                "Set blob.restricted_account_url and blob.shared_account_url in the config, "
-                f"or {RESTRICTED_ACCOUNT_ENV_VAR} and {SHARED_ACCOUNT_ENV_VAR}."
-            )
+        if restricted_account_url is None:
+            msg = f"Set blob.restricted_account_url in the config or {RESTRICTED_ACCOUNT_ENV_VAR}."
+            raise ValueError(msg)
+        if require_shared and shared_account_url is None:
+            msg = f"Set blob.shared_account_url in the config or {SHARED_ACCOUNT_ENV_VAR}."
             raise ValueError(msg)
         return cls(
             restricted_account_url=restricted_account_url,
@@ -93,6 +93,9 @@ class EvalBlobStorage:
         if container in {INPUT_CONTAINER, DEBUG_CONTAINER}:
             return self._restricted_service
         if container == RESULTS_CONTAINER:
+            if self._shared_service is None:
+                msg = f"Set blob.shared_account_url or {SHARED_ACCOUNT_ENV_VAR} to access the output container."
+                raise ValueError(msg)
             return self._shared_service
         msg = f"Unknown eval blob container: {container}"
         raise ValueError(msg)

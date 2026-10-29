@@ -138,7 +138,33 @@ def test_from_account_urls_falls_back_to_split_env() -> None:
     ]
 
 
-def test_from_account_urls_raises_without_both_account_urls() -> None:
+def test_restricted_only_storage_routes_input_and_debug_and_rejects_output(tmp_path):
+    restricted = _FakeService(blobs={("input", "transcription/audio.mp3"): b"audio"})
+    with (
+        patch.dict("os.environ", {"AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL": ""}),
+        patch("evals.shared.blob_storage.BlobServiceClient", return_value=restricted),
+        patch("evals.shared.blob_storage.DefaultAzureCredential"),
+    ):
+        blob = EvalBlobStorage.from_account_urls(
+            restricted_account_url="https://restricted.blob.core.windows.net", require_shared=False
+        )
+        blob.download_blob("input", "transcription/audio.mp3", tmp_path / "audio.mp3")
+        blob.upload_file("debug", "silver/audio.mp3", tmp_path / "audio.mp3")
+        with pytest.raises(ValueError, match="shared_account_url"):
+            blob.upload_file("output", "silver/audio.mp3", tmp_path / "audio.mp3")
+
+    assert restricted.uploaded[("debug", "silver/audio.mp3")] == b"audio"
+
+
+def test_evaluation_storage_requires_shared_account_before_processing():
+    with (
+        patch.dict("os.environ", {"AZURE_EVALS_SHARED_STORAGE_ACCOUNT_URL": ""}),
+        pytest.raises(ValueError, match="shared_account_url"),
+    ):
+        EvalBlobStorage.from_account_urls(restricted_account_url="https://restricted.blob.core.windows.net")
+
+
+def test_from_account_urls_raises_without_restricted_account_url() -> None:
     with (
         patch.dict(
             "os.environ",
@@ -149,7 +175,7 @@ def test_from_account_urls_raises_without_both_account_urls() -> None:
             clear=False,
         ),
         patch("evals.shared.blob_storage.DefaultAzureCredential"),
-        pytest.raises(ValueError, match=r"restricted_account_url.*shared_account_url"),
+        pytest.raises(ValueError, match="restricted_account_url"),
     ):
         EvalBlobStorage.from_account_urls()
 

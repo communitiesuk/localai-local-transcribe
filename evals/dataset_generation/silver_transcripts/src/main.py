@@ -7,7 +7,10 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import tempfile
+from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 import yaml
 
@@ -16,6 +19,8 @@ from evals.dataset_generation.silver_transcripts.src.config import (
     SilverTranscriptConfig,
 )
 from evals.dataset_generation.silver_transcripts.src.pipeline import SilverTranscriptPipeline
+from evals.shared.blob_io import publish_run_outputs, stage_dataset_prefix
+from evals.shared.blob_storage import EvalBlobStorage
 
 logger = logging.getLogger(__name__)
 WORKDIR = Path(__file__).resolve().parents[1]
@@ -46,6 +51,46 @@ def run_pipeline(
         logger.info("%s: %s", record.sample_id, record.status)
     logger.info("Processed %d inputs; review the audio.txt and audio.mp3 files under segments/", len(records))
     return 1 if any(record.status == "failed" for record in records) else 0
+
+
+def _run_blob_pipeline(config: SilverTranscriptConfig) -> int:
+    """
+    Stages recordings from blob storage, generates drafts, then publishes outputs.
+
+    Mirrors the transcription eval's own blob flow (EvalBlobStorage + stage_dataset_prefix +
+    publish_run_outputs in one process) rather than staging and publishing in separate steps.
+    Publishing is attempted even when generation reports failed samples, so partial output
+    from a failed run is never silently lost.
+    """
+    if config.blob.input_prefix is None:
+        msg = "blob.input_prefix is required when blob.enabled is true"
+        raise ValueError(msg)
+
+    blob = EvalBlobStorage.from_account_urls(
+        restricted_account_url=config.blob.restricted_account_url,
+        shared_account_url=config.blob.shared_account_url,
+        require_shared=False,
+    )
+    run_id = f"silver_{datetime.now(UTC):%Y%m%d_%H%M%S}_{uuid4().hex[:8]}"
+
+    with tempfile.TemporaryDirectory(prefix="silver-transcripts-") as staging:
+        staging_dir = Path(staging)
+        input_dir = stage_dataset_prefix(blob, config.blob.input_prefix, staging_dir / "input")
+        work_dir = staging_dir / "output"
+        try:
+            exit_code = run_pipeline(input_dir=input_dir, work_dir=work_dir, cutoff_seconds=config.cutoff_seconds)
+        finally:
+            if work_dir.exists():
+                published = publish_run_outputs(
+                    blob,
+                    work_dir,
+                    run_id,
+                    output_prefix=config.blob.output_prefix,
+                    eval_type="silver-transcripts",
+                    results_relative_paths=(),
+                )
+                logger.info("Published outputs to blob storage: %s", published)
+        return exit_code
 
 
 def load_config(config_path: Path) -> SilverTranscriptConfig:
@@ -87,11 +132,14 @@ def main() -> None:
     config = load_config(config_path)
     logger.info("Loaded config from: %s", config_path)
 
-    exit_code = run_pipeline(
-        input_dir=_resolve_config_path(config_path, config.input_dir),
-        work_dir=_resolve_config_path(config_path, config.work_dir),
-        cutoff_seconds=config.cutoff_seconds,
-    )
+    if config.blob.enabled:
+        exit_code = _run_blob_pipeline(config)
+    else:
+        exit_code = run_pipeline(
+            input_dir=_resolve_config_path(config_path, config.input_dir),
+            work_dir=_resolve_config_path(config_path, config.work_dir),
+            cutoff_seconds=config.cutoff_seconds,
+        )
     sys.exit(exit_code)
 
 
