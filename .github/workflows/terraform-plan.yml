@@ -60,6 +60,17 @@ jobs:
             const fs = require('fs');
             const plan = fs.readFileSync('terraform/development/tf_plan.txt', 'utf8');
             const header = '## Terraform Plan';
+            const mention = '@copilot Could you have a look?';
+            const prompt = [
+              'Please review the Terraform plan below against the changes made in this PR, then give a RAG (Red/Amber/Green) assessment:',
+              '',
+              '- **Green**: the plan only reflects expected, routine changes (e.g. image tag bumps) with no other resource changes.',
+              '- **Amber**: the plan broadly matches what this PR changes, but contains differences worth a human double-checking before merging.',
+              '- **Red**: the plan includes unexpected, unexplained, or potentially destructive changes (e.g. resource replacement/deletion) that a human must review before this is merged.',
+              '',
+              'Reply with the RAG rating and a short explanation of what drove it.',
+            ].join('\n');
+            const body = `${mention}\n\n<details>\n<summary>Prompt</summary>\n\n${prompt}\n</details>\n\n${header}\n<details>\n<summary>Show plan</summary>\n\n\`\`\`\n${plan}\n\`\`\`\n</details>`;
             const { owner, repo } = context.repo;
             const issue_number = context.payload.pull_request.number;
 
@@ -69,20 +80,20 @@ jobs:
               issue_number,
             });
 
-            const existing = comments.find(c => c.body.startsWith(header));
+            const existing = comments.find(c => c.body.includes(header));
 
             if (existing) {
               await github.rest.issues.updateComment({
                 owner,
                 repo,
                 comment_id: existing.id,
-                body: `${header}\n\`\`\`\n${plan}\n\`\`\``,
+                body,
               });
             } else {
               await github.rest.issues.createComment({
                 owner,
                 repo,
                 issue_number,
-                body: `${header}\n\`\`\`\n${plan}\n\`\`\``,
+                body,
               });
             }
