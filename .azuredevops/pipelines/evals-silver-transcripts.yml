@@ -12,7 +12,9 @@ parameters:
   - name: inputPrefix
     displayName: 'Input folder/prefix in eval input container'
     type: string
-    default: 'transcription/'
+    # Matches evals/transcription/configs/blob-smoke-test.yaml: a small, access-verified
+    # subfolder, rather than the whole transcription/ tree.
+    default: 'transcription/smoke-test/audio'
   - name: cutoffSeconds
     displayName: 'Target segment duration in seconds'
     type: number
@@ -22,6 +24,7 @@ jobs:
   - job: silver_transcripts
     # This may need to be increased for long recordings or larger batches.
     timeoutInMinutes: 360
+    # ado-vmss-latest replaces vmss-shared. The old pool is shut down at 17:00 on 28 October 2026.
     pool:
       name: ado-vmss-latest
     steps:
@@ -36,23 +39,19 @@ jobs:
       - script: poetry sync --no-root --no-ansi --with evals-transcription,evals-dataset-generation
         displayName: 'Install dependencies'
 
+      # Staging, generation and publishing to debug storage all happen in one process (main.py),
+      # the same way evals.transcription.src.evaluate stages and publishes its own blob runs.
       - task: AzureCLI@2
-        displayName: 'Download recordings and generate silver transcripts'
+        displayName: 'Generate and publish silver transcripts'
         inputs:
           azureSubscription: $(EVALS_AZURE_SERVICE_CONNECTION)
           scriptType: bash
           scriptLocation: inlineScript
           inlineScript: |
             set -eu
-            input_dir="$(mktemp -d "$(Agent.TempDirectory)/silver-input.XXXXXX")"
-            output_dir="$(Build.ArtifactStagingDirectory)/silver-transcripts-output"
             config_path="$(Agent.TempDirectory)/silver-config-$(Build.BuildId).yaml"
-            mkdir -p "$output_dir"
-            echo "##vso[task.setvariable variable=silverOutputReady]true"
-            poetry run python -c "import dotenv, runpy; dotenv.load_dotenv('.env.example', override=False); runpy.run_module('evals.shared.blob_input', run_name='__main__')" \
-              --destination "$input_dir" --prefix "$SILVER_INPUT_PREFIX"
-            printf 'input_dir: "%s"\nwork_dir: "%s"\ncutoff_seconds: %s\n' \
-              "$input_dir" "$output_dir" "$SILVER_CUTOFF_SECONDS" > "$config_path"
+            printf 'cutoff_seconds: %s\nblob:\n  enabled: true\n  input_prefix: "%s"\n  output_prefix: ""\n' \
+              "$SILVER_CUTOFF_SECONDS" "$SILVER_INPUT_PREFIX" > "$config_path"
             poetry run python -c "import dotenv, runpy; dotenv.load_dotenv('.env.example', override=False); runpy.run_module('evals.dataset_generation.silver_transcripts.src.main', run_name='__main__')" \
               --config "$config_path"
         env:
@@ -71,17 +70,3 @@ jobs:
           AZURE_APIM_CLIENT_ID: $(AZURE_APIM_CLIENT_ID)
           AZURE_APIM_CLIENT_SECRET: $(AZURE_APIM_CLIENT_SECRET)
           AZURE_APIM_SCOPE: $(AZURE_APIM_SCOPE)
-
-      - task: AzureCLI@2
-        displayName: 'Publish silver drafts and segments to debug storage'
-        condition: and(succeededOrFailed(), eq(variables['silverOutputReady'], 'true'))
-        inputs:
-          azureSubscription: $(EVALS_AZURE_SERVICE_CONNECTION)
-          scriptType: bash
-          scriptLocation: inlineScript
-          inlineScript: |
-            poetry run python -m evals.dataset_generation.silver_transcripts.src.blob_output \
-              --output-dir "$(Build.ArtifactStagingDirectory)/silver-transcripts-output" \
-              --run-id "$(Build.BuildId)"
-        env:
-          AZURE_EVALS_RESTRICTED_STORAGE_ACCOUNT_URL: $(AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL)

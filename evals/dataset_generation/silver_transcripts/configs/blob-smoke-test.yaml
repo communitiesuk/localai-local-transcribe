@@ -1,0 +1,6 @@
+cutoff_seconds: 60
+
+blob:
+  enabled: true
+  input_prefix: transcription/smoke-test/audio
+  output_prefix: ""
