@@ -12,7 +12,6 @@ import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import posthog from 'posthog-js'
 import { use } from 'react'
 
 export default function DeleteTemplatePage(props: {
@@ -37,7 +36,6 @@ export default function DeleteTemplatePage(props: {
         title: 'Template deleted',
         message: `‘${name}’ deleted`,
       })
-      posthog.capture('template_deleted')
       clearDraft()
       router.push('/templates')
     },

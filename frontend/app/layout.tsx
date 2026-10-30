@@ -8,7 +8,6 @@ import { RouteWatcher } from '@/components/route-watcher'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
-import PosthogProvider from '@/providers/posthog'
 import { RecordingDbProvider } from '@/providers/transcription-db-provider'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
@@ -61,16 +60,14 @@ export default function RootLayout({
         </a>
 
         <TanstackQueryProvider>
-          <PosthogProvider>
-            <LockNavigationProvider>
-              <RouteWatcher />
-              {OFFLINE_RECORDINGS_ENABLED ? (
-                <RecordingDbProvider>{appContent}</RecordingDbProvider>
-              ) : (
-                appContent
-              )}
-            </LockNavigationProvider>
-          </PosthogProvider>
+          <LockNavigationProvider>
+            <RouteWatcher />
+            {OFFLINE_RECORDINGS_ENABLED ? (
+              <RecordingDbProvider>{appContent}</RecordingDbProvider>
+            ) : (
+              appContent
+            )}
+          </LockNavigationProvider>
         </TanstackQueryProvider>
       </body>
     </html>

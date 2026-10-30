@@ -19,17 +19,16 @@ Do **not** add new imports from `@/components/ui/*` in new code. ESLint enforces
 
 Use `@/components/ui/*` only when govuk-frontend has no equivalent:
 
-| Component file                 | Radix / other primitive        | Used for                                           |
-| ------------------------------ | ------------------------------ | -------------------------------------------------- |
-| `dialog.tsx`                   | `@radix-ui/react-dialog`       | Modal dialogs                                      |
-| `alert-dialog.tsx`             | `@radix-ui/react-alert-dialog` | Destructive confirmations                          |
-| `popover.tsx`                  | `@radix-ui/react-popover`      | Floating panels (speaker editor, citations)        |
-| `tooltip.tsx`                  | `@radix-ui/react-tooltip`      | Icon tooltips                                      |
-| `accordion.tsx`                | `@radix-ui/react-accordion`    | Expandable sections (support page)                 |
-| `collapsible.tsx`              | `@radix-ui/react-collapsible`  | Show/hide regions                                  |
-| `sonner.tsx`                   | Sonner                         | Toast notifications (`<Toaster />` in root layout) |
-| `citation-popover-wrapper.tsx` | Popover + custom               | Citation previews in editor / chat                 |
-| TipTap editor menus            | Radix / ProseMirror            | Rich-text toolbar (no GDS pattern)                 |
+| Component file      | Radix / other primitive        | Used for                                           |
+| ------------------- | ------------------------------ | -------------------------------------------------- |
+| `dialog.tsx`        | `@radix-ui/react-dialog`       | Modal dialogs                                      |
+| `alert-dialog.tsx`  | `@radix-ui/react-alert-dialog` | Destructive confirmations                          |
+| `popover.tsx`       | `@radix-ui/react-popover`      | Floating panels (speaker editor, citations)        |
+| `tooltip.tsx`       | `@radix-ui/react-tooltip`      | Icon tooltips                                      |
+| `accordion.tsx`     | `@radix-ui/react-accordion`    | Expandable sections (support page)                 |
+| `collapsible.tsx`   | `@radix-ui/react-collapsible`  | Show/hide regions                                  |
+| `sonner.tsx`        | Sonner                         | Toast notifications (`<Toaster />` in root layout) |
+| TipTap editor menus | Radix / ProseMirror            | Rich-text toolbar (no GDS pattern)                 |
 
 Everything else (button, input, label, radio, checkbox, select, tabs, card, badge, alert, separator) has a GOV.UK Design System equivalent — use or add a `govuk/` wrapper instead.
 
