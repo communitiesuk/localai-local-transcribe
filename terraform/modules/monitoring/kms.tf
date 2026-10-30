@@ -65,9 +65,6 @@ data "aws_iam_policy_document" "cloudtrail_kms" {
       values   = ["arn:aws:cloudtrail:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:trail/local-transcribe-cloudtrail-${var.environment_name}"]
     }
   }
-<<<<<<< HEAD
-=======
-
 
   statement {
     principals {
@@ -82,5 +79,4 @@ data "aws_iam_policy_document" "cloudtrail_kms" {
 
     resources = [aws_kms_key.main.arn]
   }
->>>>>>> ec7be72b (fix: remove outdated comments regarding CloudWatch alarm KMS access)
-STF}
+}
