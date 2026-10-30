@@ -65,4 +65,18 @@ data "aws_iam_policy_document" "cloudtrail_kms" {
       values   = ["arn:aws:cloudtrail:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:trail/local-transcribe-cloudtrail-${var.environment_name}"]
     }
   }
+
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+    ]
+
+    resources = [aws_kms_key.main.arn]
+  }
 }
