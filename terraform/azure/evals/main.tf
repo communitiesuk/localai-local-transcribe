@@ -103,7 +103,9 @@ resource "azurerm_storage_account" "evals" {
 
   network_rules {
     default_action = "Deny"
-    bypass         = var.network_rules_bypass
+    # AzureServices is the trusted Microsoft services exception. The live accounts
+    # regain it after an apply that clears it, so Terraform keeps the value.
+    bypass = var.network_rules_bypass
     # Set explicitly because the provider keeps the live list when this is left out.
     ip_rules = []
   }
