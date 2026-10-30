@@ -17,7 +17,7 @@ from tests.utils import get_test_client
 
 
 def convert_to_datetime(json_datetime: str) -> datetime:
-    return datetime.fromisoformat(json_datetime.replace("Z", "+00:00"))
+    return datetime.fromisoformat(json_datetime)
 
 
 async def user_create_refresh(user):

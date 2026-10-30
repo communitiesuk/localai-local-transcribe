@@ -1,4 +1,3 @@
-# flake8: noqa: E501
 from common.database.postgres_models import DialogueEntry
 from common.prompts import build_prompt_injection_aware_system_message, get_transcript_messages
 from common.templates.types import SimpleTemplate

@@ -250,3 +250,167 @@ resource "aws_cloudwatch_metric_alarm" "apim_failure_rate" {
     aws_sns_topic.alarm_sns_topic.arn
   ]
 }
+
+resource "aws_cloudwatch_metric_alarm" "credential_renewal_failed" {
+  alarm_name          = "credential-renewal-failed-${var.environment_name}"
+  alarm_description   = "The database credential renewal process has failed in the backend or worker"
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  treat_missing_data  = "notBreaching"
+
+  metric_query {
+    id = "backend_failures"
+    metric {
+      namespace   = aws_cloudwatch_log_metric_filter.credential_renewal_failed_backend.metric_transformation[0].namespace
+      metric_name = aws_cloudwatch_log_metric_filter.credential_renewal_failed_backend.metric_transformation[0].name
+      period      = 60
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id = "worker_failures"
+    metric {
+      namespace   = aws_cloudwatch_log_metric_filter.credential_renewal_failed_worker.metric_transformation[0].namespace
+      metric_name = aws_cloudwatch_log_metric_filter.credential_renewal_failed_worker.metric_transformation[0].name
+      period      = 60
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id          = "total_failures"
+    expression  = "FILL(backend_failures, 0) + FILL(worker_failures, 0)"
+    label       = "Credential renewal failures (backend + worker)"
+    return_data = true
+  }
+
+  alarm_actions = [
+    aws_sns_topic.alarm_sns_topic.arn,
+  ]
+}
+
+resource "aws_cloudwatch_metric_alarm" "database_connection_failed" {
+  alarm_name          = "database-connection-failed-${var.environment_name}"
+  alarm_description   = "The database connection process has failed in the backend or worker"
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 5
+  datapoints_to_alarm = 3
+  treat_missing_data  = "notBreaching"
+
+  metric_query {
+    id = "backend_failures"
+    metric {
+      namespace   = aws_cloudwatch_log_metric_filter.database_connection_failed_backend.metric_transformation[0].namespace
+      metric_name = aws_cloudwatch_log_metric_filter.database_connection_failed_backend.metric_transformation[0].name
+      period      = 60
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id = "worker_failures"
+    metric {
+      namespace   = aws_cloudwatch_log_metric_filter.database_connection_failed_worker.metric_transformation[0].namespace
+      metric_name = aws_cloudwatch_log_metric_filter.database_connection_failed_worker.metric_transformation[0].name
+      period      = 60
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id          = "total_failures"
+    expression  = "FILL(backend_failures, 0) + FILL(worker_failures, 0)"
+    label       = "Database connection failures (backend + worker)"
+    return_data = true
+  }
+
+  alarm_actions = [
+    aws_sns_topic.alarm_sns_topic.arn,
+  ]
+}
+
+resource "aws_cloudwatch_metric_alarm" "worker_job_failure_rate" {
+  alarm_name          = "${var.environment_name}-worker-job-failure-rate"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 4
+  datapoints_to_alarm = 3
+  threshold           = var.worker_job_failure_rate_threshold
+  treat_missing_data  = "notBreaching"
+
+  metric_query {
+    id = "started"
+    metric {
+      namespace   = "LogMetrics"
+      metric_name = "worker-job-started-${var.environment_name}"
+      period      = 900
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id = "requeued"
+    metric {
+      namespace   = "LogMetrics"
+      metric_name = "worker-job-requeued-${var.environment_name}"
+      period      = 900
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id = "failed"
+    metric {
+      namespace   = "LogMetrics"
+      metric_name = "worker-job-failed-${var.environment_name}"
+      period      = 900
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id          = "attempts"
+    expression  = "FILL(started, 0) - FILL(requeued, 0)"
+    label       = "Completed attempts"
+    return_data = false
+  }
+
+  metric_query {
+    id          = "failures"
+    expression  = "FILL(failed, 0)"
+    label       = "Failures"
+    return_data = false
+  }
+
+  metric_query {
+    id          = "rate"
+    expression  = "IF(attempts >= ${var.worker_job_failure_rate_min_jobs}, 100 * failures / attempts, 0)"
+    label       = "Worker Job Failure Rate"
+    return_data = true
+  }
+
+  alarm_actions = [
+    aws_sns_topic.alarm_sns_topic.arn,
+  ]
+}
+
+
+resource "aws_cloudwatch_metric_alarm" "worker_job_failures" {
+  alarm_name          = "${var.environment_name}-worker-job-failures"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 4
+  datapoints_to_alarm = 2
+  threshold           = var.worker_job_failure_count_threshold
+  period              = 900
+  statistic           = "Sum"
+  namespace           = "LogMetrics"
+  metric_name         = "worker-job-failed-${var.environment_name}"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [
+    aws_sns_topic.alarm_sns_topic.arn,
+  ]
+}

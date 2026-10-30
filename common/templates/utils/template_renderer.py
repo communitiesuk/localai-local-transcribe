@@ -42,4 +42,4 @@ def call_macro(template: Template, macro: str, **kwargs: Any) -> str:
     :return: The result of the macro call as a string.
     """
 
-    return cast(str, getattr(template.module, macro)(**kwargs))
+    return cast("str", getattr(template.module, macro)(**kwargs))

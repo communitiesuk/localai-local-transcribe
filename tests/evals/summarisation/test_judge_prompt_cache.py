@@ -36,7 +36,8 @@ def _judge_prompt(criterion: str) -> str:
 
 
 def test_judge_prompts_share_the_transcript_and_summary_across_dimensions():
-    shared = os.path.commonprefix([_judge_prompt("accuracy"), _judge_prompt("auditability")])
+    # commonprefix is used here on prompt strings, not paths, so commonpath (RUF071) is wrong.
+    shared = os.path.commonprefix([_judge_prompt("accuracy"), _judge_prompt("auditability")])  # noqa: RUF071
 
     assert judge_transcript_text(_ENTRIES) in shared
     assert _SUMMARY in shared
@@ -45,7 +46,8 @@ def test_judge_prompts_share_the_transcript_and_summary_across_dimensions():
 def test_the_criterion_is_the_only_thing_after_the_shared_prefix():
     accuracy = _judge_prompt("accuracy")
     auditability = _judge_prompt("auditability")
-    shared = os.path.commonprefix([accuracy, auditability])
+    # commonprefix is used here on prompt strings, not paths, so commonpath (RUF071) is wrong.
+    shared = os.path.commonprefix([accuracy, auditability])  # noqa: RUF071
 
     assert "Factual Accuracy" in accuracy.removeprefix(shared)
     assert "Citation Quality" in auditability.removeprefix(shared)

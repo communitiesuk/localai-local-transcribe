@@ -14,7 +14,7 @@ settings = get_settings()
 
 
 @asynccontextmanager
-async def _create_boto3_s3_client() -> AsyncGenerator[Any, None]:
+async def _create_boto3_s3_client() -> AsyncGenerator[Any]:
     async_session = aioboto3.Session()
     async with (
         async_session.client("s3", region_name=settings.AWS_REGION) as s3,

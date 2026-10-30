@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
-from evals.transcription.src.core.results import create_summary, save_results
+from evals.transcription.src.core.results import _wer_by_group, create_summary, save_results
 from evals.transcription.src.models import (
     EngineOutput,
     SampleRow,
@@ -19,10 +21,10 @@ def make_sample_row(
     substitutions=1,
     deletions=0,
     insertions=0,
-    wder=0.0,
+    wder: float | None = 0.0,
     speaker_errors=0,
     total_words=10,
-    speaker_count_accuracy=1.0,
+    speaker_count_accuracy: float | None = 1.0,
     ref_speaker_count=2,
     hyp_speaker_count=2,
     latency_ms=1000.0,
@@ -42,8 +44,8 @@ def make_sample_row(
         metrics["total_words"] = total_words
     if speaker_count_accuracy is not None:
         metrics["speaker_count_accuracy"] = speaker_count_accuracy
-        metrics["ref_speaker_count"] = ref_speaker_count
-        metrics["hyp_speaker_count"] = hyp_speaker_count
+        metrics["reference_speaker_count"] = ref_speaker_count
+        metrics["predicted_speaker_count"] = hyp_speaker_count
 
     return SampleRow(
         run_id="test_run",
@@ -176,7 +178,6 @@ def test_save_results_creates_file(tmp_path):
         engine_version="TestEngine",
         split="n2_f0.1",
         n_examples=1,
-        overall_score=None,
         metrics={},
         processing_speed_ratio=0.5,
     )
@@ -186,8 +187,6 @@ def test_save_results_creates_file(tmp_path):
     save_results(results, output_path)
 
     assert output_path.exists()
-
-    import json
 
     with output_path.open() as f:
         data = json.load(f)
@@ -208,6 +207,38 @@ def test_save_results_creates_file(tmp_path):
     }
     assert actual == expected
 
+    assert data["engines"]["TestEngine"][0]["hypothesis_transcript"] == sample.hypothesis_transcript
+    assert data["engines"]["TestEngine"][0]["reference_transcript"] == sample.reference_transcript
+
+
+def test_save_results_groups_wer_by_group(tmp_path):
+    output_path = tmp_path / "output.json"
+    sample = make_sample_row(wder=None, speaker_count_accuracy=None)
+    sample.sample_metadata = {"group": "irish_male", "dialect": "irish", "gender": "male", "speaker_id": "1"}
+    summary = Summary(
+        run_id="test_run",
+        timestamp="20260223_100000",
+        dataset_version="EnglishDialects_v1",
+        engine_version="TestEngine",
+        split="published_train_all",
+        n_examples=1,
+        metrics={},
+        processing_speed_ratio=0.5,
+    )
+
+    save_results(
+        [EngineOutput(summary=summary, samples=[sample])],
+        output_path,
+    )
+
+    import json
+
+    data = json.loads(output_path.read_text(encoding="utf-8"))
+    group = data["wer_by_group"]["TestEngine"]["irish_male"]
+    assert group["n_examples"] == 1
+    assert group["wer"]["mean"] == pytest.approx(0.1)
+    assert group["corpus_wer"] == pytest.approx(0.1)
+
 
 def test_save_results_multiple_engines(tmp_path):
     output_path = tmp_path / "output.json"
@@ -220,7 +251,7 @@ def test_save_results_multiple_engines(tmp_path):
         substitutions=2,
         latency_ms=1500.0,
         processing_speed_ratio=0.6,
-        wder=None,
+        wder=0.0,
         speaker_count_accuracy=None,
     )
 
@@ -231,7 +262,6 @@ def test_save_results_multiple_engines(tmp_path):
         engine_version="Engine1",
         split="n2_f0.1",
         n_examples=1,
-        overall_score=None,
         metrics={},
         processing_speed_ratio=0.5,
     )
@@ -243,7 +273,6 @@ def test_save_results_multiple_engines(tmp_path):
         engine_version="Engine2",
         split="n2_f0.1",
         n_examples=1,
-        overall_score=None,
         metrics={},
         processing_speed_ratio=0.6,
     )
@@ -254,8 +283,6 @@ def test_save_results_multiple_engines(tmp_path):
     ]
 
     save_results(results, output_path)
-
-    import json
 
     with output_path.open() as f:
         data = json.load(f)
@@ -273,3 +300,23 @@ def test_save_results_multiple_engines(tmp_path):
         "has_Engine2": "Engine2" in data["engines"],
     }
     assert actual == expected
+
+
+def test_wer_grouping_uses_dataset_supplied_group_without_dialect_fields():
+    sample = make_sample_row()
+    sample.sample_metadata = {"group": "room_a"}
+    groups = _wer_by_group([sample])
+    assert set(groups) == {"room_a"}
+    assert groups["room_a"]["n_examples"] == 1
+    assert groups["room_a"]["corpus_wer"] == pytest.approx(0.1)
+
+
+def test_ungrouped_results_omit_group_section(tmp_path):
+    sample = make_sample_row()
+    sample.sample_metadata = {"dataset_index": 0}
+    summary = create_summary("TestEngine", [sample], TimingAccumulator(), "run", "ts", "AMI_v0", None)
+    path = tmp_path / "results.json"
+    save_results([EngineOutput(summary=summary, samples=[sample])], path)
+    data = json.loads(path.read_text())
+    assert "wer_by_group" not in data
+    assert "wer_by_dialect_and_gender" not in data

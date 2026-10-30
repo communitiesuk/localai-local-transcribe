@@ -62,6 +62,14 @@ describe('<CreateNewOrganisationDomains />', () => {
     })
   })
 
+  it('renders the cancel link without a visited-state colour', () => {
+    render(<CreateNewOrganisationDomains />)
+
+    const cancelLink = screen.getByRole('link', { name: 'Cancel' })
+    expect(cancelLink).toHaveAttribute('href', '/user-management')
+    expect(cancelLink).toHaveClass('govuk-link', 'govuk-link--no-visited-state')
+  })
+
   it('returns to user management with the new organisation selected when creation succeeds', async () => {
     const user = userEvent.setup()
     render(<CreateNewOrganisationDomains />)

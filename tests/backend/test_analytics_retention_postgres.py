@@ -27,7 +27,7 @@ async def analytics_engine(monkeypatch):
     engine = create_async_engine(url, connect_args={"server_settings": {"search_path": schema}})
     try:
         async with engine.begin() as connection:
-            await connection.run_sync(lambda conn: AnalyticsEvent.__table__.create(conn))
+            await connection.run_sync(AnalyticsEvent.__table__.create)
         monkeypatch.setattr(cleanup_job, "async_engine", engine)
         yield engine
     finally:

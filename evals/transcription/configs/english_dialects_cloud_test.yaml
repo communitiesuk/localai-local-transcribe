@@ -1,0 +1,11 @@
+# One recording from each of the 11 published dialect/gender groups.
+# The publisher only provides a train-named split; this is not guaranteed unseen data.
+dataset: english_dialects
+num_samples: null
+samples_per_group: 1
+sample_duration_fraction: null
+max_workers: 1
+prepare_only: false
+check_drift_thresholds: false
+adapters:
+  - azure

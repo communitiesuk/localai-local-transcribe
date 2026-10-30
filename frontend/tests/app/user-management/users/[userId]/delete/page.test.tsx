@@ -105,4 +105,12 @@ describe('<UserPageDelete />', () => {
       )
     })
   })
+
+  it('renders the cancel link without a visited-state colour', async () => {
+    await renderPage()
+
+    const cancelLink = screen.getByRole('link', { name: 'Cancel' })
+    expect(cancelLink).toHaveAttribute('href', '/user-management/users/user-1')
+    expect(cancelLink).toHaveClass('govuk-link', 'govuk-link--no-visited-state')
+  })
 })

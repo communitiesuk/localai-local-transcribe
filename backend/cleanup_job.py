@@ -80,7 +80,7 @@ async def cleanup_analytics_events() -> None:
     cutoff = func.timezone("UTC", func.timezone("UTC", func.now()) - text("INTERVAL '12 months'"))
     async with AsyncSession(async_engine) as session:
         result = cast(
-            CursorResult[Any],
+            "CursorResult[Any]",
             await session.execute(
                 delete(AnalyticsEvent)
                 .where(AnalyticsEvent.occurred_datetime <= cutoff)

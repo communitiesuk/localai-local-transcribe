@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
+import soundfile as sf
 
+from evals.transcription.src.core.ami.cache import AMISampleCache
 from evals.transcription.src.core.ami.loader import (
     AMIDatasetLoader,
-    _apply_cutoff,
-    _build_sample,
 )
 from evals.transcription.src.models import MeetingSegment, RawAudioDict, RawDatasetRow
 
@@ -37,7 +37,7 @@ def test_apply_cutoff_returns_all_when_no_cutoff():
         ),
     ]
 
-    result = _apply_cutoff(utterances, None)
+    result = AMIDatasetLoader._apply_cutoff(utterances, None)  # noqa: SLF001
 
     assert len(result) == 2
 
@@ -66,7 +66,7 @@ def test_apply_cutoff_filters_by_duration():
         ),
     ]
 
-    result = _apply_cutoff(utterances, 2.0)
+    result = AMIDatasetLoader._apply_cutoff(utterances, 2.0)  # noqa: SLF001
 
     assert len(result) == 1
     assert result[0].text == "a"
@@ -78,7 +78,7 @@ def test_build_sample_creates_dataset_sample(tmp_path):
     wav_path = tmp_path / "test.wav"
     ref_diar = [{"speaker": "Speaker_1", "text": "hello", "start_time": 0.0, "end_time": 1.0}]
 
-    sample = _build_sample(audio, "hello world", segment, 0, wav_path, 5, ref_diar)
+    sample = AMIDatasetLoader._build_sample(audio, "hello world", segment, 0, wav_path, 5, ref_diar)  # noqa: SLF001
 
     assert sample.text == "hello world"
     assert sample.meeting_id == "ES2008a"
@@ -128,7 +128,7 @@ def test_ami_dataset_loader_dataset_split_none_when_no_params(tmp_path):
 def test_ami_dataset_loader_getitem_raises_on_invalid_index(tmp_path):
     loader = AMIDatasetLoader(cache_dir=tmp_path, num_samples=5)
 
-    with pytest.raises(IndexError, match="Sample index .* out of range"):
+    with pytest.raises(IndexError, match=r"Sample index .* out of range"):
         loader[0]
 
 
@@ -147,26 +147,23 @@ def test_ami_dataset_loader_prepare_returns_empty_when_no_segments(tmp_path, mon
 
 def test_ami_dataset_loader_load_required_utterances_returns_empty_when_cached(tmp_path):
     segment = MeetingSegment(meeting_id="ES2008a", utterance_cutoff_time=None)
-    cache_audio = tmp_path / "processed" / "ES2008a_000000.mp3"
-    cache_transcript = tmp_path / "processed" / "ES2008a_000000.txt"
-    cache_audio.parent.mkdir(parents=True, exist_ok=True)
-    cache_audio.write_bytes(b"audio")
-    cache_transcript.write_bytes(b"text")
-
     loader = AMIDatasetLoader(cache_dir=tmp_path, num_samples=1)
-    utterances = loader._load_required_utterances([segment])  # noqa: SLF001
+    sample_cache = AMISampleCache(loader.processed_cache_dir, segment, 0)
+    sample_cache.audio.parent.mkdir(parents=True, exist_ok=True)
+    sample_cache.audio.write_bytes(b"audio")
+    sample_cache.transcript.write_text("text", encoding="utf-8")
+    sample_cache.diarization.write_text("[]", encoding="utf-8")
+
+    # A complete entry must short-circuit before any dataset download is attempted.
+    with patch.object(AMIDatasetLoader, "_load_utterances_for_meetings") as load_utterances:
+        utterances = loader._load_required_utterances([segment])  # noqa: SLF001
 
     assert len(utterances) == 0
+    load_utterances.assert_not_called()
 
 
 def test_ami_dataset_loader_process_segment_loads_from_cache(tmp_path, monkeypatch):
     segment = MeetingSegment(meeting_id="ES2008a", utterance_cutoff_time=None)
-    cache_audio = tmp_path / "processed" / "ES2008a_000000.mp3"
-    cache_transcript = tmp_path / "processed" / "ES2008a_000000.txt"
-    cache_diar = tmp_path / "processed" / "ES2008a_000000_ref_diarization.json"
-    cache_audio.parent.mkdir(parents=True, exist_ok=True)
-
-    import soundfile as sf
 
     audio_data = np.array([0.1, 0.2, 0.3], dtype=np.float32)
     temp_wav = tmp_path / "temp.wav"
@@ -175,13 +172,16 @@ def test_ami_dataset_loader_process_segment_loads_from_cache(tmp_path, monkeypat
     def fake_convert(_input_path, output_path):
         output_path.write_bytes(temp_wav.read_bytes())
 
-    monkeypatch.setattr("evals.transcription.src.core.ami.cache.convert_to_mp3", fake_convert)
-
-    cache_audio.write_bytes(temp_wav.read_bytes())
-    cache_transcript.write_text("hello world", encoding="utf-8")
-    cache_diar.write_text('[{"speaker": "Speaker_1", "text": "hello", "start_time": 0.0, "end_time": 1.0}]')
+    monkeypatch.setattr("evals.transcription.src.core.audio_cache.convert_to_mp3", fake_convert)
 
     loader = AMIDatasetLoader(cache_dir=tmp_path, num_samples=1)
+    sample_cache = AMISampleCache(loader.processed_cache_dir, segment, 0)
+    sample_cache.audio.write_bytes(temp_wav.read_bytes())
+    sample_cache.transcript.write_text("hello world", encoding="utf-8")
+    sample_cache.diarization.write_text(
+        '[{"speaker": "Speaker_1", "text": "hello", "start_time": 0.0, "end_time": 1.0}]'
+    )
+
     sample = loader._process_segment(segment, 0, {})  # noqa: SLF001
 
     assert sample is not None
@@ -216,16 +216,45 @@ def test_ami_dataset_loader_build_from_utterances(tmp_path, monkeypatch):
     def fake_convert(_input_path, output_path):
         output_path.write_bytes(b"fake mp3")
 
-    monkeypatch.setattr("evals.transcription.src.core.ami.cache.convert_to_mp3", fake_convert)
+    monkeypatch.setattr("evals.transcription.src.core.audio_cache.convert_to_mp3", fake_convert)
 
     loader = AMIDatasetLoader(cache_dir=tmp_path, num_samples=1)
-    paths = loader.processed_cache_dir / "ES2008a_000000.mp3"
+    sample_cache = AMISampleCache(loader.processed_cache_dir, segment, 0)
 
-    sample = loader._build_from_utterances(  # noqa: SLF001
-        utterances, Mock(audio=paths, transcript=paths.with_suffix(".txt")), segment, 0
-    )
+    sample = loader._build_from_utterances(utterances, sample_cache, segment, 0)  # noqa: SLF001
 
     assert sample is not None
     assert sample.text == "hello"
     assert sample.meeting_id == "ES2008a"
-    assert paths.exists()
+    assert sample_cache.is_complete()
+
+
+def test_loader_forwards_configured_arrow_cache_directory(tmp_path, monkeypatch):
+    """Verify load_dataset argument forwarding, not relocation of Hub source blobs."""
+    segment = MeetingSegment(meeting_id="ES2008a", utterance_cutoff_time=None)
+    captured = {}
+
+    def fake_load_dataset(_name, _config, split, cache_dir):  # noqa: ARG001
+        captured["cache_dir"] = cache_dir
+        return []
+
+    monkeypatch.setattr("evals.transcription.src.core.ami.loader.load_dataset", fake_load_dataset)
+
+    loader = AMIDatasetLoader(cache_dir=tmp_path, num_samples=1)
+    loader._load_required_utterances([segment])  # noqa: SLF001
+
+    assert captured["cache_dir"] == str(tmp_path / "raw")
+
+
+def test_cached_sample_uses_decoded_rate_for_metadata_and_duration(tmp_path):
+    loader = AMIDatasetLoader(cache_dir=tmp_path, num_samples=1)
+    segment = MeetingSegment(meeting_id="meeting")
+    entry = AMISampleCache(loader.processed_cache_dir, segment, 0)
+    sample_rate = 32000
+    sf.write(entry.audio, np.zeros(sample_rate), sample_rate, format="WAV")
+    entry.transcript.write_text("hello", encoding="utf-8")
+    entry.diarization.write_text("[]", encoding="utf-8")
+    sample = loader._process_segment(segment, 0, {})  # noqa: SLF001
+    assert sample is not None
+    assert sample.audio.sampling_rate == sample_rate
+    assert sample.duration_sec == pytest.approx(1.0)

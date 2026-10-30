@@ -1,7 +1,6 @@
 'use client'
 
 import { useRouter, redirect } from 'next/navigation'
-import Link from 'next/link'
 import { useForm, SubmitHandler } from 'react-hook-form'
 
 import { useQuery } from '@tanstack/react-query'
@@ -17,6 +16,7 @@ import {
   GovukButton,
   GovukDetails,
   GovukErrorSummary,
+  GovukCancelLink,
 } from '@/components/govuk'
 import { useNewOrgStore } from '@/stores/use-new-org-store'
 
@@ -100,12 +100,7 @@ function CreateNewOrganisationNameForm() {
         </GovukFormGroup>
         <div className="govuk-button-group">
           <GovukButton type="submit">Next</GovukButton>
-          <Link
-            href="/user-management"
-            className="govuk-link govuk-link--no-visited-state"
-          >
-            Cancel
-          </Link>
+          <GovukCancelLink href="/user-management" />
         </div>
       </form>
     </>

@@ -14,6 +14,7 @@ from evals.dataset_generation.data_for_testing.src.settings import INPUT_DIR, OU
 from evals.dataset_generation.data_for_testing.src.types import CharacteristicKey, ManualEntry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def create_annotated_output(manual_list: list[ManualEntry], transcript_text: str) -> dict:
@@ -53,7 +54,7 @@ def main() -> None:
     parser.add_argument("name", help="Name of the subdirectory under input/ to process")
     args = parser.parse_args()
 
-    logging.info("=== ANNOTATE START ===")
+    logger.info("=== ANNOTATE START ===")
 
     subdir = INPUT_DIR / args.name
     if not subdir.is_dir():
@@ -78,9 +79,9 @@ def main() -> None:
     reference_path = output_dir / "reference.json"
     with reference_path.open("w", encoding="utf-8") as f:
         json.dump(reference, f, indent=2)
-    logging.info("Written reference → %s", reference_path)
+    logger.info("Written reference → %s", reference_path)
 
-    logging.info("=== ANNOTATE COMPLETE - run evaluate next ===")
+    logger.info("=== ANNOTATE COMPLETE - run evaluate next ===")
 
 
 if __name__ == "__main__":

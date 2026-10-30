@@ -40,7 +40,7 @@ class SQSQueueService(QueueService):
         self.dead_letter_queue_url = self.sqs.get_queue_url(QueueName=self.deadletter_queue_name)["QueueUrl"]
         self.polling_interval = polling_interval
 
-    def __reduce__(self) -> tuple[type["SQSQueueService"], tuple[str, str]]:
+    def __reduce__(self) -> tuple[type[SQSQueueService], tuple[str, str]]:
         """Required so that Ray can deserialize the queue service by instantiated a new one."""
         return SQSQueueService, (self.queue_name, self.deadletter_queue_name)
 

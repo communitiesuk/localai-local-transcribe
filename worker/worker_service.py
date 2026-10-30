@@ -50,14 +50,14 @@ class WorkerService:
         await self.stopped.set.remote()
 
         while True:
-            done, pending = await asyncio.wait(futures, timeout=1)
+            _done, pending = await asyncio.wait(futures, timeout=1)
             if not pending:
                 logger.info("No remaining jobs. Stopping.")
                 break
             logger.info("Waiting for %d jobs", len(pending))
 
     async def _check_and_restart_tasks(self, futures: list[asyncio.Future[None]]) -> None:
-        failed, pending = await asyncio.wait(futures, timeout=1)
+        failed, _pending = await asyncio.wait(futures, timeout=1)
         for task in failed:
             # Manually restart failed jobs
             try:

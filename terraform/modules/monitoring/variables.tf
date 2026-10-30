@@ -95,3 +95,21 @@ variable "abort_incomplete_multipart_upload_days" {
   description = "Days after initiation to abort incomplete multipart uploads."
   default     = 7
 }
+
+variable "worker_job_failure_rate_threshold" {
+  description = "Worker job failure rate (%) per 15-minute window above which a window counts as breaching"
+  type        = number
+  default     = 25
+}
+
+variable "worker_job_failure_rate_min_jobs" {
+  description = "Minimum real jobs (started - requeued) in a 15-minute window before the failure rate is evaluated"
+  type        = number
+  default     = 4
+}
+
+variable "worker_job_failure_count_threshold" {
+  description = "Worker job failures per 15-minute window at or above which a window counts as breaching"
+  type        = number
+  default     = 3
+}

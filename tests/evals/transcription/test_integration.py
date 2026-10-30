@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 import soundfile as sf
 
+from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
 from evals.transcription.src.adapters.registry import ADAPTER_REGISTRY
 from evals.transcription.src.evaluate import run_evaluation
 from tests.evals.transcription.conftest import FakeDataset
@@ -157,8 +158,6 @@ def test_adapter_contracts(tmp_path, monkeypatch, adapter_name, monkeypatch_targ
 
     wav_file = tmp_path / "test.wav"
     sf.write(wav_file, [0.0, 0.0], 16000, subtype="PCM_16")
-
-    from evals.transcription.src.adapters.base import ServiceTranscriptionAdapter
 
     adapter_class = ADAPTER_REGISTRY[adapter_name]
     adapter = ServiceTranscriptionAdapter(adapter_class)

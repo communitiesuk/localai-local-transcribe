@@ -278,3 +278,98 @@ resource "aws_cloudwatch_log_metric_filter" "apim_failures_worker" {
   }
 }
 
+resource "aws_cloudwatch_log_metric_filter" "credential_renewal_failed_backend" {
+  log_group_name = var.backend_log_group_name
+
+  name = "credential-renewal-failed-${var.environment_name}-backend"
+
+  pattern = "\"DB_CREDENTIAL_RENEWAL_FAILED\""
+
+  metric_transformation {
+    name          = "credential-renewal-failed-${var.environment_name}-backend"
+    namespace     = "LogMetrics"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "database_connection_failed_backend" {
+  log_group_name = var.backend_log_group_name
+
+  name = "database-connection-failed-${var.environment_name}-backend"
+
+  pattern = "\"DB_CONNECTION_FAILED\""
+
+  metric_transformation {
+    name          = "database-connection-failed-${var.environment_name}-backend"
+    namespace     = "LogMetrics"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "credential_renewal_failed_worker" {
+  log_group_name = var.worker_log_group_name
+
+  name = "credential-renewal-failed-${var.environment_name}-worker"
+
+  pattern = "\"DB_CREDENTIAL_RENEWAL_FAILED\""
+
+  metric_transformation {
+    name          = "credential-renewal-failed-${var.environment_name}-worker"
+    namespace     = "LogMetrics"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "database_connection_failed_worker" {
+  log_group_name = var.worker_log_group_name
+
+  name = "database-connection-failed-${var.environment_name}-worker"
+
+  pattern = "\"DB_CONNECTION_FAILED\""
+
+  metric_transformation {
+    name          = "database-connection-failed-${var.environment_name}-worker"
+    namespace     = "LogMetrics"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "worker_job_started" {
+  log_group_name = var.worker_log_group_name
+  name           = "worker-job-started-${var.environment_name}"
+  pattern        = "\"WORKER JOB STARTED:\""
+
+  metric_transformation {
+    name      = "worker-job-started-${var.environment_name}"
+    namespace = "LogMetrics"
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "worker_job_requeued" {
+  log_group_name = var.worker_log_group_name
+  name           = "worker-job-requeued-${var.environment_name}"
+  pattern        = "\"WORKER JOB REQUEUED:\""
+
+  metric_transformation {
+    name      = "worker-job-requeued-${var.environment_name}"
+    namespace = "LogMetrics"
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "worker_job_failed" {
+  log_group_name = var.worker_log_group_name
+  name           = "worker-job-failed-${var.environment_name}"
+  pattern        = "\"WORKER JOB FAILED:\""
+
+  metric_transformation {
+    name      = "worker-job-failed-${var.environment_name}"
+    namespace = "LogMetrics"
+    value     = "1"
+  }
+}

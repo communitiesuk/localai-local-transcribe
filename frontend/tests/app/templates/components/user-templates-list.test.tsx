@@ -86,4 +86,31 @@ describe('<UserTemplatesList />', () => {
       '/templates/template-1'
     )
   })
+
+  it('keeps the Edit action usable when a title is long and unbroken', () => {
+    const longName = 'A'.repeat(200)
+    vi.mocked(useQuery).mockImplementation(((opts: {
+      queryKey?: unknown[]
+    }) => {
+      switch (opts?.queryKey?.[0]) {
+        case 'default-templates':
+          return { data: defaultTemplates, isLoading: false, isError: false }
+        case 'templates':
+          return {
+            data: [{ ...userTemplates[0], name: longName }],
+            isLoading: false,
+            isError: false,
+          }
+      }
+      return undefined
+    }) as unknown as typeof useQuery)
+
+    render(<UserTemplatesList />)
+
+    expect(screen.getByText(longName)).toBeInTheDocument()
+
+    const edit = screen.getByRole('link', { name: 'Edit' })
+    expect(edit).toHaveAttribute('href', '/templates/template-1')
+    expect(edit.closest('td')).toHaveClass('whitespace-nowrap')
+  })
 })

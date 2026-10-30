@@ -13,6 +13,9 @@ from evals.transcription.src.core.metrics import (
     compute_wer_metrics,
     normalise_text,
 )
+from evals.transcription.src.core.metrics.content import (
+    compute_content_wer_metrics,
+)
 from evals.transcription.src.core.results import create_summary
 from evals.transcription.src.core.segments import (
     convert_to_diarization_format,
@@ -43,28 +46,32 @@ def _extract_segments(result: TranscriptionResult, example: DatasetItem) -> tupl
 def _compute_all_metrics(
     ref_raw: str,
     hyp_raw: str,
-    ref_diarization: list[DiarizationSegment],
-    hyp_diarization: list[DiarizationSegment],
+    ref_diarization: list[DiarizationSegment] | None,
+    hyp_diarization: list[DiarizationSegment] | None,
     processing_speed_ratio: float,
 ) -> SampleMetrics:
     reference_normalized = normalise_text(ref_raw)
     hypothesis_normalized = normalise_text(hyp_raw)
     wer_metrics = compute_wer_metrics([reference_normalized], [hypothesis_normalized])
 
-    wder_metrics = compute_wder(ref_diarization, hyp_diarization)
-    speaker_metrics = compute_speaker_count_metrics(ref_diarization, hyp_diarization)
-
-    return wer_metrics.model_copy(
-        update={
-            "wder": wder_metrics["wder"],
-            "speaker_errors": wder_metrics["speaker_errors"],
-            "total_words": wder_metrics["total_words"],
-            "speaker_count_accuracy": speaker_metrics["speaker_count_accuracy"],
-            "ref_speaker_count": int(speaker_metrics["ref_speaker_count"]),
-            "hyp_speaker_count": int(speaker_metrics["hyp_speaker_count"]),
-            "processing_speed_ratio": processing_speed_ratio,
-        }
-    )
+    updates: dict[str, float | int | None] = {"processing_speed_ratio": processing_speed_ratio}
+    content_metrics = compute_content_wer_metrics(ref_raw, hyp_raw)
+    updates.update({key if key == "content_wer" else f"content_{key}": value for key, value in content_metrics.items()})
+    if ref_diarization and hyp_diarization:
+        wder_metrics = compute_wder(ref_diarization, hyp_diarization)
+        speaker_metrics = compute_speaker_count_metrics(ref_diarization, hyp_diarization)
+        updates.update(
+            {
+                "wder": wder_metrics["wder"],
+                "speaker_errors": wder_metrics["speaker_errors"],
+                "total_words": wder_metrics["total_words"],
+                "speaker_count_accuracy": speaker_metrics["speaker_count_accuracy"],
+                "ref_speaker_count": int(speaker_metrics["ref_speaker_count"]),
+                "hyp_speaker_count": int(speaker_metrics["hyp_speaker_count"]),
+                "processing_speed_ratio": processing_speed_ratio,
+            }
+        )
+    return wer_metrics.model_copy(update=updates)
 
 
 def _validate_and_convert_diarization(
@@ -122,13 +129,18 @@ def run_engines_parallel(
         process_seconds = float(result.duration_sec)
 
         dialogue_entries, reference_diarization = _extract_segments(result, example)
-        ref_diar_dicts, hyp_diar_dicts = _validate_and_convert_diarization(reference_diarization, dialogue_entries)
+        supports_diarization = adapter.supports_diarization and dataset.supports_diarization
+        if supports_diarization:
+            ref_diar_dicts, hyp_diar_dicts = _validate_and_convert_diarization(reference_diarization, dialogue_entries)
+        else:
+            ref_diar_dicts = convert_to_diarization_format(reference_diarization) if reference_diarization else []
+            hyp_diar_dicts = []
         processing_speed_ratio = process_seconds / audio_seconds if audio_seconds > 0 else float("nan")
         metrics = _compute_all_metrics(
             ref_raw,
             hyp_raw,
-            ref_diar_dicts,
-            hyp_diar_dicts,
+            ref_diar_dicts if supports_diarization else None,
+            hyp_diar_dicts if supports_diarization else None,
             processing_speed_ratio,
         )
 
@@ -138,11 +150,15 @@ def run_engines_parallel(
             example_id=str(index),
             engine_version=label,
             reference_transcript=ref_raw,
-            reference_dialogue_entries=ref_diar_dicts if ref_diar_dicts else None,
+            reference_dialogue_entries=ref_diar_dicts or None,
             hypothesis_transcript=hyp_raw,
-            hypothesis_dialogue_entries=hyp_diar_dicts if hyp_diar_dicts else None,
+            hypothesis_dialogue_entries=hyp_diar_dicts or None,
             latency_ms=process_seconds * 1000,
+            # Omit inapplicable metrics rather than writing nulls: the data contract's
+            # transcription_eval_metric_result table is keyed by metric_name, so "not
+            # applicable" is the absence of a row.
             metrics=metrics.model_dump(exclude_none=True),
+            sample_metadata=example.sample_metadata,
             error=None,
         )
 

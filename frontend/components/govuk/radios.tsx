@@ -54,13 +54,16 @@ export const GovukRadios = forwardRef<HTMLDivElement, RadiosProps>(
                   aria-controls={option.conditional ? conditionalId : undefined}
                 />
                 <GovukLabel
-                  className="govuk-radios__label"
+                  className="govuk-radios__label break-words"
                   htmlFor={resolvedId}
                 >
                   {option.label}
                 </GovukLabel>
                 {option.hint && (
-                  <div className="govuk-hint govuk-radios__hint" id={hintId}>
+                  <div
+                    className="govuk-hint govuk-radios__hint break-words"
+                    id={hintId}
+                  >
                     {option.hint}
                   </div>
                 )}

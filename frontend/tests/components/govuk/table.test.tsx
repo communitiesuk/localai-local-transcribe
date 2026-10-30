@@ -211,4 +211,18 @@ describe('<GovukTableCell />', () => {
     const cell = container.querySelector('td') as HTMLElement
     expect(cell).toHaveClass('govuk-table__cell', 'govuk-table__cell--numeric')
   })
+
+  it('lets a long unbroken value break so it cannot widen the column', () => {
+    const { container } = render(
+      <table>
+        <tbody>
+          <tr>
+            <GovukTableCell>{'A'.repeat(200)}</GovukTableCell>
+          </tr>
+        </tbody>
+      </table>
+    )
+    const cell = container.querySelector('td') as HTMLElement
+    expect(cell).toHaveClass('[overflow-wrap:anywhere]')
+  })
 })

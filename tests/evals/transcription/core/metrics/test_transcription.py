@@ -2,18 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from evals.transcription.src.core.metrics import compute_wer_metrics, normalise_text
-
-
-@pytest.mark.parametrize(
-    ("input_text", "expected"),
-    [
-        ("", ""),
-        ("  Hello,   WORLD!!  ", "hello world"),
-    ],
-)
-def test_normalise_text_edge_cases(input_text, expected):
-    assert normalise_text(input_text) == expected
+from evals.transcription.src.core.metrics import compute_wer_metrics
 
 
 @pytest.mark.parametrize(
@@ -25,7 +14,7 @@ def test_normalise_text_edge_cases(input_text, expected):
     ],
 )
 def test_compute_wer_metrics_empty_reference_raises_error(reference, hypothesis):
-    with pytest.raises(ValueError, match=".*"):
+    with pytest.raises(ValueError, match=r".*"):
         compute_wer_metrics(reference, hypothesis)
 
 

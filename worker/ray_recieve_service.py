@@ -56,7 +56,7 @@ class _RayTranscriptionService:
             messages = self.transcription_queue_service.receive_message(max_messages=1)
             for message, receipt_handle in messages:
                 try:
-                    logger.info("Received minute id for transcription: %s", message.id)
+                    logger.info("WORKER JOB STARTED: %s id=%s", message.type.name, message.id)
                     data = message.data if isinstance(message.data, TranscriptionJobMessageData) else None
                     match message.type:
                         case TaskType.TRANSCRIPTION:
@@ -65,21 +65,34 @@ class _RayTranscriptionService:
                                 data,
                             )
                         case _:
-                            logger.warning("unknown transcription task type: %s", message.type)
+                            logger.error(
+                                "WORKER JOB FAILED: %s id=%s - unexpected task type on transcription queue",
+                                message.type.name,
+                                message.id,
+                            )
                             self.transcription_queue_service.deadletter_message(message, receipt_handle)
                             continue
                 except TranscriptionFailedError:
-                    logger.exception("Transcription failed for transcription id: %s", message.id)
+                    logger.exception("WORKER JOB FAILED: %s id=%s", message.type.name, message.id)
+                except Exception:
+                    logger.exception("WORKER JOB FAILED: %s id=%s - unexpected error", message.type.name, message.id)
+                    raise
                 else:
                     # sync jobs should have the transcript available immediately, async jobs may need to go on the queue
                     if transcription_job.transcript:
-                        logger.info("Transcription complete for transcription id %s complete", message.id)
+                        logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
                     else:
+                        try:
+                            self.transcription_queue_service.publish_message(
+                                WorkerMessage(id=message.id, type=message.type, data=transcription_job)
+                            )
+                        except Exception:
+                            logger.exception(
+                                "WORKER JOB FAILED: %s id=%s - requeue failed", message.type.name, message.id
+                            )
+                            raise
                         logger.info(
-                            "Async transcription job not ready yet. Re-queueing transcription id: %s", message.id
-                        )
-                        self.transcription_queue_service.publish_message(
-                            WorkerMessage(id=message.id, type=message.type, data=transcription_job)
+                            "WORKER JOB REQUEUED: %s id=%s - async job not ready", message.type.name, message.id
                         )
                 # Delete the message to prevent repeated processing
                 self.transcription_queue_service.complete_message(receipt_handle)
@@ -113,59 +126,77 @@ class _RayLlmService:
                     case TaskType.INTERACTIVE:
                         tasks.append(asyncio.create_task(self.process_interactive_task(message, receipt_handle)))
                     case _:
-                        logger.warning("Unknown task type: %s", message.type)
+                        logger.error(
+                            "WORKER JOB FAILED: %s id=%s - unexpected task type on LLM queue",
+                            message.type.name,
+                            message.id,
+                        )
                         self.queue_service.deadletter_message(message, receipt_handle)
             if len(tasks) > 0:
-                done, pending = await asyncio.wait(tasks)
+                done, _pending = await asyncio.wait(tasks)
                 for task in done:
                     try:
                         task.result()
                     except Exception:
-                        logger.exception("Unhandled error in LLM actor")
+                        logger.exception("WORKER JOB FAILED: LLM - unhandled error in actor")
 
             self.heartbeat_path.touch()
 
     async def process_minute_task(self, message: WorkerMessage, receipt_handle: ReceiptHandle) -> None:
         try:
-            logger.info("Received minute generation message for MinuteVersion id %s", message.id)
+            logger.info("WORKER JOB STARTED: %s id=%s", message.type.name, message.id)
 
             await MinuteHandlerService.process_minute_generation_message(message.id)
             # Delete the message to prevent repeated processing
-            logger.info("Minute generation complete for MinuteVersion id %s", message.id)
+            logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
         except MinuteGenerationFailedError:
-            logger.exception("Minute generation for MinuteVersion id %s failed", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s", message.type.name, message.id)
             # For handled errors we complete the message, unhandled errors are not caught
             self.queue_service.complete_message(receipt_handle)
+        except Exception:
+            logger.exception("WORKER JOB FAILED: %s id=%s - unexpected error", message.type.name, message.id)
+            raise
         else:
             # If no error then complete the message
             self.queue_service.complete_message(receipt_handle)
 
     async def process_edit_task(self, message: WorkerMessage, receipt_handle: ReceiptHandle) -> None:
         try:
-            logger.info("Received minute edit message for minute id %s", message.id)
+            logger.info("WORKER JOB STARTED: %s id=%s", message.type.name, message.id)
             if not isinstance(message.data, EditMessageData):
-                logger.error("Invalid data type for edit message: %s", type(message.data))
+                logger.error(
+                    "WORKER JOB FAILED: %s id=%s - invalid data type %s",
+                    message.type.name,
+                    message.id,
+                    type(message.data),
+                )
                 self.queue_service.deadletter_message(message, receipt_handle)
                 return
             await MinuteHandlerService.process_minute_edit_message(
                 target_minute_version_id=message.id, source_minute_version_id=message.data.source_id
             )
 
-            logger.info("Minute edit complete for MinuteVersion id %s", message.id)
+            logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
         except MinuteGenerationFailedError:
-            logger.exception("Minute edit for MinuteVersion id %s failed", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s", message.type.name, message.id)
             self.queue_service.complete_message(receipt_handle=receipt_handle)
+        except Exception:
+            logger.exception("WORKER JOB FAILED: %s id=%s - unexpected error", message.type.name, message.id)
+            raise
         else:
             self.queue_service.complete_message(receipt_handle=receipt_handle)
 
     async def process_interactive_task(self, message: WorkerMessage, receipt_handle: ReceiptHandle) -> None:
         try:
-            logger.info("Received interactive mode message for chat id %s", message.id)
+            logger.info("WORKER JOB STARTED: %s id=%s", message.type.name, message.id)
             await TranscriptionHandlerService.process_interactive_message(message.id)
-            logger.info("Interaction complete for chat id %s", message.id)
+            logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
         except InteractionFailedError:
-            logger.exception("Interaction for chat id %s failed", message.id)
+            logger.exception("WORKER JOB FAILED: %s id=%s", message.type.name, message.id)
             self.queue_service.complete_message(receipt_handle=receipt_handle)
+        except Exception:
+            logger.exception("WORKER JOB FAILED: %s id=%s - unexpected error", message.type.name, message.id)
+            raise
         else:
             self.queue_service.complete_message(receipt_handle=receipt_handle)
 
