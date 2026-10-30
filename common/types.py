@@ -358,7 +358,7 @@ class GuardrailScore(BaseModel):
     categories: list[FailureDetail] = Field(description="List of failure details that contributed to the score")
 
     @model_validator(mode="after")
-    def _warn_if_failing_score_has_no_categories(self) -> GuardrailScore:
+    def _warn_if_failing_score_has_no_categories(self) -> "GuardrailScore":
         threshold = get_settings().GUARDRAIL_THRESHOLD
         if self.score < threshold and not self.categories:
             logger.warning(
@@ -418,7 +418,6 @@ class TranscriptionJobMessageData(BaseModel):
         description="job name to identify asynchronous jobs. Not used in case of synchronous jobs",
         default="synchronous",
     )
-    job_status: str | None = Field(description="Current status of an asynchronous job", default=None)
     transcript: list[DialogueEntry] | None = Field(description="Transcript of the transcription", default=None)
 
 
@@ -493,11 +492,6 @@ class TemplateResponse(BaseModel):
     description: str
     type: TemplateType
     questions: list[Question] | None
-
-
-class DuplicateTemplateResponse(BaseModel):
-    id: uuid.UUID
-    name: str
 
 
 class CreateUserTemplateRequest(BaseModel):

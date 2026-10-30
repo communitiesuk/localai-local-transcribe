@@ -34,7 +34,7 @@ def test_sentiment_analyzer_initialization(mock_sentiment_pipeline):
 
 
 def test_sentiment_score_positive(mock_sentiment_pipeline):
-    mock_pipe, _mock_tokenizer = mock_sentiment_pipeline
+    mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_pipe.return_value = [
         [
@@ -51,7 +51,7 @@ def test_sentiment_score_positive(mock_sentiment_pipeline):
 
 
 def test_sentiment_score_negative(mock_sentiment_pipeline):
-    mock_pipe, _mock_tokenizer = mock_sentiment_pipeline
+    mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_pipe.return_value = [
         [
@@ -67,7 +67,7 @@ def test_sentiment_score_negative(mock_sentiment_pipeline):
 
 
 def test_sentiment_score_neutral(mock_sentiment_pipeline):
-    mock_pipe, _mock_tokenizer = mock_sentiment_pipeline
+    mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_pipe.return_value = [
         [
@@ -83,7 +83,7 @@ def test_sentiment_score_neutral(mock_sentiment_pipeline):
 
 
 def test_compute_sentiment_distribution_includes_neutral(mock_sentiment_pipeline):
-    mock_pipe, _mock_tokenizer = mock_sentiment_pipeline
+    mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_pipe.return_value = [
         [
@@ -102,7 +102,7 @@ def test_compute_sentiment_distribution_includes_neutral(mock_sentiment_pipeline
 
 
 def test_split_text_by_tokens_single_chunk(mock_sentiment_pipeline):
-    _mock_pipe, mock_tokenizer = mock_sentiment_pipeline
+    mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_tokenizer.encode.return_value = [1, 2, 3, 4, 5]
     mock_tokenizer.decode.return_value = "short text"
@@ -115,7 +115,7 @@ def test_split_text_by_tokens_single_chunk(mock_sentiment_pipeline):
 
 
 def test_split_text_by_tokens_multiple_chunks(mock_sentiment_pipeline):
-    _mock_pipe, mock_tokenizer = mock_sentiment_pipeline
+    mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     long_token_list = list(range(250))
     mock_tokenizer.encode.return_value = long_token_list
@@ -159,7 +159,7 @@ def test_sentiment_score_multiple_chunks(mock_sentiment_pipeline):
 
 
 def test_split_text_by_tokens_empty_text(mock_sentiment_pipeline):
-    _mock_pipe, mock_tokenizer = mock_sentiment_pipeline
+    mock_pipe, mock_tokenizer = mock_sentiment_pipeline
 
     mock_tokenizer.encode.return_value = []
 

@@ -20,7 +20,7 @@ def _iterate_aligned_equal_chunks(
     ref_pairs: list[tuple[str, str]],
     hyp_pairs: list[tuple[str, str]],
     alignment_result: jiwer.WordOutput,
-) -> Generator[tuple[tuple[str, str], tuple[str, str]]]:
+) -> Generator[tuple[tuple[str, str], tuple[str, str]], None, None]:
     """
     Iterate through aligned equal chunks, yielding matched reference and hypothesis pairs.
     """
@@ -42,10 +42,8 @@ def find_optimal_speaker_mapping(
     alignment_result: jiwer.WordOutput,
 ) -> dict[str, str]:
     """
-    Find optimal mapping from hypothesis speaker labels to reference speaker labels.
-    Count correctly aligned words shared by each speaker pair, then
-    choose the one-to-one mapping that maximises total word overlap
-    using scipy.optimize.linear_sum_assignment.
+    Find optimal mapping from hypothesis speakers to reference speakers.
+    Uses word overlap in aligned segments to determine best speaker correspondence.
 
     Hypothesis speakers with no overlap are marked as UNMAPPED.
     Reference speakers with no mapping indicate missed speakers.
@@ -62,16 +60,16 @@ def find_optimal_speaker_mapping(
         return {hyp_spk: f"UNMAPPED_{hyp_spk}" for hyp_spk in hyp_speakers}
 
     cost_matrix = np.zeros((len(hyp_speakers), len(ref_speakers)))
-    for index_hyp_spk, hyp_spk in enumerate(hyp_speakers):
-        for index_ref_spk, ref_spk in enumerate(ref_speakers):
-            cost_matrix[index_hyp_spk, index_ref_spk] = overlap_counts.get((hyp_spk, ref_spk), 0)
+    for i, hyp_spk in enumerate(hyp_speakers):
+        for j, ref_spk in enumerate(ref_speakers):
+            cost_matrix[i, j] = overlap_counts.get((hyp_spk, ref_spk), 0)
 
     row_ind, col_ind = linear_sum_assignment(cost_matrix, maximize=True)
 
     mapping: dict[str, str] = {}
-    for row, col in zip(row_ind, col_ind, strict=False):
-        if cost_matrix[row, col] > 0:
-            mapping[hyp_speakers[row]] = ref_speakers[col]
+    for i, j in zip(row_ind, col_ind, strict=False):
+        if cost_matrix[i, j] > 0:
+            mapping[hyp_speakers[i]] = ref_speakers[j]
 
     for hyp_spk in hyp_speakers:
         if hyp_spk not in mapping:
@@ -103,13 +101,6 @@ def flatten_segments_to_word_speaker_pairs(
     return pairs
 
 
-def _sort_segments_chronologically(segments: list[DiarizationSegment]) -> list[DiarizationSegment]:
-    """
-    Return segments in chronological order.
-    """
-    return sorted(segments, key=lambda segment: (segment["start"], segment["end"]))
-
-
 def compute_wder(
     ref_segments: list[DiarizationSegment],
     hyp_segments: list[DiarizationSegment],
@@ -119,12 +110,10 @@ def compute_wder(
 
     WDER measures speaker assignment errors on correctly transcribed words.
     Uses optimal speaker mapping based on word overlap to align hypothesis
-    speakers with reference speakers before computing errors. Segments are
-    ordered by timestamp first because dataset/API payload order is not
-    guaranteed to be chronological, while word alignment depends on it.
+    speakers with reference speakers before computing errors.
     """
-    ref_pairs = flatten_segments_to_word_speaker_pairs(_sort_segments_chronologically(ref_segments))
-    hyp_pairs = flatten_segments_to_word_speaker_pairs(_sort_segments_chronologically(hyp_segments))
+    ref_pairs = flatten_segments_to_word_speaker_pairs(ref_segments)
+    hyp_pairs = flatten_segments_to_word_speaker_pairs(hyp_segments)
 
     total_ref_words = len(ref_pairs)
     if total_ref_words == 0 or len(hyp_pairs) == 0:

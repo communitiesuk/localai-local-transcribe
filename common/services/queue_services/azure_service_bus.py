@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def get_sb_client() -> Generator[ServiceBusClient]:
+def get_sb_client() -> Generator[ServiceBusClient, None, None]:
     if not settings.AZURE_SB_CONNECTION_STRING:
         msg = "AZURE_SB_CONNECTION_STRING must be set"
         raise ValueError(msg)
@@ -33,7 +33,7 @@ class AzureServiceBusQueueService(QueueService):
         self.polling_interval = polling_interval
         self.queue_name = queue_name
 
-    def __reduce__(self) -> tuple[type[AzureServiceBusQueueService], tuple[str]]:
+    def __reduce__(self) -> tuple[type["AzureServiceBusQueueService"], tuple[str]]:
         """Required so that Ray can deserialize the queue service by instantiated a new one."""
         return AzureServiceBusQueueService, (self.queue_name,)
 

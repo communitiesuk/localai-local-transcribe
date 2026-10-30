@@ -42,11 +42,9 @@ export function ConfirmationInterstitial({
 
   return (
     <div>
-      <h1 className="govuk-heading-l break-words">{title}</h1>
+      <h1 className="govuk-heading-l">{title}</h1>
       <div className="govuk-grid-row">
-        <div className="govuk-grid-column-three-quarters break-words">
-          {children}
-        </div>
+        <div className="govuk-grid-column-three-quarters">{children}</div>
       </div>
       <GovukButtonGroup className="govuk-!-margin-top-2">
         <GovukButton

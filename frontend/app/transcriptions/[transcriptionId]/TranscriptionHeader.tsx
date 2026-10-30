@@ -1,3 +1,4 @@
+import { DownloadButton } from '@/components/download-button'
 import { GovukNotificationBanner } from '@/components/govuk'
 import { StatusBadge } from '@/components/status-icon'
 import { TranscriptionTitleEditor } from '@/components/transcription-title-editor'
@@ -38,7 +39,14 @@ export const AudioPlayer = ({
   if (!recordings || recordings.length == 0) {
     return null
   }
-  return <audio controls src={recordings[0].url} className="w-full" />
+  return (
+    <div className="mb-2 flex w-full max-w-3xl flex-col gap-2 rounded border bg-white p-2">
+      <audio controls src={recordings[0].url} className="w-full" />
+      <div className="flex justify-end">
+        <DownloadButton recordings={recordings} />
+      </div>
+    </div>
+  )
 }
 
 export const StatusNotificationPage = ({

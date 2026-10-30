@@ -26,7 +26,7 @@ def judge_transcript_text(dialogue_entries: list[DialogueEntry]) -> str:
     so its auditability score reflects its own inability to verify rather than how traceable the
     summary is. Reusing the production formatter keeps the two views in step by construction.
     """
-    return transcript_as_index_speaker_and_utterance(dialogue_entries, include_recording_offsets=True)
+    return transcript_as_index_speaker_and_utterance(dialogue_entries)
 
 
 def transcript_entry_count(transcript_text: str) -> int:

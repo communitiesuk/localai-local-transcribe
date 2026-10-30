@@ -59,21 +59,12 @@ def stt_is_available() -> bool:
 
 
 def convert_to_dialogue_entries(phrases: list[dict[str, Any]]) -> list[DialogueEntry]:
-    """
-    Converts Azure phrases to dialogue entries, turning millisecond offsets into second timestamps.
-
-    Confidence is optional: phrases the service did not score are left without the key rather
-    than carrying a placeholder, so consumers can tell "unscored" apart from "scored zero".
-    """
-    entries: list[DialogueEntry] = []
-    for phrase in phrases:
-        entry = DialogueEntry(
-            speaker=str(phrase["speaker"]),
-            text=phrase["text"],
-            start_time=float(phrase["offsetMilliseconds"]) / 1000,
-            end_time=(float(phrase["offsetMilliseconds"]) + float(phrase["durationMilliseconds"])) / 1000,
+    return [
+        DialogueEntry(
+            speaker=str(entry["speaker"]),
+            text=entry["text"],
+            start_time=float(entry["offsetMilliseconds"]) / 1000,
+            end_time=(float(entry["offsetMilliseconds"]) + float(entry["durationMilliseconds"])) / 1000,
         )
-        if phrase.get("confidence") is not None:
-            entry["confidence"] = float(phrase["confidence"])
-        entries.append(entry)
-    return entries
+        for entry in phrases
+    ]

@@ -31,8 +31,8 @@ def test_judge_transcript_text_numbers_entries_from_zero():
     rendered = judge_transcript_text(_ENTRIES)
 
     assert rendered.splitlines() == [
-        "[0] Housing Officer (recording offset +0s): The application was signed off.",
-        "[1] Customer (recording offset +1s): That's a relief.",
+        "[0] Housing Officer: The application was signed off.",
+        "[1] Customer: That's a relief.",
     ]
 
 
@@ -54,10 +54,7 @@ def test_security_judge_can_mention_boundaries_without_values():
 def test_judge_transcript_from_dialogue_numbers_dialogsum_lines():
     rendered = judge_transcript_from_dialogue("#Person1#: Hello.\n#Person2#: Hi.")
 
-    assert rendered.splitlines() == [
-        "[0] Person1 (recording offset +0s): Hello.",
-        "[1] Person2 (recording offset +1s): Hi.",
-    ]
+    assert rendered.splitlines() == ["[0] Person1: Hello.", "[1] Person2: Hi."]
 
 
 # --- standard eval ---
@@ -74,12 +71,7 @@ def test_standard_eval_judges_against_numbered_transcript(eval_config, run_stand
         total_claims=1,
     )
 
-    assert judge.await_args.kwargs["transcript_text"] == "\n".join(
-        [
-            "[0] A (recording offset +0s): We agreed the deadline.",
-            "[1] B (recording offset +1s): Understood.",
-        ]
-    )
+    assert judge.await_args.kwargs["transcript_text"] == "[0] A: We agreed the deadline.\n[1] B: Understood."
 
 
 # --- security eval ---

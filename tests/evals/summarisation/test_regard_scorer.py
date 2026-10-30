@@ -178,13 +178,13 @@ class TestChunking:
     def test_text_slightly_over_one_window(self) -> None:
         window, _, _ = _import_constants()
         scorer = _build_scorer()
-        chunks, _counts = scorer._chunk_text("word " * (window + 1))  # noqa: SLF001
+        chunks, counts = scorer._chunk_text("word " * (window + 1))  # noqa: SLF001
         assert len(chunks) == 2
 
     def test_long_text_produces_multiple_chunks(self) -> None:
         scorer = _build_scorer()
         # 900 words → well over one 462-token window
-        chunks, _counts = scorer._chunk_text("word " * 900)  # noqa: SLF001
+        chunks, counts = scorer._chunk_text("word " * 900)  # noqa: SLF001
         assert len(chunks) > 1
 
     def test_final_chunk_reflects_actual_token_count(self) -> None:
@@ -290,7 +290,7 @@ class TestScoring:
         (smaller) chunk has strongly positive logits, the weighted average
         should skew negative because the first chunk has more tokens.
         """
-        window, _, _stride = _import_constants()
+        window, _, stride = _import_constants()
 
         # Chunk 1: 462 tokens, very negative logits
         # Chunk 2: ~50 tokens (remainder), very positive logits

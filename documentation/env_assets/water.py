@@ -111,7 +111,7 @@ def display() -> None:
 
     _section("Appendix H: Scope 2 Water — Factors [WRI]")
     print(f"  {'Grid':<26} {'Withdrawal':>22} {'Consumption':>20}")
-    print(f"  {'-' * 26} {'-' * 22} {'-' * 20}")
+    print(f"  {'-'*26} {'-'*22} {'-'*20}")
     print(
         f"  {'Great Britain (inference)':<26}"
         f" {f'{WATER_GB_WITHDRAWAL_GAL_PER_KWH} gal = {WATER_GB_WITHDRAWAL_L_PER_KWH:.2f} L':>22}"
@@ -126,7 +126,7 @@ def display() -> None:
 
     _section("Section 4.2: Scope 2 Water per 1-Hour Meeting (GB grid)")
     print(f"  {'Component':<34} {'Withdrawal':>22} {'Consumption':>22}")
-    print(f"  {'-' * 34} {'-' * 22} {'-' * 22}")
+    print(f"  {'-'*34} {'-'*22} {'-'*22}")
     asr, llm_wt, comb = r["asr"], r["llm_usage_weighted"], r["combined_per_meeting"]
     print(f"  {'Transcription (ASR)':<34} {_ml(asr['withdrawal_l_mid']):>22} {_ml(asr['consumption_l_mid']):>22}")
     print(f"  {'LLM inference (usage-weighted)':<34} {_w(llm_wt):>22} {_c(llm_wt):>22}")
@@ -148,7 +148,7 @@ def display() -> None:
     tr = r["training_per_user"]
     _section("Section 4.2: Combined View — Scope 2 Water by Layer")
     print(f"  {'Layer':<34} {'Basis':<20} {'Withdrawal':>20} {'Consumption':>16}")
-    print(f"  {'-' * 34} {'-' * 20} {'-' * 20} {'-' * 16}")
+    print(f"  {'-'*34} {'-'*20} {'-'*20} {'-'*16}")
     for label, basis, band in [
         ("AI processing (ASR + LLM)", "per 1-h meeting", comb),
         ("Model training", "per user, one-off", tr),

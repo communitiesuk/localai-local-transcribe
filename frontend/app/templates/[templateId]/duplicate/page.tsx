@@ -27,14 +27,14 @@ export default function DuplicateTemplatePage(props: {
 
   const { mutate, isPending } = useMutation({
     ...duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation(),
-    onSuccess: (duplicatedTemplate) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
       })
       setBanner({
         variant: 'success',
         title: 'Success',
-        message: `‘${duplicatedTemplate.name}’ created`,
+        message: `‘${name} (Copy)’ created`,
       })
       posthog.capture('template_duplicated')
       clearDraft()
@@ -61,8 +61,8 @@ export default function DuplicateTemplatePage(props: {
       cancelHref={`/templates/${templateId}`}
     >
       <p className="govuk-body">
-        The duplicate will appear with a unique title based on {`‘${name}’`}
-        until you change its title.
+        The duplicate will appear as {`‘${name} (Copy)’`} until you change its
+        title.
       </p>
     </ConfirmationInterstitial>
   )

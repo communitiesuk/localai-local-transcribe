@@ -144,7 +144,7 @@ def test_record_transcription_received_uses_earliest_recording_and_user_evaluati
 
 
 def test_record_transcription_received_reports_a_direct_upload(mock_session):
-    ctx, _session = mock_session
+    ctx, session = mock_session
 
     transcription_id = uuid4()
     recording = _make_recording(
@@ -182,7 +182,7 @@ def test_record_transcription_received_reports_a_direct_upload(mock_session):
 def test_record_transcription_received_sends_no_metadata_for_a_recording_made_before_source_was_captured(
     mock_session,
 ):
-    ctx, _session = mock_session
+    ctx, session = mock_session
 
     transcription_id = uuid4()
     recording = _make_recording(

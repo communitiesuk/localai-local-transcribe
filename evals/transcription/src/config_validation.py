@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from typing import TypeVar
 
-def get_config[T](
+T = TypeVar("T")
+
+
+def get_config(
     config: dict[str, object], key: str, expected_type: type[T], *, default: T | None = None, required: bool = False
 ) -> T | None:
     value = config.get(key)

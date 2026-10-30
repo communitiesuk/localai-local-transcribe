@@ -1,3 +1,5 @@
+# Put action within a raw block so that the curly bracket expressions aren't picked up by the cookiecutter
+# 
 name: pre-commit
 
 on:
@@ -9,7 +11,6 @@ on:
 
 env:
   TERRAFORM_VERSION: ~>1.14.0
-  PYTHON_VERSION: "3.14"
 
 permissions:
   contents: read
@@ -18,20 +19,19 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
-
-      - uses: actions/setup-python@v3
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "lts/*"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-        working-directory: frontend
-      - uses: pre-commit/action@v3.0.1
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+        
+    - uses: actions/setup-python@v3
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 'lts/*'
+        cache: npm
+        cache-dependency-path: frontend/package-lock.json
+    - run: npm ci
+      working-directory: frontend
+    - uses: pre-commit/action@v3.0.1
+#

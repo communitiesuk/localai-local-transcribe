@@ -127,7 +127,7 @@ const TemplateTable = ({
             <GovukTableRow key={template.id}>
               <GovukTableCell>{template.name}</GovukTableCell>
               {showUpdatedDate && (
-                <GovukTableCell className="whitespace-nowrap">
+                <GovukTableCell>
                   {template.updated_datetime
                     ? new Date(template.updated_datetime).toLocaleDateString(
                         'en-GB',
@@ -137,7 +137,7 @@ const TemplateTable = ({
                 </GovukTableCell>
               )}
               {renderTemplateAction && (
-                <GovukTableCell isNumeric className="whitespace-nowrap">
+                <GovukTableCell isNumeric>
                   {renderTemplateAction(template)}
                 </GovukTableCell>
               )}

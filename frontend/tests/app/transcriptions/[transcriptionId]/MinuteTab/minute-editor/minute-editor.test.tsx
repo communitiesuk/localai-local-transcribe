@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MinuteEditor } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/minute-editor'
 import type {
@@ -64,7 +64,6 @@ const transcription = {
   id: 'transcription-1',
   dialogue_entries: [],
   title: 'Meeting',
-  date_of_recording: '2024-03-15T09:30:00',
 } as unknown as TranscriptionGetResponse
 
 const minute = {
@@ -101,16 +100,15 @@ const configureQuery = (data: MinuteVersionResponse[], isLoading = false) => {
 
 const onRemovedMock = vi.fn()
 
-const editorElement = (minuteOverride: MinuteListItem = minute) => (
+const editorElement = () => (
   <MinuteEditor
     transcription={transcription}
-    minute={minuteOverride}
+    minute={minute}
     onRemoved={onRemovedMock}
   />
 )
 
-const renderEditor = (minuteOverride: MinuteListItem = minute) =>
-  render(editorElement(minuteOverride))
+const renderEditor = () => render(editorElement())
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -412,84 +410,5 @@ describe('<MinuteEditor /> AI edit flow', () => {
     )
 
     expect(onActivityChange).toHaveBeenLastCalledWith(true)
-  })
-})
-
-describe('<MinuteEditor /> Download document', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals()
-  })
-
-  it('adds the .docx extension to a downloaded document', () => {
-    const showSaveFilePicker = vi.fn().mockResolvedValue({
-      createWritable: vi
-        .fn()
-        .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
-    })
-    vi.stubGlobal('showSaveFilePicker', showSaveFilePicker)
-
-    configureQuery([
-      makeVersion({
-        id: 'v1',
-        status: 'completed',
-        content_source: 'initial_generation',
-      }),
-    ])
-    renderEditor(minute)
-    const downloadDocumentButton = screen.getByText('Download document')
-    expect(downloadDocumentButton).toBeInTheDocument()
-
-    fireEvent.click(downloadDocumentButton)
-
-    const reviewedDocumentCheckbox = screen.getByText(
-      "I've reviewed the document"
-    )
-    expect(reviewedDocumentCheckbox).toBeInTheDocument()
-
-    fireEvent.click(reviewedDocumentCheckbox)
-    fireEvent.click(screen.getByText('Confirm'))
-
-    expect(showSaveFilePicker.mock.calls[0][0].suggestedName).toBe(
-      'General summary 15-03-2024.docx'
-    )
-  })
-
-  it('adds the .docx extension to a downloaded document when the template name contains dots', () => {
-    const showSaveFilePicker = vi.fn().mockResolvedValue({
-      createWritable: vi
-        .fn()
-        .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
-    })
-    vi.stubGlobal('showSaveFilePicker', showSaveFilePicker)
-
-    const minuteWithDotsInTemplateName = {
-      ...minute,
-      template_name: 'template with dots.',
-    } as unknown as MinuteListItem
-
-    configureQuery([
-      makeVersion({
-        id: 'v1',
-        status: 'completed',
-        content_source: 'initial_generation',
-      }),
-    ])
-    renderEditor(minuteWithDotsInTemplateName)
-    const downloadDocumentButton = screen.getByText('Download document')
-    expect(downloadDocumentButton).toBeInTheDocument()
-
-    fireEvent.click(downloadDocumentButton)
-
-    const reviewedDocumentCheckbox = screen.getByText(
-      "I've reviewed the document"
-    )
-    expect(reviewedDocumentCheckbox).toBeInTheDocument()
-
-    fireEvent.click(reviewedDocumentCheckbox)
-    fireEvent.click(screen.getByText('Confirm'))
-
-    expect(showSaveFilePicker.mock.calls[0][0].suggestedName).toBe(
-      'template with dots. 15-03-2024.docx'
-    )
   })
 })

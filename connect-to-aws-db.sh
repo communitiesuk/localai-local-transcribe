@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 [--environment <environment>] [--local-port <port>] [--tunnel-only] [-- <psql args>]"
+  echo "Usage: $0 [--environment <environment>] [--local-port <port>] [-- <psql args>]"
   echo ""
   echo "  Opens an SSM port-forwarding tunnel through the bastion to the RDS"
   echo "  database, then drops you into an interactive psql session."
@@ -10,8 +10,6 @@ usage() {
   echo ""
   echo "  --environment  Environment name (default: development)"
   echo "  --local-port   Local port to forward to (default: 5433)"
-  echo "  --tunnel-only  Open the tunnel and keep it open without running psql."
-  echo "                 Stop it with Ctrl-C."
   echo ""
   echo "  Anything after '--' is passed straight to psql, e.g.:"
   echo "    $0 -- -c 'select count(*) from recordings'"
@@ -21,7 +19,6 @@ usage() {
 
 ENVIRONMENT="development"
 LOCAL_PORT="5433"
-TUNNEL_ONLY=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -40,10 +37,6 @@ while [[ $# -gt 0 ]]; do
       fi
       LOCAL_PORT="$2"
       shift 2
-      ;;
-    --tunnel-only)
-      TUNNEL_ONLY=true
-      shift
       ;;
     --help|-h)     usage ;;
     --)            shift; break ;;
@@ -98,13 +91,6 @@ read -r DB_HOST DB_NAME < <(aws rds describe-db-instances \
   --db-instance-identifier "${ENVIRONMENT}-database" \
   --query "DBInstances[0].[Endpoint.Address,DBName]" --output text)
 
-# RDS for PostgreSQL always creates a database named 'postgres', even when no
-# DBName was set at instance creation (in which case describe-db-instances
-# reports it as the literal string "None").
-if [[ -z "$DB_NAME" || "$DB_NAME" == "None" ]]; then
-  DB_NAME="postgres"
-fi
-
 DB_USER="postgres"
 
 download_rds_certificate_bundle
@@ -118,12 +104,7 @@ aws ssm start-session \
   --parameters "{\"host\":[\"${DB_HOST}\"],\"portNumber\":[\"5432\"],\"localPortNumber\":[\"${LOCAL_PORT}\"]}" &
 SSM_PID=$!
 
-cleanup() {
-  pkill -P "$SSM_PID" 2>/dev/null || true
-  kill "$SSM_PID" 2>/dev/null || true
-}
-trap cleanup EXIT
-trap 'exit 143' INT TERM
+trap 'kill "$SSM_PID" 2>/dev/null || true' EXIT
 
 # Wait for the local port to start accepting connections.
 for _ in $(seq 1 30); do
@@ -133,12 +114,6 @@ for _ in $(seq 1 30); do
   fi
   sleep 1
 done
-
-if [[ "$TUNNEL_ONLY" == true ]]; then
-  echo "Tunnel open on 127.0.0.1:${LOCAL_PORT} (host=${DB_HOST} user=${DB_USER} dbname=${DB_NAME}). Press Ctrl-C to close."
-  wait "$SSM_PID" || true
-  exit 0
-fi
 
 DB_AUTH_TOKEN=$(aws rds generate-db-auth-token \
   --region "$REGION" \

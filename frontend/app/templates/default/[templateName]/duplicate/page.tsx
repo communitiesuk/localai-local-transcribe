@@ -2,10 +2,8 @@
 
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
 import { useTemplates } from '@/hooks/use-templates'
-import {
-  getUserTemplatesUserTemplatesGetQueryKey,
-  duplicateDefaultTemplateTemplatesTemplateNameDuplicatePostMutation,
-} from '@/lib/client/@tanstack/react-query.gen'
+import { getUserTemplatesUserTemplatesGetQueryKey } from '@/lib/client/@tanstack/react-query.gen'
+import { client } from '@/lib/client/client.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
@@ -28,15 +26,21 @@ export default function DuplicateDefaultTemplatePage(props: {
   const queryClient = useQueryClient()
 
   const { mutate, isPending } = useMutation({
-    ...duplicateDefaultTemplateTemplatesTemplateNameDuplicatePostMutation(),
-    onSuccess: (duplicatedTemplate) => {
+    mutationFn: async () => {
+      await client.post({
+        url: '/templates/{template_name}/duplicate',
+        path: { template_name: templateId },
+        throwOnError: true,
+      })
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: getUserTemplatesUserTemplatesGetQueryKey(),
       })
       setBanner({
         variant: 'success',
         title: 'Success',
-        message: `‘${duplicatedTemplate.name}’ created`,
+        message: `‘${name} (Copy)’ created`,
       })
       posthog.capture('template_duplicated', { template_source: 'default' })
       router.push('/templates')
@@ -60,13 +64,13 @@ export default function DuplicateDefaultTemplatePage(props: {
       title={`Are you sure you want to duplicate ‘${name}’?`}
       actionLabel="Continue"
       actionVariant="primary"
-      onAction={() => mutate({ path: { template_name: templateId } })}
+      onAction={() => mutate()}
       actionPending={isPending}
       cancelHref="/templates"
     >
       <p className="govuk-body">
-        The duplicate will appear in your templates with a unique title based on{' '}
-        {`‘${name}’`} until you change its title.
+        The duplicate will appear in your templates as {`‘${name} (Copy)’`}
+        until you change its title.
       </p>
     </ConfirmationInterstitial>
   )

@@ -47,9 +47,7 @@ export function GovukNotificationBanner({
           {title ?? defaultTitles[variant]}
         </h2>
       </div>
-      <div className="govuk-notification-banner__content break-words">
-        {children}
-      </div>
+      <div className="govuk-notification-banner__content">{children}</div>
     </div>
   )
 }

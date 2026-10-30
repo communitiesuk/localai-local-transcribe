@@ -5,7 +5,6 @@ from unittest.mock import Mock
 
 import pytest
 from fastapi import HTTPException
-from sqlalchemy.exc import IntegrityError
 
 from backend.api.routes.templates import (
     create_user_template,
@@ -107,25 +106,6 @@ async def test_create_user_template_duplicate_title(mock_session, mock_user, moc
 
 
 @pytest.mark.asyncio
-async def test_create_user_template_unique_constraint_race_returns_conflict(mock_session, mock_user, mock_request):
-    exec_result = Mock()
-    exec_result.first.return_value = None
-    mock_session.exec.return_value = exec_result
-
-    mock_session.commit.side_effect = IntegrityError(
-        "statement",
-        "params",
-        Exception("uq_user_template_user_id_normalised_name"),
-    )
-
-    with pytest.raises(HTTPException) as exc_info:
-        await create_user_template(mock_user, mock_session, mock_request)
-
-    assert exc_info.value.status_code == 409
-    mock_session.rollback.assert_awaited_once()
-
-
-@pytest.mark.asyncio
 async def test_edit_user_template_success(mock_session, mock_user, mock_user_template, mock_request):
     exec_result = Mock()
     exec_result.first.return_value = mock_user_template
@@ -133,10 +113,7 @@ async def test_edit_user_template_success(mock_session, mock_user, mock_user_tem
     exec_q = Mock()
     exec_q.all.return_value = []
 
-    conflict_result = Mock()
-    conflict_result.first.return_value = None
-
-    mock_session.exec.side_effect = [exec_result, conflict_result, exec_q]
+    mock_session.exec.side_effect = [exec_result, exec_q]
 
     original_datetime = mock_user_template.updated_datetime
 
@@ -156,42 +133,6 @@ async def test_edit_user_template_success(mock_session, mock_user, mock_user_tem
     mock_session.delete.assert_not_called()
 
     assert mock_user_template.updated_datetime > original_datetime
-
-
-@pytest.mark.asyncio
-async def test_edit_user_template_allows_unchanged_title(mock_session, mock_user, mock_user_template, mock_request):
-    mock_request.name = "test template"
-    mock_request.questions = None
-
-    template_result = Mock()
-    template_result.first.return_value = mock_user_template
-
-    conflict_result = Mock()
-    conflict_result.first.return_value = None
-
-    mock_session.exec.side_effect = [template_result, conflict_result]
-
-    await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
-
-    assert mock_user_template.name == "test template"
-    mock_session.commit.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_edit_user_template_duplicate_title(mock_session, mock_user, mock_user_template, mock_request):
-    template_result = Mock()
-    template_result.first.return_value = mock_user_template
-
-    conflict_result = Mock()
-    conflict_result.first.return_value = Mock()
-
-    mock_session.exec.side_effect = [template_result, conflict_result]
-
-    with pytest.raises(HTTPException) as exc_info:
-        await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
-
-    assert exc_info.value.status_code == 409
-    mock_session.commit.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -233,15 +174,11 @@ async def test_delete_user_template_not_found(mock_session, mock_user):
 
 @pytest.mark.asyncio
 async def test_duplicate_user_template_success(mock_session, mock_user, mock_user_template):
-    template_result = Mock()
-    template_result.first.return_value = mock_user_template
+    exec_result = Mock()
+    exec_result.first.return_value = mock_user_template
+    mock_session.exec.return_value = exec_result
 
-    existing_names_result = Mock()
-    existing_names_result.all.return_value = [mock_user_template.name]
-
-    mock_session.exec.side_effect = [template_result, existing_names_result]
-
-    response = await duplicate_user_template(mock_user, mock_session, mock_user_template.id)
+    await duplicate_user_template(mock_user, mock_session, mock_user_template.id)
 
     mock_session.add.assert_called()
     mock_session.commit.assert_awaited()
@@ -251,28 +188,6 @@ async def test_duplicate_user_template_success(mock_session, mock_user, mock_use
     assert duplicated_template.name == mock_user_template.name + duplicated_name_suffix
     assert duplicated_template.content == mock_user_template.content
     assert duplicated_template.description == mock_user_template.description
-    assert response.id == duplicated_template.id
-    assert response.name == duplicated_template.name
-
-
-@pytest.mark.asyncio
-async def test_duplicate_user_template_uses_counter_when_copy_exists(mock_session, mock_user, mock_user_template):
-    template_result = Mock()
-    template_result.first.return_value = mock_user_template
-
-    existing_names_result = Mock()
-    existing_names_result.all.return_value = [
-        "Test Template",
-        "Test Template (Copy)",
-    ]
-
-    mock_session.exec.side_effect = [template_result, existing_names_result]
-
-    response = await duplicate_user_template(mock_user, mock_session, mock_user_template.id)
-
-    duplicated_template = mock_session.add.call_args.args[0]
-    assert duplicated_template.name == "Test Template (Copy 2)"
-    assert response.name == "Test Template (Copy 2)"
 
 
 @pytest.mark.asyncio
@@ -310,10 +225,6 @@ async def test_duplicate_default_template_success(mocker, mock_session, mock_use
         "backend.api.routes.templates.TemplateManager.get_template",
         return_value=DefaultTemplate,
     )
-
-    existing_names_result = Mock()
-    existing_names_result.all.return_value = [template_name]
-    mock_session.exec.return_value = existing_names_result
 
     await duplicate_default_template(mock_user, mock_session, template_id)
 
@@ -426,10 +337,7 @@ async def test_edit_user_template_adds_new_question_when_no_id(
     exec_q = Mock()
     exec_q.all.return_value = []
 
-    conflict_result = Mock()
-    conflict_result.first.return_value = None
-
-    mock_session.exec.side_effect = [exec_result, conflict_result, exec_q]
+    mock_session.exec.side_effect = [exec_result, exec_q]
 
     await edit_user_template(mock_user, mock_session, mock_user_template.id, mock_request)
 

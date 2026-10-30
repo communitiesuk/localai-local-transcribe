@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "= 6.68.0"
+      version = "~>6.5"
     }
   }
 
@@ -45,14 +45,6 @@ provider "aws" {
 provider "aws" {
   alias  = "us-east-1"
   region = "us-east-1"
-}
-
-module "account_baseline" {
-  source = "../modules/account_baseline"
-
-  providers = {
-    aws.us-east-1 = aws.us-east-1
-  }
 }
 
 module "networking" {
@@ -127,7 +119,6 @@ module "github_actions_access" {
   source = "../modules/github_actions_access"
 
   environment_name                   = local.environment_name
-  deployment_branch                  = "development"
   push_frontend_ecr_image_policy_arn = module.ecr.push_frontend_ecr_image_policy_arn
   push_backend_ecr_image_policy_arn  = module.ecr.push_backend_ecr_image_policy_arn
   push_worker_ecr_image_policy_arn   = module.ecr.push_worker_ecr_image_policy_arn

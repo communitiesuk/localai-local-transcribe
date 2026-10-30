@@ -114,63 +114,56 @@ export const PaginatedLabelledTranscriptions = () => {
         </div>
       ) : (
         <>
-          <div
-            role="region"
-            aria-label="Labelled recordings"
-            tabIndex={0}
-            className="relative overflow-x-auto focus-visible:[outline:3px_solid_var(--govuk-focus-colour)]"
-          >
-            <GovukTable>
-              <GovukTableHead>
-                <GovukTableRow>
-                  <GovukTableHeaderCell>Name</GovukTableHeaderCell>
-                  <GovukTableHeaderCell className="text-nowrap">
-                    Case ID
-                  </GovukTableHeaderCell>
-                  <GovukTableHeaderCell className="govuk-!-width-one-third">
-                    Subject
-                  </GovukTableHeaderCell>
-                  <GovukTableHeaderCell className="text-nowrap">
-                    Date of birth
-                  </GovukTableHeaderCell>
-                  <GovukTableHeaderCell className="text-nowrap">
-                    Date recorded
-                  </GovukTableHeaderCell>
-                  <GovukTableHeaderCell>
-                    <span className={'govuk-visually-hidden'}>
-                      Link to recording
-                    </span>
-                  </GovukTableHeaderCell>
+          <GovukTable>
+            <GovukTableHead>
+              <GovukTableRow>
+                <GovukTableHeaderCell>Name</GovukTableHeaderCell>
+                <GovukTableHeaderCell className="text-nowrap">
+                  Case ID
+                </GovukTableHeaderCell>
+                <GovukTableHeaderCell className="govuk-!-width-one-third">
+                  Subject
+                </GovukTableHeaderCell>
+                <GovukTableHeaderCell className="text-nowrap">
+                  Date of birth
+                </GovukTableHeaderCell>
+                <GovukTableHeaderCell className="text-nowrap">
+                  Date recorded
+                </GovukTableHeaderCell>
+                <GovukTableHeaderCell>
+                  <span className={'govuk-visually-hidden'}>
+                    Link to recording
+                  </span>
+                </GovukTableHeaderCell>
+              </GovukTableRow>
+            </GovukTableHead>
+            <GovukTableBody>
+              {transcriptions.map((transcription) => (
+                <GovukTableRow key={transcription.id}>
+                  <GovukTableCell>{transcription.client_name}</GovukTableCell>
+                  <GovukTableCell>{transcription.case_id}</GovukTableCell>
+                  <GovukTableCell>{transcription.title}</GovukTableCell>
+                  <GovukTableCell>
+                    {formatDateOfBirth(transcription.client_date_of_birth)}
+                  </GovukTableCell>
+                  <GovukTableCell>
+                    {formatRecordedDate(
+                      transcription.date_of_recording ??
+                        transcription.created_datetime
+                    )}
+                  </GovukTableCell>
+                  <GovukTableCell>
+                    <Link
+                      className="govuk-link"
+                      href={`/transcriptions/${transcription.id}`}
+                    >
+                      View
+                    </Link>
+                  </GovukTableCell>
                 </GovukTableRow>
-              </GovukTableHead>
-              <GovukTableBody>
-                {transcriptions.map((transcription) => (
-                  <GovukTableRow key={transcription.id}>
-                    <GovukTableCell>{transcription.client_name}</GovukTableCell>
-                    <GovukTableCell>{transcription.case_id}</GovukTableCell>
-                    <GovukTableCell>{transcription.title}</GovukTableCell>
-                    <GovukTableCell className="whitespace-nowrap">
-                      {formatDateOfBirth(transcription.client_date_of_birth)}
-                    </GovukTableCell>
-                    <GovukTableCell className="whitespace-nowrap">
-                      {formatRecordedDate(
-                        transcription.date_of_recording ??
-                          transcription.created_datetime
-                      )}
-                    </GovukTableCell>
-                    <GovukTableCell className="whitespace-nowrap">
-                      <Link
-                        className="govuk-link"
-                        href={`/transcriptions/${transcription.id}`}
-                      >
-                        View
-                      </Link>
-                    </GovukTableCell>
-                  </GovukTableRow>
-                ))}
-              </GovukTableBody>
-            </GovukTable>
-          </div>
+              ))}
+            </GovukTableBody>
+          </GovukTable>
           {(totalPages ?? 0) > 1 && (
             <div className="flex justify-center">
               <GovukPagination

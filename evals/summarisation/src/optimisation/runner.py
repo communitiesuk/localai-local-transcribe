@@ -59,7 +59,7 @@ def _utc_now() -> datetime:
 
 
 def _elapsed_ms(start_s: float, end_s: float) -> int:
-    return round((end_s - start_s) * 1000)
+    return int(round((end_s - start_s) * 1000))
 
 
 def _p50(values: list[int]) -> int:

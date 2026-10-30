@@ -12,16 +12,11 @@ from evals.transcription.src.constants import (
 )
 from evals.transcription.src.drift import (
     apply_drift_thresholds,
-    assess_engine_drift,
     classify_processing_speed_drift,
     classify_speaker_count_drift,
     classify_wder_drift,
     classify_wer_drift,
-    corpus_wder_from_samples,
-    corpus_wer_from_samples,
-    is_wer_scorable,
     require_meeting_count_matches_eval_config,
-    speaker_correct_count,
     worst_outcome,
 )
 from evals.transcription.src.models import AggregatedMetricStats, EngineOutput, SampleRow, Summary
@@ -149,8 +144,8 @@ def _sample_row(
             "speaker_errors": 0.0,
             "total_words": float(hits + substitutions + deletions),
             "speaker_count_accuracy": speaker_count_accuracy,
-            "reference_speaker_count": 2.0,
-            "predicted_speaker_count": 2.0,
+            "ref_speaker_count": 2.0,
+            "hyp_speaker_count": 2.0,
             "processing_speed_ratio": 0.04,
         },
     )
@@ -176,7 +171,7 @@ def _engine_output(samples: list[SampleRow], processing_speed_ratio: float) -> E
 def _meetings_at_corpus_wer(target_corpus_wer: float, correct_speaker_meetings: int) -> list[SampleRow]:
     """Build ten meetings whose corpus WER equals ``target_corpus_wer``."""
     reference_words_per_meeting = 1_000
-    errors_per_meeting = round(target_corpus_wer * reference_words_per_meeting)
+    errors_per_meeting = int(round(target_corpus_wer * reference_words_per_meeting))
     hits = reference_words_per_meeting - errors_per_meeting
     samples: list[SampleRow] = []
     for index in range(SPEAKER_COUNT_DRIFT_THRESHOLDS.n_meetings):
@@ -225,106 +220,3 @@ def test_apply_drift_thresholds_exits_one_on_floor(tmp_path):
     assert review_path.exists()
     payload = json.loads(review_path.read_text(encoding="utf-8"))
     assert payload["overall_outcome"] == "floor"
-
-
-@pytest.mark.parametrize("omit_metrics", [False, True])
-def test_drift_skips_unavailable_diarization_metrics(tmp_path, omit_metrics):
-    samples = _meetings_at_corpus_wer(
-        WER_DRIFT_THRESHOLDS.baseline_corpus_wer,
-        correct_speaker_meetings=SPEAKER_COUNT_DRIFT_THRESHOLDS.baseline_correct_count,
-    )
-    for sample in samples:
-        for key in ("wder", "speaker_errors", "total_words", "speaker_count_accuracy"):
-            if omit_metrics:
-                sample.metrics.pop(key)
-            else:
-                sample.metrics[key] = None
-    engine = _engine_output(samples, PROCESSING_SPEED_DRIFT_THRESHOLDS.baseline_ratio)
-    assert corpus_wder_from_samples(samples) is None
-    assert speaker_correct_count(samples) == 0
-    verdicts = assess_engine_drift(engine, supports_diarization=False)
-    assert len(verdicts) == 4
-    assert sum(verdict.outcome == "review" for verdict in verdicts) == 2
-    assert (
-        apply_drift_thresholds(
-            [engine], tmp_path, "non_diarizing", diarization_capabilities={engine.summary.engine_version: False}
-        )
-        == 0
-    )
-    payload = json.loads((tmp_path / "drift_review_non_diarizing.json").read_text())
-    assert payload["overall_outcome"] == "review"
-    skipped = [check for check in payload["checks"] if check["outcome"] == "review"]
-    assert len(skipped) == 2
-    assert all(check["observed"] is None for check in skipped)
-    if not omit_metrics:
-        assert engine.samples[0].model_dump()["metrics"]["wder"] is None
-
-
-def test_zero_word_sample_does_not_disable_wder_failure(tmp_path):
-    samples = _meetings_at_corpus_wer(
-        WER_DRIFT_THRESHOLDS.baseline_corpus_wer,
-        correct_speaker_meetings=SPEAKER_COUNT_DRIFT_THRESHOLDS.baseline_correct_count,
-    )
-    samples[0].metrics.update(speaker_errors=0, total_words=0)
-    for sample in samples[1:]:
-        sample.metrics.update(speaker_errors=1000, total_words=1000)
-    engine = _engine_output(samples, PROCESSING_SPEED_DRIFT_THRESHOLDS.baseline_ratio)
-    assert corpus_wder_from_samples(samples) == 1.0
-    assert apply_drift_thresholds([engine], tmp_path, "zero_words") == 1
-    payload = json.loads((tmp_path / "drift_review_zero_words.json").read_text())
-    wder = next(check for check in payload["checks"] if check["metric"] == "corpus_wder")
-    assert wder["outcome"] in {"fail", "floor"}
-    assert "Excluded 1" in wder["detail"]
-
-
-def test_unscorable_diarizing_run_creates_review_artifact(tmp_path):
-    samples = _meetings_at_corpus_wer(
-        WER_DRIFT_THRESHOLDS.baseline_corpus_wer,
-        correct_speaker_meetings=SPEAKER_COUNT_DRIFT_THRESHOLDS.baseline_correct_count,
-    )
-    for sample in samples:
-        sample.metrics.update(speaker_errors=0, total_words=0)
-    engine = _engine_output(samples, PROCESSING_SPEED_DRIFT_THRESHOLDS.baseline_ratio)
-    assert corpus_wder_from_samples(samples) is None
-    assert apply_drift_thresholds([engine], tmp_path, "unscorable") == 0
-    payload = json.loads((tmp_path / "drift_review_unscorable.json").read_text())
-    wder = next(check for check in payload["checks"] if check["metric"] == "corpus_wder")
-    assert wder["outcome"] == "review"
-    assert wder["observed"] is None
-
-
-def test_zero_reference_word_sample_is_excluded_from_corpus_wer(tmp_path):
-    samples = _meetings_at_corpus_wer(
-        WER_DRIFT_THRESHOLDS.baseline_corpus_wer,
-        correct_speaker_meetings=SPEAKER_COUNT_DRIFT_THRESHOLDS.baseline_correct_count,
-    )
-
-    samples[0].metrics.update(hits=0.0, substitutions=0.0, deletions=0.0, insertions=0.0, total_words=1_000.0)
-
-    assert not is_wer_scorable(samples[0])
-    assert corpus_wer_from_samples(samples) == pytest.approx(corpus_wer_from_samples(samples[1:]))
-
-    engine = _engine_output(samples, PROCESSING_SPEED_DRIFT_THRESHOLDS.baseline_ratio)
-    assert apply_drift_thresholds([engine], tmp_path, "wer_excluded") == 0
-    payload = json.loads((tmp_path / "drift_review_wer_excluded.json").read_text())
-    wer = next(check for check in payload["checks"] if check["metric"] == "corpus_wer")
-    assert wer["outcome"] == "review"
-    assert "Excluded 1" in wer["detail"]
-
-
-def test_corpus_wer_without_scorable_samples_reports_review(tmp_path):
-    samples = _meetings_at_corpus_wer(
-        WER_DRIFT_THRESHOLDS.baseline_corpus_wer,
-        correct_speaker_meetings=SPEAKER_COUNT_DRIFT_THRESHOLDS.baseline_correct_count,
-    )
-    for sample in samples:
-        sample.metrics.update(hits=0.0, substitutions=0.0, deletions=0.0, insertions=0.0, total_words=1_000.0)
-
-    assert corpus_wer_from_samples(samples) is None
-
-    engine = _engine_output(samples, PROCESSING_SPEED_DRIFT_THRESHOLDS.baseline_ratio)
-    assert apply_drift_thresholds([engine], tmp_path, "wer_unscorable") == 0
-    payload = json.loads((tmp_path / "drift_review_wer_unscorable.json").read_text())
-    wer = next(check for check in payload["checks"] if check["metric"] == "corpus_wer")
-    assert wer["outcome"] == "review"
-    assert wer["observed"] is None

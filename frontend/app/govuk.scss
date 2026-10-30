@@ -239,11 +239,3 @@ audio::-webkit-media-controls-enclosure {
 .citation-link:focus {
   @include index.govuk-focused-text;
 }
-
-@media (min-width: 641px) {
-  .govuk-tabs__list {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-}

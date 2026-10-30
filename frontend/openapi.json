@@ -1955,13 +1955,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DuplicateTemplateResponse"
-                }
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
@@ -1999,13 +1993,7 @@
         "responses": {
           "200": {
             "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DuplicateTemplateResponse"
-                }
-              }
-            }
+            "content": { "application/json": { "schema": {} } }
           },
           "422": {
             "description": "Validation Error",
@@ -2714,15 +2702,6 @@
         "type": "object",
         "required": ["speaker", "text", "start_time", "end_time"],
         "title": "DialogueEntry"
-      },
-      "DuplicateTemplateResponse": {
-        "properties": {
-          "id": { "type": "string", "format": "uuid", "title": "Id" },
-          "name": { "type": "string", "title": "Name" }
-        },
-        "type": "object",
-        "required": ["id", "name"],
-        "title": "DuplicateTemplateResponse"
       },
       "GetUserResponse": {
         "properties": {

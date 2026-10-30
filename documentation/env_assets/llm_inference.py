@@ -248,13 +248,13 @@ def display() -> None:
         _row(
             "Total LLM energy",
             f"{_rng(tr['total_wh_min'], tr['total_wh_max'], 'Wh')}"
-            f"  ({_rng(tr['total_wh_min'] / 1000, tr['total_wh_max'] / 1000, 'kWh', dp=4)})",
+            f"  ({_rng(tr['total_wh_min']/1000, tr['total_wh_max']/1000, 'kWh', dp=4)})",
         )
         _row("CO₂e (energy × GBR 217 g/kWh)", _rng(tr["gwp_g_min"], tr["gwp_g_max"], "g"))
 
     _section("Section 7.6: Template Comparison Summary")
     print(f"  {'Template':<34} {'Invocations':>11} {'Out Tokens':>10} {'Energy (Wh)':>20} {'CO₂e (g)':>16}")
-    print(f"  {'-' * 34} {'-' * 11} {'-' * 10} {'-' * 20} {'-' * 16}")
+    print(f"  {'-'*34} {'-'*11} {'-'*10} {'-'*20} {'-'*16}")
     for name, inv, tr in [
         ("Basic Minutes", "4", bm),
         ("Short 'n' Sweet (no citations)", "4", es),
@@ -271,7 +271,7 @@ def display() -> None:
 
     _section("Appendix F.2: Usage-Weighted Impact (production shares, Dec 2024–May 2026)")
     print(f"  {'Template':<28} {'Share':>6} {'Impl.':<38} {'Out Tok':>8} {'CO₂e (g)':>14}")
-    print(f"  {'-' * 28} {'-' * 6} {'-' * 38} {'-' * 8} {'-' * 14}")
+    print(f"  {'-'*28} {'-'*6} {'-'*38} {'-'*8} {'-'*14}")
     for tname, share, impl in TEMPLATE_USAGE_SHARES:
         tr = r["by_template"][tname]
         print(

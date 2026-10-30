@@ -26,13 +26,7 @@ DEFAULT_BOOTSTRAP_RESAMPLES = 10_000
 DEFAULT_RANDOM_SEED = 42
 DEFAULT_QUANTILES = (0.5, 0.9, 0.95, 0.99)
 
-AGGREGATABLE_METRIC_KEYS = [
-    "wer",
-    "content_wer",
-    "wder",
-    "speaker_count_accuracy",
-    "processing_speed_ratio",
-]
+AGGREGATABLE_METRIC_KEYS = ["wer", "wder", "speaker_count_accuracy", "processing_speed_ratio"]
 
 # Thresholds below are provisional for the baseline transcription eval config only.
 DRIFT_THRESHOLDS_ARE_AMI_PROXY_PLACEHOLDERS = True
@@ -126,13 +120,13 @@ WER_DRIFT_THRESHOLDS = WerDriftThresholds(
 )
 
 # Baseline and review band follow evals/transcription/baseline/wder_bootstrap_ami_proxy.json
-# (corpus WDER and bootstrap p95 relative increase ≈ 0.19). Fail +30% sits clearly above
-# sampling uncertainty. Absolute floor 0.10 is a loose AMI disaster line only.
+# (corpus WDER and bootstrap p95 relative increase ≈ 0.05). Fail +15% sits clearly above
+# sampling uncertainty. Absolute floor 0.15 is a loose AMI disaster line only.
 WDER_DRIFT_THRESHOLDS = WderDriftThresholds(
-    baseline_corpus_wder=0.017720,
-    review_relative_increase=0.20,
-    fail_relative_increase=0.30,
-    absolute_floor=0.10,
+    baseline_corpus_wder=0.049162,
+    review_relative_increase=0.05,
+    fail_relative_increase=0.15,
+    absolute_floor=0.15,
 )
 
 # Speaker-count bands are absolute correct counts out of n_meetings (readable as 7/10, 6/10, ...).

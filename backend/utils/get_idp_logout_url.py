@@ -45,7 +45,7 @@ async def get_idp_logout_url() -> str | None:
             response = await client.get(discovery_url)
             response.raise_for_status()
 
-        config = cast("OIDCResponse", response.json())
+        config = cast(OIDCResponse, response.json())
 
         logout_url = config.get("end_session_endpoint")
 

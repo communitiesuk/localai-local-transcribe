@@ -19,7 +19,7 @@ log = logging.getLogger("uvicorn")
 
 
 @asynccontextmanager
-async def lifespan(app_: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
+async def lifespan(app_: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
     log.info("Starting up...")
 
     await init_cleanup_scheduler()

@@ -54,25 +54,18 @@ def corpus_wer(meetings: list[MeetingWerComponents]) -> float:
     """Return corpus WER as sum(errors) / sum(reference_words) across meetings."""
     total_errors = sum(meeting.errors for meeting in meetings)
     total_reference_words = sum(meeting.reference_words for meeting in meetings)
-    if total_reference_words <= 0:
-        message = "Corpus WER requires at least one reference word"
-        raise ValueError(message)
     return total_errors / total_reference_words
 
 
-def meeting_components_from_sample(sample: dict) -> MeetingWerComponents | None:
-    """Extract scorable WER counts, or return None for missing/zero-reference samples."""
-    metrics = sample.get("metrics") or {}
-    if any(metrics.get(key) is None for key in ("hits", "substitutions", "deletions", "insertions")):
-        return None
+def meeting_components_from_sample(sample: dict) -> MeetingWerComponents:
+    """Extract WER edit components from one evaluation sample row."""
+    metrics = sample["metrics"]
     hits = int(metrics["hits"])
     substitutions = int(metrics["substitutions"])
     deletions = int(metrics["deletions"])
     insertions = int(metrics["insertions"])
     reference_words = hits + substitutions + deletions
     errors = substitutions + deletions + insertions
-    if reference_words <= 0:
-        return None
     return MeetingWerComponents(
         example_id=str(sample["example_id"]),
         hits=hits,
@@ -108,15 +101,12 @@ def build_wer_bootstrap_artefact(
     random_seed: int = DEFAULT_RANDOM_SEED,
     quantiles: tuple[float, ...] = DEFAULT_QUANTILES,
     engine_version: str | None = None,
-) -> dict | None:
-    """Build a WER bootstrap artefact, or return None when no sample has scorable WER."""
+) -> dict:
+    """Build the JSON-serialisable WER bootstrap artefact for one evaluation results file."""
     data = json.loads(evaluation_results_path.read_text(encoding="utf-8"))
     engines: dict = data["engines"]
     resolved_engine = engine_version or next(iter(engines))
-    components = [meeting_components_from_sample(sample) for sample in engines[resolved_engine]]
-    meetings = [meeting for meeting in components if meeting is not None]
-    if not meetings:
-        return None
+    meetings = [meeting_components_from_sample(sample) for sample in engines[resolved_engine]]
     baseline_corpus_wer = corpus_wer(meetings)
     bootstrap_values = bootstrap_corpus_wer(meetings, n_resamples=n_resamples, random_seed=random_seed)
     summary = bootstrap_summary(bootstrap_values, quantiles=quantiles)
@@ -135,11 +125,6 @@ def build_wer_bootstrap_artefact(
         "source_results_file": evaluation_results_path.name,
         "engine_version": resolved_engine,
         "n_meetings": len(meetings),
-        "excluded_example_ids": [
-            str(sample["example_id"])
-            for sample, meeting in zip(engines[resolved_engine], components, strict=True)
-            if meeting is None
-        ],
         "meetings": [meeting._asdict() for meeting in meetings],
         "baseline_corpus_wer": baseline_corpus_wer,
         "bootstrap": {

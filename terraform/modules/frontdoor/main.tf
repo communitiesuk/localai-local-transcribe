@@ -1,6 +1,5 @@
 locals {
-  cloudfront_header_name             = "X-CLOUDFRONT-HEADER"
-  waf_body_size_exception_path_regex = "^(/monitoring|/api/proxy/minutes/[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}/versions)/?$"
+  cloudfront_header_name = "X-CLOUDFRONT-HEADER"
 }
 
 terraform {
@@ -9,6 +8,7 @@ terraform {
   required_providers {
     aws = {
       source                = "hashicorp/aws"
+      version               = "~>6.5"
       configuration_aliases = [aws.us-east-1]
     }
     random = {

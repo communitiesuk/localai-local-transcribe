@@ -1,4 +1,4 @@
-import datetime as dt
+import datetime
 from typing import Any, cast
 
 from sqlalchemy import ColumnElement, and_, or_
@@ -41,11 +41,11 @@ def _transcription_search_filters(
     client_name: str | None = None,
     case_id: str | None = None,
     subject: str | None = None,
-    date_of_recording: dt.date | None = None,
+    date_of_recording: datetime.date | None = None,
     date_of_recording_day: int | None = None,
     date_of_recording_month: int | None = None,
     date_of_recording_year: int | None = None,
-    client_date_of_birth: dt.date | None = None,
+    client_date_of_birth: datetime.date | None = None,
 ) -> list[ColumnElement[Any]]:
     filters: list[ColumnElement[Any]] = []
 
@@ -71,10 +71,10 @@ def _transcription_search_filters(
             )
         )
     if date_of_recording:
-        start = dt.datetime.combine(date_of_recording, dt.time.min)
-        end = start + dt.timedelta(days=1)
-        created_start = start.replace(tzinfo=dt.UTC)
-        created_end = end.replace(tzinfo=dt.UTC)
+        start = datetime.datetime.combine(date_of_recording, datetime.time.min)
+        end = start + datetime.timedelta(days=1)
+        created_start = start.replace(tzinfo=datetime.UTC)
+        created_end = end.replace(tzinfo=datetime.UTC)
         filters.append(
             or_(
                 and_(
@@ -90,8 +90,8 @@ def _transcription_search_filters(
             )
         )
     elif date_of_recording_day or date_of_recording_month or date_of_recording_year:
-        date_of_recording_column = cast("ColumnElement[Any]", col(Transcription.date_of_recording))
-        created_datetime_column = cast("ColumnElement[Any]", col(Transcription.created_datetime))
+        date_of_recording_column = cast(ColumnElement[Any], col(Transcription.date_of_recording))
+        created_datetime_column = cast(ColumnElement[Any], col(Transcription.created_datetime))
         recorded_date_filters = _date_part_filters(
             date_of_recording_column,
             day=date_of_recording_day,
@@ -111,8 +111,8 @@ def _transcription_search_filters(
             )
         )
     if client_date_of_birth:
-        start = dt.datetime.combine(client_date_of_birth, dt.time.min)
-        end = start + dt.timedelta(days=1)
+        start = datetime.datetime.combine(client_date_of_birth, datetime.time.min)
+        end = start + datetime.timedelta(days=1)
         filters.append(col(Transcription.client_date_of_birth) >= start)
         filters.append(col(Transcription.client_date_of_birth) < end)
 

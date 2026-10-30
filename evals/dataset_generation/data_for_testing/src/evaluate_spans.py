@@ -12,7 +12,6 @@ from evals.dataset_generation.data_for_testing.src.run_helpers import (
 from evals.dataset_generation.data_for_testing.src.settings import INPUT_DIR, OUTPUT_DIR
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
-logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
@@ -20,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("name", help="Name of the instance to evaluate (matches input/<name> and output/<name>)")
     args = parser.parse_args()
 
-    logger.info("=== STARTING EVALUATE ===")
+    logging.info("=== STARTING EVALUATE ===")
 
     output_dir = OUTPUT_DIR / args.name
     reference = load_json(output_dir / "reference.json")
@@ -30,15 +29,15 @@ if __name__ == "__main__":
 
     hypothesis_path = copy_characteristics_output(output_dir, output_stem)
     hypothesis = load_json(hypothesis_path)
-    logger.info("Saved hypothesis → %s", hypothesis_path)
+    logging.info("Saved hypothesis → %s", hypothesis_path)
 
     if hypothesis.get("detected_characteristics"):
         metrics = evaluate_by_index(reference, hypothesis)
         metrics_path = output_dir / "metrics.json"
         with metrics_path.open("w", encoding="utf-8") as f:
             json.dump(metrics, f, indent=2, ensure_ascii=False)
-        logger.info("Written metrics → %s", metrics_path)
+        logging.info("Written metrics → %s", metrics_path)
     else:
-        logger.error("Empty detected_characteristics in hypothesis output")
+        logging.error("Empty detected_characteristics in hypothesis output")
 
-    logger.info("=== EVALUATE COMPLETE ===")
+    logging.info("=== EVALUATE COMPLETE ===")

@@ -15,6 +15,10 @@ from pathlib import Path
 from typing import Literal, NamedTuple
 
 from evals.transcription.src.baseline.bootstrap_common import relative_increase
+from evals.transcription.src.baseline.wder_bootstrap import (
+    corpus_wder,
+    meeting_wder_components_from_sample,
+)
 from evals.transcription.src.baseline.wer_bootstrap import (
     corpus_wer,
     meeting_components_from_sample,
@@ -56,7 +60,7 @@ class DriftVerdict(NamedTuple):
     metric: str
     outcome: DriftOutcome
     detail: str
-    observed: float | None
+    observed: float
 
 
 def require_meeting_count_matches_eval_config(
@@ -93,7 +97,8 @@ def classify_wer_drift(
             metric="corpus_wer",
             outcome="floor",
             detail=(
-                f"corpus WER {observed_corpus_wer:.6f} is at or above absolute floor {thresholds.absolute_floor:.6f}"
+                f"corpus WER {observed_corpus_wer:.6f} is at or above absolute floor "
+                f"{thresholds.absolute_floor:.6f}"
             ),
             observed=observed_corpus_wer,
         )
@@ -139,7 +144,8 @@ def classify_wder_drift(
             metric="corpus_wder",
             outcome="floor",
             detail=(
-                f"corpus WDER {observed_corpus_wder:.6f} is at or above absolute floor {thresholds.absolute_floor:.6f}"
+                f"corpus WDER {observed_corpus_wder:.6f} is at or above absolute floor "
+                f"{thresholds.absolute_floor:.6f}"
             ),
             observed=observed_corpus_wder,
         )
@@ -282,149 +288,56 @@ def classify_processing_speed_drift(
 
 
 def worst_outcome(outcomes: list[DriftOutcome]) -> DriftOutcome:
-    """
-    Return the most severe outcome in outcomes.
-    """
+    """Return the most severe outcome in ``outcomes``."""
     if not outcomes:
         msg = "worst_outcome requires at least one drift outcome"
         raise ValueError(msg)
     return max(outcomes, key=lambda outcome: _OUTCOME_RANK[outcome])
 
 
-def is_wer_scorable(sample: SampleRow) -> bool:
-    """
-    Report whether a sample's reference contributed at least one word to score WER against.
-
-    Both the corpus ratio and the excluded-sample count read this one predicate, so the
-    number reported in a verdict always matches the set that was actually summed.
-    """
-    reference_word_count_keys = ("hits", "substitutions", "deletions")
-    if any(sample.metrics.get(word_count_key) is None for word_count_key in reference_word_count_keys):
-        return False
-    return sum(int(sample.metrics[word_count_key]) for word_count_key in reference_word_count_keys) > 0
-
-
-def is_wder_scorable(sample: SampleRow) -> bool:
-    """
-    Report whether a sample has the speaker-error and reference-word counts WER diarisation needs.
-    """
-    return (
-        sample.metrics.get("speaker_errors") is not None
-        and sample.metrics.get("total_words") is not None
-        and sample.metrics["total_words"] > 0
-    )
-
-
-def corpus_wer_from_samples(samples: list[SampleRow]) -> float | None:
-    """
-    Compute corpus WER from per-meeting edit counts
+def corpus_wer_from_samples(samples: list[SampleRow]) -> float:
+    """Compute corpus WER from per-meeting edit counts
     (hits, substitutions, deletions, and insertions used to form total errors over total reference words).
-
-    Samples are filtered before components are built, because the per-meeting WER each
-    component carries divides by that meeting's reference words. Returns None when no
-    sample is scorable, leaving the caller to record that the check did not run.
     """
-    scorable_samples = [sample for sample in samples if is_wer_scorable(sample)]
-    if not scorable_samples:
-        return None
-    components = [
+    meetings = [
         meeting_components_from_sample({"example_id": sample.example_id, "metrics": sample.metrics})
-        for sample in scorable_samples
+        for sample in samples
     ]
-    meetings = [component for component in components if component is not None]
-    return corpus_wer(meetings) if meetings else None
+    return corpus_wer(meetings)
 
 
-def corpus_wder_from_samples(samples: list[SampleRow]) -> float | None:
-    """
-    Sum scorable diarisation counts; zero-word or unavailable samples do not enter the ratio.
-    """
-    scorable_samples = [sample for sample in samples if is_wder_scorable(sample)]
-    reference_words = sum(sample.metrics["total_words"] for sample in scorable_samples)
-    speaker_errors = sum(sample.metrics["speaker_errors"] for sample in scorable_samples)
-    return speaker_errors / reference_words if reference_words else None
+def corpus_wder_from_samples(samples: list[SampleRow]) -> float:
+    """Compute corpus WDER from per-meeting speaker-error and reference-word counts."""
+    meetings = [
+        meeting_wder_components_from_sample({"example_id": sample.example_id, "metrics": sample.metrics})
+        for sample in samples
+    ]
+    return corpus_wder(meetings)
 
 
 def speaker_correct_count(samples: list[SampleRow]) -> int:
-    """
-    Count meetings whose speaker_count_accuracy metric is at least 1.0.
-    """
-    return sum(
-        1
-        for sample in samples
-        if sample.metrics.get("speaker_count_accuracy") is not None and sample.metrics["speaker_count_accuracy"] >= 1.0
-    )
+    """Count meetings whose speaker_count_accuracy metric is at least 1.0."""
+    return sum(1 for sample in samples if sample.metrics["speaker_count_accuracy"] >= 1.0)
 
 
-def note_excluded_samples(verdict: DriftVerdict, excluded: int) -> DriftVerdict:
-    """
-    Record excluded samples on a verdict, escalating a pass to review.
-
-    A corpus ratio computed over a subset is still worth reporting, but it is no longer the
-    clean pass it appears to be, so the run earns a review artefact rather than silence.
-    """
-    if not excluded:
-        return verdict
-    return verdict._replace(
-        outcome="review" if verdict.outcome == "pass" else verdict.outcome,
-        detail=f"{verdict.detail} Excluded {excluded} unscorable sample(s).",
-    )
-
-
-def assess_engine_drift(engine_output: EngineOutput, *, supports_diarization: bool = True) -> list[DriftVerdict]:
-    """
-    Run WER, WDER, speaker-count, and speed drift checks for one engine output
+def assess_engine_drift(engine_output: EngineOutput) -> list[DriftVerdict]:
+    """Run WER, WDER, speaker-count, and speed drift checks for one engine output
     (one speech-to-text (STT) provider's full eval result. A run summary plus one
     sample row per meeting, each holding that meeting's transcripts and metrics).
     """
     samples = engine_output.samples
-    corpus_wer_value = corpus_wer_from_samples(samples)
-    if corpus_wer_value is None:
-        verdicts = [DriftVerdict("corpus_wer", "review", "Not assessed: no scorable reference words.", None)]
-    else:
-        verdicts = [
-            note_excluded_samples(
-                classify_wer_drift(corpus_wer_value),
-                sum(not is_wer_scorable(sample) for sample in samples),
-            )
-        ]
-    if not supports_diarization:
-        detail = "Not assessed: the dataset or adapter does not support diarization."
-        verdicts.extend(
-            [
-                DriftVerdict("corpus_wder", "review", detail, None),
-                DriftVerdict("speaker_count_accuracy", "review", detail, None),
-            ]
-        )
-    else:
-        corpus_wder_value = corpus_wder_from_samples(samples)
-        if corpus_wder_value is None:
-            verdicts.append(
-                DriftVerdict("corpus_wder", "review", "Not assessed: no scorable diarization reference words.", None)
-            )
-        else:
-            verdicts.append(
-                note_excluded_samples(
-                    classify_wder_drift(corpus_wder_value),
-                    sum(not is_wder_scorable(sample) for sample in samples),
-                )
-            )
-        if samples and all(sample.metrics.get("speaker_count_accuracy") is not None for sample in samples):
-            verdicts.append(classify_speaker_count_drift(speaker_correct_count(samples), len(samples)))
-        else:
-            verdicts.append(
-                DriftVerdict("speaker_count_accuracy", "review", "Not assessed: speaker accuracy is unavailable.", None)
-            )
-    verdicts.append(classify_processing_speed_drift(engine_output.summary.processing_speed_ratio))
-    return verdicts
+    return [
+        classify_wer_drift(corpus_wer_from_samples(samples)),
+        classify_wder_drift(corpus_wder_from_samples(samples)),
+        classify_speaker_count_drift(speaker_correct_count(samples), len(samples)),
+        classify_processing_speed_drift(engine_output.summary.processing_speed_ratio),
+    ]
 
 
 def apply_drift_thresholds(
     results: list[EngineOutput],
     output_dir: Path,
     timestamp: str,
-    *,
-    diarization_capabilities: dict[str, bool] | None = None,
 ) -> int:
     """Assess drift for each engine output, write a review file if needed, and return the process exit code.
 
@@ -439,12 +352,7 @@ def apply_drift_thresholds(
     all_verdicts: list[dict] = []
     outcomes: list[DriftOutcome] = []
     for engine_output in results:
-        supports_diarization = (
-            diarization_capabilities[engine_output.summary.engine_version]
-            if diarization_capabilities is not None
-            else True
-        )
-        engine_verdicts = assess_engine_drift(engine_output, supports_diarization=supports_diarization)
+        engine_verdicts = assess_engine_drift(engine_output)
         for verdict in engine_verdicts:
             logger.info(
                 "%s %s: %s (%s)",

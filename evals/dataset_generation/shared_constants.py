@@ -1,9 +1,7 @@
 from enum import Enum
 
 
-# Kept as (str, Enum) rather than StrEnum: StrEnum changes f-string/str() output from
-# "ProtectedCharacteristic.AGE" to "Age", which would alter generated file names and log output.
-class ProtectedCharacteristic(str, Enum):  # noqa: UP042
+class ProtectedCharacteristic(str, Enum):
     AGE = "Age"
     DISABILITY = "Disability"
     GENDER_REASSIGNMENT = "Gender Reassignment"

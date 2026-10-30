@@ -1,4 +1,4 @@
-import datetime as dt
+import datetime
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def get_client() -> AsyncGenerator[ContainerClient]:
+async def get_client() -> AsyncGenerator[ContainerClient, None]:
     if not settings.AZURE_BLOB_CONNECTION_STRING:
         msg = "AZURE_BLOB_CONNECTION_STRING must be set"
         raise ValueError(msg)
@@ -49,8 +49,8 @@ class AzureBlobStorageService(StorageService):
     @classmethod
     async def generate_presigned_url_put_object(cls, key: str, expiry_seconds: int) -> str:
         async with get_client() as container_client:
-            start_time = dt.datetime.now(dt.UTC)
-            expiry_time = start_time + dt.timedelta(seconds=expiry_seconds)
+            start_time = datetime.datetime.now(datetime.UTC)
+            expiry_time = start_time + datetime.timedelta(seconds=expiry_seconds)
             sas_token = generate_blob_sas(
                 blob_name=key,
                 account_name=container_client.account_name,
@@ -64,8 +64,8 @@ class AzureBlobStorageService(StorageService):
     @classmethod
     async def generate_presigned_url_get_object(cls, key: str, filename: str, expiry_seconds: int) -> str:
         async with get_client() as container_client:
-            start_time = dt.datetime.now(dt.UTC)
-            expiry_time = start_time + dt.timedelta(seconds=expiry_seconds)
+            start_time = datetime.datetime.now(datetime.UTC)
+            expiry_time = start_time + datetime.timedelta(seconds=expiry_seconds)
             sas_token = generate_blob_sas(
                 blob_name=key,
                 account_name=container_client.account_name,

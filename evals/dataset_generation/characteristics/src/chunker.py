@@ -40,7 +40,7 @@ def _article_extended_start(match_start: int, text: str) -> int:
 _MIN_MULTI_OCCURRENCE_LEN = 4
 
 
-def _located_spans(detection: CharacteristicDetection) -> list[tuple[int, int]]:
+def _located_spans(detection: "CharacteristicDetection") -> list[tuple[int, int]]:
     """Return (start, end) pairs for spans that have been located in the transcript."""
     return [
         (s.start_index, s.end_index)
@@ -49,7 +49,7 @@ def _located_spans(detection: CharacteristicDetection) -> list[tuple[int, int]]:
     ]
 
 
-def _spans_related(a: CharacteristicDetection, b: CharacteristicDetection) -> bool:
+def _spans_related(a: "CharacteristicDetection", b: "CharacteristicDetection") -> bool:
     """Return True if any span in `a` contains or is contained by any span in `b`.
 
     This catches sub-span duplicates (e.g. 'Blum' inside 'Mrs Blum', 'with disabilities'

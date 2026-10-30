@@ -37,20 +37,6 @@ This will build and run 5 containers:
 4. Postgres database hosted at http:localhost:5432
 5. ElasticMQ to simulate AWS SQS
 
-The frontend, backend and worker containers run as non-root users: UID/GID
-`1001:1001`, `1000:1000` and `1000:1000`, respectively.
-
-The backend and worker share `./.data` as `/static`. On Linux hosts, prepare
-this bind mount before the first start and repair ownership after files have
-been created by a previous root-running container:
-
-```bash
-mkdir -p .data
-sudo chown -R 1000:1000 .data
-```
-
-Do not apply this to a database directory.
-
 #### LLM and Transcription Services
 
 If you have access to a supported LLM and Transcription provider, you will need to fill in the associated `.env` variables and configure `common/settings.py` accordingly. For example, to use transcription and LLM services via Azure APIM, update the following values:

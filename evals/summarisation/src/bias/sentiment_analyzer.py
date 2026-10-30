@@ -48,10 +48,10 @@ class SentimentAnalyzer:
         while start < len(tokens):
             end = start + chunk_size
             chunk_tokens = tokens[start:end]
-            chunk_text = cast("str", self.tokenizer.decode(chunk_tokens, skip_special_tokens=True))
+            chunk_text = cast(str, self.tokenizer.decode(chunk_tokens, skip_special_tokens=True))
             chunks.append(chunk_text)
             start = end - chunk_overlap if end < len(tokens) else end
-        return chunks or [text]
+        return chunks if chunks else [text]
 
     def compute_sentiment_distribution(self, text: str) -> dict[str, float]:
         """Compute the raw sentiment probability distribution for text.
@@ -68,7 +68,7 @@ class SentimentAnalyzer:
         neg_scores: list[float] = []
         for chunk in chunks:
             chunk_results = self.sentiment_pipeline(chunk, truncation=True, max_length=SENTIMENT_MAX_LENGTH)
-            results = cast("list[SentimentResult]", chunk_results[0])
+            results = cast(list[SentimentResult], chunk_results[0])
 
             pos_score = 0.0
             neu_score = 0.0

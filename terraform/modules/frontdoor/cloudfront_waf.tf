@@ -100,18 +100,40 @@ resource "aws_wafv2_web_acl" "main" {
         scope_down_statement {
           not_statement {
             statement {
-              regex_match_statement {
-                field_to_match {
-                  uri_path {}
+              or_statement {
+                statement {
+                  byte_match_statement {
+                    field_to_match {
+                      uri_path {}
+                    }
+                    positional_constraint = "EXACTLY"
+                    search_string         = "/monitoring"
+                    text_transformation {
+                      priority = 0
+                      type     = "URL_DECODE"
+                    }
+                    text_transformation {
+                      priority = 1
+                      type     = "NORMALIZE_PATH"
+                    }
+                  }
                 }
-                regex_string = local.waf_body_size_exception_path_regex
-                text_transformation {
-                  priority = 0
-                  type     = "URL_DECODE"
-                }
-                text_transformation {
-                  priority = 1
-                  type     = "NORMALIZE_PATH"
+                statement {
+                  byte_match_statement {
+                    field_to_match {
+                      uri_path {}
+                    }
+                    positional_constraint = "EXACTLY"
+                    search_string         = "/monitoring/"
+                    text_transformation {
+                      priority = 0
+                      type     = "URL_DECODE"
+                    }
+                    text_transformation {
+                      priority = 1
+                      type     = "NORMALIZE_PATH"
+                    }
+                  }
                 }
               }
             }
@@ -119,13 +141,13 @@ resource "aws_wafv2_web_acl" "main" {
         }
       }
     }
+
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "waf-block-common-exploit"
       sampled_requests_enabled   = true
     }
   }
-
 
   rule {
     name     = "aws-managed-rules-common-rule-set-monitoring"
@@ -148,25 +170,45 @@ resource "aws_wafv2_web_acl" "main" {
         }
 
         scope_down_statement {
-          regex_match_statement {
-            field_to_match {
-              uri_path {}
+          or_statement {
+            statement {
+              byte_match_statement {
+                field_to_match {
+                  uri_path {}
+                }
+                positional_constraint = "EXACTLY"
+                search_string         = "/monitoring"
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+                text_transformation {
+                  priority = 1
+                  type     = "NORMALIZE_PATH"
+                }
+              }
             }
-            regex_string = local.waf_body_size_exception_path_regex
-            text_transformation {
-              priority = 0
-              type     = "URL_DECODE"
-            }
-            text_transformation {
-              priority = 1
-              type     = "NORMALIZE_PATH"
+            statement {
+              byte_match_statement {
+                field_to_match {
+                  uri_path {}
+                }
+                positional_constraint = "EXACTLY"
+                search_string         = "/monitoring/"
+                text_transformation {
+                  priority = 0
+                  type     = "URL_DECODE"
+                }
+                text_transformation {
+                  priority = 1
+                  type     = "NORMALIZE_PATH"
+                }
+              }
             }
           }
         }
       }
     }
-
-
 
     visibility_config {
       cloudwatch_metrics_enabled = true
@@ -174,6 +216,7 @@ resource "aws_wafv2_web_acl" "main" {
       sampled_requests_enabled   = true
     }
   }
+
   rule {
     name     = "aws-managed-rules-known-bad-inputs-rule-set"
     priority = 5

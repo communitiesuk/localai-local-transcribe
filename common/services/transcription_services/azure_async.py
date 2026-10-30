@@ -1,5 +1,5 @@
 import asyncio
-import datetime as dt
+import datetime
 import json
 import logging
 import uuid
@@ -27,7 +27,7 @@ storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
 
 
 @contextmanager
-def get_client() -> Generator[ContainerClient]:
+def get_client() -> Generator[ContainerClient, None, None]:
     if not settings.AZURE_BLOB_CONNECTION_STRING:
         msg = "AZURE_BLOB_CONNECTION_STRING must be set"
         raise ValueError(msg)
@@ -170,19 +170,15 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
 
     @classmethod
     def get_dialogue_entries(cls, phrases: dict[str, Any]) -> list[DialogueEntry]:
-        entries = []
-        for phrase in phrases["recognizedPhrases"]:
-            best_result = phrase["nBest"][0]
-            entry = DialogueEntry(
-                speaker=str(phrase["speaker"]),
-                text=best_result["display"],
-                start_time=float(phrase["offsetMilliseconds"]) / 1000,
-                end_time=(float(phrase["offsetMilliseconds"]) + float(phrase["durationMilliseconds"])) / 1000,
+        return [
+            DialogueEntry(
+                speaker=str(entry["speaker"]),
+                text=entry["nBest"][0]["display"],
+                start_time=float(entry["offsetMilliseconds"]) / 1000,
+                end_time=(float(entry["offsetMilliseconds"]) + float(entry["durationMilliseconds"])) / 1000,
             )
-            if best_result.get("confidence") is not None:
-                entry["confidence"] = float(best_result["confidence"])
-            entries.append(entry)
-        return entries
+            for entry in phrases["recognizedPhrases"]
+        ]
 
     @classmethod
     @retry(
@@ -194,7 +190,6 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
         cls, data: TranscriptionJobMessageData, retry_count: int = 5, retry_delay: int = 5
     ) -> TranscriptionJobMessageData:
         # Poll for completion
-        job_status = data.job_status
         for _ in range(retry_count):
             async with httpx.AsyncClient(timeout=timeout_settings) as client:
                 job_response = await make_stt_request(
@@ -207,8 +202,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
                 job_status = job_data.get("status", None)
                 match job_status:
                     case "Succeeded":
-                        result = await cls.get_results(job_data["links"]["files"], data)
-                        return result.model_copy(update={"job_status": job_status})
+                        return await cls.get_results(job_data["links"]["files"], data)
                     case "Failed":
                         msg = f"Transcription job failed: {job_data.get('statusMessage', 'Unknown error')}"
                         raise ValueError(msg)
@@ -217,7 +211,7 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
                         raise ValueError(msg)
                     case _:
                         await asyncio.sleep(retry_delay)
-        return data.model_copy(update={"job_status": job_status})
+        return data
 
     @classmethod
     def is_available(cls) -> bool:
@@ -227,8 +221,8 @@ class AzureBatchTranscriptionAdapter(TranscriptionAdapter):
     def get_azure_container_sas(
         cls, container_client: ContainerClient, container_permissions: ContainerSasPermissions, expiry_days: int = 1
     ) -> str:
-        start_time = dt.datetime.now(dt.UTC)
-        expiry_time = start_time + dt.timedelta(days=expiry_days)
+        start_time = datetime.datetime.now(datetime.UTC)
+        expiry_time = start_time + datetime.timedelta(days=expiry_days)
         return generate_container_sas(
             account_name=container_client.account_name,
             container_name=container_client.container_name,

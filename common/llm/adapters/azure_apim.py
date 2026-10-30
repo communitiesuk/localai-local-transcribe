@@ -102,7 +102,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
             raise ValueError(error_msg)
 
         if not isinstance(parsed, response_format):
-            error_msg = f"Azure APIM parsed response is not of type {response_format}"
+            error_msg = "Azure APIM parsed response is not of type " f"{response_format}"
 
             logger.error(
                 "APIM FAILURE: structured_chat - %s",
@@ -141,7 +141,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
         choice = response.choices[0]
 
-        self.log_if_finish_reason_is_length(choice, response)
+        self.choice_incomplete(choice, response)
 
         message_content = choice.message.content
 
@@ -156,7 +156,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
             raise ValueError(error_msg)
 
         if not isinstance(message_content, str):
-            error_msg = f"Azure APIM message.content is not a string: {type(message_content)}"
+            error_msg = "Azure APIM message.content is not a string: " f"{type(message_content)}"
 
             logger.error(
                 "APIM FAILURE: chat - %s",
@@ -182,7 +182,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
                 wait_time = self._extract_retry_after(error)
 
                 logger.warning(
-                    ("APIM RETRY: %s - rate limit hit (attempt %d/%d), retrying in %ds"),
+                    ("APIM RETRY: %s - rate limit hit " "(attempt %d/%d), retrying in %ds"),
                     method_name,
                     attempt + 1,
                     MAX_RETRIES,
@@ -200,7 +200,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
             except AuthenticationError:
                 logger.warning(
-                    ("APIM RETRY: %s - authentication error, refreshing token and retrying (attempt %d/%d)"),
+                    ("APIM RETRY: %s - authentication error, " "refreshing token and retrying " "(attempt %d/%d)"),
                     method_name,
                     attempt + 1,
                     MAX_RETRIES,
@@ -212,7 +212,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
                 if attempt == MAX_RETRIES - 1:
                     logger.error(
-                        ("APIM FAILURE: %s - max retries exceeded due to authentication errors"),
+                        ("APIM FAILURE: %s - max retries exceeded " "due to authentication errors"),
                         method_name,
                     )
                     raise
@@ -226,7 +226,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
             except (APIConnectionError, APIError, APITimeoutError) as error:
                 logger.warning(
-                    ("APIM RETRY: %s - %s: %s (attempt %d/%d)"),
+                    ("APIM RETRY: %s - %s: %s " "(attempt %d/%d)"),
                     method_name,
                     type(error).__name__,
                     str(error),
@@ -267,7 +267,7 @@ class AzureAPIMModelAdapter(ModelAdapter):
 
             except ValueError:
                 logger.warning(
-                    ("APIM WARNING: failed to parse Retry-After header: %s"),
+                    ("APIM WARNING: failed to parse " "Retry-After header: %s"),
                     retry_after_header,
                 )
 
@@ -282,17 +282,20 @@ class AzureAPIMModelAdapter(ModelAdapter):
         if match:
             return int(match.group(1))
 
-        logger.warning("APIM WARNING: could not determine retry-after value, defaulting to 60 seconds")
+        logger.warning("APIM WARNING: could not determine retry-after " "value, defaulting to 60 seconds")
 
         return 60
 
     @staticmethod
-    def log_if_finish_reason_is_length(
+    def choice_incomplete(
         choice: Choice,
         response: ChatCompletion,
-    ) -> None:
+    ) -> bool:
         if choice.finish_reason == "length":
             logger.warning(
-                ("APIM WARNING: max output tokens reached (response_id=%s)"),
+                ("APIM WARNING: max output tokens reached " "(response_id=%s)"),
                 response.id,
             )
+            return True
+
+        return False

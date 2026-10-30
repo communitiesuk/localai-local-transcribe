@@ -30,7 +30,7 @@ class LazyQueueService(QueueService[ReceiptHandle]):
             self._service = service(self.queue_name, self.deadletter_queue_name)
         return self._service
 
-    def __reduce__(self) -> tuple[type[LazyQueueService], tuple[str, str, str]]:
+    def __reduce__(self) -> tuple[type["LazyQueueService"], tuple[str, str, str]]:
         return LazyQueueService, (self.queue_service_name, self.queue_name, self.deadletter_queue_name)
 
     def receive_message(self, max_messages: int = 10) -> list[tuple[WorkerMessage, ReceiptHandle]]:

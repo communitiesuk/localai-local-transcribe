@@ -26,7 +26,7 @@ class ChunkingConfig(BaseModel):
     overlap_chars: int = Field(default=400)
 
     @model_validator(mode="after")
-    def overlap_less_than_chunk(self) -> ChunkingConfig:
+    def overlap_less_than_chunk(self) -> "ChunkingConfig":
         if self.overlap_chars >= self.chunk_size_chars:
             msg = f"overlap_chars ({self.overlap_chars}) must be less than chunk_size_chars ({self.chunk_size_chars})"
             raise ValueError(msg)

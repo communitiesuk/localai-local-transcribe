@@ -50,21 +50,14 @@ def corpus_wder(meetings: list[MeetingWderComponents]) -> float:
     """Return corpus WDER as sum(speaker_errors) / sum(total_words) across meetings."""
     total_speaker_errors = sum(meeting.speaker_errors for meeting in meetings)
     total_words = sum(meeting.total_words for meeting in meetings)
-    if total_words <= 0:
-        message = "Corpus WDER requires at least one reference word"
-        raise ValueError(message)
     return total_speaker_errors / total_words
 
 
-def meeting_wder_components_from_sample(sample: dict) -> MeetingWderComponents | None:
-    """Extract scorable WDER counts, or return None for unavailable/zero-word samples."""
-    metrics = sample.get("metrics") or {}
-    if metrics.get("speaker_errors") is None or metrics.get("total_words") is None:
-        return None
+def meeting_wder_components_from_sample(sample: dict) -> MeetingWderComponents:
+    """Extract WDER components from one evaluation sample row."""
+    metrics = sample["metrics"]
     speaker_errors = int(metrics["speaker_errors"])
     total_words = int(metrics["total_words"])
-    if total_words <= 0:
-        return None
     return MeetingWderComponents(
         example_id=str(sample["example_id"]),
         speaker_errors=speaker_errors,
@@ -96,15 +89,12 @@ def build_wder_bootstrap_artefact(
     random_seed: int = DEFAULT_RANDOM_SEED,
     quantiles: tuple[float, ...] = DEFAULT_QUANTILES,
     engine_version: str | None = None,
-) -> dict | None:
-    """Build a WDER bootstrap artefact, or return None when no sample has scorable WDER."""
+) -> dict:
+    """Build the JSON-serialisable WDER bootstrap artefact for one evaluation results file."""
     data = json.loads(evaluation_results_path.read_text(encoding="utf-8"))
     engines: dict = data["engines"]
     resolved_engine = engine_version or next(iter(engines))
-    components = [meeting_wder_components_from_sample(sample) for sample in engines[resolved_engine]]
-    meetings = [meeting for meeting in components if meeting is not None]
-    if not meetings:
-        return None
+    meetings = [meeting_wder_components_from_sample(sample) for sample in engines[resolved_engine]]
     baseline_corpus_wder = corpus_wder(meetings)
     bootstrap_values = bootstrap_corpus_wder(meetings, n_resamples=n_resamples, random_seed=random_seed)
     summary = bootstrap_summary(bootstrap_values, quantiles=quantiles)
@@ -125,11 +115,6 @@ def build_wder_bootstrap_artefact(
         "source_results_file": evaluation_results_path.name,
         "engine_version": resolved_engine,
         "n_meetings": len(meetings),
-        "excluded_example_ids": [
-            str(sample["example_id"])
-            for sample, meeting in zip(engines[resolved_engine], components, strict=True)
-            if meeting is None
-        ],
         "meetings": [meeting._asdict() for meeting in meetings],
         "baseline_corpus_wder": baseline_corpus_wder,
         "bootstrap": {

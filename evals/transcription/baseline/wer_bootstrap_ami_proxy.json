@@ -2,113 +2,112 @@
   "metric": "corpus_wer",
   "resampling_unit": "meeting",
   "description": "Meeting-block bootstrap of corpus WER on the baseline transcription eval config (evals/transcription/configs/larger_cloud_test.yaml. 10 full audio recordings of the Augmented Multi-party Interaction (AMI) dataset, run with Azure speech-to-text). Estimates uncertainty in the aggregate metric, not provider run-to-run randomness.",
-  "source_results_file": "evaluation_results_20261015_122813.json",
+  "source_results_file": "evaluation_results_20260715_180006.json",
   "engine_version": "azure_stt_synchronous",
   "n_meetings": 10,
-  "excluded_example_ids": [],
   "meetings": [
     {
       "example_id": "0",
-      "hits": 4940,
-      "substitutions": 492,
-      "deletions": 2189,
-      "insertions": 70,
+      "hits": 5011,
+      "substitutions": 503,
+      "deletions": 2107,
+      "insertions": 82,
       "reference_words": 7621,
-      "errors": 2751,
-      "meeting_wer": 0.36097624983597953
+      "errors": 2692,
+      "meeting_wer": 0.3532344836635612
     },
     {
       "example_id": "1",
-      "hits": 4012,
-      "substitutions": 391,
-      "deletions": 1661,
-      "insertions": 83,
+      "hits": 4058,
+      "substitutions": 394,
+      "deletions": 1612,
+      "insertions": 92,
       "reference_words": 6064,
-      "errors": 2135,
-      "meeting_wer": 0.3520778364116095
+      "errors": 2098,
+      "meeting_wer": 0.345976253298153
     },
     {
       "example_id": "2",
-      "hits": 7461,
-      "substitutions": 753,
-      "deletions": 2517,
-      "insertions": 140,
+      "hits": 7510,
+      "substitutions": 744,
+      "deletions": 2477,
+      "insertions": 151,
       "reference_words": 10731,
-      "errors": 3410,
-      "meeting_wer": 0.317770943994036
+      "errors": 3372,
+      "meeting_wer": 0.31422980150964497
     },
     {
       "example_id": "3",
-      "hits": 5005,
-      "substitutions": 500,
-      "deletions": 2325,
-      "insertions": 92,
+      "hits": 5094,
+      "substitutions": 506,
+      "deletions": 2230,
+      "insertions": 89,
       "reference_words": 7830,
-      "errors": 2917,
-      "meeting_wer": 0.37254150702426564
+      "errors": 2825,
+      "meeting_wer": 0.3607918263090677
     },
     {
       "example_id": "4",
-      "hits": 2010,
-      "substitutions": 115,
-      "deletions": 505,
-      "insertions": 19,
+      "hits": 2042,
+      "substitutions": 129,
+      "deletions": 459,
+      "insertions": 24,
       "reference_words": 2630,
-      "errors": 639,
-      "meeting_wer": 0.2429657794676806
+      "errors": 612,
+      "meeting_wer": 0.23269961977186313
     },
     {
       "example_id": "5",
-      "hits": 5369,
-      "substitutions": 323,
-      "deletions": 1136,
-      "insertions": 52,
+      "hits": 5444,
+      "substitutions": 339,
+      "deletions": 1045,
+      "insertions": 56,
       "reference_words": 6828,
-      "errors": 1511,
-      "meeting_wer": 0.221294669009959
+      "errors": 1440,
+      "meeting_wer": 0.210896309314587
     },
     {
       "example_id": "6",
-      "hits": 5434,
-      "substitutions": 291,
-      "deletions": 1321,
-      "insertions": 65,
+      "hits": 5544,
+      "substitutions": 302,
+      "deletions": 1200,
+      "insertions": 78,
       "reference_words": 7046,
-      "errors": 1677,
-      "meeting_wer": 0.23800738007380073
+      "errors": 1580,
+      "meeting_wer": 0.224240703945501
     },
     {
       "example_id": "7",
-      "hits": 4545,
-      "substitutions": 311,
-      "deletions": 1319,
-      "insertions": 64,
+      "hits": 4580,
+      "substitutions": 324,
+      "deletions": 1271,
+      "insertions": 61,
       "reference_words": 6175,
-      "errors": 1694,
-      "meeting_wer": 0.27433198380566803
+      "errors": 1656,
+      "meeting_wer": 0.26817813765182186
     },
     {
       "example_id": "8",
-      "hits": 1459,
-      "substitutions": 77,
-      "deletions": 459,
+      "hits": 1481,
+      "substitutions": 78,
+      "deletions": 436,
       "insertions": 8,
       "reference_words": 1995,
-      "errors": 544,
-      "meeting_wer": 0.27268170426065164
+      "errors": 522,
+      "meeting_wer": 0.26165413533834586
     },
     {
       "example_id": "9",
-      "hits": 4673,
-      "substitutions": 198,
-      "deletions": 1246,
-      "insertions": 55,
+      "hits": 4737,
+      "substitutions": 208,
+      "deletions": 1172,
+      "insertions": 58,
       "reference_words": 6117,
-      "errors": 1499,
-      "meeting_wer": 0.24505476540787968
+      "errors": 1438,
+      "meeting_wer": 0.23508255680889326
     }
   ],
-  "baseline_corpus_wer": 0.2978726779510446,
+  "baseline_corpus_wer": 0.28927455304027794,
   "bootstrap": {
     "n_resamples": 10000,
     "random_seed": 42,
@@ -118,21 +117,21 @@
       0.95,
       0.99
     ],
-    "mean": 0.29712458471321285,
-    "std": 0.018381914402252755,
-    "min": 0.23241316394107311,
-    "max": 0.3584902573499337,
+    "mean": 0.28848362302069835,
+    "std": 0.01879607792172211,
+    "min": 0.2208406541424517,
+    "max": 0.34896847340608284,
     "quantiles": {
-      "p50": 0.2977470575819018,
-      "p90": 0.3207183483530455,
-      "p95": 0.3265851498531765,
-      "p99": 0.33758831293388725
+      "p50": 0.28922306476985493,
+      "p90": 0.3125363997271374,
+      "p95": 0.3184370766066599,
+      "p99": 0.32876656345805166
     },
     "relative_increase_vs_baseline_corpus_wer": {
-      "p50": -0.0004217250471138078,
-      "p90": 0.07669609230073664,
-      "p95": 0.09639176073359364,
-      "p99": 0.13333090921944143
+      "p50": -0.0001779910119361126,
+      "p90": 0.08041442443649913,
+      "p95": 0.10081261299994615,
+      "p99": 0.13652085882671797
     }
   }
 }

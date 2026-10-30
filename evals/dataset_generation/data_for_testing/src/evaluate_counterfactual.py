@@ -14,7 +14,6 @@ from evals.dataset_generation.data_for_testing.src.run_helpers import get_transc
 from evals.dataset_generation.data_for_testing.src.settings import INPUT_DIR, OUTPUT_DIR
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
-logger = logging.getLogger(__name__)
 
 
 def _load_dialogue_entries(transcript_file_path: str | Path) -> list[dict]:
@@ -50,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", choices=["fast", "best"], default="best", help="LLM tier to use (default: best)")
     args = parser.parse_args()
 
-    logger.info("=== STARTING COUNTERFACTUAL EVALUATE ===")
+    logging.info("=== STARTING COUNTERFACTUAL EVALUATE ===")
 
     output_dir = OUTPUT_DIR / args.name
     rewrites_dir = output_dir / "rewrites"
@@ -64,10 +63,10 @@ if __name__ == "__main__":
 
     original_path = rewrites_dir / "original.txt"
     original_path.write_text(transcript_text, encoding="utf-8")
-    logger.info("Written original transcript → %s", original_path)
+    logging.info("Written original transcript → %s", original_path)
 
     axes = _load_axes(INPUT_DIR / args.name)
-    logger.info("Loaded %d axes from axes.json", len(axes))
+    logging.info("Loaded %d axes from axes.json", len(axes))
 
     chatbot = create_default_chatbot(FastOrBestLLM[args.model.upper()])
     report = asyncio.run(
@@ -82,11 +81,11 @@ if __name__ == "__main__":
             rewrite_path = rewrites_dir / f"{axis_slug}_{target_slug}_{i}.txt"
             rewrite_path.write_text(rewrite.pop("transcript"), encoding="utf-8")
             rewrite["transcript_file"] = f"rewrites/{rewrite_path.name}"
-            logger.info("Written rewrite %s attempt %d → %s", axis_slug, i, rewrite_path)
+            logging.info("Written rewrite %s attempt %d → %s", axis_slug, i, rewrite_path)
 
     report_path = output_dir / "counterfactual_report.json"
     with report_path.open("w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
-    logger.info("Written counterfactual report → %s", report_path)
+    logging.info("Written counterfactual report → %s", report_path)
 
-    logger.info("=== COUNTERFACTUAL EVALUATE COMPLETE ===")
+    logging.info("=== COUNTERFACTUAL EVALUATE COMPLETE ===")

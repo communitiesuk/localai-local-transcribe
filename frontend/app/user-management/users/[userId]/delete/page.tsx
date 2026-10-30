@@ -10,7 +10,6 @@ import {
   GovukButton,
   GovukWarningText,
   GovukBackLink,
-  GovukCancelLink,
 } from '@/components/govuk'
 import {
   getUserUsersMeGetOptions,
@@ -106,7 +105,9 @@ export default function UserPageDelete(props: {
           {deletePending ? 'Deleting account...' : 'Delete account'}
         </GovukButton>
 
-        <GovukCancelLink href={`/user-management/users/${userId}`} />
+        <a className="govuk-link" href={`/user-management/users/${userId}`}>
+          Cancel
+        </a>
       </div>
     </>
   )

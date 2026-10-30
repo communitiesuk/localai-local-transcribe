@@ -9,8 +9,6 @@ from typing import Any
 from evals.dataset_generation.data_for_testing.src.settings import CHARACTERISTICS_OUTPUT_DIR
 from evals.dataset_generation.data_for_testing.src.types import ManualEntry
 
-logger = logging.getLogger(__name__)
-
 
 def get_transcript_file(subdir: Path) -> Path:
     excluded = {"manual_pc.json", "axes.json"}
@@ -56,16 +54,16 @@ prompts:
             config_path,
         ]
 
-        logger.info("Running characteristics pipeline on %s...", transcript_file.name)
+        logging.info("Running characteristics pipeline on %s...", transcript_file.name)
 
         try:
             result = subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603
-            logger.info("Pipeline completed successfully")
-            logger.debug("STDOUT:\n%s", result.stdout)
+            logging.info("Pipeline completed successfully")
+            logging.debug("STDOUT:\n%s", result.stdout)
         except subprocess.CalledProcessError as e:
-            logger.error("Pipeline failed")
-            logger.error("STDOUT:\n%s", e.stdout)
-            logger.error("STDERR:\n%s", e.stderr)
+            logging.error("Pipeline failed")
+            logging.error("STDOUT:\n%s", e.stdout)
+            logging.error("STDERR:\n%s", e.stderr)
             raise
 
     return instance_name
@@ -78,7 +76,7 @@ def copy_characteristics_output(output_dir: Path, transcript_stem: str) -> Path:
         raise FileNotFoundError(error_msg)
     dest = output_dir / "hypothesis.json"
     shutil.copy2(expected_path, dest)
-    logger.info("Copied characteristics output → %s", dest)
+    logging.info("Copied characteristics output → %s", dest)
     return dest
 
 
@@ -86,7 +84,7 @@ def validate_json(file_path: Path) -> None:
     try:
         with file_path.open("r", encoding="utf-8") as f:
             json.load(f)
-        logger.info("JSON validation passed: %s", file_path.name)
+        logging.info("JSON validation passed: %s", file_path.name)
     except json.JSONDecodeError as e:
         error_msg = f"Invalid JSON in {file_path}: {e}"
         raise ValueError(error_msg) from e

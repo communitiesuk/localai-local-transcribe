@@ -1,46 +1,35 @@
 import logging
+import tempfile
 from pathlib import Path
 
+import soundfile
+
+from common.audio.ffmpeg import convert_to_mp3
 from evals.transcription.src.constants import (
     AUDIO_DIR,
+    INPUT_DIR,
 )
-from evals.transcription.src.core.ami.loader import AMIDatasetSource
-from evals.transcription.src.core.audio_cache import AudioFileHandler
-from evals.transcription.src.core.audio_files_dataset import AudioFilesSource
-from evals.transcription.src.core.benchmark_dataset_source import BenchmarkDatasetSource
-from evals.transcription.src.core.english_dialects.english_dialects_dataset import EnglishDialectsSource
-from evals.transcription.src.models import DatasetItem, DatasetProtocol
+from evals.transcription.src.core.ami.loader import AMIDatasetLoader
+from evals.transcription.src.core.ami_dataset import load_ami_dataset
+from evals.transcription.src.models import DatasetItem
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DATASET_NAME = AMIDatasetSource.name
 
-DATASET_REGISTRY: dict[str, type[BenchmarkDatasetSource]] = {
-    AMIDatasetSource.name: AMIDatasetSource,
-    EnglishDialectsSource.name: EnglishDialectsSource,
-    AudioFilesSource.name: AudioFilesSource,
-}
-
-
-def load_benchmark_dataset(
-    num_samples: int | None,
-    sample_duration_fraction: float | None = None,
-    dataset_name: str = DEFAULT_DATASET_NAME,
-    samples_per_group: int | None = None,
-    input_dir: Path | None = None,
-) -> DatasetProtocol:
+def load_benchmark_dataset(num_samples: int | None, sample_duration_fraction: float | None = None) -> AMIDatasetLoader:
     """
-    Load a benchmark using the configured source/cache directory or its default.
+    Loads the AMI benchmark dataset with optional sampling of meetings and duration fractions.
     """
-    source_class = DATASET_REGISTRY.get(dataset_name)
-    if source_class is None:
-        message = f"Unknown transcription dataset: {dataset_name}"
-        raise ValueError(message)
-    return source_class(input_dir).load(
-        num_samples=num_samples,
-        sample_duration_fraction=sample_duration_fraction,
-        samples_per_group=samples_per_group,
-    )
+    ami_cache_dir = INPUT_DIR / "ami"
+    logger.info("Loading AMI dataset with %d samples...", num_samples)
+    logger.info("Using cache directory: %s", ami_cache_dir)
+
+    ami_loader = load_ami_dataset(ami_cache_dir, num_samples, sample_duration_fraction)
+
+    logger.info("Dataset loaded successfully")
+    logger.info("Number of samples: %d", len(ami_loader))
+
+    return ami_loader
 
 
 def prepare_audio_for_transcription(example: DatasetItem, index: int) -> str:
@@ -53,9 +42,15 @@ def prepare_audio_for_transcription(example: DatasetItem, index: int) -> str:
     audio_data = example.audio.array
     sample_rate = example.audio.sampling_rate
 
-    audio_cache = AudioFileHandler()
-    output_path = AUDIO_DIR / f"sample_{index:06d}{audio_cache.suffix}"
+    output_path = AUDIO_DIR / f"sample_{index:06d}.mp3"
 
-    audio_cache.write(output_path, audio_data, sample_rate)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+        temp_path = Path(temp_file.name)
+        soundfile.write(temp_path, audio_data, sample_rate, subtype="PCM_16")
+
+    try:
+        convert_to_mp3(temp_path, output_path)
+    finally:
+        temp_path.unlink(missing_ok=True)
 
     return str(output_path)

@@ -97,7 +97,7 @@ export const SpeakerNameInlineEditor = ({
 
   if (editing) {
     return (
-      <span className="govuk-!-font-weight-bold w-[30vw] max-w-[200px] min-w-[100px] shrink-0 break-words">
+      <span className="govuk-!-font-weight-bold max-w-[200px] min-w-[100px] break-words">
         {entry.speaker}:
       </span>
     )
@@ -105,16 +105,16 @@ export const SpeakerNameInlineEditor = ({
 
   return (
     <>
-      <span className="flex w-[30vw] max-w-[200px] min-w-[100px] shrink-0 items-start gap-1">
+      <span className="flex items-center gap-1">
         <button
           type="button"
           aria-label={`Edit speaker name ${entry.speaker}`}
-          className="mt-1 flex shrink-0 cursor-pointer items-center text-[var(--govuk-text-colour)] hover:text-[var(--govuk-link-colour)]"
+          className="flex shrink-0 cursor-pointer items-center text-[var(--govuk-text-colour)] hover:text-[var(--govuk-link-colour)]"
           onClick={openModal}
         >
           <EditSpeakerIcon width={16} height={18} />
         </button>
-        <span className="govuk-!-font-weight-bold min-w-0 break-words">
+        <span className="govuk-!-font-weight-bold max-w-[200px] min-w-[100px] break-words">
           {entry.speaker}:
         </span>
       </span>

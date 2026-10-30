@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 
-import { useTemplateDraftStore } from '@/stores/use-template-draft-store'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
 
 export function RouteWatcher() {
@@ -17,7 +16,6 @@ export function RouteWatcher() {
 
     previousPathnameRef.current = pathname
     useUploadRecordingStore.getState().handleRouteChange()
-    useTemplateDraftStore.getState().handleRouteChange(pathname)
   }, [pathname])
 
   return null
