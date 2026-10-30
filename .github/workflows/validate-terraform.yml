@@ -5,7 +5,7 @@ on:
 
   pull_request:
   push:
-    branches: [development, main]
+    branches: [development, staging, production]
 
 concurrency:
   group: terraform-${{ github.ref }}
