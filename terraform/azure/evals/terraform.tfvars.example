@@ -17,7 +17,7 @@ environment_name    = "<environment-name>"
 # ado_federation_subject = "sc://<org>/<project>/evals-blob"
 
 # Network access.
-# network_rules_bypass = []
+# network_rules_bypass = ["AzureServices"]
 
 # Private endpoint subnet in the evals virtual network.
 private_endpoint_subnet_id = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
@@ -28,8 +28,9 @@ terraform_state_storage_account_name = "<state-storage-account-name>"
 # Shared Log Analytics workspace that Cyber can read. It is in another subscription.
 shared_log_analytics_workspace_id = "/subscriptions/<shared-subscription-id>/resourceGroups/<shared-resource-group>/providers/Microsoft.OperationalInsights/workspaces/<shared-workspace-name>"
 
-# Team RBAC.
-# TODO(AIILG-649): Spike what we can do via Entra groups to make these less hardcoded.
+# Team RBAC. Each value is a Terraform list of Entra object IDs. Prefer a group
+# object ID. Real IDs live in the evals-pipeline-config variable group, not here.
 # input_writer_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
 # debug_reader_principal_ids   = ["00000000-0000-0000-0000-000000000000"]
 # results_reader_principal_ids = ["00000000-0000-0000-0000-000000000000"]
+# debug_and_output_writer_principal_ids = ["00000000-0000-0000-0000-000000000000"]

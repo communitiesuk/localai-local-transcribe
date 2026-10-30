@@ -89,10 +89,11 @@ variable "ado_federation_subject" {
 
 # Network access
 
+# Confirmed by the engineering team.
 variable "network_rules_bypass" {
   type        = list(string)
-  description = "Storage firewall bypass exemptions. Keep empty unless a named trusted Azure service needs access."
-  default     = []
+  description = "Storage firewall bypass exemptions. AzureServices lets trusted Microsoft services reach the accounts while public network access stays disabled."
+  default     = ["AzureServices"]
 }
 
 # Private endpoint
@@ -122,6 +123,12 @@ variable "debug_reader_principal_ids" {
 variable "results_reader_principal_ids" {
   type        = set(string)
   description = "Object IDs allowed to read the output (results) container."
+  default     = []
+}
+
+variable "debug_and_output_writer_principal_ids" {
+  type        = set(string)
+  description = "Object IDs allowed to read, write and delete blobs in both the debug container and the output container. An ad hoc evals run on test ADAPT writes both, so one list grants both roles."
   default     = []
 }
 
