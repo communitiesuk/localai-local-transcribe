@@ -1,4 +1,5 @@
 import { forwardRef } from 'react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 export type ErrorItem = { href?: string; text: string }
@@ -12,6 +13,14 @@ type Props = {
   React.HTMLAttributes<HTMLDivElement>,
   'className' | 'children' | 'role'
 >
+
+function ErrorItemLink({ href, text }: { href: string; text: string }) {
+  if (href.startsWith('#')) {
+    return <a href={href}>{text}</a>
+  }
+
+  return <Link href={href}>{text}</Link>
+}
 
 export const GovukErrorSummary = forwardRef<HTMLDivElement, Props>(
   function GovukErrorSummary(
@@ -38,7 +47,11 @@ export const GovukErrorSummary = forwardRef<HTMLDivElement, Props>(
             <ul className="govuk-list govuk-error-summary__list">
               {errorList.map((item) => (
                 <li key={item.text}>
-                  {item.href ? <a href={item.href}>{item.text}</a> : item.text}
+                  {item.href ? (
+                    <ErrorItemLink href={item.href} text={item.text} />
+                  ) : (
+                    item.text
+                  )}
                 </li>
               ))}
             </ul>

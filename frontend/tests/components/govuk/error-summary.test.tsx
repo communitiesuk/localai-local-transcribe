@@ -1,6 +1,15 @@
 import { GovukErrorSummary } from '@/components/govuk/error-summary'
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import type { ReactNode } from 'react'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('next/link', () => ({
+  default: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href} data-next-link="true">
+      {children}
+    </a>
+  ),
+}))
 
 describe('<GovukErrorSummary />', () => {
   it('renders the canonical root with govuk-error-summary class and data-module', () => {
@@ -60,6 +69,30 @@ describe('<GovukErrorSummary />', () => {
     expect(linkA).toHaveAttribute('href', '#a')
     const linkB = screen.getByRole('link', { name: 'Field B invalid' })
     expect(linkB).toHaveAttribute('href', '#b')
+  })
+
+  it('routes a link to another page through the client side router so entered details survive', () => {
+    render(
+      <GovukErrorSummary
+        errorList={[{ href: '/invite-user#invitee-name', text: 'Name in use' }]}
+      />
+    )
+
+    const link = screen.getByRole('link', { name: 'Name in use' })
+    expect(link).toHaveAttribute('href', '/invite-user#invitee-name')
+    expect(link).toHaveAttribute('data-next-link', 'true')
+  })
+
+  it('leaves an in page link as a plain anchor', () => {
+    render(
+      <GovukErrorSummary
+        errorList={[{ href: '#invitee-name', text: 'Enter a name' }]}
+      />
+    )
+
+    const link = screen.getByRole('link', { name: 'Enter a name' })
+    expect(link).toHaveAttribute('href', '#invitee-name')
+    expect(link).not.toHaveAttribute('data-next-link')
   })
 
   it('renders plain <li> rows when errorList items have no href', () => {
