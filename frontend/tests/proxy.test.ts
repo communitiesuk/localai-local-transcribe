@@ -160,4 +160,125 @@ describe('proxy auth pathways', () => {
     expect(res.status).toBe(307)
     expect(res.headers.get('location')).toBe('https://example.com/unauthorised')
   })
+
+  it('redirects to /service-unavailable when the backend cannot be reached', async () => {
+    vi.stubEnv('ENVIRONMENT', 'development')
+    vi.stubEnv('BACKEND_HOST', 'http://development')
+    vi.mocked(parseAuthToken).mockResolvedValue({
+      email: 'a@b.com',
+      isAuthorised: true,
+      authReason: 'OIDC',
+    })
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fetch failed')))
+
+    const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toBe(
+      'https://example.com/service-unavailable'
+    )
+  })
+
+  it('redirects to /service-unavailable when the backend returns 500', async () => {
+    vi.stubEnv('ENVIRONMENT', 'development')
+    vi.stubEnv('BACKEND_HOST', 'http://development')
+    vi.mocked(parseAuthToken).mockResolvedValue({
+      email: 'a@b.com',
+      isAuthorised: true,
+      authReason: 'OIDC',
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, { status: 500 }))
+    )
+
+    const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toBe(
+      'https://example.com/service-unavailable'
+    )
+  })
+
+  it('redirects to /service-unavailable when the backend response cannot be read', async () => {
+    vi.stubEnv('ENVIRONMENT', 'development')
+    vi.stubEnv('BACKEND_HOST', 'http://development')
+    vi.mocked(parseAuthToken).mockResolvedValue({
+      email: 'a@b.com',
+      isAuthorised: true,
+      authReason: 'OIDC',
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response('<html>Bad gateway</html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html' },
+        })
+      )
+    )
+
+    const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toBe(
+      'https://example.com/service-unavailable'
+    )
+  })
+
+  it('redirects to /service-unavailable when the backend returns no user', async () => {
+    vi.stubEnv('ENVIRONMENT', 'development')
+    vi.stubEnv('BACKEND_HOST', 'http://development')
+    vi.mocked(parseAuthToken).mockResolvedValue({
+      email: 'a@b.com',
+      isAuthorised: true,
+      authReason: 'OIDC',
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(null), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        })
+      )
+    )
+
+    const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toBe(
+      'https://example.com/service-unavailable'
+    )
+  })
+
+  it('redirects to /service-unavailable when the backend is down locally', async () => {
+    vi.stubEnv('ENVIRONMENT', 'local')
+    vi.stubEnv('BACKEND_HOST', 'http://local')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED'))
+    )
+
+    const res = await proxy(buildRequest())
+
+    expect(res.status).toBe(307)
+    expect(res.headers.get('location')).toBe(
+      'https://example.com/service-unavailable'
+    )
+  })
+
+  it('allows /service-unavailable without calling the backend', async () => {
+    vi.stubEnv('ENVIRONMENT', 'development')
+    vi.stubEnv('BACKEND_HOST', 'http://development')
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await proxy(
+      buildRequest({ 'x-amzn-oidc-data': 'tok' }, '/service-unavailable')
+    )
+
+    expect(res.headers.get('x-middleware-next')).toBe('1')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
 })
