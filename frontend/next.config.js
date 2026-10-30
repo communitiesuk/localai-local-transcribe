@@ -1,7 +1,10 @@
-import { withSentryConfig } from '@sentry/nextjs'
+import { t } from '@hey-api/openapi-ts/plugins'
+import { withSentryConfig } from '@sentry/nextjs/config'
+import { withSerwist } from '@serwist/turbopack'
 
 let nextConfig = {
   output: 'standalone',
+  reactStrictMode: true,
   async headers() {
     return [
       {
@@ -63,4 +66,6 @@ const sentryConfig = {
 }
 nextConfig = withSentryConfig(nextConfig, sentryConfig)
 
-export default nextConfig
+export default withSerwist(nextConfig)
+
+//export default nextConfig

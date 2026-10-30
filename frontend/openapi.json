@@ -2706,6 +2706,7 @@
       },
       "DialogueEntry": {
         "properties": {
+          "confidence": { "type": "number", "title": "Confidence" },
           "speaker": { "type": "string", "title": "Speaker" },
           "text": { "type": "string", "title": "Text" },
           "start_time": { "type": "number", "title": "Start Time" },

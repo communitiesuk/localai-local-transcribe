@@ -10,6 +10,7 @@ import { OFFLINE_RECORDINGS_ENABLED } from '@/lib/constants'
 import { TanstackQueryProvider } from '@/providers/TanstackQueryProvider'
 import PosthogProvider from '@/providers/posthog'
 import { RecordingDbProvider } from '@/providers/transcription-db-provider'
+import { SerwistProvider } from '@serwist/turbopack/react'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
@@ -52,26 +53,28 @@ export default function RootLayout({
   return (
     <html lang="en" className={`govuk-template ${inter.className}`}>
       <body className="govuk-template__body js-enabled govuk-frontend-supported">
-        <a
-          href="#main-content"
-          className="govuk-skip-link"
-          data-module="govuk-skip-link"
-        >
-          Skip to main content
-        </a>
+        <SerwistProvider swUrl="/serwist/sw.js">
+          <a
+            href="#main-content"
+            className="govuk-skip-link"
+            data-module="govuk-skip-link"
+          >
+            Skip to main content
+          </a>
 
-        <TanstackQueryProvider>
-          <PosthogProvider>
-            <LockNavigationProvider>
-              <RouteWatcher />
-              {OFFLINE_RECORDINGS_ENABLED ? (
-                <RecordingDbProvider>{appContent}</RecordingDbProvider>
-              ) : (
-                appContent
-              )}
-            </LockNavigationProvider>
-          </PosthogProvider>
-        </TanstackQueryProvider>
+          <TanstackQueryProvider>
+            <PosthogProvider>
+              <LockNavigationProvider>
+                <RouteWatcher />
+                {OFFLINE_RECORDINGS_ENABLED ? (
+                  <RecordingDbProvider>{appContent}</RecordingDbProvider>
+                ) : (
+                  appContent
+                )}
+              </LockNavigationProvider>
+            </PosthogProvider>
+          </TanstackQueryProvider>
+        </SerwistProvider>
       </body>
     </html>
   )
