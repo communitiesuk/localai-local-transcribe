@@ -23,10 +23,14 @@ on:
       - "development/**"
       - "dependabot/**"
       - "security/**"
+      - "staging"
+      - "production"
 
   pull_request:
     branches:
       - development
+      - staging
+      - production
 
   workflow_dispatch:
 
