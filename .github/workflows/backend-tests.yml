@@ -19,20 +19,20 @@ permissions:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     environment: release
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ inputs.python_version }}
 
       - name: Set up Poetry
-        uses: abatilo/actions-poetry@v2
+        uses: abatilo/actions-poetry@v4
         with:
           poetry-version: ${{ inputs.poetry_version }}
 
@@ -40,7 +40,7 @@ jobs:
         run: poetry config virtualenvs.in-project true
 
       - name: Cache virtualenv
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ inputs.python_version }}-${{ hashFiles('**/poetry.lock') }}
@@ -67,14 +67,14 @@ jobs:
         run: make test-cov
 
       - name: Upload backend coverage HTML
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-coverage-report
           path: htmlcov/cov
 
       - name: Upload backend coverage XML
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: backend-coverage-xml

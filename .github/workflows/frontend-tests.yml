@@ -8,13 +8,13 @@ permissions:
 
 jobs:
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
@@ -46,14 +46,14 @@ jobs:
           npm run test:cov 2>&1 | tee test-output.txt
 
       - name: Upload frontend coverage HTML
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: frontend-coverage-html
           path: frontend/coverage
 
       - name: Upload frontend coverage XML
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: frontend-coverage-xml
