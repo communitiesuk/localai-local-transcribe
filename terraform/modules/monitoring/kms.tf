@@ -83,4 +83,4 @@ data "aws_iam_policy_document" "cloudtrail_kms" {
     resources = [aws_kms_key.main.arn]
   }
 >>>>>>> ec7be72b (fix: remove outdated comments regarding CloudWatch alarm KMS access)
-}
+STF}
