@@ -83,7 +83,7 @@ The evals accounts encrypt with a customer-managed key from the vault in `key-va
 
 ## Unknowns left as variables
 
-The private endpoint subnet and principal IDs are variables. The storage firewall bypass defaults to AzureServices, so trusted Microsoft services can reach the accounts while public network access stays disabled.
+The private endpoint subnet and principal IDs are variables. The storage firewall bypass defaults to AzureServices, so trusted Microsoft services can reach the accounts while public network access stays disabled. Confirmed by the engineering team.
 
 ## Private endpoints
 

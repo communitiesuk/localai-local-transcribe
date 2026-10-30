@@ -89,6 +89,7 @@ variable "ado_federation_subject" {
 
 # Network access
 
+# Confirmed by the engineering team.
 variable "network_rules_bypass" {
   type        = list(string)
   description = "Storage firewall bypass exemptions. AzureServices lets trusted Microsoft services reach the accounts while public network access stays disabled."
