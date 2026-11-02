@@ -125,6 +125,12 @@ variable "results_reader_principal_ids" {
   default     = []
 }
 
+variable "debug_and_output_writer_principal_ids" {
+  type        = set(string)
+  description = "Object IDs allowed to read, write and delete blobs in both the debug container and the output container. An ad hoc evals run on test ADAPT writes both, so one list grants both roles."
+  default     = []
+}
+
 # Shared logging
 
 variable "terraform_state_storage_account_name" {

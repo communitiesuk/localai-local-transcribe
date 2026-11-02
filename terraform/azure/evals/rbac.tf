@@ -48,6 +48,19 @@ locals {
       role      = "Storage Blob Data Reader"
       principal = id
     } },
+    # One list grants write on both containers. An ad hoc evals run on test ADAPT
+    # writes debug and output together. Storage Blob Data Contributor already
+    # includes read and list, so these object IDs stay off the reader lists.
+    { for id in var.debug_and_output_writer_principal_ids : "debug-writer-${id}" => {
+      container = "debug"
+      role      = "Storage Blob Data Contributor"
+      principal = id
+    } },
+    { for id in var.debug_and_output_writer_principal_ids : "results-writer-${id}" => {
+      container = "output"
+      role      = "Storage Blob Data Contributor"
+      principal = id
+    } },
   )
 }
 
