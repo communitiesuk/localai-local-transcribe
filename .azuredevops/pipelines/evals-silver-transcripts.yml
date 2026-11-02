@@ -35,6 +35,7 @@ jobs:
           pythonVersion: $(EVALS_PYTHON_VERSION_RESOLVED)
           poetryVersion: $(EVALS_POETRY_VERSION_RESOLVED)
           freeDiskSpace: false
+          installFfmpeg: true
 
       - script: poetry sync --no-root --no-ansi --with evals-transcription,evals-dataset-generation
         displayName: 'Install dependencies'

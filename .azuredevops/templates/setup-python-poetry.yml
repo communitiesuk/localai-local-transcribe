@@ -10,6 +10,9 @@ parameters:
   - name: freeDiskSpace
     type: boolean
     default: true
+  - name: installFfmpeg
+    type: boolean
+    default: false
 
 steps:
   - ${{ if eq(parameters.freeDiskSpace, true) }}:
@@ -25,13 +28,14 @@ steps:
     inputs:
       versionSpec: '${{ parameters.pythonVersion }}'
 
-  - script: |
-      if ! command -v ffprobe >/dev/null 2>&1; then
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg
-      fi
-      ffprobe -version
-    displayName: 'Ensure ffmpeg/ffprobe is installed'
+  - ${{ if eq(parameters.installFfmpeg, true) }}:
+      - script: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+          ffprobe -version
+        displayName: 'Ensure ffmpeg/ffprobe is installed'
 
   - script: |
       echo "Installing Poetry ${{ parameters.poetryVersion }}"

@@ -32,3 +32,4 @@ steps:
       config: ${{ parameters.config }}
       resultsArtifactName: ${{ parameters.resultsArtifactName }}
       runDisplayName: 'Run transcription smoke test (blob)'
+      installFfmpeg: true
