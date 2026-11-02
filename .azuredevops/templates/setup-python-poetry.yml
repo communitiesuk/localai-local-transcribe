@@ -7,21 +7,17 @@ parameters:
   - name: poetryVersion
     type: string
     default: '2.5.1'
-  - name: freeDiskSpace
-    type: boolean
-    default: true
   - name: installFfmpeg
     type: boolean
     default: false
 
 steps:
-  - ${{ if eq(parameters.freeDiskSpace, true) }}:
-      - script: |
-          # Delete pre-installed toolchains we don't use (dotnet, GHC, Android SDK, etc.)
-          # to reclaim disk space for the chonky eval dependencies.
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"/CodeQL
-          df -h /
-        displayName: 'Free up disk space'
+  - script: |
+      # Delete pre-installed toolchains we don't use (dotnet, GHC, Android SDK, etc.)
+      # to reclaim disk space for the chonky eval dependencies.
+      sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"/CodeQL
+      df -h /
+    displayName: 'Free up disk space'
 
   - task: UsePythonVersion@0
     displayName: 'Set up Python ${{ parameters.pythonVersion }}'
