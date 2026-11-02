@@ -12,7 +12,6 @@ const verifier =
 // Define paths that should be public (no authorisation required)
 const PUBLIC_PATHS = [
   '/unauthorised',
-  '/service-unavailable',
   '/health',
   '/monitoring',
   '/privacy-council-employees',
@@ -23,7 +22,6 @@ const PUBLIC_PATHS = [
 ]
 
 const TOU_PATH = '/terms-of-use'
-const SERVICE_UNAVAILABLE_PATH = '/service-unavailable'
 
 export async function proxy(req: NextRequest) {
   try {
@@ -83,7 +81,7 @@ export async function proxy(req: NextRequest) {
       )
     } catch (error) {
       console.error('Backend could not be reached:', error)
-      return redirectTo(req, SERVICE_UNAVAILABLE_PATH)
+      return serviceUnavailable()
     }
 
     if (backendAuthResponse.status === 401) {
@@ -94,7 +92,7 @@ export async function proxy(req: NextRequest) {
       console.error(
         `Backend returned ${backendAuthResponse.status} when authorising ${pathname}`
       )
-      return redirectTo(req, SERVICE_UNAVAILABLE_PATH)
+      return serviceUnavailable()
     }
 
     let user: { accepted_tou?: boolean } | null = null
@@ -103,12 +101,12 @@ export async function proxy(req: NextRequest) {
       user = await backendAuthResponse.json()
     } catch (error) {
       console.error('Backend response could not be read:', error)
-      return redirectTo(req, SERVICE_UNAVAILABLE_PATH)
+      return serviceUnavailable()
     }
 
     if (!user) {
       console.error(`Backend returned no user when authorising ${pathname}`)
-      return redirectTo(req, SERVICE_UNAVAILABLE_PATH)
+      return serviceUnavailable()
     }
 
     if (!user.accepted_tou && !pathname.startsWith(TOU_PATH)) {
@@ -120,6 +118,10 @@ export async function proxy(req: NextRequest) {
     console.error('Error authorising token:', error)
     return redirectTo(req, '/unauthorised')
   }
+}
+
+function serviceUnavailable() {
+  return new NextResponse('Service unavailable', { status: 503 })
 }
 
 function redirectTo(req: NextRequest, page: string) {

@@ -161,7 +161,7 @@ describe('proxy auth pathways', () => {
     expect(res.headers.get('location')).toBe('https://example.com/unauthorised')
   })
 
-  it('redirects to /service-unavailable when the backend cannot be reached', async () => {
+  it('returns 503 when the backend cannot be reached', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
     vi.mocked(parseAuthToken).mockResolvedValue({
@@ -173,13 +173,11 @@ describe('proxy auth pathways', () => {
 
     const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
 
-    expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toBe(
-      'https://example.com/service-unavailable'
-    )
+    expect(res.status).toBe(503)
+    expect(res.headers.get('location')).toBeNull()
   })
 
-  it('redirects to /service-unavailable when the backend returns 500', async () => {
+  it('returns 503 when the backend returns 500', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
     vi.mocked(parseAuthToken).mockResolvedValue({
@@ -194,13 +192,11 @@ describe('proxy auth pathways', () => {
 
     const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
 
-    expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toBe(
-      'https://example.com/service-unavailable'
-    )
+    expect(res.status).toBe(503)
+    expect(res.headers.get('location')).toBeNull()
   })
 
-  it('redirects to /service-unavailable when the backend response cannot be read', async () => {
+  it('returns 503 when the backend response cannot be read', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
     vi.mocked(parseAuthToken).mockResolvedValue({
@@ -220,13 +216,11 @@ describe('proxy auth pathways', () => {
 
     const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
 
-    expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toBe(
-      'https://example.com/service-unavailable'
-    )
+    expect(res.status).toBe(503)
+    expect(res.headers.get('location')).toBeNull()
   })
 
-  it('redirects to /service-unavailable when the backend returns no user', async () => {
+  it('returns 503 when the backend returns no user', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
     vi.mocked(parseAuthToken).mockResolvedValue({
@@ -246,13 +240,11 @@ describe('proxy auth pathways', () => {
 
     const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
 
-    expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toBe(
-      'https://example.com/service-unavailable'
-    )
+    expect(res.status).toBe(503)
+    expect(res.headers.get('location')).toBeNull()
   })
 
-  it('redirects to /service-unavailable when the backend is down locally', async () => {
+  it('returns 503 when the backend is down locally', async () => {
     vi.stubEnv('ENVIRONMENT', 'local')
     vi.stubEnv('BACKEND_HOST', 'http://local')
     vi.stubGlobal(
@@ -262,23 +254,31 @@ describe('proxy auth pathways', () => {
 
     const res = await proxy(buildRequest())
 
-    expect(res.status).toBe(307)
-    expect(res.headers.get('location')).toBe(
-      'https://example.com/service-unavailable'
-    )
+    expect(res.status).toBe(503)
+    expect(res.headers.get('location')).toBeNull()
   })
 
-  it('allows /service-unavailable without calling the backend', async () => {
+  it('does not send the user to terms of use when the backend is unhealthy', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
-    const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
-
-    const res = await proxy(
-      buildRequest({ 'x-amzn-oidc-data': 'tok' }, '/service-unavailable')
+    vi.mocked(parseAuthToken).mockResolvedValue({
+      email: 'a@b.com',
+      isAuthorised: true,
+      authReason: 'OIDC',
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ detail: 'Internal server error' }), {
+          status: 500,
+          headers: { 'content-type': 'application/json' },
+        })
+      )
     )
 
-    expect(res.headers.get('x-middleware-next')).toBe('1')
-    expect(fetchMock).not.toHaveBeenCalled()
+    const res = await proxy(buildRequest({ 'x-amzn-oidc-data': 'tok' }))
+
+    expect(res.status).toBe(503)
+    expect(res.headers.get('location')).toBeNull()
   })
 })
