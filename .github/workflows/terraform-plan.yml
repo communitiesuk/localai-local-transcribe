@@ -19,21 +19,21 @@ env:
 jobs:
   terraform-plan:
     name: Terraform Plan — ${{ inputs.environment }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     defaults:
       run:
         working-directory: terraform/${{ inputs.environment }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/github-actions-terraform-ci-plan-read-only
           aws-region: ${{ env.AWS_REGION }}
@@ -50,20 +50,20 @@ jobs:
         run: terraform show -no-color tfplan > tf_plan.txt
 
       - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tf-plan-${{ inputs.environment }}
           path: terraform/${{ inputs.environment }}/tfplan
 
       - name: Upload readable plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tf-plan-text-${{ inputs.environment }}
           path: terraform/${{ inputs.environment }}/tf_plan.txt
 
       - name: Publish plan to PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           ENVIRONMENT: ${{ inputs.environment }}
         with:
