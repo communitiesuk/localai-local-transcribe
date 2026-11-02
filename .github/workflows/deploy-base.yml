@@ -31,14 +31,14 @@ env:
 jobs:
   build:
     name: Build and push ${{ matrix.service }}
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     strategy:
       matrix:
         service: [frontend, backend, worker]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/${{ inputs.environment }}-push-image
           aws-region: ${{ env.AWS_REGION }}
@@ -46,7 +46,7 @@ jobs:
       - name: Login to ECR
         run: aws ecr get-login-password | docker login --username AWS --password-stdin ${{ secrets.aws-account-id }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.service }}/Dockerfile
@@ -87,7 +87,7 @@ jobs:
 
   plan:
     name: Terraform plan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: build
     concurrency: tfstate-${{ inputs.environment }}
     outputs:
@@ -96,14 +96,14 @@ jobs:
       run:
         working-directory: terraform/${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/github-actions-terraform-ci-plan-read-only
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ~>1.14.0
 
@@ -129,7 +129,7 @@ jobs:
 
   apply:
     name: Terraform apply
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: plan
     if: needs.plan.outputs.exitcode == 2
     concurrency: tfstate-${{ inputs.environment }}
@@ -137,14 +137,14 @@ jobs:
       run:
         working-directory: terraform/${{ inputs.environment }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/github-actions-terraform-admin
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ~>1.14.0
 
@@ -158,7 +158,7 @@ jobs:
    
   notify-slack:
     name: Notify Slack
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     needs: [build, plan, apply]
     if: always()
     steps:

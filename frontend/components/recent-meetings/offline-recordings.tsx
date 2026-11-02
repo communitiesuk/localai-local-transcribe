@@ -19,7 +19,6 @@ import {
   Upload,
 } from 'lucide-react'
 import Link from 'next/link'
-import posthog from 'posthog-js'
 import { useMemo, useState } from 'react'
 
 export const OfflineRecordings = () => {
@@ -111,9 +110,6 @@ const OfflineRecording = ({ recording }: { recording: RecordingDbItem }) => {
           removeRecording(recording.recording_id)
           queryClient.invalidateQueries({
             queryKey: ['list-db-recordings'],
-          })
-          posthog.capture('offline_recording_deleted', {
-            size: recording.blob.size,
           })
         }}
       />

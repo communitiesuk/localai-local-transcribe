@@ -106,7 +106,7 @@ export default function AdminAddUserConfirmPage() {
     : '/user-management'
   const inviteUserHref = selectedOrganisationId
     ? `/invite-user?organisationId=${encodeURIComponent(selectedOrganisationId)}`
-    : '/invite-user/'
+    : '/invite-user'
 
   const createUserMutation = useMutation(createUserUsersPostMutation())
 

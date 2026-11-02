@@ -7,19 +7,13 @@ import {
 } from '@/components/ui/popover'
 import { SingleRecording } from '@/lib/client'
 import { Download } from 'lucide-react'
-import posthog from 'posthog-js'
 
 export const DownloadButton = ({
   recordings,
 }: {
   recordings: SingleRecording[]
 }) => {
-  const onClick = (recording: SingleRecording) => () => {
-    posthog.capture('recording_downloaded', {
-      extension: recording.extension,
-      recording_id: recording.id,
-    })
-  }
+  const onClick = (recording: SingleRecording) => () => {}
   if (recordings.length == 1) {
     return (
       <Button asChild variant="link" onClick={onClick(recordings[0])}>

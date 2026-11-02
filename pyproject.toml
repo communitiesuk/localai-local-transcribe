@@ -92,7 +92,6 @@ anthropic = "^2.3.0"
 
 [tool.poetry.group.backend.dependencies]
 pyjwt = "2.15.1"
-posthog = "^6.6.1"
 uvicorn = "^0.31.0"
 apscheduler = "^3.11.0"
 
