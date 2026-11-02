@@ -14,7 +14,6 @@
 --
 -- inclusion/exclusion rules:
 -- SUMMARY_RECEIVED events that occurred within the reporting period
--- default templates have a NULL template_id
 --
 -- duplicate/retried events:
 -- duplicate events prevented by the unique constraint on (event_type, source_id)

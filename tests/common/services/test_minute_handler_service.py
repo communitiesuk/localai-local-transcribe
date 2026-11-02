@@ -443,9 +443,17 @@ async def test_generate_minute_from_user_template_raises_if_no_template(mocker, 
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("template_type", ["custom", "default"])
+@pytest.mark.asyncio
 async def test_process_minute_generation_message_success(
-    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry, template_type
 ):
+    if template_type == "default":
+        mock_minute.user_template_id = None
+        mock_minute.template_name = "General"
+
+    expected_template_id = "default-general" if template_type == "default" else str(mock_minute.user_template_id)
+
     mock_minute.transcription = mock_transcription
     mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
     mock_minute.transcription.user = User(
@@ -489,11 +497,11 @@ async def test_process_minute_generation_message_success(
         AnalyticsEventType.SUMMARY_RECEIVED,
         "EVAL-001",
         mock_minute.transcription.user.organisation_id,
-        # keyed on the minute version so a redelivered queue message doesn't duplicate the event
         source_id=mock_minute_version.id,
         event_metadata={
             "transcription_id": str(mock_minute.transcription_id),
-            "template_id": str(mock_minute.user_template_id),
+            "template_id": expected_template_id,
+            "template_type": template_type,
         },
     )
 

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum, auto
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -389,6 +389,7 @@ class AnalyticsEventMetadata(TypedDict, total=False):
     # Both stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
     transcription_id: str
     template_id: str | None
+    template_type: Literal["default", "custom"]
 
 
 class AnalyticsEvent(BaseTableMixin, table=True):
