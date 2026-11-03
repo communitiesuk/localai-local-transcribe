@@ -444,7 +444,6 @@ async def test_generate_minute_from_user_template_raises_if_no_template(mocker, 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("template_type", ["custom", "default"])
-@pytest.mark.asyncio
 async def test_process_minute_generation_message_success(
     mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry, template_type
 ):
