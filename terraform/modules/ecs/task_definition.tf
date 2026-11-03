@@ -19,8 +19,11 @@ locals {
       containerPath = "/var/log/amazon/ssm"
       sourceVolume  = "var-log-amazon-ssm"
       readOnly      = false
-    }
-  ] : []
+    },
+    { sourceVolume  = "tmp",
+      containerPath = "/tmp",
+    readOnly = false },
+  ] : [{ sourceVolume = "tmp", containerPath = "/tmp", readOnly = false }, ]
 
   shared_worker_backend_environment_variables = [
     {
@@ -331,6 +334,9 @@ resource "aws_ecs_task_definition" "worker" {
     content {
       name = volume.value
     }
+  }
+  volume {
+    name = "tmp"
   }
 
   container_definitions = jsonencode([
