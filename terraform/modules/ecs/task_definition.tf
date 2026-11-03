@@ -20,10 +20,7 @@ locals {
       sourceVolume  = "var-log-amazon-ssm"
       readOnly      = false
     },
-    { sourceVolume  = "tmp",
-      containerPath = "/tmp",
-    readOnly = false },
-  ] : [{ sourceVolume = "tmp", containerPath = "/tmp", readOnly = false }, ]
+  ] : []
 
   shared_worker_backend_environment_variables = [
     {
@@ -335,9 +332,6 @@ resource "aws_ecs_task_definition" "worker" {
       name = volume.value
     }
   }
-  volume {
-    name = "tmp"
-  }
 
   container_definitions = jsonencode([
     {
@@ -346,6 +340,19 @@ resource "aws_ecs_task_definition" "worker" {
       image                  = var.worker_image_name
       user                   = "1000:1000"
       readonlyRootFilesystem = true
+
+      # Fargate-native tmpfs (supported since Jan 2026) so /tmp is writable
+      # despite the read-only root filesystem, matching docker-compose's
+      # tmpfs: - /tmp:noexec,nosuid,nodev,size=512m
+      linuxParameters = {
+        tmpfs = [
+          {
+            containerPath = "/tmp"
+            size          = var.worker_tmpfs_size
+            mountOptions  = ["noexec", "nosuid", "nodev"]
+          }
+        ]
+      }
 
       mountPoints = local.ecs_exec_tmpfs_mounts
 
