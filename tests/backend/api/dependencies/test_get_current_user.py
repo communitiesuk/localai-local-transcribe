@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
@@ -6,6 +6,7 @@ import pytest
 from fastapi import HTTPException
 
 from backend.api.dependencies.get_current_user import get_current_user, require_accepted_tou
+from backend.utils.constants import LOGIN_SESSION_GAP_MINUTES
 from common.database.postgres_models import AnalyticsEventType, User
 from common.services.exceptions import MissingAuthTokenError
 
@@ -37,8 +38,51 @@ def make_mock_get_user_info(email: str = TEST_EMAIL, is_authorised: bool = True,
 
 
 @pytest.mark.asyncio
-async def test_get_current_user_existing_user(monkeypatch, session):
+async def test_get_current_user_existing_user_within_session_gap_does_not_update_last_login(monkeypatch, session):
     existing_last_login = datetime.now(UTC)
+    mock_user = User(
+        id=uuid4(),
+        email=TEST_EMAIL,
+        subject_id=TEST_SUBJECT_ID,
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+        last_login=existing_last_login,
+        first_login=existing_last_login,  # already authenticated before, so no analytics event is recorded
+    )
+
+    session.exec.side_effect = [
+        make_exec_result(None),  # no changed sub match
+        make_exec_result(mock_user),  # match by subject_id
+    ]
+
+    mock_get_user_info = make_mock_get_user_info()
+    monkeypatch.setattr(
+        "backend.api.dependencies.get_current_user.get_user_info",
+        mock_get_user_info,
+    )
+
+    user = await get_current_user(
+        session=session,
+        x_amzn_oidc_data=TEST_TOKEN,
+    )
+
+    assert user.email == mock_user.email
+    mock_get_user_info.assert_called_once_with(TEST_TOKEN)
+    # request is within the idle-gap window, so it is not treated as a new login
+    session.commit.assert_not_called()
+    assert user.last_login == existing_last_login
+
+    # check the query filtered by subject_id (the second exec call)
+    executed_statement = session.exec.await_args_list[1].args[0]
+    compiled = executed_statement.compile()
+    assert "subject_id" in str(compiled)
+    assert TEST_SUBJECT_ID in compiled.params.values()
+
+
+@pytest.mark.asyncio
+async def test_get_current_user_existing_user_beyond_session_gap_updates_last_login(monkeypatch, session):
+    existing_last_login = datetime.now(UTC) - timedelta(minutes=LOGIN_SESSION_GAP_MINUTES + 1)
     mock_user = User(
         id=uuid4(),
         email=TEST_EMAIL,

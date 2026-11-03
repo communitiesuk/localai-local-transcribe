@@ -11,6 +11,7 @@ __pycache__/
 .env
 reporting/aggregate_analytics/output/
 reporting/aggregate_analytics/input/
+reporting/analytics_events/output/
 Brewfile.lock.json
 *.pdf
 .mypy_cache

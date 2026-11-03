@@ -1,5 +1,5 @@
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException
@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import col, select
 
 from backend.api.dependencies.get_session import SQLSessionDep
+from backend.utils.constants import LOGIN_SESSION_GAP_MINUTES
 from common.auth import get_user_info
 from common.database.postgres_models import AnalyticsEventType, User, UserAuthEmail
 from common.services.analytics_service import record_analytics_event
@@ -49,6 +50,28 @@ async def record_user_auth_email(
         await session.exec(insert_statement)
 
 
+def is_new_login(user: User) -> bool:
+    """Whether this request should be treated as the start of a new login, rather than continued activity
+    from an existing one. A user is authenticated on every request (the ALB re-mints the JWT each time), so
+    there is no login boundary we can observe directly; this approximates one with an idle-gap heuristic.
+    """
+    if user.first_login is None:
+        return True
+    return datetime.now(UTC) - user.last_login > timedelta(minutes=LOGIN_SESSION_GAP_MINUTES)
+
+
+async def record_login(session: SQLSessionDep, user: User, email: str) -> None:
+    """Record a new login: updates first_login/last_login and the user's auth email. Only call when
+    is_new_login(user) is True.
+    """
+    now = datetime.now(UTC)
+    if user.first_login is None:
+        user.first_login = now
+    user.last_login = now
+
+    await record_user_auth_email(session=session, user=user, email=email)
+
+
 async def get_current_user(
     session: SQLSessionDep,
     x_amzn_oidc_data: Annotated[str | None, Header()] = None,
@@ -80,10 +103,12 @@ async def get_current_user(
             raise unauthorised_error
 
         # If IA has changed the subs, match on email and update to new sub
+        needs_commit = False
         user = await get_user_by_email_if_needs_to_update_sub(session, email)
         if user:
             user.subject_id = subject_id
             user.needs_to_update_sub = False
+            needs_commit = True
 
         if not user:
             statement = select(User).where(User.subject_id == subject_id)
@@ -104,20 +129,21 @@ async def get_current_user(
         # Update subject_id if it has changed (e.g. legacy account matched by email)
         if user.subject_id != subject_id:
             user.subject_id = subject_id
+            needs_commit = True
 
         # A user is authenticated on every request (the ALB re-mints the JWT each time), so there is no login
-        # boundary we can observe here. Rather than approximate one, record a single event the first time a user
-        # authenticates; repeat usage is derivable from the timestamps on the events for their actual actions.
-        now = datetime.now(UTC)
-        is_first_login = user.first_login is None
-        if is_first_login:
-            user.first_login = now
-        user.last_login = now
+        # boundary we can observe directly; record_login/is_new_login approximate one with an idle-gap
+        # heuristic, so that routine request traffic doesn't masquerade as repeated logins.
+        is_first_login = False
+        if is_new_login(user):
+            is_first_login = user.first_login is None
+            await record_login(session, user, email)
+            needs_commit = True
 
-        await record_user_auth_email(session=session, user=user, email=email)
-        session.add(user)
-        await session.commit()
-        await session.refresh(user)
+        if needs_commit:
+            session.add(user)
+            await session.commit()
+            await session.refresh(user)
 
         if is_first_login:
             await record_analytics_event(
