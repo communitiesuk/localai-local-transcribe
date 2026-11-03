@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter
+from evals.summarisation.src.common.adapter_factory import build_azure_apim_adapter, build_bedrock_apim_adapter
 from evals.summarisation.src.common.config import (
     AppConfig,
     BlobStorageConfig,
@@ -36,6 +36,7 @@ __all__ = [
     "MetricResult",
     "RunSummary",
     "build_azure_apim_adapter",
+    "build_bedrock_apim_adapter",
     "build_metrics",
     "call_llm_judge_parallel",
     "citation_markers",

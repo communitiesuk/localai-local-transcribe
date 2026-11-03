@@ -9,7 +9,7 @@ from pathlib import Path
 import orjson
 import typer
 
-from common.azure_apim_auth import build_azure_apim_token_provider
+from common.apim_auth import build_apim_token_provider
 from evals.shared.blob_io import publish_run_outputs, stage_dataset
 from evals.shared.blob_storage import EvalBlobStorage
 from evals.summarisation.src.common import AppConfig, RunSummary, load_config, run_halted
@@ -141,7 +141,7 @@ async def _require_ai_gateway_token() -> None:
     placeholder, and Azure DevOps leaves an unmapped variable as the literal $(NAME).
     The provider accepts both. Requesting a token rejects them here.
     """
-    provider = build_azure_apim_token_provider()
+    provider = build_apim_token_provider()
     await provider.get_token()
 
 

@@ -19,7 +19,7 @@ import pytest
 import yaml
 from typer.testing import CliRunner
 
-from common.azure_apim_auth import get_azure_client_secret_token_provider
+from common.apim_auth import get_azure_client_secret_token_provider
 from evals.summarisation.src.main import _require_ai_gateway_token, app
 
 runner = CliRunner()
@@ -86,7 +86,7 @@ def test_bad_client_secret_stops_the_run_before_the_dataset_is_read(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, client_secret: str
 ) -> None:
     monkeypatch.setenv("AZURE_APIM_CLIENT_SECRET", client_secret)
-    monkeypatch.setattr("common.azure_apim_auth.ClientSecretCredential", _RejectingCredential)
+    monkeypatch.setattr("common.apim_auth.ClientSecretCredential", _RejectingCredential)
 
     with patch("evals.summarisation.src.main.run_standard_eval") as run_eval:
         result = runner.invoke(app, ["--config", str(_write_config(tmp_path))])
@@ -101,7 +101,7 @@ def test_bad_client_secret_stops_the_run_before_the_dataset_is_read(
 def test_token_is_fetched_before_the_dataset_is_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("AZURE_APIM_CLIENT_SECRET", "secret")
     _AcceptingCredential.events = []
-    monkeypatch.setattr("common.azure_apim_auth.ClientSecretCredential", _AcceptingCredential)
+    monkeypatch.setattr("common.apim_auth.ClientSecretCredential", _AcceptingCredential)
 
     def _run_eval(*_args: object, **_kwargs: object) -> list[object]:
         _AcceptingCredential.events.append("eval")

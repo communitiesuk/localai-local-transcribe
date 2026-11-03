@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from common.azure_apim_auth import AzureClientSecretCredentialTokenProvider
+from common.apim_auth import AzureClientSecretCredentialTokenProvider
 
 
 @pytest.fixture
