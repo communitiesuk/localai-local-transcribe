@@ -341,7 +341,7 @@ resource "aws_ecs_task_definition" "worker" {
       user                   = "1000:1000"
       readonlyRootFilesystem = true
 
-      # Fargate-native tmpfs (supported since Jan 2026) so /tmp is writable
+      # Fargate-native tmpfs so /tmp is writable
       # despite the read-only root filesystem, matching docker-compose's
       # tmpfs: - /tmp:noexec,nosuid,nodev,size=512m
       linuxParameters = {
