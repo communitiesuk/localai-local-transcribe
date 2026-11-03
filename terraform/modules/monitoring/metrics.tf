@@ -199,7 +199,7 @@ resource "aws_cloudwatch_log_metric_filter" "ecs_task_start_failure" {
   log_group_name = module.ecs_events_log_group.name
   name           = "ecs-task-start-failure-${each.value}-${var.environment_name}"
   pattern        = <<EOT
-    {($.detail.stopCode = "TaskFailedToStart") &&
+    {($.detail.stopCode = "TaskFailedToStart" || $.detail.stopCode = "EssentialContainerExited") &&
      ($.detail-type = "ECS Task State Change") &&
      ($.detail.group = "service:${each.value}")}
   EOT
