@@ -17,7 +17,7 @@ environment_name    = "<environment-name>"
 # ado_federation_subject = "sc://<org>/<project>/evals-blob"
 
 # Network access.
-# network_rules_bypass = []
+# network_rules_bypass = ["AzureServices"]
 
 # Private endpoint subnet in the evals virtual network.
 private_endpoint_subnet_id = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
