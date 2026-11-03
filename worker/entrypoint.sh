@@ -7,6 +7,11 @@ echo "$GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d > "$GOOGLE_CREDENTIALS
 chmod 600 "$GOOGLE_CREDENTIALS_PATH"
 export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_CREDENTIALS_PATH"
 
+# Ray defaults to ~/.ray for some of its state (e.g. usage-stats config), which
+# sits on the read-only root filesystem. Point it at the one writable mount.
+export RAY_TMPDIR=/tmp
+export RAY_AUTH_MODE=disabled
+
 # Main execution
 echo "Starting queue service..."
 
