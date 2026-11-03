@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE
 from backend.utils.mappers import to_user_response
-from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Organisation, User
+from common.database.postgres_models import JobStatus, Minute, MinuteVersion, Organisation, Recording, User
 from common.types import PaginatedUsersResponse
 
 
@@ -74,6 +74,20 @@ async def get_paginated_users(
         page_size=page_size,
         total_pages=math.ceil(count / page_size) or 1,
     )
+
+
+async def get_original_recording_id(session: AsyncSession, transcription_id: uuid.UUID) -> uuid.UUID | None:
+    """Return the id of the earliest (originally uploaded) Recording for a transcription, if any.
+
+    A transcription can have more than one Recording (e.g. a re-encoded copy added during processing), so we use
+    the earliest one - the recording the user originally uploaded.
+    """
+    result = await session.exec(
+        select(Recording.id)
+        .where(Recording.transcription_id == transcription_id)
+        .order_by(col(Recording.created_datetime))
+    )
+    return result.first()
 
 
 async def has_pending_minute_version_for_transcription(session: AsyncSession, transcription_id: uuid.UUID) -> bool:

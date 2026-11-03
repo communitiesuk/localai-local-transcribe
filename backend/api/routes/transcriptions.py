@@ -11,6 +11,7 @@ from sqlmodel import col, func, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
 from backend.utils.get_file_s3_key import get_file_s3_key
+from backend.utils.queries import get_original_recording_id
 from backend.utils.transcription_search_filters import _transcription_search_filters
 from common.database.postgres_models import (
     AnalyticsEventType,
@@ -70,27 +71,13 @@ async def _get_owned_transcription_or_404(
     return transcription
 
 
-async def _get_original_recording_id(session: SQLSessionDep, transcription_id: uuid.UUID) -> uuid.UUID | None:
-    """Return the id of the earliest (originally uploaded) Recording for a transcription, if any.
-
-    A transcription can have more than one Recording (e.g. a re-encoded copy added during processing), so we use
-    the earliest one - the recording the user originally uploaded.
-    """
-    result = await session.exec(
-        select(Recording.id)
-        .where(Recording.transcription_id == transcription_id)
-        .order_by(col(Recording.created_datetime))
-    )
-    return result.first()
-
-
 async def _record_transcription_edit_analytics_event(
     session: SQLSessionDep,
     current_user: User,
     transcription_id: uuid.UUID,
     edit_type: TranscriptionEditType,
 ) -> None:
-    recording_id = await _get_original_recording_id(session, transcription_id) if current_user.evaluation_id else None
+    recording_id = await get_original_recording_id(session, transcription_id) if current_user.evaluation_id else None
     await record_analytics_event(
         session,
         AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,

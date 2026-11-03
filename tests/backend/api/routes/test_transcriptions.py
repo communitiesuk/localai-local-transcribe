@@ -676,7 +676,7 @@ async def test_rename_speaker_everywhere_records_analytics_event(mocker, mock_se
     mock_user.evaluation_id = "EVAL-001"
     mock_user.organisation_id = uuid.uuid4()
     recording_id = uuid.uuid4()
-    mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
+    mocker.patch("backend.api.routes.transcriptions.get_original_recording_id", AsyncMock(return_value=recording_id))
     mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
 
     await rename_speaker_everywhere(
@@ -704,7 +704,7 @@ async def test_update_dialogue_entry_speaker_records_analytics_event(
     mock_user.evaluation_id = "EVAL-001"
     mock_user.organisation_id = uuid.uuid4()
     recording_id = uuid.uuid4()
-    mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
+    mocker.patch("backend.api.routes.transcriptions.get_original_recording_id", AsyncMock(return_value=recording_id))
     mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
 
     await update_dialogue_entry_speaker(
@@ -736,7 +736,7 @@ async def test_update_dialogue_entry_text_records_analytics_event(mocker, mock_s
     mock_user.evaluation_id = "EVAL-001"
     mock_user.organisation_id = uuid.uuid4()
     recording_id = uuid.uuid4()
-    mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
+    mocker.patch("backend.api.routes.transcriptions.get_original_recording_id", AsyncMock(return_value=recording_id))
     mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
 
     await update_dialogue_entry_text(
