@@ -19,27 +19,22 @@
 # If an apply ran without them, Terraform would delete the federated credential
 # on evals-blob-id and pipelines using evals-blob could no longer sign in.
 #
-# Also required for plan and apply: EVALS_INPUT_WRITER_PRINCIPAL_IDS,
-# EVALS_DEBUG_READER_PRINCIPAL_IDS, EVALS_RESULTS_READER_PRINCIPAL_IDS,
-# EVALS_DEBUG_AND_OUTPUT_WRITER_PRINCIPAL_IDS. These lists
-# decide which people can use the evaluation containers from test ADAPT:
-#   EVALS_INPUT_WRITER_PRINCIPAL_IDS              - can upload, change and delete test data in input
-#   EVALS_DEBUG_READER_PRINCIPAL_IDS              - can read debug files in debug
-#   EVALS_RESULTS_READER_PRINCIPAL_IDS            - can read evals results in output
-#   EVALS_DEBUG_AND_OUTPUT_WRITER_PRINCIPAL_IDS   - can upload, change and delete blobs in debug and in output
-# The evaluation pipelines do not depend on these lists. Their own identity has
-# separate, fixed roles.
-#
-# Each value is a Terraform list of Entra ID object IDs, for example
-# ["id-one", "id-two"], or [] for nobody. Prefer a group object ID, so a membership
-# change does not need a Terraform apply. The values are written into
+# Also required for plan and apply: EVALS_CONTAINER_ACCESS. One JSON list decides
+# which people can use the evaluation containers from test ADAPT. Each entry names
+# a container (input, debug or output), a role (Storage Blob Data Reader or
+# Storage Blob Data Contributor) and one Entra ID object ID. For example
+# [{"container":"input","role":"Storage Blob Data Contributor","principal_id":"object-id"}]
+# or [] for nobody. Keep the value on one line. Prefer a group object ID, so a
+# membership change does not need a Terraform apply. The value is written into
 # terraform.tfvars exactly as given.
 #
-# The values stay in the variable group between runs, so nothing needs to be
-# re-entered. Change them only when the people who need access change. Every plan
-# and apply makes the live role assignments match the current lists. Anyone
-# removed from a list loses that role. Review the role assignment changes in each
-# plan before applying it.
+# The evaluation pipelines do not depend on this list. Their own identity has
+# separate, fixed roles.
+#
+# The value stays in the variable group between runs, so nothing needs to be
+# re-entered. Change it only when a grant changes. Every plan and apply makes the
+# live role assignments match the list. Removing an entry removes that role.
+# Review the role assignment changes in each plan before applying it.
 #
 # Extra environment for grant-key-vault-roles: EVALS_KEY_VAULT_NAME,
 # EVALS_SUPER_USER_OBJECT_ID.
@@ -101,10 +96,7 @@ federation_issuer="${EVALS_ADO_FEDERATION_ISSUER:?}"
 federation_subject="${EVALS_ADO_FEDERATION_SUBJECT:?}"
 private_endpoint_subnet_id="${EVALS_PRIVATE_ENDPOINT_SUBNET_ID:?}"
 shared_log_analytics_workspace_id="${EVALS_SHARED_LOG_ANALYTICS_WORKSPACE_ID:?}"
-input_writer_ids="${EVALS_INPUT_WRITER_PRINCIPAL_IDS:?}"
-debug_reader_ids="${EVALS_DEBUG_READER_PRINCIPAL_IDS:?}"
-results_reader_ids="${EVALS_RESULTS_READER_PRINCIPAL_IDS:?}"
-debug_and_output_writer_ids="${EVALS_DEBUG_AND_OUTPUT_WRITER_PRINCIPAL_IDS:?}"
+container_access="${EVALS_CONTAINER_ACCESS:?}"
 
 scope="/subscriptions/${sub}/resourceGroups/${rg}/providers/Microsoft.Storage/storageAccounts/${state_account}"
 
@@ -147,11 +139,8 @@ shared_log_analytics_workspace_id = "${shared_log_analytics_workspace_id}"
 # Federated credential that lets the evals-blob service connection sign in as evals-blob-id.
 ado_federation_issuer  = "${federation_issuer}"
 ado_federation_subject = "${federation_subject}"
-# People or groups given container roles in rbac.tf. Prefer one Entra ID group per list.
-input_writer_principal_ids   = ${input_writer_ids}
-debug_reader_principal_ids   = ${debug_reader_ids}
-results_reader_principal_ids = ${results_reader_ids}
-debug_and_output_writer_principal_ids = ${debug_and_output_writer_ids}
+# One JSON list of container role grants. See EVALS_CONTAINER_ACCESS.
+container_access = ${container_access}
 EOF
 
 curl -fsSL "https://releases.hashicorp.com/terraform/1.16.2/terraform_1.16.2_linux_amd64.zip" -o /tmp/tf.zip
