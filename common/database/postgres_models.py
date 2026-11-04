@@ -389,7 +389,7 @@ class AnalyticsEventMetadata(TypedDict, total=False):
     # Both stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
     transcription_id: str
     template_id: str | None
-    template_type: Literal["default", "custom"]
+    template_source: Literal["default", "custom"]
 
 
 class AnalyticsEvent(BaseTableMixin, table=True):

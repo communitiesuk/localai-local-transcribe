@@ -252,7 +252,7 @@ class MinuteHandlerService:
                             if minute.user_template_id is not None
                             else default_template_id(minute.template_name)
                         ),
-                        "template_type": "custom" if minute.user_template_id is not None else "default",
+                        "template_source": "custom" if minute.user_template_id is not None else "default",
                     },
                 )
 
