@@ -7,6 +7,8 @@ echo "$GOOGLE_APPLICATION_CREDENTIALS_BASE64" | base64 -d > "$GOOGLE_CREDENTIALS
 chmod 600 "$GOOGLE_CREDENTIALS_PATH"
 export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_CREDENTIALS_PATH"
 
+export RAY_AUTH_MODE=disabled
+
 # Main execution
 echo "Starting queue service..."
 

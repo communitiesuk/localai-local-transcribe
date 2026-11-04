@@ -8,13 +8,13 @@
 -- SUMMARY_RECEIVED
 --
 -- output columns and units:
--- template_id: UUID, template id from SUMMARY_RECEIVED event_metadata
+-- template_id: text, custom template UUID or generated default template ID from SUMMARY_RECEIVED event_metadata
 -- transcript_count: numeric, number of transcripts that have been summarised with that template
 -- median_summary_count: numeric, median number of times that template summarises a transcript
 --
 -- inclusion/exclusion rules:
 -- SUMMARY_RECEIVED events that occurred within the reporting period
--- default templates have a NULL template_id
+-- events with a missing or null template_id are grouped under NULL including events for default templates recorded before default IDs were included
 --
 -- duplicate/retried events:
 -- duplicate events prevented by the unique constraint on (event_type, source_id)
