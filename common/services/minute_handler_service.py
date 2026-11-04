@@ -29,7 +29,7 @@ from common.prompts import (
     get_basic_minutes_prompt,
 )
 from common.services.analytics_service import record_analytics_event_sync
-from common.services.template_manager import TemplateManager
+from common.services.template_manager import TemplateManager, default_template_id
 from common.settings import get_settings
 from common.templates.user_template import generate_user_template
 from common.types import (
@@ -247,7 +247,12 @@ class MinuteHandlerService:
                     source_id=minute_version.id,
                     event_metadata={
                         "transcription_id": str(minute.transcription_id),
-                        "template_id": str(minute.user_template_id) if minute.user_template_id else None,
+                        "template_id": (
+                            str(minute.user_template_id)
+                            if minute.user_template_id is not None
+                            else default_template_id(minute.template_name)
+                        ),
+                        "template_source": "custom" if minute.user_template_id is not None else "default",
                     },
                 )
 
