@@ -4,27 +4,22 @@ Generate Azure draft transcripts and reviewable audio segments for one meeting a
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import math
 import re
 import shutil
 import tempfile
-import time
 from datetime import UTC, datetime
 from pathlib import Path
-from uuid import NAMESPACE_URL, uuid4, uuid5
+from uuid import NAMESPACE_URL, uuid5
 
 import ffmpeg
 import soundfile
 from tenacity import RetryError
 
 from common.audio.ffmpeg import MP3_ENCODING_OPTIONS, convert_to_mp3
-from common.database.postgres_models import DialogueEntry, Recording
-from common.services.storage_services import get_storage_service
+from common.database.postgres_models import DialogueEntry
 from common.services.transcription_services.azure import AzureSpeechAdapter
-from common.services.transcription_services.azure_async import AzureBatchTranscriptionAdapter
-from common.settings import get_settings
 from evals.dataset_generation.silver_transcripts.src.config import DEFAULT_CUTOFF_SECONDS
 from evals.dataset_generation.silver_transcripts.src.models import MeetingMetadata, SegmentMetadata
 from evals.transcription.src.adapters.base import EvalsTranscriptionAdapter, ServiceTranscriptionAdapter
@@ -35,10 +30,7 @@ TIMESTAMP_TOLERANCE_SECONDS = 0.05
 AUDIO_SUFFIXES = {".wav", ".flac", ".ogg", ".mp3", ".m4a", ".aac"}
 MAX_SEGMENT_SPAN_FACTOR = 2
 MAX_SAMPLE_NAME_LENGTH = 60
-MAX_SYNCHRONOUS_TRANSCRIPTION_SECONDS = AzureSpeechAdapter.max_audio_length
-MAX_BATCH_TRANSCRIPTION_SECONDS = AzureBatchTranscriptionAdapter.max_audio_length
-BATCH_TRANSCRIPTION_POLL_SECONDS = 5
-MIN_BATCH_TRANSCRIPTION_TIMEOUT_SECONDS = 1800
+# Azure batch transcription for recordings over the synchronous limit was removed from here.
 
 
 class CutoffMismatchError(ValueError):
@@ -85,7 +77,6 @@ class SilverTranscriptPipeline:
         self.cutoff_seconds = cutoff_seconds
         self.work_dir = work_dir.expanduser().resolve()
         self.adapter = adapter or ServiceTranscriptionAdapter(AzureSpeechAdapter)
-        self._uses_default_adapter = getattr(self.adapter, "_adapter", None) is AzureSpeechAdapter
 
     def generate_transcripts(self, input_dir: Path) -> list[MeetingMetadata]:
         """
@@ -191,12 +182,7 @@ class SilverTranscriptPipeline:
                 converted = Path(temporary_dir) / "audio.mp3"
                 convert_to_mp3(source, converted)
                 converted.replace(audio_path)
-            audio_info = soundfile.info(audio_path)
-            duration = audio_info.frames / audio_info.samplerate
-            use_batch_adapter = self._uses_default_adapter and duration > MAX_SYNCHRONOUS_TRANSCRIPTION_SECONDS
-            if use_batch_adapter:
-                meeting_metadata.engine = AzureBatchTranscriptionAdapter.name
-            transcript_result = self._transcribe(audio_path, duration, use_batch_adapter)
+            transcript_result = self._transcribe(audio_path)
             if transcript_result.debug_info.get("error") or not transcript_result.text.strip():
                 message = str(transcript_result.debug_info.get("error") or "The engine returned an empty transcript")
                 raise RuntimeError(message)
@@ -215,58 +201,12 @@ class SilverTranscriptPipeline:
         _save_metadata(metadata_path, meeting_metadata)
         return meeting_metadata
 
-    def _transcribe(self, audio_path: Path, duration: float, use_batch_adapter: bool) -> TranscriptionResult:
-        """Use Azure's existing async batch adapter for recordings over its two-hour limit."""
-        if not use_batch_adapter:
-            return self.adapter.transcribe(str(audio_path))
-        if duration > MAX_BATCH_TRANSCRIPTION_SECONDS:
-            message = f"Recording is {duration / 3600:.1f} hours long; Azure batch transcription supports up to 4 hours"
-            raise ValueError(message)
-        return asyncio.run(self._transcribe_with_azure_batch(audio_path, duration))
+    def _transcribe(self, audio_path: Path) -> TranscriptionResult:
+        """Transcribe a recording with the configured adapter."""
+        return self.adapter.transcribe(str(audio_path))
 
-    async def _transcribe_with_azure_batch(self, audio_path: Path, duration: float) -> TranscriptionResult:
-        """Upload a local file and run the existing stored-recording batch adapter flow."""
-        storage_service = get_storage_service(get_settings().STORAGE_SERVICE_NAME)
-        if storage_service.name == "local":
-            message = (
-                "Azure batch transcription requires remotely accessible storage; "
-                "STORAGE_SERVICE_NAME=local cannot provide Azure with an audio URL. "
-                "Configure S3 or Azure Blob storage for recordings over two hours."
-            )
-            raise ValueError(message)
-        recording_id = uuid4()
-        key = f"silver-transcripts/{recording_id}.mp3"
-        recording = Recording(id=recording_id, user_id=uuid4(), s3_file_key=key)
-        await storage_service.upload(key, audio_path)
-        started_at = time.monotonic()
-        timeout_seconds = max(MIN_BATCH_TRANSCRIPTION_TIMEOUT_SECONDS, duration * 2)
-        job_submitted = False
-        job_completed = False
-        try:
-            job = await AzureBatchTranscriptionAdapter.start(recording)
-            job_submitted = True
-            while time.monotonic() - started_at < timeout_seconds:
-                await asyncio.sleep(BATCH_TRANSCRIPTION_POLL_SECONDS)
-                job = await AzureBatchTranscriptionAdapter.check(job)
-                if job.job_status == "Succeeded":
-                    job_completed = True
-                    entries = job.transcript or []
-                    return TranscriptionResult(
-                        text=" ".join(entry["text"] for entry in entries).strip(),
-                        duration_sec=time.monotonic() - started_at,
-                        debug_info={},
-                        dialogue_entries=entries,
-                    )
-            message = f"Azure batch transcription did not complete within {timeout_seconds / 60:g} minutes"
-            raise TimeoutError(message)
-        finally:
-            if job_submitted and not job_completed:
-                logger.warning("Retaining %s because the Azure batch job did not complete", key)
-            else:
-                try:
-                    await storage_service.delete(key)
-                except Exception as error:  # noqa: BLE001 - cleanup must not mask the transcription result
-                    logger.warning("Could not delete temporary batch audio %s: %s", key, error)
+    # The Azure batch transcription flow (upload/poll/delete for recordings too long for
+    # _transcribe above) used to live here; it has been removed.
 
     @staticmethod
     def _format_diarized_transcript(utterances: list[DialogueEntry]) -> str:

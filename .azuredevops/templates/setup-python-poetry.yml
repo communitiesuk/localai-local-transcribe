@@ -7,6 +7,9 @@ parameters:
   - name: poetryVersion
     type: string
     default: '2.5.1'
+  - name: installFfmpeg
+    type: boolean
+    default: false
 
 steps:
   - script: |
@@ -20,6 +23,15 @@ steps:
     displayName: 'Set up Python ${{ parameters.pythonVersion }}'
     inputs:
       versionSpec: '${{ parameters.pythonVersion }}'
+
+  - ${{ if eq(parameters.installFfmpeg, true) }}:
+      - script: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+          ffprobe -version
+        displayName: 'Ensure ffmpeg/ffprobe is installed'
 
   - script: |
       echo "Installing Poetry ${{ parameters.poetryVersion }}"

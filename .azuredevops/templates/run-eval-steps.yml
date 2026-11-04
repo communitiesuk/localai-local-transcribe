@@ -21,6 +21,9 @@ parameters:
     type: string
   - name: runDisplayName
     type: string
+  - name: installFfmpeg
+    type: boolean
+    default: false
 
 steps:
   - checkout: self
@@ -29,6 +32,7 @@ steps:
     parameters:
       pythonVersion: ${{ parameters.pythonVersion }}
       poetryVersion: ${{ parameters.poetryVersion }}
+      installFfmpeg: ${{ parameters.installFfmpeg }}
 
   - script: poetry sync --no-root --no-ansi --with ${{ parameters.poetryDependencyGroup }}
     displayName: 'Install dependencies'
