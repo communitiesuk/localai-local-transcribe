@@ -15,6 +15,7 @@ export type TranscriptionForm = {
   recordingId?: string
   title?: string
   recordedAt?: Date
+  durationSeconds?: number
 }
 
 const getMediaDurationSeconds = async (file: Blob | File) =>
@@ -102,7 +103,7 @@ export const useStartTranscription = (
 
   const onSubmit = useCallback(
     async (
-      { file, recordingId, title }: TranscriptionForm,
+      { file, recordingId, title, durationSeconds }: TranscriptionForm,
       signal: AbortSignal
     ) => {
       if (!file) {
@@ -139,7 +140,12 @@ export const useStartTranscription = (
         await getOrganisationId()
       )
 
-      const audio_duration_seconds = await getMediaDurationSeconds(file)
+      let audio_duration_seconds = undefined
+      if (isFile) {
+        audio_duration_seconds = await getMediaDurationSeconds(file)
+      } else {
+        audio_duration_seconds = durationSeconds
+      }
 
       const transcriptionData = await createTranscription({
         body: {

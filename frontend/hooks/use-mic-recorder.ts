@@ -10,6 +10,7 @@ import { AudioDevice } from '@/components/audio/microphone-permission'
 import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { useCountdown } from '@/hooks/use-countdown'
 import { usePreferredMicrophone } from '@/hooks/use-preferred-microphone'
+import { useRecordingTimer } from '@/hooks/use-recording-timer'
 
 /**
  * Encapsulates the MediaRecorder lifecycle (device selection, permission
@@ -43,6 +44,17 @@ export function useMicRecorder({
   const isStartingRecordingRef = useRef(false)
   const [isRecording, setIsRecording] = useState(false)
   const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
+  const [recordingDurationMs, setRecordingDurationMs] = useState<number>(0)
+  const recordingDurationMsRef = useRef<number>(recordingDurationMs)
+
+  useRecordingTimer(1000, (elapsedMs) => {
+    if (!isRecording || mediaRecorderRef.current?.state === 'paused') return
+    setRecordingDurationMs((recordingDuration) => {
+      const newDuration = recordingDuration + elapsedMs
+      recordingDurationMsRef.current = newDuration
+      return newDuration
+    })
+  })
 
   const stopAllTracks = useCallback(() => {
     isStartingRecordingRef.current = false
@@ -115,6 +127,7 @@ export function useMicRecorder({
       }
 
       mediaRecorder.onstop = async () => {
+        form.setValue('durationSeconds', recordingDurationMsRef.current / 1000)
         if (mediaChunksRef.current.length > 0) {
           const audioBlob = new Blob(mediaChunksRef.current, {
             type: 'audio/webm',
@@ -138,6 +151,8 @@ export function useMicRecorder({
       setRecordedAudio(null)
       await requestWakeLock()
       form.setValue('recordedAt', new Date())
+      recordingDurationMsRef.current = 0
+      setRecordingDurationMs(0)
       recordAnalyticsEvent('live_recording_started')
       mediaRecorder.start(1000) // Collect data every second
       setIsRecording(true)
@@ -246,5 +261,6 @@ export function useMicRecorder({
     handleLoadingCancel,
     stopRecording,
     handlePauseStateChange,
+    recordingDuration: recordingDurationMs,
   }
 }
