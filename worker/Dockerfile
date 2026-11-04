@@ -65,6 +65,13 @@ RUN apt-get update && \
 RUN groupadd -g 1000 appuser && \
     useradd -u 1000 -g appuser -m -s /bin/bash appuser
 
+# Create /tmp directory mapped to appuser
+RUN mkdir -p /tmp && \
+    chown -R appuser:appuser /tmp && \
+    chmod 1777 /tmp
+
+VOLUME [ "/tmp" ]
+
 WORKDIR /app
 
 # Create writable directories
