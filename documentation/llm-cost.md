@@ -40,6 +40,35 @@ The change applies once per generated minute, not per section: one `extract_clai
 
 Executive Summary has `citations_required = False`, so it is unchanged. The same is true for custom user-template question generation and the other non-citation calls: meeting title, speaker predictions, the accuracy guardrail, AI edits and the eval judge all keep their current tiers. A precise per-template estimate still depends on the production template mix; the blended usage-weighted figure above uses the existing December 2024-May 2026 mix in `assumptions.yaml`.
 
+## FAST-tier model substitution
+
+Candidate replacements for `FAST_LLM_MODEL_NAME` (currently gpt-5-nano), holding BEST at
+gpt-5.1. Figures are the usage-weighted per-meeting cost from `fast_model_comparison()` in
+`documentation/env_assets/llm_cost.py`, run with `poetry run python llm_cost.py`.
+
+gpt-5-nano and gpt-5.1 reuse this file's own `PRICES` entries; the other four are Azure
+OpenAI Data Zone / AWS Bedrock `eu.anthropic.*` (region-pinned) USD list prices converted
+to GBP at the 2026-11-04 mid-market rate (1 USD = 0.74 GBP) — see
+[Azure OpenAI pricing](https://azure.microsoft.com/en-us/pricing/details/azure-openai/) and
+[AWS Bedrock pricing](https://aws.amazon.com/bedrock/pricing/). gpt-6-luna uses the
+short-context Data Zone tier; a transcript long enough to hit the long-context tier would
+roughly double its price.
+
+| Candidate | GBP, FAST calls only | GBP, total | GBP per 1,000 meetings | Delta vs gpt-5-nano |
+|---|---:|---:|---:|---:|
+| gpt-5-nano (current) | £0.0075 | £0.1096 | £109.60 | — |
+| gpt-5.1 | £0.1971 | £0.2992 | £299.19 | +£0.1896 (+173%) |
+| gpt-5-6-luna | £0.0495 | £0.1516 | £151.58 | +£0.0420 (+38%) |
+| gpt-6-luna | £0.0128 | £0.1149 | £114.92 | +£0.0053 (+5%) |
+| haiku-4-5 | £0.1281 | £0.2302 | £230.20 | +£0.1206 (+110%) |
+| sonnet-5 | £0.2562 | £0.3583 | £358.30 | +£0.2487 (+227%) |
+
+`gpt-6-luna` is the cheapest upgrade path at roughly a 5% total increase; `sonnet-5` and
+`gpt-5.1` are the most expensive at close to 3x the current FAST cost. FAST calls (speaker
+ID, title, accuracy guardrail) are a small share of per-meeting cost regardless of model —
+even the most expensive candidate (`sonnet-5`) only adds £0.25 of FAST cost, versus the
+dominant BEST-tier cost of citations and minute generation.
+
 ## Transcription
 
 Azure AI Speech is billed per hour of audio, so a 1-hour meeting costs whichever rate its adapter charges:
