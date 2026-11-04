@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 from enum import StrEnum, auto
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -411,6 +411,7 @@ class AnalyticsEventMetadata(TypedDict, total=False):
     transcription_id: str
     minute_version_id: str
     template_id: str | None
+    template_source: Literal["default", "custom"]
 
 
 class AnalyticsEvent(BaseTableMixin, table=True):
