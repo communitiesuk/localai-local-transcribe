@@ -58,10 +58,6 @@ vi.mock('next/navigation', () => ({
   redirect: () => null,
 }))
 
-vi.mock('posthog-js/react', () => ({
-  useFeatureFlagEnabled: () => false,
-}))
-
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetOptions:
     () => ({

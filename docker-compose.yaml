@@ -58,8 +58,9 @@ services:
       - type: bind
         source: ./.data
         target: /static
+    read_only: true
     tmpfs:
-      - /tmp
+      - /tmp:noexec,nosuid,nodev,size=512m
     environment:
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
@@ -97,7 +98,6 @@ services:
       dockerfile: ./frontend/Dockerfile.dev
       args:
         - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
-        - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
         - NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
         - NEXT_PUBLIC_PLAUSIBLE_DOMAIN=$NEXT_PUBLIC_PLAUSIBLE_DOMAIN
     ports:
@@ -110,7 +110,6 @@ services:
     environment:
       - BACKEND_HOST=http://backend:8080
       - NEXT_PUBLIC_SENTRY_DSN=$SENTRY_DSN
-      - NEXT_PUBLIC_POSTHOG_API_KEY=$POSTHOG_API_KEY
       - NEXT_PUBLIC_ENVIRONMENT=$NEXT_PUBLIC_ENVIRONMENT
       - NEXT_PUBLIC_PLAUSIBLE_DOMAIN=$NEXT_PUBLIC_PLAUSIBLE_DOMAIN
     volumes:
