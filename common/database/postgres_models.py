@@ -369,6 +369,7 @@ class AnalyticsEventType(StrEnum):
     SUMMARY_EDIT_SUBMITTED = auto()
     SUMMARY_DOWNLOADED = auto()
     SUMMARY_COPIED = auto()
+    TOU_ACCEPTED = auto()
 
 
 class TranscriptionEditType(StrEnum):
