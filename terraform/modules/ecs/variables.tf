@@ -169,12 +169,6 @@ variable "worker_task_memory" {
   default     = 4096
 }
 
-variable "worker_tmpfs_size" {
-  description = "Size (in MiB) of the /tmp tmpfs mount for the worker ECS task definition"
-  type        = number
-  default     = 512
-}
-
 variable "alb_arn" {
   description = "ARN of the Application Load Balancer, used for JWT signer validation"
   type        = string
