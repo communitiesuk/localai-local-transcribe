@@ -41,6 +41,10 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   createMinuteTranscriptionTranscriptionIdMinutesPostMutation: () => ({
     mutationKey: ['create-minute'],
   }),
+  recordSummaryInteractionEventMinuteVersionsMinuteVersionIdAnalyticsEventsPostMutation:
+    () => ({
+      mutationKey: ['record-summary-interaction'],
+    }),
 }))
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {
