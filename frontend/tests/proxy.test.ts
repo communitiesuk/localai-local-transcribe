@@ -207,7 +207,7 @@ describe('proxy auth pathways', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response('<html>Bad gateway</html>', {
+        new Response('not json', {
           status: 200,
           headers: { 'content-type': 'text/html' },
         })
@@ -220,7 +220,7 @@ describe('proxy auth pathways', () => {
     expect(res.headers.get('location')).toBeNull()
   })
 
-  it('returns 503 when the backend returns no user', async () => {
+  it('returns 503 when the backend returns a null user', async () => {
     vi.stubEnv('ENVIRONMENT', 'development')
     vi.stubEnv('BACKEND_HOST', 'http://development')
     vi.mocked(parseAuthToken).mockResolvedValue({
@@ -231,7 +231,7 @@ describe('proxy auth pathways', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(null), {
+        new Response('null', {
           status: 200,
           headers: { 'content-type': 'application/json' },
         })
