@@ -62,6 +62,42 @@ async def test_accept_terms_of_use_success(override_user, override_session, mock
     mock_session.refresh.assert_awaited_once_with(mock_pending_tou_user)
 
 
+@pytest.mark.asyncio
+async def test_accept_terms_of_use_records_tou_accepted_analytics_event(
+    mocker, override_user, override_session, mock_pending_tou_user
+):
+    """Accepting the terms of use records a TOU_ACCEPTED event; its occurred_datetime is the acceptance time."""
+    mock_pending_tou_user.evaluation_id = "EVAL-TOU"
+    mock_pending_tou_user.organisation_id = uuid4()
+    mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
+
+    async with get_test_client() as ac:
+        response = await ac.post("/users/terms-of-use")
+
+    assert response.status_code == 200
+    mock_record_event.assert_awaited_once()
+    call_args = mock_record_event.await_args
+    assert call_args.args[0] is override_session
+    assert call_args.args[1] == AnalyticsEventType.TOU_ACCEPTED
+    assert call_args.args[2] == "EVAL-TOU"
+    assert call_args.args[3] == mock_pending_tou_user.organisation_id
+
+
+@pytest.mark.asyncio
+async def test_accept_terms_of_use_records_no_event_when_already_accepted(
+    mocker, override_user, override_session, mock_user
+):
+    """A repeat POST is not a second acceptance, so it records nothing."""
+    assert mock_user.accepted_tou is True
+    mock_record_event = mocker.patch("backend.api.routes.users.record_analytics_event", new=AsyncMock())
+
+    async with get_test_client() as ac:
+        response = await ac.post("/users/terms-of-use")
+
+    assert response.status_code == 200
+    mock_record_event.assert_not_awaited()
+
+
 @pytest.mark.parametrize("retention_period", range(1, 31))
 @pytest.mark.asyncio
 async def test_update_data_retention_success(

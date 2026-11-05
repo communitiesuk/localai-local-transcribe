@@ -50,10 +50,17 @@ async def accept_terms_of_use(
     user: PendingTouUserDep,
     session: SQLSessionDep,
 ) -> GetUserResponse:
+    # Only the transition to accepted is an acceptance. The endpoint is idempotent and the frontend may call it
+    # again on a refresh or a retry, so without this guard one user could produce several TOU_ACCEPTED events.
+    is_first_acceptance = not user.accepted_tou
     user.accepted_tou = True
 
     await session.commit()
     await session.refresh(user)
+
+    if is_first_acceptance:
+        # The acceptance time is the event's own occurred_datetime; there is nothing extra to store.
+        await record_analytics_event(session, AnalyticsEventType.TOU_ACCEPTED, user.evaluation_id, user.organisation_id)
 
     return to_user_response(user)
 
