@@ -6,7 +6,8 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
-from backend.utils.queries import get_original_recording_id, has_pending_minute_version_for_transcription
+from backend.services.analytics import record_user_analytics_event
+from backend.utils.queries import has_pending_minute_version_for_transcription
 from common.database.postgres_models import (
     AnalyticsEventMetadata,
     AnalyticsEventType,
@@ -20,7 +21,6 @@ from common.database.postgres_models import (
     User,
 )
 from common.guardrail_messages import get_guardrail_warning_message_for_results
-from common.services.analytics_service import record_analytics_event
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
 from common.types import (
@@ -58,7 +58,6 @@ ANALYTICS_EVENT_TYPE_BY_SUMMARY_INTERACTION = {
 
 
 async def _record_summary_analytics_event(
-    session: SQLSessionDep,
     user: User,
     event_type: AnalyticsEventType,
     transcription_id: uuid.UUID,
@@ -69,10 +68,9 @@ async def _record_summary_analytics_event(
 ) -> None:
     """Record a summary analytics event, mirroring `_record_transcription_edit_analytics_event`.
 
-    `recording_id` is resolved so reporting can join recording -> transcript -> summary on a single column, rather
-    than through `transcription`, which is deleted on a shorter retention schedule than analytics events.
+    Deliberately takes no session: `record_user_analytics_event` uses one of its own, so a failure here cannot
+    roll back the request or stop the work that follows the call.
     """
-    recording_id = await get_original_recording_id(session, transcription_id) if user.evaluation_id else None
     event_metadata: AnalyticsEventMetadata = {
         "transcription_id": str(transcription_id),
         "minute_version_id": str(minute_version_id),
@@ -80,12 +78,10 @@ async def _record_summary_analytics_event(
     if extra_metadata:
         event_metadata.update(extra_metadata)
 
-    await record_analytics_event(
-        session,
+    await record_user_analytics_event(
+        user,
         event_type,
-        user.evaluation_id,
-        user.organisation_id,
-        recording_id=recording_id,
+        transcription_id=transcription_id,
         source_id=source_id,
         event_metadata=event_metadata,
     )
@@ -147,7 +143,6 @@ async def create_minute(
     # source_id pairs this 1:1 with the SUMMARY_RECEIVED event the worker records for the same version, so
     # generation latency is a self-join rather than a fuzzy time-window match.
     await _record_summary_analytics_event(
-        session,
         user,
         AnalyticsEventType.SUMMARY_REQUESTED,
         transcription_id=transcription_id,
@@ -240,7 +235,6 @@ async def create_minute_version(
     edit_type = SUMMARY_EDIT_TYPE_BY_CONTENT_SOURCE.get(request.content_source)
     if edit_type is not None:
         await _record_summary_analytics_event(
-            session,
             user,
             AnalyticsEventType.SUMMARY_EDIT_SUBMITTED,
             transcription_id=minute.transcription_id,
@@ -322,13 +316,12 @@ async def record_summary_interaction_event(
     """Record a summary interaction that only the client can observe (download, copy).
 
     No `source_id`: a user may legitimately download or copy the same version repeatedly, and each of those is a
-    real event rather than a retry. `record_analytics_event` swallows its own failures, so this returns 204 even
-    if the insert fails - the client is never given a reason to retry or to surface an error.
+    real event rather than a retry. `record_user_analytics_event` swallows its own failures, so this returns 204
+    even if the insert fails - the client is never given a reason to retry or to surface an error.
     """
     minute_version = await get_minute_version(minute_version_id, session, user)
 
     await _record_summary_analytics_event(
-        session,
         user,
         ANALYTICS_EVENT_TYPE_BY_SUMMARY_INTERACTION[request.event_type],
         transcription_id=minute_version.minute.transcription_id,

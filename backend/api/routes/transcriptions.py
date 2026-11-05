@@ -10,8 +10,8 @@ from sqlalchemy import ColumnElement, not_, or_
 from sqlmodel import col, func, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
+from backend.services.analytics import record_user_analytics_event
 from backend.utils.get_file_s3_key import get_file_s3_key
-from backend.utils.queries import get_original_recording_id
 from backend.utils.transcription_search_filters import _transcription_search_filters
 from common.database.postgres_models import (
     AnalyticsEventType,
@@ -72,18 +72,17 @@ async def _get_owned_transcription_or_404(
 
 
 async def _record_transcription_edit_analytics_event(
-    session: SQLSessionDep,
     current_user: User,
     transcription_id: uuid.UUID,
     edit_type: TranscriptionEditType,
 ) -> None:
-    recording_id = await get_original_recording_id(session, transcription_id) if current_user.evaluation_id else None
-    await record_analytics_event(
-        session,
+    """Record an edit event. Takes no session: `record_user_analytics_event` uses one of its own, so a failed
+    lookup or insert cannot roll back the edit the user has already saved.
+    """
+    await record_user_analytics_event(
+        current_user,
         AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
-        current_user.evaluation_id,
-        current_user.organisation_id,
-        recording_id=recording_id,
+        transcription_id=transcription_id,
         # TranscriptionEditType is a StrEnum, so this serialises to the same JSON as edit_type.value
         event_metadata={"edit_type": edit_type},
     )
@@ -475,7 +474,7 @@ async def rename_speaker_everywhere(
     await session.commit()
 
     await _record_transcription_edit_analytics_event(
-        session, current_user, transcription_id, TranscriptionEditType.ALL_INSTANCES_OF_NAME
+        current_user, transcription_id, TranscriptionEditType.ALL_INSTANCES_OF_NAME
     )
 
 
@@ -511,7 +510,7 @@ async def update_dialogue_entry_speaker(
     await session.commit()
 
     await _record_transcription_edit_analytics_event(
-        session, current_user, transcription_id, TranscriptionEditType.SINGLE_INSTANCE_OF_NAME
+        current_user, transcription_id, TranscriptionEditType.SINGLE_INSTANCE_OF_NAME
     )
 
 
@@ -546,7 +545,7 @@ async def update_dialogue_entry_text(
     await session.commit()
 
     await _record_transcription_edit_analytics_event(
-        session, current_user, transcription_id, TranscriptionEditType.DIALOGUE_ENTRY
+        current_user, transcription_id, TranscriptionEditType.DIALOGUE_ENTRY
     )
 
 
