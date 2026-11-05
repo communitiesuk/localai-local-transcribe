@@ -105,31 +105,27 @@ variable "private_endpoint_subnet_id" {
 
 # Team RBAC
 #
-# All values are Entra ID object IDs. Prefer a group object ID over individual users so
-# membership changes do not need a terraform apply.
+# One list of grants. Each entry names a container, a role and one Entra ID object ID.
+# Prefer a group object ID over individual users so membership changes do not need a
+# terraform apply. Adding a grant is an edit of this list and a plan.
 
-variable "input_writer_principal_ids" {
-  type        = set(string)
-  description = "Object IDs allowed to upload and manage eval test data in the input container. Keep to the people who curate that data."
+variable "container_access" {
+  type = list(object({
+    container    = string
+    role         = string
+    principal_id = string
+  }))
+  description = "Container role grants for people and groups. Each entry is one container, one role and one Entra ID object ID. Allowed containers are input, debug and output. Allowed roles are Storage Blob Data Reader and Storage Blob Data Contributor."
   default     = []
-}
 
-variable "debug_reader_principal_ids" {
-  type        = set(string)
-  description = "Object IDs allowed to read the debug container when diagnosing eval runs."
-  default     = []
-}
-
-variable "results_reader_principal_ids" {
-  type        = set(string)
-  description = "Object IDs allowed to read the output (results) container."
-  default     = []
-}
-
-variable "debug_and_output_writer_principal_ids" {
-  type        = set(string)
-  description = "Object IDs allowed to read, write and delete blobs in both the debug container and the output container. An ad hoc evals run on test ADAPT writes both, so one list grants both roles."
-  default     = []
+  validation {
+    condition = alltrue([
+      for grant in var.container_access :
+      contains(["input", "debug", "output"], grant.container)
+      && contains(["Storage Blob Data Reader", "Storage Blob Data Contributor"], grant.role)
+    ])
+    error_message = "container_access entries must use container input, debug or output, and role Storage Blob Data Reader or Storage Blob Data Contributor."
+  }
 }
 
 # Shared logging

@@ -30,38 +30,31 @@ locals {
     }
   }
 
-  # Team members. Keep each list to the smallest group that needs the container, and prefer
-  # an Entra ID group object ID over a list of individual users.
-  team_assignments = merge(
-    { for id in var.input_writer_principal_ids : "input-writer-${id}" => {
-      container = "input"
-      role      = "Storage Blob Data Contributor"
-      principal = id
-    } },
-    { for id in var.debug_reader_principal_ids : "debug-reader-${id}" => {
-      container = "debug"
-      role      = "Storage Blob Data Reader"
-      principal = id
-    } },
-    { for id in var.results_reader_principal_ids : "results-reader-${id}" => {
-      container = "output"
-      role      = "Storage Blob Data Reader"
-      principal = id
-    } },
-    # One list grants write on both containers. An ad hoc evals run on test ADAPT
-    # writes debug and output together. Storage Blob Data Contributor already
-    # includes read and list, so these object IDs stay off the reader lists.
-    { for id in var.debug_and_output_writer_principal_ids : "debug-writer-${id}" => {
-      container = "debug"
-      role      = "Storage Blob Data Contributor"
-      principal = id
-    } },
-    { for id in var.debug_and_output_writer_principal_ids : "results-writer-${id}" => {
-      container = "output"
-      role      = "Storage Blob Data Contributor"
-      principal = id
-    } },
-  )
+  # State addresses keep the names from the four previous lists. output was
+  # called results in those addresses. A container or role missing from these
+  # maps fails the plan here, before Terraform replaces an assignment.
+  container_state_name = {
+    input  = "input"
+    debug  = "debug"
+    output = "results"
+  }
+
+  role_state_name = {
+    "Storage Blob Data Reader"      = "reader"
+    "Storage Blob Data Contributor" = "writer"
+  }
+
+  # One entry in container_access is one role on one container. Storage Blob Data
+  # Contributor already includes read and list, so a writer entry stays off the
+  # reader rows. Prefer one Entra ID group object ID per entry.
+  team_assignments = {
+    for grant in var.container_access :
+    "${local.container_state_name[grant.container]}-${local.role_state_name[grant.role]}-${grant.principal_id}" => {
+      container = grant.container
+      role      = grant.role
+      principal = grant.principal_id
+    }
+  }
 }
 
 resource "azurerm_role_assignment" "evals" {

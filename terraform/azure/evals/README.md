@@ -54,7 +54,7 @@ Creating the role assignments needs Owner or User Access Administrator on the re
 
 ## Team container roles
 
-`rbac.tf` also grants container roles to the object IDs in the variable group. `input_writer_principal_ids` can upload, change and delete blobs in `input`. `debug_reader_principal_ids` can read `debug`. `results_reader_principal_ids` can read `output`. `debug_and_output_writer_principal_ids` can read, write and delete blobs in both `debug` and `output`. An ad hoc evals run on test ADAPT writes both of those containers, so one list grants both roles. Storage Blob Data Contributor includes read and list, so those object IDs stay off the reader lists. Prefer a group object ID. A membership change inside the group takes effect without a Terraform apply. Adding or removing a group object ID from a list needs a plan and apply.
+`rbac.tf` also grants container roles from `container_access`. Each entry names one container (`input`, `debug` or `output`), one role (`Storage Blob Data Reader` or `Storage Blob Data Contributor`) and one Entra object ID. A write on both `debug` and `output` is two entries. Storage Blob Data Contributor includes read and list, so a writer entry stays off the reader rows. Prefer a group object ID. A membership change inside the group takes effect without a Terraform apply. Adding or removing an entry needs a plan and apply.
 
 ## Customer-managed key
 

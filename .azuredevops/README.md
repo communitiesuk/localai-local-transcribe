@@ -38,10 +38,7 @@ Mandatory values:
 | `EVALS_ADO_FEDERATION_SUBJECT` | Subject shown on the `evals-blob` service connection | No |
 | `EVALS_PRIVATE_ENDPOINT_SUBNET_ID` | Resource ID of the private endpoint subnet in the evals virtual network | No |
 | `EVALS_SHARED_LOG_ANALYTICS_WORKSPACE_ID` | Resource ID of the shared Log Analytics workspace that Cyber can read. The Terraform pipeline identity needs `Microsoft.OperationalInsights/workspaces/sharedKeys/action` on it | No |
-| `EVALS_INPUT_WRITER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can upload, change and delete blobs in `input`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
-| `EVALS_DEBUG_READER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can read `debug`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
-| `EVALS_RESULTS_READER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can read `output`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
-| `EVALS_DEBUG_AND_OUTPUT_WRITER_PRINCIPAL_IDS` | Terraform list of Entra object IDs that can upload, change and delete blobs in both `debug` and `output`. For example `["object-id"]`, or `[]` for nobody. Plan and apply read this | No |
+| `EVALS_CONTAINER_ACCESS` | One JSON list of container role grants. Each entry has `container` (`input`, `debug` or `output`), `role` (`Storage Blob Data Reader` or `Storage Blob Data Contributor`) and `principal_id` (one Entra object ID). One line, for example `[{"container":"input","role":"Storage Blob Data Contributor","principal_id":"object-id"}]`, or `[]` for nobody. Plan and apply read this | No |
 | `EVALS_KEY_VAULT_NAME` | Key Vault holding the storage key. Read only by `grant-key-vault-roles` | No |
 | `EVALS_SUPER_USER_OBJECT_ID` | Entra object ID given Key Vault Crypto Officer. Read only by `grant-key-vault-roles` | No |
 | `AZURE_EVALS_SENSITIVE_STORAGE_ACCOUNT_URL` | Storage account blob endpoint | No |
