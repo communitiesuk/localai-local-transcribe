@@ -30,16 +30,18 @@ locals {
     }
   }
 
-  # Key prefixes match the addresses already in state from the four previous lists.
-  # A grant that is unchanged keeps its role assignment. A new container and role
-  # pair still needs a prefix here, or the plan fails when it looks the prefix up.
-  container_access_key_prefix = {
-    "input|Storage Blob Data Contributor"  = "input-writer"
-    "input|Storage Blob Data Reader"       = "input-reader"
-    "debug|Storage Blob Data Reader"       = "debug-reader"
-    "debug|Storage Blob Data Contributor"  = "debug-writer"
-    "output|Storage Blob Data Reader"      = "results-reader"
-    "output|Storage Blob Data Contributor" = "results-writer"
+  # State addresses keep the names from the four previous lists. output was
+  # called results in those addresses. A container or role missing from these
+  # maps fails the plan here, before Terraform replaces an assignment.
+  container_state_name = {
+    input  = "input"
+    debug  = "debug"
+    output = "results"
+  }
+
+  role_state_name = {
+    "Storage Blob Data Reader"      = "reader"
+    "Storage Blob Data Contributor" = "writer"
   }
 
   # One entry in container_access is one role on one container. Storage Blob Data
@@ -47,7 +49,7 @@ locals {
   # reader rows. Prefer one Entra ID group object ID per entry.
   team_assignments = {
     for grant in var.container_access :
-    "${local.container_access_key_prefix["${grant.container}|${grant.role}"]}-${grant.principal_id}" => {
+    "${local.container_state_name[grant.container]}-${local.role_state_name[grant.role]}-${grant.principal_id}" => {
       container = grant.container
       role      = grant.role
       principal = grant.principal_id
