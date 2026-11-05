@@ -60,14 +60,13 @@ async def accept_terms_of_use(
 
     if is_first_acceptance:
         # The acceptance time is the event's own occurred_datetime; there is nothing extra to store.
-        try:
             await record_analytics_event(
-             session,
-             AnalyticsEventType.TOU_ACCEPTED,
-             user.evaluation_id,
-             user.organisation_id,
-             source_id=user.id,
-         )
+                session,
+                AnalyticsEventType.TOU_ACCEPTED,
+                user.evaluation_id,
+                user.organisation_id,
+                source_id=user.id,
+            )
 
     return to_user_response(user)
 
