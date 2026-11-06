@@ -119,6 +119,23 @@ describe('<AiEditPopover />', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('clears the instruction text when Cancel is clicked and the modal is reopened', () => {
+    renderPopover()
+    fireEvent.click(screen.getByRole('button', { name: 'AI edit' }))
+    fireEvent.change(document.getElementById('ai-edit-instruction')!, {
+      target: { value: 'Make it more formal' },
+    })
+    expect(screen.getByDisplayValue('Make it more formal')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'AI edit' }))
+
+    expect(
+      screen.queryByDisplayValue('Make it more formal')
+    ).not.toBeInTheDocument()
+    expect(document.getElementById('ai-edit-instruction')).toHaveValue('')
+  })
+
   it('shows an error banner and preserves the instruction when the request fails', () => {
     vi.mocked(useMutation).mockReturnValue({
       mutate: mutateMock,
