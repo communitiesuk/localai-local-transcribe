@@ -1,6 +1,7 @@
 'use client'
 
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
+import { ProcessingSpinner } from '@/components/processing-spinner'
 import { GovukNotificationBanner } from '@/components/govuk'
 import {
   CreateUserTemplateRequest,
@@ -18,6 +19,8 @@ const CONFLICT_STATUS = 409
 
 class TemplateTitleConflictError extends Error {}
 
+const PENDING_LABEL = 'Creating template'
+
 export default function CreateTemplateConfirmPage() {
   const router = useRouter()
   const draft = useTemplateCreateStore((store) => store.draft)
@@ -30,7 +33,7 @@ export default function CreateTemplateConfirmPage() {
   const submitInProgress = useRef(false)
   const [hasUnexpectedError, setHasUnexpectedError] = useState(false)
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: async (body: CreateUserTemplateRequest) => {
       const { response } = await createUserTemplateUserTemplatesPost({
         body,
@@ -72,6 +75,12 @@ export default function CreateTemplateConfirmPage() {
     if (!draft && !submitInProgress.current) router.replace('/templates/new')
   }, [draft, router])
 
+  if (isSuccess) {
+    return (
+      <ProcessingSpinner label={PENDING_LABEL} message={`${PENDING_LABEL}…`} />
+    )
+  }
+
   if (!draft) {
     return null
   }
@@ -103,6 +112,7 @@ export default function CreateTemplateConfirmPage() {
         actionVariant="primary"
         onAction={handleCreate}
         actionPending={isPending}
+        pendingLabel={PENDING_LABEL}
         cancelHref="/templates/new"
       >
         <p className="govuk-body">

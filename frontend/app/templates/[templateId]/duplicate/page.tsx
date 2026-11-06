@@ -1,6 +1,7 @@
 'use client'
 
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
+import { ProcessingSpinner } from '@/components/processing-spinner'
 import useTemplateName from '@/app/templates/components/use-template-name'
 import {
   duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation,
@@ -13,6 +14,8 @@ import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { use } from 'react'
 
+const PENDING_LABEL = 'Duplicating template'
+
 export default function DuplicateTemplatePage(props: {
   params: Promise<{ templateId: string }>
 }) {
@@ -24,7 +27,7 @@ export default function DuplicateTemplatePage(props: {
 
   const name = useTemplateName(templateId)
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     ...duplicateUserTemplateUserTemplatesTemplateIdDuplicatePostMutation(),
     onSuccess: (duplicatedTemplate) => {
       queryClient.invalidateQueries({
@@ -39,6 +42,12 @@ export default function DuplicateTemplatePage(props: {
       router.push('/templates')
     },
   })
+
+  if (isSuccess) {
+    return (
+      <ProcessingSpinner label={PENDING_LABEL} message={`${PENDING_LABEL}…`} />
+    )
+  }
 
   if (name === undefined) {
     return (
@@ -56,6 +65,7 @@ export default function DuplicateTemplatePage(props: {
       actionVariant="primary"
       onAction={() => mutate({ path: { template_id: templateId } })}
       actionPending={isPending}
+      pendingLabel={PENDING_LABEL}
       cancelHref={`/templates/${templateId}`}
     >
       <p className="govuk-body">

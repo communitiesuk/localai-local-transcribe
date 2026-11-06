@@ -1,6 +1,7 @@
 'use client'
 
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
+import { ProcessingSpinner } from '@/components/processing-spinner'
 import { GovukWarningText, GovukNotificationBanner } from '@/components/govuk'
 import {
   PatchUserTemplateRequest,
@@ -20,6 +21,8 @@ const CONFLICT_STATUS = 409
 
 class TemplateTitleConflictError extends Error {}
 
+const PENDING_LABEL = 'Saving template'
+
 export default function SaveTemplatePage(props: {
   params: Promise<{ templateId: string }>
 }) {
@@ -37,7 +40,7 @@ export default function SaveTemplatePage(props: {
 
   const data = draft?.templateId === templateId ? draft.data : null
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     mutationFn: async (body: PatchUserTemplateRequest) => {
       const { response } = await editUserTemplateUserTemplatesTemplateIdPatch({
         path: { template_id: templateId },
@@ -87,6 +90,12 @@ export default function SaveTemplatePage(props: {
     }
   }, [data, router, templateId])
 
+  if (isSuccess) {
+    return (
+      <ProcessingSpinner label={PENDING_LABEL} message={`${PENDING_LABEL}…`} />
+    )
+  }
+
   if (!data) {
     return null
   }
@@ -121,6 +130,7 @@ export default function SaveTemplatePage(props: {
         actionVariant="primary"
         onAction={handleSave}
         actionPending={isPending}
+        pendingLabel={PENDING_LABEL}
         cancelHref={`/templates/${templateId}`}
       >
         <p className="govuk-body">

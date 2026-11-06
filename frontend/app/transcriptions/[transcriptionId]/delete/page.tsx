@@ -10,7 +10,10 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
+import { ProcessingSpinner } from '@/components/processing-spinner'
 import { GovukWarningText } from '@/components/govuk'
+
+const PENDING_LABEL = 'Deleting recording'
 
 export default function DeleteTranscriptionPage(props: {
   params: Promise<{ transcriptionId: string }>
@@ -20,7 +23,7 @@ export default function DeleteTranscriptionPage(props: {
   const setBanner = useBannerStore((store) => store.setBanner)
   const queryClient = useQueryClient()
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     ...deleteTranscriptionTranscriptionsTranscriptionIdDeleteMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -40,6 +43,12 @@ export default function DeleteTranscriptionPage(props: {
     },
   })
 
+  if (isSuccess) {
+    return (
+      <ProcessingSpinner label={PENDING_LABEL} message={`${PENDING_LABEL}…`} />
+    )
+  }
+
   return (
     <ConfirmationInterstitial
       title={'Are you sure you want to delete this recording?'}
@@ -53,6 +62,7 @@ export default function DeleteTranscriptionPage(props: {
         })
       }
       actionPending={isPending}
+      pendingLabel={PENDING_LABEL}
       cancelHref={`/transcriptions/${transcriptionId}`}
     >
       <GovukWarningText>

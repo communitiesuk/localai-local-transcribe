@@ -1,6 +1,7 @@
 'use client'
 
 import { ConfirmationInterstitial } from '@/components/confirmation-interstitial'
+import { ProcessingSpinner } from '@/components/processing-spinner'
 import useTemplateName from '@/app/templates/components/use-template-name'
 import { GovukWarningText } from '@/components/govuk'
 import {
@@ -14,6 +15,8 @@ import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { use } from 'react'
 
+const PENDING_LABEL = 'Deleting template'
+
 export default function DeleteTemplatePage(props: {
   params: Promise<{ templateId: string }>
 }) {
@@ -25,7 +28,7 @@ export default function DeleteTemplatePage(props: {
 
   const name = useTemplateName(templateId)
 
-  const { mutate, isPending } = useMutation({
+  const { mutate, isPending, isSuccess } = useMutation({
     ...deleteUserTemplateUserTemplatesTemplateIdDeleteMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -40,6 +43,12 @@ export default function DeleteTemplatePage(props: {
       router.push('/templates')
     },
   })
+
+  if (isSuccess) {
+    return (
+      <ProcessingSpinner label={PENDING_LABEL} message={`${PENDING_LABEL}…`} />
+    )
+  }
 
   if (name === undefined) {
     return (
@@ -57,6 +66,7 @@ export default function DeleteTemplatePage(props: {
       actionVariant="warning"
       onAction={() => mutate({ path: { template_id: templateId } })}
       actionPending={isPending}
+      pendingLabel={PENDING_LABEL}
       cancelHref={`/templates/${templateId}`}
     >
       <GovukWarningText>
