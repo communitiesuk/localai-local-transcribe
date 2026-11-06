@@ -1,0 +1,35 @@
+# Example local access values for the evals Terraform roots.
+# Names and other defaults live in variables.tf and backend/variables.tf.
+# Copy to terraform.tfvars in this directory; do not commit real subscription IDs,
+# resource group names, IPs, or object IDs.
+
+subscription_id     = "<azure-subscription-id>"
+resource_group_name = "<resource-group-name>"
+environment_name    = "<environment-name>"
+
+# Customer-managed key. Vault and key come from terraform/azure/evals/key-vault/.
+# key_vault_name                                = "<key-vault-name>"
+# storage_customer_managed_key_name             = "<key-name>"
+# storage_customer_managed_key_identity_name    = "<key-identity-name>"
+
+# Azure DevOps pipeline identity.
+# ado_federation_issuer  = "https://vstoken.dev.azure.com/<org-guid>"
+# ado_federation_subject = "sc://<org>/<project>/evals-blob"
+
+# Network access.
+# network_rules_bypass = ["AzureServices"]
+
+# Private endpoint subnet in the evals virtual network.
+private_endpoint_subnet_id = "/subscriptions/<azure-subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Network/virtualNetworks/vnet-tst-uks-aielt-evals-001/subnets/snet-tst-uks-aielt-pe-001"
+
+# Name of the Terraform state storage account created by backend/.
+terraform_state_storage_account_name = "<state-storage-account-name>"
+
+# Shared Log Analytics workspace that Cyber can read. It is in another subscription.
+shared_log_analytics_workspace_id = "/subscriptions/<shared-subscription-id>/resourceGroups/<shared-resource-group>/providers/Microsoft.OperationalInsights/workspaces/<shared-workspace-name>"
+
+# Team RBAC. One JSON list. Real IDs live in the evals-pipeline-config variable
+# group, not here. Prefer a group object ID.
+# container_access = [
+#   { container = "input", role = "Storage Blob Data Contributor", principal_id = "00000000-0000-0000-0000-000000000000" },
+# ]

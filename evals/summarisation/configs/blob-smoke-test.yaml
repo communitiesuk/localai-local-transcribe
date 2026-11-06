@@ -1,0 +1,30 @@
+# Standard summarisation smoke test reading from / writing to blob storage.
+run:
+  eval_type: standard
+  seed: 0
+  limit: 2
+  prompt_version: dev
+
+dataset:
+  name: synthetic-dialogues
+  source: blob
+  blob_path: summarisation/standard/dialogues.jsonl
+  dialogue_field: dialogue
+  reference_summary_field: summary
+
+judge:
+  # Lower than the usual 4. This smoke test checks the pipeline runs end to end, and with
+  # two dialogues a single low judge score would otherwise fail it.
+  pass_threshold: 3
+
+metrics:
+  - accuracy
+  - coverage
+  - readability
+
+prompts:
+  judge_template_path: evals/summarisation/prompts/judge.j2
+
+blob:
+  enabled: true
+  output_prefix: summarisation

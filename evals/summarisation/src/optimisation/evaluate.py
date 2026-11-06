@@ -24,6 +24,13 @@ def run(
     try:
         cfg = load_config(config)
 
+        if cfg.dataset.source == "blob" or cfg.blob.enabled:
+            msg = (
+                "evaluate.py does not support blob storage; run "
+                "`python -m evals.summarisation.src.main` for blob-backed configs."
+            )
+            raise ValueError(msg)
+
         run_id, results_path, summary_path, hallucination_inputs_path = run_eval(
             cfg,
             split=cfg.run.split,

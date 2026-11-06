@@ -2,13 +2,13 @@
 
 Generate Azure transcripts and audio segments for human annotation. Listen to each segment and correct its transcript to create a silver reference.
 
-The pipeline reads directories from a YAML config, defaulting to `configs/smoke_test.yaml`. Paths resolve relative to the config file. Set `input_dir` to your source audio directory and optionally set `work_dir`; its default is `output/` under this directory.
+The pipeline reads directories from a YAML config, defaulting to `configs/smoke_test.yaml`. Paths resolve relative to the config file. Set `input_dir` to your source audio directory and optionally set `work_dir`; its default is `output/` under this directory. Alternatively, set `blob.enabled: true` with `blob.input_prefix` to stage recordings from the restricted eval input container instead, the same way transcription evaluation does: both reuse `evals.shared.blob_io` and `evals.transcription.src.models.BlobConfig`, and the prefix must live under `transcription/`. In blob mode, staging, generation and publishing to `debug/silver-transcripts/<run-id>/` all happen in a single process; `work_dir` and `input_dir` are ignored.
 
 ```bash
 poetry run python -m evals.dataset_generation.silver_transcripts.src.main --config path/to/config.yaml
 ```
 
-Generation uses Azure credentials and ffmpeg. Every source is converted to mono MP3 at 192 kbps using the same helper as transcription evaluation. Sources up to two hours use synchronous Azure transcription. Sources over two hours and up to four hours use the existing Azure batch adapter: the MP3 is uploaded to the configured storage service, submitted for asynchronous transcription, then deleted after a result is retrieved. Polling allows at least 30 minutes and scales to twice the recording duration. If a submitted job does not complete, its uploaded audio is retained so the running job can still access it. This requires S3 or Azure Blob storage so Azure can fetch the uploaded audio; `STORAGE_SERVICE_NAME=local` is not supported for batch transcription. Recordings over four hours fail with a recorded error. Supported extensions are `.wav`, `.flac`, `.ogg`, `.mp3`, `.m4a` and `.aac`, discovered recursively. Keep the work directory outside the input directory.
+Generation uses Azure credentials and ffmpeg. Every source is converted to mono MP3 at 192 kbps using the same helper as transcription evaluation. Only synchronous Azure transcription is used, so sources must fit within its limit (currently two hours); longer recordings fail with a recorded error. Supported extensions are `.wav`, `.flac`, `.ogg`, `.mp3`, `.m4a` and `.aac`, discovered recursively. Keep the work directory outside the input directory.
 
 Each meeting is written under `<work_dir>/drafts/<meeting-id>/`:
 
@@ -44,3 +44,9 @@ poetry run python -m evals.dataset_generation.silver_transcripts.src.main --conf
 This calls Azure and writes to `output/smoke/drafts/` under this directory. The code default is a 10-minute cutoff, but `smoke_test.yaml` overrides it to 60 seconds, so a recording longer than two minutes should exercise multiple chunks (continuous overlap can extend a chunk to twice the cutoff).
 
 Set `cutoff_seconds: 300` in the YAML config for approximately five-minute segments. It must be a positive finite number; whole utterances and overlapping speech can exceed the target. When changing the cutoff, use a new `work_dir` or move existing drafts aside before regenerating.
+
+## Azure DevOps
+
+The manual `evals-silver-transcripts.yml` pipeline runs `main.py` with `blob.enabled: true`, defaulting to the same verified input prefix as the transcription eval's own smoke test, `transcription/smoke-test/audio`, and publishes drafts and segments to `debug/silver-transcripts/<run-id>/` in the restricted storage account. A single task performs staging, generation and publishing, so partial output is published even if some samples fail, as long as the work directory was created. Its default cutoff is 60 seconds; both the prefix and cutoff can be changed when starting the run. The output contains audio and transcripts: use appropriate access controls and retention for the input data.
+
+The pipeline uses client-secret APIM authentication and a six-hour job timeout, which may need increasing for long recordings or larger batches. Azure batch transcription is not supported (see above), so recordings over two hours will fail with a recorded error rather than being processed.

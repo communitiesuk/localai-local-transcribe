@@ -35,3 +35,22 @@ def test_unknown_keys_are_rejected() -> None:
 def test_invalid_cutoff_is_rejected(cutoff):
     with pytest.raises(ValidationError):
         SilverTranscriptConfig(cutoff_seconds=cutoff)
+
+
+def test_blob_is_disabled_by_default() -> None:
+    config = SilverTranscriptConfig()
+
+    assert config.blob.enabled is False
+
+
+def test_blob_config_accepts_a_transcription_prefix() -> None:
+    config = SilverTranscriptConfig.model_validate(
+        {"blob": {"enabled": True, "input_prefix": "transcription/smoke-test/audio"}}
+    )
+
+    assert config.blob.input_prefix == "transcription/smoke-test/audio"
+
+
+def test_blob_config_rejects_a_prefix_outside_transcription() -> None:
+    with pytest.raises(ValidationError):
+        SilverTranscriptConfig.model_validate({"blob": {"enabled": True, "input_prefix": "summarisation/audio"}})

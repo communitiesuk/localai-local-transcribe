@@ -1,0 +1,12 @@
+num_samples: 2
+dataset_loader: audio_files
+max_workers: 1
+prepare_only: false
+check_drift_thresholds: false
+adapters:
+  - azure
+
+blob:
+  enabled: true
+  input_prefix: transcription/smoke-test/audio
+  output_prefix: ""

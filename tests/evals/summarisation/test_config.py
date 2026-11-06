@@ -89,7 +89,6 @@ prompts:
 
 def test_load_config_uses_defaults(tmp_path):
     default_seed = 0
-    default_split = "test"
 
     config_path = tmp_path / "config.yaml"
     config_content = """
@@ -111,7 +110,7 @@ prompts:
     config = load_config(config_path)
 
     assert config.run.seed == default_seed
-    assert config.run.split == default_split
+    assert config.run.split is None
     assert config.run.limit is None
 
 
