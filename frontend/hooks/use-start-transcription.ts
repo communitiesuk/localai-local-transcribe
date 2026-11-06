@@ -65,7 +65,10 @@ export const getMediaDurationSeconds = async (file: Blob | File) =>
     media.src = objectUrl
     media.load()
     media.muted = true
-    media.play().then(() => media.pause()).catch(() => {}) 
+    media
+      .play()
+      .then(() => media.pause())
+      .catch(() => {})
   })
 
 export const useStartTranscription = (
