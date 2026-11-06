@@ -13,6 +13,7 @@ const Summary = () => {
 
   return (
     <>
+      <p data-testid="preceding-text">Transcript heading</p>
       <div ref={containerRef}>
         <p data-testid="summary-text">Summary body</p>
       </div>
@@ -28,6 +29,21 @@ const selectTextIn = (element: Element) => {
   const selection = window.getSelection()!
   selection.removeAllRanges()
   selection.addRange(range)
+}
+
+/**
+ * Puts a selection running from one element to another. A selection that straddles the container is
+ * anchored outside it and focused inside, which `anchorNode` alone cannot see.
+ */
+const selectFromTo = (anchor: Element, focus: Element) => {
+  const selection = window.getSelection()!
+  selection.removeAllRanges()
+  selection.setBaseAndExtent(
+    anchor.firstChild!,
+    0,
+    focus.firstChild!,
+    focus.textContent!.length
+  )
 }
 
 const collapseSelection = () => {
@@ -66,6 +82,15 @@ describe('useNativeCopyTracking', () => {
     pressCopy()
 
     expect(onCopyMock).not.toHaveBeenCalled()
+  })
+
+  it('records a copy of a selection that straddles the container', () => {
+    const { getByTestId } = render(<Summary />)
+
+    selectFromTo(getByTestId('preceding-text'), getByTestId('summary-text'))
+    pressCopy()
+
+    expect(onCopyMock).toHaveBeenCalledTimes(1)
   })
 
   it('ignores a copy with an empty selection', () => {

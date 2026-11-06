@@ -140,6 +140,14 @@ async def create_minute(
     await session.commit()
     await session.refresh(minute_version)
 
+    # Publish before recording: the version is already committed at AWAITING_START, and
+    # has_pending_minute_version_for_transcription treats that as in flight. Anything that stops this line being
+    # reached - a cancellation on deploy, a client disconnect - leaves the user unable to generate a summary for
+    # this transcript ever again, and cleanup_failed_records only rescues rows at IN_PROGRESS. A lost analytics
+    # event costs a row in a report, so it goes second and keeps the gap between commit and publish as small as
+    # possible.
+    llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+
     # source_id pairs this 1:1 with the SUMMARY_RECEIVED event the worker records for the same version, so
     # generation latency is a self-join rather than a fuzzy time-window match.
     await _record_summary_analytics_event(
@@ -149,8 +157,6 @@ async def create_minute(
         minute_version_id=minute_version.id,
         source_id=minute_version.id,
     )
-
-    llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
 
     return MinuteVersionResponse(
         id=minute_version.id,
@@ -232,6 +238,17 @@ async def create_minute_version(
     await session.commit()
     await session.refresh(minute_version)
 
+    # Publish first, for the reason given in create_minute: an AI-edit version is committed at AWAITING_START,
+    # so a version that is never queued renders as perpetually generating and blocks the transcript's 409 guard.
+    if request.ai_edit_instructions:
+        llm_queue_service.publish_message(
+            WorkerMessage(
+                id=minute_version.id,
+                data=EditMessageData(source_id=request.ai_edit_instructions.source_id),
+                type=TaskType.EDIT,
+            )
+        )
+
     edit_type = SUMMARY_EDIT_TYPE_BY_CONTENT_SOURCE.get(request.content_source)
     if edit_type is not None:
         await _record_summary_analytics_event(
@@ -244,14 +261,6 @@ async def create_minute_version(
             extra_metadata={"edit_type": edit_type},
         )
 
-    if request.ai_edit_instructions:
-        llm_queue_service.publish_message(
-            WorkerMessage(
-                id=minute_version.id,
-                data=EditMessageData(source_id=request.ai_edit_instructions.source_id),
-                type=TaskType.EDIT,
-            )
-        )
     return MinuteVersionResponse(
         id=minute_version.id,
         minute_id=minute_id,

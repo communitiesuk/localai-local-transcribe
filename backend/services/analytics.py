@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 
@@ -9,6 +10,13 @@ from common.database.postgres_models import AnalyticsEventMetadata, AnalyticsEve
 from common.services.analytics_service import record_analytics_event
 
 logger = logging.getLogger(__name__)
+
+# This runs inline on a request the user is waiting on, and it takes a second connection from the pool the
+# request itself is using. A saturated pool would otherwise block here for the engine's pool_timeout - 60
+# seconds - to record a row in a report. Giving up is the better trade. A timeout mid-commit may still land the
+# insert; for events that carry a source_id the unique constraint makes that harmless, and for the rest a
+# duplicate is less costly than the wait.
+EVENT_TIMEOUT_SECONDS = 5
 
 
 async def record_user_analytics_event(
@@ -38,7 +46,7 @@ async def record_user_analytics_event(
     events.
     """
     try:
-        async with AsyncSession(async_engine) as session:
+        async with asyncio.timeout(EVENT_TIMEOUT_SECONDS), AsyncSession(async_engine) as session:
             recording_id = (
                 await get_original_recording_id(session, transcription_id)
                 if user.evaluation_id and transcription_id

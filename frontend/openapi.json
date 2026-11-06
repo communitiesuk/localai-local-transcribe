@@ -1673,7 +1673,7 @@
       "post": {
         "tags": ["Minutes"],
         "summary": "Record Summary Interaction Event",
-        "description": "Record a summary interaction that only the client can observe (download, copy).\n\nNo `source_id`: a user may legitimately download or copy the same version repeatedly, and each of those is a\nreal event rather than a retry. `record_analytics_event` swallows its own failures, so this returns 204 even\nif the insert fails - the client is never given a reason to retry or to surface an error.",
+        "description": "Record a summary interaction that only the client can observe (download, copy).\n\nNo `source_id`: a user may legitimately download or copy the same version repeatedly, and each of those is a\nreal event rather than a retry. `record_user_analytics_event` swallows its own failures, so this returns 204\neven if the insert fails - the client is never given a reason to retry or to surface an error.",
         "operationId": "record_summary_interaction_event_minute_versions__minute_version_id__analytics_events_post",
         "parameters": [
           {

@@ -13,7 +13,8 @@ const COPY_THROTTLE_MS = 2000
  *
  * Deliberately listens on `document` rather than on the container: a selection that starts inside
  * the container and ends outside it fires `copy` on the common ancestor, which a container-only
- * listener would miss. Containment is then checked against the selection instead.
+ * listener would miss. Containment is then checked against either end of the selection, so a
+ * selection that straddles the container counts whichever direction it was dragged in.
  *
  * This does not double count our own Copy button. `copyHTML` writes via `navigator.clipboard`,
  * a programmatic write that raises no `copy` event, so the `button` and `native` paths are
@@ -55,9 +56,13 @@ export function useNativeCopyTracking({
         return
       }
 
-      // anchorNode is where the selection began. A text node is fine here: Node.contains
-      // matches text nodes as well as elements.
-      if (!selection.anchorNode || !container.contains(selection.anchorNode)) {
+      // Both ends are checked, not just the anchor: a selection dragged upwards out of the container, or a
+      // Ctrl+A, is anchored outside it but still copies the summary. A text node is fine for either —
+      // Node.contains matches text nodes as well as elements.
+      const touchesContainer = [selection.anchorNode, selection.focusNode].some(
+        (node) => node && container.contains(node)
+      )
+      if (!touchesContainer) {
         return
       }
 

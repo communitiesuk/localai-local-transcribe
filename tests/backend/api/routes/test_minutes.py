@@ -138,6 +138,43 @@ async def test_create_minute_publishes_to_the_queue_when_analytics_fails(
 
 
 @pytest.mark.asyncio
+async def test_create_minute_records_the_event_after_publishing(
+    mocker, mock_session, mock_minute, mock_minute_version, mock_user
+):
+    """The order is load-bearing, not cosmetic.
+
+    The version is committed at AWAITING_START before either call, and nothing ever rescues a row left in that
+    state, so anything that stops the publish being reached costs the user this transcript permanently. The
+    analytics await is a DB round-trip on a second connection, so it belongs after the publish, not between the
+    commit and the publish.
+    """
+    transcription = Mock()
+    transcription.user_id = mock_user.id
+    mock_session.get.return_value = transcription
+    mocker.patch("backend.api.routes.minutes.Minute", return_value=mock_minute)
+    mocker.patch("backend.api.routes.minutes.MinuteVersion", return_value=mock_minute_version)
+    mocker.patch(
+        "backend.api.routes.minutes.has_pending_minute_version_for_transcription",
+        new=AsyncMock(return_value=False),
+    )
+    llm = mocker.patch("backend.api.routes.minutes.llm_queue_service")
+    record_event = mocker.patch("backend.api.routes.minutes._record_summary_analytics_event", new=AsyncMock())
+
+    order = Mock()
+    order.attach_mock(llm.publish_message, "publish")
+    order.attach_mock(record_event, "record_event")
+
+    await create_minute(
+        transcription_id=mock_minute.id,
+        request=SimpleNamespace(template_name="T", template_id=None, agenda="A"),
+        session=mock_session,
+        user=mock_user,
+    )
+
+    assert [name for name, _, _ in order.mock_calls] == ["publish", "record_event"]
+
+
+@pytest.mark.asyncio
 async def test_create_minute_pending_document_exists(mocker, mock_session, mock_minute, mock_user):
     """Test create_minute raises 409 when a minute version is already pending for the transcript."""
     transcription = Mock()
