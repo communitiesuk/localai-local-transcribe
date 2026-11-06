@@ -175,10 +175,13 @@ describe('getMediaDurationSeconds', () => {
     preload: string
     duration: number
     currentTime: number
+    muted: boolean
     onloadedmetadata: (() => void) | null
     onerror: (() => void) | null
     ontimeupdate: (() => void) | null
     load: () => void
+    play: () => Promise<void>
+    pause: () => void
   }
 
   const createFakeMedia = (): FakeMediaElement => ({
@@ -186,10 +189,13 @@ describe('getMediaDurationSeconds', () => {
     preload: '',
     duration: NaN,
     currentTime: 0,
+    muted: false,
     onloadedmetadata: null,
     onerror: null,
     ontimeupdate: null,
     load: vi.fn(),
+    play: vi.fn().mockResolvedValue(undefined),
+    pause: vi.fn(),
   })
 
   let media: FakeMediaElement
