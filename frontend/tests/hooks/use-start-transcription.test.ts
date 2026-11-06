@@ -36,10 +36,10 @@ describe('useStartTranscription', () => {
   const uploadBlob = vi.fn()
   const ensureQueryData = vi.fn()
 
-  const submit = (file: Blob | File) => {
+  const submit = (file: Blob | File, durationSeconds?: number) => {
     const { result } = renderHook(() => useStartTranscription())
     return result.current.onSubmit(
-      { file, title: 'Test' },
+      { file, title: 'Test', durationSeconds },
       new AbortController().signal
     )
   }
@@ -162,6 +162,26 @@ describe('useStartTranscription', () => {
     )
     expect(recordAnalyticsEvent).not.toHaveBeenCalledWith(
       'transcript_requested_for_live_recording'
+    )
+  })
+
+  it('takes the recorded length from the recorder, as browsers leave it out of the webm', async () => {
+    await submit(new Blob(['audio']), 42)
+
+    expect(createTranscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ audio_duration_seconds: 42 }),
+      })
+    )
+  })
+
+  it('reads the length from an uploaded file rather than the form', async () => {
+    await submit(new File(['audio'], 'meeting.mp3', { type: 'audio/mpeg' }), 42)
+
+    expect(createTranscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ audio_duration_seconds: undefined }),
+      })
     )
   })
 })
