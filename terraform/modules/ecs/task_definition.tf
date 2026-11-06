@@ -19,7 +19,7 @@ locals {
       containerPath = "/var/log/amazon/ssm"
       sourceVolume  = "var-log-amazon-ssm"
       readOnly      = false
-    }
+    },
   ] : []
 
   shared_worker_backend_environment_variables = [
@@ -326,6 +326,10 @@ resource "aws_ecs_task_definition" "worker" {
   requires_compatibilities = ["FARGATE"]
   task_role_arn            = aws_iam_role.worker_ecs_task.arn
 
+  volume {
+    name = "tmp"
+  }
+
   dynamic "volume" {
     for_each = var.allow_exec ? ["managed-agents", "var-lib-amazon-ssm", "var-log-amazon-ssm"] : []
     content {
@@ -341,7 +345,14 @@ resource "aws_ecs_task_definition" "worker" {
       user                   = "1000:1000"
       readonlyRootFilesystem = true
 
-      mountPoints = local.ecs_exec_tmpfs_mounts
+      # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/bind-mounts.html
+      mountPoints = concat(local.ecs_exec_tmpfs_mounts, [
+        {
+          containerPath = "/tmp"
+          sourceVolume  = "tmp"
+          readOnly      = false
+        }
+      ])
 
 
       logConfiguration = {
