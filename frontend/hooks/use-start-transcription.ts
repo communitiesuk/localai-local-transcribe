@@ -17,7 +17,9 @@ export type TranscriptionForm = {
   recordedAt?: Date
 }
 
-const getMediaDurationSeconds = async (file: Blob | File) =>
+const DURATION_RESOLUTION_TIMEOUT_MS = 3000
+
+export const getMediaDurationSeconds = async (file: Blob | File) =>
   new Promise<number | undefined>((resolve) => {
     if (
       typeof document === 'undefined' ||
@@ -32,19 +34,36 @@ const getMediaDurationSeconds = async (file: Blob | File) =>
     )
     const objectUrl = URL.createObjectURL(file)
 
+    let settled = false
     const finish = (duration?: number) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeoutId)
       URL.revokeObjectURL(objectUrl)
       resolve(duration)
     }
 
+    // Fallback in case neither 'loadedmetadata' nor 'error' ever fires preventing the promise from resolving
+    const timeoutId = setTimeout(() => finish(), DURATION_RESOLUTION_TIMEOUT_MS)
+
     media.preload = 'metadata'
     media.onloadedmetadata = () => {
-      finish(Number.isFinite(media.duration) ? media.duration : undefined)
+      if (!Number.isFinite(media.duration)) {
+        media.currentTime = Number.MAX_SAFE_INTEGER
+        media.ontimeupdate = () => {
+          media.ontimeupdate = null
+          finish(Number.isFinite(media.duration) ? media.duration : undefined)
+          media.currentTime = 0
+        }
+        return
+      }
+      finish(media.duration)
     }
     media.onerror = () => {
       finish()
     }
     media.src = objectUrl
+    media.load()
   })
 
 export const useStartTranscription = (
