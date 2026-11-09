@@ -90,6 +90,7 @@ export default function SaveTemplatePage(props: {
     }
   }, [data, router, templateId])
 
+  // Hold the spinner until the app has finished navigating away.
   if (isSuccess) {
     return (
       <ProcessingSpinner label={PENDING_LABEL} message={`${PENDING_LABEL}…`} />
