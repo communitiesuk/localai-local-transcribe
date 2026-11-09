@@ -9,7 +9,6 @@ import {
 } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { use } from 'react'
 
@@ -44,15 +43,11 @@ export default function DuplicateDefaultTemplatePage(props: {
     },
   })
 
-  // Hold the spinner until the app has finished navigating away.
-  if (isSuccess) {
+  // isSuccess holds the spinner until the app has finished navigating away.
+  if (isSuccess || isLoading) {
     return (
       <ProcessingSpinner label={PENDING_LABEL} message={`${PENDING_LABEL}…`} />
     )
-  }
-
-  if (isLoading) {
-    return <Loader2 className="animate-spin" />
   }
 
   if (isError || !template) {
