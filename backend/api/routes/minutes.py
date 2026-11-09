@@ -140,16 +140,18 @@ async def create_minute(
     await session.commit()
     await session.refresh(minute_version)
 
-    # Publish before recording: the version is already committed at AWAITING_START, and
-    # has_pending_minute_version_for_transcription treats that as in flight. Anything that stops this line being
-    # reached - a cancellation on deploy, a client disconnect - leaves the user unable to generate a summary for
-    # this transcript ever again, and cleanup_failed_records only rescues rows at IN_PROGRESS. A lost analytics
-    # event costs a row in a report, so it goes second and keeps the gap between commit and publish as small as
-    # possible.
+    # Publish before recording analytics, and keep this line as close to the commit above as possible. The
+    # version is committed at AWAITING_START, which has_pending_minute_version_for_transcription treats as in
+    # flight and cleanup_failed_records does not rescue - it only picks up rows at IN_PROGRESS. So if the process
+    # dies between the commit and this line (a deploy cancellation, a client disconnect) the row stays
+    # AWAITING_START forever and the user can never generate a summary for this transcript again. Any await
+    # placed before this line widens that window, and a lost analytics event only costs a row in a report.
     llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
 
-    # source_id pairs this 1:1 with the SUMMARY_RECEIVED event the worker records for the same version, so
-    # generation latency is a self-join rather than a fuzzy time-window match.
+    # The worker records SUMMARY_RECEIVED with this same source_id once generation finishes (see
+    # minute_handler_service), so a report can match request to receipt on source_id and subtract the two
+    # occurred_datetimes to get generation latency. Without a shared key it would have to infer which receipt
+    # belongs to which request from how close their timestamps happen to be.
     await _record_summary_analytics_event(
         user,
         AnalyticsEventType.SUMMARY_REQUESTED,

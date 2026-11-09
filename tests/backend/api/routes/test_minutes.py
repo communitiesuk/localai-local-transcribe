@@ -141,12 +141,11 @@ async def test_create_minute_publishes_to_the_queue_when_analytics_fails(
 async def test_create_minute_records_the_event_after_publishing(
     mocker, mock_session, mock_minute, mock_minute_version, mock_user
 ):
-    """The order is load-bearing, not cosmetic.
+    """The analytics write belongs after the queue publish, not between the commit and the publish.
 
     The version is committed at AWAITING_START before either call, and nothing ever rescues a row left in that
     state, so anything that stops the publish being reached costs the user this transcript permanently. The
-    analytics await is a DB round-trip on a second connection, so it belongs after the publish, not between the
-    commit and the publish.
+    analytics await is a DB round-trip on a second connection, so it goes last.
     """
     transcription = Mock()
     transcription.user_id = mock_user.id
