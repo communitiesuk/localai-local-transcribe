@@ -31,6 +31,7 @@ import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { RecordingLoading } from '@/components/recording-loading'
 import { useCountdown } from '@/hooks/use-countdown'
 import { usePreferredMicrophone } from '@/hooks/use-preferred-microphone'
+import { useRecordingTimer } from '@/hooks/use-recording-timer'
 
 export const TabRecorderForm = () => {
   const uploadRef = useRef(false)
@@ -113,6 +114,17 @@ function TabRecorder({
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [micStream, setMicStream] = useState<MediaStream | null>(null)
   const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
+  const [recordingDurationMs, setRecordingDurationMs] = useState<number>(0)
+  const recordingDurationMsRef = useRef<number>(recordingDurationMs)
+
+  useRecordingTimer(1000, (elapsedMs) => {
+    if (!isRecording || mediaRecorderRef.current?.state === 'paused') return
+    setRecordingDurationMs((recordingDuration) => {
+      const newDuration = recordingDuration + elapsedMs
+      recordingDurationMsRef.current = newDuration
+      return newDuration
+    })
+  })
 
   useLockNavigation(isRecording || !!recordedAudio)
 
@@ -273,6 +285,7 @@ function TabRecorder({
       }
 
       mediaRecorder.onstop = async () => {
+        form.setValue('durationSeconds', recordingDurationMsRef.current / 1000)
         if (mediaChunksRef.current.length > 0) {
           const audioBlob = new Blob(mediaChunksRef.current, {
             type: 'audio/webm',
@@ -294,6 +307,8 @@ function TabRecorder({
 
       await requestWakeLock()
       form.setValue('recordedAt', new Date())
+      recordingDurationMsRef.current = 0
+      setRecordingDurationMs(0)
       recordAnalyticsEvent('live_recording_started')
       mediaRecorder.start(1000)
       setIsRecording(true)
@@ -444,6 +459,7 @@ function TabRecorder({
                 stopRecording()
               }}
               onPauseStateChange={handlePauseStateChange}
+              recordingDuration={recordingDurationMs}
             />
           </div>
         )}
