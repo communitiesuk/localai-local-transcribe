@@ -1,7 +1,7 @@
 'use client'
 
 import { GovukButton, GovukButtonGroup } from '@/components/govuk'
-import { Loader2 } from 'lucide-react'
+import { ProcessingSpinner } from '@/components/processing-spinner'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ReactNode } from 'react'
@@ -15,6 +15,7 @@ type ConfirmationInterstitialProps = {
   actionVariant?: ActionVariant
   onAction: () => void
   actionPending?: boolean
+  pendingLabel?: string
   // Cancelling navigates back through history rather than by pushing this URL,
   // but an href is still required for accessibility / graceful degradation.
   cancelHref: string
@@ -28,6 +29,7 @@ export function ConfirmationInterstitial({
   actionVariant = 'primary',
   onAction,
   actionPending,
+  pendingLabel,
   cancelHref,
   cancelLabel = 'Cancel',
 }: ConfirmationInterstitialProps) {
@@ -38,6 +40,12 @@ export function ConfirmationInterstitial({
   const handleCancel = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault()
     router.back()
+  }
+
+  if (actionPending && pendingLabel) {
+    return (
+      <ProcessingSpinner label={pendingLabel} message={`${pendingLabel}…`} />
+    )
   }
 
   return (
@@ -55,14 +63,7 @@ export function ConfirmationInterstitial({
           onClick={onAction}
           disabled={actionPending}
         >
-          {actionPending ? (
-            <>
-              <Loader2 className="animate-spin" aria-hidden="true" />
-              {actionLabel}
-            </>
-          ) : (
-            actionLabel
-          )}
+          {actionLabel}
         </GovukButton>
         <Link href={cancelHref} className="govuk-link" onClick={handleCancel}>
           {cancelLabel}

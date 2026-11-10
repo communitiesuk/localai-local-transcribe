@@ -42,10 +42,10 @@ export async function proxy(req: NextRequest) {
 
     // Authorise user for frontend access
     let authResult: UserAuthorisationResult | null = null
-    let backendAuthResponse: Response | null = null
+    let token: string | null = null
 
     if (process.env.ENVIRONMENT !== 'local') {
-      const token = req.headers.get('x-amzn-oidc-data')
+      token = req.headers.get('x-amzn-oidc-data')
 
       if (!token) {
         console.error(
@@ -62,26 +62,53 @@ export async function proxy(req: NextRequest) {
           return redirectTo(req, '/unauthorised')
         }
       }
-      backendAuthResponse = await fetch(
-        `${process.env.BACKEND_HOST}/users/me`,
-        {
-          headers: { 'x-amzn-oidc-data': token },
-        }
-      )
     } else {
       authResult = {
         email: 'test@test.co.uk',
         isAuthorised: true,
         authReason: 'LOCAL_TESTING',
       }
-      backendAuthResponse = await fetch(`${process.env.BACKEND_HOST}/users/me`)
+    }
+
+    let backendAuthResponse: Response
+
+    try {
+      backendAuthResponse = await fetch(
+        `${process.env.BACKEND_HOST}/users/me`,
+        {
+          headers: token ? { 'x-amzn-oidc-data': token } : undefined,
+        }
+      )
+    } catch (error) {
+      console.error('Backend could not be reached:', error)
+      return serviceUnavailable()
     }
 
     if (backendAuthResponse.status === 401) {
       return redirectTo(req, '/unauthorised')
     }
 
-    const user = await backendAuthResponse.json()
+    if (!backendAuthResponse.ok) {
+      console.error(
+        `Backend returned ${backendAuthResponse.status} when authorising ${pathname}`
+      )
+      return serviceUnavailable()
+    }
+
+    let user: { accepted_tou?: boolean } | null = null
+
+    try {
+      user = await backendAuthResponse.json()
+    } catch (error) {
+      console.error('Backend response could not be read:', error)
+      return serviceUnavailable()
+    }
+
+    if (!user) {
+      console.error(`Backend returned no user when authorising ${pathname}`)
+      return serviceUnavailable()
+    }
+
     if (!user.accepted_tou && !pathname.startsWith(TOU_PATH)) {
       return redirectTo(req, TOU_PATH)
     }
@@ -91,6 +118,10 @@ export async function proxy(req: NextRequest) {
     console.error('Error authorising token:', error)
     return redirectTo(req, '/unauthorised')
   }
+}
+
+function serviceUnavailable() {
+  return new NextResponse('Service unavailable', { status: 503 })
 }
 
 function redirectTo(req: NextRequest, page: string) {
