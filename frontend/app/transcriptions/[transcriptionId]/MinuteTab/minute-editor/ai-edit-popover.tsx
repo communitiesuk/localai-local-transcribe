@@ -45,6 +45,7 @@ export const AiEditPopover = ({
   })
   const closeModal = () => {
     resetSaveEdit()
+    form.reset()
     setOpen(false)
   }
   const onSubmit = useCallback(

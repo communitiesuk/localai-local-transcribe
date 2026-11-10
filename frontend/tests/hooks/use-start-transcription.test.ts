@@ -1,8 +1,11 @@
 import { renderHook } from '@testing-library/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { useStartTranscription } from '@/hooks/use-start-transcription'
+import {
+  getMediaDurationSeconds,
+  useStartTranscription,
+} from '@/hooks/use-start-transcription'
 import { recordAnalyticsEvent } from '@/lib/analytics'
 
 vi.mock('@/lib/analytics', () => ({
@@ -36,10 +39,10 @@ describe('useStartTranscription', () => {
   const uploadBlob = vi.fn()
   const ensureQueryData = vi.fn()
 
-  const submit = (file: Blob | File) => {
+  const submit = (file: Blob | File, durationSeconds?: number) => {
     const { result } = renderHook(() => useStartTranscription())
     return result.current.onSubmit(
-      { file, title: 'Test' },
+      { file, title: 'Test', durationSeconds },
       new AbortController().signal
     )
   }
@@ -163,5 +166,110 @@ describe('useStartTranscription', () => {
     expect(recordAnalyticsEvent).not.toHaveBeenCalledWith(
       'transcript_requested_for_live_recording'
     )
+  })
+
+  it('takes the recorded length from the recorder, as browsers leave it out of the webm', async () => {
+    await submit(new Blob(['audio']), 42)
+
+    expect(createTranscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ audio_duration_seconds: 42 }),
+      })
+    )
+  })
+
+  it('reads the length from an uploaded file rather than the form', async () => {
+    await submit(new File(['audio'], 'meeting.mp3', { type: 'audio/mpeg' }), 42)
+
+    expect(createTranscription).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({ audio_duration_seconds: undefined }),
+      })
+    )
+  })
+})
+
+describe('getMediaDurationSeconds', () => {
+  type FakeMediaElement = {
+    src: string
+    preload: string
+    duration: number
+    currentTime: number
+    muted: boolean
+    onloadedmetadata: (() => void) | null
+    onerror: (() => void) | null
+    ontimeupdate: (() => void) | null
+    load: () => void
+    play: () => Promise<void>
+    pause: () => void
+  }
+
+  const createFakeMedia = (): FakeMediaElement => ({
+    src: '',
+    preload: '',
+    duration: NaN,
+    currentTime: 0,
+    muted: false,
+    onloadedmetadata: null,
+    onerror: null,
+    ontimeupdate: null,
+    load: vi.fn(),
+    play: vi.fn().mockResolvedValue(undefined),
+    pause: vi.fn(),
+  })
+
+  let media: FakeMediaElement
+
+  beforeEach(() => {
+    media = createFakeMedia()
+    vi.spyOn(document, 'createElement').mockReturnValue(media as never)
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      value: vi.fn(() => 'blob:fake'),
+    })
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      value: vi.fn(),
+    })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('resolves the reported duration', async () => {
+    const pending = getMediaDurationSeconds(new Blob(['audio']))
+    media.duration = 42
+    media.onloadedmetadata?.()
+
+    await expect(pending).resolves.toBe(42)
+  })
+
+  it('recalculates duration when the browser reports Infinity', async () => {
+    const pending = getMediaDurationSeconds(new Blob(['audio']))
+    media.duration = Infinity
+    media.onloadedmetadata?.()
+    expect(media.currentTime).toBe(Number.MAX_SAFE_INTEGER)
+
+    media.duration = 42
+    media.ontimeupdate?.()
+
+    await expect(pending).resolves.toBe(42)
+    expect(media.currentTime).toBe(0)
+  })
+
+  it('resolves undefined on error', async () => {
+    const pending = getMediaDurationSeconds(new Blob(['audio']))
+    media.onerror?.()
+
+    await expect(pending).resolves.toBeUndefined()
+  })
+
+  it('resolves undefined if neither event fires before the timeout', async () => {
+    vi.useFakeTimers()
+    const pending = getMediaDurationSeconds(new Blob(['audio']))
+    vi.advanceTimersByTime(3000)
+
+    await expect(pending).resolves.toBeUndefined()
   })
 })
