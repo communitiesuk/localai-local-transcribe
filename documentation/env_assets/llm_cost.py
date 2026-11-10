@@ -348,6 +348,50 @@ def fast_model_comparison(m: Meeting) -> list[tuple[str, float, float]]:
     return rows
 
 
+BOTH_TIER_CANDIDATES = ["gpt-6-luna", "haiku-4-5", "sonnet-5"]
+
+
+def both_tier_model_comparison(m: Meeting) -> list[tuple[str, str, float]]:
+    """Usage-weighted per-meeting GBP cost for substituting a single candidate into *both*
+    BEST and FAST (citations routed to BEST, i.e. USE_BEST_LLM_FOR_CITATIONS=True, the
+    production default - with BEST=FAST this doesn't affect which price is used). Also
+    includes the mixed FAST=haiku-4-5/BEST=sonnet-5 row, since that combination was tested too.
+
+    Returns (label, detail, total_cost) tuples; "detail" is e.g. "BEST=FAST=gpt-6-luna" or
+    "BEST=sonnet-5, FAST=haiku-4-5"."""
+    original_fast, original_best = PRICES["fast"], PRICES["best"]
+    rows = []
+    try:
+        for name in BOTH_TIER_CANDIDATES:
+            PRICES["fast"] = PRICES["best"] = FAST_MODEL_CANDIDATES[name]  # type: ignore[assignment]
+            total = cost(weighted(m, citation_tier="best"))
+            rows.append((f"All-{name}", f"BEST=FAST={name}", total))
+
+        PRICES["best"] = FAST_MODEL_CANDIDATES["sonnet-5"]  # type: ignore[assignment]
+        PRICES["fast"] = FAST_MODEL_CANDIDATES["haiku-4-5"]  # type: ignore[assignment]
+        total = cost(weighted(m, citation_tier="best"))
+        rows.append(("FAST=haiku, BEST=sonnet", "BEST=sonnet-5, FAST=haiku-4-5", total))
+    finally:
+        PRICES["fast"], PRICES["best"] = original_fast, original_best
+    return rows
+
+
+def display_both_tier_model_comparison() -> None:
+    one_hour = Meeting(1.0)
+    rows = both_tier_model_comparison(one_hour)
+    baseline_total = cost(weighted(one_hour, citation_tier="fast"))  # Production-before reference
+    print("\n\nBoth-tier model substitution (single candidate replaces BEST and FAST, usage-weighted 1-hour meeting)")
+    print("=" * 110)
+    print(
+        f"  {'Setup':<28} {'Detail':<30} {'GBP total':>10} {'GBP/1,000 meetings':>20}"
+        f" {'Delta vs Production-before':>28}"
+    )
+    print("  " + "-" * 104)
+    for label, detail, total_c in rows:
+        delta_pct = (total_c - baseline_total) / baseline_total
+        print(f"  {label:<28} {detail:<30} {total_c:>10.4f} {total_c * 1e3:>20.2f} {delta_pct:>+27.0%}")
+
+
 def display_fast_model_comparison() -> None:
     one_hour = Meeting(1.0)
     rows = fast_model_comparison(one_hour)
@@ -432,6 +476,7 @@ def display() -> None:
     )
 
     display_fast_model_comparison()
+    display_both_tier_model_comparison()
 
 
 if __name__ == "__main__":
