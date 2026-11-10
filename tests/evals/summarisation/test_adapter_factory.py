@@ -52,6 +52,25 @@ def test_build_azure_apim_adapter_success(monkeypatch):
     assert "Ocp-Apim-Subscription-Key" in client.default_headers
 
 
+def test_build_azure_apim_adapter_judge_model_overrides_best_model(monkeypatch):
+    """JUDGE_LLM_MODEL_NAME, when set, picks the judge model independently of BEST_LLM_MODEL_NAME.
+
+    Needed for experiments that swap BEST_LLM_MODEL_NAME away from gpt5-1 (e.g. an all-luna
+    summariser run): without this override, the judge would silently become the same model as the
+    summariser it's judging, breaking comparability with every other run on the chart.
+    """
+    monkeypatch.setenv("AZURE_APIM_URL", "https://api.example.com/openai/")
+    monkeypatch.setenv("AZURE_APIM_API_VERSION", "2024-02-15-preview")
+    monkeypatch.setenv("AZURE_APIM_ACCESS_TOKEN", "test-access-token-123")
+    monkeypatch.setenv("AZURE_APIM_SUBSCRIPTION_KEY", "test-subscription-key-456")
+    monkeypatch.setenv("BEST_LLM_MODEL_NAME", "gpt-6-luna")
+    monkeypatch.setenv("JUDGE_LLM_MODEL_NAME", "gpt5-1")
+
+    adapter = build_azure_apim_adapter()
+
+    assert adapter._model == "gpt5-1"  # noqa: SLF001
+
+
 @pytest.mark.parametrize(
     ("url", "token", "key", "expected_error"),
     [
