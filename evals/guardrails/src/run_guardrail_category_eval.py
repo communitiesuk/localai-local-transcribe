@@ -225,13 +225,41 @@ async def _run_case(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-async def _run(cases_path: Path, output_path: Path, limit: int | None) -> dict[str, Any]:
+def _errored_case_ids(report: dict[str, Any]) -> set[str]:
+    """IDs of cases in a previous report that did not produce a score (``error`` is set)."""
+    return {result["id"] for result in report["results"] if result.get("error") is not None}
+
+
+def _merge_results(previous_results: list[dict[str, Any]], rerun_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Replace each previous result with its rerun, keyed by case ``id``, preserving original order.
+
+    Lets a selective rerun (e.g. only the cases that hit a transient rate limit) be folded back into
+    a full report without re-running every case.
+    """
+    rerun_by_id = {result["id"]: result for result in rerun_results}
+    return [rerun_by_id.get(result["id"], result) for result in previous_results]
+
+
+async def _run(
+    cases_path: Path,
+    output_path: Path,
+    limit: int | None,
+    *,
+    case_ids: set[str] | None = None,
+    previous_report: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     cases = [] if limit == 0 else _read_cases(cases_path)
+    if case_ids is not None:
+        cases = [case for case in cases if case["id"] in case_ids]
     if limit is not None and limit > 0:
         cases = cases[:limit]
     results = []
     for case in cases:
         results.append(await _run_case(case))
+
+    if previous_report is not None:
+        results = _merge_results(previous_report["results"], results)
+
     completed_results = [result for result in results if result["score"] is not None]
     report = {
         "case_count": len(results),
@@ -250,6 +278,22 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the minimal guardrail category eval.")
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--case-ids",
+        type=str,
+        default=None,
+        help="Comma-separated case IDs to run, instead of the full case set.",
+    )
+    parser.add_argument(
+        "--retry-errors-from",
+        type=Path,
+        default=None,
+        help=(
+            "Path to a previous results JSON. Reruns only the cases that errored in it, then "
+            "merges the new results back in (by case id) and writes the merged report to --output "
+            "(or back to this same path if --output is not given)."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -263,8 +307,34 @@ def main() -> None:
     args = _parse_args()
     config = _read_config(_repo_path(DEFAULT_CONFIG_PATH))
     cases_path = Path(config.get("cases_path", DEFAULT_CASES_PATH))
+
+    previous_report = None
+    case_ids: set[str] | None = None
     output_path = args.output or Path(config.get("output_path", DEFAULT_OUTPUT_PATH))
-    report = asyncio.run(_run(_repo_path(cases_path), _repo_path(output_path), args.limit))
+
+    if args.retry_errors_from is not None:
+        retry_path = _repo_path(args.retry_errors_from)
+        previous_report = _read_json(retry_path)
+        case_ids = _errored_case_ids(previous_report)
+        if args.output is None:
+            output_path = retry_path
+        if not case_ids:
+            sys.stdout.write(f"No errored cases found in {retry_path}; nothing to rerun.\n")
+            return
+
+    if args.case_ids is not None:
+        explicit_ids = {case_id.strip() for case_id in args.case_ids.split(",") if case_id.strip()}
+        case_ids = explicit_ids if case_ids is None else case_ids & explicit_ids
+
+    report = asyncio.run(
+        _run(
+            _repo_path(cases_path),
+            _repo_path(output_path),
+            args.limit,
+            case_ids=case_ids,
+            previous_report=previous_report,
+        )
+    )
     sys.stdout.write(
         json.dumps(
             _build_stdout_summary(report, output_path),

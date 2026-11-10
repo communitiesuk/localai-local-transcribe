@@ -4,6 +4,8 @@ from common.types import FailureCategory, FailureDetail, FailureMode, GuardrailS
 from evals.guardrails.src.run_guardrail_category_eval import (
     _apply_mutations,
     _build_stdout_summary,
+    _errored_case_ids,
+    _merge_results,
     _score_requested_metrics,
 )
 
@@ -68,6 +70,37 @@ def test_build_stdout_summary_uses_requested_f1_metric_names() -> None:
         "f1_no_issue": 1.0,
         "output": str(output_path),
     }
+
+
+def test_errored_case_ids_returns_only_cases_with_an_error() -> None:
+    report = {
+        "results": [
+            {"id": "case-1", "error": "PermissionDeniedError: quota exceeded", "score": None},
+            {"id": "case-2", "error": None, "score": 1.0},
+            {"id": "case-3", "error": None, "score": 0.0},
+        ]
+    }
+
+    assert _errored_case_ids(report) == {"case-1"}
+
+
+def test_merge_results_replaces_only_rerun_cases_and_keeps_order() -> None:
+    previous_results = [
+        {"id": "case-1", "error": "PermissionDeniedError: quota exceeded", "score": None},
+        {"id": "case-2", "error": None, "score": 1.0},
+        {"id": "case-3", "error": "PermissionDeniedError: quota exceeded", "score": None},
+    ]
+    rerun_results = [
+        {"id": "case-3", "error": None, "score": 0.5},
+        {"id": "case-1", "error": None, "score": 0.8},
+    ]
+
+    merged = _merge_results(previous_results, rerun_results)
+
+    assert [result["id"] for result in merged] == ["case-1", "case-2", "case-3"]
+    assert merged[0]["score"] == 0.8
+    assert merged[1]["score"] == 1.0
+    assert merged[2]["score"] == 0.5
 
 
 def test_failure_detail_dump_includes_derived_category() -> None:
