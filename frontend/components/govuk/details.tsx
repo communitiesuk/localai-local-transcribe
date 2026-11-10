@@ -25,6 +25,7 @@ export function GovukDetails({
       className={cn('govuk-details', className)}
       data-module="govuk-details"
       open={open === true || undefined}
+      suppressHydrationWarning
     >
       <summary className="govuk-details__summary">
         <span className="govuk-details__summary-text">{summary}</span>
