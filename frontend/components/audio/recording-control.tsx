@@ -10,7 +10,6 @@ import {
   useRecordingUIStore,
   type RecordingState,
 } from '@/stores/use-recording-ui-store'
-import { useRecordingTimer } from '@/hooks/use-recording-timer'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -23,6 +22,7 @@ interface RecordingControlProps {
     isPaused?: boolean
   }
   onPauseStateChange?: (isPaused: boolean) => void
+  recordingDuration: number
 }
 
 const formatDuration = (durationMs: number) => {
@@ -44,6 +44,7 @@ export default function RecordingControl({
   onStopRecording,
   recorderControls,
   onPauseStateChange,
+  recordingDuration,
 }: RecordingControlProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -53,7 +54,6 @@ export default function RecordingControl({
   const audioContextRef = useRef<AudioContext | null>(null)
   const preStopConfirmState = useRef<RecordingState>('idle')
   const [localIsPaused, setLocalIsPaused] = useState(false)
-  const [meetingDuration, setMeetingDuration] = useState(0)
 
   const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
   const showStopConfirm =
@@ -66,11 +66,7 @@ export default function RecordingControl({
       ? recorderControls.isPaused
       : localIsPaused
 
-  const formattedRecordingDuration = formatDuration(meetingDuration)
-  useRecordingTimer(1000, (elapsedMs) => {
-    if (!isRecording || isPaused) return
-    setMeetingDuration((meetingDuration) => meetingDuration + elapsedMs)
-  })
+  const formattedRecordingDuration = formatDuration(recordingDuration)
 
   useEffect(() => {
     if (

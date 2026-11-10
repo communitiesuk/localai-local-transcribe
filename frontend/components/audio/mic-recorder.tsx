@@ -87,6 +87,7 @@ function MicRecorderComponent({
     handleLoadingCancel,
     stopRecording,
     handlePauseStateChange,
+    recordingDuration,
   } = useMicRecorder({ recordedAudio, setRecordedAudio })
 
   if (isStartingRecording || isPreparingRecording) {
@@ -161,6 +162,7 @@ function MicRecorderComponent({
             microphoneLabel={microphoneInUse(audioDevices, mediaRecorderStream)}
             onStopRecording={stopRecording}
             onPauseStateChange={handlePauseStateChange}
+            recordingDuration={recordingDuration}
           />
         </div>
       )}
