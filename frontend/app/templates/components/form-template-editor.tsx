@@ -28,7 +28,7 @@ export const FormTemplateEditor = ({
   const [, setTipsClicked] = useState(false)
   const pathname = usePathname()
   const [lastPathname, setLastPathname] = useState(pathname)
-  const tipsDetailsWrapperRef = useRef<HTMLDivElement>(null)
+  const tipsDetailsRef = useRef<HTMLDetailsElement>(null)
 
   if (pathname !== lastPathname) {
     setLastPathname(pathname)
@@ -36,9 +36,9 @@ export const FormTemplateEditor = ({
   }
 
   useLayoutEffect(() => {
-    const details = tipsDetailsWrapperRef.current?.querySelector('details')
+    const details = tipsDetailsRef.current
     if (!details) return
-    const handleClick = () => {
+    const handleToggle = () => {
       setTipsClicked((alreadyClicked) => {
         if (!alreadyClicked) {
           recordAnalyticsEvent('template_useful_tips_clicked')
@@ -46,8 +46,8 @@ export const FormTemplateEditor = ({
         return true
       })
     }
-    details.addEventListener('click', handleClick)
-    return () => details.removeEventListener('click', handleClick)
+    details.addEventListener('toggle', handleToggle)
+    return () => details.removeEventListener('toggle', handleToggle)
   }, [pathname])
 
   const fieldArray = useFieldArray({
@@ -164,59 +164,58 @@ export const FormTemplateEditor = ({
           Add and order sections to make up this template
         </GovukHint>
 
-        <div ref={tipsDetailsWrapperRef}>
-          <GovukDetails
-            summary="Useful tips"
-            className="govuk-!-margin-bottom-4"
-          >
-            <p className="govuk-body">
-              Customise your template based on how you want your document to be
-              presented. Each section has 3 editable fields:
-            </p>
-            <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
-              Section heading:
-            </p>
-            <ul className="govuk-list govuk-list--bullet">
-              <li>
-                how you want each section&rsquo;s heading to appear in the
-                document
-              </li>
-              <li>headings are case sensitive</li>
-            </ul>
-            <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
-              Section information:
-            </p>
-            <ul className="govuk-list govuk-list--bullet">
-              <li>
-                state the information you&rsquo;d like to include, or questions
-                you&rsquo;d like answered, in this section
-              </li>
-              <li>
-                use a new line for each question or desired piece of information
-              </li>
-              <li>
-                the information will be pulled from the transcript into the
-                document
-              </li>
-            </ul>
-            <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
-              Format instructions (optional):
-            </p>
-            <ul className="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
-              <li>
-                state how you&rsquo;d like the information to be presented, for
-                example:
-                <ul className="govuk-list govuk-list--bullet">
-                  <li>tone (more or less formal)</li>
-                  <li>specific language to include</li>
-                  <li>length</li>
-                  <li>bulleted list</li>
-                  <li>any text to make bold</li>
-                </ul>
-              </li>
-            </ul>
-          </GovukDetails>
-        </div>
+        <GovukDetails
+          ref={tipsDetailsRef}
+          summary="Useful tips"
+          className="govuk-!-margin-bottom-4"
+        >
+          <p className="govuk-body">
+            Customise your template based on how you want your document to be
+            presented. Each section has 3 editable fields:
+          </p>
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
+            Section heading:
+          </p>
+          <ul className="govuk-list govuk-list--bullet">
+            <li>
+              how you want each section&rsquo;s heading to appear in the
+              document
+            </li>
+            <li>headings are case sensitive</li>
+          </ul>
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
+            Section information:
+          </p>
+          <ul className="govuk-list govuk-list--bullet">
+            <li>
+              state the information you&rsquo;d like to include, or questions
+              you&rsquo;d like answered, in this section
+            </li>
+            <li>
+              use a new line for each question or desired piece of information
+            </li>
+            <li>
+              the information will be pulled from the transcript into the
+              document
+            </li>
+          </ul>
+          <p className="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">
+            Format instructions (optional):
+          </p>
+          <ul className="govuk-list govuk-list--bullet govuk-!-margin-bottom-0">
+            <li>
+              state how you&rsquo;d like the information to be presented, for
+              example:
+              <ul className="govuk-list govuk-list--bullet">
+                <li>tone (more or less formal)</li>
+                <li>specific language to include</li>
+                <li>length</li>
+                <li>bulleted list</li>
+                <li>any text to make bold</li>
+              </ul>
+            </li>
+          </ul>
+        </GovukDetails>
 
         <GovukFormGroup className="govuk-!-margin-bottom-4">
           <GovukLabel htmlFor="template-heading">
