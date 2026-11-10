@@ -2,9 +2,9 @@
 
 ## Status
 
-Draft
+Accepted
 
-Date of decision: {yyyy-MM-dd}
+Date of decision: 2026-10-21
 
 ## Context and Problem Statement
 
@@ -43,8 +43,7 @@ Feature branches are merged into `development` when complete. Staging and produc
 
 All changes are merged into `development` frequently via short-lived branches. Incomplete work is hidden behind
 feature flags, so every commit on `development` is, in theory, releasable. Fixing forward is preferred, but where
-not possible, hotfix branches (from the currently deployed commit) can be created used to deploy from (and merged
-back to `development`).
+not possible, hotfixes can be created and deployed (and merged back to `development`).
 
 * Good, because unfinished features need not prevent other changes from being released.
 * Good, because short-lived branches reduce merge conflicts and keep integration continuous.
