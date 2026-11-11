@@ -15,9 +15,12 @@ export type TranscriptionForm = {
   recordingId?: string
   title?: string
   recordedAt?: Date
+  durationSeconds?: number
 }
 
-const getMediaDurationSeconds = async (file: Blob | File) =>
+const DURATION_RESOLUTION_TIMEOUT_MS = 3000
+
+export const getMediaDurationSeconds = async (file: Blob | File) =>
   new Promise<number | undefined>((resolve) => {
     if (
       typeof document === 'undefined' ||
@@ -32,19 +35,36 @@ const getMediaDurationSeconds = async (file: Blob | File) =>
     )
     const objectUrl = URL.createObjectURL(file)
 
+    let settled = false
     const finish = (duration?: number) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeoutId)
       URL.revokeObjectURL(objectUrl)
       resolve(duration)
     }
 
+    // Fallback in case neither 'loadedmetadata' nor 'error' ever fires preventing the promise from resolving
+    const timeoutId = setTimeout(() => finish(), DURATION_RESOLUTION_TIMEOUT_MS)
+
     media.preload = 'metadata'
     media.onloadedmetadata = () => {
-      finish(Number.isFinite(media.duration) ? media.duration : undefined)
+      if (!Number.isFinite(media.duration)) {
+        media.currentTime = Number.MAX_SAFE_INTEGER
+        media.ontimeupdate = () => {
+          media.ontimeupdate = null
+          finish(Number.isFinite(media.duration) ? media.duration : undefined)
+          media.currentTime = 0
+        }
+        return
+      }
+      finish(media.duration)
     }
     media.onerror = () => {
       finish()
     }
     media.src = objectUrl
+    media.load()
   })
 
 export const useStartTranscription = (
@@ -102,7 +122,7 @@ export const useStartTranscription = (
 
   const onSubmit = useCallback(
     async (
-      { file, recordingId, title }: TranscriptionForm,
+      { file, recordingId, title, durationSeconds }: TranscriptionForm,
       signal: AbortSignal
     ) => {
       if (!file) {
@@ -139,7 +159,12 @@ export const useStartTranscription = (
         await getOrganisationId()
       )
 
-      const audio_duration_seconds = await getMediaDurationSeconds(file)
+      let audio_duration_seconds = undefined
+      if (isFile) {
+        audio_duration_seconds = await getMediaDurationSeconds(file)
+      } else {
+        audio_duration_seconds = durationSeconds
+      }
 
       const transcriptionData = await createTranscription({
         body: {
