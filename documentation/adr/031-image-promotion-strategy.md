@@ -65,7 +65,9 @@ to staging and production are triggered manually by specifying a commit SHA that
 ### Rebuild per environment from an environment branch, with pinned inputs
 
 As above, but instead of specifying a commit SHA, create `staging` and `production` branches and automatically
-deploy from those when they receive merges. No development work happens directly on these branches, only merges.
+deploy from those when they receive merges. No typical development work happens directly on these branches, only merges.
+Hotfixes are created as PRs into `staging` / `production` (which can then be deployed as normal) and then merged back
+into `development`.
 
 As above, plus:
 

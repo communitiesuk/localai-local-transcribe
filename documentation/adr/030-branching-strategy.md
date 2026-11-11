@@ -43,7 +43,9 @@ Feature branches are merged into `development` when complete. Staging and produc
 
 All changes are merged into `development` frequently via short-lived branches. Incomplete work is hidden behind
 feature flags, so every commit on `development` is, in theory, releasable. Fixing forward is preferred, but where
-not possible, hotfixes can be created and deployed (and merged back to `development`).
+not possible, hotfixes can be created and deployed (and merged back to `development`). See ADR-031 for more on
+hotfixing strategy. Work that cannot be hidden behind feature flags (e.g. database migrations) require special
+care, to ensure they remain compatible with the current release.
 
 * Good, because unfinished features need not prevent other changes from being released.
 * Good, because short-lived branches reduce merge conflicts and keep integration continuous.
