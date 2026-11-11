@@ -156,15 +156,15 @@ resource "aws_lb_listener_rule" "authentication" {
     type = "authenticate-oidc"
 
     authenticate_oidc {
-      client_id              = data.aws_ssm_parameter.oidc_client_id[0].value
-      issuer                 = local.gds_ia_issuer
-      authorization_endpoint = "${local.gds_ia_issuer}/oauth2/authorization"
-      token_endpoint         = "${local.gds_ia_issuer}/oauth2/token"
-      user_info_endpoint     = "${local.gds_ia_issuer}/oauth2/userinfo"
-      session_cookie_name    = "X-Amzn-Oidc-Data"
-      client_secret          = data.aws_ssm_parameter.oidc_client_secret[0].value
-      scope                  = "openid profile email"
-      session_timeout        = 604800
+      client_id                  = data.aws_ssm_parameter.oidc_client_id[0].value
+      issuer                     = local.gds_ia_issuer
+      authorization_endpoint     = "${local.gds_ia_issuer}/oauth2/authorization"
+      token_endpoint             = "${local.gds_ia_issuer}/oauth2/token"
+      user_info_endpoint         = "${local.gds_ia_issuer}/oauth2/userinfo"
+      session_cookie_name        = "X-Amzn-Oidc-Data"
+      client_secret              = data.aws_ssm_parameter.oidc_client_secret[0].value
+      scope                      = "openid profile email"
+      session_timeout            = 604800
       on_unauthenticated_request = "authenticate"
     }
   }
@@ -197,15 +197,15 @@ resource "aws_lb_listener_rule" "authentication_no_reauth_for_rsc_request" {
     type = "authenticate-oidc"
 
     authenticate_oidc {
-      client_id              = data.aws_ssm_parameter.oidc_client_id[0].value
-      issuer                 = local.gds_ia_issuer
-      authorization_endpoint = "${local.gds_ia_issuer}/oauth2/authorization"
-      token_endpoint         = "${local.gds_ia_issuer}/oauth2/token"
-      user_info_endpoint     = "${local.gds_ia_issuer}/oauth2/userinfo"
-      session_cookie_name    = "X-Amzn-Oidc-Data"
-      client_secret          = data.aws_ssm_parameter.oidc_client_secret[0].value
-      scope                  = "openid profile email"
-      session_timeout        = 604800
+      client_id                  = data.aws_ssm_parameter.oidc_client_id[0].value
+      issuer                     = local.gds_ia_issuer
+      authorization_endpoint     = "${local.gds_ia_issuer}/oauth2/authorization"
+      token_endpoint             = "${local.gds_ia_issuer}/oauth2/token"
+      user_info_endpoint         = "${local.gds_ia_issuer}/oauth2/userinfo"
+      session_cookie_name        = "X-Amzn-Oidc-Data"
+      client_secret              = data.aws_ssm_parameter.oidc_client_secret[0].value
+      scope                      = "openid profile email"
+      session_timeout            = 604800
       on_unauthenticated_request = "deny"
     }
   }
@@ -231,7 +231,7 @@ resource "aws_lb_listener_rule" "authentication_no_reauth_for_rsc_request" {
   condition {
     http_header {
       http_header_name = "RSC"
-      values = ["1"]
+      values           = ["1"]
     }
   }
 }
