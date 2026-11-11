@@ -12,7 +12,7 @@ import {
 } from '@/components/govuk'
 import { recordAnalyticsEvent } from '@/lib/analytics'
 import { TemplateData } from '@/types/templates'
-import { ReactNode, useLayoutEffect, useRef, useState } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 import { usePathname } from 'next/navigation'
 
@@ -25,30 +25,19 @@ export const FormTemplateEditor = ({
 }) => {
   const form = useFormContext<TemplateData>()
   const { errors, isSubmitted } = form.formState
-  const [, setTipsClicked] = useState(false)
   const pathname = usePathname()
-  const [lastPathname, setLastPathname] = useState(pathname)
-  const tipsDetailsRef = useRef<HTMLDetailsElement>(null)
+  const tipsTracked = useRef(false)
 
-  if (pathname !== lastPathname) {
-    setLastPathname(pathname)
-    setTipsClicked(false)
-  }
-
-  useLayoutEffect(() => {
-    const details = tipsDetailsRef.current
-    if (!details) return
-    const handleToggle = () => {
-      setTipsClicked((alreadyClicked) => {
-        if (!alreadyClicked) {
-          recordAnalyticsEvent('template_useful_tips_clicked')
-        }
-        return true
-      })
-    }
-    details.addEventListener('toggle', handleToggle)
-    return () => details.removeEventListener('toggle', handleToggle)
+  useEffect(() => {
+    tipsTracked.current = false
   }, [pathname])
+
+  const handleTipsToggle = (e: React.SyntheticEvent<HTMLDetailsElement>) => {
+    if (e.currentTarget.open && !tipsTracked.current) {
+      tipsTracked.current = true
+      recordAnalyticsEvent('template_useful_tips_clicked')
+    }
+  }
 
   const fieldArray = useFieldArray({
     control: form.control,
@@ -165,7 +154,7 @@ export const FormTemplateEditor = ({
         </GovukHint>
 
         <GovukDetails
-          ref={tipsDetailsRef}
+          onToggle={handleTipsToggle}
           summary="Useful tips"
           className="govuk-!-margin-bottom-4"
         >
