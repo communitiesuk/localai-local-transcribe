@@ -10,9 +10,11 @@ import {
   GovukLabel,
   GovukTextarea,
 } from '@/components/govuk'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { TemplateData } from '@/types/templates'
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
+import { usePathname } from 'next/navigation'
 
 export const FormTemplateEditor = ({
   onSubmit,
@@ -23,6 +25,19 @@ export const FormTemplateEditor = ({
 }) => {
   const form = useFormContext<TemplateData>()
   const { errors, isSubmitted } = form.formState
+  const pathname = usePathname()
+  const tipsTracked = useRef(false)
+
+  useEffect(() => {
+    tipsTracked.current = false
+  }, [pathname])
+
+  const handleTipsToggle = (e: React.SyntheticEvent<HTMLDetailsElement>) => {
+    if (e.currentTarget.open && !tipsTracked.current) {
+      tipsTracked.current = true
+      recordAnalyticsEvent('template_useful_tips_clicked')
+    }
+  }
 
   const fieldArray = useFieldArray({
     control: form.control,
@@ -138,7 +153,11 @@ export const FormTemplateEditor = ({
           Add and order sections to make up this template
         </GovukHint>
 
-        <GovukDetails summary="Useful tips" className="govuk-!-margin-bottom-4">
+        <GovukDetails
+          onToggle={handleTipsToggle}
+          summary="Useful tips"
+          className="govuk-!-margin-bottom-4"
+        >
           <p className="govuk-body">
             Customise your template based on how you want your document to be
             presented. Each section has 3 editable fields:
