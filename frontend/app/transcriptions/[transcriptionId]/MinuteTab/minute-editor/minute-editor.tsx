@@ -8,6 +8,7 @@ import { citationRegex, citationRegexWithSpace } from '@/lib/citationRegex'
 import {
   Minute,
   MinuteVersionResponse,
+  SummaryInteractionEventRequest,
   TranscriptionGetResponse,
 } from '@/lib/client'
 import {
@@ -17,6 +18,7 @@ import {
   listMinutesForTranscriptionTranscriptionTranscriptionIdMinutesGetQueryKey,
   listMinuteVersionsMinutesMinuteIdVersionsGetOptions,
   listMinuteVersionsMinutesMinuteIdVersionsGetQueryKey,
+  recordSummaryInteractionEventMinuteVersionsMinuteVersionIdAnalyticsEventsPostMutation,
 } from '@/lib/client/@tanstack/react-query.gen'
 import convertAIMinutesToWordDoc from '@/lib/download-word-doc'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -33,6 +35,7 @@ import {
 import { AiEditPopover } from '@/app/transcriptions/[transcriptionId]/MinuteTab/minute-editor/ai-edit-popover'
 import { Banner, useBannerStore } from '@/stores/use-banner-store'
 import { copyHTML, formatDate } from '@/lib/utils'
+import { useNativeCopyTracking } from '@/hooks/use-native-copy-tracking'
 
 type MinuteEditorForm = {
   html: string
@@ -187,6 +190,36 @@ export function MinuteEditor({
     useMutation({
       ...deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation(),
     })
+
+  const { mutate: recordSummaryInteraction } = useMutation({
+    ...recordSummaryInteractionEventMinuteVersionsMinuteVersionIdAnalyticsEventsPostMutation(),
+  })
+
+  // Fire and forget. Analytics must stay invisible: no banner on failure, and nothing here may
+  // block or delay the copy or download the user actually asked for. `mutate` (not `mutateAsync`)
+  // keeps rejections inside react-query rather than surfacing them.
+  const recordSummaryEvent = useCallback(
+    (body: SummaryInteractionEventRequest) => {
+      const minuteVersionId = displayedMinuteVersion?.id
+      if (!minuteVersionId) return
+
+      recordSummaryInteraction({
+        path: { minute_version_id: minuteVersionId },
+        body,
+      })
+    },
+    [displayedMinuteVersion?.id, recordSummaryInteraction]
+  )
+
+  const summaryContainerRef = useRef<HTMLDivElement>(null)
+  const handleNativeCopy = useCallback(() => {
+    recordSummaryEvent({ event_type: 'summary_copied', copy_type: 'native' })
+  }, [recordSummaryEvent])
+
+  useNativeCopyTracking({
+    containerRef: summaryContainerRef,
+    onCopy: handleNativeCopy,
+  })
 
   const invalidateMinuteVersions = useCallback(() => {
     queryClient.invalidateQueries({
@@ -432,6 +465,10 @@ export function MinuteEditor({
           <ReviewGuardButton
             onConfirm={async () => await copyHTML(contentToCopy)}
             onSuccess={() => {
+              recordSummaryEvent({
+                event_type: 'summary_copied',
+                copy_type: 'button',
+              })
               setBanner({
                 variant: 'success',
                 title: 'Success',
@@ -445,6 +482,9 @@ export function MinuteEditor({
           <ReviewGuardButton
             onConfirm={handleWordDocDownload}
             onSuccess={() => {
+              // onSuccess runs only when handleWordDocDownload resolves true, so this counts
+              // completed downloads and excludes save-picker cancellations.
+              recordSummaryEvent({ event_type: 'summary_downloaded' })
               setBanner({
                 variant: 'success',
                 title: 'Success',
@@ -505,21 +545,25 @@ export function MinuteEditor({
         </GovukButtonGroup>
       )}
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Controller
-          control={form.control}
-          name="html"
-          render={({ field: { onChange } }) => (
-            <SimpleEditor
-              key={editorResetKey}
-              currentTranscription={transcription}
-              initialContent={displayedMinuteVersion.html_content || ''}
-              isEditing={isEditable}
-              onContentChange={onChange}
-              hideCitations={hideCitations && !isEditable}
-              onCitationClicked={onCitationClicked}
-            />
-          )}
-        />
+        {/* Bounds native copy tracking to the summary, so copies from the transcript panel and
+            page chrome are not counted. */}
+        <div ref={summaryContainerRef}>
+          <Controller
+            control={form.control}
+            name="html"
+            render={({ field: { onChange } }) => (
+              <SimpleEditor
+                key={editorResetKey}
+                currentTranscription={transcription}
+                initialContent={displayedMinuteVersion.html_content || ''}
+                isEditing={isEditable}
+                onContentChange={onChange}
+                hideCitations={hideCitations && !isEditable}
+                onCitationClicked={onCitationClicked}
+              />
+            )}
+          />
+        </div>
       </form>
       <GovukModalDialogue
         open={showDiscardModal}

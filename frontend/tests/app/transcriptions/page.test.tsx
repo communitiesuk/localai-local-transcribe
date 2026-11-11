@@ -94,6 +94,10 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
     mutationKey: ['delete-minute-version'],
   }),
+  recordSummaryInteractionEventMinuteVersionsMinuteVersionIdAnalyticsEventsPostMutation:
+    () => ({
+      mutationKey: ['record-summary-interaction'],
+    }),
 }))
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {

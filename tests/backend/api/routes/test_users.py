@@ -2,7 +2,7 @@
 # needed for pytest fixtures
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -60,6 +60,76 @@ async def test_accept_terms_of_use_success(override_user, override_session, mock
 
     mock_session.commit.assert_awaited_once()
     mock_session.refresh.assert_awaited_once_with(mock_pending_tou_user)
+
+
+@pytest.mark.asyncio
+async def test_accept_terms_of_use_records_tou_accepted_analytics_event(
+    mocker, override_user, override_session, mock_pending_tou_user
+):
+    """Accepting the terms of use records a TOU_ACCEPTED event; its occurred_datetime is the acceptance time.
+
+    source_id is the user, so the (event_type, source_id) constraint rejects a second acceptance if two
+    overlapping requests both read accepted_tou as False.
+    """
+    mock_pending_tou_user.evaluation_id = "EVAL-TOU"
+    mock_pending_tou_user.organisation_id = uuid4()
+    mock_record_event = mocker.patch("backend.api.routes.users.record_user_analytics_event", new=AsyncMock())
+
+    async with get_test_client() as ac:
+        response = await ac.post("/users/terms-of-use")
+
+    assert response.status_code == 200
+    mock_record_event.assert_awaited_once_with(
+        mock_pending_tou_user,
+        AnalyticsEventType.TOU_ACCEPTED,
+        source_id=mock_pending_tou_user.id,
+    )
+
+
+@pytest.mark.asyncio
+async def test_accept_terms_of_use_records_no_event_when_already_accepted(
+    mocker, override_user, override_session, mock_user
+):
+    """A repeat POST is not a second acceptance, so it records nothing."""
+    assert mock_user.accepted_tou is True
+    mock_record_event = mocker.patch("backend.api.routes.users.record_user_analytics_event", new=AsyncMock())
+
+    async with get_test_client() as ac:
+        response = await ac.post("/users/terms-of-use")
+
+    assert response.status_code == 200
+    mock_record_event.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_accept_terms_of_use_succeeds_when_analytics_fails(
+    mocker, override_user, override_session, mock_pending_tou_user
+):
+    """Acceptance is committed before the event is recorded, so a failed event must not fail the request.
+
+    The write used to share the request session: a failed insert rolled that session back, expiring `user`, and
+    to_user_response then raised MissingGreenlet - a 500 for a user whose acceptance had already been stored.
+    """
+    mock_pending_tou_user.evaluation_id = "EVAL-TOU"
+    mock_pending_tou_user.organisation_id = uuid4()
+
+    # Fail inside the isolated session, which is where the analytics work happens now.
+    analytics_session = MagicMock()
+    analytics_session.__aenter__ = AsyncMock(return_value=AsyncMock())
+    analytics_session.__aexit__ = AsyncMock(return_value=False)
+    mocker.patch("backend.services.analytics.AsyncSession", return_value=analytics_session)
+    mocker.patch(
+        "backend.services.analytics.record_analytics_event",
+        new=AsyncMock(side_effect=OSError("connection lost")),
+    )
+
+    async with get_test_client() as ac:
+        response = await ac.post("/users/terms-of-use")
+
+    assert response.status_code == 200
+    assert response.json()["accepted_tou"] is True
+    # The request session is untouched, so the object the response is built from stays usable.
+    override_session.rollback.assert_not_called()
 
 
 @pytest.mark.parametrize("retention_period", range(1, 31))

@@ -14,6 +14,7 @@ from backend.api.dependencies import (
     TargetUserDep,
     UserDep,
 )
+from backend.services.analytics import record_user_analytics_event
 from backend.services.emails import EmailSendError, get_email_sender
 from backend.utils.constants import DEFAULT_PAGE, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from backend.utils.mappers import to_user_response
@@ -50,10 +51,21 @@ async def accept_terms_of_use(
     user: PendingTouUserDep,
     session: SQLSessionDep,
 ) -> GetUserResponse:
+    # Only the transition to accepted is an acceptance. The endpoint is idempotent and the frontend may call it
+    # again on a refresh or a retry, so without this guard one user could produce several TOU_ACCEPTED events.
+    is_first_acceptance = not user.accepted_tou
     user.accepted_tou = True
 
     await session.commit()
     await session.refresh(user)
+
+    if is_first_acceptance:
+        # our (event_type, source_id) constraint rejects duplicate events
+        await record_user_analytics_event(
+            user,
+            AnalyticsEventType.TOU_ACCEPTED,
+            source_id=user.id,
+        )
 
     return to_user_response(user)
 

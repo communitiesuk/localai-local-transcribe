@@ -34,6 +34,10 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
     mutationKey: ['delete-minute-version'],
   }),
+  recordSummaryInteractionEventMinuteVersionsMinuteVersionIdAnalyticsEventsPostMutation:
+    () => ({
+      mutationKey: ['record-summary-interaction'],
+    }),
 }))
 
 // Stub the rich text editor; like the real one it only reads initialContent on mount.
