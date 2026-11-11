@@ -398,12 +398,13 @@ def display_fast_model_comparison() -> None:
     baseline_total = next(total for name, _fast, total in rows if name == "gpt-5-nano")
     print("\n\nFAST-tier model substitution (BEST=gpt-5.1 held fixed, usage-weighted 1-hour meeting)")
     print("=" * 100)
-    print(f"  {'Candidate':<14} {'GBP FAST only':>14} {'GBP total':>12} {'GBP/1,000 meetings':>20} {'Delta vs nano':>14}")
+    print(
+        f"  {'Candidate':<14} {'GBP FAST only':>14} {'GBP total':>12} {'GBP/1,000 meetings':>20} {'Delta vs nano':>14}"
+    )
     print("  " + "-" * 82)
     for name, fast_c, total_c in rows:
         print(
-            f"  {name:<14} {fast_c:>14.5f} {total_c:>12.5f} {total_c * 1e3:>20.2f}"
-            f" {total_c - baseline_total:>+14.5f}"
+            f"  {name:<14} {fast_c:>14.5f} {total_c:>12.5f} {total_c * 1e3:>20.2f} {total_c - baseline_total:>+14.5f}"
         )
 
 
