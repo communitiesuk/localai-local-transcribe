@@ -3,10 +3,6 @@ import { describe, expect, it, vi } from 'vitest'
 
 import RecordingControl from '@/components/audio/recording-control'
 
-vi.mock('@/hooks/use-recording-timer', () => ({
-  useRecordingTimer: () => ({ recordingDuration: 0 }),
-}))
-
 describe('<RecordingControl />', () => {
   it('names the microphone in use above the recording length', () => {
     render(
@@ -15,6 +11,7 @@ describe('<RecordingControl />', () => {
         isRecording={true}
         microphoneLabel="Default - External Microphone (Built-in)"
         onStopRecording={vi.fn()}
+        recordingDuration={0}
       />
     )
 
@@ -37,6 +34,7 @@ describe('<RecordingControl />', () => {
         isRecording={true}
         noMicrophone={true}
         onStopRecording={vi.fn()}
+        recordingDuration={0}
       />
     )
 
@@ -52,9 +50,23 @@ describe('<RecordingControl />', () => {
         stream={null}
         isRecording={true}
         onStopRecording={vi.fn()}
+        recordingDuration={0}
       />
     )
 
     expect(screen.queryByText(/Microphone in use:/)).not.toBeInTheDocument()
+  })
+
+  it('shows the recording length', () => {
+    render(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={vi.fn()}
+        recordingDuration={3_725_000}
+      />
+    )
+
+    expect(screen.getByText('Recording length: 01:02:05')).toBeInTheDocument()
   })
 })
