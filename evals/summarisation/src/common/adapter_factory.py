@@ -7,6 +7,13 @@ from common.llm.adapters import AzureAPIMModelAdapter, BedrockAPIMModelAdapter
 from common.settings import get_settings
 
 
+def resolve_judge_model_name(best_model_name: str | None = None) -> str:
+    """Resolve the judge model, falling back to the configured best model."""
+    if best_model_name is None:
+        best_model_name = get_settings().BEST_LLM_MODEL_NAME
+    return os.environ.get("JUDGE_LLM_MODEL_NAME") or best_model_name
+
+
 def build_azure_apim_adapter() -> AzureAPIMModelAdapter:
     """Builds Azure APIM model adapter from environment settings.
 
@@ -31,7 +38,7 @@ def build_azure_apim_adapter() -> AzureAPIMModelAdapter:
         msg = "AZURE_APIM_SUBSCRIPTION_KEY is required"
         raise ValueError(msg)
 
-    judge_model = os.environ.get("JUDGE_LLM_MODEL_NAME") or settings.BEST_LLM_MODEL_NAME
+    judge_model = resolve_judge_model_name(settings.BEST_LLM_MODEL_NAME)
 
     return AzureAPIMModelAdapter(
         url=settings.AZURE_APIM_URL,
