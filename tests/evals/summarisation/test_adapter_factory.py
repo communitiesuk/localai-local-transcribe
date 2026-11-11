@@ -38,6 +38,7 @@ def test_build_azure_apim_adapter_success(monkeypatch):
     monkeypatch.setenv("AZURE_APIM_ACCESS_TOKEN", "test-access-token-123")
     monkeypatch.setenv("AZURE_APIM_SUBSCRIPTION_KEY", "test-subscription-key-456")
     monkeypatch.setenv("BEST_LLM_MODEL_NAME", model_name)
+    monkeypatch.delenv("JUDGE_LLM_MODEL_NAME", raising=False)
 
     adapter = build_azure_apim_adapter()
     client = asyncio.run(adapter._get_apim_client())  # noqa: SLF001
