@@ -9,6 +9,7 @@ import DiscardTemplatePage from '@/app/templates/new/discard/page'
 import { ServiceNav } from '@/components/layout/service-nav'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { useTemplateCreateStore } from '@/stores/use-template-create-store'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 
 const NEW_PATH = '/templates/new'
 const DISCARD_PATH = '/templates/new/discard'
@@ -65,6 +66,10 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@tanstack/react-query')>()
   return { ...actual, useQuery: vi.fn() }
 })
+
+vi.mock('@/lib/analytics', () => ({
+  recordAnalyticsEvent: vi.fn(),
+}))
 
 const TestApp = () => {
   const [path, setPath] = useState(currentPath)
@@ -323,5 +328,64 @@ describe('<NewTemplatePage /> navigation lock', () => {
     await discardWithDestination('//evil.example')
 
     expect(mockPush).toHaveBeenLastCalledWith('/templates')
+  })
+})
+
+describe('<NewTemplatePage /> Useful tips analytics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    history = [NEW_PATH]
+    useTemplateCreateStore.setState({ draft: null })
+    Object.defineProperty(window, 'navigation', {
+      value: new EventTarget(),
+      configurable: true,
+    })
+
+    vi.mocked(useQuery).mockImplementation(
+      () => ({ data: { roles: ['standard_user'] } }) as any
+    )
+  })
+
+  afterEach(() => {
+    delete (window as any).navigation
+  })
+
+  const renderPage = async () => {
+    await act(async () => render(<TestApp />))
+  }
+
+  const clickTips = async (user: ReturnType<typeof userEvent.setup>) => {
+    await act(async () => user.click(screen.getByText('Useful tips')))
+  }
+
+  it('records exactly one event for repeated toggling of Useful tips', async () => {
+    const user = userEvent.setup()
+    await renderPage()
+
+    await clickTips(user)
+    await clickTips(user)
+    await clickTips(user)
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledTimes(1)
+    expect(recordAnalyticsEvent).toHaveBeenCalledWith(
+      'template_useful_tips_clicked'
+    )
+  })
+
+  it('records a new event after leaving and returning to the page', async () => {
+    const user = userEvent.setup()
+    await renderPage()
+
+    await clickTips(user)
+    expect(recordAnalyticsEvent).toHaveBeenCalledTimes(1)
+
+    await act(async () => navigate([...history, '/templates']))
+    await act(async () => navigate([...history, NEW_PATH]))
+
+    await clickTips(user)
+    await clickTips(user)
+    await clickTips(user)
+
+    expect(recordAnalyticsEvent).toHaveBeenCalledTimes(2)
   })
 })
