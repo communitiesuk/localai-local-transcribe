@@ -60,12 +60,7 @@ async def accept_terms_of_use(
     await session.refresh(user)
 
     if is_first_acceptance:
-        # The acceptance time is the event's own occurred_datetime; there is nothing extra to store.
-        # source_id makes the (event_type, source_id) constraint reject a second acceptance, so two overlapping
-        # requests that both read accepted_tou as False still count once. The write goes through
-        # record_user_analytics_event to keep it on a session of its own: on the request session a failed insert
-        # would roll back and expire `user`, and to_user_response would then turn a committed acceptance into a
-        # MissingGreenlet 500.
+        # our (event_type, source_id) constraint rejects duplicate events
         await record_user_analytics_event(
             user,
             AnalyticsEventType.TOU_ACCEPTED,
