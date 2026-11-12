@@ -21,7 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Manual backfill of defualt templates with template IDs in the format "default-<template-name>"
+    # Manual backfill of default templates with template IDs in the format "default-<template-name>"
     op.execute(
         """
         UPDATE analytics_event AS event
