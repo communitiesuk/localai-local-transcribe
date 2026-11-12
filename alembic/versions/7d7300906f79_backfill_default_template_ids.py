@@ -5,6 +5,7 @@ Revises: 33c5c81f24f7
 Create Date: 2026-11-12 14:24:27.827844
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -13,8 +14,8 @@ import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '7d7300906f79'
-down_revision: Union[str, None] = '33c5c81f24f7'
+revision: str = "7d7300906f79"
+down_revision: Union[str, None] = "33c5c81f24f7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
