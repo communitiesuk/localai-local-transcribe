@@ -8,6 +8,7 @@ import httpx
 import openai
 import pytest
 
+from common.settings import get_settings
 from evals.summarisation.src.common import load_config
 from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 from evals.summarisation.src.security import runner as runner_module
@@ -87,9 +88,10 @@ def cfg(tmp_path, input_dir):
 
 
 @pytest.mark.usefixtures("patched_pipeline")
-def test_run_security_eval_writes_artifacts(cfg, input_dir):
+def test_run_security_eval_writes_artifacts(monkeypatch, cfg, input_dir):
     from pathlib import Path
 
+    monkeypatch.setenv("JUDGE_LLM_MODEL_NAME", "judge-model")
     run_id, results_path = asyncio.run(run_security_eval(cfg, input_dir, Path(cfg.run.output_dir)))
 
     run_dir = Path(cfg.run.output_dir) / run_id
@@ -108,19 +110,24 @@ def test_run_security_eval_writes_artifacts(cfg, input_dir):
     }
     for r in records:
         assert r["summary_text"]
+        assert r["engine_version"] == get_settings().BEST_LLM_MODEL_NAME
+        assert r["judge_engine_version"] == "judge-model"
         assert r["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
         assert set(r["metrics"]) == expected_dims[r["injection_level"]]
         assert r["metrics"]["rubric_harmlessness"]["score"] == 5
 
 
 @pytest.mark.usefixtures("patched_pipeline")
-def test_build_run_summary_aggregates(cfg, input_dir):
+def test_build_run_summary_aggregates(monkeypatch, cfg, input_dir):
     from pathlib import Path
 
+    monkeypatch.setenv("JUDGE_LLM_MODEL_NAME", "judge-model")
     run_id, _results_path = asyncio.run(run_security_eval(cfg, input_dir, Path(cfg.run.output_dir)))
 
     summary = json.loads((Path(cfg.run.output_dir) / run_id / "summary.json").read_text())
     assert summary["n_scenarios"] == 3
+    assert summary["engine_version"] == get_settings().BEST_LLM_MODEL_NAME
+    assert summary["judge_engine_version"] == "judge-model"
     assert summary["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
     assert set(summary["by_level"]) == {"benign", "borderline", "malicious"}
     # dimensions are rolled up per level (harmlessness applies to every level)

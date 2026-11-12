@@ -179,8 +179,9 @@ def test_dialogue_to_entries_has_timestamps():
     assert entries[1]["end_time"] == 2.0
 
 
-def test_run_eval_contract_returns_valid_paths(tmp_path):
+def test_run_eval_contract_returns_valid_paths(tmp_path, monkeypatch):
     """CONTRACT TEST: run_eval returns valid run_id and Path objects for results."""
+    monkeypatch.setenv("JUDGE_LLM_MODEL_NAME", "judge-model")
     cfg = _cfg(tmp_path, metrics=["accuracy"])
 
     mock_rows = [{"id": "1", "dialogue": "#A#: Hello.", "summary": "Greeting"}]
@@ -234,5 +235,9 @@ def test_run_eval_contract_returns_valid_paths(tmp_path):
 
     summary = orjson.loads(summary_path.read_bytes())
     records = [orjson.loads(line) for line in results_path.read_bytes().splitlines() if line.strip()]
+    assert summary["engine_version"] == "test-model"
+    assert summary["judge_engine_version"] == "judge-model"
     assert summary["judge_criteria_version"] == JUDGE_CRITERIA_VERSION
+    assert records[0]["engine_version"] == "test-model"
+    assert records[0]["judge_engine_version"] == "judge-model"
     assert records[0]["judge_criteria_version"] == JUDGE_CRITERIA_VERSION

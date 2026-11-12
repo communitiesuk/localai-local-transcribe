@@ -84,13 +84,16 @@ def sample_record(sample_iteration_metrics):
     )
 
 
-def test_create_summary_single_record(sample_config, sample_record):
+def test_create_summary_single_record(monkeypatch, sample_config, sample_record):
+    monkeypatch.setenv("JUDGE_LLM_MODEL_NAME", "judge-model")
     records = [sample_record]
     run_id = "test-run-123"
 
     summary = create_summary(records, run_id, sample_config)
 
     assert summary.run_id == run_id
+    assert summary.engine_version == "test-model"
+    assert summary.judge_engine_version == "judge-model"
     assert summary.n_comparisons == 1
     assert summary.dataset_version == "v1.0"
     assert summary.prompt_version == "v1"
@@ -155,8 +158,9 @@ def test_create_summary_aggregates_metrics(sample_config, sample_record):
 
 
 @patch("evals.summarisation.src.bias.output_formatter.get_settings")
-def test_create_plotting_output_basic(mock_settings, sample_config, sample_record):
+def test_create_plotting_output_basic(mock_settings, monkeypatch, sample_config, sample_record):
     mock_settings.return_value.BEST_LLM_MODEL_NAME = "test-model"
+    monkeypatch.setenv("JUDGE_LLM_MODEL_NAME", "judge-model")
 
     records = [sample_record]
     run_id = "test-run-plot"
@@ -165,6 +169,8 @@ def test_create_plotting_output_basic(mock_settings, sample_config, sample_recor
     output = build_results(records, run_id, sample_config, num_iterations)
 
     assert output.run_id == run_id
+    assert output.engine_version == "test-model"
+    assert output.judge_engine_version == "judge-model"
     assert output.num_iterations == num_iterations
     assert output.dataset_version == "v1.0"
     assert output.prompt_version == "v1"

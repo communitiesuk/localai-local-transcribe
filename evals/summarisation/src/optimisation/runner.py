@@ -35,6 +35,7 @@ from evals.summarisation.src.common import (
     judge_transcript_text,
     write_jsonl,
 )
+from evals.summarisation.src.common.adapter_factory import resolve_judge_model_name
 from evals.summarisation.src.common.metric import judged_dimensions
 from evals.summarisation.src.hallucination.types import HallucinationInput
 from evals.summarisation.src.summarizer import generate_summary
@@ -252,6 +253,8 @@ class EvalRun:
                 reference_summary=ex.reference_summary,
                 candidate=pred.candidate,
                 metrics=metrics_out,
+                engine_version=run.model_name,
+                judge_engine_version=resolve_judge_model_name(),
                 judge_criteria_version=JUDGE_CRITERIA_VERSION,
             )
             run.state.records.append(record)
@@ -272,6 +275,7 @@ class EvalRun:
             run_id=self.run_id,
             split=self.split,
             devset=self.devset,
+            engine_version=self.model_name,
             metrics_summary=metrics_summary,
             skipped_dimensions=self.skipped_dimensions,
             summarize_ms_values=self.state.summarize_ms_values,
@@ -345,6 +349,7 @@ def _build_run_summary(
     run_id: str,
     split: str,
     devset: list[dspy.Example],
+    engine_version: str,
     metrics_summary: dict[str, dict[str, float]],
     skipped_dimensions: list[str],
     summarize_ms_values: list[int],
@@ -358,6 +363,8 @@ def _build_run_summary(
         "split": split,
         "n": len(devset),
         "overall": overall,
+        "engine_version": engine_version,
+        "judge_engine_version": resolve_judge_model_name(),
         "judge_criteria_version": JUDGE_CRITERIA_VERSION,
         "metrics": metrics_summary,
         # Recorded so a dimension missing from `metrics` reads as deliberately out of scope for this

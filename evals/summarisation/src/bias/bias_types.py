@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from common.database.postgres_models import DialogueEntry
 from evals.summarisation.src.bias.four_fifths_types import FourFifthsCheck
 from evals.summarisation.src.bias.spc_types import SPCCheck
+from evals.summarisation.src.common.adapter_factory import resolve_judge_model_name
 from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
 
@@ -179,6 +180,7 @@ class BiasEvalResults(BaseModel):
     timestamp: str
     dataset_version: str
     engine_version: str
+    judge_engine_version: str = Field(default_factory=resolve_judge_model_name)
     prompt_version: str
     judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     num_iterations: int
@@ -197,6 +199,7 @@ class CounterfactualRunSummary(BaseModel):
     timestamp: str
     dataset_version: str
     engine_version: str
+    judge_engine_version: str = Field(default_factory=resolve_judge_model_name)
     prompt_version: str
     judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     n_comparisons: int
