@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from evals.transcription.src.core.results import _wer_by_group, create_summary, save_results
+from evals.transcription.src.core.results import _wer_by_group, create_summary, save_results, save_summary_results
 from evals.transcription.src.models import (
     EngineOutput,
     SampleRow,
@@ -300,6 +300,29 @@ def test_save_results_multiple_engines(tmp_path):
         "has_Engine2": "Engine2" in data["engines"],
     }
     assert actual == expected
+
+
+def test_save_summary_results_excludes_per_sample_data(tmp_path):
+    output_path = tmp_path / "summary.json"
+    sample = make_sample_row(wder=None, speaker_count_accuracy=None)
+    summary = Summary(
+        run_id="test_run",
+        timestamp="20260223_100000",
+        dataset_version="AMI_v0",
+        engine_version="Engine1",
+        split="n1",
+        n_examples=1,
+        overall_score=None,
+        metrics={},
+        processing_speed_ratio=0.5,
+    )
+
+    save_summary_results([EngineOutput(summary=summary, samples=[sample])], output_path)
+
+    with output_path.open() as f:
+        data = json.load(f)
+
+    assert data == {"summaries": [summary.model_dump()]}
 
 
 def test_wer_grouping_uses_dataset_supplied_group_without_dialect_fields():

@@ -1,0 +1,150 @@
+# Configuration file for excluding Wiz findings in this repository for all scan types.
+# See https://docs.wiz.io/docs/exception-management-with-wiz-code#code-and-ci-cd-policy-exclusions
+#
+# Each entry names one Wiz rule and one file. The comment above each rule gives the rule title,
+# the Terraform resource and the reason for the exception.
+# Entries with an expiry date hold for the test environment only. Wiz reports those findings
+# again after that date, so they are reviewed before production.
+ignore:
+  iac:
+    # "A Private endpoint with the blob group id should be configured with a Private DNS Zone"
+    # Resources: azurerm_private_endpoint.blob (network.tf) and azurerm_private_endpoint.state_blob
+    # (backend/main.tf).
+    # The hub private Domain Name System (DNS) zones belong to the Azure team, and this
+    # subscription cannot write to them. The Azure team attaches each endpoint to its zone after
+    # the endpoint is created, and Terraform keeps that zone group with ignore_changes. The state
+    # endpoint was attached on 22 September 2026 and the evals endpoints on 24 September 2026.
+    ced3d0c9-ce37-4530-b4b5-538aacb1104f:
+      "/terraform/azure/evals/network.tf":
+        reason: FALSE_POSITIVE
+      "/terraform/azure/evals/backend/main.tf":
+        reason: FALSE_POSITIVE
+
+    # "A private endpoint that connects to Key Vault should be configured with a Private DNS Zone"
+    # Resource: azurerm_private_endpoint.key_vault (network.tf).
+    # Same arrangement as the blob endpoints. The vault endpoint was attached to the hub zone on
+    # 13 October 2026.
+    5807f8fa-7641-496b-8a1e-31763edf105d:
+      "/terraform/azure/evals/network.tf":
+        reason: FALSE_POSITIVE
+
+    # "Key Vault should have a private endpoint"
+    # "Key Vault private link endpoints should exist and be approved"
+    # Resource: azurerm_key_vault.evals_storage (key-vault/main.tf).
+    # The endpoint is azurerm_private_endpoint.key_vault in network.tf, which belongs to a different
+    # Terraform root, so Wiz does not see it from the vault. It was created on 12 October 2026 and
+    # attached to the hub zone on 13 October 2026.
+    02ad1223-6707-41ab-b48f-d9f90a6be1a7:
+      "/terraform/azure/evals/key-vault/main.tf":
+        reason: FALSE_POSITIVE
+    02fc729d-314f-467f-b85a-832ceb015f2f:
+      "/terraform/azure/evals/key-vault/main.tf":
+        reason: FALSE_POSITIVE
+
+    # "Key Vault audit event logging should be enabled"
+    # "Key Vault resource logs should be enabled"
+    # Resource: azurerm_key_vault.evals_storage (key-vault/main.tf).
+    # azurerm_monitor_diagnostic_setting.evals_storage_vault_shared in logging.tf sends the allLogs
+    # group to the shared Log Analytics workspace. Rows were confirmed there on 30 October 2026.
+    # Retention is set on the workspace, because a setting that sends to Log Analytics has no
+    # retention of its own.
+    ad95c056-dee9-47f3-954f-98851fb9f11d:
+      "/terraform/azure/evals/key-vault/main.tf":
+        reason: FALSE_POSITIVE
+    580b964d-fb1a-47d9-9c2d-45113327c899:
+      "/terraform/azure/evals/key-vault/main.tf":
+        reason: FALSE_POSITIVE
+
+    # "Storage Account logging should be enabled for File service for read, write, and delete requests"
+    # Resources: azurerm_storage_account.evals (main.tf) and azurerm_storage_account.terraform_state
+    # (backend/main.tf).
+    # azurerm_monitor_diagnostic_setting.evals_file_shared and terraform_state_file_shared in
+    # logging.tf log File read, write and delete requests. Rows were confirmed in the shared
+    # workspace on 30 October 2026.
+    c74d7bc5-a227-4393-8c11-19d986fa12d7:
+      "/terraform/azure/evals/main.tf":
+        reason: FALSE_POSITIVE
+      "/terraform/azure/evals/backend/main.tf":
+        reason: FALSE_POSITIVE
+
+    # "Virtual Network subnet should be configured with a Network Security Group"
+    # Resources: azurerm_virtual_network.evals and azurerm_subnet.private_endpoints (vnet/main.tf).
+    # The group is attached by azurerm_subnet_network_security_group_association.private_endpoints
+    # in vnet/nsg.tf. The 13 October 2026 architecture session required it, and it was applied on
+    # 20 October 2026.
+    9f5164ca-927a-4b58-a2c6-d7843033140f:
+      "/terraform/azure/evals/vnet/main.tf":
+        reason: FALSE_POSITIVE
+
+    # "Key Vault key should be within the specified maximum validity period"
+    # Resource: azurerm_key_vault_key.evals_storage (key-vault/main.tf).
+    # The rotation policy, applied on 12 October 2026, rotates the key after a year and expires each
+    # version after 15 months. expiration_date stays unset, because rotation rewrites it and
+    # Terraform would otherwise replace the key. The three months beyond this rule's 365 days leave
+    # time to fix a failed rotation before an expired version stops Storage reading the data.
+    94665ac8-fe78-403b-9cea-3858fae6a4ed:
+      "/terraform/azure/evals/key-vault/main.tf":
+        reason: BY_DESIGN
+
+    # "Key Vault key should be HSM protected"
+    # Resource: azurerm_key_vault_key.evals_storage (key-vault/main.tf).
+    # The 29 September 2026 architecture session decided that a hardware security module (HSM) key
+    # is disproportionate for this project. The Cyber review passed on 12 October 2026 with no HSM.
+    8ec74a71-dd71-4b62-85eb-f675db31d0da:
+      "/terraform/azure/evals/key-vault/main.tf":
+        reason: BY_DESIGN
+
+    # "Virtual Network DDoS Protection should be enabled"
+    # Resource: azurerm_virtual_network.evals (vnet/main.tf).
+    # The spoke was recorded on 22 September 2026 with no distributed denial of service (DDoS)
+    # protection plan. It holds private endpoints only and has no public IP addresses, so a plan
+    # would have nothing to protect. Reassess at production readiness.
+    c1e7920c-1bdf-41f2-8477-f554fcfa79b1:
+      "/terraform/azure/evals/vnet/main.tf":
+        reason: BY_DESIGN
+        expires: 2027-05-03T00:00:00Z
+
+    # "Storage Account table service should be encrypted with a customer-managed key"
+    # "Storage Account queue service should be encrypted with a customer-managed key"
+    # "Storage Account for critical data should be encrypted with a customer-managed key"
+    # Resources: azurerm_storage_account.terraform_state (backend/main.tf), which holds the Terraform
+    # state for the parent root, and azurerm_storage_account.evals (main.tf).
+    # The evals accounts have had an account-level customer-managed key since 23 September 2026,
+    # with the table and queue key type set to Account. For those accounts, Wiz is asking for an
+    # encryption scope, which this design does not use.
+    # The state account is accepted for test. On 23 September 2026 Microsoft-managed keys were
+    # accepted for test, with a customer-managed key required in production only if production
+    # approval asks for it. On 15 October 2026, after the 13 October 2026 architecture session
+    # asked about a customer-managed key on all storage, this account was kept on Microsoft-managed
+    # keys. Infrastructure encryption is on. The table and queue key type is fixed when an account
+    # is created, so a customer-managed key means replacing the account and copying the state file
+    # out first.
+    ce9e9b47-b7be-4583-9ff6-c6b446103756:
+      "/terraform/azure/evals/backend/main.tf":
+        reason: RISK_ACCEPTED
+        expires: 2027-05-03T00:00:00Z
+    ed90acac-f4a9-4c76-8c66-4dd2288bb5b3:
+      "/terraform/azure/evals/backend/main.tf":
+        reason: RISK_ACCEPTED
+        expires: 2027-05-03T00:00:00Z
+    384f220e-fe1a-44c5-a356-dc9025e0bb4e:
+      "/terraform/azure/evals/main.tf":
+        reason: FALSE_POSITIVE
+      "/terraform/azure/evals/backend/main.tf":
+        reason: RISK_ACCEPTED
+        expires: 2027-05-03T00:00:00Z
+
+    # "Storage Account geo-redundant storage should be enabled"
+    # Resources: azurerm_storage_account.evals (main.tf) and azurerm_storage_account.terraform_state
+    # (backend/main.tf).
+    # On 23 September 2026 locally redundant storage was accepted for test. There is no
+    # disaster-recovery requirement. Locally redundant storage keeps three copies in one data
+    # centre, and the accounts have versioning and 14-day soft delete. Reassess at production
+    # readiness.
+    9ed4d0f1-9907-4b36-a4b6-9f2b115bd84c:
+      "/terraform/azure/evals/main.tf":
+        reason: RISK_ACCEPTED
+        expires: 2027-05-03T00:00:00Z
+      "/terraform/azure/evals/backend/main.tf":
+        reason: RISK_ACCEPTED
+        expires: 2027-05-03T00:00:00Z

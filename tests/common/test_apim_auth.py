@@ -1,5 +1,6 @@
 import asyncio
-from unittest.mock import AsyncMock, MagicMock
+import threading
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -13,8 +14,8 @@ def provider():
     )
 
     # Mock the Azure Credential provider used within AzureClientSecretCredentialTokenProvider
-    token_provider._azure_credential = AsyncMock()  # noqa: SLF001
-    token_provider._azure_credential.get_token = AsyncMock(return_value=MagicMock(token="fake-token"))  # noqa: SLF001
+    token_provider._azure_credential = MagicMock()  # noqa: SLF001
+    token_provider._azure_credential.get_token = MagicMock(return_value=MagicMock(token="fake-token"))  # noqa: SLF001
     return token_provider
 
 
@@ -36,7 +37,7 @@ async def test_get_token_returns_cached_token_without_re_fetching(provider):
 
 @pytest.mark.asyncio
 async def test_invalidate_token_causes_refetch(provider):
-    provider._azure_credential.get_token = AsyncMock(  # noqa: SLF001
+    provider._azure_credential.get_token = MagicMock(  # noqa: SLF001
         side_effect=[MagicMock(token="token-1"), MagicMock(token="token-2")]
     )
 
@@ -54,3 +55,19 @@ async def test_concurrent_get_token_calls_only_fetch_once(provider):
 
     assert all(t == "fake-token" for t in tokens)
     provider._azure_credential.get_token.assert_called_once()  # noqa: SLF001
+
+
+def test_get_token_completes_when_called_from_separate_event_loops(provider):
+    """Two threads, each with its own event loop, ask for a token at the same moment."""
+    tokens: list[str] = []
+
+    def request_token() -> None:
+        tokens.append(asyncio.run(provider.get_token()))
+
+    threads = [threading.Thread(target=request_token, daemon=True) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=10)
+
+    assert tokens == ["fake-token", "fake-token"]

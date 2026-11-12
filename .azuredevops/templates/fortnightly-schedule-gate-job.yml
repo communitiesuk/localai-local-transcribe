@@ -1,0 +1,48 @@
+# Reusable job for scheduled pipelines that should run every two weeks.
+# Azure DevOps cron schedules cannot express fortnightly cadence directly, so
+# pipelines schedule weekly and this job gates alternate Sundays.
+
+parameters:
+  - name: scheduledRunsEnabled
+    type: string
+    default: 'true'
+  - name: referenceSunday
+    type: string
+    default: '2026-08-30'
+
+jobs:
+  - job: fortnightly_schedule_gate
+    displayName: 'Fortnightly schedule gate'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - bash: |
+          set -euo pipefail
+
+          if [ "${BUILD_REASON:-}" != "Schedule" ]; then
+            echo "Manual/non-scheduled run: continuing."
+            echo "##vso[task.setvariable variable=shouldRun;isOutput=true]true"
+            exit 0
+          fi
+
+          if [ "${{ parameters.scheduledRunsEnabled }}" != "true" ]; then
+            echo "Scheduled runs are disabled: skipping."
+            echo "##vso[task.setvariable variable=shouldRun;isOutput=true]false"
+            exit 0
+          fi
+
+          reference_sunday="${{ parameters.referenceSunday }}"
+          today="$(date -u +%Y-%m-%d)"
+          today_epoch="$(date -u -d "${today}" +%s)"
+          reference_epoch="$(date -u -d "${reference_sunday}" +%s)"
+          days_since_reference=$(( (today_epoch - reference_epoch) / 86400 ))
+
+          if [ "${days_since_reference}" -ge 0 ] && [ $(( days_since_reference % 14 )) -eq 0 ]; then
+            echo "Scheduled fortnightly Sunday: continuing."
+            echo "##vso[task.setvariable variable=shouldRun;isOutput=true]true"
+          else
+            echo "Scheduled run is not on the fortnightly cadence from ${reference_sunday}: skipping."
+            echo "##vso[task.setvariable variable=shouldRun;isOutput=true]false"
+          fi
+        name: set_schedule_gate
+        displayName: 'Check fortnightly cadence'

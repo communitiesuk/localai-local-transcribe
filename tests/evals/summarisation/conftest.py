@@ -16,6 +16,20 @@ from evals.summarisation.src.common import AppConfig
 from evals.summarisation.src.optimisation.runner import run_eval
 
 
+@pytest.fixture(autouse=True)
+def ai_gateway_token_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Summarisation tests do not sign in to the AI Gateway.
+
+    The startup token fetch has its own tests. Leaving it live would make every other test
+    depend on pipeline credentials.
+    """
+
+    async def _accept_token() -> None:
+        """Stand in for the startup token fetch."""
+
+    monkeypatch.setattr("evals.summarisation.src.main._require_ai_gateway_token", _accept_token)
+
+
 @pytest.fixture
 def eval_config(tmp_path: Path) -> Callable[..., AppConfig]:
     """Build a minimal :class:`AppConfig` for the standard eval, writing output under ``tmp_path``."""
