@@ -93,6 +93,27 @@ PRICES = {
     "fast": (0.04, 0.01, 0.31),  # gpt-5-nano (FAST_LLM_MODEL_NAME)
 }
 
+# Candidate FAST-tier substitutes considered for the guardrail/speaker-id/title calls.
+# USD list prices (Azure OpenAI Data Zone / AWS Bedrock eu.anthropic.* region-pinned),
+# converted to GBP at the 2026-11-04 mid-market rate (1 USD = 0.74 GBP); see
+# https://azure.microsoft.com/en-us/pricing/details/azure-openai/ and
+# https://aws.amazon.com/bedrock/pricing/. gpt-6-luna uses the short-context Data Zone
+# tier; it roughly doubles if a transcript pushes a call into the long-context tier.
+# gpt-5-nano and gpt-5.1 reuse the PRICES entries above rather than a fresh USD
+# conversion, so the baseline row matches the headline figures exactly.
+_USD_TO_GBP = 0.74
+FAST_MODEL_CANDIDATES_USD = {
+    "gpt-5-6-luna": (0.44, 0.05, 1.98),
+    "gpt-6-luna": (0.11, 0.011, 0.55),
+    "haiku-4-5": (1.10, 0.11, 5.50),
+    "sonnet-5": (2.20, 0.22, 11.00),
+}
+FAST_MODEL_CANDIDATES = {
+    "gpt-5-nano": PRICES["fast"],  # current FAST_LLM_MODEL_NAME, for reference
+    "gpt-5.1": PRICES["best"],  # current BEST_LLM_MODEL_NAME, for reference
+    **{name: tuple(p * _USD_TO_GBP for p in prices) for name, prices in FAST_MODEL_CANDIDATES_USD.items()},
+}
+
 # Azure AI Speech standard transcription, UK South, GBP per hour of audio:
 # https://azure.microsoft.com/en-us/pricing/details/speech/
 SPEECH_GBP_PER_HOUR = {
@@ -312,6 +333,81 @@ def headroom(tk: dict[str, float], name: str, m: Meeting) -> float:
     return cost(hypo)
 
 
+def fast_model_comparison(m: Meeting) -> list[tuple[str, float, float]]:
+    """Usage-weighted per-meeting GBP cost (FAST-only, total) for each FAST_MODEL_CANDIDATES
+    entry substituted in place of the current FAST_LLM_MODEL_NAME, with BEST held fixed."""
+    wt_tokens = weighted(m, citation_tier="fast")
+    original_fast = PRICES["fast"]
+    rows = []
+    try:
+        for name, prices in FAST_MODEL_CANDIDATES.items():
+            PRICES["fast"] = prices
+            rows.append((name, cost(wt_tokens, only="fast"), cost(wt_tokens)))
+    finally:
+        PRICES["fast"] = original_fast
+    return rows
+
+
+BOTH_TIER_CANDIDATES = ["gpt-6-luna", "haiku-4-5", "sonnet-5"]
+
+
+def both_tier_model_comparison(m: Meeting) -> list[tuple[str, str, float]]:
+    """Usage-weighted per-meeting GBP cost for substituting a single candidate into *both*
+    BEST and FAST (citations routed to BEST, i.e. USE_BEST_LLM_FOR_CITATIONS=True, the
+    production default - with BEST=FAST this doesn't affect which price is used). Also
+    includes the mixed FAST=haiku-4-5/BEST=sonnet-5 row, since that combination was tested too.
+
+    Returns (label, detail, total_cost) tuples; "detail" is e.g. "BEST=FAST=gpt-6-luna" or
+    "BEST=sonnet-5, FAST=haiku-4-5"."""
+    original_fast, original_best = PRICES["fast"], PRICES["best"]
+    rows = []
+    try:
+        for name in BOTH_TIER_CANDIDATES:
+            PRICES["fast"] = PRICES["best"] = FAST_MODEL_CANDIDATES[name]  # type: ignore[assignment]
+            total = cost(weighted(m, citation_tier="best"))
+            rows.append((f"All-{name}", f"BEST=FAST={name}", total))
+
+        PRICES["best"] = FAST_MODEL_CANDIDATES["sonnet-5"]  # type: ignore[assignment]
+        PRICES["fast"] = FAST_MODEL_CANDIDATES["haiku-4-5"]  # type: ignore[assignment]
+        total = cost(weighted(m, citation_tier="best"))
+        rows.append(("FAST=haiku, BEST=sonnet", "BEST=sonnet-5, FAST=haiku-4-5", total))
+    finally:
+        PRICES["fast"], PRICES["best"] = original_fast, original_best
+    return rows
+
+
+def display_both_tier_model_comparison() -> None:
+    one_hour = Meeting(1.0)
+    rows = both_tier_model_comparison(one_hour)
+    baseline_total = cost(weighted(one_hour, citation_tier="fast"))  # Production-before reference
+    print("\n\nBoth-tier model substitution (single candidate replaces BEST and FAST, usage-weighted 1-hour meeting)")
+    print("=" * 110)
+    print(
+        f"  {'Setup':<28} {'Detail':<30} {'GBP total':>10} {'GBP/1,000 meetings':>20}"
+        f" {'Delta vs Production-before':>28}"
+    )
+    print("  " + "-" * 104)
+    for label, detail, total_c in rows:
+        delta_pct = (total_c - baseline_total) / baseline_total
+        print(f"  {label:<28} {detail:<30} {total_c:>10.4f} {total_c * 1e3:>20.2f} {delta_pct:>+27.0%}")
+
+
+def display_fast_model_comparison() -> None:
+    one_hour = Meeting(1.0)
+    rows = fast_model_comparison(one_hour)
+    baseline_total = next(total for name, _fast, total in rows if name == "gpt-5-nano")
+    print("\n\nFAST-tier model substitution (BEST=gpt-5.1 held fixed, usage-weighted 1-hour meeting)")
+    print("=" * 100)
+    print(
+        f"  {'Candidate':<14} {'GBP FAST only':>14} {'GBP total':>12} {'GBP/1,000 meetings':>20} {'Delta vs nano':>14}"
+    )
+    print("  " + "-" * 82)
+    for name, fast_c, total_c in rows:
+        print(
+            f"  {name:<14} {fast_c:>14.5f} {total_c:>12.5f} {total_c * 1e3:>20.2f} {total_c - baseline_total:>+14.5f}"
+        )
+
+
 def display() -> None:
     one_hour = Meeting(1.0)
     model_labels = "BEST=gpt-5.1, FAST=gpt-5-nano"
@@ -379,6 +475,9 @@ def display() -> None:
         f"\n  replays into a shared prefix would instead land at GBP {headroom(wt, 'Usage-weighted', one_hour):.4f}"
         f" ({headroom(wt, 'Usage-weighted', one_hour) / c_cached - 1:+.0%})."
     )
+
+    display_fast_model_comparison()
+    display_both_tier_model_comparison()
 
 
 if __name__ == "__main__":

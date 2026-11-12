@@ -1,0 +1,26 @@
+# Citation-tier experiment: General template (citations_required) run with claim extraction and
+# citation insertion routed back to FAST (USE_BEST_LLM_FOR_CITATIONS=false), FAST model overridden
+# via env var. See evals/summarisation/CITATIONS_FAST_EXPERIMENT.md for the exact commands and how
+# to read citation_outcomes/rubric_auditability against the gpt-5-nano and BEST-citation baselines.
+run:
+  eval_type: standard
+  output_dir: evals/summarisation/output/citations_fast_candidate
+  prompt_version: dev
+  dataset_version: unspecified
+  limit: 20
+
+dataset:
+  name: knkarthick/dialogsum
+  config: default
+  dialogue_field: dialogue
+  reference_summary_field: summary
+
+judge:
+  pass_threshold: 4
+
+prompts:
+  summarizer_template_name: General
+  judge_template_path: evals/summarisation/prompts/judge.j2
+
+hallucination:
+  enabled: true
