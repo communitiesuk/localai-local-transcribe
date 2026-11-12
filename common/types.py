@@ -218,6 +218,7 @@ class TranscriptionGetResponse(BaseModel):
     client_name: str | None
     case_id: str | None
     client_date_of_birth: datetime | None
+    no_speech_detected: bool = False
 
 
 class SingleRecording(BaseModel):

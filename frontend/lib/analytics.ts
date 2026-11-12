@@ -8,6 +8,7 @@ export type AnalyticsEventName =
   | 'transcript_requested_for_live_recording'
   | 'transcript_requested_for_direct_upload'
   | 'summary_requested'
+  | 'transcription_failed'
 
 const PLAUSIBLE_DOMAIN = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN
 

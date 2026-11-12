@@ -224,6 +224,7 @@ class Transcription(BaseTableMixin, table=True):
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
     )
     error: str | None = Field(default=None)
+    no_speech_detected: bool = Field(default=False, sa_column_kwargs={"server_default": "false"})
     user: User | None = Relationship(back_populates="transcriptions")
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
     # metadata fields:

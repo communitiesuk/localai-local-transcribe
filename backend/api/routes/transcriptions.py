@@ -388,6 +388,7 @@ async def get_transcription(
         client_name=transcription.client_name,
         case_id=transcription.case_id,
         client_date_of_birth=transcription.client_date_of_birth,
+        no_speech_detected=transcription.no_speech_detected,
     )
 
 

@@ -520,3 +520,63 @@ describe('<TranscriptionPage /> Edit transcript', () => {
     expect(finishEditingButton).not.toBeInTheDocument()
   })
 })
+describe('<TranscriptionPage /> failed transcription', () => {
+  const renderWithTranscription = async (
+    failedTranscription: TranscriptionGetResponse
+  ) => {
+    vi.mocked(useQuery).mockImplementation(((opts: {
+      queryKey?: unknown[]
+    }) => {
+      switch (opts?.queryKey?.[0]) {
+        case 'transcription':
+          return { data: failedTranscription }
+        case 'recordings':
+          return { data: [] }
+        default:
+          return { data: [] }
+      }
+    }) as unknown as typeof useQuery)
+
+    await act(async () =>
+      render(
+        <TranscriptionPage params={Promise.resolve({ transcriptionId: '1' })} />
+      )
+    )
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(useQueryClient).mockReturnValue({
+      setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+    } as unknown as QueryClient)
+  })
+
+  it('tells the user no sound was detected when the recording was silent', async () => {
+    await renderWithTranscription({
+      ...transcription,
+      status: 'failed',
+      dialogue_entries: null,
+      no_speech_detected: true,
+    })
+
+    expect(screen.getByText('No sound detected')).toBeInTheDocument()
+    expect(
+      screen.getByText(/We could not hear anything in this recording/)
+    ).toBeInTheDocument()
+  })
+
+  it('keeps the general wording when the transcription failed for another reason', async () => {
+    await renderWithTranscription({
+      ...transcription,
+      status: 'failed',
+      dialogue_entries: null,
+      no_speech_detected: false,
+    })
+
+    expect(screen.getByText('Transcription failed')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Something went wrong with your transcription/)
+    ).toBeInTheDocument()
+  })
+})

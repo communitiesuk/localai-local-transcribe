@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 from uuid import uuid4
 
 import pytest
@@ -12,7 +12,11 @@ from common.database.postgres_models import (
     Transcription,
     User,
 )
-from common.services.transcription_handler_service import TranscriptionHandlerService
+from common.services.transcription_handler_service import (
+    NO_SPEECH_DETECTED_ERROR,
+    TranscriptionHandlerService,
+)
+from common.types import TranscriptionJobMessageData
 
 
 @pytest.fixture
@@ -237,3 +241,56 @@ def test_record_transcription_received_handles_no_user(mock_session):
         source_id=transcription_id,
         event_metadata={"recording_source": RecordingSource.LIVE_RECORDING},
     )
+
+
+def test_update_transcription_records_no_speech_detected(mock_session, mock_transcription):
+    ctx, session = mock_session
+
+    with patch("common.services.transcription_handler_service.SessionLocal", return_value=ctx):
+        TranscriptionHandlerService.update_transcription(mock_transcription.id, no_speech_detected=True)
+
+    assert mock_transcription.no_speech_detected is True
+    session.commit.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_process_transcription_marks_an_empty_transcript_as_no_speech_detected(mock_transcription):
+    job = TranscriptionJobMessageData(transcription_service="azure_stt_synchronous", transcript=[])
+
+    with (
+        patch.object(TranscriptionHandlerService, "get_transcription", return_value=mock_transcription),
+        patch.object(TranscriptionHandlerService, "update_transcription") as update_transcription,
+        patch.object(TranscriptionHandlerService, "_record_transcription_received") as record_event,
+        patch(
+            "common.services.transcription_handler_service.transcription_manager.perform_transcription_steps",
+            new=AsyncMock(return_value=job),
+        ),
+    ):
+        result = await TranscriptionHandlerService.process_transcription(mock_transcription.id)
+
+    assert result is job
+    update_transcription.assert_any_call(
+        mock_transcription.id,
+        status=JobStatus.FAILED,
+        error=NO_SPEECH_DETECTED_ERROR,
+        no_speech_detected=True,
+    )
+    record_event.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_process_transcription_leaves_an_unfinished_async_job_alone(mock_transcription):
+    job = TranscriptionJobMessageData(transcription_service="azure_stt_batch", job_name="job")
+
+    with (
+        patch.object(TranscriptionHandlerService, "get_transcription", return_value=mock_transcription),
+        patch.object(TranscriptionHandlerService, "update_transcription") as update_transcription,
+        patch(
+            "common.services.transcription_handler_service.transcription_manager.check_transcription",
+            new=AsyncMock(return_value=job),
+        ),
+    ):
+        result = await TranscriptionHandlerService.process_transcription(mock_transcription.id, job)
+
+    assert result is job
+    update_transcription.assert_not_called()

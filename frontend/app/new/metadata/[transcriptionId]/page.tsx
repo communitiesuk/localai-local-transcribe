@@ -10,9 +10,11 @@ import { ProcessingSpinner } from '@/components/processing-spinner'
 import { RecordingDetails } from '@/app/transcriptions/[transcriptionId]/RecordingDetails'
 import {
   isTranscriptionProcessing,
+  notifyNoSpeechDetected,
   notifyRecordingFailed,
   notifyRecordingSaved,
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionStatus'
+import { recordAnalyticsEvent } from '@/lib/analytics'
 import { getTranscriptionTranscriptionsTranscriptionIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
 
@@ -45,6 +47,7 @@ export default function AddRecordingMetadataPage(props: {
   })
 
   const hasFailed = transcription?.status === 'failed'
+  const hasNoSpeech = hasFailed && transcription?.no_speech_detected === true
 
   useEffect(() => {
     if (!isSaved || !transcription) {
@@ -54,6 +57,15 @@ export default function AddRecordingMetadataPage(props: {
       return
     }
     if (transcription.status === 'failed') {
+      recordAnalyticsEvent('transcription_failed', {
+        reason: transcription.no_speech_detected
+          ? 'no_speech_detected'
+          : 'error',
+      })
+      if (transcription.no_speech_detected) {
+        notifyNoSpeechDetected(router, setBanner, transcription.id)
+        return
+      }
       notifyRecordingFailed(router, setBanner, transcription.id)
       return
     }
@@ -93,7 +105,9 @@ export default function AddRecordingMetadataPage(props: {
         {hasFailed && (
           <GovukNotificationBanner variant="important" title="Important">
             <p className="govuk-notification-banner__heading">
-              Something went wrong transcribing this recording.
+              {hasNoSpeech
+                ? 'No sound was detected in this recording, so there is no transcript.'
+                : 'Something went wrong transcribing this recording.'}
             </p>
             <p className="govuk-body">
               Your audio has been saved. You can still add these details and

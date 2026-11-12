@@ -29,6 +29,8 @@ settings = get_settings()
 transcription_manager = TranscriptionServiceManager()
 logger = logging.getLogger(__name__)
 
+NO_SPEECH_DETECTED_ERROR = "No speech was detected in this recording"
+
 
 class TranscriptionHandlerService:
     @classmethod
@@ -145,6 +147,7 @@ class TranscriptionHandlerService:
         transcript: list[DialogueEntry] | None = None,
         title: str | None = None,
         error: str | None = None,
+        no_speech_detected: bool | None = None,
     ) -> None:
         with SessionLocal() as session:
             transcription = session.get(Transcription, transcription_id)
@@ -157,6 +160,8 @@ class TranscriptionHandlerService:
                 transcription.dialogue_entries = transcript
             if error:
                 transcription.error = error
+            if no_speech_detected is not None:
+                transcription.no_speech_detected = no_speech_detected
             # The title passed here is AI-generated, so it must not clobber a title the
             # user has already set themselves (the "subject" field on the details form).
             if title and not transcription.title:
@@ -194,6 +199,15 @@ class TranscriptionHandlerService:
                     transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
                 )
                 cls._record_transcription_received(transcription)
+            elif transcription_job.transcript is not None:
+                # An empty transcript is a finished job with no speech in it. None is a job still running.
+                logger.info("No speech detected for transcription id=%s", transcription.id)
+                cls.update_transcription(
+                    transcription.id,
+                    status=JobStatus.FAILED,
+                    error=NO_SPEECH_DETECTED_ERROR,
+                    no_speech_detected=True,
+                )
 
         except Exception as e:
             msg = f"Transcription failed: {e!s}"

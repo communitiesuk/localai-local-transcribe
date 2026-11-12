@@ -79,7 +79,8 @@ class _RayTranscriptionService:
                     raise
                 else:
                     # sync jobs should have the transcript available immediately, async jobs may need to go on the queue
-                    if transcription_job.transcript:
+                    # an empty transcript is a finished job with no speech in it, so only a missing one is requeued
+                    if transcription_job.transcript is not None:
                         logger.info("WORKER JOB COMPLETED: %s id=%s", message.type.name, message.id)
                     else:
                         try:

@@ -37,3 +37,20 @@ export const notifyRecordingFailed = (
   })
   router.push('/')
 }
+
+export const notifyNoSpeechDetected = (
+  router: ReturnType<typeof useRouter>,
+  setBanner: ReturnType<typeof useBannerStore.getState>['setBanner'],
+  transcriptionId: string
+) => {
+  setBanner({
+    variant: 'important',
+    title: 'Important',
+    message: 'No sound was detected in your recording - ',
+    link: {
+      text: 'click to view',
+      href: `/transcriptions/${transcriptionId}`,
+    },
+  })
+  router.push('/')
+}

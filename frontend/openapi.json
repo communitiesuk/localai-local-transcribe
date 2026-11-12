@@ -3418,6 +3418,11 @@
               { "type": "null" }
             ],
             "title": "Client Date Of Birth"
+          },
+          "no_speech_detected": {
+            "type": "boolean",
+            "title": "No Speech Detected",
+            "default": false
           }
         },
         "type": "object",
