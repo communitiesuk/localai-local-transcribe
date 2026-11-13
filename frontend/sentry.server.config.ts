@@ -4,6 +4,8 @@
 
 import * as Sentry from '@sentry/nextjs'
 
+import { dataCollection } from './sentry.data-collection'
+
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN
 const ENVIRONMENT = process.env.NEXT_PUBLIC_ENVIRONMENT
 
@@ -17,5 +19,7 @@ if (SENTRY_DSN) {
 
     // Setting this option to true will print useful information to the console while you're setting up Sentry.
     debug: false,
+
+    dataCollection,
   })
 }
