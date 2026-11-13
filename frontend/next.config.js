@@ -1,4 +1,4 @@
-import { withSentryConfig } from '@sentry/nextjs'
+import { withSentryConfig } from '@sentry/nextjs/config'
 
 let nextConfig = {
   output: 'standalone',
@@ -23,9 +23,10 @@ const sentryConfig = {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
   webpack: {
-    treeShaking: {
+    treeshake: {
       removeDebugLogging: true,
     },
+    automaticVercelMonitors: true,
   },
   org: 'communitiesuk',
   project: 'localai-local-transcribe',
@@ -54,12 +55,6 @@ const sentryConfig = {
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors.
-  automaticVercelMonitors: true,
 }
 nextConfig = withSentryConfig(nextConfig, sentryConfig)
 
