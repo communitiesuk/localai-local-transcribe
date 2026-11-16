@@ -1,0 +1,30 @@
+run:
+  eval_type: bias
+  prompt_version: dev
+  num_iterations: 1
+  dataset_version: synthetic-bias-smoke
+  spc_baseline_enabled: false
+  emit_spc_baseline: false
+
+dataset:
+  name: synthetic-counterfactuals
+  source: blob
+  blob_path: summarisation/bias/smoke-test/gender_facilitator_to_chair.json
+  dialogue_field: dialogue
+  reference_summary_field: summary
+
+judge:
+  pass_threshold: 4
+
+metrics:
+  - accuracy
+  - coverage
+  - readability
+
+prompts:
+  summarizer_template_name: General
+  judge_template_path: evals/summarisation/prompts/judge.j2
+
+blob:
+  enabled: true
+  output_prefix: summarisation

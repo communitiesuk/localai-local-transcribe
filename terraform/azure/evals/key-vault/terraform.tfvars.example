@@ -1,0 +1,11 @@
+# Copy to terraform.tfvars in this directory. Do not commit terraform.tfvars.
+
+subscription_id     = "<azure-subscription-id>"
+resource_group_name = "<resource-group-name>"
+location            = "uksouth"
+environment_name    = "test"
+key_vault_name      = "kv-tst-aielt-evals-001"
+storage_customer_managed_key_name = "evals-storage"
+
+# First apply: false. After the pipeline has granted Key Vault Crypto Officer: true.
+create_storage_key = false

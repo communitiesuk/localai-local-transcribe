@@ -1,14 +1,15 @@
 """Load ordinary audio files paired with same-name UTF-8 reference transcripts."""
 
+import json
 import re
 from pathlib import Path
 
 import soundfile
 
 from evals.transcription.src.core.benchmark_dataset_source import BenchmarkDatasetSource
-from evals.transcription.src.models import AudioSample, DatasetItem, DatasetRequest
+from evals.transcription.src.models import AudioFilesDatasetSample, AudioSample, DatasetRequest
 
-AUDIO_SUFFIXES = {".wav", ".flac", ".ogg", ".mp3"}
+AUDIO_SUFFIXES = {".aac", ".flac", ".m4a", ".mp3", ".ogg", ".wav", ".webm", ".wma"}
 DIARIZED_LINE_PREFIX = re.compile(r"^\s*Speaker [^:\r\n]+:\s*", re.IGNORECASE)
 
 
@@ -23,11 +24,8 @@ def _reference_text(path: Path) -> str:
 
 
 class AudioFilesDataset:
-    """
-    Ordered audio/text pairs, with audio decoded on access.
-    """
+    """Ordered audio/text pairs, with audio decoded on access."""
 
-    supports_diarization = False
     dataset_split = None
 
     def __init__(self, input_dir: Path, num_samples: int | None = None):
@@ -43,8 +41,8 @@ class AudioFilesDataset:
         if num_samples is not None:
             self.paths = self.paths[:num_samples]
         self.dataset_version = f"audio_files:{input_dir.resolve()}"
-        # Read all selected references before any requests are made.
-        self.references = []
+        self.references: list[str] = []
+        self.diarizations: list[list[dict]] = []
         for audio_path in self.paths:
             reference_path = audio_path.with_suffix(".txt")
             try:
@@ -52,18 +50,31 @@ class AudioFilesDataset:
             except FileNotFoundError as error:
                 message = f"Missing reference transcript {reference_path} for audio file {audio_path}"
                 raise FileNotFoundError(message) from error
+            diarization_path = audio_path.with_name(f"{audio_path.stem}_ref_diarization.json")
+            if diarization_path.is_file():
+                data = json.loads(diarization_path.read_text(encoding="utf-8"))
+                if not isinstance(data, list):
+                    msg = f"Reference diarization must be a list: {diarization_path}"
+                    raise TypeError(msg)
+                self.diarizations.append(data)
+            else:
+                self.diarizations.append([])
+        self.supports_diarization = all(self.diarizations)
 
     def __len__(self) -> int:
         return len(self.paths)
 
-    def __getitem__(self, index: int) -> DatasetItem:
+    def __getitem__(self, index: int) -> AudioFilesDatasetSample:
         if index < 0 or index >= len(self):
             raise IndexError(index)
         path = self.paths[index]
         audio, sample_rate = soundfile.read(path, dtype="float32")
-        return DatasetItem(
+        return AudioFilesDatasetSample(
             audio=AudioSample(array=audio, sampling_rate=sample_rate, path=str(path.resolve())),
             text=self.references[index],
+            file_id=path.stem,
+            dataset_index=index,
+            reference_diarization=self.diarizations[index],
         )
 
 

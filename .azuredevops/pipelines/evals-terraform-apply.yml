@@ -1,0 +1,54 @@
+# Plan or apply terraform/azure/evals using a dedicated Azure Resource Manager
+# service connection for Terraform (not the evals-blob workload identity).
+# Manual only until a plan has been reviewed. Microsoft-hosted agents cannot be
+# allowed through the storage firewall, so this job uses the self-hosted pool
+# ado-vmss-latest. The pool vmss-shared is shut down at 17:00 on 28 October 2026.
+# The pool reaches the state account through its private endpoint. terraform init
+# reads the remote state on that path.
+
+name: Evals Terraform
+
+trigger: none
+pr: none
+
+variables:
+  - group: evals-pipeline-config
+
+parameters:
+  - name: terraform_command
+    displayName: Terraform command
+    type: string
+    default: plan
+    values:
+      - plan
+      - apply
+      - grant-key-vault-roles
+
+# ado-vmss-latest replaces vmss-shared. The old pool is shut down at 17:00 on 28 October 2026.
+pool:
+  name: ado-vmss-latest
+
+steps:
+  - checkout: self
+
+  - task: AzureCLI@2
+    displayName: Run evals Terraform (${{ parameters.terraform_command }})
+    inputs:
+      azureSubscription: $(EVALS_TERRAFORM_SERVICE_CONNECTION)
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: bash .azuredevops/scripts/apply-evals-terraform.sh "${{ parameters.terraform_command }}"
+    env:
+      EVALS_ARM_SUBSCRIPTION_ID: $(EVALS_ARM_SUBSCRIPTION_ID)
+      EVALS_RESOURCE_GROUP_NAME: $(EVALS_RESOURCE_GROUP_NAME)
+      EVALS_STATE_STORAGE_ACCOUNT_NAME: $(EVALS_STATE_STORAGE_ACCOUNT_NAME)
+      EVALS_ENVIRONMENT_NAME: $(EVALS_ENVIRONMENT_NAME)
+      EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME: $(EVALS_SENSITIVE_STORAGE_ACCOUNT_NAME)
+      EVALS_RESULTS_STORAGE_ACCOUNT_NAME: $(EVALS_RESULTS_STORAGE_ACCOUNT_NAME)
+      EVALS_ADO_FEDERATION_ISSUER: $(EVALS_ADO_FEDERATION_ISSUER)
+      EVALS_ADO_FEDERATION_SUBJECT: $(EVALS_ADO_FEDERATION_SUBJECT)
+      EVALS_PRIVATE_ENDPOINT_SUBNET_ID: $(EVALS_PRIVATE_ENDPOINT_SUBNET_ID)
+      EVALS_SHARED_LOG_ANALYTICS_WORKSPACE_ID: $(EVALS_SHARED_LOG_ANALYTICS_WORKSPACE_ID)
+      EVALS_CONTAINER_ACCESS: $(EVALS_CONTAINER_ACCESS)
+      EVALS_KEY_VAULT_NAME: $(EVALS_KEY_VAULT_NAME)
+      EVALS_SUPER_USER_OBJECT_ID: $(EVALS_SUPER_USER_OBJECT_ID)
