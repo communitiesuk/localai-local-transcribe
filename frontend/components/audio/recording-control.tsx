@@ -10,6 +10,10 @@ import {
   useRecordingUIStore,
   type RecordingState,
 } from '@/stores/use-recording-ui-store'
+import {
+  MAX_RECORDING_DURATION_LABEL,
+  MAX_RECORDING_DURATION_MS,
+} from '@/lib/constants'
 
 interface RecordingControlProps {
   stream: MediaStream | null
@@ -53,6 +57,7 @@ export default function RecordingControl({
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const preStopConfirmState = useRef<RecordingState>('idle')
+  const hasAutoStoppedRef = useRef(false)
   const [localIsPaused, setLocalIsPaused] = useState(false)
 
   const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
@@ -67,17 +72,33 @@ export default function RecordingControl({
       : localIsPaused
 
   const formattedRecordingDuration = formatDuration(recordingDuration)
+  const hasReachedLimit = recordingDuration >= MAX_RECORDING_DURATION_MS
+
+  useEffect(() => {
+    if (!isRecording || !hasReachedLimit || hasAutoStoppedRef.current) return
+
+    hasAutoStoppedRef.current = true
+    setRecordingUIState('stopping')
+    onStopRecording()
+  }, [hasReachedLimit, isRecording, onStopRecording, setRecordingUIState])
 
   useEffect(() => {
     if (
       !isRecording ||
+      hasReachedLimit ||
       recordingUIState === 'stopConfirm' ||
       recordingUIState === 'stopping'
     )
       return
 
     setRecordingUIState(isPaused ? 'paused' : 'recording')
-  }, [isRecording, isPaused, recordingUIState, setRecordingUIState])
+  }, [
+    isRecording,
+    isPaused,
+    hasReachedLimit,
+    recordingUIState,
+    setRecordingUIState,
+  ])
 
   useEffect(() => {
     const isValidStream =
@@ -354,6 +375,8 @@ export default function RecordingControl({
 
         <p>Recording length: {formattedRecordingDuration}</p>
 
+        <p>Your recording must be {MAX_RECORDING_DURATION_LABEL} or less.</p>
+
         <div
           ref={containerRef}
           className="relative h-20 w-full overflow-hidden rounded-md border-2 border-blue-200 bg-transparent dark:border-blue-800"
@@ -385,7 +408,12 @@ export default function RecordingControl({
           </GovukButton>
         </GovukButtonGroup>
       </div>
-      {showStopConfirm && (
+      {hasReachedLimit && (
+        <GovukWarningText>
+          This recording reached {MAX_RECORDING_DURATION_LABEL} and has stopped.
+        </GovukWarningText>
+      )}
+      {showStopConfirm && !hasReachedLimit && (
         <>
           <GovukWarningText>
             You will not be able to resume recording if you proceed.
