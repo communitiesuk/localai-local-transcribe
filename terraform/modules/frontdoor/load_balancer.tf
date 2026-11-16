@@ -150,21 +150,22 @@ data "aws_ssm_parameter" "oidc_client_secret" {
 resource "aws_lb_listener_rule" "authentication" {
   count        = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
-  priority     = local.listener_rule_base_priority + 1
+  priority     = local.listener_rule_base_priority + 2
 
   action {
     type = "authenticate-oidc"
 
     authenticate_oidc {
-      client_id              = data.aws_ssm_parameter.oidc_client_id[0].value
-      issuer                 = local.gds_ia_issuer
-      authorization_endpoint = "${local.gds_ia_issuer}/oauth2/authorization"
-      token_endpoint         = "${local.gds_ia_issuer}/oauth2/token"
-      user_info_endpoint     = "${local.gds_ia_issuer}/oauth2/userinfo"
-      session_cookie_name    = "X-Amzn-Oidc-Data"
-      client_secret          = data.aws_ssm_parameter.oidc_client_secret[0].value
-      scope                  = "openid profile email"
-      session_timeout        = 604800
+      client_id                  = data.aws_ssm_parameter.oidc_client_id[0].value
+      issuer                     = local.gds_ia_issuer
+      authorization_endpoint     = "${local.gds_ia_issuer}/oauth2/authorization"
+      token_endpoint             = "${local.gds_ia_issuer}/oauth2/token"
+      user_info_endpoint         = "${local.gds_ia_issuer}/oauth2/userinfo"
+      session_cookie_name        = "X-Amzn-Oidc-Data"
+      client_secret              = data.aws_ssm_parameter.oidc_client_secret[0].value
+      scope                      = "openid profile email"
+      session_timeout            = 604800
+      on_unauthenticated_request = "authenticate"
     }
   }
 
@@ -183,6 +184,54 @@ resource "aws_lb_listener_rule" "authentication" {
     http_header {
       http_header_name = local.cloudfront_header_name
       values           = [random_password.cloudfront_header.result]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "authentication_no_reauth_for_rsc_request" {
+  count        = var.ssl_certs_created && var.enable_oidc_auth ? 1 : 0
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = local.listener_rule_base_priority + 1
+
+  action {
+    type = "authenticate-oidc"
+
+    authenticate_oidc {
+      client_id                  = data.aws_ssm_parameter.oidc_client_id[0].value
+      issuer                     = local.gds_ia_issuer
+      authorization_endpoint     = "${local.gds_ia_issuer}/oauth2/authorization"
+      token_endpoint             = "${local.gds_ia_issuer}/oauth2/token"
+      user_info_endpoint         = "${local.gds_ia_issuer}/oauth2/userinfo"
+      session_cookie_name        = "X-Amzn-Oidc-Data"
+      client_secret              = data.aws_ssm_parameter.oidc_client_secret[0].value
+      scope                      = "openid profile email"
+      session_timeout            = 604800
+      on_unauthenticated_request = "deny"
+    }
+  }
+
+  action {
+    target_group_arn = aws_lb_target_group.frontend.id
+    type             = "forward"
+  }
+
+  condition {
+    host_header {
+      values = [var.app_host]
+    }
+  }
+
+  condition {
+    http_header {
+      http_header_name = local.cloudfront_header_name
+      values           = [random_password.cloudfront_header.result]
+    }
+  }
+
+  condition {
+    http_header {
+      http_header_name = "RSC"
+      values           = ["1"]
     }
   }
 }
@@ -220,7 +269,7 @@ resource "aws_lb_listener_rule" "signout" {
 resource "aws_lb_listener_rule" "forward_no_auth" {
   count        = var.ssl_certs_created && !var.enable_oidc_auth ? 1 : 0
   listener_arn = aws_lb_listener.https[0].arn
-  priority     = local.listener_rule_base_priority + 2
+  priority     = local.listener_rule_base_priority + 3
 
 
   action {

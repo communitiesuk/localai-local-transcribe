@@ -135,17 +135,13 @@ class Settings(BaseSettings):
     )
 
     STORAGE_SERVICE_NAME: str = Field(
-        description="Storage service type to use for file uploads. Currently supported are: s3, azure-blob",
+        description="Storage service type to use for file uploads. Currently supported are: s3",
         default="s3",
     )
     # if using s3
     DATA_S3_BUCKET: str | None = Field(description="S3 bucket name for data storage", default=None)
-    # if using Azure blob
-    AZURE_BLOB_CONNECTION_STRING: str | None = Field(description="Azure Blob Storage connection string", default=None)
-    AZURE_UPLOADS_CONTAINER_NAME: str | None = Field(
-        description="Azure container name for uploaded files", default=None
-    )
     # if using azure_stt_batch
+    AZURE_BLOB_CONNECTION_STRING: str | None = Field(description="Azure Blob Storage connection string", default=None)
     AZURE_TRANSCRIPTION_CONTAINER_NAME: str | None = Field(
         description="Azure container name for transcription result files. Note that Azure Batch transcription requires "
         "this.",
