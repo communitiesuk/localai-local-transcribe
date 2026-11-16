@@ -675,9 +675,7 @@ async def test_rename_speaker_everywhere_records_analytics_event(mocker, mock_se
     mock_session.get = AsyncMock(return_value=mock_transcription)
     mock_user.evaluation_id = "EVAL-001"
     mock_user.organisation_id = uuid.uuid4()
-    recording_id = uuid.uuid4()
-    mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
-    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
+    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_user_analytics_event", new=AsyncMock())
 
     await rename_speaker_everywhere(
         mock_transcription.id,
@@ -687,11 +685,9 @@ async def test_rename_speaker_everywhere_records_analytics_event(mocker, mock_se
     )
 
     mock_record_event.assert_awaited_once_with(
-        mock_session,
+        mock_user,
         AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
-        "EVAL-001",
-        mock_user.organisation_id,
-        recording_id=recording_id,
+        transcription_id=mock_transcription.id,
         event_metadata={"edit_type": TranscriptionEditType.ALL_INSTANCES_OF_NAME.value},
     )
 
@@ -703,9 +699,7 @@ async def test_update_dialogue_entry_speaker_records_analytics_event(
     mock_session.get = AsyncMock(return_value=mock_transcription)
     mock_user.evaluation_id = "EVAL-001"
     mock_user.organisation_id = uuid.uuid4()
-    recording_id = uuid.uuid4()
-    mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
-    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
+    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_user_analytics_event", new=AsyncMock())
 
     await update_dialogue_entry_speaker(
         mock_transcription.id,
@@ -721,11 +715,9 @@ async def test_update_dialogue_entry_speaker_records_analytics_event(
     )
 
     mock_record_event.assert_awaited_once_with(
-        mock_session,
+        mock_user,
         AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
-        "EVAL-001",
-        mock_user.organisation_id,
-        recording_id=recording_id,
+        transcription_id=mock_transcription.id,
         event_metadata={"edit_type": TranscriptionEditType.SINGLE_INSTANCE_OF_NAME.value},
     )
 
@@ -735,9 +727,7 @@ async def test_update_dialogue_entry_text_records_analytics_event(mocker, mock_s
     mock_session.get = AsyncMock(return_value=mock_transcription)
     mock_user.evaluation_id = "EVAL-001"
     mock_user.organisation_id = uuid.uuid4()
-    recording_id = uuid.uuid4()
-    mocker.patch("backend.api.routes.transcriptions._get_original_recording_id", AsyncMock(return_value=recording_id))
-    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_analytics_event", new=AsyncMock())
+    mock_record_event = mocker.patch("backend.api.routes.transcriptions.record_user_analytics_event", new=AsyncMock())
 
     await update_dialogue_entry_text(
         mock_transcription.id,
@@ -754,11 +744,9 @@ async def test_update_dialogue_entry_text_records_analytics_event(mocker, mock_s
     )
 
     mock_record_event.assert_awaited_once_with(
-        mock_session,
+        mock_user,
         AnalyticsEventType.TRANSCRIPTION_EDIT_SUBMITTED,
-        "EVAL-001",
-        mock_user.organisation_id,
-        recording_id=recording_id,
+        transcription_id=mock_transcription.id,
         event_metadata={"edit_type": TranscriptionEditType.DIALOGUE_ENTRY.value},
     )
 
