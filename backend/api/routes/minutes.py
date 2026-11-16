@@ -6,8 +6,20 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import col, select
 
 from backend.api.dependencies import SQLSessionDep, UserDep
+from backend.services.analytics import record_user_analytics_event
 from backend.utils.queries import has_pending_minute_version_for_transcription
-from common.database.postgres_models import GuardrailResult, JobStatus, Minute, MinuteVersion, Transcription
+from common.database.postgres_models import (
+    AnalyticsEventMetadata,
+    AnalyticsEventType,
+    ContentSource,
+    GuardrailResult,
+    JobStatus,
+    Minute,
+    MinuteVersion,
+    SummaryEditType,
+    Transcription,
+    User,
+)
 from common.guardrail_messages import get_guardrail_warning_message_for_results
 from common.services.queue_services import get_queue_service
 from common.settings import get_settings
@@ -18,6 +30,8 @@ from common.types import (
     MinutesCreateRequest,
     MinuteVersionCreateRequest,
     MinuteVersionResponse,
+    SummaryInteractionEventRequest,
+    SummaryInteractionEventType,
     TaskType,
     WorkerMessage,
 )
@@ -29,6 +43,48 @@ llm_queue_service = get_queue_service(
 )
 
 minutes_router = APIRouter(tags=["Minutes"])
+
+# An initial generation is not an edit, so it emits no SUMMARY_EDIT_SUBMITTED event.
+SUMMARY_EDIT_TYPE_BY_CONTENT_SOURCE = {
+    ContentSource.MANUAL_EDIT: SummaryEditType.MANUAL,
+    ContentSource.AI_EDIT: SummaryEditType.AI,
+}
+
+# Maps the closed set of client-reportable events onto the stored event types.
+ANALYTICS_EVENT_TYPE_BY_SUMMARY_INTERACTION = {
+    SummaryInteractionEventType.SUMMARY_DOWNLOADED: AnalyticsEventType.SUMMARY_DOWNLOADED,
+    SummaryInteractionEventType.SUMMARY_COPIED: AnalyticsEventType.SUMMARY_COPIED,
+}
+
+
+async def _record_summary_analytics_event(
+    user: User,
+    event_type: AnalyticsEventType,
+    transcription_id: uuid.UUID,
+    minute_version_id: uuid.UUID,
+    *,
+    source_id: uuid.UUID | None = None,
+    extra_metadata: AnalyticsEventMetadata | None = None,
+) -> None:
+    """Record a summary analytics event, mirroring `_record_transcription_edit_analytics_event`.
+
+    Deliberately takes no session: `record_user_analytics_event` uses one of its own, so a failure here cannot
+    roll back the request or stop the work that follows the call.
+    """
+    event_metadata: AnalyticsEventMetadata = {
+        "transcription_id": str(transcription_id),
+        "minute_version_id": str(minute_version_id),
+    }
+    if extra_metadata:
+        event_metadata.update(extra_metadata)
+
+    await record_user_analytics_event(
+        user,
+        event_type,
+        transcription_id=transcription_id,
+        source_id=source_id,
+        event_metadata=event_metadata,
+    )
 
 
 @minutes_router.get("/transcription/{transcription_id}/minutes")
@@ -83,7 +139,26 @@ async def create_minute(
     session.add(minute_version)
     await session.commit()
     await session.refresh(minute_version)
+
+    # Publish before recording analytics, and keep this line as close to the commit above as possible. The
+    # version is committed at AWAITING_START, which has_pending_minute_version_for_transcription treats as in
+    # flight and cleanup_failed_records does not rescue - it only picks up rows at IN_PROGRESS. So if the process
+    # dies between the commit and this line (a deploy cancellation, a client disconnect) the row stays
+    # AWAITING_START forever and the user can never generate a summary for this transcript again. Any await
+    # placed before this line widens that window, and a lost analytics event only costs a row in a report.
     llm_queue_service.publish_message(WorkerMessage(id=minute_version.id, type=TaskType.MINUTE))
+
+    # The worker records SUMMARY_RECEIVED with this same source_id once generation finishes (see
+    # minute_handler_service), so a report can match request to receipt on source_id and subtract the two
+    # occurred_datetimes to get generation latency. Without a shared key it would have to infer which receipt
+    # belongs to which request from how close their timestamps happen to be.
+    await _record_summary_analytics_event(
+        user,
+        AnalyticsEventType.SUMMARY_REQUESTED,
+        transcription_id=transcription_id,
+        minute_version_id=minute_version.id,
+        source_id=minute_version.id,
+    )
 
     return MinuteVersionResponse(
         id=minute_version.id,
@@ -164,6 +239,9 @@ async def create_minute_version(
     session.add(minute_version)
     await session.commit()
     await session.refresh(minute_version)
+
+    # Publish first, for the reason given in create_minute: an AI-edit version is committed at AWAITING_START,
+    # so a version that is never queued renders as perpetually generating and blocks the transcript's 409 guard.
     if request.ai_edit_instructions:
         llm_queue_service.publish_message(
             WorkerMessage(
@@ -172,6 +250,19 @@ async def create_minute_version(
                 type=TaskType.EDIT,
             )
         )
+
+    edit_type = SUMMARY_EDIT_TYPE_BY_CONTENT_SOURCE.get(request.content_source)
+    if edit_type is not None:
+        await _record_summary_analytics_event(
+            user,
+            AnalyticsEventType.SUMMARY_EDIT_SUBMITTED,
+            transcription_id=minute.transcription_id,
+            minute_version_id=minute_version.id,
+            source_id=minute_version.id,
+            # SummaryEditType is a StrEnum, so this serialises to the same JSON as edit_type.value
+            extra_metadata={"edit_type": edit_type},
+        )
+
     return MinuteVersionResponse(
         id=minute_version.id,
         minute_id=minute_id,
@@ -223,6 +314,30 @@ async def get_guardrail_warning(
             content_source=minute_version.content_source,
             guardrail_results=minute_version.guardrail_results,
         )
+    )
+
+
+@minutes_router.post("/minute_versions/{minute_version_id}/analytics-events", status_code=204)
+async def record_summary_interaction_event(
+    minute_version_id: uuid.UUID,
+    request: SummaryInteractionEventRequest,
+    session: SQLSessionDep,
+    user: UserDep,
+) -> None:
+    """Record a summary interaction that only the client can observe (download, copy).
+
+    No `source_id`: a user may legitimately download or copy the same version repeatedly, and each of those is a
+    real event rather than a retry. `record_user_analytics_event` swallows its own failures, so this returns 204
+    even if the insert fails - the client is never given a reason to retry or to surface an error.
+    """
+    minute_version = await get_minute_version(minute_version_id, session, user)
+
+    await _record_summary_analytics_event(
+        user,
+        ANALYTICS_EVENT_TYPE_BY_SUMMARY_INTERACTION[request.event_type],
+        transcription_id=minute_version.minute.transcription_id,
+        minute_version_id=minute_version.id,
+        extra_metadata={"copy_type": request.copy_type} if request.copy_type else None,
     )
 
 
