@@ -2,9 +2,9 @@
 
 ## Status
 
-Proposed
+Accepted
 
-Date of decision: pending (drafted 2026-11-13)
+Date of decision: 2026-11-17
 
 ## Context and Problem Statement
 
