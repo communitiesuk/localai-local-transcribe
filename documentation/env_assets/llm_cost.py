@@ -336,7 +336,7 @@ def headroom(tk: dict[str, float], name: str, m: Meeting) -> float:
 def fast_model_comparison(m: Meeting) -> list[tuple[str, float, float]]:
     """Usage-weighted per-meeting GBP cost (FAST-only, total) for each FAST_MODEL_CANDIDATES
     entry substituted in place of the current FAST_LLM_MODEL_NAME, with BEST held fixed."""
-    wt_tokens = weighted(m, citation_tier="fast")
+    wt_tokens = weighted(m, citation_tier="best")
     original_fast = PRICES["fast"]
     rows = []
     try:
@@ -379,12 +379,12 @@ def both_tier_model_comparison(m: Meeting) -> list[tuple[str, str, float]]:
 def display_both_tier_model_comparison() -> None:
     one_hour = Meeting(1.0)
     rows = both_tier_model_comparison(one_hour)
-    baseline_total = cost(weighted(one_hour, citation_tier="fast"))  # Production-before reference
+    baseline_total = cost(weighted(one_hour, citation_tier="best"))
     print("\n\nBoth-tier model substitution (single candidate replaces BEST and FAST, usage-weighted 1-hour meeting)")
     print("=" * 110)
     print(
         f"  {'Setup':<28} {'Detail':<30} {'GBP total':>10} {'GBP/1,000 meetings':>20}"
-        f" {'Delta vs Production-before':>28}"
+        f" {'Delta vs current production':>28}"
     )
     print("  " + "-" * 104)
     for label, detail, total_c in rows:
@@ -432,15 +432,15 @@ def display() -> None:
 
     wt = rows["Usage-weighted"]
     c_cached, c_none = cost(wt), cost(wt, caching=False)
-    current = weighted(one_hour, citation_tier="fast")
+    previous = weighted(one_hour, citation_tier="fast")
     print("\n\nScenario comparison: usage-weighted average meeting")
     print("=" * 100)
     print(f"  {'Scenario':<34} {'GBP FAST':>12} {'GBP BEST':>12} {'GBP total':>12} {'Delta':>12}")
     print("  " + "-" * 82)
-    current_total = cost(current)
+    current_total = cost(wt)
     for label, tk in [
-        ("Current production", current),
-        ("Citations BEST", wt),
+        ("Previous setup (citations FAST)", previous),
+        ("Current production (citations BEST)", wt),
     ]:
         total = cost(tk)
         print(

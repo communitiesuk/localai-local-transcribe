@@ -44,7 +44,8 @@ Executive Summary has `citations_required = False`, so it is unchanged. The same
 
 Candidate replacements for `FAST_LLM_MODEL_NAME` (currently gpt-5-nano), holding BEST at
 gpt-5.1. Figures are the usage-weighted per-meeting cost from `fast_model_comparison()` in
-`documentation/env_assets/llm_cost.py`, run with `poetry run python llm_cost.py`.
+`documentation/env_assets/llm_cost.py`, run from the repository root with
+`poetry run python documentation/env_assets/llm_cost.py`.
 
 gpt-5-nano and gpt-5.1 reuse this file's own `PRICES` entries; the other four are Azure
 OpenAI Data Zone / AWS Bedrock `eu.anthropic.*` (region-pinned) USD list prices converted
@@ -56,43 +57,34 @@ roughly double its price.
 
 | Candidate | GBP, FAST calls only | GBP, total | GBP per 1,000 meetings | Delta vs gpt-5-nano |
 |---|---:|---:|---:|---:|
-| gpt-5-nano (current) | £0.0075 | £0.1096 | £109.60 | — |
-| gpt-5.1 | £0.1971 | £0.2992 | £299.19 | +£0.1896 (+173%) |
-| gpt-5-6-luna | £0.0495 | £0.1516 | £151.58 | +£0.0420 (+38%) |
-| gpt-6-luna | £0.0128 | £0.1149 | £114.92 | +£0.0053 (+5%) |
-| haiku-4-5 | £0.1281 | £0.2302 | £230.20 | +£0.1206 (+110%) |
-| sonnet-5 | £0.2562 | £0.3583 | £358.30 | +£0.2487 (+227%) |
+| gpt-5-nano (current) | £0.0030 | £0.2233 | £223.33 | — |
+| gpt-5.1 | £0.0789 | £0.2992 | £299.19 | +£0.0759 (+34%) |
+| gpt-5-6-luna | £0.0243 | £0.2446 | £244.61 | +£0.0213 (+10%) |
+| gpt-6-luna | £0.0061 | £0.2264 | £226.39 | +£0.0031 (+1%) |
+| haiku-4-5 | £0.0609 | £0.2812 | £281.21 | +£0.0579 (+26%) |
+| sonnet-5 | £0.1218 | £0.3421 | £342.13 | +£0.1188 (+53%) |
 
-`gpt-6-luna` is the cheapest upgrade path at roughly a 5% total increase; `sonnet-5` and
-`gpt-5.1` are the most expensive at close to 3x the current FAST cost. FAST calls (speaker
-ID, title, accuracy guardrail) are a small share of per-meeting cost regardless of model —
-even the most expensive candidate (`sonnet-5`) only adds £0.25 of FAST cost, versus the
-dominant BEST-tier cost of citations and minute generation.
+`gpt-6-luna` is the cheapest upgrade path at roughly a 1% total increase. FAST calls (speaker
+ID, title and accuracy guardrail) remain a small share of the total; citations and minute
+generation dominate the BEST-tier cost.
 
 ## Both-tier model substitution
 
-The table above holds BEST fixed at gpt-5.1 and swaps only FAST. These rows instead substitute
-a single candidate model into *both* BEST and FAST, to see how far cost falls if one cheaper
-model handles the whole pipeline (citations included, routed to whichever model is BEST — i.e.
-`USE_BEST_LLM_FOR_CITATIONS` at its production default of `True`). Same usage-weighted,
-1-hour-meeting model as above; gpt-6-luna/all-luna and all-haiku figures are backed by a real eval
-run (`evals/summarisation/CITATIONS_FAST_EXPERIMENT.md`), the mixed and all-sonnet rows are cost
-estimates only (not yet run/evaluated for quality).
+These costs use the same usage-weighted, 1-hour production template mix as above, not a single
+template. Each row replaces both BEST and FAST, with citations routed to BEST
+(`USE_BEST_LLM_FOR_CITATIONS=True`). All-luna and all-haiku were evaluated; the mixed and
+all-sonnet rows are cost estimates only.
 
-| Setup | BEST | FAST | GBP total | GBP per 1,000 meetings | Delta vs Production-before |
+| Setup | BEST | FAST | GBP total | GBP per 1,000 meetings | Delta vs current production |
 |---|---|---|---:|---:|---:|
-| Production-before (reference) | gpt-5.1 | gpt-5-nano | £0.1096 | £109.60 | — |
-| All-luna | gpt-6-luna | gpt-6-luna | £0.0186 | £18.56 | -83% |
-| All-haiku | haiku-4-5 | haiku-4-5 | £0.1856 | £185.58 | +69% |
-| FAST=haiku, BEST=sonnet (estimate) | sonnet-5 | haiku-4-5 | £0.3102 | £310.24 | +183% |
-| All-sonnet (estimate) | sonnet-5 | sonnet-5 | £0.3712 | £371.16 | +239% |
+| Current production | gpt-5.1 | gpt-5-nano | £0.2233 | £223.33 | — |
+| All-luna | gpt-6-luna | gpt-6-luna | £0.0186 | £18.56 | -92% |
+| All-haiku | haiku-4-5 | haiku-4-5 | £0.1856 | £185.58 | -17% |
+| FAST=haiku, BEST=sonnet (estimate) | sonnet-5 | haiku-4-5 | £0.3102 | £310.24 | +39% |
+| All-sonnet (estimate) | sonnet-5 | sonnet-5 | £0.3712 | £371.16 | +66% |
 
-All-luna is the only both-tier candidate cheaper than Production-before — it also scored highest
-of any point tested on the FORM-summarisation quality eval (see
-`evals/openai_model_comparison/cost_vs_quality_summarisation.png`). The Bedrock/mantle
-candidates (haiku-4-5, sonnet-5) are all more expensive than Production-before even when
-substituted for both tiers, since their per-token prices are materially higher than gpt-5-nano's
-or gpt-6-luna's.
+All-luna is the cheapest option and scored highest in the separate custom FORM-template quality
+eval (see `evals/openai_model_comparison/cost_vs_quality_summarisation.png`).
 
 ## Transcription
 
