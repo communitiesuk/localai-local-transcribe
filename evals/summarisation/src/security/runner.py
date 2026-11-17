@@ -10,6 +10,7 @@ from statistics import mean
 import orjson
 from openai import BadRequestError
 
+from common.settings import get_settings
 from common.types import MinuteAndHallucinations
 from evals.summarisation.src.common import (
     AppConfig,
@@ -37,6 +38,13 @@ from evals.summarisation.src.summarizer import generate_summary, generate_summar
 logger = logging.getLogger(__name__)
 
 
+def _generator_model_name(scenario: SecurityScenarioInput, template_name: str | None) -> str:
+    settings = get_settings()
+    if scenario.template_content is not None or template_name is not None:
+        return settings.BEST_LLM_MODEL_NAME
+    return settings.FAST_LLM_MODEL_NAME
+
+
 def _is_content_safety_error(exc: Exception) -> bool:
     """Whether ``exc`` is Azure's content-safety filter rejecting the request.
 
@@ -51,6 +59,7 @@ def _is_content_safety_error(exc: Exception) -> bool:
 def _make_record(
     scenario: SecurityScenarioInput,
     *,
+    engine_version: str,
     summary_text: str = "",
     metrics: dict[str, MetricResult] | None = None,
     error: str | None = None,
@@ -61,6 +70,7 @@ def _make_record(
         injection_level=scenario.injection_level,
         intended_solicitation=scenario.intended_solicitation,
         summary_text=summary_text,
+        engine_version=engine_version,
         judge_criteria_version=JUDGE_CRITERIA_VERSION,
         metrics=metrics or {},
         error=error,
@@ -68,7 +78,12 @@ def _make_record(
     )
 
 
-def _content_safety_record(scenario: SecurityScenarioInput, detail: str) -> SecurityEvalRecord:
+def _content_safety_record(
+    scenario: SecurityScenarioInput,
+    detail: str,
+    *,
+    engine_version: str,
+) -> SecurityEvalRecord:
     """Score a scenario blocked by Azure's content-safety filter without calling the judge.
 
     For a malicious scenario, being blocked before a summary was produced means the attack never
@@ -87,7 +102,12 @@ def _content_safety_record(scenario: SecurityScenarioInput, detail: str) -> Secu
         f"rubric_{dim}": MetricResult(score=score, reason=reason)
         for dim in SECURITY_DIMENSIONS_BY_LEVEL[scenario.injection_level]
     }
-    return _make_record(scenario, metrics=metrics, content_safety_blocked=True)
+    return _make_record(
+        scenario,
+        engine_version=engine_version,
+        metrics=metrics,
+        content_safety_blocked=True,
+    )
 
 
 async def _summarise_scenario(
@@ -115,17 +135,18 @@ async def evaluate_scenario(
     template_name: str | None,
 ) -> SecurityEvalRecord:
     """Summarise one scenario with the production summariser and score it with the LLM judge."""
+    engine_version = _generator_model_name(scenario, template_name)
     try:
         generated, judge_template_name = await _summarise_scenario(scenario, template_name)
         summary_text = generated.text
     except Exception as exc:
         if _is_content_safety_error(exc):
             logger.warning("Content-safety filter triggered for scenario %s: %s", scenario.scenario_id, exc)
-            return _content_safety_record(scenario, str(exc))
+            return _content_safety_record(scenario, str(exc), engine_version=engine_version)
         # Anything else (API errors, timeouts, etc.) is a failure of the pipeline, not a judged
         # outcome — it must not be silently scored as if the summariser had responded.
         logger.exception("Summary generation failed for scenario %s", scenario.scenario_id)
-        return _make_record(scenario, error=str(exc))
+        return _make_record(scenario, engine_version=engine_version, error=str(exc))
 
     # Point the right judge at the right level: harmlessness always, plus adherence for
     # benign/borderline or refusal/robustness for malicious.
@@ -146,13 +167,23 @@ async def evaluate_scenario(
         # whether the (already-produced) summary was safe — the judge itself just couldn't score
         # it — so this is always a pipeline failure, never an automatic pass/fail.
         logger.exception("Judge call failed for scenario %s", scenario.scenario_id)
-        return _make_record(scenario, summary_text=summary_text, error=str(exc))
+        return _make_record(
+            scenario,
+            engine_version=engine_version,
+            summary_text=summary_text,
+            error=str(exc),
+        )
 
     metrics = {
         f"rubric_{dim}": MetricResult(score=int(result["score"]), reason=result["rationale"])
         for dim, result in rubric_evaluation["dimensions"].items()
     }
-    return _make_record(scenario, summary_text=summary_text, metrics=metrics)
+    return _make_record(
+        scenario,
+        engine_version=engine_version,
+        summary_text=summary_text,
+        metrics=metrics,
+    )
 
 
 def _dimension_means(records: list[SecurityEvalRecord]) -> dict[str, float]:
@@ -177,10 +208,14 @@ def build_run_summary(run_id: str, records: list[SecurityEvalRecord]) -> Securit
         if level_records:
             by_level[level.value] = LevelRollup(n=len(level_records), dimension_means=_dimension_means(level_records))
 
+    engine_versions = sorted({record.engine_version for record in records})
+    engine_version = ",".join(engine_versions) if engine_versions else get_settings().BEST_LLM_MODEL_NAME
+
     return SecurityRunSummary(
         run_id=run_id,
         timestamp=datetime.now(UTC).isoformat(),
         n_scenarios=len(records),
+        engine_version=engine_version,
         judge_criteria_version=JUDGE_CRITERIA_VERSION,
         n_failed=len(records) - len(scored_records),
         by_level=by_level,
