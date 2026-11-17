@@ -12,7 +12,9 @@ ADR-033 proposes peak load and breakpoint testing. Three questions must be answe
 
 **Where do tests run?** Currently we have `development`, `staging` and `production`, each in its own AWS environment 
 (ADR-031). Staging is much smaller than production (backend 256 CPU units against 4096; one worker against two), it is
-the release promotion path, and it shares the APIM test endpoint with development.
+the release promotion path, and it shares the APIM test endpoint with development. A fourth AWS account has already
+been approved and created for performance testing. It is called Test, because `perf` is not one of MHCLG's standard
+environment names, and it is currently empty.
 
 **How do virtual users sign in?** The load balancer authenticates users against GDS Internal Access (ADR-026), which
 emails a one-time code. The backend accepts only the load balancer's signed `x-amzn-oidc-data` token, and checks its
@@ -26,7 +28,7 @@ Speech and Azure OpenAI, with costs and quotas we do not control.
 
 Environment:
 
-* Dedicated `perf` environment in its own AWS account
+* Dedicated `test` environment in the existing Test AWS account
 * Staging, in a booked window, temporarily resized
 * Production, out of hours
 
@@ -45,35 +47,40 @@ AI dependencies:
 
 ## Decision Outcome
 
-**Dedicated `perf` environment**, because it is the only option that is production-sized, does not block releases, and
-can have its identity provider replaced without affecting anyone. It is sized like production while a test runs and
-scaled to zero tasks otherwise.
+**Dedicated `test` environment**, because it is the only option that is production-sized, does not block releases, and
+can have its identity provider replaced without affecting anyone. The account already exists and is approved. The
+environment is sized like production while a test runs, scaled to zero tasks between runs in the same period of
+testing, and can be torn down completely between periods of testing.
 
-**Cognito user pool with an adapter, in `perf` only**, because the whole production request path is exercised
+**Cognito user pool with an adapter, in `test` only**, because the whole production request path is exercised
 (CloudFront, WAF, load balancer authentication, frontend, backend) and no authentication bypass is added to
 application code. GDS Internal Access itself is not tested.
 
 **Stub by default, with one calibration run**, because stubbing makes runs free, repeatable and able to go beyond
 real quotas, while one measured run against APIM checks quota at the target peak.
 
-Safeguards: the Cognito pool, adapter and stub are created only by `terraform/perf`; the production Terraform root
+Safeguards: the Cognito pool, adapter and stub are created only by `terraform/test`; the production Terraform root
 does not expose the variables that select them; real-AI runs happen only in a window and volume agreed with the APIM
 team.
 
 ## Pros and Cons of the Options
 
-### Dedicated `perf` environment
+### Dedicated `test` environment
 
 * Good, because task sizes and counts can match production exactly.
 * Good, because tests never block or pollute the release path.
 * Good, because test-only infrastructure is isolated in one account.
-* Bad, because it needs a new AWS account and DNS changes.
-* Bad, because it has fixed costs when idle (NAT gateway, load balancer, database storage).
-* Bad, because it is a fourth environment to keep deployable.
+* Good, because the Test account has already been approved and created.
+* Bad, because the account is empty, so the whole environment must be provisioned, including DNS.
+* Neutral, because idle cost is a choice. Scaled to zero tasks, it still has fixed costs (NAT gateway, load balancer,
+  database storage). Torn down completely, it costs almost nothing, but bringing it back takes longer and the seeded
+  data and test users must be created again.
+* Bad, because it is a fourth environment to keep deployable, and tearing it down regularly means its Terraform must
+  apply cleanly from nothing every time.
 
 ### Staging, in a booked window, temporarily resized
 
-* Good, because it exists today and needs no new account or DNS.
+* Good, because it exists today and needs no provisioning or DNS.
 * Bad, because releases are blocked during tests and test data must be cleaned out afterwards.
 * Bad, because replacing its identity provider would break real sign-in testing on staging.
 * Bad, because resizing up and down for each run is error-prone.
@@ -136,4 +143,5 @@ team.
 ## More Information
 
 * If the adapter approach fails when built, fall back to the self-built mock identity provider.
-* Fixed monthly cost of an idle `perf` environment can to be estimated from the development account's bill.
+* The fixed monthly cost of a `test` environment scaled to zero tasks can be estimated from the development account's
+  bill. That figure, and the time a full rebuild takes, decide how often it is worth tearing the environment down.

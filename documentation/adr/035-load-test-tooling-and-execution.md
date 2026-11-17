@@ -21,7 +21,7 @@ Constraints from the current infrastructure and application:
 * The durations that matter most (upload to transcript ready; summary requested to summary ready) span many requests
   and a queue, so the tool must record custom timings.
 * The backend, worker and evaluation code are Python, managed with Poetry. The frontend is TypeScript.
-* All CI runs on GitHub-hosted runners.
+* All CI runs on GitHub-hosted runners. The evaluation pipeline runs in MHCLG's Azure DevOps (ADR-014).
 
 Which tool should we use, and where should it run?
 
@@ -38,7 +38,8 @@ Tool:
 Execution:
 
 * GitHub-hosted runner generates the load
-* ECS Fargate task in the `perf` account generates the load, orchestrated by GitHub Actions
+* MHCLG Azure DevOps self-hosted runner generates the load
+* ECS Fargate task in the `test` account generates the load, orchestrated by GitHub Actions
 * Developer laptop
 
 ## Decision Outcome
@@ -46,9 +47,19 @@ Execution:
 **Locust**, because it fits our Python stack, supports the custom load shapes and custom timings we need, and the
 load involved is small enough that raw generator efficiency does not matter.
 
-**An ECS Fargate task in the `perf` account, orchestrated by manually triggered GitHub Actions workflows**, because
+**An ECS Fargate task in the `test` account, orchestrated by manually triggered GitHub Actions workflows**, because
 the load generator must be in the UK, come from known IP addresses and have fast access to S3. GitHub-hosted runners
-meet none of these.
+meet none of these. MHCLG's Azure DevOps runners might, but we have not confirmed it, and we would not control their
+capacity.
+
+We accept two limitations of generating load from inside AWS, and guard against the second:
+
+* Traffic between the generator and CloudFront stays on AWS's network, so measured response times do not include the
+  network delay a real user has between their own device and CloudFront. Results are reported as time spent in our
+  service, not as what a user would experience.
+* The generator is close enough to the service that a mistake could let its traffic bypass the public route. Every
+  run therefore checks that responses carry CloudFront's headers, and that the request counts recorded by CloudFront
+  and the WAF match the generator's own count.
 
 Test code lives in a top-level `perf/` package with its own Poetry dependency group and container image, so nothing
 test-related is shipped in the application images.
@@ -96,13 +107,29 @@ test-related is shipped in the application images.
 * Bad, because runner IP addresses are unpredictable, so they cannot be allow-listed or exempted from the rate limit.
 * Bad, because shared runners give variable network and CPU performance, which adds noise to results.
 
-### ECS Fargate task in the `perf` account, orchestrated by GitHub Actions
+### MHCLG Azure DevOps self-hosted runner generates the load
+
+* Good, because we already have access to MHCLG's Azure DevOps for the evaluation pipeline, so there is no
+  load-generation infrastructure to build.
+* Good, because traffic starts outside AWS and crosses the public internet, so it cannot bypass the public route.
+* Neutral, because we have not confirmed that the self-hosted runners are in Great Britain or send traffic from fixed
+  IP addresses.
+* Bad, because the runners are shared with other MHCLG teams and we do not control their size or network capacity.
+* Bad, because a run would be split across two CI systems. Scaling and seeding the environment needs AWS access,
+  which is set up for GitHub Actions only.
+
+### ECS Fargate task in the `test` account, orchestrated by GitHub Actions
 
 * Good, because traffic originates in `eu-west-2` from the environment's fixed NAT gateway addresses.
-* Good, because requests still enter through the public hostname, so the full path is tested.
+* Good, because requests still enter through the public hostname, so CloudFront, the WAF and the load balancer are
+  all exercised.
 * Good, because uploads to S3 are fast and consistent.
 * Good, because the team triggers runs from the familiar GitHub Actions interface.
-* Bad, because it needs a task definition and image repository in the `perf` account.
+* Bad, because it needs a task definition and image repository in the `test` account.
+* Bad, because traffic from an AWS address to CloudFront stays on AWS's network and never crosses the public
+  internet.
+* Bad, because a generator in the service's own VPC can reach things real users cannot. The backend is addressable
+  directly through Cloud Map, and uploads already take a private route to S3 through the VPC's S3 gateway endpoint.
 
 ### Developer laptop
 
