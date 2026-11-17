@@ -1,5 +1,20 @@
 import { withSentryConfig } from '@sentry/nextjs'
 
+const isDev = process.env.NODE_ENV === 'development'
+
+const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''};
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data:;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    upgrade-insecure-requests;
+`
+
 let nextConfig = {
   output: 'standalone',
   async headers() {
@@ -10,6 +25,15 @@ let nextConfig = {
         // max-age=31536000, immutable`)
         source: '/:path((?!_next/static/).*)',
         headers: [{ key: 'Cache-Control', value: 'private, no-cache' }],
+      },
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: cspHeader.replace(/\n/g, ''),
+          },
+        ],
       },
     ]
   },
