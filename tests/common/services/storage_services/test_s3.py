@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
@@ -17,7 +18,7 @@ def mock_s3_client_ctx(mocker, mock_s3_client):
     ctx = MagicMock()
     ctx.__aenter__ = AsyncMock(return_value=mock_s3_client)
     ctx.__aexit__ = AsyncMock(return_value=None)
-    mocker.patch("common.services.storage_services.s3._create_boto3_s3_client", return_value=ctx)
+    mocker.patch("common.services.storage_services.s3._create_s3_client", return_value=ctx)
     return ctx
 
 
@@ -61,14 +62,33 @@ async def test_upload(
 async def test_download(
     mock_s3_client_ctx,  # noqa: ARG001
     mock_s3_client,
+    mock_file_ctx,
     mock_data_s3_bucket,
+    mocker,
 ):
     key = "/blob.mp3"
     path = Path("/documents/file.mp3")
+    chunks = [b"hello ", b"world"]
+
+    stream = MagicMock()
+    stream.__aenter__ = AsyncMock(return_value=stream)
+    stream.__aexit__ = AsyncMock(return_value=None)
+
+    async def chunk_iter():
+        for chunk in chunks:
+            yield chunk
+
+    # __aiter__ is looked up on the type and called as a bound method, so it must accept self.
+    def aiter_(_self: MagicMock) -> AsyncGenerator[bytes]:
+        return chunk_iter()
+
+    stream.__aiter__ = aiter_
+    mock_s3_client.get_object = AsyncMock(return_value={"Body": stream})
 
     await S3StorageService.download(key, path)
 
-    mock_s3_client.download_file.assert_awaited_once_with(mock_data_s3_bucket, key, path)
+    mock_s3_client.get_object.assert_awaited_once_with(Bucket=mock_data_s3_bucket, Key=key)
+    mock_file_ctx.write.assert_has_awaits([mocker.call(chunk) for chunk in chunks])
 
 
 @pytest.mark.asyncio
