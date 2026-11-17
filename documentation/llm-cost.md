@@ -40,6 +40,52 @@ The change applies once per generated minute, not per section: one `extract_clai
 
 Executive Summary has `citations_required = False`, so it is unchanged. The same is true for custom user-template question generation and the other non-citation calls: meeting title, speaker predictions, the accuracy guardrail, AI edits and the eval judge all keep their current tiers. A precise per-template estimate still depends on the production template mix; the blended usage-weighted figure above uses the existing December 2024-May 2026 mix in `assumptions.yaml`.
 
+## FAST-tier model substitution
+
+Candidate replacements for `FAST_LLM_MODEL_NAME` (currently gpt-5-nano), holding BEST at
+gpt-5.1. Figures are the usage-weighted per-meeting cost from `fast_model_comparison()` in
+`documentation/env_assets/llm_cost.py`, run from the repository root with
+`poetry run python documentation/env_assets/llm_cost.py`.
+
+gpt-5-nano and gpt-5.1 reuse this file's own `PRICES` entries; the other four are Azure
+OpenAI Data Zone / AWS Bedrock `eu.anthropic.*` (region-pinned) USD list prices converted
+to GBP at the 2026-11-04 mid-market rate (1 USD = 0.74 GBP) — see
+[Azure OpenAI pricing](https://azure.microsoft.com/en-us/pricing/details/azure-openai/) and
+[AWS Bedrock pricing](https://aws.amazon.com/bedrock/pricing/). gpt-6-luna uses the
+short-context Data Zone tier; a transcript long enough to hit the long-context tier would
+roughly double its price.
+
+| Candidate | GBP, FAST calls only | GBP, total | GBP per 1,000 meetings | Delta vs gpt-5-nano |
+|---|---:|---:|---:|---:|
+| gpt-5-nano (current) | £0.0030 | £0.2233 | £223.33 | — |
+| gpt-5.1 | £0.0789 | £0.2992 | £299.19 | +£0.0759 (+34%) |
+| gpt-5-6-luna | £0.0243 | £0.2446 | £244.61 | +£0.0213 (+10%) |
+| gpt-6-luna | £0.0061 | £0.2264 | £226.39 | +£0.0031 (+1%) |
+| haiku-4-5 | £0.0609 | £0.2812 | £281.21 | +£0.0579 (+26%) |
+| sonnet-5 | £0.1218 | £0.3421 | £342.13 | +£0.1188 (+53%) |
+
+`gpt-6-luna` is the cheapest upgrade path at roughly a 1% total increase. FAST calls (speaker
+ID, title and accuracy guardrail) remain a small share of the total; citations and minute
+generation dominate the BEST-tier cost.
+
+## Both-tier model substitution
+
+These costs use the same usage-weighted, 1-hour production template mix as above, not a single
+template. Each row replaces both BEST and FAST, with citations routed to BEST
+(`USE_BEST_LLM_FOR_CITATIONS=True`). All-luna and all-haiku were evaluated; the mixed and
+all-sonnet rows are cost estimates only.
+
+| Setup | BEST | FAST | GBP total | GBP per 1,000 meetings | Delta vs current production |
+|---|---|---|---:|---:|---:|
+| Current production | gpt-5.1 | gpt-5-nano | £0.2233 | £223.33 | — |
+| All-luna | gpt-6-luna | gpt-6-luna | £0.0186 | £18.56 | -92% |
+| All-haiku | haiku-4-5 | haiku-4-5 | £0.1856 | £185.58 | -17% |
+| FAST=haiku, BEST=sonnet (estimate) | sonnet-5 | haiku-4-5 | £0.3102 | £310.24 | +39% |
+| All-sonnet (estimate) | sonnet-5 | sonnet-5 | £0.3712 | £371.16 | +66% |
+
+All-luna is the cheapest option and scored highest in the separate custom FORM-template quality
+eval (see `evals/openai_model_comparison/cost_vs_quality_summarisation.png`).
+
 ## Transcription
 
 Azure AI Speech is billed per hour of audio, so a 1-hour meeting costs whichever rate its adapter charges:
