@@ -22,7 +22,7 @@ How should we collect data to support prompt optimization while balancing resour
 * Prompted user feedback collection
 * Automated collection via system-flagged inputs
 * Manual annotation of production samples
-* Explicit meeting donation by councils or professionals (chosen)
+* Explicit meeting donation by councils or professionals
 * No systematic data collection
 
 ## Decision Outcome
@@ -67,7 +67,7 @@ Sample production inputs and have human annotators label them with quality score
 * Bad, because it is resource-intensive, slow, hard to scale, and annotator biases can reinforce existing system issues.
 * Bad, because sampling production data is implicit collection without an affirmative donation decision.
 
-### Explicit meeting donation by councils or professionals (chosen)
+### Explicit meeting donation by councils or professionals
 
 Councils or professionals choose which meetings to donate.
 
