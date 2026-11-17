@@ -1,10 +1,14 @@
 # Analytics events export
 
-Full export of the first-party `analytics_event` and `organisation` tables, with no date filtering - every event type, all dates. Writes `analytics_events_<timestamp>.csv` and `organisations_<timestamp>.csv` into `reporting/analytics_events/output/`, where `<timestamp>` is the UTC run time as `YYYY-MM-DD_HH-MM` (shared by both files from the same run).
+Full export of the first-party `analytics_event` and `organisation` tables - every event type, from the first event up to the end of the last full UTC day. Writes `analytics_events_<timestamp>.csv` and `organisations_<timestamp>.csv` into `reporting/analytics_events/output/`, where `<timestamp>` is the UTC run time as `YYYY-MM-DD_HH-MM` (shared by both files from the same run).
 
 ## Columns
 
-`analytics_events_<timestamp>.csv`: `id, occurred_datetime (UTC), event_type, evaluation_id, organisation_id, recording_id, source_id, edit_type, recording_source, template_id, transcription_id, audio_duration_seconds`. The last five come from `event_metadata` (JSONB) and are blank/null when not captured for a given event type.
+`analytics_events_<timestamp>.csv`: `id, occurred_datetime (UTC), event_type, evaluation_id, organisation_id, recording_id, source_id, event_metadata`.
+
+`event_metadata` is the raw JSONB column serialised as text, blank when the event has no metadata. It is exported whole rather than flattened into a column per key, so keys added to `AnalyticsEventMetadata` (`common/database/postgres_models.py`) show up in the export without a change here. Keys are event-type specific: `audio_duration_seconds`, `edit_type`, `copy_type`, `recording_source`, `transcription_id`, `minute_version_id`, `template_id`, `template_source`.
+
+Note that this replaces the earlier flattened `edit_type, recording_source, template_id, transcription_id, audio_duration_seconds` columns, so anything reading exports from before AIILG-1248 by column position or name needs updating.
 
 `organisations_<timestamp>.csv`: `organisation_id, organisation_name`.
 
