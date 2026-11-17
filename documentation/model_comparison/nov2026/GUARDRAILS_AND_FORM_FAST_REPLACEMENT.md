@@ -21,7 +21,7 @@ Raw data in Sharepoint, `model_comparison_november_2026`
 
 | Metric | gpt-5-nano (prod) | gpt-5-6-luna | gpt-6-luna | haiku-4-5 | sonnet-5 |
 |---|---:|---:|---:|---:|---:|
-| **Overall score (/5)** | 4.66 | 4.71 | **4.84** | _blocked_ | _blocked_ |
-| Summarise latency p50 (s) | 72.2 | **15.4** | 16.5 | _blocked_ | _blocked_ |
+| **Overall score (/5)** | 4.66 | 4.71 | 4.84 | 4.84 | **4.91** |
+| Summarise latency p50 (s) | 72.2 | 15.4 | 16.5 | **8.8** | 17.9 |
 
-Bedrock (`haiku-4-5`, `sonnet-5`) blocked on Bedrock/APIM routing — not run on this eval.
+Bedrock (`haiku-4-5`, `sonnet-5`) results use the same 10-case custom FORM eval.
