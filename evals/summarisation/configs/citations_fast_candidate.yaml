@@ -1,7 +1,6 @@
 # Citation-tier experiment: General template (citations_required) run with claim extraction and
 # citation insertion routed back to FAST (USE_BEST_LLM_FOR_CITATIONS=false), FAST model overridden
-# via env var. See evals/summarisation/CITATIONS_FAST_EXPERIMENT.md for the exact commands and how
-# to read citation_outcomes/rubric_auditability against the gpt-5-nano and BEST-citation baselines.
+# via env var.
 run:
   eval_type: standard
   output_dir: evals/summarisation/output/citations_fast_candidate
