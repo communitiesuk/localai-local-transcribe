@@ -6,6 +6,8 @@ Accepted
 
 Date of decision: 2026-05-15
 
+Date amended: 2026-11-17
+
 ## Context and Problem Statement
 
 Current monitoring of AI system components relies primarily on user action logging, which is reactive and imperfect. User feedback only surfaces after significant issues occur, missing gradual quality deterioration and failing to pinpoint which system component is underperforming.
@@ -26,9 +28,11 @@ How can we implement ongoing evaluation monitoring to detect quality changes, di
 
 ## Decision Outcome
 
-Continuous monitoring with full dataset, because the current dataset is small and primarily synthetic, making tiered subsets premature. A full-dataset run on each release provides complete, directly comparable results without the overhead of managing tiers.
+Continue monitoring with the full evaluation dataset.
 
-Evaluation on flagged inputs, third-party moderation/safety APIs, and random sampling of live production data are blocked by the current Data Protection landscape but remain technically viable and should be reconsidered once compliance access is established.
+The new Data Sharing Agreement (DSA) we are working towards allows evaluation monitoring with live user data only when an authorised user or council explicitly donates the meeting. Passive collection, random sampling, and shadow evaluation of general production traffic remain prohibited.
+
+Identifiable donated audio may be retained for up to 12 months, then must be deleted or anonymised. Data must be used only for approved evaluation monitoring and handled under DSA-approved access, storage, and processing controls. Donation must be an affirmative opt-in, including during onboarding.
 
 ## Pros and Cons of the Options
 
@@ -57,7 +61,7 @@ Evaluate inputs flagged as problematic via explicit feedback (e.g., thumbs down)
 * Good, because it focuses resources on actual user pain points and surfaces unknown issues.
 * Bad, because it requires high implementation effort and misses issues users don't flag.
 * Bad, because it creates blind spots that can mask overall performance degradation.
-* Neutral, because user interactions are partially captured in PostHog already.
+* Neutral, because an interaction signal alone does not constitute donation.
 
 ### Third-party moderation/safety APIs
 
@@ -72,13 +76,15 @@ Run old prompt/model variants alongside the production version on live traffic t
 
 * Good, because it enables direct comparison on identical real-world inputs.
 * Bad, because it doubles inference costs and requires significant infrastructure (dual execution, traffic routing).
+* Bad, because general production traffic cannot be used without explicit donation.
 
 ### Random sampling of live production data
 
 Periodically sample production inputs/outputs and run LLM-as-a-judge evaluations against existing criteria.
 
 * Good, because costs are controllable via sample size and frequency.
-* Bad, because results aren't comparable across periods, curated datasets already cover common cases, and it may raise privacy concerns.
+* Bad, because results aren't comparable across periods and curated datasets already cover common cases.
+* Bad, because passive sampling is prohibited; each meeting requires explicit donation.
 
 ### No additional monitoring
 
