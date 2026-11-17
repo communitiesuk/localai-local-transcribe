@@ -3,14 +3,14 @@ updates:
   - package-ecosystem: "docker"
     directory: "/backend"
     schedule:
-      interval: "weekly"
+      interval: "daily"
 
   - package-ecosystem: "docker"
     directory: "/worker"
     schedule:
-      interval: "weekly"
+      interval: "daily"
 
   - package-ecosystem: "docker"
     directory: "/frontend"
     schedule:
-      interval: "weekly"
+      interval: "daily"
