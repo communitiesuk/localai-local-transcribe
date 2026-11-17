@@ -7,11 +7,24 @@
 // anything here changes what leaves the service, so it needs a deliberate decision.
 // https://github.com/getsentry/sentry-javascript/blob/develop/MIGRATION.md#senddefaultpii-is-replaced-by-datacollection
 
+import type * as Sentry from '@sentry/nextjs'
+
 // Sentry's default denylist for header/query-param values that commonly carry PII.
 const SENSITIVE_FIELDS = ['forwarded', '-ip', 'remote-', 'via', '-user']
 
-// Not annotated with Sentry's `DataCollection` type: it is exported from `@sentry/core`, which we
-// only have transitively. `Sentry.init()` checks this object against that type at each call site.
+// Derived from `init`'s own signature rather than imported: the `DataCollection` type is exported
+// from `@sentry/core`, which we only have transitively. Type-only import, so nothing is added to
+// the bundle.
+type DataCollection = NonNullable<
+  NonNullable<Parameters<typeof Sentry.init>[0]>['dataCollection']
+>
+
+// `satisfies`, not a plain object: passing this to `Sentry.init()` as a variable means TypeScript
+// does no excess property check at the call site, so without this a key misspelled here - or
+// renamed by a future Sentry version - would compile clean, be ignored at runtime, and silently
+// inherit the permissive v11 default. The unit tests cannot catch that either, since they pin the
+// same hand-written key names. `satisfies` rather than an annotation so the literal types survive
+// for those tests.
 export const dataCollection = {
   userInfo: false,
   cookies: false,
@@ -40,4 +53,4 @@ export const dataCollection = {
 
   // v11 lowered the default from 7 to 5; keep the wider stack trace context we had on v10.
   frameContextLines: 7,
-}
+} satisfies DataCollection
