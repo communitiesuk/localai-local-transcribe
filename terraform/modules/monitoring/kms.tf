@@ -65,4 +65,32 @@ data "aws_iam_policy_document" "cloudtrail_kms" {
       values   = ["arn:aws:cloudtrail:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:trail/local-transcribe-cloudtrail-${var.environment_name}"]
     }
   }
+
+  # Scoped to this environment's own account so the key cannot be used as a
+  # confused deputy by CloudWatch acting for another account's alarms.
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+    ]
+
+    resources = [aws_kms_key.main.arn]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "ArnLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:cloudwatch:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:alarm:*"]
+    }
+  }
 }

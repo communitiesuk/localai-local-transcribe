@@ -1,6 +1,6 @@
 import uuid
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
 from fastapi import HTTPException
@@ -86,6 +86,91 @@ async def test_create_minute_success(mocker, mock_session, mock_minute, mock_min
     llm.publish_message.assert_called()
     assert result.minute_id == minute.id
     assert result.id == minute_version.id
+
+
+@pytest.mark.asyncio
+async def test_create_minute_publishes_to_the_queue_when_analytics_fails(
+    mocker, mock_session, mock_minute, mock_minute_version, mock_user
+):
+    """A failed analytics write must not cost the user their summary.
+
+    Analytics used to run on the request session, so a failure there rolled that session back and raised: the
+    version was committed but never queued, and `has_pending_minute_version_for_transcription` then refused
+    every retry. The queue publication and the response have to survive it.
+    """
+    transcription = Mock()
+    transcription.user_id = mock_user.id
+    mock_session.get.return_value = transcription
+    mock_user.evaluation_id = "EVAL-001"
+
+    minute = mock_minute
+    minute_version = mock_minute_version
+    mocker.patch("backend.api.routes.minutes.Minute", return_value=minute)
+    mocker.patch("backend.api.routes.minutes.MinuteVersion", return_value=minute_version)
+    mocker.patch(
+        "backend.api.routes.minutes.has_pending_minute_version_for_transcription",
+        new=AsyncMock(return_value=False),
+    )
+
+    # Fail inside the helper's own session, which is where the analytics work now happens.
+    analytics_session = MagicMock()
+    analytics_session.__aenter__ = AsyncMock(return_value=AsyncMock())
+    analytics_session.__aexit__ = AsyncMock(return_value=False)
+    mocker.patch("backend.services.analytics.AsyncSession", return_value=analytics_session)
+    mocker.patch(
+        "backend.services.analytics.get_original_recording_id",
+        AsyncMock(side_effect=OSError("connection lost")),
+    )
+
+    llm = mocker.patch("backend.api.routes.minutes.llm_queue_service")
+
+    result = await create_minute(
+        transcription_id=minute.id,
+        request=SimpleNamespace(template_name="T", template_id=None, agenda="A"),
+        session=mock_session,
+        user=mock_user,
+    )
+
+    llm.publish_message.assert_called_once()
+    assert result.id == minute_version.id
+    # The request session is untouched by the failure, so the objects the response is built from stay usable.
+    mock_session.rollback.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_create_minute_records_the_event_after_publishing(
+    mocker, mock_session, mock_minute, mock_minute_version, mock_user
+):
+    """The analytics write belongs after the queue publish, not between the commit and the publish.
+
+    The version is committed at AWAITING_START before either call, and nothing ever rescues a row left in that
+    state, so anything that stops the publish being reached costs the user this transcript permanently. The
+    analytics await is a DB round-trip on a second connection, so it goes last.
+    """
+    transcription = Mock()
+    transcription.user_id = mock_user.id
+    mock_session.get.return_value = transcription
+    mocker.patch("backend.api.routes.minutes.Minute", return_value=mock_minute)
+    mocker.patch("backend.api.routes.minutes.MinuteVersion", return_value=mock_minute_version)
+    mocker.patch(
+        "backend.api.routes.minutes.has_pending_minute_version_for_transcription",
+        new=AsyncMock(return_value=False),
+    )
+    llm = mocker.patch("backend.api.routes.minutes.llm_queue_service")
+    record_event = mocker.patch("backend.api.routes.minutes._record_summary_analytics_event", new=AsyncMock())
+
+    order = Mock()
+    order.attach_mock(llm.publish_message, "publish")
+    order.attach_mock(record_event, "record_event")
+
+    await create_minute(
+        transcription_id=mock_minute.id,
+        request=SimpleNamespace(template_name="T", template_id=None, agenda="A"),
+        session=mock_session,
+        user=mock_user,
+    )
+
+    assert [name for name, _, _ in order.mock_calls] == ["publish", "record_event"]
 
 
 @pytest.mark.asyncio
