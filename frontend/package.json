@@ -93,15 +93,11 @@
     "vitest": "^4.1.11"
   },
   "overridesReason": {
-    "js-yaml": "Patch js-yaml CPU DoS CVEs CVE-2026-59869 and CVE-2026-84375 via transitive @hey-api/eslint deps.",
-    "@typescript-eslint/typescript-estree": "https://github.com/communitiesuk/localai-local-transcribe/security/dependabot/404. Remove override once pacakge supports minimatch > 11.0.1"
+    "js-yaml": "Patch js-yaml CPU DoS CVEs CVE-2026-59869 and CVE-2026-84375 via transitive @hey-api/eslint deps."
   },
   "overrides": {
     "js-yaml": "^4.3.2",
-    "postcss": "^8.5.10",
-    "@typescript-eslint/typescript-estree": {
-      "minimatch": "^11.0.8"
-    }
+    "postcss": "^8.5.10"
   },
   "engines": {
     "node": ">=24"
