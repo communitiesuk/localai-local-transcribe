@@ -22,14 +22,13 @@ RUN python scripts/check-python-version.py
 
 # Install packages, strip debug symbols, and clean up pip/setuptools directly in Stage 1
 RUN poetry export -f requirements.txt --output requirements.txt --with backend --without dev --without-hashes && \
-    pip install --no-cache-dir --target=/app/site-packages -r requirements.txt && \
+    python -m pip install --no-cache-dir --ignore-installed --prefix=/install -r requirements.txt && \
+    cd /install/lib/python*/site-packages && \
     # 1. Strip binary debug symbols from compiled extensions to save space
-    find /app/site-packages -name "*.so" -exec strip --strip-unneeded {} + && \
+    find . -name "*.so" -exec strip --strip-unneeded {} + && \
     # 2. Purge pip, setuptools, wheels, and standard pycaches
-    rm -rf /app/site-packages/pip* \
-           /app/site-packages/setuptools* \
-           /app/site-packages/wheel* \
-    && find /app/site-packages -type d -name "__pycache__" -prune -exec rm -rf {} +
+    rm -rf pip* setuptools* wheel* && \
+    find . -type d -name "__pycache__" -prune -exec rm -rf {} +
 
 # ==========================================
 # Stage 2: Runner
@@ -55,8 +54,8 @@ ADD --chown=appuser:appuser --chmod=0444 \
     https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
     /app/config/rds-ca-bundle.pem
 
-# Copy only the site-packages from the builder stage to the runner stage
-COPY --from=builder /app/site-packages /usr/local/lib/python3.14/site-packages
+# Copy the installed packages and scripts from the builder stage to the runner stage
+COPY --from=builder /install/ /usr/local/
 
 # Copy only what the backend needs to run directly to /app
 COPY --chown=appuser:appuser backend/ backend/
@@ -68,13 +67,8 @@ COPY --chown=appuser:appuser backend/entrypoint.sh .
 # Ensure entrypoint is executable
 RUN chmod +x backend/entrypoint.sh
 
-# Set PATH so executables in site-packages/bin (like alembic, uvicorn) are found.
-# site-packages now lives at the default interpreter path
-# (/usr/local/lib/python3.14/site-packages), so PYTHONPATH no longer needs to
-# point there - Python finds it automatically. PYTHONPATH=/app is what makes
-# our own backend/common/alembic source importable.
-ENV PATH="/usr/local/lib/python3.14/site-packages/bin:${PATH}" \
-    PYTHONPATH=/app
+# PYTHONPATH=/app is what makes our own backend/common/alembic source importable.
+ENV PYTHONPATH=/app
 
 USER appuser
 
