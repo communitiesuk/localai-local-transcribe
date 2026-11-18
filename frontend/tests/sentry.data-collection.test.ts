@@ -6,7 +6,16 @@ import { dataCollection } from '@/sentry.data-collection'
 // a config tidy-up - it starts sending transcript-adjacent PII. Loosening anything here should mean
 // deliberately editing this test too.
 
-const SENSITIVE_FIELDS = ['forwarded', '-ip', 'remote-', 'via', '-user']
+// Mirrors sentry.data-collection.ts: the v10-equivalent deny list from Sentry's migration guide,
+// plus the ALB's x-amzn-oidc-* identity headers.
+const SENSITIVE_FIELDS = [
+  'forwarded',
+  '-ip',
+  'remote-',
+  'via',
+  '-user',
+  'x-amzn-oidc',
+]
 
 describe('Sentry dataCollection baseline', () => {
   it('does not collect user info, cookies or database query data', () => {

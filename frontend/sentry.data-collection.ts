@@ -9,8 +9,12 @@
 
 import type * as Sentry from '@sentry/nextjs'
 
-// Sentry's default denylist for header/query-param values that commonly carry PII.
-const SENSITIVE_FIELDS = ['forwarded', '-ip', 'remote-', 'via', '-user']
+// Sentry's default denylist for header/query-param values that commonly carry PII.  
+const SENTRY_DEFAULT_SENSITIVE_FIELDS = ['forwarded', '-ip', 'remote-', 'via', '-user']  
+
+// The ALB's identity headers (x-amzn-oidc-data, x-amzn-oidc-identity) carry user claims.  
+
+const SENSITIVE_FIELDS = [...SENTRY_DEFAULT_SENSITIVE_FIELDS, 'x-amzn-oidc'] 
 
 // Derived from `init`'s own signature rather than imported: the `DataCollection` type is exported
 // from `@sentry/core`, which we only have transitively. Type-only import, so nothing is added to
@@ -53,4 +57,4 @@ export const dataCollection = {
 
   // v11 lowered the default from 7 to 5; keep the wider stack trace context we had on v10.
   frameContextLines: 7,
-} satisfies DataCollection
+} satisfies Required<DataCollection>
