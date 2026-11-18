@@ -27,3 +27,8 @@ output "kms_key_arn" {
   description = "ARN of the KMS key used to encrypt AppConfig hosted configuration data"
   value       = aws_kms_key.main.arn
 }
+
+output "read_policy_arn" {
+  description = "ARN of the IAM policy granting read access to this AppConfig configuration"
+  value       = aws_iam_policy.app_config_read.arn
+}

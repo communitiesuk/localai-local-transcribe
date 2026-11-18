@@ -7,8 +7,3 @@ variable "environment_name" {
     error_message = "Environment must be one of: development, staging, production"
   }
 }
-
-variable "backend_task_role_name" {
-  description = "Name of the backend ECS task role that should be granted permission to read this AppConfig configuration"
-  type        = string
-}

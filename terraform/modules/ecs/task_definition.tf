@@ -335,7 +335,11 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         { "name" = "SERVICE_REGION", "value" = var.aws_region },
         { "name" = "POLL_INTERVAL", "value" = "5m" },
-        { "name" = "HTTP_PORT", "value" = tostring(local.appconfig_agent_port) }
+        { "name" = "HTTP_PORT", "value" = tostring(local.appconfig_agent_port) },
+        {
+          "name"  = "PREFETCH_LIST"
+          "value" = "${var.app_config_application_id}:${var.app_config_environment_id}:${var.app_config_configuration_profile_id}"
+        }
       ]
 
       logConfiguration = {
