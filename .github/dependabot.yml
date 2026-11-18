@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "docker"
+    directory: "/worker"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    schedule:
+      interval: "daily"

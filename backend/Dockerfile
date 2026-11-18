@@ -1,10 +1,12 @@
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.14-slim AS builder
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928 AS builder
+
+ARG BUILD_ESSENTIAL_VERSION=12.12
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential=12.12 && \
+    apt-get install -y --no-install-recommends build-essential=${BUILD_ESSENTIAL_VERSION} && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -27,10 +29,12 @@ RUN poetry export -f requirements.txt --output requirements.txt --with backend -
 # ==========================================
 # Stage 2: Runner
 # ==========================================
-FROM python:3.14-slim
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
+
+ARG CURL_VERSION=8.14.1-2+deb13u7
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl=${CURL_VERSION} && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
