@@ -1,6 +1,11 @@
 import { withSentryConfig } from '@sentry/nextjs'
 
 const isDev = process.env.NODE_ENV === 'development'
+const isLocal = process.env.NEXT_PUBLIC_ENVIRONMENT === 'local'
+
+const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
+const reportOrigin = reportUri ? new URL(reportUri).origin : ''
+const reportGroup = 'csp-endpoint'
 
 const cspHeader = `
     default-src 'self';
@@ -12,8 +17,24 @@ const cspHeader = `
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
-    upgrade-insecure-requests;
+    ${isLocal ? '' : 'upgrade-insecure-requests;'}
+    connect-src 'self' ${reportOrigin};
+    ${reportUri ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
 `
+
+const headers = [
+  {
+    key: 'Content-Security-Policy-Report-Only',
+    value: cspHeader.replace(/\n/g, ''),
+  },
+]
+
+if (reportUri) {
+  headers.push({
+    key: 'Reporting-Endpoints',
+    value: `${reportGroup}="${reportUri}"`,
+  })
+}
 
 let nextConfig = {
   output: 'standalone',
@@ -28,12 +49,7 @@ let nextConfig = {
       },
       {
         source: '/(.*)',
-        headers: [
-          {
-            key: 'Content-Security-Policy-Report-Only',
-            value: cspHeader.replace(/\n/g, ''),
-          },
-        ],
+        headers: headers,
       },
     ]
   },
