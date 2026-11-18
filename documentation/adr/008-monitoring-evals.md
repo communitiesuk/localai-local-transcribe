@@ -30,7 +30,7 @@ How can we implement ongoing evaluation monitoring to detect quality changes, di
 
 Continue monitoring with the full evaluation dataset.
 
-The new Data Sharing Agreement (DSA) we are working towards allows evaluation monitoring with live user data only when an authorised user or council explicitly donates the meeting. Passive collection, random sampling, and shadow evaluation of general production traffic remain prohibited.
+Under the new Data Sharing Agreement (DSA) we are working towards, live user data may be used for evaluation monitoring when an authorised user or council donates the meeting. Donation must be an affirmative choice; passive collection, random sampling, and shadow evaluation of general production traffic are not currently included.
 
 Identifiable donated audio may be retained for up to 12 months, then must be deleted or anonymised. Data must be used only for approved evaluation monitoring and handled under DSA-approved access, storage, and processing controls. Donation must be an affirmative opt-in, including during onboarding.
 
@@ -76,7 +76,7 @@ Run old prompt/model variants alongside the production version on live traffic t
 
 * Good, because it enables direct comparison on identical real-world inputs.
 * Bad, because it doubles inference costs and requires significant infrastructure (dual execution, traffic routing).
-* Bad, because general production traffic cannot be used without explicit donation.
+* Bad, because general production traffic is not currently covered without donation.
 
 ### Random sampling of live production data
 
@@ -84,7 +84,7 @@ Periodically sample production inputs/outputs and run LLM-as-a-judge evaluations
 
 * Good, because costs are controllable via sample size and frequency.
 * Bad, because results aren't comparable across periods and curated datasets already cover common cases.
-* Bad, because passive sampling is prohibited; each meeting requires explicit donation.
+* Bad, because passive sampling is not currently covered; each meeting would need to be donated.
 
 ### No additional monitoring
 

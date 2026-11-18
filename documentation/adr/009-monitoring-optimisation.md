@@ -27,7 +27,7 @@ How should we collect data to support prompt optimization while balancing resour
 
 ## Decision Outcome
 
-The new Data Sharing Agreement (DSA) we are working towards allows councils or professionals to explicitly donate meetings for prompt optimisation. Passive collection is prohibited.
+Under the new Data Sharing Agreement (DSA) we are working towards, meetings donated by councils or professionals may be used for prompt optimisation. Donation must be an affirmative choice; passive collection is not currently included.
 
 Only anonymised data may be used. Identifiable audio must be deleted or anonymised within 12 months and handled under DSA controls.
 
