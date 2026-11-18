@@ -13,6 +13,14 @@ export const MAX_UPLOAD_FILE_SIZE_LABEL = '5GB'
 export const MAX_RECORDING_DURATION_MS = 2 * 60 * 60 * 1000
 export const MAX_RECORDING_DURATION_LABEL = '2 hours'
 
+/**
+ * Stop a recording this far short of the cap. The length only updates about once a second,
+ * so stopping on the cap itself can land just over it if a tick is delayed.
+ */
+export const RECORDING_STOP_HEADROOM_MS = 30 * 1000
+export const AUTO_STOP_RECORDING_DURATION_MS =
+  MAX_RECORDING_DURATION_MS - RECORDING_STOP_HEADROOM_MS
+
 /** Maximum number of characters allowed in the agenda field. */
 export const MAX_AGENDA_LENGTH = 500
 

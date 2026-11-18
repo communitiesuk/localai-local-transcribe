@@ -101,44 +101,82 @@ describe('<RecordingControl />', () => {
         stream={null}
         isRecording={true}
         onStopRecording={onStopRecording}
-        recordingDuration={7_199_000}
+        recordingDuration={7_169_000}
       />
     )
 
     expect(onStopRecording).not.toHaveBeenCalled()
   })
 
-  it('stops the recording once it reaches the limit', () => {
+  it('stops with headroom, before the recording reaches 2 hours', () => {
     const onStopRecording = vi.fn()
 
-    render(
+    const { rerender } = render(
       <RecordingControl
         stream={null}
         isRecording={true}
         onStopRecording={onStopRecording}
-        recordingDuration={7_200_000}
+        recordingDuration={7_169_000}
+      />
+    )
+
+    expect(onStopRecording).not.toHaveBeenCalled()
+
+    rerender(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={onStopRecording}
+        recordingDuration={7_170_000}
       />
     )
 
     expect(onStopRecording).toHaveBeenCalledTimes(1)
     expect(useRecordingUIStore.getState().recordingUIState).toBe('stopping')
+    expect(useRecordingUIStore.getState().stoppedAtLimit).toBe(true)
   })
 
-  it('says the limit stopped the recording, rather than asking to confirm', () => {
+  it('stops only once, however many times the length updates past the limit', () => {
+    const onStopRecording = vi.fn()
+
+    const { rerender } = render(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={onStopRecording}
+        recordingDuration={7_169_000}
+      />
+    )
+
+    for (const recordingDuration of [7_170_000, 7_171_000, 7_172_000]) {
+      rerender(
+        <RecordingControl
+          stream={null}
+          isRecording={true}
+          onStopRecording={onStopRecording}
+          recordingDuration={recordingDuration}
+        />
+      )
+    }
+
+    expect(onStopRecording).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not ask the user to confirm a stop it made itself', () => {
     render(
       <RecordingControl
         stream={null}
         isRecording={true}
         onStopRecording={vi.fn()}
-        recordingDuration={7_200_000}
+        recordingDuration={7_170_000}
       />
     )
 
     expect(
-      screen.getByText(/This recording reached 2 hours and has stopped\./)
-    ).toBeInTheDocument()
-    expect(
       screen.queryByRole('button', { name: 'Stop Recording' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/This recording reached 2 hours and has stopped\./)
     ).not.toBeInTheDocument()
   })
 })

@@ -11,8 +11,8 @@ import {
   type RecordingState,
 } from '@/stores/use-recording-ui-store'
 import {
+  AUTO_STOP_RECORDING_DURATION_MS,
   MAX_RECORDING_DURATION_LABEL,
-  MAX_RECORDING_DURATION_MS,
 } from '@/lib/constants'
 
 interface RecordingControlProps {
@@ -60,7 +60,8 @@ export default function RecordingControl({
   const hasAutoStoppedRef = useRef(false)
   const [localIsPaused, setLocalIsPaused] = useState(false)
 
-  const { recordingUIState, setRecordingUIState } = useRecordingUIStore()
+  const { recordingUIState, setRecordingUIState, setStoppedAtLimit } =
+    useRecordingUIStore()
   const showStopConfirm =
     recordingUIState === 'stopConfirm' || recordingUIState === 'stopping'
   const isStopping = recordingUIState === 'stopping'
@@ -72,15 +73,22 @@ export default function RecordingControl({
       : localIsPaused
 
   const formattedRecordingDuration = formatDuration(recordingDuration)
-  const hasReachedLimit = recordingDuration >= MAX_RECORDING_DURATION_MS
+  const hasReachedLimit = recordingDuration >= AUTO_STOP_RECORDING_DURATION_MS
 
   useEffect(() => {
-    if (!isRecording || !hasReachedLimit || hasAutoStoppedRef.current) return
-
-    hasAutoStoppedRef.current = true
-    setRecordingUIState('stopping')
-    onStopRecording()
-  }, [hasReachedLimit, isRecording, onStopRecording, setRecordingUIState])
+    if (isRecording && hasReachedLimit && !hasAutoStoppedRef.current) {
+      hasAutoStoppedRef.current = true
+      setRecordingUIState('stopping')
+      setStoppedAtLimit(true)
+      onStopRecording()
+    }
+  }, [
+    hasReachedLimit,
+    isRecording,
+    onStopRecording,
+    setRecordingUIState,
+    setStoppedAtLimit,
+  ])
 
   useEffect(() => {
     if (
@@ -408,11 +416,6 @@ export default function RecordingControl({
           </GovukButton>
         </GovukButtonGroup>
       </div>
-      {hasReachedLimit && (
-        <GovukWarningText>
-          This recording reached {MAX_RECORDING_DURATION_LABEL} and has stopped.
-        </GovukWarningText>
-      )}
       {showStopConfirm && !hasReachedLimit && (
         <>
           <GovukWarningText>

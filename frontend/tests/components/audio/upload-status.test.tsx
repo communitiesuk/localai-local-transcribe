@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { UploadStatus } from '@/components/audio/upload-status'
 import { LockNavigationProvider } from '@/hooks/use-lock-navigation-context'
 import { useUploadRecordingStore } from '@/stores/use-upload-recording-store'
+import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 import { saveAs } from 'file-saver'
 
 vi.mock('next/navigation', () => ({
@@ -42,6 +43,7 @@ describe('UploadStatus', () => {
   afterEach(() => {
     push.mockReset()
     useUploadRecordingStore.setState(initialStoreState, true)
+    useRecordingUIStore.getState().resetRecordingUI()
     setOnline(true)
   })
 
@@ -56,6 +58,35 @@ describe('UploadStatus', () => {
 
     expect(screen.getByRole('status')).toBeInTheDocument()
     expect(screen.getByText('Processing recording…')).toBeInTheDocument()
+  })
+
+  it('tells the user the recording stopped at the limit while it uploads', () => {
+    useRecordingUIStore.setState({ stoppedAtLimit: true })
+    useUploadRecordingStore.setState({
+      status: 'pending',
+      uploadingFrom: 'recording',
+      awaitingManualRetry: false,
+    })
+
+    render(<UploadStatus />)
+
+    expect(
+      screen.getByText(/This recording reached 2 hours and has stopped\./)
+    ).toBeInTheDocument()
+  })
+
+  it('says nothing about the limit when the recording was stopped by the user', () => {
+    useUploadRecordingStore.setState({
+      status: 'pending',
+      uploadingFrom: 'recording',
+      awaitingManualRetry: false,
+    })
+
+    render(<UploadStatus />)
+
+    expect(
+      screen.queryByText(/This recording reached 2 hours and has stopped\./)
+    ).not.toBeInTheDocument()
   })
 
   it('shows the error view with an enabled retry button when online and the upload failed', () => {
