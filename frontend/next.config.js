@@ -1,7 +1,7 @@
 import { withSentryConfig } from '@sentry/nextjs'
 
 const isDev = process.env.NODE_ENV === 'development'
-const isLocal = process.env.NEXT_PUBLIC_ENVIRONMENT === 'local'
+const isLocal = process.env.ENVIRONMENT === 'local'
 
 const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
 const reportOrigin = reportUri ? new URL(reportUri).origin : ''
@@ -13,12 +13,13 @@ const cspHeader = `
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data:;
     font-src 'self';
+    media-src 'self' blob:;
     object-src 'none';
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
     ${isLocal ? '' : 'upgrade-insecure-requests;'}
-    connect-src 'self' ${reportOrigin};
+    connect-src 'self' ${isLocal ? 'http://localhost:8080' : ''} ${reportOrigin};
     ${reportUri ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
 `
 
