@@ -24,7 +24,11 @@ services:
         source: ./.data
         target: /static
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/healthcheck')\""]
+      test:
+        [
+          "CMD-SHELL",
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8080/healthcheck'')"',
+        ]
       interval: 60s
       retries: 3
       start_period: 30s
@@ -64,7 +68,7 @@ services:
     environment:
       - POSTGRES_HOST=db
       - RAY_DASHBOARD_HOST=0.0.0.0
-      - ELASTICMQ_URL=http://elasticmq:9324 
+      - ELASTICMQ_URL=http://elasticmq:9324
       - STORAGE_SERVICE_NAME=local
       - LOCAL_STORAGE_PATH=/static
       - RAY_OBJECT_STORE_ALLOW_SLOW_STORAGE=1
@@ -140,7 +144,7 @@ services:
       timeout: 30s
       retries: 24
       start_period: 30s
-      
+
   elasticmq:
     image: softwaremill/elasticmq
     ports:
@@ -148,7 +152,8 @@ services:
     volumes:
       - ./elasticmq.conf:/opt/elasticmq.conf
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:9324/?Action=ListQueues"]
+      test:
+        ["CMD-SHELL", "curl --fail http://localhost:9324/?Action=ListQueues"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -157,4 +162,3 @@ services:
 volumes:
   local_postgres_data: {}
   next_data: {}
-  

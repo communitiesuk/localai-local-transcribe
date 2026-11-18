@@ -4,7 +4,6 @@ const isDev = process.env.NODE_ENV === 'development'
 const isLocal = process.env.ENVIRONMENT === 'local'
 
 const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
-const reportOrigin = reportUri ? new URL(reportUri).origin : ''
 const reportGroup = 'csp-endpoint'
 
 const cspHeader = `
@@ -19,12 +18,13 @@ const cspHeader = `
     form-action 'self';
     frame-ancestors 'none';
     ${isLocal ? '' : 'upgrade-insecure-requests;'}
-    connect-src 'self' ${isLocal ? 'http://localhost:8080' : ''} ${reportOrigin};
+    connect-src 'self' ${isLocal ? 'http://localhost:8080' : ''} ${reportUri ? new URL(reportUri).origin : ''};
     ${reportUri ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
 `
 
 const headers = [
   {
+    // key: `Content-Security-Policy${isLocal ? '' : '-Report-Only'}`
     key: 'Content-Security-Policy-Report-Only',
     value: cspHeader.replace(/\n/g, ''),
   },
