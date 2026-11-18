@@ -103,7 +103,23 @@ data "aws_iam_policy_document" "bastion_logs" {
     resources = [module.bastion_logs.log_group_arn, "${module.bastion_logs.log_group_arn}:*"]
   }
 
+  statement {
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:Describe*",
+    ]
+    resources = [module.bastion_logs.kms_key_arn]
 
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["logs.${data.aws_region.current.name}.amazonaws.com"]
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "bastion_logs" {
