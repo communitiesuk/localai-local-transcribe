@@ -1,4 +1,7 @@
 locals {
+  appconfig_agent_port = 2772
+
+
   # ECS Exec (the embedded SSM Core Agent) requires write access to these paths at runtime.
   # This is NOT officially documented/supported by AWS alongside readonlyRootFilesystem - see
   # https://github.com/aws/containers-roadmap/issues/2824 and
@@ -303,6 +306,51 @@ resource "aws_ecs_task_definition" "backend" {
 
       healthCheck = {
         command     = ["CMD-SHELL", "curl --fail http://localhost:${var.backend_port}/healthcheck"]
+        interval    = 60
+        retries     = 3
+        startPeriod = 30
+        timeout     = 5
+      },
+      "dependsOn" : [
+        {
+          "containerName" : "appconfig-agent",
+          "condition" : "START"
+        }
+      ]
+    },
+    {
+      name              = "appconfig-agent"
+      essential         = false
+      image             = "public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.0.247456"
+      user              = "1000:1000"
+      cpu               = 128
+      memoryReservation = 256
+
+      portMappings = [
+        {
+          protocol      = "tcp"
+          containerPort = local.appconfig_agent_port
+        }
+      ],
+      environment = [
+        { "name" = "SERVICE_REGION", "value" = var.aws_region },
+        { "name" = "POLL_INTERVAL", "value" = "5m" },
+        { "name" = "HTTP_PORT", "value" = tostring(local.appconfig_agent_port) }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = module.backend_log_group.name
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "${var.environment_name}-appconfig-agent"
+          mode                  = "non-blocking"
+          max-buffer-size       = "4m"
+        }
+      }
+
+      healthCheck = {
+        command     = ["CMD-SHELL", "curl --fail http://localhost:${local.appconfig_agent_port}/ || exit 1"]
         interval    = 60
         retries     = 3
         startPeriod = 30

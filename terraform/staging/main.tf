@@ -258,6 +258,13 @@ module "uploads_bucket" {
   backend_task_role_name        = module.ecs.backend_task_role_name
 }
 
+module "app_config" {
+  source = "../modules/app_config"
+
+  environment_name       = local.environment_name
+  backend_task_role_name = module.ecs.backend_task_role_name
+}
+
 module "monitoring" {
   source = "../modules/monitoring"
 
