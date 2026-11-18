@@ -67,6 +67,13 @@ def test_start_still_fails_when_the_response_has_no_phrases_key(monkeypatch, aud
         asyncio.run(AzureSpeechAdapter.start(audio_file))
 
 
+def test_start_still_fails_when_phrases_is_null(monkeypatch, audio_file):
+    _patch_azure(monkeypatch, {"phrases": None})
+
+    with pytest.raises(TranscriptionFailedError, match="No transcription phrases found in response"):
+        asyncio.run(AzureSpeechAdapter.start(audio_file))
+
+
 def test_start_converts_phrases_into_dialogue_entries(monkeypatch, audio_file):
     _patch_azure(
         monkeypatch,

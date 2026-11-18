@@ -15,7 +15,9 @@ from common.database.postgres_models import (
     DialogueEntry,
     JobStatus,
     RecordingSource,
+    SummaryCopyType,
     TemplateType,
+    TranscriptionFailureReason,
     UserRole,
 )
 from common.settings import get_settings
@@ -218,7 +220,7 @@ class TranscriptionGetResponse(BaseModel):
     client_name: str | None
     case_id: str | None
     client_date_of_birth: datetime | None
-    no_speech_detected: bool = False
+    failure_reason: TranscriptionFailureReason | None = None
 
 
 class SingleRecording(BaseModel):
@@ -259,6 +261,36 @@ class MinuteVersionCreateRequest(BaseModel):
 
 class MinutesPatchRequest(BaseModel):
     html_content: str | None = None
+
+
+class SummaryInteractionEventType(StrEnum):
+    """The client-observable summary events that `POST /minute_versions/{id}/analytics-events` accepts.
+
+    Deliberately a separate, closed enum rather than `AnalyticsEventType`: a client must not be able to write
+    event types that are authoritative server/worker observations, such as SUMMARY_RECEIVED.
+    """
+
+    SUMMARY_DOWNLOADED = auto()
+    SUMMARY_COPIED = auto()
+
+
+class SummaryInteractionEventRequest(BaseModel):
+    event_type: SummaryInteractionEventType
+    copy_type: SummaryCopyType | None = Field(
+        default=None,
+        description="How the summary reached the clipboard. Required for copies, rejected for anything else.",
+    )
+
+    @model_validator(mode="after")
+    def _validate_copy_type(self) -> SummaryInteractionEventRequest:
+        is_copy = self.event_type == SummaryInteractionEventType.SUMMARY_COPIED
+        if is_copy and self.copy_type is None:
+            msg = "copy_type is required for summary_copied events"
+            raise ValueError(msg)
+        if not is_copy and self.copy_type is not None:
+            msg = f"copy_type is not valid for {self.event_type.value} events"
+            raise ValueError(msg)
+        return self
 
 
 class GuardrailWarningResponse(BaseModel):

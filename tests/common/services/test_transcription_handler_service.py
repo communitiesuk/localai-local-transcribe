@@ -10,6 +10,7 @@ from common.database.postgres_models import (
     Recording,
     RecordingSource,
     Transcription,
+    TranscriptionFailureReason,
     User,
 )
 from common.services.transcription_handler_service import (
@@ -243,13 +244,15 @@ def test_record_transcription_received_handles_no_user(mock_session):
     )
 
 
-def test_update_transcription_records_no_speech_detected(mock_session, mock_transcription):
+def test_update_transcription_records_the_failure_reason(mock_session, mock_transcription):
     ctx, session = mock_session
 
     with patch("common.services.transcription_handler_service.SessionLocal", return_value=ctx):
-        TranscriptionHandlerService.update_transcription(mock_transcription.id, no_speech_detected=True)
+        TranscriptionHandlerService.update_transcription(
+            mock_transcription.id, failure_reason=TranscriptionFailureReason.NO_SPEECH_DETECTED
+        )
 
-    assert mock_transcription.no_speech_detected is True
+    assert mock_transcription.failure_reason is TranscriptionFailureReason.NO_SPEECH_DETECTED
     session.commit.assert_called_once()
 
 
@@ -260,7 +263,8 @@ async def test_process_transcription_marks_an_empty_transcript_as_no_speech_dete
     with (
         patch.object(TranscriptionHandlerService, "get_transcription", return_value=mock_transcription),
         patch.object(TranscriptionHandlerService, "update_transcription") as update_transcription,
-        patch.object(TranscriptionHandlerService, "_record_transcription_received") as record_event,
+        patch.object(TranscriptionHandlerService, "_record_transcription_received") as record_received,
+        patch.object(TranscriptionHandlerService, "_record_transcription_failed") as record_failed,
         patch(
             "common.services.transcription_handler_service.transcription_manager.perform_transcription_steps",
             new=AsyncMock(return_value=job),
@@ -273,9 +277,10 @@ async def test_process_transcription_marks_an_empty_transcript_as_no_speech_dete
         mock_transcription.id,
         status=JobStatus.FAILED,
         error=NO_SPEECH_DETECTED_ERROR,
-        no_speech_detected=True,
+        failure_reason=TranscriptionFailureReason.NO_SPEECH_DETECTED,
     )
-    record_event.assert_not_called()
+    record_received.assert_not_called()
+    record_failed.assert_called_once_with(mock_transcription, TranscriptionFailureReason.NO_SPEECH_DETECTED)
 
 
 @pytest.mark.asyncio

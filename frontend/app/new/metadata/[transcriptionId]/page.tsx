@@ -14,7 +14,6 @@ import {
   notifyRecordingFailed,
   notifyRecordingSaved,
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionStatus'
-import { recordAnalyticsEvent } from '@/lib/analytics'
 import { getTranscriptionTranscriptionsTranscriptionIdGetOptions } from '@/lib/client/@tanstack/react-query.gen'
 import { useBannerStore } from '@/stores/use-banner-store'
 
@@ -47,7 +46,8 @@ export default function AddRecordingMetadataPage(props: {
   })
 
   const hasFailed = transcription?.status === 'failed'
-  const hasNoSpeech = hasFailed && transcription?.no_speech_detected === true
+  const hasNoSpeech =
+    hasFailed && transcription?.failure_reason === 'no_speech_detected'
 
   useEffect(() => {
     if (!isSaved || !transcription) {
@@ -56,21 +56,16 @@ export default function AddRecordingMetadataPage(props: {
     if (isTranscriptionProcessing(transcription.status)) {
       return
     }
-    if (transcription.status === 'failed') {
-      recordAnalyticsEvent('transcription_failed', {
-        reason: transcription.no_speech_detected
-          ? 'no_speech_detected'
-          : 'error',
-      })
-      if (transcription.no_speech_detected) {
-        notifyNoSpeechDetected(router, setBanner, transcription.id)
-        return
-      }
+    if (hasNoSpeech) {
+      notifyNoSpeechDetected(router, setBanner, transcription.id)
+      return
+    }
+    if (hasFailed) {
       notifyRecordingFailed(router, setBanner, transcription.id)
       return
     }
     notifyRecordingSaved(router, setBanner, transcription.id)
-  }, [isSaved, transcription, router, setBanner])
+  }, [isSaved, transcription, hasFailed, hasNoSpeech, router, setBanner])
 
   if (!transcription && !isLoading) {
     redirect('/')
@@ -106,7 +101,7 @@ export default function AddRecordingMetadataPage(props: {
           <GovukNotificationBanner variant="important" title="Important">
             <p className="govuk-notification-banner__heading">
               {hasNoSpeech
-                ? 'No sound was detected in this recording, so there is no transcript.'
+                ? 'No speech was detected in this recording, so there is no transcript.'
                 : 'Something went wrong transcribing this recording.'}
             </p>
             <p className="govuk-body">

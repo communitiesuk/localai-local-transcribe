@@ -148,15 +148,18 @@ export default function TranscriptionPage(props: {
   }
 
   if (transcription.status == 'failed') {
-    if (transcription.no_speech_detected) {
+    if (transcription.failure_reason === 'no_speech_detected') {
       return (
         <StatusNotificationPage
           transcription={transcription}
           dateLabel={dateLabel}
-          title="No sound detected"
+          title="No speech detected"
         >
-          We could not hear anything in this recording, so there is no
-          transcript. Check your microphone and record again.
+          We could not pick out any speech in this recording, so there is no
+          transcript.{' '}
+          {transcription.is_upload
+            ? 'Check the file and upload it again.'
+            : 'Check your microphone and record again.'}
         </StatusNotificationPage>
       )
     }

@@ -214,6 +214,13 @@ class Chat(BaseTableMixin, table=True):
     error: str | None = Field(default=None)
 
 
+class TranscriptionFailureReason(StrEnum):
+    """Why a transcription failed. Set alongside JobStatus.FAILED and null on anything that has not failed."""
+
+    NO_SPEECH_DETECTED = auto()
+    ERROR = auto()
+
+
 class Transcription(BaseTableMixin, table=True):
     __tablename__ = "transcription"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
@@ -224,7 +231,10 @@ class Transcription(BaseTableMixin, table=True):
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
     )
     error: str | None = Field(default=None)
-    no_speech_detected: bool = Field(default=False, sa_column_kwargs={"server_default": "false"})
+    failure_reason: TranscriptionFailureReason | None = Field(
+        default=None,
+        sa_column=Column(Enum(TranscriptionFailureReason, name="transcriptionfailurereason"), nullable=True),
+    )
     user: User | None = Relationship(back_populates="transcriptions")
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
     # metadata fields:
@@ -365,7 +375,13 @@ class AnalyticsEventType(StrEnum):
     AUDIO_UPLOAD_COMPLETED = auto()
     SUMMARY_RECEIVED = auto()
     TRANSCRIPTION_RECEIVED = auto()
+    TRANSCRIPTION_FAILED = auto()
     TRANSCRIPTION_EDIT_SUBMITTED = auto()
+    SUMMARY_REQUESTED = auto()
+    SUMMARY_EDIT_SUBMITTED = auto()
+    SUMMARY_DOWNLOADED = auto()
+    SUMMARY_COPIED = auto()
+    TOU_ACCEPTED = auto()
 
 
 class TranscriptionEditType(StrEnum):
@@ -378,6 +394,22 @@ class TranscriptionEditType(StrEnum):
     ALL_INSTANCES_OF_NAME = auto()
 
 
+class SummaryEditType(StrEnum):
+    """The kind of edit made to a summary, recorded as part of a SUMMARY_EDIT_SUBMITTED analytics event."""
+
+    AI = auto()
+    MANUAL = auto()
+
+
+class SummaryCopyType(StrEnum):
+    """How a summary reached the clipboard, recorded as part of a SUMMARY_COPIED analytics event."""
+
+    BUTTON = auto()
+    # A Ctrl/Cmd+C or context-menu copy of a selection inside the summary. A lower bound: not every route out of
+    # the browser raises a `copy` event.
+    NATIVE = auto()
+
+
 ANALYTICS_EVENT_SOURCE_UNIQUE_CONSTRAINT = "uq_analytics_event_event_type_source_id"
 
 
@@ -385,10 +417,13 @@ class AnalyticsEventMetadata(TypedDict, total=False):
     """Optional detail stored in `AnalyticsEvent.event_metadata` for event-specific metadata."""
 
     audio_duration_seconds: float
-    edit_type: TranscriptionEditType
+    edit_type: TranscriptionEditType | SummaryEditType
+    copy_type: SummaryCopyType
     recording_source: RecordingSource
-    # Both stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
+    failure_reason: TranscriptionFailureReason
+    # All stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
     transcription_id: str
+    minute_version_id: str
     template_id: str | None
     template_source: Literal["default", "custom"]
 

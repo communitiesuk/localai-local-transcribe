@@ -84,12 +84,14 @@ class AzureSpeechAdapter(TranscriptionAdapter):
                     error_message = full_response.get("message", "Unknown error occurred")
                     raise TranscriptionFailedError(error_message)
                 # An empty phrase list is a valid answer for audio with no speech in it.
-                if "phrases" not in full_response:
+                # A missing or null one is not, so both still fail.
+                phrases = full_response.get("phrases")
+                if phrases is None:
                     error_msg = "No transcription phrases found in response"
                     raise TranscriptionFailedError(error_msg)
                 return TranscriptionJobMessageData(
                     transcription_service=cls.name,
-                    transcript=convert_to_dialogue_entries(full_response["phrases"]),
+                    transcript=convert_to_dialogue_entries(phrases),
                 )
 
     @classmethod

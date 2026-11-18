@@ -94,6 +94,10 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
   deleteMinuteVersionMinuteVersionsMinuteVersionIdDeleteMutation: () => ({
     mutationKey: ['delete-minute-version'],
   }),
+  recordSummaryInteractionEventMinuteVersionsMinuteVersionIdAnalyticsEventsPostMutation:
+    () => ({
+      mutationKey: ['record-summary-interaction'],
+    }),
 }))
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {
@@ -552,17 +556,31 @@ describe('<TranscriptionPage /> failed transcription', () => {
     } as unknown as QueryClient)
   })
 
-  it('tells the user no sound was detected when the recording was silent', async () => {
+  it('tells the user no speech was detected when nothing was recognised', async () => {
     await renderWithTranscription({
       ...transcription,
       status: 'failed',
       dialogue_entries: null,
-      no_speech_detected: true,
+      failure_reason: 'no_speech_detected',
     })
 
-    expect(screen.getByText('No sound detected')).toBeInTheDocument()
+    expect(screen.getByText('No speech detected')).toBeInTheDocument()
     expect(
-      screen.getByText(/We could not hear anything in this recording/)
+      screen.getByText(/We could not pick out any speech in this recording/)
+    ).toBeInTheDocument()
+  })
+
+  it('tells someone who uploaded a file to check the file, not their microphone', async () => {
+    await renderWithTranscription({
+      ...transcription,
+      status: 'failed',
+      dialogue_entries: null,
+      failure_reason: 'no_speech_detected',
+      is_upload: true,
+    })
+
+    expect(
+      screen.getByText(/Check the file and upload it again/)
     ).toBeInTheDocument()
   })
 
@@ -571,7 +589,7 @@ describe('<TranscriptionPage /> failed transcription', () => {
       ...transcription,
       status: 'failed',
       dialogue_entries: null,
-      no_speech_detected: false,
+      failure_reason: 'error',
     })
 
     expect(screen.getByText('Transcription failed')).toBeInTheDocument()
