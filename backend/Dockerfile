@@ -1,7 +1,9 @@
+FROM python:3.14-slim@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS base
+
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.14-slim@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS builder
+FROM base AS builder
 
 ARG BUILD_ESSENTIAL_VERSION=12.12
 
@@ -14,6 +16,9 @@ COPY pyproject.toml poetry.lock README.md ./
 COPY scripts/get-poetry-version.py scripts/get-poetry-version.py
 RUN POETRY_VERSION=$(python scripts/get-poetry-version.py) && \
     pip install --no-cache-dir "poetry==${POETRY_VERSION}" poetry-plugin-export==1.9.0
+
+COPY scripts/check-python-version.py scripts/check-python-version.py
+RUN python scripts/check-python-version.py
 
 # Install packages, strip debug symbols, and clean up pip/setuptools directly in Stage 1
 RUN poetry export -f requirements.txt --output requirements.txt --with backend --without dev --without-hashes && \
@@ -29,7 +34,7 @@ RUN poetry export -f requirements.txt --output requirements.txt --with backend -
 # ==========================================
 # Stage 2: Runner
 # ==========================================
-FROM python:3.14-slim@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f
+FROM base AS runner
 
 ARG CURL_VERSION=8.14.1-2+deb13u7
 
