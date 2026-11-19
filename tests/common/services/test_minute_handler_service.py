@@ -10,6 +10,7 @@ from common.database.postgres_models import (
     JobStatus,
     Minute,
     MinuteVersion,
+    Recording,
     Transcription,
     User,
     UserTemplate,
@@ -491,18 +492,103 @@ async def test_process_minute_generation_message_success(
         status=JobStatus.COMPLETED,
         template_prompt_version=None,
     )
+    # This transcription has no recordings, so recording_id falls back to None rather than raising -
+    # retention cleanup can remove them before a summary is regenerated.
     mock_record_event.assert_called_once_with(
         mock_session,
         AnalyticsEventType.SUMMARY_RECEIVED,
         "EVAL-001",
         mock_minute.transcription.user.organisation_id,
+        recording_id=None,
         source_id=mock_minute_version.id,
         event_metadata={
             "transcription_id": str(mock_minute.transcription_id),
+            "minute_version_id": str(mock_minute_version.id),
             "template_id": expected_template_id,
             "template_source": template_source,
         },
     )
+
+
+@pytest.mark.asyncio
+async def test_get_minute_version_eager_loads_everything_the_summary_event_reads(mock_minute_version, mock_session):
+    """The instance is expunged before returning, so a lazy load afterwards raises DetachedInstanceError.
+
+    The SUMMARY_RECEIVED event reads transcription.user and transcription.recordings, so both have to be
+    in the loader options. A mocked session cannot reproduce the detached failure, so assert the options
+    directly - this is the only thing standing between a dropped selectinload and summary generation
+    failing in production.
+    """
+    ctx, session = mock_session
+    session.get.return_value = mock_minute_version
+
+    with patch("common.services.minute_handler_service.SessionLocal", return_value=ctx):
+        await MinuteHandlerService.get_minute_version(mock_minute_version.id)
+
+    loaded_relationships = {
+        element.key
+        for option in session.get.call_args.kwargs["options"]
+        for element in option.path
+        if hasattr(element, "key")
+    }
+    assert {"minute", "transcription", "user", "recordings"} <= loaded_relationships
+
+
+@pytest.mark.asyncio
+async def test_process_minute_generation_message_attributes_summary_to_the_original_recording(
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
+):
+    """`recordings` can include a re-encoded copy added during processing, so the earliest one wins.
+
+    Without this the summary is attributed to whichever recording the ORM happens to return first,
+    which is not the one the user uploaded.
+    """
+    upload = Recording(
+        id=uuid4(),
+        user_id=uuid4(),
+        s3_file_key="original.mp3",
+        created_datetime=datetime(2026, 11, 19, 10, 0, tzinfo=UTC),
+    )
+    reencoded = Recording(
+        id=uuid4(),
+        user_id=upload.user_id,
+        s3_file_key="reencoded.wav",
+        created_datetime=datetime(2026, 11, 19, 10, 5, tzinfo=UTC),
+    )
+    mock_minute.transcription = mock_transcription
+    mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
+    mock_minute.transcription.recordings = [reencoded, upload]
+    mock_minute.transcription.user = User(
+        id=uuid4(),
+        email="someone@example.com",
+        evaluation_id="EVAL-001",
+        organisation_id=uuid4(),
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+    )
+
+    mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
+    mocker.patch.object(MinuteHandlerService, "predict_meeting", return_value=MeetingType.standard)
+    mocker.patch.object(
+        MinuteHandlerService,
+        "generate_minutes",
+        AsyncMock(return_value=MinuteAndHallucinations(text="<p>summary</p>", total_claims=0, hallucinations=[])),
+    )
+    mocker.patch.object(MinuteHandlerService, "update_minute_version")
+    session_ctx = MagicMock()
+    mock_session = Mock()
+    session_ctx.__enter__ = Mock(return_value=mock_session)
+    session_ctx.__exit__ = Mock(return_value=None)
+
+    with (
+        patch("common.services.minute_handler_service.SessionLocal", return_value=session_ctx),
+        patch("common.services.minute_handler_service.record_analytics_event_sync") as mock_record_event,
+    ):
+        await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
+
+    assert mock_record_event.call_args.kwargs["recording_id"] == upload.id
+    assert mock_record_event.call_args.kwargs["event_metadata"]["minute_version_id"] == str(mock_minute_version.id)
 
 
 @pytest.mark.asyncio

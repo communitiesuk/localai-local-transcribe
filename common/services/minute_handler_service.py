@@ -132,7 +132,13 @@ class MinuteHandlerService:
                 options=[
                     selectinload(MinuteVersion.minute)
                     .selectinload(Minute.transcription)
-                    .selectinload(Transcription.user)  # type: ignore[arg-type]
+                    .selectinload(Transcription.user),  # type: ignore[arg-type]
+                    # The instance is expunged below, so anything the SUMMARY_RECEIVED event reads has to be
+                    # loaded here - a lazy load on a detached instance raises DetachedInstanceError, and that
+                    # would be caught as a generation failure.
+                    selectinload(MinuteVersion.minute)
+                    .selectinload(Minute.transcription)
+                    .selectinload(Transcription.recordings),  # type: ignore[arg-type]
                 ],
             )
             if not minute_version:
@@ -235,18 +241,30 @@ class MinuteHandlerService:
             )
 
             minute = minute_version.minute
-            event_user = minute.transcription.user
+            transcription = minute.transcription
+            event_user = transcription.user
+            # As in `_record_transcription_received`, `recordings` may hold a re-encoded copy as well as the
+            # upload, so attribute the summary to the earliest one. Unlike that call this runs long after the
+            # upload, by which time retention cleanup may have removed them all, so tolerate an empty list -
+            # raising here would mark the minute version FAILED for an analytics-only problem.
+            original_recording = min(
+                transcription.recordings, key=lambda recording: recording.created_datetime, default=None
+            )
             with SessionLocal() as session:
                 record_analytics_event_sync(
                     session,
                     AnalyticsEventType.SUMMARY_RECEIVED,
                     event_user.evaluation_id if event_user else None,
                     event_user.organisation_id if event_user else None,
+                    recording_id=original_recording.id if original_recording else None,
                     # The queue message is acknowledged after this write, so a crash in between redelivers it. Keying
                     # on the minute version makes the retry a no-op rather than a duplicate event.
                     source_id=minute_version.id,
                     event_metadata={
                         "transcription_id": str(minute.transcription_id),
+                        # Also carried as source_id, but the other SUMMARY_* events expose it here, so repeat it
+                        # rather than make reporting special-case this one event type.
+                        "minute_version_id": str(minute_version.id),
                         "template_id": (
                             str(minute.user_template_id)
                             if minute.user_template_id is not None
