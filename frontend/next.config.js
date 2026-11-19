@@ -4,7 +4,7 @@ const isDev = process.env.NODE_ENV === 'development'
 const isLocal =
   (process.env.ENVIRONMENT ?? process.env.NEXT_PUBLIC_ENVIRONMENT) === 'local'
 
-let storageOrigin = process.env.CSP_STORAGE_ORIGIN
+const storageOrigin = process.env.CSP_STORAGE_ORIGIN
 const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
 const reportGroup = 'csp-endpoint'
 const PLAUSIBLE_ORIGIN = 'https://plausible.io'
@@ -16,7 +16,6 @@ if (isLocal) {
 } else {
   connectSources.push(PLAUSIBLE_ORIGIN)
   if (storageOrigin) {
-    storageOrigin = new URL(storageOrigin).origin
     connectSources.push(storageOrigin)
   }
 }
