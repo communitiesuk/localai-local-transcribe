@@ -1,7 +1,7 @@
 import { withSentryConfig } from '@sentry/nextjs'
 
 const isDev = process.env.NODE_ENV === 'development'
-const isLocal = process.env.ENVIRONMENT === 'local'
+const isLocal = process.env.NEXT_PUBLIC_ENVIRONMENT === 'local'
 
 const storageOrigin = process.env.CSP_STORAGE_ORIGIN
 const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
