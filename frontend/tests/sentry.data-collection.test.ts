@@ -1,21 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { dataCollection } from '@/sentry.data-collection'
 
-// These assertions exist because every value below is a statement about what leaves the service.
-// Sentry v11 defaults all of them to collecting, so a key quietly dropped from the baseline is not
-// a config tidy-up - it starts sending transcript-adjacent PII. Loosening anything here should mean
-// deliberately editing this test too.
+// Sentry v11 defaults every option below to collecting, so a key dropped from the baseline starts
+// sending transcript-adjacent PII rather than just tidying config.
 
-// Mirrors sentry.data-collection.ts: the v10-equivalent deny list from Sentry's migration guide,
-// plus the ALB's x-amzn-oidc-* identity headers.
-const SENSITIVE_FIELDS = [
-  'forwarded',
-  '-ip',
-  'remote-',
-  'via',
-  '-user',
-  'x-amzn-oidc',
-]
+// Sentry matches deny terms as case-insensitive substrings - see shouldFilterDataKey in
+// @sentry/core/utils/data-collection/filterKeyValueData.js - so these assert on header and param
+// names rather than on the deny list itself, which would only compare the list to a copy of itself.
+const isDenied = (name: string, deny: string[]) =>
+  deny.some((term) => name.toLowerCase().includes(term.toLowerCase()))
 
 describe('Sentry dataCollection baseline', () => {
   it('does not collect user info, cookies or database query data', () => {
@@ -29,13 +22,35 @@ describe('Sentry dataCollection baseline', () => {
     expect(dataCollection.httpBodies).toEqual([])
   })
 
-  it('denies PII-bearing headers in both directions', () => {
-    expect(dataCollection.httpHeaders.request.deny).toEqual(SENSITIVE_FIELDS)
-    expect(dataCollection.httpHeaders.response.deny).toEqual(SENSITIVE_FIELDS)
+  // x-amzn-oidc-data is the ALB's signed JWT of user claims, including email address. Its siblings
+  // (-identity, -accesstoken) are also caught by Sentry's always-on SENSITIVE_KEY_SNIPPETS, but
+  // -data is not, so the baseline has to deny it itself.
+  it.each([
+    ['x-amzn-oidc-data', true],
+    ['x-amzn-oidc-identity', true],
+    ['x-forwarded-for', true],
+    ['x-real-ip', true],
+    ['remote-addr', true],
+    ['via', true],
+    ['x-user-email', true],
+    // Not PII, and useful for debugging - these must still reach Sentry.
+    ['content-type', false],
+    ['accept-language', false],
+  ])('denies request and response header %s: %s', (header, expected) => {
+    expect(isDenied(header, dataCollection.httpHeaders.request.deny)).toBe(
+      expected
+    )
+    expect(isDenied(header, dataCollection.httpHeaders.response.deny)).toBe(
+      expected
+    )
   })
 
-  it('denies PII-bearing URL query params', () => {
-    expect(dataCollection.urlQueryParams.deny).toEqual(SENSITIVE_FIELDS)
+  it.each([
+    ['remote-addr', true],
+    ['client-ip', true],
+    ['page', false],
+  ])('denies URL query param %s: %s', (param, expected) => {
+    expect(isDenied(param, dataCollection.urlQueryParams.deny)).toBe(expected)
   })
 
   it('records no GenAI or MCP inputs and outputs', () => {
