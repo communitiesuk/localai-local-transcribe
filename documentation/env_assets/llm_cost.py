@@ -99,6 +99,8 @@ PRICES = {
 # https://azure.microsoft.com/en-us/pricing/details/azure-openai/ and
 # https://aws.amazon.com/bedrock/pricing/. gpt-6-luna uses the short-context Data Zone
 # tier; it roughly doubles if a transcript pushes a call into the long-context tier.
+# Gemma 4 E2B uses the exact Bedrock Europe (Frankfurt) standard price. Bedrock does not
+# publish a discounted cached-input price for this model, so cached input is priced as input.
 # gpt-5-nano and gpt-5.1 reuse the PRICES entries above rather than a fresh USD
 # conversion, so the baseline row matches the headline figures exactly.
 _USD_TO_GBP = 0.74
@@ -107,11 +109,19 @@ FAST_MODEL_CANDIDATES_USD = {
     "gpt-6-luna": (0.11, 0.011, 0.55),
     "haiku-4-5": (1.10, 0.11, 5.50),
     "sonnet-5": (2.20, 0.22, 11.00),
+    "gemma-4-e2b": (0.05, 0.05, 0.10),
 }
-FAST_MODEL_CANDIDATES = {
+FAST_MODEL_CANDIDATES: dict[str, tuple[float, float, float]] = {
     "gpt-5-nano": PRICES["fast"],  # current FAST_LLM_MODEL_NAME, for reference
     "gpt-5.1": PRICES["best"],  # current BEST_LLM_MODEL_NAME, for reference
-    **{name: tuple(p * _USD_TO_GBP for p in prices) for name, prices in FAST_MODEL_CANDIDATES_USD.items()},
+    **{
+        name: (
+            prices[0] * _USD_TO_GBP,
+            prices[1] * _USD_TO_GBP,
+            prices[2] * _USD_TO_GBP,
+        )
+        for name, prices in FAST_MODEL_CANDIDATES_USD.items()
+    },
 }
 
 # Azure AI Speech standard transcription, UK South, GBP per hour of audio:
@@ -348,7 +358,7 @@ def fast_model_comparison(m: Meeting) -> list[tuple[str, float, float]]:
     return rows
 
 
-BOTH_TIER_CANDIDATES = ["gpt-6-luna", "haiku-4-5", "sonnet-5"]
+BOTH_TIER_CANDIDATES = ["gpt-6-luna", "haiku-4-5", "sonnet-5", "gemma-4-e2b"]
 
 
 def both_tier_model_comparison(m: Meeting) -> list[tuple[str, str, float]]:
@@ -363,12 +373,12 @@ def both_tier_model_comparison(m: Meeting) -> list[tuple[str, str, float]]:
     rows = []
     try:
         for name in BOTH_TIER_CANDIDATES:
-            PRICES["fast"] = PRICES["best"] = FAST_MODEL_CANDIDATES[name]  # type: ignore[assignment]
+            PRICES["fast"] = PRICES["best"] = FAST_MODEL_CANDIDATES[name]
             total = cost(weighted(m, citation_tier="best"))
             rows.append((f"All-{name}", f"BEST=FAST={name}", total))
 
-        PRICES["best"] = FAST_MODEL_CANDIDATES["sonnet-5"]  # type: ignore[assignment]
-        PRICES["fast"] = FAST_MODEL_CANDIDATES["haiku-4-5"]  # type: ignore[assignment]
+        PRICES["best"] = FAST_MODEL_CANDIDATES["sonnet-5"]
+        PRICES["fast"] = FAST_MODEL_CANDIDATES["haiku-4-5"]
         total = cost(weighted(m, citation_tier="best"))
         rows.append(("FAST=haiku, BEST=sonnet", "BEST=sonnet-5, FAST=haiku-4-5", total))
     finally:
