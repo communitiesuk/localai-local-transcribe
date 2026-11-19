@@ -1,4 +1,5 @@
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 data "aws_iam_policy_document" "ecs_task_execution_assume_role" {
   statement {
@@ -21,6 +22,36 @@ resource "aws_iam_role_policy_attachment" "task_execution_managed_policy" {
   role = aws_iam_role.ecs_task_execution.name
   # This is an aws managed policy for ecs task execution roles
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+data "aws_iam_policy_document" "ecs_task_execution_logs" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:Describe*",
+    ]
+    resources = [
+      module.frontend_log_group.kms_key_arn,
+      module.backend_log_group.kms_key_arn,
+      module.worker_log_group.kms_key_arn,
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["logs.${data.aws_region.current.name}.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role_policy" "ecs_task_execution_logs" {
+  name   = "${var.environment_name}-ecs-task-execution-logs"
+  role   = aws_iam_role.ecs_task_execution.id
+  policy = data.aws_iam_policy_document.ecs_task_execution_logs.json
 }
 
 data "aws_iam_policy_document" "task_assume_role" {

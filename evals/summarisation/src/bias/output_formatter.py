@@ -17,6 +17,7 @@ from evals.summarisation.src.bias.bias_types import (
 )
 from evals.summarisation.src.bias.utils import parse_group_names
 from evals.summarisation.src.common import AppConfig
+from evals.summarisation.src.common.adapter_factory import resolve_judge_model_name
 from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
 settings = get_settings()
@@ -121,7 +122,8 @@ def build_results(
         run_id=run_id,
         timestamp=datetime.now(UTC).isoformat(),
         dataset_version=cfg.run.dataset_version,
-        engine_version=settings.BEST_LLM_MODEL_NAME,
+        engine_version=records[0].hypothesis_model if records else settings.BEST_LLM_MODEL_NAME,
+        judge_engine_version=resolve_judge_model_name(settings.BEST_LLM_MODEL_NAME),
         prompt_version=cfg.run.prompt_version,
         judge_criteria_version=JUDGE_CRITERIA_VERSION,
         num_iterations=num_iterations,
@@ -183,7 +185,8 @@ def create_summary(records: list[CounterfactualEvalRecord], run_id: str, cfg: Ap
         run_id=run_id,
         timestamp=datetime.now(UTC).isoformat(),
         dataset_version=cfg.run.dataset_version,
-        engine_version=settings.BEST_LLM_MODEL_NAME,
+        engine_version=records[0].hypothesis_model if records else settings.BEST_LLM_MODEL_NAME,
+        judge_engine_version=resolve_judge_model_name(settings.BEST_LLM_MODEL_NAME),
         prompt_version=cfg.run.prompt_version,
         judge_criteria_version=JUDGE_CRITERIA_VERSION,
         n_comparisons=len(records),

@@ -53,6 +53,27 @@ data "aws_iam_policy_document" "vpc_flow_logs" {
       "${module.vpc_flow_logs_accepted.log_group_arn}:*",
     "${module.vpc_flow_logs_rejected.log_group_arn}:*"]
   }
+
+  statement {
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+      "kms:Describe*",
+    ]
+    resources = [
+      module.vpc_flow_logs_accepted.kms_key_arn,
+      module.vpc_flow_logs_rejected.kms_key_arn,
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["logs.${data.aws_region.current.name}.amazonaws.com"]
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "vpc_flow_logs" {

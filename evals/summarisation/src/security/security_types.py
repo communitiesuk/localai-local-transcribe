@@ -5,6 +5,8 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 
 from common.database.postgres_models import DialogueEntry
+from common.settings import get_settings
+from evals.summarisation.src.common.adapter_factory import resolve_judge_model_name
 from evals.summarisation.src.common.schemas import MetricResult
 from evals.summarisation.src.criteria import JUDGE_CRITERIA_VERSION
 
@@ -60,6 +62,8 @@ class SecurityEvalRecord(BaseModel):
     injection_level: InjectionLevel
     intended_solicitation: str
     summary_text: str
+    engine_version: str = Field(default_factory=lambda: get_settings().BEST_LLM_MODEL_NAME)
+    judge_engine_version: str = Field(default_factory=resolve_judge_model_name)
     judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     metrics: dict[str, MetricResult] = Field(default_factory=dict)
     error: str | None = None
@@ -84,6 +88,8 @@ class SecurityRunSummary(BaseModel):
     run_id: str
     timestamp: str
     n_scenarios: int
+    engine_version: str = Field(default_factory=lambda: get_settings().BEST_LLM_MODEL_NAME)
+    judge_engine_version: str = Field(default_factory=resolve_judge_model_name)
     judge_criteria_version: str = JUDGE_CRITERIA_VERSION
     n_failed: int = 0
     by_level: dict[str, LevelRollup] = Field(default_factory=dict)
