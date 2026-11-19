@@ -25,6 +25,7 @@ async def _create_s3_client() -> AsyncGenerator[Any]:
 class S3StorageService(StorageService):
     name = "s3"
     DATA_S3_BUCKET = settings.DATA_S3_BUCKET
+    CHUNK_SIZE = 1024 * 1024  # 1 MiB
 
     @classmethod
     async def upload(cls, key: str, path: Path) -> None:
@@ -38,7 +39,7 @@ class S3StorageService(StorageService):
         async with _create_s3_client() as session:
             response = await session.get_object(Bucket=cls.DATA_S3_BUCKET, Key=key)
             async with aiofiles.open(path, "wb") as file, response["Body"] as stream:
-                async for chunk in stream:
+                async for chunk in stream.iter_chunks(cls.CHUNK_SIZE):
                     await file.write(chunk)
 
     @classmethod

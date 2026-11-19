@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
@@ -74,15 +73,11 @@ async def test_download(
     stream.__aenter__ = AsyncMock(return_value=stream)
     stream.__aexit__ = AsyncMock(return_value=None)
 
-    async def chunk_iter():
+    async def chunk_iter(_):
         for chunk in chunks:
             yield chunk
 
-    # __aiter__ is looked up on the type and called as a bound method, so it must accept self.
-    def aiter_(_self: MagicMock) -> AsyncGenerator[bytes]:
-        return chunk_iter()
-
-    stream.__aiter__ = aiter_
+    stream.iter_chunks = chunk_iter
     mock_s3_client.get_object = AsyncMock(return_value={"Body": stream})
 
     await S3StorageService.download(key, path)
