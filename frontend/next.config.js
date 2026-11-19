@@ -4,7 +4,7 @@ const isDev = process.env.NODE_ENV === 'development'
 const isLocal =
   (process.env.ENVIRONMENT ?? process.env.NEXT_PUBLIC_ENVIRONMENT) === 'local'
 
-const storageOrigin = process.env.CSP_STORAGE_ORIGIN
+let storageOrigin = process.env.CSP_STORAGE_ORIGIN
 const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
 const reportGroup = 'csp-endpoint'
 const PLAUSIBLE_ORIGIN = 'https://plausible.io'
@@ -16,7 +16,8 @@ if (isLocal) {
 } else {
   connectSources.push(PLAUSIBLE_ORIGIN)
   if (storageOrigin) {
-    connectSources.push(new URL(storageOrigin).origin)
+    storageOrigin = new URL(storageOrigin).origin
+    connectSources.push(storageOrigin)
   }
 }
 
@@ -27,7 +28,7 @@ const cspHeader = `
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data:;
     font-src 'self';
-    media-src 'self' blob:;
+    media-src 'self' blob: ${storageOrigin ?? ''};
     object-src 'none';
     base-uri 'self';
     form-action 'self';
