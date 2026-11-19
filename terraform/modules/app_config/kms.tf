@@ -1,8 +1,8 @@
 data "aws_caller_identity" "current" {}
 
 resource "aws_kms_key" "main" {
-  description         = "local-transcribe-app-config-${var.environment_name}"
-  enable_key_rotation = true
+  description             = "local-transcribe-app-config-${var.environment_name}"
+  enable_key_rotation     = true
   rotation_period_in_days = 180
 
   tags = {
