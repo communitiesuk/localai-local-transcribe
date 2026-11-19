@@ -34,7 +34,7 @@ const cspHeader = `
     frame-src 'none';
     ${isLocal ? '' : 'upgrade-insecure-requests;'}
     connect-src ${connectSources.join(' ')};
-    ${!isLocal ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
+    ${reportUri ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
 `
 
 const headers = [
@@ -45,7 +45,7 @@ const headers = [
   },
 ]
 
-if (!isLocal) {
+if (reportUri) {
   headers.push({
     key: 'Reporting-Endpoints',
     value: `${reportGroup}="${reportUri}"`,
