@@ -1,4 +1,4 @@
-import { withSentryConfig } from '@sentry/nextjs'
+import { withSentryConfig } from '@sentry/nextjs/config'
 
 let nextConfig = {
   output: 'standalone',
@@ -20,12 +20,11 @@ let nextConfig = {
 }
 
 const sentryConfig = {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-  webpack: {
-    treeShaking: {
-      removeDebugLogging: true,
-    },
+  // Tree-shake Sentry's debug logging out of the bundle to reduce its size. This is the top-level,
+  // bundler-agnostic option: `next build` uses Turbopack, so `webpack`-scoped options would not
+  // apply to production builds. Replaces the `disableLogger` option removed in Sentry v11.
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
   },
   org: 'communitiesuk',
   project: 'localai-local-transcribe',
@@ -54,12 +53,6 @@ const sentryConfig = {
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors.
-  automaticVercelMonitors: true,
 }
 nextConfig = withSentryConfig(nextConfig, sentryConfig)
 
