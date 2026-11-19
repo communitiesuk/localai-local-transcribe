@@ -1,10 +1,14 @@
+FROM python:3.14-slim@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS base
+
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.14-slim AS builder
+FROM base AS builder
+
+ARG BUILD_ESSENTIAL_VERSION=12.12
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential=12.12 && \
+    apt-get install -y --no-install-recommends build-essential=${BUILD_ESSENTIAL_VERSION} && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -13,24 +17,28 @@ COPY scripts/get-poetry-version.py scripts/get-poetry-version.py
 RUN POETRY_VERSION=$(python scripts/get-poetry-version.py) && \
     pip install --no-cache-dir "poetry==${POETRY_VERSION}" poetry-plugin-export==1.9.0
 
+COPY scripts/check-python-version.py scripts/check-python-version.py
+RUN python scripts/check-python-version.py
+
 # Install packages, strip debug symbols, and clean up pip/setuptools directly in Stage 1
 RUN poetry export -f requirements.txt --output requirements.txt --with backend --without dev --without-hashes && \
-    pip install --no-cache-dir --target=/app/site-packages -r requirements.txt && \
+    python -m pip install --no-cache-dir --ignore-installed --prefix=/install -r requirements.txt && \
+    cd /install/lib/python*/site-packages && \
     # 1. Strip binary debug symbols from compiled extensions to save space
-    find /app/site-packages -name "*.so" -exec strip --strip-unneeded {} + && \
+    find . -name "*.so" -exec strip --strip-unneeded {} + && \
     # 2. Purge pip, setuptools, wheels, and standard pycaches
-    rm -rf /app/site-packages/pip* \
-           /app/site-packages/setuptools* \
-           /app/site-packages/wheel* \
-    && find /app/site-packages -type d -name "__pycache__" -prune -exec rm -rf {} +
+    rm -rf pip* setuptools* wheel* && \
+    find . -type d -name "__pycache__" -prune -exec rm -rf {} +
 
 # ==========================================
 # Stage 2: Runner
 # ==========================================
-FROM python:3.14-slim
+FROM base AS runner
+
+ARG CURL_VERSION=8.14.1-2+deb13u7
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl=${CURL_VERSION} && \
     rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -46,8 +54,8 @@ ADD --chown=appuser:appuser --chmod=0444 \
     https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
     /app/config/rds-ca-bundle.pem
 
-# Copy only the site-packages from the builder stage to the runner stage
-COPY --from=builder /app/site-packages /usr/local/lib/python3.14/site-packages
+# Copy the installed packages and scripts from the builder stage to the runner stage
+COPY --from=builder /install/ /usr/local/
 
 # Copy only what the backend needs to run directly to /app
 COPY --chown=appuser:appuser backend/ backend/
@@ -59,13 +67,8 @@ COPY --chown=appuser:appuser backend/entrypoint.sh .
 # Ensure entrypoint is executable
 RUN chmod +x backend/entrypoint.sh
 
-# Set PATH so executables in site-packages/bin (like alembic, uvicorn) are found.
-# site-packages now lives at the default interpreter path
-# (/usr/local/lib/python3.14/site-packages), so PYTHONPATH no longer needs to
-# point there - Python finds it automatically. PYTHONPATH=/app is what makes
-# our own backend/common/alembic source importable.
-ENV PATH="/usr/local/lib/python3.14/site-packages/bin:${PATH}" \
-    PYTHONPATH=/app
+# PYTHONPATH=/app is what makes our own backend/common/alembic source importable.
+ENV PYTHONPATH=/app
 
 USER appuser
 
