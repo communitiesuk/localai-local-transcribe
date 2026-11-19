@@ -1,7 +1,9 @@
+FROM python:3.14-slim@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS base
+
 # ==========================================
 # Stage 1: Builder
 # ==========================================
-FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928 AS builder
+FROM base AS builder
 
 ARG BUILD_ESSENTIAL_VERSION=12.12
 
@@ -21,6 +23,9 @@ COPY scripts/get-poetry-version.py scripts/get-poetry-version.py
 RUN POETRY_VERSION=$(python scripts/get-poetry-version.py) && \
     pip install --no-cache-dir "poetry==${POETRY_VERSION}" poetry-plugin-export==1.9.0
 
+COPY scripts/check-python-version.py scripts/check-python-version.py
+RUN python scripts/check-python-version.py
+
 RUN poetry export \
       -f requirements.txt \
       --output requirements.txt \
@@ -28,29 +33,28 @@ RUN poetry export \
       --without dev \
       --without-hashes
 
-RUN pip install --no-cache-dir \
-      --target=/opt/site-packages \
+RUN python -m pip install --no-cache-dir --ignore-installed \
+      --prefix=/install \
       -r requirements.txt
 
 # -------------------------------------------------------------
 # Clean unnecessary files directly in Stage 1 to keep Stage 2 light
 # -------------------------------------------------------------
 # 1. Strip debug symbols from compiled Python extensions (.so files)
-RUN find /opt/site-packages -name "*.so" -exec strip --strip-unneeded {} + && \
+RUN cd /install/lib/python*/site-packages && \
+    find . -name "*.so" -exec strip --strip-unneeded {} + && \
 # 2. Delete pip, setuptools, and wheel
-    rm -rf /opt/site-packages/pip* \
-           /opt/site-packages/setuptools* \
-           /opt/site-packages/wheel* \
+    rm -rf pip* setuptools* wheel* && \
 # 3. Clean up pycaches and test directories
-    && find /opt/site-packages -type d -name "__pycache__" -prune -exec rm -rf {} + \
-    && find /opt/site-packages -type d -name "tests" -prune -exec rm -rf {} + \
+    find . -type d -name "__pycache__" -prune -exec rm -rf {} + && \
+    find . -type d -name "tests" -prune -exec rm -rf {} + && \
 # 4. Remove Ray's Java runtime. This worker only creates Python actors; removing the jars prevents unnecessary vuln detections
-    && rm -rf /opt/site-packages/ray/jars
+    rm -rf ray/jars
 
 # ==========================================
 # Stage 2: Runner
 # ==========================================
-FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
+FROM base AS runner
 
 ARG FFMPEG_VERSION=7:7.1.5-0+deb13u1
 
@@ -87,8 +91,8 @@ ADD --chown=appuser:appuser --chmod=0444 \
     https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem \
     /app/config/rds-ca-bundle.pem
 
-# Copy built site-packages from builder (already pre-cleaned & stripped)
-COPY --from=builder /opt/site-packages /usr/local/lib/python3.14/site-packages
+# Copy built packages and scripts from builder (already pre-cleaned & stripped)
+COPY --from=builder /install/ /usr/local/
 
 # Copy runtime code cleanly directly to /app (No duplication in site-packages)
 COPY --chown=appuser:appuser common/ common/
