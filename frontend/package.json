@@ -80,7 +80,7 @@
     "cpy-cli": "^7.0.0",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",
-    "eslint-config-next": "^16.2.1",
+    "eslint-config-next": "^16.4.6",
     "eslint-config-prettier": "^10.1.5",
     "govuk-frontend": "^6.1.0",
     "jsdom": "^25.0.1",
