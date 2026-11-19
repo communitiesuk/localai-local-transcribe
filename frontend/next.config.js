@@ -3,12 +3,26 @@ import { withSentryConfig } from '@sentry/nextjs'
 const isDev = process.env.NODE_ENV === 'development'
 const isLocal = process.env.ENVIRONMENT === 'local'
 
+const storageOrigin = process.env.CSP_STORAGE_ORIGIN
 const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
 const reportGroup = 'csp-endpoint'
+const PLAUSIBLE_ORIGIN = 'https://plausible.io'
+const LOCAL_BACKEND_ORIGIN = 'http://localhost:8080'
+
+const connectSources = ["'self'"]
+if (isLocal) {
+  connectSources.push(LOCAL_BACKEND_ORIGIN)
+} else {
+  connectSources.push(PLAUSIBLE_ORIGIN)
+  if (storageOrigin) {
+    connectSources.push(new URL(storageOrigin).origin)
+  }
+}
 
 const cspHeader = `
     default-src 'self';
     script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''};
+    script-src-attr 'none';
     style-src 'self' 'unsafe-inline';
     img-src 'self' blob: data:;
     font-src 'self';
@@ -17,9 +31,10 @@ const cspHeader = `
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
+    frame-src 'none';
     ${isLocal ? '' : 'upgrade-insecure-requests;'}
-    connect-src 'self' ${isLocal ? 'http://localhost:8080' : ''} ${reportUri ? new URL(reportUri).origin : ''};
-    ${reportUri ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
+    connect-src ${connectSources.join(' ')};
+    ${!isLocal ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
 `
 
 const headers = [
@@ -30,7 +45,7 @@ const headers = [
   },
 ]
 
-if (reportUri) {
+if (!isLocal) {
   headers.push({
     key: 'Reporting-Endpoints',
     value: `${reportGroup}="${reportUri}"`,
