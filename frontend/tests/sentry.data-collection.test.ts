@@ -4,9 +4,10 @@ import { dataCollection } from '@/sentry.data-collection'
 // Sentry v11 defaults every option below to collecting, so a key dropped from the baseline starts
 // sending transcript-adjacent PII rather than just tidying config.
 
-// Sentry matches deny terms as case-insensitive substrings - see shouldFilterDataKey in
-// @sentry/core/utils/data-collection/filterKeyValueData.js - so these assert on header and param
-// names rather than on the deny list itself, which would only compare the list to a copy of itself.
+// Sentry matches deny terms as case-insensitive substrings - `shouldFilterDataKey` in @sentry/core
+// (src/utils/data-collection/filterKeyValueData.ts) does `lowerKey.includes(term.toLowerCase())`.
+// So these assert on header and param names rather than on the deny list itself, which would only
+// compare the list to a copy of itself and pass however the list were edited.
 const isDenied = (name: string, deny: string[]) =>
   deny.some((term) => name.toLowerCase().includes(term.toLowerCase()))
 
