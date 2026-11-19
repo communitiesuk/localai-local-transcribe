@@ -1669,6 +1669,56 @@
         }
       }
     },
+    "/minute_versions/{minute_version_id}/analytics-events": {
+      "post": {
+        "tags": ["Minutes"],
+        "summary": "Record Summary Interaction Event",
+        "description": "Record a summary interaction that only the client can observe (download, copy).\n\nNo `source_id`: a user may legitimately download or copy the same version repeatedly, and each of those is a\nreal event rather than a retry. `record_user_analytics_event` swallows its own failures, so this returns 204\neven if the insert fails - the client is never given a reason to retry or to surface an error.",
+        "operationId": "record_summary_interaction_event_minute_versions__minute_version_id__analytics_events_post",
+        "parameters": [
+          {
+            "name": "minute_version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Minute Version Id"
+            }
+          },
+          {
+            "name": "x-amzn-oidc-data",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "X-Amzn-Oidc-Data"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SummaryInteractionEventRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/templates": {
       "get": {
         "tags": ["Templates"],
@@ -3285,6 +3335,35 @@
         "type": "object",
         "required": ["id", "url", "extension", "created_datetime"],
         "title": "SingleRecording"
+      },
+      "SummaryCopyType": {
+        "type": "string",
+        "enum": ["button", "native"],
+        "title": "SummaryCopyType",
+        "description": "How a summary reached the clipboard, recorded as part of a SUMMARY_COPIED analytics event."
+      },
+      "SummaryInteractionEventRequest": {
+        "properties": {
+          "event_type": {
+            "$ref": "#/components/schemas/SummaryInteractionEventType"
+          },
+          "copy_type": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/SummaryCopyType" },
+              { "type": "null" }
+            ],
+            "description": "How the summary reached the clipboard. Required for copies, rejected for anything else."
+          }
+        },
+        "type": "object",
+        "required": ["event_type"],
+        "title": "SummaryInteractionEventRequest"
+      },
+      "SummaryInteractionEventType": {
+        "type": "string",
+        "enum": ["summary_downloaded", "summary_copied"],
+        "title": "SummaryInteractionEventType",
+        "description": "The client-observable summary events that `POST /minute_versions/{id}/analytics-events` accepts.\n\nDeliberately a separate, closed enum rather than `AnalyticsEventType`: a client must not be able to write\nevent types that are authoritative server/worker observations, such as SUMMARY_RECEIVED."
       },
       "TemplateMetadata": {
         "properties": {
