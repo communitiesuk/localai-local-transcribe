@@ -511,13 +511,6 @@ async def test_process_minute_generation_message_success(
 
 @pytest.mark.asyncio
 async def test_get_minute_version_eager_loads_everything_the_summary_event_reads(mock_minute_version, mock_session):
-    """The instance is expunged before returning, so a lazy load afterwards raises DetachedInstanceError.
-
-    The SUMMARY_RECEIVED event reads transcription.user and transcription.recordings, so both have to be
-    in the loader options. A mocked session cannot reproduce the detached failure, so assert the options
-    directly - this is the only thing standing between a dropped selectinload and summary generation
-    failing in production.
-    """
     ctx, session = mock_session
     session.get.return_value = mock_minute_version
 

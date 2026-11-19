@@ -243,10 +243,6 @@ class MinuteHandlerService:
             minute = minute_version.minute
             transcription = minute.transcription
             event_user = transcription.user
-            # As in `_record_transcription_received`, `recordings` may hold a re-encoded copy as well as the
-            # upload, so attribute the summary to the earliest one. Unlike that call this runs long after the
-            # upload, by which time retention cleanup may have removed them all, so tolerate an empty list -
-            # raising here would mark the minute version FAILED for an analytics-only problem.
             original_recording = min(
                 transcription.recordings, key=lambda recording: recording.created_datetime, default=None
             )
