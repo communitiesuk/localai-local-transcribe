@@ -138,7 +138,7 @@ class MinuteHandlerService:
                     # would be caught as a generation failure.
                     selectinload(MinuteVersion.minute)
                     .selectinload(Minute.transcription)
-                    .selectinload(Transcription.recordings),  # type: ignore[arg-type]
+                    .selectinload(Transcription.recordings),
                 ],
             )
             if not minute_version:
