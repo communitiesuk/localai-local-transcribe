@@ -22,12 +22,12 @@ How should we collect data to support prompt optimization while balancing resour
 * Prompted user feedback collection
 * Automated collection via system-flagged inputs
 * Manual annotation of production samples
-* Explicit meeting donation by councils or professionals
+* Explicit meeting donation by councils or users (for example, housing officers)
 * No systematic data collection
 
 ## Decision Outcome
 
-Under the new Data Sharing Agreement (DSA) we are working towards, meetings donated by councils or professionals may be used for prompt optimisation. Donation must be an affirmative choice; passive collection is not currently included.
+Under the new Data Sharing Agreement (DSA) we are working towards, meetings donated by councils or users, such as council housing officers, may be used for prompt optimisation. Donation must be an affirmative choice; passive collection is not currently included.
 
 Only anonymised data may be used. Identifiable audio must be deleted or anonymised within 12 months and handled under DSA controls.
 
@@ -67,9 +67,9 @@ Sample production inputs and have human annotators label them with quality score
 * Bad, because it is resource-intensive, slow, hard to scale, and annotator biases can reinforce existing system issues.
 * Bad, because sampling production data is implicit collection without an affirmative donation decision.
 
-### Explicit meeting donation by councils or professionals
+### Explicit meeting donation by councils or users
 
-Councils or professionals choose which meetings to donate.
+Councils or users, such as council housing officers, choose which meetings to donate.
 
 * Good, because collection is explicit and provides real usage data.
 * Bad, because asking for consent will bias donations towards non-problematic meetings.
