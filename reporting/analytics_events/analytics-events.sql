@@ -12,9 +12,7 @@
 -- source_id: UUID as text ('' when the event has no idempotency key)
 -- event_metadata: JSONB serialised as text ('' when the event has no metadata). Exported whole rather than
 --   flattened into a column per key, so new keys appear in the export without a query change. Keys are
---   event-type specific and defined by AnalyticsEventMetadata in common/database/postgres_models.py:
---   audio_duration_seconds, edit_type, copy_type, recording_source, transcription_id, minute_version_id,
---   template_id, template_source.
+--   event-type specific - see AnalyticsEventMetadata in common/database/postgres_models.py.
 --
 -- inclusion/exclusion rules:
 -- events on the current (partial) UTC day are excluded, so the last day in the export is always a full

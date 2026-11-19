@@ -6,7 +6,9 @@ Full export of the first-party `analytics_event` and `organisation` tables - eve
 
 `analytics_events_<timestamp>.csv`: `id, occurred_datetime (UTC), event_type, evaluation_id, organisation_id, recording_id, source_id, event_metadata`.
 
-`event_metadata` is the raw JSONB column serialised as text, blank when the event has no metadata. It is exported whole rather than flattened into a column per key, so keys added to `AnalyticsEventMetadata` (`common/database/postgres_models.py`) show up in the export without a change here. Keys are event-type specific: `audio_duration_seconds`, `edit_type`, `copy_type`, `recording_source`, `transcription_id`, `minute_version_id`, `template_id`, `template_source`.
+`event_metadata` is the raw JSONB column serialised as text, blank when the event has no metadata. It is exported whole rather than flattened into a column per key, so keys added to `AnalyticsEventMetadata` (`common/database/postgres_models.py`) show up in the export without a change here. Which keys an event carries depends on its type - see that class for the full set.
+
+A run with no events in range writes a header-only `analytics_events_<timestamp>.csv` rather than failing, so both files are always produced.
 
 Note that this replaces the earlier flattened `edit_type, recording_source, template_id, transcription_id, audio_duration_seconds` columns, so anything reading exports from before AIILG-1248 by column position or name needs updating.
 
