@@ -1,0 +1,14 @@
+{
+  "flags": {
+    "offline_recordings": {
+      "name": "offline_recordings",
+      "description": "Offline recordings feature flag"
+    }
+  },
+  "values": {
+    "offline_recordings": {
+      "enabled": false
+    }
+  },
+  "version": "1"
+}

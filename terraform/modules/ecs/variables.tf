@@ -259,3 +259,23 @@ variable "data_s3_bucket_name" {
   description = "name of the S3 bucket for data storage"
   type        = string
 }
+
+variable "app_config_application_id" {
+  description = "ID of the AppConfig application to prefetch on agent startup"
+  type        = string
+}
+
+variable "app_config_environment_id" {
+  description = "ID of the AppConfig environment to prefetch on agent startup"
+  type        = string
+}
+
+variable "app_config_configuration_profile_id" {
+  description = "ID of the AppConfig configuration profile to prefetch on agent startup"
+  type        = string
+}
+
+variable "app_config_read_policy_arn" {
+  description = "ARN of the IAM policy granting the backend task read access to AppConfig"
+  type        = string
+}
