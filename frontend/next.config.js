@@ -1,5 +1,58 @@
 import { withSentryConfig } from '@sentry/nextjs/config'
 
+const isDev = process.env.NODE_ENV === 'development'
+const isLocal =
+  (process.env.ENVIRONMENT ?? process.env.NEXT_PUBLIC_ENVIRONMENT) === 'local'
+
+const storageOrigin = process.env.CSP_STORAGE_ORIGIN
+const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
+const reportGroup = 'csp-endpoint'
+const PLAUSIBLE_ORIGIN = 'https://plausible.io'
+const LOCAL_BACKEND_ORIGIN = 'http://localhost:8080'
+
+const connectSources = ["'self'"]
+if (isLocal) {
+  connectSources.push(LOCAL_BACKEND_ORIGIN)
+} else {
+  connectSources.push(PLAUSIBLE_ORIGIN)
+  if (storageOrigin) {
+    connectSources.push(storageOrigin)
+  }
+}
+
+const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''};
+    script-src-attr 'none';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data:;
+    font-src 'self';
+    media-src 'self' blob: ${storageOrigin ?? ''};
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    frame-src 'none';
+    ${isLocal ? '' : 'upgrade-insecure-requests;'}
+    connect-src ${connectSources.join(' ')};
+    ${reportUri ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
+`
+
+const headers = [
+  {
+    // key: `Content-Security-Policy${isLocal ? '' : '-Report-Only'}`
+    key: 'Content-Security-Policy-Report-Only',
+    value: cspHeader.replace(/\n/g, ''),
+  },
+]
+
+if (reportUri) {
+  headers.push({
+    key: 'Reporting-Endpoints',
+    value: `${reportGroup}="${reportUri}"`,
+  })
+}
+
 let nextConfig = {
   output: 'standalone',
   async headers() {
@@ -10,6 +63,10 @@ let nextConfig = {
         // max-age=31536000, immutable`)
         source: '/:path((?!_next/static/).*)',
         headers: [{ key: 'Cache-Control', value: 'private, no-cache' }],
+      },
+      {
+        source: '/(.*)',
+        headers: headers,
       },
     ]
   },
