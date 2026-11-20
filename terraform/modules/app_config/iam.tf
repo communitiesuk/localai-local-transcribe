@@ -13,8 +13,8 @@ data "aws_iam_policy_document" "app_config_read" {
   }
 
   statement {
-    effect = "Allow"
-    actions = ["kms:Decrypt"]
+    effect    = "Allow"
+    actions   = ["kms:Decrypt"]
     resources = [aws_kms_key.main.arn]
   }
 }
