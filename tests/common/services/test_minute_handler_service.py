@@ -10,6 +10,7 @@ from common.database.postgres_models import (
     JobStatus,
     Minute,
     MinuteVersion,
+    Recording,
     Transcription,
     User,
     UserTemplate,
@@ -524,6 +525,53 @@ async def test_get_minute_version_eager_loads_everything_the_summary_event_reads
         if hasattr(element, "key")
     }
     assert {"minute", "transcription", "user", "recordings"} <= loaded_relationships
+
+
+@pytest.mark.asyncio
+async def test_process_minute_generation_message_attributes_summary_to_the_earliest_recording(
+    mocker, mock_minute_version, mock_minute, mock_transcription, mock_dialogue_entry
+):
+    """`Transcription.recordings` is ordered `created_datetime DESC`, so recordings[0] is the newest.
+
+    Processing can add a re-encoded copy, so the newest is not the file the user uploaded. Taking the
+    first entry would silently attribute the summary to the copy - hence `min()`, and hence this test.
+    """
+    reencoded = Recording(
+        id=uuid4(), user_id=uuid4(), s3_file_key="reencoded.wav", created_datetime=datetime(2026, 1, 2, tzinfo=UTC)
+    )
+    upload = Recording(
+        id=uuid4(), user_id=uuid4(), s3_file_key="upload.mp3", created_datetime=datetime(2026, 1, 1, tzinfo=UTC)
+    )
+    mock_minute.transcription = mock_transcription
+    mock_minute.transcription.dialogue_entries = [mock_dialogue_entry]
+    # Newest first, as the relationship's order_by would return them.
+    mock_minute.transcription.recordings = [reencoded, upload]
+    mock_minute.transcription.user = User(
+        id=uuid4(),
+        email=mock_email,
+        evaluation_id="EVAL-001",
+        organisation_id=uuid4(),
+        data_retention_days=30,
+        created_datetime=datetime.now(UTC),
+        updated_datetime=datetime.now(UTC),
+    )
+
+    mocker.patch.object(MinuteHandlerService, "get_minute_version", AsyncMock(return_value=mock_minute_version))
+    mocker.patch.object(MinuteHandlerService, "predict_meeting", return_value=MeetingType.standard)
+    mocker.patch.object(
+        MinuteHandlerService,
+        "generate_minutes",
+        AsyncMock(return_value=MinuteAndHallucinations(text="<p>summary</p>", total_claims=0, hallucinations=[])),
+    )
+    mocker.patch.object(MinuteHandlerService, "update_minute_version")
+
+    with (
+        patch("common.services.minute_handler_service.SessionLocal", return_value=MagicMock()),
+        patch("common.services.minute_handler_service.record_analytics_event_sync") as mock_record_event,
+    ):
+        await MinuteHandlerService.process_minute_generation_message(mock_minute_version.id)
+
+    assert mock_record_event.call_args.kwargs["recording_id"] == upload.id
 
 
 @pytest.mark.asyncio
