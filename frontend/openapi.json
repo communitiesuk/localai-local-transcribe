@@ -3448,6 +3448,12 @@
         "required": ["id"],
         "title": "TranscriptionCreateResponse"
       },
+      "TranscriptionFailureReason": {
+        "type": "string",
+        "enum": ["no_speech_detected", "error"],
+        "title": "TranscriptionFailureReason",
+        "description": "Why a transcription failed. Set alongside JobStatus.FAILED and null on anything that has not failed."
+      },
       "TranscriptionGetResponse": {
         "properties": {
           "id": { "type": "string", "format": "uuid", "title": "Id" },
@@ -3497,6 +3503,12 @@
               { "type": "null" }
             ],
             "title": "Client Date Of Birth"
+          },
+          "failure_reason": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/TranscriptionFailureReason" },
+              { "type": "null" }
+            ]
           }
         },
         "type": "object",

@@ -14,6 +14,7 @@ from common.database.postgres_models import (
     JobStatus,
     Minute,
     Transcription,
+    TranscriptionFailureReason,
 )
 from common.generate_meeting_title import generate_meeting_title
 from common.llm.client import FastOrBestLLM, create_default_chatbot
@@ -28,6 +29,8 @@ from common.types import DialogueEntry, TranscriptionJobMessageData
 settings = get_settings()
 transcription_manager = TranscriptionServiceManager()
 logger = logging.getLogger(__name__)
+
+NO_SPEECH_DETECTED_ERROR = "No speech was detected in this recording"
 
 
 class TranscriptionHandlerService:
@@ -145,6 +148,7 @@ class TranscriptionHandlerService:
         transcript: list[DialogueEntry] | None = None,
         title: str | None = None,
         error: str | None = None,
+        failure_reason: TranscriptionFailureReason | None = None,
     ) -> None:
         with SessionLocal() as session:
             transcription = session.get(Transcription, transcription_id)
@@ -157,6 +161,8 @@ class TranscriptionHandlerService:
                 transcription.dialogue_entries = transcript
             if error:
                 transcription.error = error
+            if failure_reason is not None:
+                transcription.failure_reason = failure_reason
             # The title passed here is AI-generated, so it must not clobber a title the
             # user has already set themselves (the "subject" field on the details form).
             if title and not transcription.title:
@@ -170,7 +176,7 @@ class TranscriptionHandlerService:
         transcription_id: UUID,
         async_transcription_message_data: TranscriptionJobMessageData | None = None,
     ) -> TranscriptionJobMessageData:
-        """Process a transcription job and save results. Returns True if job is complete, False otherwise."""
+        """Process a transcription job and save its results, returning the job data for the caller to act on."""
         try:
             transcription = cls.get_transcription(transcription_id)
         except Exception as e:
@@ -187,7 +193,20 @@ class TranscriptionHandlerService:
                 cls.update_transcription(transcription.id, JobStatus.IN_PROGRESS)
                 transcription_job = await transcription_manager.perform_transcription_steps(transcription=transcription)
 
-            if transcription_job.transcript:
+            if transcription_job.transcript is None:
+                # Still running. The worker puts it back on the queue to be polled again.
+                return transcription_job
+
+            if not transcription_job.transcript:
+                logger.info("No speech detected for transcription id=%s", transcription.id)
+                cls.update_transcription(
+                    transcription.id,
+                    status=JobStatus.FAILED,
+                    error=NO_SPEECH_DETECTED_ERROR,
+                    failure_reason=TranscriptionFailureReason.NO_SPEECH_DETECTED,
+                )
+                cls._record_transcription_failed(transcription, TranscriptionFailureReason.NO_SPEECH_DETECTED)
+            else:
                 dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
                 meeting_title = await generate_meeting_title(transcript=dialogue_entries)
                 cls.update_transcription(
@@ -199,7 +218,13 @@ class TranscriptionHandlerService:
             msg = f"Transcription failed: {e!s}"
             logger.exception(msg)
             try:
-                cls.update_transcription(transcription.id, status=JobStatus.FAILED, error=msg)
+                cls.update_transcription(
+                    transcription.id,
+                    status=JobStatus.FAILED,
+                    error=msg,
+                    failure_reason=TranscriptionFailureReason.ERROR,
+                )
+                cls._record_transcription_failed(transcription, TranscriptionFailureReason.ERROR)
             except Exception:
                 logger.exception("Error updating transcription status. Maybe it doesn't exist?")
 
@@ -223,6 +248,29 @@ class TranscriptionHandlerService:
             record_analytics_event_sync(
                 session,
                 AnalyticsEventType.TRANSCRIPTION_RECEIVED,
+                event_user.evaluation_id if event_user else None,
+                event_user.organisation_id if event_user else None,
+                recording_id=original_recording.id,
+                source_id=transcription.id,
+                event_metadata=event_metadata,
+            )
+
+    @classmethod
+    def _record_transcription_failed(cls, transcription: Transcription, reason: TranscriptionFailureReason) -> None:
+        """Record the TRANSCRIPTION_FAILED analytics event for a transcription that will not produce a transcript.
+
+        Recorded here rather than in the browser so every failure is counted, including ones where the user has
+        already closed the tab. The unique constraint on (event_type, source_id) keeps a retried job to one event.
+        """
+        original_recording = min(transcription.recordings, key=lambda recording: recording.created_datetime)
+        event_user = transcription.user
+        event_metadata: AnalyticsEventMetadata = {"failure_reason": reason}
+        if original_recording.source:
+            event_metadata["recording_source"] = original_recording.source
+        with SessionLocal() as session:
+            record_analytics_event_sync(
+                session,
+                AnalyticsEventType.TRANSCRIPTION_FAILED,
                 event_user.evaluation_id if event_user else None,
                 event_user.organisation_id if event_user else None,
                 recording_id=original_recording.id,
