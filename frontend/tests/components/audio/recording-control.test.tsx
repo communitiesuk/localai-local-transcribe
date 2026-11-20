@@ -1,9 +1,14 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import RecordingControl from '@/components/audio/recording-control'
+import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
 
 describe('<RecordingControl />', () => {
+  beforeEach(() => {
+    useRecordingUIStore.getState().resetRecordingUI()
+  })
+
   it('names the microphone in use above the recording length', () => {
     render(
       <RecordingControl
@@ -68,5 +73,110 @@ describe('<RecordingControl />', () => {
     )
 
     expect(screen.getByText('Recording length: 01:02:05')).toBeInTheDocument()
+  })
+  it('tells the user how long a recording can be', () => {
+    render(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={vi.fn()}
+        recordingDuration={0}
+      />
+    )
+
+    const limit = screen.getByText('Your recording must be 2 hours or less.')
+    const length = screen.getByText(/Recording length:/)
+
+    expect(limit).toBeInTheDocument()
+    expect(
+      length.compareDocumentPosition(limit) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('keeps recording while the length is under the limit', () => {
+    const onStopRecording = vi.fn()
+
+    render(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={onStopRecording}
+        recordingDuration={7_169_000}
+      />
+    )
+
+    expect(onStopRecording).not.toHaveBeenCalled()
+  })
+
+  it('stops with headroom, before the recording reaches 2 hours', () => {
+    const onStopRecording = vi.fn()
+
+    const { rerender } = render(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={onStopRecording}
+        recordingDuration={7_169_000}
+      />
+    )
+
+    expect(onStopRecording).not.toHaveBeenCalled()
+
+    rerender(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={onStopRecording}
+        recordingDuration={7_170_000}
+      />
+    )
+
+    expect(onStopRecording).toHaveBeenCalledTimes(1)
+    expect(useRecordingUIStore.getState().recordingUIState).toBe('stopping')
+    expect(useRecordingUIStore.getState().stoppedAtLimit).toBe(true)
+  })
+
+  it('stops only once, however many times the length updates past the limit', () => {
+    const onStopRecording = vi.fn()
+
+    const { rerender } = render(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={onStopRecording}
+        recordingDuration={7_169_000}
+      />
+    )
+
+    for (const recordingDuration of [7_170_000, 7_171_000, 7_172_000]) {
+      rerender(
+        <RecordingControl
+          stream={null}
+          isRecording={true}
+          onStopRecording={onStopRecording}
+          recordingDuration={recordingDuration}
+        />
+      )
+    }
+
+    expect(onStopRecording).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not ask the user to confirm a stop it made itself', () => {
+    render(
+      <RecordingControl
+        stream={null}
+        isRecording={true}
+        onStopRecording={vi.fn()}
+        recordingDuration={7_170_000}
+      />
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Stop Recording' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/This recording reached 2 hours and has stopped\./)
+    ).not.toBeInTheDocument()
   })
 })

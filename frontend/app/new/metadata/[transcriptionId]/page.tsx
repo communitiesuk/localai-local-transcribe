@@ -1,9 +1,13 @@
 'use client'
 
 import { use, useEffect, useRef, useState } from 'react'
-import { redirect, useRouter } from 'next/navigation'
+import { redirect, useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { BannerNotification } from '@/components/banner-notification'
+import {
+  RECORDING_STOPPED_AT_LIMIT_PARAM,
+  RecordingLimitWarning,
+} from '@/components/audio/recording-limit-warning'
 import { GovukErrorSummary, GovukNotificationBanner } from '@/components/govuk'
 import type { ErrorItem } from '@/components/govuk/error-summary'
 import { ProcessingSpinner } from '@/components/processing-spinner'
@@ -28,6 +32,9 @@ export default function AddRecordingMetadataPage(props: {
 }) {
   const { transcriptionId } = use(props.params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const stoppedAtLimit =
+    searchParams.get(RECORDING_STOPPED_AT_LIMIT_PARAM) === 'true'
   const setBanner = useBannerStore((store) => store.setBanner)
   const [recordingDetailsErrors, setRecordingDetailsErrors] = useState<
     ErrorItem[]
@@ -90,6 +97,7 @@ export default function AddRecordingMetadataPage(props: {
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-two-thirds">
         <BannerNotification />
+        {stoppedAtLimit && <RecordingLimitWarning />}
         {hasFailed && (
           <GovukNotificationBanner variant="important" title="Important">
             <p className="govuk-notification-banner__heading">
