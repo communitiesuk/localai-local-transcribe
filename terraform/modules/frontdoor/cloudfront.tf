@@ -199,6 +199,10 @@ resource "aws_cloudfront_origin_request_policy" "main" {
 resource "random_password" "cloudfront_header" {
   length  = 16
   special = false
+
+  keepers = {
+    rotated = "2026-11-20" # Change this value to force a new password
+  }
 }
 
 resource "aws_shield_subscription" "cloudfront" {
