@@ -59,7 +59,7 @@ jobs:
             NEXT_PUBLIC_ENVIRONMENT=${{ inputs.environment }}
             NEXT_PUBLIC_PLAUSIBLE_DOMAIN=${{ secrets.plausible-domain }}
             SENTRY_SECURITY_REPORT_URI=${{ secrets.sentry-security-report-uri }}
-            CSP_STORAGE_ORIGIN=https://${{ inputs.environment }}-local-transcribe-uploads.s3.${{ env.AWS_REGION }}.amazonaws.com
+            CSP_STORAGE_ORIGIN=https://${{ inputs.environment }}-local-transcribe-uploads.s3.amazonaws.com
           secrets: |
             "sentry_auth_token=${{ secrets.sentry-auth-token }}"
 
