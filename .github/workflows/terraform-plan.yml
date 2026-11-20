@@ -41,19 +41,17 @@ jobs:
       - name: Terraform init
         run: terraform init -input=false
 
+      # Note this `tfplan` file contains secrets, do not upload it anywhere!
       - name: Terraform plan
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
         run: terraform plan -no-color -input=false -out=tfplan -lock=false -var="image_tag=${{ github.sha }}"
 
+      # terraform show will redact 'sensitive' values automatically as long as
+      # the `-json` option is not used see:
+      # https://developer.hashicorp.com/terraform/cli/commands/show
       - name: Terraform show
         run: terraform show -no-color tfplan > tf_plan.txt
-
-      - name: Upload plan artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: tf-plan-${{ inputs.environment }}
-          path: terraform/${{ inputs.environment }}/tfplan
 
       - name: Upload readable plan
         uses: actions/upload-artifact@v7
