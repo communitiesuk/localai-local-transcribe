@@ -1,5 +1,7 @@
 locals {
   appconfig_agent_port = 2772
+  # https://gallery.ecr.aws/aws-appconfig/aws-appconfig-agent
+  appConfig_agent_image = "public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.0.247456"
 
 
   # ECS Exec (the embedded SSM Core Agent) requires write access to these paths at runtime.
@@ -321,7 +323,7 @@ resource "aws_ecs_task_definition" "backend" {
     {
       name              = "appconfig-agent"
       essential         = false
-      image             = "public.ecr.aws/aws-appconfig/aws-appconfig-agent:2.0.247456"
+      image             = local.appConfig_agent_image
       user              = "1000:1000"
       cpu               = 128
       memoryReservation = 256
@@ -354,7 +356,7 @@ resource "aws_ecs_task_definition" "backend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl --fail http://localhost:${local.appconfig_agent_port}/ || exit 1"]
+        command     = ["CMD-SHELL", "curl --fail http://localhost:${local.appconfig_agent_port}/applications/${var.app_config_application_id}/environments/${var.app_config_environment_id}/configurations/${var.app_config_configuration_profile_id} || exit 1"]
         interval    = 60
         retries     = 3
         startPeriod = 30
