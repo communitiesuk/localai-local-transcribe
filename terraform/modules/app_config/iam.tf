@@ -2,16 +2,20 @@
 data "aws_iam_policy_document" "app_config_read" {
   statement {
     effect = "Allow"
-
     actions = [
       "appconfig:StartConfigurationSession",
       "appconfig:GetLatestConfiguration",
     ]
-
     resources = [
       aws_appconfig_application.main.arn,
       "${aws_appconfig_application.main.arn}/*",
     ]
+  }
+
+  statement {
+    effect = "Allow"
+    actions = ["kms:Decrypt"]
+    resources = [aws_kms_key.main.arn]
   }
 }
 

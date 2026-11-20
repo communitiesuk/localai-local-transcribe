@@ -36,7 +36,7 @@ resource "aws_appconfig_configuration_profile" "main" {
 
 resource "aws_appconfig_hosted_configuration_version" "main" {
   application_id           = aws_appconfig_application.main.id
-  configuration_profile_id = aws_appconfig_configuration_profile.main.id
+  configuration_profile_id = aws_appconfig_configuration_profile.main.configuration_profile_id
   description              = "AppConfig feature flag configuration version for ${var.environment_name}"
   content_type             = "application/json"
 
