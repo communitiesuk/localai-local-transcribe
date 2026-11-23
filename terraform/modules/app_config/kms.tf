@@ -6,8 +6,9 @@ resource "aws_kms_key" "main" {
   rotation_period_in_days = 180
 
   tags = {
-    type        = "AppConfig KMS Key"
-    Environment = "${var.environment_name}"
+    type                  = "AppConfig KMS Key"
+    Environment           = "${var.environment_name}"
+    "terraform-plan-read" = true
   }
 }
 
