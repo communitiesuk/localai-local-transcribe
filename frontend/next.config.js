@@ -70,6 +70,14 @@ let nextConfig = {
       },
     ]
   },
+  turbopack: {
+    resolveAlias: {
+      // Use JSZip's prebuilt browser bundle. Its Node-style source pulls in Next's `stream` and `util`
+      // polyfills, and `util` evaluates a string as JavaScript on load, which violates our CSP
+      // (no 'unsafe-eval').
+      jszip: 'jszip/dist/jszip.min.js',
+    },
+  },
   sassOptions: {
     includePaths: ['./node_modules'],
     quietDeps: true,
