@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "github_actions_terraform_plan_assume_role" {
 
     condition {
       test     = "StringLike"
-      values   = ["repo:communitiesuk/localai-local-transcribe:*"]
+      values   = ["repo:communitiesuk/localai-local-transcribe:ref:refs/heads/${var.deployment_branch}"]
       variable = "token.actions.githubusercontent.com:sub"
     }
   }

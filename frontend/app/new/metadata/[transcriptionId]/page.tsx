@@ -1,15 +1,20 @@
 'use client'
 
 import { use, useEffect, useRef, useState } from 'react'
-import { redirect, useRouter } from 'next/navigation'
+import { redirect, useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { BannerNotification } from '@/components/banner-notification'
+import {
+  RECORDING_STOPPED_AT_LIMIT_PARAM,
+  RecordingLimitWarning,
+} from '@/components/audio/recording-limit-warning'
 import { GovukErrorSummary, GovukNotificationBanner } from '@/components/govuk'
 import type { ErrorItem } from '@/components/govuk/error-summary'
 import { ProcessingSpinner } from '@/components/processing-spinner'
 import { RecordingDetails } from '@/app/transcriptions/[transcriptionId]/RecordingDetails'
 import {
   isTranscriptionProcessing,
+  notifyNoSpeechDetected,
   notifyRecordingFailed,
   notifyRecordingSaved,
 } from '@/app/transcriptions/[transcriptionId]/TranscriptionStatus'
@@ -28,6 +33,9 @@ export default function AddRecordingMetadataPage(props: {
 }) {
   const { transcriptionId } = use(props.params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const stoppedAtLimit =
+    searchParams.get(RECORDING_STOPPED_AT_LIMIT_PARAM) === 'true'
   const setBanner = useBannerStore((store) => store.setBanner)
   const [recordingDetailsErrors, setRecordingDetailsErrors] = useState<
     ErrorItem[]
@@ -45,6 +53,8 @@ export default function AddRecordingMetadataPage(props: {
   })
 
   const hasFailed = transcription?.status === 'failed'
+  const hasNoSpeech =
+    hasFailed && transcription?.failure_reason === 'no_speech_detected'
 
   useEffect(() => {
     if (!isSaved || !transcription) {
@@ -53,12 +63,16 @@ export default function AddRecordingMetadataPage(props: {
     if (isTranscriptionProcessing(transcription.status)) {
       return
     }
-    if (transcription.status === 'failed') {
+    if (hasNoSpeech) {
+      notifyNoSpeechDetected(router, setBanner, transcription.id)
+      return
+    }
+    if (hasFailed) {
       notifyRecordingFailed(router, setBanner, transcription.id)
       return
     }
     notifyRecordingSaved(router, setBanner, transcription.id)
-  }, [isSaved, transcription, router, setBanner])
+  }, [isSaved, transcription, hasFailed, hasNoSpeech, router, setBanner])
 
   if (!transcription && !isLoading) {
     redirect('/')
@@ -90,10 +104,13 @@ export default function AddRecordingMetadataPage(props: {
     <div className="govuk-grid-row">
       <div className="govuk-grid-column-two-thirds">
         <BannerNotification />
+        {stoppedAtLimit && <RecordingLimitWarning />}
         {hasFailed && (
           <GovukNotificationBanner variant="important" title="Important">
             <p className="govuk-notification-banner__heading">
-              Something went wrong transcribing this recording.
+              {hasNoSpeech
+                ? 'No speech was detected in this recording, so there is no transcript.'
+                : 'Something went wrong transcribing this recording.'}
             </p>
             <p className="govuk-body">
               Your audio has been saved. You can still add these details and

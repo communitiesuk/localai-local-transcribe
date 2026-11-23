@@ -1,6 +1,6 @@
 -- analytics-events
 --
--- required parameters: none (exports every event, all dates)
+-- required parameters: none (exports every event up to the last full UTC day)
 --
 -- output columns and units:
 -- id: UUID as text, analytics_event primary key
@@ -10,13 +10,13 @@
 -- organisation_id: UUID as text ('' when the event has no organisation)
 -- recording_id: UUID as text ('' when the event has no recording)
 -- source_id: UUID as text ('' when the event has no idempotency key)
--- edit_type: text, event_metadata edit_type ('' when not captured)
--- recording_source: text, event_metadata recording_source ('' when not captured)
--- template_id: text, event_metadata template_id ('' when not captured)
--- transcription_id: text, event_metadata transcription_id ('' when not captured)
--- audio_duration_seconds: numeric, event_metadata audio_duration_seconds (null when not captured)
+-- event_metadata: JSONB serialised as text ('' when the event has no metadata). Exported whole rather than
+--   flattened into a column per key, so new keys appear in the export without a query change. Keys are
+--   event-type specific - see AnalyticsEventMetadata in common/database/postgres_models.py.
 --
--- inclusion/exclusion rules: none, full export
+-- inclusion/exclusion rules:
+-- events on the current (partial) UTC day are excluded, so the last day in the export is always a full
+-- 24 hours and per-day counts are not misread as a drop-off
 --
 -- duplicate/retried events:
 -- relies on the unique (event_type, source_id) constraint, so retried events are already de-duplicated
@@ -29,10 +29,9 @@ SELECT
     COALESCE(organisation_id::text, '') AS organisation_id,
     COALESCE(recording_id::text, '') AS recording_id,
     COALESCE(source_id::text, '') AS source_id,
-    COALESCE(event_metadata ->> 'edit_type', '') AS edit_type,
-    COALESCE(event_metadata ->> 'recording_source', '') AS recording_source,
-    COALESCE(event_metadata ->> 'template_id', '') AS template_id,
-    COALESCE(event_metadata ->> 'transcription_id', '') AS transcription_id,
-    (event_metadata ->> 'audio_duration_seconds')::numeric AS audio_duration_seconds
+    -- NULLIF catches JSONB holding the JSON value 'null' (how a Python None is serialised into the column),
+    -- which ::text would otherwise export as the literal string 'null'. COALESCE catches a SQL NULL column.
+    COALESCE(NULLIF(event_metadata::text, 'null'), '') AS event_metadata
 FROM analytics_event
+WHERE occurred_datetime < date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
 ORDER BY occurred_datetime;

@@ -140,6 +140,7 @@ Notes:
 - Only `TRANSCRIPTION_RECEIVED` and `SUMMARY_RECEIVED` come from the database; everything else is a Plausible aggregate count.
 - Measure 6 relies on the `organisation_id` custom property sent with the audio upload complete events (`hooks/use-start-transcription.ts`). If the organisation breakdown errors or comes back with only a null organisation, check that the property is allowed in Plausible's site settings (Custom properties). Events without it are keyed to a null organisation.
 - Plausible months follow the Plausible site's timezone, whereas database months are UTC.
+- This table names only the events the measures use. For the full set, see `AnalyticsEventName` in `frontend/lib/analytics.ts` for the Plausible events and `AnalyticsEventType` in `common/database/postgres_models.py` for the first party ones.
 
 ## Tests
 

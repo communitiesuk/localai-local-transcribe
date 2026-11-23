@@ -140,6 +140,10 @@ resource "aws_secretsmanager_secret" "database_password" {
 resource "random_password" "database_password" {
   length  = 32
   special = false
+
+  keepers = {
+    rotated = "2026-11-20" # Change this value to force a new password
+  }
 }
 
 resource "aws_secretsmanager_secret_version" "database_password" {

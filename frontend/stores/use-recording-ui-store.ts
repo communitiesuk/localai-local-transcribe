@@ -5,12 +5,17 @@ export type RecordingState =
 
 export type RecordingUIStore = {
   recordingUIState: RecordingState
+  stoppedAtLimit: boolean
   setRecordingUIState: (state: RecordingState) => void
+  setStoppedAtLimit: (stoppedAtLimit: boolean) => void
   resetRecordingUI: () => void
 }
 
 export const useRecordingUIStore = create<RecordingUIStore>((set) => ({
   recordingUIState: 'idle',
+  stoppedAtLimit: false,
   setRecordingUIState: (recordingUIState) => set({ recordingUIState }),
-  resetRecordingUI: () => set({ recordingUIState: 'idle' }),
+  setStoppedAtLimit: (stoppedAtLimit) => set({ stoppedAtLimit }),
+  resetRecordingUI: () =>
+    set({ recordingUIState: 'idle', stoppedAtLimit: false }),
 }))

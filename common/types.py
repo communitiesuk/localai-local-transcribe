@@ -17,6 +17,7 @@ from common.database.postgres_models import (
     RecordingSource,
     SummaryCopyType,
     TemplateType,
+    TranscriptionFailureReason,
     UserRole,
 )
 from common.settings import get_settings
@@ -219,6 +220,7 @@ class TranscriptionGetResponse(BaseModel):
     client_name: str | None
     case_id: str | None
     client_date_of_birth: datetime | None
+    failure_reason: TranscriptionFailureReason | None = None
 
 
 class SingleRecording(BaseModel):

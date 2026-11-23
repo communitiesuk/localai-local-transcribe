@@ -214,6 +214,13 @@ class Chat(BaseTableMixin, table=True):
     error: str | None = Field(default=None)
 
 
+class TranscriptionFailureReason(StrEnum):
+    """Why a transcription failed. Set alongside JobStatus.FAILED and null on anything that has not failed."""
+
+    NO_SPEECH_DETECTED = auto()
+    ERROR = auto()
+
+
 class Transcription(BaseTableMixin, table=True):
     __tablename__ = "transcription"
     created_datetime: datetime = Field(sa_column=created_datetime_column(), default=None)
@@ -224,6 +231,10 @@ class Transcription(BaseTableMixin, table=True):
         default=JobStatus.AWAITING_START, sa_column_kwargs={"server_default": JobStatus.AWAITING_START.name}
     )
     error: str | None = Field(default=None)
+    failure_reason: TranscriptionFailureReason | None = Field(
+        default=None,
+        sa_column=Column(Enum(TranscriptionFailureReason, name="transcriptionfailurereason"), nullable=True),
+    )
     user: User | None = Relationship(back_populates="transcriptions")
     user_id: UUID | None = Field(default=None, foreign_key="user.id")
     # metadata fields:
@@ -364,6 +375,7 @@ class AnalyticsEventType(StrEnum):
     AUDIO_UPLOAD_COMPLETED = auto()
     SUMMARY_RECEIVED = auto()
     TRANSCRIPTION_RECEIVED = auto()
+    TRANSCRIPTION_FAILED = auto()
     TRANSCRIPTION_EDIT_SUBMITTED = auto()
     SUMMARY_REQUESTED = auto()
     SUMMARY_EDIT_SUBMITTED = auto()
@@ -408,6 +420,7 @@ class AnalyticsEventMetadata(TypedDict, total=False):
     edit_type: TranscriptionEditType | SummaryEditType
     copy_type: SummaryCopyType
     recording_source: RecordingSource
+    failure_reason: TranscriptionFailureReason
     # All stored as strings (rather than UUID) since event_metadata is opaque JSONB, not FK-backed.
     transcription_id: str
     minute_version_id: str

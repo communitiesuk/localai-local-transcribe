@@ -14,6 +14,11 @@ import {
   GovukNotificationBanner,
 } from '@/components/govuk'
 import { downloadRecording } from '@/lib/download-recording'
+import { useRecordingUIStore } from '@/stores/use-recording-ui-store'
+import {
+  RECORDING_STOPPED_AT_LIMIT_PARAM,
+  RecordingLimitWarning,
+} from '@/components/audio/recording-limit-warning'
 
 const LOCK_NAVIGATION_MESSAGE =
   'You have a recording that has not been uploaded. Are you sure you want to leave this page? Your recording will be discarded if you do not upload it.'
@@ -35,6 +40,11 @@ export function UploadStatus() {
 
   const recordedFile = uploadingFrom === 'recording' ? _values?.file : null
 
+  // The recorder unmounts as soon as the upload starts, so the automatic stop is reported here.
+  const stoppedAtLimit = useRecordingUIStore((state) => state.stoppedAtLimit)
+  const wasStoppedAtLimit = uploadingFrom === 'recording' && stoppedAtLimit
+  const limitWarning = wasStoppedAtLimit ? <RecordingLimitWarning /> : null
+
   useLockNavigation(
     status === 'pending' || status === 'error' ? LOCK_NAVIGATION_MESSAGE : false
   )
@@ -43,9 +53,13 @@ export function UploadStatus() {
     if (status === 'success' && transcriptionId) {
       hasRedirectedToMetadataRef.current = true
       reset()
-      router.push(`/new/metadata/${transcriptionId}`)
+      router.push(
+        wasStoppedAtLimit
+          ? `/new/metadata/${transcriptionId}?${RECORDING_STOPPED_AT_LIMIT_PARAM}=true`
+          : `/new/metadata/${transcriptionId}`
+      )
     }
-  }, [status, transcriptionId, reset, router])
+  }, [status, transcriptionId, wasStoppedAtLimit, reset, router])
 
   const needsRetry =
     status === 'error' || (status === 'pending' && awaitingManualRetry)
@@ -67,6 +81,7 @@ export function UploadStatus() {
 
     return (
       <div className="space-y-4">
+        {limitWarning}
         <GovukHeading>{heading}</GovukHeading>
         {status === 'error' ? (
           <p className="govuk-error-message" role="alert">
@@ -103,9 +118,12 @@ export function UploadStatus() {
   }
 
   return (
-    <ProcessingSpinner
-      label={uploadingFrom === 'upload' ? 'Uploading' : 'Processing'}
-      message={`${uploadingFrom === 'upload' ? 'Uploading File' : 'Processing recording'}…`}
-    />
+    <>
+      {limitWarning}
+      <ProcessingSpinner
+        label={uploadingFrom === 'upload' ? 'Uploading' : 'Processing'}
+        message={`${uploadingFrom === 'upload' ? 'Uploading File' : 'Processing recording'}…`}
+      />
+    </>
   )
 }

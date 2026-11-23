@@ -8,7 +8,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-import aioboto3
 import httpx
 from azure.storage.blob import BlobClient, ContainerClient, ContainerSasPermissions, generate_container_sas
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
@@ -20,7 +19,6 @@ from common.services.transcription_services.azure_stt_base import make_stt_reque
 from common.settings import get_settings
 from common.types import TranscriptionJobMessageData
 
-async_session = aioboto3.Session()
 settings = get_settings()
 logger = logging.getLogger(__name__)
 storage_service = get_storage_service(settings.STORAGE_SERVICE_NAME)
