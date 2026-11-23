@@ -209,6 +209,11 @@ module "ecs" {
   vpc_id               = module.networking.vpc.id
   app_url              = local.app_host
 
+  app_config_application_id           = module.app_config.application_id
+  app_config_environment_id           = module.app_config.environment_id
+  app_config_configuration_profile_id = module.app_config.configuration_profile_id
+  app_config_read_policy_arn          = module.app_config.read_policy_arn
+
   frontend_image_name = "${module.ecr.ecr_frontend_repository_url}:${var.image_tag}"
   backend_image_name  = "${module.ecr.ecr_backend_repository_url}:${var.image_tag}"
   worker_image_name   = "${module.ecr.ecr_worker_repository_url}:${var.image_tag}"
@@ -248,6 +253,12 @@ module "uploads_bucket" {
   force_destroy                 = false
   worker_task_role_name         = module.ecs.worker_task_role_name
   backend_task_role_name        = module.ecs.backend_task_role_name
+}
+
+module "app_config" {
+  source = "../modules/app_config"
+
+  environment_name = local.environment_name
 }
 
 module "monitoring" {
