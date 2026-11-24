@@ -16,6 +16,7 @@ and every other call keep their existing assumptions.
 """
 
 from dataclasses import dataclass
+from typing import NamedTuple
 
 # =============================================================================
 # Token model (Appendix B.1 convention: X transcript words, 2 tokens per word)
@@ -88,9 +89,16 @@ CACHE_HIT = 0.75
 # https://azure.microsoft.com/en-us/pricing/details/azure-openai/
 # =============================================================================
 
+
+class TokenPrices(NamedTuple):
+    input: float
+    cached_input: float
+    output: float
+
+
 PRICES = {
-    "best": (1.04, 0.11, 8.28),  # gpt-5.1  (BEST_LLM_MODEL_NAME)
-    "fast": (0.04, 0.01, 0.31),  # gpt-5-nano (FAST_LLM_MODEL_NAME)
+    "best": TokenPrices(1.04, 0.11, 8.28),  # gpt-5.1  (BEST_LLM_MODEL_NAME)
+    "fast": TokenPrices(0.04, 0.01, 0.31),  # gpt-5-nano (FAST_LLM_MODEL_NAME)
 }
 
 # Candidate FAST-tier substitutes considered for the guardrail/speaker-id/title calls.
@@ -105,20 +113,20 @@ PRICES = {
 # conversion, so the baseline row matches the headline figures exactly.
 _USD_TO_GBP = 0.74
 FAST_MODEL_CANDIDATES_USD = {
-    "gpt-5-6-luna": (0.44, 0.05, 1.98),
-    "gpt-6-luna": (0.11, 0.011, 0.55),
-    "haiku-4-5": (1.10, 0.11, 5.50),
-    "sonnet-5": (2.20, 0.22, 11.00),
-    "gemma-4-e2b": (0.05, 0.05, 0.10),
+    "gpt-5-6-luna": TokenPrices(0.44, 0.05, 1.98),
+    "gpt-6-luna": TokenPrices(0.11, 0.011, 0.55),
+    "haiku-4-5": TokenPrices(1.10, 0.11, 5.50),
+    "sonnet-5": TokenPrices(2.20, 0.22, 11.00),
+    "gemma-4-e2b": TokenPrices(0.05, 0.05, 0.10),
 }
-FAST_MODEL_CANDIDATES: dict[str, tuple[float, float, float]] = {
+FAST_MODEL_CANDIDATES: dict[str, TokenPrices] = {
     "gpt-5-nano": PRICES["fast"],  # current FAST_LLM_MODEL_NAME, for reference
     "gpt-5.1": PRICES["best"],  # current BEST_LLM_MODEL_NAME, for reference
     **{
-        name: (
-            prices[0] * _USD_TO_GBP,
-            prices[1] * _USD_TO_GBP,
-            prices[2] * _USD_TO_GBP,
+        name: TokenPrices(
+            prices.input * _USD_TO_GBP,
+            prices.cached_input * _USD_TO_GBP,
+            prices.output * _USD_TO_GBP,
         )
         for name, prices in FAST_MODEL_CANDIDATES_USD.items()
     },
