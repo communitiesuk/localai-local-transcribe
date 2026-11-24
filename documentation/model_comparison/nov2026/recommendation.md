@@ -43,7 +43,7 @@ Points show the overall F1 score on the left and average form-summary score on t
 show one standard deviation: variation across safety-check category F1 scores on the left and
 across the 10 form-summary cases on the right. Bars show the F1 score for accepting good summaries.
 
-| Model | Form-summary score (/5) | Form-summary cost per meeting | Safety-check F1 | Good summaries accepted (F1) |
+| Model | Form-summary score (/5) | Form-summary cost per meeting | Safety-check F1 (%) | Good summaries accepted (F1, %) |
 | --- | ---: | ---: | ---: | ---: |
 | GPT 5 Nano (current) | 4.66 | 11.0p | 59.6% | 77.3% |
 | **GPT 6 Luna** | **4.84** | **11.5p** | 52.5% | 0.0% |
