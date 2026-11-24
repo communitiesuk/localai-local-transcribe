@@ -108,7 +108,7 @@ class TranscriptionConfirmResponse(BaseModel):
 
 
 class UpdateTranscriptionTitleRequest(BaseModel):
-    title: str | None = None
+    title: str | None
 
 
 class UpdateTranscriptionMetadataRequest(BaseModel):

@@ -121,6 +121,12 @@ def _created_datetime_order(sort: TranscriptionSortOrder) -> ColumnElement[Any]:
     return column.asc() if sort == TranscriptionSortOrder.oldest else column.desc()
 
 
+def _normalise_title(title: str | None) -> str | None:
+    if title is None:
+        return None
+    return title.strip() or None
+
+
 @transcriptions_router.get("/transcriptions/labelled", response_model=LabelledTranscriptionsResponse)
 async def list_labelled_transcriptions(
     session: SQLSessionDep,
@@ -316,7 +322,7 @@ async def create_transcription(
         raise HTTPException(404, detail="Recording not found")
     transcription = Transcription(
         user_id=current_user.id,
-        title=request.title,
+        title=_normalise_title(request.title),
         date_of_recording=(
             recording.file_created_at.astimezone(dt.UTC).replace(tzinfo=None)
             if recording.file_created_at is not None
@@ -425,9 +431,8 @@ async def update_transcription_title(
 ) -> None:
     """Update a transcription title."""
     transcription = await _get_owned_transcription_or_404(session, transcription_id, current_user)
-    if request.title is not None:
-        transcription.title = request.title
-        await session.commit()
+    transcription.title = _normalise_title(request.title)
+    await session.commit()
 
 
 @transcriptions_router.put("/transcriptions/{transcription_id}/details", status_code=204)
@@ -447,7 +452,7 @@ async def update_transcription_metadata(
     transcription.date_of_recording = (
         request.date_of_recording.replace(tzinfo=None) if request.date_of_recording is not None else None
     )
-    transcription.title = request.subject
+    transcription.title = _normalise_title(request.subject)
 
     transcription.updated_datetime = dt.datetime.now(tz=dt.UTC)
     await session.commit()

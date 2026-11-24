@@ -56,9 +56,7 @@ export const TranscriptionTitleEditor = ({
     if (errorMessage) errorSummaryRef.current?.focus()
   }, [errorMessage])
 
-  const placeholder = ['awaiting_start', 'in_progress'].includes(status)
-    ? 'Generating title'
-    : 'Add title'
+  const placeholder = 'Add title'
 
   const isSaving = form.formState.isSubmitting
 

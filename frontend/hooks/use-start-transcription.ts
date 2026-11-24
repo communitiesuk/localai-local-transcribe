@@ -200,7 +200,6 @@ export const useStartTranscription = (
     defaultValues: {
       file: null,
       recordingId: undefined,
-      title: '',
       ...defaultValues,
     },
   })
