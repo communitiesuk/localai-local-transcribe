@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 _public_key_cache: dict[str, str] = {}
 
+# The user local development always authenticates as. Seeded by scripts/seed_local_database.py.
+LOCAL_USER_SUBJECT_ID = "test123"
+LOCAL_USER_EMAIL = "test@test.co.uk"
+
 
 @dataclass
 class UserAuthorisationResult:
@@ -56,8 +60,8 @@ def _verify_and_decode_alb_jwt(token: str) -> dict:
 
 def __load_dummy_user_info() -> UserAuthorisationResult:
     return UserAuthorisationResult(
-        subject_id="test123",
-        email="test@test.co.uk",
+        subject_id=LOCAL_USER_SUBJECT_ID,
+        email=LOCAL_USER_EMAIL,
         is_authorised=True,
         auth_reason="LOCAL_TESTING",
     )
