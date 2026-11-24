@@ -61,7 +61,7 @@ Form results are based on 10 cases; guardrail results are based on 51 cases.
 | Claude Sonnet 5 with Claude Haiku 4.5 | Most consistent, but about 15 times the cost of GPT 6 Luna for the same mean score |
 | Claude Haiku 4.5 | Similar to GPT 6 Luna on forms, but 2 to 10 times the cost; Haiku 5.5 is not available through our Bedrock integration |
 | GPT 5.6 Luna | Weaker and more expensive than GPT 6 Luna |
-| Gemma 4 E2B | Cheapest, but it performed poorly on guardrails (F1 0.18) and citations (90% of citation checks failed) |
+| Gemma 4 E2B | Cheapest, but it performed poorly on guardrails (F1 17.9%) and citations (90% of citation checks failed) |
 
 ## Actions
 
