@@ -109,8 +109,12 @@ resource "aws_iam_role_policy_attachment" "backend_task_allow_ecs_exec" {
   policy_arn = aws_iam_policy.allow_ecs_exec.arn
 }
 
+resource "aws_iam_role_policy_attachment" "backend_task_app_config_read" {
+  role       = aws_iam_role.backend_ecs_task.name
+  policy_arn = var.app_config_read_policy_arn
+}
+
 resource "aws_iam_role_policy_attachment" "worker_task_allow_ecs_exec" {
   role       = aws_iam_role.worker_ecs_task.name
   policy_arn = aws_iam_policy.allow_ecs_exec.arn
 }
-

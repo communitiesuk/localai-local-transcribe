@@ -106,7 +106,8 @@ class TranscriptionServiceManager:
                     msg = "adapter not recognised"
                     raise RuntimeError(msg)
 
-        if not transcription_job.transcript:
+        # a transcript of None is an asynchronous job that still has to be polled
+        if transcription_job.transcript is None:
             transcription_job = await self.check_transcription(adapter.name, transcription_job)
         return transcription_job
 

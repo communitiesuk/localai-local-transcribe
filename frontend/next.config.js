@@ -1,4 +1,57 @@
-import { withSentryConfig } from '@sentry/nextjs'
+import { withSentryConfig } from '@sentry/nextjs/config'
+
+const isDev = process.env.NODE_ENV === 'development'
+const isLocal =
+  (process.env.ENVIRONMENT ?? process.env.NEXT_PUBLIC_ENVIRONMENT) === 'local'
+
+const storageOrigin = process.env.CSP_STORAGE_ORIGIN
+const reportUri = process.env.SENTRY_SECURITY_REPORT_URI
+const reportGroup = 'csp-endpoint'
+const PLAUSIBLE_ORIGIN = 'https://plausible.io'
+const LOCAL_BACKEND_ORIGIN = 'http://localhost:8080'
+
+const connectSources = ["'self'"]
+if (isLocal) {
+  connectSources.push(LOCAL_BACKEND_ORIGIN)
+} else {
+  connectSources.push(PLAUSIBLE_ORIGIN)
+  if (storageOrigin) {
+    connectSources.push(storageOrigin)
+  }
+}
+
+const cspHeader = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''};
+    script-src-attr 'none';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' blob: data:;
+    font-src 'self';
+    media-src 'self' blob: ${storageOrigin ?? ''};
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    frame-src 'none';
+    ${isLocal ? '' : 'upgrade-insecure-requests;'}
+    connect-src ${connectSources.join(' ')};
+    ${reportUri ? `report-uri ${reportUri}; report-to ${reportGroup};` : ''}
+`
+
+const headers = [
+  {
+    // key: `Content-Security-Policy${isLocal ? '' : '-Report-Only'}`
+    key: 'Content-Security-Policy-Report-Only',
+    value: cspHeader.replace(/\n/g, ''),
+  },
+]
+
+if (reportUri) {
+  headers.push({
+    key: 'Reporting-Endpoints',
+    value: `${reportGroup}="${reportUri}"`,
+  })
+}
 
 let nextConfig = {
   output: 'standalone',
@@ -11,7 +64,22 @@ let nextConfig = {
         source: '/:path((?!_next/static/).*)',
         headers: [{ key: 'Cache-Control', value: 'private, no-cache' }],
       },
+      {
+        source: '/(.*)',
+        headers: headers,
+      },
     ]
+  },
+  turbopack: {
+    resolveAlias: {
+      // Use JSZip's prebuilt browser bundle. The JSZip package ships both a source bundle
+      // intended for Node environments and a prebuilt browser bundle. The former requests
+      // Node's `streams` feature, which is polyfilled by Turbopack when being packaged for
+      // a browser, and this polyfill evaluates a string as JavaScript on load, which violates
+      // our CSP (no 'unsafe-eval'). By explicitly requesting the browser bundle instead, this
+      // polyfill is not included and the distributed code no longer contains unsafe evaluation.
+      jszip: 'jszip/dist/jszip.min.js',
+    },
   },
   sassOptions: {
     includePaths: ['./node_modules'],
@@ -20,12 +88,11 @@ let nextConfig = {
 }
 
 const sentryConfig = {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
-  webpack: {
-    treeShaking: {
-      removeDebugLogging: true,
-    },
+  // Tree-shake Sentry's debug logging out of the bundle to reduce its size. This is the top-level,
+  // bundler-agnostic option: `next build` uses Turbopack, so `webpack`-scoped options would not
+  // apply to production builds. Replaces the `disableLogger` option removed in Sentry v11.
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
   },
   org: 'communitiesuk',
   project: 'localai-local-transcribe',
@@ -54,12 +121,6 @@ const sentryConfig = {
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
   },
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors.
-  automaticVercelMonitors: true,
 }
 nextConfig = withSentryConfig(nextConfig, sentryConfig)
 
