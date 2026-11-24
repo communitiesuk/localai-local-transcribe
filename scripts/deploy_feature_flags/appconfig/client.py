@@ -45,9 +45,7 @@ def create_new_version(client: Any, application_id: str, configuration_profile_i
     return int(response["VersionNumber"])
 
 
-def validate_new_version(
-    client: Any, application_id: str, configuration_profile_id: str, version_number: int
-) -> None:
+def validate_new_version(client: Any, application_id: str, configuration_profile_id: str, version_number: int) -> None:
     """Validate a hosted configuration version against the configuration profile's validators.
     Raises `botocore.exceptions.ClientError` (e.g. BadRequestException) if validation fails.
     """

@@ -134,7 +134,9 @@ def main() -> int:
         logger.exception("Failed to start feature flag deployment.")
         return 1
 
-    logger.info("Started feature flag deployment number %s for configuration version %s.", deployment_number, new_version)
+    logger.info(
+        "Started feature flag deployment number %s for configuration version %s.", deployment_number, new_version
+    )
     write_github_output("status", "updated")
     return 0
 
