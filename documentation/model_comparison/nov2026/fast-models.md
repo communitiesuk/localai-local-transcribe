@@ -8,14 +8,14 @@ Raw data in Sharepoint, `model_comparison_november_2026`
 
 | Metric | gpt-5-nano (prod) | gpt-5-6-luna | gpt-6-luna | haiku-4-5 | sonnet-5 | gemma-4-e2b |
 |---|---:|---:|---:|---:|---:|---:|
-| Overall accuracy score (/1) | 0.596 | 0.601 | 0.525 | 0.587 | **0.727** | 0.179 |
+| Overall F1 | 59.6% | 60.1% | 52.5% | 58.7% | **72.7%** | 17.9% |
 | Exact category match | **70.6%** | 35.3% | 17.6% | 58.8% | **70.6%** | 41.2% |
-| Good summaries accepted score (/1) | **0.773** | 0.400 | 0.000 | 0.745 | 0.588 | 0.571 |
-| Factual accuracy score (/1) | 0.870 | 0.522 | 0.533 | **0.880** | 0.800 | 0.000 |
-| Evidence and citation score (/1) | **0.727** | 0.250 | 0.178 | 0.167 | 0.615 | 0.000 |
-| Required content and structure score (/1) | 0.444 | **0.800** | 0.769 | 0.000 | 0.500 | 0.000 |
-| Instruction-following score (/1) | 0.500 | 0.632 | 0.667 | 0.727 | **1.000** | 0.000 |
-| Safety-check cost per meeting | £0.0013 | £0.0104 | £0.0026 | £0.0260 | £0.0520 | **£0.0012** |
+| Good summaries accepted (F1) | **77.3%** | 40.0% | 0.0% | 74.5% | 58.8% | 57.1% |
+| Factual integrity (F1) | 87.0% | 52.2% | 53.3% | **88.0%** | 80.0% | 0.0% |
+| Evidence and citation quality (F1) | **72.7%** | 25.0% | 17.8% | 16.7% | 61.5% | 0.0% |
+| Required content and structure (F1) | 44.4% | **80.0%** | 76.9% | 0.0% | 50.0% | 0.0% |
+| Instruction integrity (F1) | 50.0% | 63.2% | 66.7% | 72.7% | **100.0%** | 0.0% |
+| Safety-check cost per meeting | 0.13p | 1.04p | 0.26p | 2.60p | 5.20p | **0.12p** |
 
 ## Form-summary evaluation (10 cases each, FAST models only)
 

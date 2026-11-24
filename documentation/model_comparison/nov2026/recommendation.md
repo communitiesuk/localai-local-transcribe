@@ -4,7 +4,7 @@
 
 ## Recommendation
 
-Move all summarisation work (FAST, BEST and citing) to GPT 6 Luna. It scored 4.88/5 on standard summaries, compared with 4.74 for the current setup, at £0.02 per one-hour meeting instead of £0.20.
+Move all summarisation work (FAST, BEST and citing) to GPT 6 Luna. It scored 4.88/5 on standard summaries, compared with 4.74 for the current setup, at 2p per one-hour meeting instead of 20p.
 
 That saves about 18p per meeting.
 
@@ -24,32 +24,33 @@ Circles show the mean judge score and standard deviation. Diamonds show the shar
 
 | Setup | Cost per meeting | Score (/5) | Spread (±) | Failed summaries |
 | --- | ---: | ---: | ---: | ---: |
-| **All GPT 6 Luna (recommended)** | **£0.02** | **4.88** | 0.51 | 10.0% |
-| GPT 5-1 with GPT 5 Nano (current) | £0.20 | 4.74 | 0.62 | 11.1% |
-| Claude Sonnet 5 with Claude Haiku 4.5 | £0.31 | 4.88 | 0.35 | 0.0% |
-| All Claude Haiku 4.5 | £0.19 | 4.56 | 0.96 | 47.4% |
-| GPT 6 Luna with Gemma 4 E2B on FAST | £0.015 | 4.89 | 0.43 | 10.0% |
-| All Gemma 4 E2B | £0.006 | 4.21 | 1.14 | 50.0% |
+| **All GPT 6 Luna (recommended)** | **2p** | **4.88** | 0.51 | 10.0% |
+| GPT 5-1 with GPT 5 Nano (current) | 20p | 4.74 | 0.62 | 11.1% |
+| Claude Sonnet 5 with Claude Haiku 4.5 | 31p | 4.88 | 0.35 | 0.0% |
+| All Claude Haiku 4.5 | 19p | 4.56 | 0.96 | 47.4% |
+| GPT 6 Luna with Gemma 4 E2B on FAST | 1.5p | 4.89 | 0.43 | 10.0% |
+| All Gemma 4 E2B | 0.6p | 4.21 | 1.14 | 50.0% |
 
 A failed summary scored below the pass mark on at least one judged dimension.
 
 ## FAST tasks (form templates and guardrails)
 
-GPT 6 Luna writes better form summaries than GPT 5 Nano at about 5% higher cost. Its guardrail accuracy is lower because the current prompts are tuned to GPT 5 Nano.
+GPT 6 Luna writes better form summaries than GPT 5 Nano at about 5% higher cost. Its guardrail F1 score is lower because the current prompts are tuned to GPT 5 Nano.
 
-![Safety-check accuracy and form-summary quality by FAST model](guardrail_vs_form_summarisation.png)
+![Safety-check F1 and form-summary quality by FAST model](guardrail_vs_form_summarisation.png)
 
-Points show the average score. Whiskers show one standard deviation: variation across safety-check
-categories on the left and across the 10 form-summary cases on the right.
+Points show the overall F1 score on the left and average form-summary score on the right. Whiskers
+show one standard deviation: variation across safety-check category F1 scores on the left and
+across the 10 form-summary cases on the right. Bars show the F1 score for accepting good summaries.
 
-| Model | Form-summary score (/5) | Form-summary cost per meeting | Safety-check accuracy score (/1) | Good summaries accepted score (/1) |
+| Model | Form-summary score (/5) | Form-summary cost per meeting | Safety-check F1 | Good summaries accepted (F1) |
 | --- | ---: | ---: | ---: | ---: |
-| GPT 5 Nano (current) | 4.66 | £0.110 | 0.60 | 0.77 |
-| **GPT 6 Luna** | **4.84** | **£0.115** | 0.53 | 0.00 |
-| GPT 5.6 Luna | 4.71 | £0.152 | 0.60 | 0.40 |
-| Claude Haiku 4.5 | 4.84 | £0.230 | 0.59 | 0.75 |
-| Claude Sonnet 5 | 4.91 | £0.358 | 0.73 | 0.59 |
-| Gemma 4 E2B | 4.81 | not estimated | 0.18 | 0.57 |
+| GPT 5 Nano (current) | 4.66 | 11.0p | 59.6% | 77.3% |
+| **GPT 6 Luna** | **4.84** | **11.5p** | 52.5% | 0.0% |
+| GPT 5.6 Luna | 4.71 | 15.2p | 60.1% | 40.0% |
+| Claude Haiku 4.5 | 4.84 | 23.0p | 58.7% | 74.5% |
+| Claude Sonnet 5 | 4.91 | 35.8p | 72.7% | 58.8% |
+| Gemma 4 E2B | 4.81 | not estimated | 17.9% | 57.1% |
 
 Form results are based on 10 cases; guardrail results are based on 51 cases.
 
