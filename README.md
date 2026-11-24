@@ -28,6 +28,7 @@ Local Transcribe streamlines the traditionally time-intensive process of creatin
 1. [Install Docker](https://docs.docker.com/desktop/setup/install/mac-install/).
 2. Make a copy of the `.env.example` file and name it `.env`.
 3. Run `docker compose up --build`.
+4. In the root directory, run `make seed`. This adds the user and organisation you need in order to sign in, and it is safe to run again later. It uses Poetry, so set that up first if you have not already, see [Backend](#backend) below.
 
 This will build and run 5 containers:
 
@@ -93,7 +94,7 @@ To instead configure the environemnt locally:
 
 #### Notes
 
-- User authenitcation and autherisation is turned off for local development, a 'dummy_user' is created for which every requested is authorised.
+- User authentication and authorisation are turned off for local development. Every request is authorised as the same user, which is defined in `common/auth.py`. That user still has to exist in the database, because the app does not create accounts on login, so a new database leaves you locked out until `make seed` adds it.
 - Versioned prompts are tracked for developers via an internal `prompt_version`. If you change a versioned prompt or its prompt-building code, bump the relevant version and mention it in the PR template.
 
 ## Project structure
