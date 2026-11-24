@@ -30,3 +30,8 @@ variable "deployment_branch" {
     error_message = "Deployment branch must be one of: development, staging, production"
   }
 }
+
+variable "app_config_deploy_policy_arn" {
+  description = "ARN of the IAM policy for deploying AppConfig feature flags"
+  type        = string
+}

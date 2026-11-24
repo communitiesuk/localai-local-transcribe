@@ -131,6 +131,7 @@ module "github_actions_access" {
   push_frontend_ecr_image_policy_arn = module.ecr.push_frontend_ecr_image_policy_arn
   push_backend_ecr_image_policy_arn  = module.ecr.push_backend_ecr_image_policy_arn
   push_worker_ecr_image_policy_arn   = module.ecr.push_worker_ecr_image_policy_arn
+  app_config_deploy_policy_arn       = module.app_config.deploy_policy_arn
 }
 
 module "secrets" {

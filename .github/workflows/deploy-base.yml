@@ -159,10 +159,61 @@ jobs:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
         run: terraform apply -auto-approve -input=false -var="image_tag=${{ github.sha }}"
 
+  deploy-feature-flags:
+    name: Deploy feature flags
+    runs-on: ubuntu-26.04
+    needs: [plan, apply]
+    if: always() && needs.plan.result == 'success'
+    concurrency: tfstate-${{ inputs.environment }}
+    outputs:
+      status: ${{ steps.deploy.outputs.status }}
+    defaults:
+      run:
+        working-directory: terraform/${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/github-actions-appconfig-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ~>1.14.0
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install deploy_feature_flags.py dependencies
+        run: pip install boto3 jsonschema
+
+      - name: Read AppConfig Terraform outputs
+        id: tf-outputs
+        run: |
+          echo "application_id=$(terraform output -raw app_config_application_id)" >> "$GITHUB_OUTPUT"
+          echo "environment_id=$(terraform output -raw app_config_environment_id)" >> "$GITHUB_OUTPUT"
+          echo "configuration_profile_id=$(terraform output -raw app_config_configuration_profile_id)" >> "$GITHUB_OUTPUT"
+          echo "deployment_strategy_id=$(terraform output -raw app_config_deployment_strategy_id)" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy feature flags to AppConfig
+        id: deploy
+        working-directory: scripts
+        run: |
+          python -m deploy_feature_flags.main \
+            --application-id "${{ steps.tf-outputs.outputs.application_id }}" \
+            --environment-id "${{ steps.tf-outputs.outputs.environment_id }}" \
+            --configuration-profile-id "${{ steps.tf-outputs.outputs.configuration_profile_id }}" \
+            --deployment-strategy-id "${{ steps.tf-outputs.outputs.deployment_strategy_id }}"
+
   notify-slack:
     name: Notify Slack
     runs-on: ubuntu-26.04
-    needs: [build, plan, apply]
+    needs: [build, plan, apply, deploy-feature-flags]
     if: always()
     steps:
       - name: Determine deployment status
@@ -184,6 +235,11 @@ jobs:
             echo "emoji=:x:" >> $GITHUB_OUTPUT
           fi
 
+          case "${{ needs.deploy-feature-flags.outputs.status }}" in
+            updated) echo "feature_flag_status=updated" >> $GITHUB_OUTPUT ;;
+            no_change) echo "feature_flag_status=no change" >> $GITHUB_OUTPUT ;;
+          esac
+
       - name: Send Slack notification on deployment status
         if: steps.status.outputs.skip != 'true'
         env:
@@ -193,9 +249,10 @@ jobs:
             --arg text "${{ steps.status.outputs.emoji }} Deployment - ${{inputs.environment}}" \
             --arg run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             --arg status "${{ steps.status.outputs.status }}" \
+            --arg feature_flag_status "${{ steps.status.outputs.feature_flag_status }}" \
             '{
               text: $text,
-              blocks: [
+              blocks: ([
                 {
                   type: "section",
                   text: { type: "mrkdwn", text: $text }
@@ -207,7 +264,12 @@ jobs:
                     { type: "mrkdwn", text: ("*Run:* <" + $run_url + "|View run>") }
                   ]
                 }
-              ]
+              ] + (if $feature_flag_status != "" then [
+                {
+                  type: "section",
+                  text: { type: "mrkdwn", text: ("*Feature Flag*\n*Status:* " + $feature_flag_status) }
+                }
+              ] else [] end))
             }')
           curl --fail-with-body -X POST -H 'Content-type: application/json' \
             --data "$PAYLOAD" \

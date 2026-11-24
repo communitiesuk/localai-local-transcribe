@@ -3,10 +3,17 @@
     "offline_recordings": {
       "name": "offline_recordings",
       "description": "Offline recordings feature flag"
+    },
+    "post_part_one": {
+      "name": "post_part_one",
+      "description": "Post part one feature flag"
     }
   },
   "values": {
     "offline_recordings": {
+      "enabled": false
+    },
+    "post_part_one": {
       "enabled": false
     }
   },
