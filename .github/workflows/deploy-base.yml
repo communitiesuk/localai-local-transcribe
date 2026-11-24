@@ -10,7 +10,9 @@ on:
       aws-account-id:
         required: true
       alarm-email-address:
-        required: true
+        required: false
+      alarm-email-addresses:
+        required: false
       slack-webhook-url:
         required: true
       sentry-dsn:
@@ -117,6 +119,7 @@ jobs:
         id: plan
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
+          TF_VAR_alarm_email_addresses: ${{ secrets.alarm-email-addresses || '{}' }}
 
         run: terraform plan -input=false -lock=false -detailed-exitcode -var="image_tag=${{ github.sha }}"
         continue-on-error: true
@@ -157,6 +160,7 @@ jobs:
       - name: Terraform apply
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
+          TF_VAR_alarm_email_addresses: ${{ secrets.alarm-email-addresses || '{}' }}
         run: terraform apply -auto-approve -input=false -var="image_tag=${{ github.sha }}"
 
   notify-slack:

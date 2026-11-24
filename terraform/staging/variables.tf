@@ -11,9 +11,17 @@ variable "image_tag" {
 }
 
 variable "alarm_email_address" {
-  description = "Email address to receive CloudWatch alarm notifications"
+  description = "Deprecated: Email address to receive CloudWatch alarm notifications"
   type        = string
   sensitive   = true
+  default     = null
+}
+
+variable "alarm_email_addresses" {
+  description = "Email addresses to receive CloudWatch alarm notifications, map of non-sensitive identifier to email address"
+  type        = map(string)
+  sensitive   = true
+  default     = {}
 }
 
 variable "maintenance_mode_on" {

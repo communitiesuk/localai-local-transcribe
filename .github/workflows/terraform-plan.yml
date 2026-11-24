@@ -10,7 +10,9 @@ on:
       aws-account-id:
         required: true
       alarm-email-address:
-        required: true
+        required: false
+      alarm-email-addresses:
+        required: false
 
 env:
   AWS_REGION: eu-west-2
@@ -45,6 +47,7 @@ jobs:
       - name: Terraform plan
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
+          TF_VAR_alarm_email_addresses: ${{ secrets.alarm-email-addresses || '{}' }}
         run: terraform plan -no-color -input=false -out=tfplan -lock=false -var="image_tag=${{ github.sha }}"
 
       # terraform show will redact 'sensitive' values automatically as long as

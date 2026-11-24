@@ -36,6 +36,7 @@ jobs:
     secrets:
       aws-account-id: ${{ secrets.DEV_AWS_ACCOUNT_ID }}
       alarm-email-address: ${{ secrets.DEV_ALARM_EMAIL_ADDRESS }}
+      alarm-email-addresses: ${{ secrets.DEV_ALARM_EMAIL_ADDRESSES }}
     permissions:
       contents: read
       id-token: write
@@ -50,6 +51,7 @@ jobs:
     secrets:
       aws-account-id: ${{ secrets.STAGING_AWS_ACCOUNT_ID }}
       alarm-email-address: ${{ secrets.STAGING_ALARM_EMAIL_ADDRESS }}
+      alarm-email-addresses: ${{ secrets.STAGING_ALARM_EMAIL_ADDRESSES }}
     permissions:
       contents: read
       id-token: write
@@ -64,6 +66,7 @@ jobs:
     secrets:
       aws-account-id: ${{ secrets.PROD_AWS_ACCOUNT_ID }}
       alarm-email-address: ${{ secrets.PROD_ALARM_EMAIL_ADDRESS }}
+      alarm-email-addresses: ${{ secrets.PROD_ALARM_EMAIL_ADDRESSES }}
     permissions:
       contents: read
       id-token: write
