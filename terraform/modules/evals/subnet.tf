@@ -1,7 +1,8 @@
 locals {
   # The networking module uses ranges 1 to 4 of the VPC's address space, each a /22 block.
   # Range 5 is the next free block, so the evals subnet does not overlap any product subnet.
-  evals_private_cidr = cidrsubnet(var.vpc_cidr_block, 6, 5)
+  # Like the product subnets, the evals subnet is a /24 block carved from the start of its range.
+  evals_private_cidr = cidrsubnet(cidrsubnet(var.vpc_cidr_block, 6, 5), 2, 0)
 }
 
 # Private subnet for evals tasks. It has no public addresses and is separate from the web
