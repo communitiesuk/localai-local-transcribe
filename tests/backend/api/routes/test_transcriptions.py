@@ -102,8 +102,7 @@ async def test_create_transcription_normalises_empty_title_to_null(
 ):
     mock_recording.file_created_at = None
     mock_transcription_class = mocker.patch(
-        "backend.api.routes.transcriptions.Transcription",
-        return_value=mock_transcription
+        "backend.api.routes.transcriptions.Transcription", return_value=mock_transcription
     )
 
     await create_transcription(
@@ -415,9 +414,7 @@ async def test_update_transcription_title_success(mock_session, mock_user, mock_
 
 
 @pytest.mark.asyncio
-async def test_update_transcription_title_null_clears_title(
-    mock_session, mock_user, mock_transcription
-):
+async def test_update_transcription_title_null_clears_title(mock_session, mock_user, mock_transcription):
     mock_session.get = AsyncMock(return_value=mock_transcription)
 
     await update_transcription_title(
