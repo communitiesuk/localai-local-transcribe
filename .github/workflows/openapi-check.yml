@@ -1,0 +1,56 @@
+name: OpenAPI Check
+
+on:
+  workflow_call:
+    inputs:
+      python_version:
+        required: true
+        type: string
+      poetry_version:
+        required: true
+        type: string
+
+env:
+  ENVIRONMENT: test
+
+permissions:
+  contents: read
+
+jobs:
+  openapi:
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: ${{ inputs.poetry_version }}
+
+      - name: Configure Poetry to create .venv in project
+        run: poetry config virtualenvs.in-project true
+
+      - name: Cache virtualenv
+        uses: actions/cache@v6
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ inputs.python_version }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            venv-${{ runner.os }}-${{ inputs.python_version }}-
+            venv-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: poetry sync --no-root --no-ansi --with dev
+
+      - name: Copy env file
+        run: cp .env.example .env
+
+      - name: Check frontend/openapi.json is up to date
+        run: poetry run python -m scripts.check_openapi_json

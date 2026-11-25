@@ -61,6 +61,13 @@ jobs:
       poetry_version: ${{ needs.poetry_version.outputs.version }}
     secrets: inherit
 
+  openapi_check:
+    needs: poetry_version
+    uses: ./.github/workflows/openapi-check.yml
+    with:
+      python_version: "3.14"
+      poetry_version: ${{ needs.poetry_version.outputs.version }}
+
   frontend_tests:
     uses: ./.github/workflows/frontend-tests.yml
     secrets: inherit
