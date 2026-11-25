@@ -91,6 +91,29 @@ async def test_create_transcription_success(
 
 
 @pytest.mark.asyncio
+async def test_create_transcription_normalises_empty_title_to_null(
+    mock_session_with_recording,
+    mock_recording,
+    mock_user,
+    mock_transcription_queue_service,  # NOQA: ARG001
+    mock_storage_service,  # NOQA: ARG001
+):
+    mock_recording.file_created_at = None
+    request = TranscriptionCreateRequest(
+        recording_id=mock_recording.id,
+        title="",
+    )
+
+    await create_transcription(request, mock_session_with_recording, mock_user)
+
+    # get the newely created transcript to inspect it's title
+    first_add_call = mock_session_with_recording.add.call_args_list[0]
+    created_transcription = first_add_call.args[0]
+
+    assert created_transcription.title is None
+
+
+@pytest.mark.asyncio
 async def test_create_transcription_records_audio_upload_completed_analytics_event(
     mocker,
     mock_session_with_recording,
