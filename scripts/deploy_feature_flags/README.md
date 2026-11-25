@@ -61,10 +61,6 @@ wherever you have AWS credentials with the required AppConfig permissions
 (`appconfig:ListDeployments`, `GetHostedConfigurationVersion`, `CreateHostedConfigurationVersion`,
 `ValidateConfiguration`, `StartDeployment`).
 
-Because `main.py` uses relative imports (so it works identically whether run in CI or locally),
-it must be run as a module with `scripts/` as the working directory (or otherwise on
-`PYTHONPATH`), not invoked directly as a script file:
-
 ```bash
 cd scripts
 poetry run python -m deploy_feature_flags.main \
@@ -76,8 +72,7 @@ poetry run python -m deploy_feature_flags.main \
 ```
 
 All four IDs are required. Each can be supplied either as a `--flag` or via the matching
-environment variable instead (useful for local runs where you don't want to look up IDs by
-hand each time):
+environment variable instead:
 
 | Flag | Env var | Default |
 |------|---------|---------|
@@ -89,8 +84,7 @@ hand each time):
 
 ### Reading the IDs via Terraform output
 
-Both `terraform output` and the deployment itself need a credentialed AWS session - start one
-first if you don't already have one:
+Both `terraform output` and the deployment itself need a credentialed AWS session. Start one first if you don't already have one:
 
 ```bash
 export AWS_PROFILE=<your-profile>
@@ -108,16 +102,13 @@ terraform output -raw app_config_configuration_profile_id
 terraform output -raw app_config_deployment_strategy_id
 ```
 
-Copying each value into the `--flag`/env var form above is four extra lookups. Since every ID
-can be supplied via its env var, and `terraform output -raw` can be pointed at another
-environment's directory with `-chdir` (without `cd`-ing there yourself), the lookups and the
-deployment can be combined into a single command - no intermediate file needed:
+Since every ID can be supplied via its env var, the lookups and the deployment can be combined into a single command:
 
 ```bash
 cd scripts
 ```
 
-The block below is a single copy-pasteable command - paste it into the terminal as-is once
+The block below is a single copy-pasteable command, paste it into the terminal as is once
 you're in `scripts/`:
 
 `<environment>` below is a placeholder - replace the whole `<environment>` token with the actual

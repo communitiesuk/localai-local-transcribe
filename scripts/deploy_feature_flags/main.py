@@ -20,7 +20,7 @@ import boto3
 import jsonschema
 from botocore.exceptions import ClientError
 
-from .appconfig.client import (
+from .app_config.client import (
     create_new_version,
     get_deployed_content,
     get_deployed_version,

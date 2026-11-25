@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from scripts.deploy_feature_flags.appconfig.client import validate_new_version
+from scripts.deploy_feature_flags.app_config.client import validate_new_version
 
 
 def test_validate_new_version_calls_validate_configuration_with_expected_arguments() -> None:
