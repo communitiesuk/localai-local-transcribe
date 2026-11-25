@@ -65,6 +65,16 @@ module "networking" {
   vpc_flow_cloudwatch_log_expiration_days = local.cloudwatch_log_expiration_days
 }
 
+module "evals" {
+  source = "../modules/evals"
+
+  environment_name       = local.environment_name
+  vpc_id                 = module.networking.vpc.id
+  vpc_cidr_block         = module.networking.vpc.cidr_block
+  availability_zone      = module.networking.private_subnets[0].availability_zone
+  private_route_table_id = module.networking.private_route_table_id
+}
+
 module "frontdoor" {
   source = "../modules/frontdoor"
 
