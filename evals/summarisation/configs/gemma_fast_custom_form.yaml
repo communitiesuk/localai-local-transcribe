@@ -1,0 +1,55 @@
+run:
+  eval_type: standard
+  output_dir: evals/summarisation/output/model_comparison/gemma_fast_custom_form
+  seed: 0
+  split: test
+  limit: 10
+  prompt_version: dev
+  dataset_version: july-general-to-custom-form
+
+dataset:
+  name: evals/summarisation/input/july_general_to_custom_form/_datasets/custom-form
+  source: local_dir
+  dialogue_field: dialogue
+  reference_summary_field: summary
+
+judge:
+  pass_threshold: 4
+
+metrics:
+  - accuracy
+  - coverage
+  - action_clarity
+  - professional_tone
+  - readability
+
+prompts:
+  judge_template_path: evals/summarisation/prompts/judge.j2
+  custom_template_content: |
+    A housing case-note form covering tenancy, property, rent, vulnerability, and follow-up
+    fields. Answer each question using only information present in the transcript. If the
+    transcript does not cover a field, answer exactly: "Information not found in transcript."
+  custom_template_questions:
+    - title: Tenancy/case reference
+      description: Any tenancy, case, or reference number mentioned for this contact.
+    - title: Tenant/caller name
+      description: The name of the tenant or caller this contact is about.
+    - title: Issue reported
+      description: The issue or reason for contact, in the caller's or officer's own terms.
+    - title: Property condition
+      description: Any details about the physical condition of the property mentioned.
+    - title: Rent account status
+      description: Any mention of rent balance, arrears, payment plan, or benefit status.
+    - title: Vulnerability or safeguarding concerns
+      description: Any vulnerability, safeguarding risk, health condition, or disability mentioned.
+    - title: Risk or priority level
+      description: Any risk level, urgency category, or priority banding assigned during the call.
+    - title: Action agreed
+      description: Any action, next step, or commitment agreed during the call.
+    - title: Referral made
+      description: Any referral to another team, service, or agency mentioned.
+    - title: Follow-up date
+      description: Any date or timeframe agreed for a follow-up, visit, or review.
+
+hallucination:
+  enabled: false
