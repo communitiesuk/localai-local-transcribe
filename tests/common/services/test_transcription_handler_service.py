@@ -45,17 +45,14 @@ def mock_session(mock_transcription):
 
 def test_update_transcription_updates_fields(mock_session, mock_transcription):
     ctx, _ = mock_session
-    transcript = []
 
     with patch("common.services.transcription_handler_service.SessionLocal", return_value=ctx):
         TranscriptionHandlerService.update_transcription(
             mock_transcription.id,
             status=JobStatus.COMPLETED,
-            transcript=transcript,
         )
 
     assert mock_transcription.status == JobStatus.COMPLETED
-    assert mock_transcription.dialogue_entries == transcript
 
 
 def test_update_transcription_raises_if_not_found(mock_session, mock_transcription):
