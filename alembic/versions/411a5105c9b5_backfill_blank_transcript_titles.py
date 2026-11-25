@@ -21,12 +21,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Manual edit to make '' titles null
+    # Manual edit to backfill empty whitespace titles as null
     op.execute("""
         UPDATE transcription
         SET title = NULL
         WHERE title IS NOT NULL
-        AND btrim(title) = ''
+        AND btrim(title, E' \t\n\r') = ''
     """)
 
 
