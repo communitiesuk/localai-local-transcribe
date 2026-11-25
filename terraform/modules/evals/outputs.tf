@@ -3,3 +3,18 @@ output "evals_private_subnet" {
   description = "Private subnet that evals tasks run in"
   depends_on  = [aws_route_table_association.evals_private]
 }
+
+output "evals_kms_key_arn" {
+  value       = aws_kms_key.evals.arn
+  description = "Arn of the customer-managed key that encrypts the evals data buckets"
+}
+
+output "evals_buckets" {
+  value = {
+    for name, bucket in module.evals_bucket : name => {
+      name = bucket.bucket
+      arn  = bucket.bucket_arn
+    }
+  }
+  description = "Name and arn of each evals data bucket, keyed by quarantine, assets, outputs and results"
+}
