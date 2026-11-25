@@ -16,6 +16,7 @@ and every other call keep their existing assumptions.
 """
 
 from dataclasses import dataclass
+from typing import NamedTuple
 
 # =============================================================================
 # Token model (Appendix B.1 convention: X transcript words, 2 tokens per word)
@@ -88,9 +89,16 @@ CACHE_HIT = 0.75
 # https://azure.microsoft.com/en-us/pricing/details/azure-openai/
 # =============================================================================
 
+
+class TokenPrices(NamedTuple):
+    input: float
+    cached_input: float
+    output: float
+
+
 PRICES = {
-    "best": (1.04, 0.11, 8.28),  # gpt-5.1  (BEST_LLM_MODEL_NAME)
-    "fast": (0.04, 0.01, 0.31),  # gpt-5-nano (FAST_LLM_MODEL_NAME)
+    "best": TokenPrices(1.04, 0.11, 8.28),  # gpt-5.1  (BEST_LLM_MODEL_NAME)
+    "fast": TokenPrices(0.04, 0.01, 0.31),  # gpt-5-nano (FAST_LLM_MODEL_NAME)
 }
 
 # Candidate FAST-tier substitutes considered for the guardrail/speaker-id/title calls.
@@ -99,19 +107,29 @@ PRICES = {
 # https://azure.microsoft.com/en-us/pricing/details/azure-openai/ and
 # https://aws.amazon.com/bedrock/pricing/. gpt-6-luna uses the short-context Data Zone
 # tier; it roughly doubles if a transcript pushes a call into the long-context tier.
+# Gemma 4 E2B uses the exact Bedrock Europe (Frankfurt) standard price. Bedrock does not
+# publish a discounted cached-input price for this model, so cached input is priced as input.
 # gpt-5-nano and gpt-5.1 reuse the PRICES entries above rather than a fresh USD
 # conversion, so the baseline row matches the headline figures exactly.
 _USD_TO_GBP = 0.74
 FAST_MODEL_CANDIDATES_USD = {
-    "gpt-5-6-luna": (0.44, 0.05, 1.98),
-    "gpt-6-luna": (0.11, 0.011, 0.55),
-    "haiku-4-5": (1.10, 0.11, 5.50),
-    "sonnet-5": (2.20, 0.22, 11.00),
+    "gpt-5-6-luna": TokenPrices(0.44, 0.05, 1.98),
+    "gpt-6-luna": TokenPrices(0.11, 0.011, 0.55),
+    "haiku-4-5": TokenPrices(1.10, 0.11, 5.50),
+    "sonnet-5": TokenPrices(2.20, 0.22, 11.00),
+    "gemma-4-e2b": TokenPrices(0.05, 0.05, 0.10),
 }
-FAST_MODEL_CANDIDATES = {
+FAST_MODEL_CANDIDATES: dict[str, TokenPrices] = {
     "gpt-5-nano": PRICES["fast"],  # current FAST_LLM_MODEL_NAME, for reference
     "gpt-5.1": PRICES["best"],  # current BEST_LLM_MODEL_NAME, for reference
-    **{name: tuple(p * _USD_TO_GBP for p in prices) for name, prices in FAST_MODEL_CANDIDATES_USD.items()},
+    **{
+        name: TokenPrices(
+            prices.input * _USD_TO_GBP,
+            prices.cached_input * _USD_TO_GBP,
+            prices.output * _USD_TO_GBP,
+        )
+        for name, prices in FAST_MODEL_CANDIDATES_USD.items()
+    },
 }
 
 # Azure AI Speech standard transcription, UK South, GBP per hour of audio:
@@ -348,7 +366,7 @@ def fast_model_comparison(m: Meeting) -> list[tuple[str, float, float]]:
     return rows
 
 
-BOTH_TIER_CANDIDATES = ["gpt-6-luna", "haiku-4-5", "sonnet-5"]
+BOTH_TIER_CANDIDATES = ["gpt-6-luna", "haiku-4-5", "sonnet-5", "gemma-4-e2b"]
 
 
 def both_tier_model_comparison(m: Meeting) -> list[tuple[str, str, float]]:
@@ -363,12 +381,12 @@ def both_tier_model_comparison(m: Meeting) -> list[tuple[str, str, float]]:
     rows = []
     try:
         for name in BOTH_TIER_CANDIDATES:
-            PRICES["fast"] = PRICES["best"] = FAST_MODEL_CANDIDATES[name]  # type: ignore[assignment]
+            PRICES["fast"] = PRICES["best"] = FAST_MODEL_CANDIDATES[name]
             total = cost(weighted(m, citation_tier="best"))
             rows.append((f"All-{name}", f"BEST=FAST={name}", total))
 
-        PRICES["best"] = FAST_MODEL_CANDIDATES["sonnet-5"]  # type: ignore[assignment]
-        PRICES["fast"] = FAST_MODEL_CANDIDATES["haiku-4-5"]  # type: ignore[assignment]
+        PRICES["best"] = FAST_MODEL_CANDIDATES["sonnet-5"]
+        PRICES["fast"] = FAST_MODEL_CANDIDATES["haiku-4-5"]
         total = cost(weighted(m, citation_tier="best"))
         rows.append(("FAST=haiku, BEST=sonnet", "BEST=sonnet-5, FAST=haiku-4-5", total))
     finally:
