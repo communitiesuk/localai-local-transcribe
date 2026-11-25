@@ -5,7 +5,9 @@ data "aws_caller_identity" "current" {}
 # S3 cannot write access logs into a bucket that uses a customer-managed key.
 resource "aws_kms_key" "evals" {
   enable_key_rotation = true
-  description         = "local-transcribe-evals-${var.environment_name}"
+  # AWS otherwise rotates yearly. 180 days matches the app config key and the Wiz check.
+  rotation_period_in_days = 180
+  description             = "local-transcribe-evals-${var.environment_name}"
 
   # If this key were destroyed, the four evals data buckets could no longer be read. A plan that
   # would delete or replace the key fails instead, so removal has to be a deliberate edit.
