@@ -30,6 +30,7 @@ Brewfile.lock.json
 *.terraform.lock.hcl 
 # Terraform plan files (may contain sensitive data - never commit)
 *.tfplan
+terraform/modules/evals/lambda/promote.zip
 
 # Data
 *.csv

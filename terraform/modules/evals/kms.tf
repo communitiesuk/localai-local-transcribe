@@ -29,8 +29,9 @@ resource "aws_kms_key_policy" "evals" {
 data "aws_iam_policy_document" "evals_kms" {
   # Gives the account root full control of the key. This is what lets IAM policies grant
   # other roles access to the key later: https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-default.html#key-policy-default-allow-root-enable-iam
-  # No other principal is named here. Access for the malware scan, the task and people is
-  # added by the tickets that introduce them.
+  # No other principal is named here. The quarantine scan role and the promotion Lambda
+  # are granted use of the key by their own IAM policies. Access for the task and for
+  # people is added by the tickets that introduce them.
   statement {
     principals {
       type        = "AWS"
