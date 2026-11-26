@@ -1,5 +1,21 @@
 data "aws_caller_identity" "current" {}
 
+locals {
+  github_repository_subject = "repo:communitiesuk/localai-local-transcribe"
+
+  # Who may assume the plan role. A plan reads the Terraform state, which holds this
+  # environment's secrets, so anything listed here can read those secrets.
+  terraform_plan_subjects = concat(
+    # The deploy workflow, running on the deployment branch.
+    ["${local.github_repository_subject}:ref:refs/heads/${var.deployment_branch}"],
+    # If `allow_plan_from_pull_requests` is set, then any pull request in this repository.
+    # Pull requests from forks cannot get a token.
+    var.allow_plan_from_pull_requests ? ["${local.github_repository_subject}:pull_request"] : [],
+    # If `plan_github_environment` is set, jobs that run in this GitHub environment, which has required reviewers.
+    var.plan_github_environment != null ? ["${local.github_repository_subject}:environment:${var.plan_github_environment}"] : [],
+  )
+}
+
 # Read only role for terraform plan
 resource "aws_iam_role" "github_actions_terraform_plan" {
   name               = "github-actions-terraform-ci-plan-read-only"
@@ -23,7 +39,7 @@ data "aws_iam_policy_document" "github_actions_terraform_plan_assume_role" {
 
     condition {
       test     = "StringLike"
-      values   = ["repo:communitiesuk/localai-local-transcribe:ref:refs/heads/${var.deployment_branch}"]
+      values   = local.terraform_plan_subjects
       variable = "token.actions.githubusercontent.com:sub"
     }
   }
