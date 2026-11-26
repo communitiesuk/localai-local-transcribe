@@ -1,0 +1,15 @@
+name: guard-demo
+
+# Deliberately breaks the saved-plan rule to show the check failing. Never merge.
+on:
+  workflow_dispatch:
+
+jobs:
+  demo:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: tf-plan-development
+          path: terraform/development/tfplan
