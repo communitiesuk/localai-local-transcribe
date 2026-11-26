@@ -250,10 +250,10 @@ SHARES = {
 # Speaker ID uses pre-prediction labels ("Unknown speaker N"), cite_claims uses indexed
 # transcript lines, and FAST calls cannot seed BEST cache entries.
 CACHEABLE_TRANSCRIPT_REPLAYS: dict[str, tuple[float, float]] = {
-    "General": (0, 0),  # title -> guardrail
-    "Short 'n' Sweet": (0, 0),  # title -> guardrail
-    "Delivery": (0, 0),  # title -> guardrail
-    "User generated (DOCUMENT)": (0, 0),  # title -> guardrail
+    "General": (0, 0),  # guardrail
+    "Short 'n' Sweet": (0, 0),  # guardrail
+    "Delivery": (0, 0),  # guardrail
+    "User generated (DOCUMENT)": (0, 0),  # guardrail
     "SectionTemplate (Y=6)": (1, 0),  # section_detection -> guardrail
 }
 CACHEABLE_TRANSCRIPT_REPLAYS["Usage-weighted"] = (
