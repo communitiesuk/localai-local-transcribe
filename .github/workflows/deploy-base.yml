@@ -101,6 +101,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Must stay before the AWS credentials step, so that a workflow which could publish
+      # a saved plan is stopped before it can read anything.
+      - name: Check no workflow publishes a saved plan
+        working-directory: ${{ github.workspace }}
+        run: python3 scripts/check_terraform_plan_not_published.py
+
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ secrets.aws-account-id }}:role/github-actions-terraform-ci-plan-read-only
