@@ -26,7 +26,7 @@ from .app_config.client import (
     start_deployment,
     validate_new_version,
 )
-from .helpers import strip_ignored_keys, write_github_output
+from .helpers import strip_ignored_keys, validate_required_args, write_github_output
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     args = parse_args()
+    validate_required_args(args)
 
     feature_flags_path = Path(args.feature_flags_file)
     local_content = json.loads(feature_flags_path.read_text())
@@ -75,16 +76,21 @@ def main() -> int:
 
     client = boto3.client("appconfig")
 
-    deployed_version = get_deployed_version(client, args.application_id, args.environment_id)
+    try:
+        deployed_version = get_deployed_version(client, args.application_id, args.environment_id)
 
-    if deployed_version is None:
-        logger.info("No existing deployment found for this environment; treating as a change.")
-        deployed_content: dict[str, Any] | None = None
-    else:
-        logger.info("Currently deployed configuration version: %s", deployed_version)
-        deployed_content = get_deployed_content(
-            client, args.application_id, args.configuration_profile_id, deployed_version
-        )
+        if deployed_version is None:
+            logger.info("No existing deployment found for this environment; treating as a change.")
+            deployed_content: dict[str, Any] | None = None
+        else:
+            logger.info("Currently deployed configuration version: %s", deployed_version)
+            deployed_content = get_deployed_content(
+                client, args.application_id, args.configuration_profile_id, deployed_version
+            )
+    except ClientError:
+        logger.exception("Failed to read the currently deployed feature flag configuration.")
+        write_github_output("status", "error")
+        return 1
 
     if deployed_content is not None and strip_ignored_keys(deployed_content) == strip_ignored_keys(local_content):
         logger.info("No changes detected between deployed configuration and %s. Exiting.", feature_flags_path)
