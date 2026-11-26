@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import Any
 
 import boto3
-import jsonschema
 from botocore.exceptions import ClientError
 
 from .app_config.client import (
@@ -28,7 +27,6 @@ from .app_config.client import (
     validate_new_version,
 )
 from .helpers import strip_ignored_keys, write_github_output
-from .schema import validate_feature_flags
 
 logger = logging.getLogger(__name__)
 
@@ -75,12 +73,6 @@ def main() -> int:
     local_content = json.loads(feature_flags_path.read_text())
     local_content_bytes = feature_flags_path.read_bytes()
 
-    try:
-        validate_feature_flags(local_content)
-    except jsonschema.exceptions.ValidationError as e:
-        logger.error("%s does not conform to the AWS.AppConfig.FeatureFlags schema: %s", feature_flags_path, e.message)
-        return 1
-
     client = boto3.client("appconfig")
 
     deployed_version = get_deployed_version(client, args.application_id, args.environment_id)
@@ -112,12 +104,14 @@ def main() -> int:
             deployed_version,
             current_version,
         )
+        write_github_output("status", "error")
         return 1
 
     try:
         validate_new_version(client, args.application_id, args.configuration_profile_id, new_version)
     except ClientError:
         logger.exception("Configuration version %s failed validation.", new_version)
+        write_github_output("status", "error")
         return 1
 
     logger.info("Starting deployment of version %s.", new_version)
@@ -132,6 +126,7 @@ def main() -> int:
         )
     except ClientError:
         logger.exception("Failed to start feature flag deployment.")
+        write_github_output("status", "error")
         return 1
 
     logger.info(

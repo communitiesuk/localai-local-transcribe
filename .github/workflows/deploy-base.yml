@@ -29,6 +29,8 @@ permissions:
 env:
   AWS_REGION: eu-west-2
   TF_VAR_ssl_certs_created: true
+  TERRAFORM_VERSION : ~>1.14.0
+  PYTHON_VERSION: 3.14
 
 jobs:
   build:
@@ -108,7 +110,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v4
         with:
-          terraform_version: ~>1.14.0
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform init
         run: terraform init -input=false
@@ -149,7 +151,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v4
         with:
-          terraform_version: ~>1.14.0
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform init
         run: terraform init -input=false
@@ -163,7 +165,7 @@ jobs:
     name: Deploy feature flags
     runs-on: ubuntu-26.04
     needs: [plan, apply]
-    if: always() && needs.plan.result == 'success'
+    if: ${{!cancelled() && needs.plan.result == 'success'}}
     concurrency: tfstate-${{ inputs.environment }}
     outputs:
       status: ${{ steps.deploy.outputs.status }}
@@ -180,35 +182,49 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v4
         with:
-          terraform_version: ~>1.14.0
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Terraform init
         run: terraform init -input=false
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Read Poetry version from pyproject.toml
+        id: poetry-version
+        working-directory: ${{ github.workspace }}
+        run: |
+          POETRY_VERSION=$(python scripts/get-poetry-version.py) || exit 1
+          echo "version=${POETRY_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Poetry
+        uses: abatilo/actions-poetry@v4
+        with:
+          poetry-version: ${{ steps.poetry-version.outputs.version }}
 
       - name: Install deploy_feature_flags.py dependencies
-        run: pip install boto3 jsonschema
-
-      - name: Read AppConfig Terraform outputs
-        id: tf-outputs
-        run: |
-          echo "application_id=$(terraform output -raw app_config_application_id)" >> "$GITHUB_OUTPUT"
-          echo "environment_id=$(terraform output -raw app_config_environment_id)" >> "$GITHUB_OUTPUT"
-          echo "configuration_profile_id=$(terraform output -raw app_config_configuration_profile_id)" >> "$GITHUB_OUTPUT"
-          echo "deployment_strategy_id=$(terraform output -raw app_config_deployment_strategy_id)" >> "$GITHUB_OUTPUT"
+        working-directory: ${{ github.workspace }}
+        run: poetry install --no-root --no-ansi
 
       - name: Deploy feature flags to AppConfig
         id: deploy
         working-directory: scripts
+        env:
+          TF_DIR: ${{ github.workspace }}/terraform/${{ inputs.environment }}
         run: |
-          python -m deploy_feature_flags.main \
-            --application-id "${{ steps.tf-outputs.outputs.application_id }}" \
-            --environment-id "${{ steps.tf-outputs.outputs.environment_id }}" \
-            --configuration-profile-id "${{ steps.tf-outputs.outputs.configuration_profile_id }}" \
-            --deployment-strategy-id "${{ steps.tf-outputs.outputs.deployment_strategy_id }}"
+          set -euo pipefail
+
+          APPLICATION_ID=$(terraform -chdir="$TF_DIR" output -raw app_config_application_id)
+          ENVIRONMENT_ID=$(terraform -chdir="$TF_DIR" output -raw app_config_environment_id)
+          CONFIGURATION_PROFILE_ID=$(terraform -chdir="$TF_DIR" output -raw app_config_configuration_profile_id)
+          DEPLOYMENT_STRATEGY_ID=$(terraform -chdir="$TF_DIR" output -raw app_config_deployment_strategy_id)
+
+          poetry run python -m deploy_feature_flags.main \
+            --application-id "$APPLICATION_ID" \
+            --environment-id "$ENVIRONMENT_ID" \
+            --configuration-profile-id "$CONFIGURATION_PROFILE_ID" \
+            --deployment-strategy-id "$DEPLOYMENT_STRATEGY_ID"
 
   notify-slack:
     name: Notify Slack
@@ -235,9 +251,15 @@ jobs:
             echo "emoji=:x:" >> $GITHUB_OUTPUT
           fi
 
-          case "${{ needs.deploy-feature-flags.outputs.status }}" in
-            updated) echo "feature_flag_status=updated" >> $GITHUB_OUTPUT ;;
-            no_change) echo "feature_flag_status=no change" >> $GITHUB_OUTPUT ;;
+          case "${{ needs.deploy-feature-flags.result }}" in
+            skipped) echo "feature_flag_status=skipped" >> $GITHUB_OUTPUT ;;
+            *)
+              case "${{ needs.deploy-feature-flags.outputs.status }}" in
+                updated) echo "feature_flag_status=updated" >> $GITHUB_OUTPUT ;;
+                no_change) echo "feature_flag_status=no change" >> $GITHUB_OUTPUT ;;
+                error) echo "feature_flag_status=error" >> $GITHUB_OUTPUT ;;
+              esac
+              ;;
           esac
 
       - name: Send Slack notification on deployment status

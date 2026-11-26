@@ -7,17 +7,16 @@ changes made to `feature_flags.json`.
 
 Logic:
 
-1. Validate `feature_flags.json` against the `AWS.AppConfig.FeatureFlags` JSON schema
-   (`schema.py`), failing fast before touching AWS if it doesn't conform.
-2. Read the currently *deployed* hosted configuration version for the environment
+1. Read the currently *deployed* hosted configuration version for the environment
    (`list_deployments` + `get_hosted_configuration_version`).
-3. Reconcile (structurally compare, ignoring `_createdAt`/`_updatedAt`) it against
+2. Reconcile (structurally compare, ignoring `_createdAt`/`_updatedAt`) it against
    `feature_flags.json`.
-4. If they match, exit without making any changes.
-5. Otherwise, create a new hosted configuration version from `feature_flags.json` - first
-   re-checking that the deployed version hasn't changed since step 2, to avoid clobbering a
+3. If they match, exit without making any changes.
+4. Otherwise, create a new hosted configuration version from `feature_flags.json` - first
+   re-checking that the deployed version hasn't changed since step 1, to avoid clobbering a
    concurrent manual change - then validate the new version against the configuration
-   profile's own validators (`validate_configuration`) before starting a deployment of it.
+   profile's own validators (`validate_configuration`, AWS-side) before starting a deployment
+   of it.
 
 ## CI deployment
 
