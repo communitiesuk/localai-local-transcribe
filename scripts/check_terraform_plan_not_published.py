@@ -83,6 +83,12 @@ def _problem_with(line: str, *, file_uses_terraform: bool, file_saves_a_plan: bo
         return SHOWN_AS_JSON
     if _is_allowed(command):
         return None
+    return _problem_with_plan_file_use(
+        command, file_uses_terraform=file_uses_terraform, file_saves_a_plan=file_saves_a_plan
+    )
+
+
+def _problem_with_plan_file_use(command: str, *, file_uses_terraform: bool, file_saves_a_plan: bool) -> str | None:
     if file_uses_terraform and SAVES_A_PLAN.search(command):
         return SAVE_OUTSIDE_TEMP
     if MENTIONS_PLAN_FILE.search(command):
