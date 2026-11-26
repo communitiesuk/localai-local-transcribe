@@ -179,12 +179,12 @@ Energy is computed per API invocation via EcoLogits [25]; ranges reflect GPT-5-n
 
 | Template | Invocations | Output Tokens | LLM Energy | LLM CO₂e |
 |----------|-------------|---------------|------------|----------|
-| Basic Minutes | 4 | 5,660 | 0.3–0.4 Wh | 0.1 g |
-| Short 'n' Sweet | 4 | 5,660 | 7.4–11.0 Wh | 1.6–2.4 g |
-| SectionTemplate (Y=6) | 17 | 12,964 | 9.0–13.3 Wh | 2.0–2.9 g |
-| Delivery | 6 | 16,160 | 10.3–15.3 Wh | 2.2–3.3 g |
-| UserTemplate DOCUMENT | 4 | 9,260 | 12.1–18.1 Wh | 2.6–3.9 g |
-| SimpleTemplate | 6 | 20,060 | 12.7–18.8 Wh | 2.8–4.1 g |
+| Basic Minutes | 3 | 5,640 | 0.3–0.4 Wh | 0.1 g |
+| Short 'n' Sweet | 3 | 5,640 | 7.3–11.0 Wh | 1.6–2.4 g |
+| SectionTemplate (Y=6) | 16 | 12,944 | 9.0–13.3 Wh | 2.0–2.9 g |
+| Delivery | 5 | 16,140 | 10.3–15.3 Wh | 2.2–3.3 g |
+| UserTemplate DOCUMENT | 3 | 9,240 | 12.1–18.1 Wh | 2.6–3.9 g |
+| SimpleTemplate | 5 | 20,040 | 12.7–18.8 Wh | 2.8–4.1 g |
 
 The dominant cost driver is the **BEST model (GPT-5.1 MoE)**. Templates that use only the FAST model (GPT-5-nano) — Basic Minutes — are 26–45× cheaper than BEST-model templates because GPT-5-nano operates at 96 tokens/second versus GPT-5.1 at 61 tokens/second, and its active parameter footprint is an order of magnitude smaller. The lower bound (26×) applies to Short 'n' Sweet and the upper bound (45×) to SimpleTemplate. The citations pipeline (extract_claims + cite_claims) adds 10,800 output tokens and distinguishes SimpleTemplate from Short 'n' Sweet (1.2–1.7 g CO₂e extra). Detailed usage-frequency breakdown is in Appendix F.2.
 
@@ -208,11 +208,11 @@ Applying production usage shares (Appendix F.1):
 
 | Template | Total Energy | Total CO₂e | ASR % | LLM % |
 |----------|-------------|------------|-------|-------|
-| Basic Minutes | 22.6–22.7 Wh | 4.9 g | 98.3% | 1.7% |
+| Basic Minutes | 22.6–22.7 Wh | 4.9 g | 98.4% | 1.6% |
 | Short 'n' Sweet | 29.6–33.3 Wh | 6.4–7.2 g | 70.8% | 29.2% |
-| SectionTemplate (Y=6) | 31.3–35.5 Wh | 6.8–7.7 g | 66.6% | 33.4% |
+| SectionTemplate (Y=6) | 31.3–35.5 Wh | 6.8–7.7 g | 66.7% | 33.3% |
 | Delivery | 32.6–37.5 Wh | 7.1–8.2 g | 63.5% | 36.5% |
-| UserTemplate DOCUMENT | 34.4–40.4 Wh | 7.5–8.8 g | 59.6% | 40.4% |
+| UserTemplate DOCUMENT | 34.3–40.4 Wh | 7.5–8.8 g | 59.6% | 40.4% |
 | SimpleTemplate | 35.0–41.1 Wh | 7.6–8.9 g | 58.5% | 41.5% |
 
 ---
@@ -223,7 +223,7 @@ Applying production usage shares (Appendix F.1):
 
 **Template variation:** The range across production templates is **4.9–8.9 g CO₂e** total combined — a 1.8× spread. The crucial differentiator is whether a BEST model invocation (GPT-5.1) is present: Basic Minutes is FAST-only and sits at a near-negligible 0.1 g LLM CO₂e, while every template using GPT-5.1 clusters in the 1.6–4.1 g LLM range. Within the BEST-using templates, the citations pipeline (extract_claims + cite_claims) adds 10,800 output tokens and 1.2–1.7 g CO₂e — the primary differentiator between SimpleTemplate and Short 'n' Sweet.
 
-**Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. LLM's share of total CO₂e ranges from 1% (Basic Minutes) to 37% (SimpleTemplate), with ASR dominating at all template levels.
+**Transcription is a fixed cost:** The 22.3 Wh transcription cost is identical regardless of template. LLM's share of total CO₂e ranges from 2% (Basic Minutes) to 42% (SimpleTemplate), with ASR dominating at all template levels.
 
 **Infrastructure vs. AI processing cost:** The AWS hosting layer (Section 2.2) emitted **17,317 g CO₂e (MBM)** in April 2026 — equivalent to the AI processing cost of approximately **2,192 complete 1-hour meetings** (at the usage-weighted midpoint of 7.9 g CO₂e/meeting). The two figures cover different layers: non-AI hosting (AWS) vs. transcription and LLM inference (Azure). This AWS figure covers only the hosting layer; Azure AI inference costs (Section 3) are tracked separately.
 
@@ -379,46 +379,44 @@ Primary studies [11], [15] represent the best available independent research but
 
 **Templates**: General, ExecutiveSummary, CareAssessmentV2  
 **Source**: `common/templates/types.py:92-103`  
-**Total invocations**: 6
+**Total invocations**: 5
 
 | # | Invocation      | Model | File Reference | Input (words) | Output (words) |
 | - | --------------- | ----- | -------------- | ------------: | -------------: |
 | 1 | Speaker ID     | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
-| 2 | Title          | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
-| 3 | Minutes        | BEST  | `common/templates/types.py:96-97` | 345 + X | 0.5X |
-| 4 | Hallucination  | BEST  | `common/templates/types.py:98` | 17 | 80 |
-| 5 | extract_claims | FAST  | `common/templates/citations.py` | 336 + 0.5X | 0.1X |
-| 6 | cite_claims    | FAST  | `common/templates/citations.py` | 235 + 1.7X | 0.5X |
+| 2 | Minutes        | BEST  | `common/templates/types.py:96-97` | 345 + X | 0.5X |
+| 3 | Hallucination  | BEST  | `common/templates/types.py:98` | 17 | 80 |
+| 4 | extract_claims | FAST  | `common/templates/citations.py` | 336 + 0.5X | 0.1X |
+| 5 | cite_claims    | FAST  | `common/templates/citations.py` | 235 + 1.7X | 0.5X |
 
 **Totals (words):**
-* FAST: 693 + 4.2X input, 50 + 0.6X output
+* FAST: 681 + 3.2X input, 40 + 0.6X output
 * BEST: 362 + X input, 80 + 0.5X output
 
 ## B.2a Short 'n' Sweet (ExecutiveSummary) — SimpleTemplate without citations
 
 **Template**: Short 'n' Sweet  
 **Source**: `common/templates/default/executive_summary.py`  
-**Total invocations**: 4 (`citations_required = False` — invocations 5 and 6 skipped)
+**Total invocations**: 3 (`citations_required = False` — invocations 4 and 5 skipped)
 
 | # | Invocation      | Model | File Reference | Input (words) | Output (words) |
 | - | --------------- | ----- | -------------- | ------------: | -------------: |
 | 1 | Speaker ID    | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
-| 2 | Title         | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
-| 3 | Minutes       | BEST  | `common/templates/default/template_prompts/executive_summary.j2` | 134 + X | 0.3X |
-| 4 | Hallucination | BEST  | `common/templates/types.py:98` | 17 | 80 |
+| 2 | Minutes       | BEST  | `common/templates/default/template_prompts/executive_summary.j2` | 134 + X | 0.3X |
+| 3 | Hallucination | BEST  | `common/templates/types.py:98` | 17 | 80 |
 
-*Invocation 3 uses `executive_summary.j2` (129w system prompt, not `general.j2`). Output is 0.3X — a concise summary rather than full minutes.*
+*Invocation 2 uses `executive_summary.j2` (129w system prompt, not `general.j2`). Output is 0.3X — a concise summary rather than full minutes.*
 
 **Totals (words):**
-* FAST: 122 + 2X input, 50 output
+* FAST: 110 + X input, 40 output
 * BEST: 151 + X input, 80 + 0.3X output
 
 **Output tokens at X = 9,000 (EcoLogits charges output only):**
-* GPT-5-nano (FAST): 100 tokens (speaker 80 + title 20)
+* GPT-5-nano (FAST): 80 tokens (speaker 80)
 * GPT-5.1 (BEST): 5,560 tokens (minutes 5,400 + hallucination 160)
-* Total output: 5,660 tokens
+* Total output: 5,640 tokens
 
-**Energy (EcoLogits, per-invocation, UK GBR grid):** **7.4–11.0 Wh**
+**Energy (EcoLogits, per-invocation, UK GBR grid):** **7.3–11.0 Wh**
 
 **CO₂e (energy × GBR 217 g/kWh):** **1.6–2.4 g**
 
@@ -426,83 +424,79 @@ Primary studies [11], [15] represent the best available independent research but
 
 **Templates**: Cabinet, PlanningCommittee  
 **Source**: `common/templates/types.py:163-196`  
-**Total invocations**: 5 + 2Y
+**Total invocations**: 4 + 2Y
 
 | # | Invocation           | Model | File Reference | Input (words) | Output (words) |
 | - | -------------------- | ----- | -------------- | ------------: | -------------: |
 | 1  | Speaker ID                     | FAST | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
-| 2  | Title                          | FAST | `common/generate_meeting_title.py` | 12 + X | 10 |
-| 3  | Section detection              | FAST | `common/templates/types.py` | 74 + X | 2Y |
-| 4a | First section                  | BEST | `common/templates/types.py:176-181` | 345 + 15 | 0.3X/Y |
-| 4b | Each section k (×Y-1)          | BEST | `common/templates/types.py:185-186` | grows with history† | 0.3X/Y |
-| 5  | Hallucination (×Y)             | BEST | `common/templates/types.py:183,187` | 17 | 80 |
-| 6  | extract_claims                 | FAST | `common/templates/citations.py` | 336 + 0.3X | 0.06X |
-| 7  | cite_claims                    | FAST | `common/templates/citations.py` | 235 + 1.46X | 0.3X |
+| 2  | Section detection              | FAST | `common/templates/types.py` | 74 + X | 2Y |
+| 3a | First section                  | BEST | `common/templates/types.py:176-181` | 345 + 15 | 0.3X/Y |
+| 3b | Each section k (×Y-1)          | BEST | `common/templates/types.py:185-186` | grows with history† | 0.3X/Y |
+| 4  | Hallucination (×Y)             | BEST | `common/templates/types.py:183,187` | 17 | 80 |
+| 5  | extract_claims                 | FAST | `common/templates/citations.py` | 336 + 0.3X | 0.06X |
+| 6  | cite_claims                    | FAST | `common/templates/citations.py` | 235 + 1.46X | 0.3X |
 
 *†Section k input = system (345w) + k×15w + (k−1)×0.3X/Y (prior section output). Context window grows by 15 + 0.3X/Y per iteration.*
 
 **Totals (words):**
-* FAST: 767 + 4.76X input, 50 + 2Y + 0.36X output
+* FAST: 755 + 3.76X input, 40 + 2Y + 0.36X output
 * BEST section calls: Y×345 + 7.5Y(Y+1) + 0.15X(Y−1) input, 0.3X output (context accumulates)
 * BEST hallucination (×Y): 17Y input, 80Y output
 
 ## B.4 Delivery Template
 
 **Source**: `common/templates/default/delivery.py:73-107`  
-**Total invocations**: 6 (4 FAST + 2 BEST)
+**Total invocations**: 5 (3 FAST + 2 BEST)
 
 | # | Invocation                    | Model | File Reference | Input (words) | Output (words) |
 | - | ----------------------------- | ----- | -------------- | ------------: | -------------: |
 | 1 | Speaker ID                    | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
-| 2 | Title                         | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
-| 3 | Sections + Actions + Attendees | BEST  | `common/templates/default/delivery.py:81-86` | 199 + X | 0.4X + 30 |
-| 4 | Hallucination                 | BEST  | `common/templates/default/delivery.py:84` | 17 | 80 |
-| 5 | extract_claims                | FAST  | `common/templates/citations.py` | 336 + 0.4X | 0.08X |
-| 6 | cite_claims                   | FAST  | `common/templates/citations.py` | 235 + 1.58X | 0.4X |
+| 2 | Sections + Actions + Attendees | BEST  | `common/templates/default/delivery.py:81-86` | 199 + X | 0.4X + 30 |
+| 3 | Hallucination                 | BEST  | `common/templates/default/delivery.py:84` | 17 | 80 |
+| 4 | extract_claims                | FAST  | `common/templates/citations.py` | 336 + 0.4X | 0.08X |
+| 5 | cite_claims                   | FAST  | `common/templates/citations.py` | 235 + 1.58X | 0.4X |
 
 **Totals (words):**
-* FAST: 693 + 3.98X input, 50 + 0.48X output
+* FAST: 681 + 2.98X input, 40 + 0.48X output
 * BEST: 216 + X input, 110 + 0.4X output
 
 ## B.5 Basic Minutes (Fallback)
 
 **Source**: `common/services/minute_handler_service.py:221-228`  
-**Total invocations**: 4
+**Total invocations**: 3
 
 | # | Invocation      | Model | File Reference | Input (words) | Output (words) |
 | - | --------------- | ----- | -------------- | ------------: | -------------: |
 | 1 | Speaker ID    | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
-| 2 | Title         | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
-| 3 | Basic summary | FAST  | `common/services/minute_handler_service.py:225-226` | 12 + X | 0.3X |
-| 4 | Hallucination | FAST  | `common/services/minute_handler_service.py:227` | 17 | 80 |
+| 2 | Basic summary | FAST  | `common/services/minute_handler_service.py:225-226` | 12 + X | 0.3X |
+| 3 | Hallucination | FAST  | `common/services/minute_handler_service.py:227` | 17 | 80 |
 
 **Totals (words):**
-* FAST only: 151 + 3X input, 130 + 0.3X output
+* FAST only: 139 + 2X input, 120 + 0.3X output
 
 ## B.6 Additional Template Types
 
 ### B.6.1 UserTemplate (DOCUMENT type)
 
 **Source**: `common/templates/user_template.py:73-90`  
-**Total invocations**: 4 (2 FAST + 2 BEST)
+**Total invocations**: 3 (1 FAST + 2 BEST)
 
 | # | Invocation      | Model | File Reference | Input (words) | Output (words) |
 | - | --------------- | ----- | -------------- | ------------: | -------------: |
 | 1 | Speaker ID    | FAST  | `common/audio/generate_speaker_predictions.py` | 110 + X | 40 |
-| 2 | Title         | FAST  | `common/generate_meeting_title.py` | 12 + X | 10 |
-| 3 | Document gen  | BEST  | `common/templates/user_template.py:80-88` | 327 + X | 0.5X |
-| 4 | Hallucination | BEST  | `common/templates/user_template.py:89` | 17 | 80 |
+| 2 | Document gen  | BEST  | `common/templates/user_template.py:80-88` | 327 + X | 0.5X |
+| 3 | Hallucination | BEST  | `common/templates/user_template.py:89` | 17 | 80 |
 
-*Invocation 3 system prompt = `document_prompt` fixed text (115w) + user-defined template content (200w assumed) + date string (7w) = 322w. Plus transcript wrapper (5w) = 327w input. Actual values vary with template length.*
+*Invocation 2 system prompt = `document_prompt` fixed text (115w) + user-defined template content (200w assumed) + date string (7w) = 322w. Plus transcript wrapper (5w) = 327w input. Actual values vary with template length.*
 
 **Totals (words):**
-* FAST: 122 + 2X input, 50 output
+* FAST: 110 + X input, 40 output
 * BEST: 344 + X input, 80 + 0.5X output
 
 **Output tokens at X = 9,000 (EcoLogits charges output only):**
-* GPT-5-nano (FAST): 100 tokens (speaker 80 + title 20)
+* GPT-5-nano (FAST): 80 tokens (speaker 80)
 * GPT-5.1 (BEST): 9,160 tokens (doc gen 9,000 + hallucination 160)
-* Total output: 9,260 tokens
+* Total output: 9,240 tokens
 
 **Energy (EcoLogits, per-invocation, UK GBR grid):** **12.1–18.1 Wh**
 
@@ -796,12 +790,12 @@ EcoLogits [25] min–max ranges (UK GBR grid). Output tokens only; CO₂e derive
 
 | Template | Output Tokens | LLM Energy | LLM CO₂e |
 |---------|--------------|------------|----------|
-| Basic Minutes (fallback) | 5,660 | 0.3–0.4 Wh | 0.1 g |
-| Short 'n' Sweet | 5,660 | 7.4–11.0 Wh | 1.6–2.4 g |
-| Cabinet / Planning Committee (SectionTemplate Y=6) | 12,964 | 9.0–13.3 Wh | 2.0–2.9 g |
-| Delivery | 16,160 | 10.3–15.3 Wh | 2.2–3.3 g |
-| UserTemplate DOCUMENT | 9,260 | 12.1–18.1 Wh | 2.6–3.9 g |
-| General / Care Assessment / Care Assessment V2 | 20,060 | 12.7–18.8 Wh | 2.8–4.1 g |
+| Basic Minutes (fallback) | 5,640 | 0.3–0.4 Wh | 0.1 g |
+| Short 'n' Sweet | 5,640 | 7.3–11.0 Wh | 1.6–2.4 g |
+| Cabinet / Planning Committee (SectionTemplate Y=6) | 12,944 | 9.0–13.3 Wh | 2.0–2.9 g |
+| Delivery | 16,140 | 10.3–15.3 Wh | 2.2–3.3 g |
+| UserTemplate DOCUMENT | 9,240 | 12.1–18.1 Wh | 2.6–3.9 g |
+| General / Care Assessment / Care Assessment V2 | 20,040 | 12.7–18.8 Wh | 2.8–4.1 g |
 
 ### F.2.3 Usage-Weighted Average Impact
 

@@ -13,17 +13,17 @@ Prices are list prices in GBP, from:
 
 | Measure | FAST (gpt-5-nano) | BEST (gpt-5.1) | Total |
 |---|---|---|---|
-| Calls | 3.1 | 2.9 | 6.0 |
-| Input tokens, total | 73,098 | 59,722 | 132,820 |
+| Calls | 2.1 | 2.9 | 5.0 |
+| Input tokens, total | 52,818 | 59,722 | 112,540 |
 | Input tokens, cached | 0 | 6,194 | 6,194 |
-| Input tokens, non-cached | 73,098 | 53,528 | 126,626 |
-| Output tokens | 347 | 19,801 | 20,148 |
-| Cost, caching as built | £0.0030 | £0.2203 | £0.2233 |
-| Cost, caching off | £0.0030 | £0.2261 | £0.2291 |
+| Input tokens, non-cached | 52,818 | 53,528 | 106,346 |
+| Output tokens | 324 | 19,801 | 20,125 |
+| Cost, caching as built | £0.0022 | £0.2203 | £0.2225 |
+| Cost, caching off | £0.0022 | £0.2261 | £0.2283 |
 | Share of cost | 1% | 99% | — |
-| Cost per 1,000 meetings | £3.03 | £220 | £223 |
+| Cost per 1,000 meetings | £2.21 | £220.30 | £222.51 |
 
-The previous production estimate on this branch was £0.1096 per 1-hour meeting. Moving only citation extraction and citation insertion to BEST raises that to £0.2233, a £0.1137 increase per meeting, or about £114 per 1,000 meetings. FAST mostly falls back to speaker ID, title and the accuracy guardrail; BEST now carries initial summarisation plus the two citation calls.
+The previous production estimate on this branch was £0.1088 per 1-hour meeting. Moving only citation extraction and citation insertion to BEST raises that to £0.2225, a £0.1137 increase per meeting, or about £114 per 1,000 meetings. FAST mostly falls back to speaker ID and the accuracy guardrail; BEST now carries initial summarisation plus the two citation calls.
 
 ## Template effect
 
@@ -38,7 +38,7 @@ The previous production estimate on this branch was £0.1096 per 1-hour meeting.
 
 The change applies once per generated minute, not per section: one `extract_claims` call and one `cite_claims` call. `extract_claims` sends static instructions plus the full draft summary and returns a JSON list of atomic claims. `cite_claims` sends static citation policy, the full indexed transcript, the claims list and the full draft, then re-emits the cited summary plus `claim_citations`. For a 1-hour meeting, `cite_claims` is the expensive leg because the indexed transcript dominates input.
 
-Executive Summary has `citations_required = False`, so it is unchanged. The same is true for custom user-template question generation and the other non-citation calls: meeting title, speaker predictions, the accuracy guardrail, AI edits and the eval judge all keep their current tiers. A precise per-template estimate still depends on the production template mix; the blended usage-weighted figure above uses the existing December 2024-May 2026 mix in `assumptions.yaml`.
+Executive Summary has `citations_required = False`, so it is unchanged. The same is true for custom user-template question generation and the other non-citation calls: speaker predictions, the accuracy guardrail, AI edits and the eval judge all keep their current tiers. A precise per-template estimate still depends on the production template mix; the blended usage-weighted figure above uses the existing December 2024-May 2026 mix in `assumptions.yaml`.
 
 ## FAST-tier model substitution
 
@@ -57,15 +57,15 @@ roughly double its price.
 
 | Candidate | GBP, FAST calls only | GBP, total | GBP per 1,000 meetings | Delta vs gpt-5-nano |
 |---|---:|---:|---:|---:|
-| gpt-5-nano (current) | £0.0030 | £0.2233 | £223.33 | — |
-| gpt-5.1 | £0.0789 | £0.2992 | £299.19 | +£0.0759 (+34%) |
-| gpt-5-6-luna | £0.0243 | £0.2446 | £244.61 | +£0.0213 (+10%) |
-| gpt-6-luna | £0.0061 | £0.2264 | £226.39 | +£0.0031 (+1%) |
-| haiku-4-5 | £0.0609 | £0.2812 | £281.21 | +£0.0579 (+26%) |
-| sonnet-5 | £0.1218 | £0.3421 | £342.13 | +£0.1188 (+53%) |
+| gpt-5-nano (current) | £0.00221 | £0.22251 | £222.51 | — |
+| gpt-5.1 | £0.05761 | £0.27791 | £277.91 | +£0.05540 (+25%) |
+| gpt-5-6-luna | £0.01767 | £0.23797 | £237.97 | +£0.01546 (+7%) |
+| gpt-6-luna | £0.00443 | £0.22473 | £224.73 | +£0.00222 (+1%) |
+| haiku-4-5 | £0.04431 | £0.26461 | £264.61 | +£0.04210 (+19%) |
+| sonnet-5 | £0.08862 | £0.30892 | £308.92 | +£0.08641 (+39%) |
 
 `gpt-6-luna` is the cheapest upgrade path at roughly a 1% total increase. FAST calls (speaker
-ID, title and accuracy guardrail) remain a small share of the total; citations and minute
+ID and accuracy guardrail) remain a small share of the total; citations and minute
 generation dominate the BEST-tier cost.
 
 ## Both-tier model substitution
@@ -77,11 +77,11 @@ all-sonnet rows are cost estimates only.
 
 | Setup | BEST | FAST | GBP total | GBP per 1,000 meetings | Delta vs current production |
 |---|---|---|---:|---:|---:|
-| Current production | gpt-5.1 | gpt-5-nano | £0.2233 | £223.33 | — |
-| All-luna | gpt-6-luna | gpt-6-luna | £0.0186 | £18.56 | -92% |
-| All-haiku | haiku-4-5 | haiku-4-5 | £0.1856 | £185.58 | -17% |
-| FAST=haiku, BEST=sonnet (estimate) | sonnet-5 | haiku-4-5 | £0.3102 | £310.24 | +39% |
-| All-sonnet (estimate) | sonnet-5 | sonnet-5 | £0.3712 | £371.16 | +66% |
+| Current production | gpt-5.1 | gpt-5-nano | £0.2225 | £222.51 | — |
+| All-luna | gpt-6-luna | gpt-6-luna | £0.0169 | £16.90 | -92% |
+| All-haiku | haiku-4-5 | haiku-4-5 | £0.1690 | £168.98 | -24% |
+| FAST=haiku, BEST=sonnet (estimate) | sonnet-5 | haiku-4-5 | £0.2936 | £293.64 | +32% |
+| All-sonnet (estimate) | sonnet-5 | sonnet-5 | £0.3380 | £337.95 | +52% |
 
 All-luna is the cheapest option and scored highest in the separate custom FORM-template quality
 eval (see `evals/openai_model_comparison/cost_vs_quality_summarisation.png`).

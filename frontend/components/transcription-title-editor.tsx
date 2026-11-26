@@ -4,7 +4,6 @@ import {
   GovukErrorSummary,
 } from '@/components/govuk'
 import { useUpdateTranscription } from '@/hooks/use-update-transcription-speakers'
-import { JobStatus } from '@/lib/client'
 import { cn } from '@/lib/utils'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
@@ -12,11 +11,9 @@ import { useForm, useWatch } from 'react-hook-form'
 export const TranscriptionTitleEditor = ({
   transcriptionId,
   title,
-  status,
 }: {
   transcriptionId: string
   title: string | null
-  status: JobStatus
 }) => {
   const [editing, setEditing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)

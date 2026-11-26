@@ -69,7 +69,6 @@ P_DELIVERY_SYS = 30 * TOK  # inline system message in delivery.py
 P_DELIVERY_STYLE = 161 * TOK  # delivery_style_guide.j2 + wrapper
 P_DOCUMENT = (115 + 200 + 7) * TOK  # document_prompt fixed + assumed user content + date
 P_SPEAKER = (63 + 30) * TOK  # inline system + user in generate_speaker_predictions.py
-P_TITLE = 14 * TOK  # meeting_title.j2
 P_GUARDRAIL = 85 * TOK  # inline system + wrapper in get_accuracy_check_messages
 
 Y = 6  # sections, SectionTemplate
@@ -93,7 +92,7 @@ PRICES = {
     "fast": (0.04, 0.01, 0.31),  # gpt-5-nano (FAST_LLM_MODEL_NAME)
 }
 
-# Candidate FAST-tier substitutes considered for the guardrail/speaker-id/title calls.
+# Candidate FAST-tier substitutes considered for the guardrail/speaker-id calls.
 # USD list prices (Azure OpenAI Data Zone / AWS Bedrock eu.anthropic.* region-pinned),
 # converted to GBP at the 2026-11-04 mid-market rate (1 USD = 0.74 GBP); see
 # https://azure.microsoft.com/en-us/pricing/details/azure-openai/ and
@@ -138,12 +137,11 @@ class Inv:
 def _common(m: Meeting, minute_tokens: float) -> list[Inv]:
     """Calls every standard meeting makes regardless of template.
 
-    Speaker ID, title and the guardrail each re-send the whole transcript behind a
+    Speaker ID and the guardrail each re-send the whole transcript behind a
     different leading message, so none of them can hit another's cached prefix.
     """
     return [
         Inv("speaker_id", "fast", P_SPEAKER + m.t, 0, 80),
-        Inv("title", "fast", P_TITLE + m.t, 0, 20),
         Inv("accuracy_guardrail", "fast", P_GUARDRAIL + m.t + minute_tokens * HTML, 0, 200),
     ]
 
@@ -252,11 +250,11 @@ SHARES = {
 # Speaker ID uses pre-prediction labels ("Unknown speaker N"), cite_claims uses indexed
 # transcript lines, and FAST calls cannot seed BEST cache entries.
 CACHEABLE_TRANSCRIPT_REPLAYS: dict[str, tuple[float, float]] = {
-    "General": (1, 0),  # title -> guardrail
-    "Short 'n' Sweet": (1, 0),  # title -> guardrail
-    "Delivery": (1, 0),  # title -> guardrail
-    "User generated (DOCUMENT)": (1, 0),  # title -> guardrail
-    "SectionTemplate (Y=6)": (2, 0),  # section_detection -> title -> guardrail
+    "General": (0, 0),  # title -> guardrail
+    "Short 'n' Sweet": (0, 0),  # title -> guardrail
+    "Delivery": (0, 0),  # title -> guardrail
+    "User generated (DOCUMENT)": (0, 0),  # title -> guardrail
+    "SectionTemplate (Y=6)": (1, 0),  # section_detection -> guardrail
 }
 CACHEABLE_TRANSCRIPT_REPLAYS["Usage-weighted"] = (
     sum(SHARES[n] * CACHEABLE_TRANSCRIPT_REPLAYS[n][0] for n in SHARES),

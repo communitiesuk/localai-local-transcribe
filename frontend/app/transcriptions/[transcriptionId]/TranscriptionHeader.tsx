@@ -16,7 +16,6 @@ export const TranscriptionHeader = ({
     <TranscriptionTitleEditor
       title={transcription.title}
       transcriptionId={transcription.id}
-      status={transcription.status}
     />
     <div className="govuk-!-margin-bottom-4 flex items-center gap-2">
       <StatusBadge status={transcription.status} />
