@@ -77,7 +77,8 @@ water:
 
 # --- AWS hosting snapshot ----------------------------------------------------
 # April 2026 monthly CO₂e, fetched via the AWS Sustainability API.
-# Re-run `poetry run python calculations.py` with valid AWS credentials to refresh.
+# Re-run `poetry run python calculations.py` and enter current AWS Console values
+# to refresh the report.
 aws:
   apr2026_co2e_g: 17317 # g CO₂e (market-based MBM), April 2026
   apr2026_lbm_co2e_g: 64309 # g CO₂e (location-based LBM), April 2026; reversed via GB grid intensity to recover kWh for water

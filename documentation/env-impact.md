@@ -97,7 +97,7 @@ A single 1-hour meeting therefore embeds roughly **6 L of withdrawn water** but 
 
 #### 4.2.2 Monthly AWS hosting
 
-The AWS Sustainability API reports carbon, not electricity. `water.py` fetches the latest available month's **location-based** emissions (which are built on grid averages) and recovers energy by dividing by the GB grid intensity (217.4 g CO₂e/kWh); the GB water factors are then applied. For the April 2026 figure (64,309 g CO₂e, §2.2) this is ≈**296 kWh**, embedding approximately **49,300 L (493 hL) withdrawn** for the month — of which only about **694 L is consumed (lost)**, the remainder returning to source.
+The AWS Sustainability API reports carbon, not electricity. `water.py` prompts for the latest available month's **location-based** emissions from the AWS Console (built on grid averages) and recovers energy by dividing by the GB grid intensity (217.4 g CO₂e/kWh); the GB water factors are then applied. For the April 2026 figure (64,309 g CO₂e, §2.2) this is ≈**296 kWh**, embedding approximately **49,300 L (493 hL) withdrawn** for the month — of which only about **694 L is consumed (lost)**, the remainder returning to source.
 
 #### 4.2.3 Model training
 
@@ -1024,7 +1024,7 @@ Scope 2 water (§4.2) is estimated using the WRI methodology [29]: multiply each
 
 **Withdrawal** is water drawn from a source, most of which returns to the water cycle; **consumption** is water actually lost, primarily to evaporation (§4). The ~70× gap between the two factors reflects this — most withdrawn water is not lost.
 
-Inference and AWS hosting are assumed to run on UK infrastructure (§5.1) and use the Great Britain factors; model training runs on US infrastructure and uses the United States factors. AWS reports carbon rather than energy, so its electricity is recovered from the location-based emission figure (which is built on grid averages) before the factors are applied: `kWh = LBM g CO₂e ÷ GB grid intensity (217.4 g/kWh)`. `water.py` pulls the latest available month from the AWS Sustainability API live, falling back to the recorded April 2026 snapshot when credentials are unavailable. All figures are reproducible via `documentation/env_assets/water.py`.
+Inference and AWS hosting are assumed to run on UK infrastructure (§5.1) and use the Great Britain factors; model training runs on US infrastructure and uses the United States factors. AWS reports carbon rather than energy, so its electricity is recovered from the location-based emission figure (which is built on grid averages) before the factors are applied: `kWh = LBM g CO₂e ÷ GB grid intensity (217.4 g/kWh)`. `water.py` prompts for the latest available month's figures from the AWS Console. Its optional `--api_calls` flag retains the API integration for development and staging only; it must not be used for production. All figures are reproducible via `documentation/env_assets/water.py`.
 
 ---
 

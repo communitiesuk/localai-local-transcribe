@@ -25,8 +25,26 @@ poetry run python llm_inference.py   # LLM invocation costs
 poetry run python training.py        # Model training footprint
 poetry run python water.py           # Scope 2 water embedded in electricity
 poetry run python comparisons.py     # Real-life analogies
-poetry run python aws.py             # Live AWS carbon data (requires AWS CLI + credentials)
+poetry run python aws.py             # AWS carbon data entered manually from the AWS Console
 ```
+
+The full report, `water.py`, and `aws.py` prompt for the latest month's
+market-based and location-based emissions from the AWS Sustainability page.
+This is the default so running the scripts does not require command-line access
+to production.
+
+To fetch those values with the existing AWS API integration, opt in explicitly:
+
+```bash
+poetry run python calculations.py --api_calls
+poetry run python water.py --api_calls
+poetry run python aws.py --api_calls
+```
+
+> [!WARNING]
+> `--api_calls` is only for development and staging. **DO NOT use it for
+> production.** It requires valid AWS credentials and accesses the configured
+> AWS account.
 
 ## How it works
 
