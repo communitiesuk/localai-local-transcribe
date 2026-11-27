@@ -48,6 +48,16 @@ button.govuk-service-navigation__link:disabled {
   cursor: not-allowed;
 }
 
+// govuk-back-link sets its colour on :link and :visited too, so a <button>
+// wearing the class falls back to the inherited colour.
+button.govuk-back-link {
+  color: var(--govuk-text-colour);
+
+  &:focus {
+    color: var(--govuk-focus-text-colour);
+  }
+}
+
 // Summary-card action links (e.g. "Move up" on the first question, "Move down"
 // on the last) are disabled at the list edges but should stay link-blue to
 // match the design, rather than picking up the greyed disabled colour above.
