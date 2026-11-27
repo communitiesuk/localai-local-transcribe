@@ -243,15 +243,3 @@ def get_cite_claims_prompt(
 
 def string_to_system_message(string: str) -> dict[str, str]:
     return {"role": "system", "content": string}
-
-
-def get_meeting_title_prompt(transcript: list[DialogueEntry]) -> list[dict[str, str]]:
-    return [
-        build_prompt_injection_aware_system_message(render_prompt_template("meeting_title_system.j2")),
-        {
-            "role": "user",
-            "content": render_prompt_template(
-                "meeting_title.j2", transcript=wrap_transcript(transcript_as_speaker_and_utterance(transcript))
-            ),
-        },
-    ]

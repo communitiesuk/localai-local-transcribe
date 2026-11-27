@@ -91,6 +91,33 @@ async def test_create_transcription_success(
 
 
 @pytest.mark.asyncio
+async def test_create_transcription_normalises_empty_title_to_null(
+    mocker,
+    mock_session_with_recording,
+    mock_recording,
+    mock_user,
+    mock_transcription,
+    mock_transcription_queue_service,  # NOQA: ARG001
+    mock_storage_service,  # NOQA: ARG001
+):
+    mock_recording.file_created_at = None
+    mock_transcription_class = mocker.patch(
+        "backend.api.routes.transcriptions.Transcription", return_value=mock_transcription
+    )
+
+    await create_transcription(
+        TranscriptionCreateRequest(
+            recording_id=mock_recording.id,
+            title="",
+        ),
+        mock_session_with_recording,
+        mock_user,
+    )
+
+    assert mock_transcription_class.call_args.kwargs["title"] is None
+
+
+@pytest.mark.asyncio
 async def test_create_transcription_records_audio_upload_completed_analytics_event(
     mocker,
     mock_session_with_recording,
@@ -387,8 +414,7 @@ async def test_update_transcription_title_success(mock_session, mock_user, mock_
 
 
 @pytest.mark.asyncio
-async def test_update_transcription_title_null_succeeds_no_change(mock_session, mock_user, mock_transcription):
-    original_title = mock_transcription.title
+async def test_update_transcription_title_null_clears_title(mock_session, mock_user, mock_transcription):
     mock_session.get = AsyncMock(return_value=mock_transcription)
 
     await update_transcription_title(
@@ -398,8 +424,8 @@ async def test_update_transcription_title_null_succeeds_no_change(mock_session, 
         mock_user,
     )
 
-    assert mock_transcription.title == original_title
-    mock_session.commit.assert_not_awaited()  # No commit should be made since no change was made
+    assert mock_transcription.title is None
+    mock_session.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio

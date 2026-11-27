@@ -102,70 +102,64 @@ def _combine(*invocations: dict) -> dict:
 
 
 def simple_template(x: float = TRANSCRIPT_WORDS) -> dict:
-    """B.2 — SimpleTemplate: General / Care Assessment / Care Assessment V2 (6 invocations)."""
+    """B.2 — SimpleTemplate: General / Care Assessment / Care Assessment V2 (5 invocations)."""
     return _combine(
         _inv(40, "fast"),  # 1. speaker_id
-        _inv(10, "fast"),  # 2. title
-        _inv(0.5 * x, "best"),  # 3. minutes
-        _inv(80, "best"),  # 4. hallucination check
-        _inv(0.1 * x, "fast"),  # 5. extract_claims
-        _inv(0.5 * x, "fast"),  # 6. cite_claims
+        _inv(0.5 * x, "best"),  # 2. minutes
+        _inv(80, "best"),  # 3. hallucination check
+        _inv(0.1 * x, "fast"),  # 4. extract_claims
+        _inv(0.5 * x, "fast"),  # 5. cite_claims
     )
 
 
 def section_template(x: float = TRANSCRIPT_WORDS, y: int = NUM_SECTIONS) -> dict:
-    """B.3 — SectionTemplate: Cabinet / Planning Committee (5 + 2Y invocations)."""
+    """B.3 — SectionTemplate: Cabinet / Planning Committee (4 + 2Y invocations)."""
     section_words = 0.3 * x / y
     return _combine(
         _inv(40, "fast"),  # 1. speaker_id
-        _inv(10, "fast"),  # 2. title
-        _inv(2 * y, "fast"),  # 3. section detection
-        *[_inv(section_words, "best") for _ in range(y)],  # 4×Y section outputs
-        *[_inv(80, "best") for _ in range(y)],  # 5×Y hallucination checks
-        _inv(0.06 * x, "fast"),  # 6. extract_claims
-        _inv(0.3 * x, "fast"),  # 7. cite_claims
+        _inv(2 * y, "fast"),  # 2. section detection
+        *[_inv(section_words, "best") for _ in range(y)],  # 3×Y section outputs
+        *[_inv(80, "best") for _ in range(y)],  # 4×Y hallucination checks
+        _inv(0.06 * x, "fast"),  # 5. extract_claims
+        _inv(0.3 * x, "fast"),  # 6. cite_claims
     )
 
 
 def delivery_template(x: float = TRANSCRIPT_WORDS) -> dict:
-    """B.4 — Delivery Template (6 invocations: 4 FAST + 2 BEST)."""
+    """B.4 — Delivery Template (5 invocations: 3 FAST + 2 BEST)."""
     return _combine(
         _inv(40, "fast"),  # 1. speaker_id
-        _inv(10, "fast"),  # 2. title
-        _inv(0.4 * x + 30, "best"),  # 3. sections + actions + attendees
-        _inv(80, "best"),  # 4. hallucination check
-        _inv(0.08 * x, "fast"),  # 5. extract_claims
-        _inv(0.4 * x, "fast"),  # 6. cite_claims
+        _inv(0.4 * x + 30, "best"),  # 2. sections + actions + attendees
+        _inv(80, "best"),  # 3. hallucination check
+        _inv(0.08 * x, "fast"),  # 4. extract_claims
+        _inv(0.4 * x, "fast"),  # 5. cite_claims
     )
 
 
 def basic_minutes(x: float = TRANSCRIPT_WORDS) -> dict:
-    """B.5 — Basic Minutes fallback (4 FAST-only invocations)."""
+    """B.5 — Basic Minutes fallback (3 FAST-only invocations)."""
     return _combine(
         _inv(40, "fast"),  # 1. speaker_id
-        _inv(10, "fast"),  # 2. title
-        _inv(0.3 * x, "fast"),  # 3. summary
-        _inv(80, "fast"),  # 4. hallucination check
+        _inv(0.3 * x, "fast"),  # 2. summary
+        _inv(80, "fast"),  # 3. hallucination check
     )
 
 
 def executive_summary(x: float = TRANSCRIPT_WORDS) -> dict:
-    """B.2a — Short 'n' Sweet / ExecutiveSummary (4 invocations, no citations)."""
+    """B.2a — Short 'n' Sweet / ExecutiveSummary (3 invocations, no citations)."""
     return _combine(
         _inv(40, "fast"),  # 1. speaker_id
-        _inv(10, "fast"),  # 2. title
-        _inv(0.3 * x, "best"),  # 3. minutes
-        _inv(80, "best"),  # 4. hallucination check
+        _inv(0.3 * x, "best"),  # 2. minutes
+        _inv(80, "best"),  # 3. hallucination check
     )
 
 
 def user_template_document(x: float = TRANSCRIPT_WORDS) -> dict:
-    """B.6.1 — UserTemplate (DOCUMENT type): 4 invocations (2 FAST + 2 BEST)."""
+    """B.6.1 — UserTemplate (DOCUMENT type): 3 invocations (1 FAST + 2 BEST)."""
     return _combine(
         _inv(40, "fast"),  # 1. speaker_id
-        _inv(10, "fast"),  # 2. title
-        _inv(0.5 * x, "best"),  # 3. document generation
-        _inv(80, "best"),  # 4. hallucination check
+        _inv(0.5 * x, "best"),  # 2. document generation
+        _inv(80, "best"),  # 3. hallucination check
     )
 
 
@@ -234,10 +228,10 @@ def display() -> None:
     es, utd, wt = r["executive_summary"], r["user_template_document"], r["usage_weighted"]
 
     for title, tr, inv in [
-        ("Section 7.1: SimpleTemplate", st, "6"),
-        (f"Section 7.2: SectionTemplate Y={NUM_SECTIONS}", sec, f"5+2×{NUM_SECTIONS}={5 + 2 * NUM_SECTIONS}"),
-        ("Section 7.3: Delivery Template", dv, "6"),
-        ("Section 7.4: Basic Minutes (fallback)", bm, "4"),
+        ("Section 7.1: SimpleTemplate", st, "5"),
+        (f"Section 7.2: SectionTemplate Y={NUM_SECTIONS}", sec, f"4+2×{NUM_SECTIONS}={4 + 2 * NUM_SECTIONS}"),
+        ("Section 7.3: Delivery Template", dv, "5"),
+        ("Section 7.4: Basic Minutes (fallback)", bm, "3"),
     ]:
         _section(f"{title}  [{inv} invocations]")
         _row("GPT-5-nano (fast) output tokens", f"{tr['fast_out_tokens']:,.0f}")
@@ -256,12 +250,12 @@ def display() -> None:
     print(f"  {'Template':<34} {'Invocations':>11} {'Out Tokens':>10} {'Energy (Wh)':>20} {'CO₂e (g)':>16}")
     print(f"  {'-' * 34} {'-' * 11} {'-' * 10} {'-' * 20} {'-' * 16}")
     for name, inv, tr in [
-        ("Basic Minutes", "4", bm),
-        ("Short 'n' Sweet (no citations)", "4", es),
-        ("UserTemplate DOCUMENT", "4", utd),
-        ("Delivery", "6", dv),
-        ("SimpleTemplate", "6", st),
-        (f"SectionTemplate Y={NUM_SECTIONS}", f"5+2×{NUM_SECTIONS}={5 + 2 * NUM_SECTIONS}", sec),
+        ("Basic Minutes", "3", bm),
+        ("Short 'n' Sweet (no citations)", "3", es),
+        ("UserTemplate DOCUMENT", "3", utd),
+        ("Delivery", "5", dv),
+        ("SimpleTemplate", "5", st),
+        (f"SectionTemplate Y={NUM_SECTIONS}", f"4+2×{NUM_SECTIONS}={4 + 2 * NUM_SECTIONS}", sec),
     ]:
         print(
             f"  {name:<34} {inv:>11} {tr['total_out_tokens']:>10,.0f}"

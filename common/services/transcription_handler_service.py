@@ -16,7 +16,6 @@ from common.database.postgres_models import (
     Transcription,
     TranscriptionFailureReason,
 )
-from common.generate_meeting_title import generate_meeting_title
 from common.llm.client import FastOrBestLLM, create_default_chatbot
 from common.prompts import get_chat_with_transcript_system_message
 from common.services.analytics_service import record_analytics_event_sync
@@ -146,7 +145,6 @@ class TranscriptionHandlerService:
         transcription_id: UUID,
         status: JobStatus | None = None,
         transcript: list[DialogueEntry] | None = None,
-        title: str | None = None,
         error: str | None = None,
         failure_reason: TranscriptionFailureReason | None = None,
     ) -> None:
@@ -163,10 +161,6 @@ class TranscriptionHandlerService:
                 transcription.error = error
             if failure_reason is not None:
                 transcription.failure_reason = failure_reason
-            # The title passed here is AI-generated, so it must not clobber a title the
-            # user has already set themselves (the "subject" field on the details form).
-            if title and not transcription.title:
-                transcription.title = title
             session.add(transcription)
             session.commit()
 
@@ -208,10 +202,7 @@ class TranscriptionHandlerService:
                 cls._record_transcription_failed(transcription, TranscriptionFailureReason.NO_SPEECH_DETECTED)
             else:
                 dialogue_entries = await cls.identify_speakers(transcription_job.transcript)
-                meeting_title = await generate_meeting_title(transcript=dialogue_entries)
-                cls.update_transcription(
-                    transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries, title=meeting_title
-                )
+                cls.update_transcription(transcription.id, status=JobStatus.COMPLETED, transcript=dialogue_entries)
                 cls._record_transcription_received(transcription)
 
         except Exception as e:

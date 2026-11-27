@@ -3658,6 +3658,7 @@
           }
         },
         "type": "object",
+        "required": ["title"],
         "title": "UpdateTranscriptionTitleRequest"
       },
       "UserCreate": {

@@ -11,7 +11,6 @@ from common.prompts import (
     get_cite_claims_prompt,
     get_extract_claims_prompt,
     get_meeting_detection_prompt,
-    get_meeting_title_prompt,
     get_minutes_messages,
     get_section_for_agenda_prompt,
     get_sections_from_transcript_prompt,
@@ -345,16 +344,6 @@ def test_get_cite_claims_prompt_excludes_boundary_metadata_from_output():
 def test_string_to_system_message():
     result = string_to_system_message("You are helpful.")
     assert result == {"role": "system", "content": "You are helpful."}
-
-
-def test_get_meeting_title_prompt():
-    messages = get_meeting_title_prompt(_TRANSCRIPT)
-    assert len(messages) == 2
-    assert messages[0]["role"] == "system"
-    assert messages[1]["role"] == "user"
-    assert "Alice" in messages[1]["content"]
-    assert "BEGIN transcript " in messages[1]["content"]
-    assert "title" in messages[1]["content"].lower()
 
 
 def test_format_guidelines_list():
