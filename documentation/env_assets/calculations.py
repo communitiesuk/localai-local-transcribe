@@ -12,6 +12,8 @@ Run this file for the complete report:
   poetry run python calculations.py
 """
 
+import argparse
+
 import aws
 import comparisons
 import llm_inference
@@ -20,17 +22,22 @@ import transcription
 import water
 
 
-def main() -> None:
+def main(*, api_calls: bool = False) -> None:
+    aws_data = aws.calculate(api_calls=api_calls)
     transcription.display()
     llm_inference.display()
     training.display()
-    water.display()
+    water.display(aws_data)
     comparisons.display()
-    try:
-        aws.display()
-    except RuntimeError as e:
-        print(f"\n[AWS report skipped: {e}]")
+    aws.display(aws_data)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--api_calls",
+        action="store_true",
+        help="Use AWS API calls for development/staging only. DO NOT use for production.",
+    )
+    args = parser.parse_args()
+    main(api_calls=args.api_calls)

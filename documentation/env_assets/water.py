@@ -7,8 +7,9 @@ training runs on the US grid (US factors). Scope 1 (on-site cooling) is small
 for the providers used and reported separately by operators (§4.1).
 """
 
+import argparse
+
 from utils import (
-    AWS_APR2026_LBM_CO2E_G,
     LLM_CARBON_INTENSITY_G_PER_KWH,
     WATER_GB_CONSUMPTION_GAL_PER_KWH,
     WATER_GB_CONSUMPTION_L_PER_KWH,
@@ -18,11 +19,11 @@ from utils import (
     WATER_US_CONSUMPTION_L_PER_KWH,
     WATER_US_WITHDRAWAL_GAL_PER_KWH,
     WATER_US_WITHDRAWAL_L_PER_KWH,
-    combined_impact,
-    scope2_water,
     _ml,
     _row,
     _section,
+    combined_impact,
+    scope2_water,
 )
 
 
@@ -49,22 +50,15 @@ def _band(energy_wh_min: float, energy_wh_max: float, grid: str = "gb") -> dict:
     }
 
 
-def _aws_lbm() -> tuple[float, str, bool]:
-    """Latest-month AWS location-based CO₂e (g), with offline fallback to the snapshot.
-
-    Returns (lbm_g, month_label, is_live). Falls back to the recorded April 2026
-    snapshot when AWS credentials are unavailable so the report still runs.
-    """
+def _aws_lbm(aws_data: dict | None = None, *, api_calls: bool = False) -> tuple[float, str, str]:
+    """Latest-month AWS location-based CO₂e (g) and its source."""
     import aws
 
-    try:
-        a = aws.calculate()
-    except RuntimeError:
-        return float(AWS_APR2026_LBM_CO2E_G), "April 2026 (snapshot)", False
-    return a["lbm_g"], a["label"], True
+    result = aws_data or aws.calculate(api_calls=api_calls)
+    return result["lbm_g"], result["label"], result["source"]
 
 
-def calculate() -> dict:
+def calculate(aws_data: dict | None = None, *, api_calls: bool = False) -> dict:
     import llm_inference
     import training
     import transcription
@@ -77,12 +71,12 @@ def calculate() -> dict:
     training_wh = training_r["llm"]["llm_total_wh"] + training_r["asr"]["per_user_wh"]
 
     # AWS reports carbon, not energy. Pull the latest available month's
-    # location-based (LBM) figure live, then recover kWh by dividing through the
+    # location-based (LBM) figure, then recover kWh by dividing through the
     # GB grid intensity. LBM uses grid averages, so it reverses cleanly.
-    lbm_g, aws_label, aws_live = _aws_lbm()
+    lbm_g, aws_label, aws_source = _aws_lbm(aws_data, api_calls=api_calls)
     aws_kwh = lbm_g / LLM_CARBON_INTENSITY_G_PER_KWH
     aws_band = _band(aws_kwh * 1_000, aws_kwh * 1_000)
-    aws_band.update(kwh=aws_kwh, lbm_g=lbm_g, label=aws_label, live=aws_live)
+    aws_band.update(kwh=aws_kwh, lbm_g=lbm_g, label=aws_label, source=aws_source)
 
     return {
         # Inference (ASR + LLM) is UK-hosted → GB factors.
@@ -106,8 +100,8 @@ def _c(band: dict) -> str:
     return f"{_ml(band['consumption_l_min'])} – {_ml(band['consumption_l_max'])}"
 
 
-def display() -> None:
-    r = calculate()
+def display(aws_data: dict | None = None, *, api_calls: bool = False) -> None:
+    r = calculate(aws_data, api_calls=api_calls)
 
     _section("Appendix H: Scope 2 Water — Factors [WRI]")
     print(f"  {'Grid':<26} {'Withdrawal':>22} {'Consumption':>20}")
@@ -136,8 +130,7 @@ def display() -> None:
     _row("Combined consumption (midpoint)", _ml(comb["consumption_l_mid"]))
 
     aws = r["aws_monthly"]
-    source = "live" if aws["live"] else "snapshot — no AWS credentials"
-    _section(f"Section 4.2: Scope 2 Water — AWS Hosting ({aws['label']}, GB grid) [{source}]")
+    _section(f"Section 4.2: Scope 2 Water — AWS Hosting ({aws['label']}, GB grid) [{aws['source']}]")
     _row(
         "Energy recovered from LBM",
         f"{aws['lbm_g']:,.0f} g CO₂e / {LLM_CARBON_INTENSITY_G_PER_KWH:.1f} g/kWh  = {aws['kwh']:,.0f} kWh",
@@ -163,4 +156,11 @@ def display() -> None:
 
 
 if __name__ == "__main__":
-    display()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--api_calls",
+        action="store_true",
+        help="Use AWS API calls for development/staging only. DO NOT use for production.",
+    )
+    args = parser.parse_args()
+    display(api_calls=args.api_calls)

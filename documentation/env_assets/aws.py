@@ -1,6 +1,8 @@
-"""AWS Sustainability API: live monthly carbon report."""
+"""AWS monthly carbon report from manual input or the Sustainability API."""
 
+import argparse
 import json
+import math
 import subprocess
 from datetime import date, timedelta
 
@@ -9,9 +11,9 @@ from utils import (
     NUM_SECTIONS,
     TRANSCRIPT_WORDS,
     WORKING_HOURS_PER_DAY,
-    combined_impact,
     _row,
     _section,
+    combined_impact,
 )
 
 _MTCO2E_TO_G = 1_000_000
@@ -60,10 +62,40 @@ def fetch_aws_emissions(start: str, end: str) -> dict:
     return results[0]
 
 
-def calculate() -> dict:
-    """Fetch last month's AWS carbon emissions. Raises RuntimeError if CLI unavailable."""
+def prompt_for_aws_emissions() -> dict:
+    """Collect last month's AWS carbon emissions from the AWS Console."""
+
+    print("\nOpen the AWS Sustainability page in the AWS Console.")
+    print("Find the latest month's carbon footprint and enter these two values.")
+
+    emissions = {}
+    for key, label in [
+        ("TOTAL_MBM_CARBON_EMISSIONS", "Market-based emissions (MTCO2e)"),
+        ("TOTAL_LBM_CARBON_EMISSIONS", "Location-based emissions (MTCO2e)"),
+    ]:
+        while True:
+            raw_value = input(f"  {label}: ")
+            try:
+                value = float(raw_value)
+            except ValueError:
+                print("  Enter a number, for example 0.017317.")
+                continue
+            if value < 0 or not math.isfinite(value):
+                print("  Enter a finite value greater than or equal to zero.")
+                continue
+            emissions[key] = {"Value": value}
+            break
+
+    return {
+        "EmissionsValues": emissions,
+        "ModelVersion": "manual console entry",
+    }
+
+
+def calculate(*, api_calls: bool = False) -> dict:
+    """Get last month's AWS carbon emissions, using manual input by default."""
     start, end, label = last_month_window()
-    result = fetch_aws_emissions(start, end)
+    result = fetch_aws_emissions(start, end) if api_calls else prompt_for_aws_emissions()
     emissions = result["EmissionsValues"]
     mbm_mtco2e: float = emissions["TOTAL_MBM_CARBON_EMISSIONS"]["Value"]
     lbm_mtco2e: float = emissions["TOTAL_LBM_CARBON_EMISSIONS"]["Value"]
@@ -72,6 +104,7 @@ def calculate() -> dict:
         "end": end,
         "label": label,
         "model_version": result.get("ModelVersion", "unknown"),
+        "source": "AWS API via CLI" if api_calls else "manual console entry",
         "mbm_g": mbm_mtco2e * _MTCO2E_TO_G,
         "mbm_kg": mbm_mtco2e * _MTCO2E_TO_KG,
         "mbm_mtco2e": mbm_mtco2e,
@@ -81,16 +114,16 @@ def calculate() -> dict:
     }
 
 
-def display() -> None:
+def display(aws_data: dict | None = None, *, api_calls: bool = False) -> None:
     import llm_inference
     import transcription
 
-    aws = calculate()
+    aws = aws_data or calculate(api_calls=api_calls)
     mbm_g, lbm_g = aws["mbm_g"], aws["lbm_g"]
     label = aws["label"]
 
     print(f"\nAWS INFRASTRUCTURE CARBON EMISSIONS — {label}")
-    print(f"  Querying {aws['start'][:10]} → {aws['end'][:10]} (exclusive end) …")
+    print(f"  Source: {aws['source']}")
 
     _section(f"AWS Sustainability API — {label}  [model {aws['model_version']}]")
     _row("Period", f"{aws['start'][:10]} – {aws['end'][:10]}")
@@ -111,7 +144,7 @@ def display() -> None:
     wt_combined = combined_impact(llm["usage_weighted"], asr)
     per_hour_g = wt_combined["total_co2e_g"]
 
-    _section(f"AI Processing Cost — per 1-hour meeting")
+    _section("AI Processing Cost — per 1-hour meeting")
     _row("Usage-weighted CO₂e / hour", f"{per_hour_g:.1f} g CO₂e")
     _row("Scope", "Transcription (ASR) + LLM inference, UK GBR grid")
 
@@ -155,4 +188,11 @@ def display() -> None:
 
 
 if __name__ == "__main__":
-    display()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--api_calls",
+        action="store_true",
+        help="Use AWS API calls for development/staging only. DO NOT use for production.",
+    )
+    args = parser.parse_args()
+    display(api_calls=args.api_calls)
