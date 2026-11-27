@@ -153,7 +153,7 @@ The `build-and-push.sh` script builds Docker images, pushes them to ECR, and run
 Ask in slack for the current alarm email address to use in development, and then run:
 
 ```bash
-export TF_VAR_alarm_email_address=the_email_address_you_just_got_from_slack
+export TF_VAR_alarm_email_addresses='{"primary":"the_email_address_you_just_got_from_slack"}'
 ./build-and-push.sh [--environment development] [--tag <tag>] [frontend] [backend] [worker]
 ```
 
@@ -168,7 +168,7 @@ export TF_VAR_alarm_email_address=the_email_address_you_just_got_from_slack
 To run Terraform commands directly against the development environment:
 
 ```bash
-export TF_VAR_alarm_email_address=alerts@example.com
+export TF_VAR_alarm_email_addresses='{"primary":"alerts@example.com"}'
 cd terraform/development
 terraform init
 terraform plan [-var="image_tag=<tag>"]
@@ -295,7 +295,7 @@ Update `variables.tf` to set `ssl_certs_created` to `true` to avoid having to pa
 then run:
 
 ```bash
-terraform apply -var ssl_certs_created=true -var alarm_email_address=<email>
+terraform apply -var ssl_certs_created=true -var='alarm_email_addresses={"primary":"<email>"}'
 ```
 
 This will create all remaining resources including ECS services, the RDS database, SQS queues, and Secrets Manager secrets. The secrets will be created but not populated — you will need to populate them manually via the AWS console before the service will function correctly.
@@ -409,7 +409,7 @@ Run the `build-and-push.sh` script as described above to build and push the late
 Ensure you're using the correct AWS profile.
 
 ```bash
-export TF_VAR_alarm_email_address=email_address_to_recieve alarms
+export TF_VAR_alarm_email_addresses='{"primary":"email_address_to_recieve alarms"}'
 ./build-and-push.sh --environment <env>
 ```
 

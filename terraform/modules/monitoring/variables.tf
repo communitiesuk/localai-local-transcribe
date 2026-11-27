@@ -7,9 +7,9 @@ variable "environment_name" {
   }
 }
 
-variable "alarm_email_address" {
-  description = "Email address to receive CloudWatch alarm notifications"
-  type        = string
+variable "alarm_email_addresses" {
+  description = "Email addresses to receive CloudWatch alarm notifications, map of non-sensitive identifier to email address"
+  type        = map(string)
 }
 
 variable "cloudwatch_log_expiration_days" {

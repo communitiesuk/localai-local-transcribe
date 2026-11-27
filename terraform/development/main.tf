@@ -36,6 +36,11 @@ locals {
   cloudwatch_log_expiration_days = 90
   access_s3_log_expiration_days  = 365
   database_allocated_storage     = 50
+
+  alarm_email_addresses = merge(
+    var.alarm_email_address != null && var.alarm_email_address != "" ? { primary = var.alarm_email_address } : {},
+    var.alarm_email_addresses
+  )
 }
 
 provider "aws" {
@@ -281,7 +286,7 @@ module "monitoring" {
 
   environment_name                    = local.environment_name
   cloudwatch_log_expiration_days      = local.cloudwatch_log_expiration_days
-  alarm_email_address                 = var.alarm_email_address
+  alarm_email_addresses               = local.alarm_email_addresses
   alb_name                            = module.frontdoor.load_balancer.name
   alb_arn_suffix                      = module.frontdoor.load_balancer.arn_suffix
   alb_target_group_arn_suffix         = module.frontdoor.load_balancer.target_group_arn_suffix

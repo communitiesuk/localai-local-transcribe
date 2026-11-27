@@ -37,8 +37,8 @@ if [[ ! -d "$TF_DIR" ]]; then
   exit 1
 fi
 
-if [[ -z "${TF_VAR_alarm_email_address:-}" ]]; then
-  echo "Error: TF_VAR_alarm_email_address is not set"
+if [[ -z "${TF_VAR_alarm_email_addresses:-}" ]]; then
+  echo 'Error: set TF_VAR_alarm_email_addresses to a JSON map, e.g. {"primary":"alerts@example.org"}'
   exit 1
 fi
 

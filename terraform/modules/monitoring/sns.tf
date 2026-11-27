@@ -8,9 +8,10 @@ resource "aws_sns_topic" "alarm_sns_topic" {
 }
 
 resource "aws_sns_topic_subscription" "alarm_email_subscription" {
+  for_each  = nonsensitive(toset(keys(var.alarm_email_addresses)))
   topic_arn = aws_sns_topic.alarm_sns_topic.arn
   protocol  = "email"
-  endpoint  = var.alarm_email_address
+  endpoint  = var.alarm_email_addresses[each.value]
 }
 
 # non-sensitive
@@ -23,8 +24,19 @@ resource "aws_sns_topic" "us_alarm_sns_topic" {
 }
 
 resource "aws_sns_topic_subscription" "us_alarm_email_subscription" {
+  for_each  = nonsensitive(toset(keys(var.alarm_email_addresses)))
   topic_arn = aws_sns_topic.us_alarm_sns_topic.arn
   protocol  = "email"
-  endpoint  = var.alarm_email_address
+  endpoint  = var.alarm_email_addresses[each.value]
   provider  = aws.us-east-1
+}
+
+moved {
+  from = aws_sns_topic_subscription.alarm_email_subscription
+  to   = aws_sns_topic_subscription.alarm_email_subscription["primary"]
+}
+
+moved {
+  from = aws_sns_topic_subscription.us_alarm_email_subscription
+  to   = aws_sns_topic_subscription.us_alarm_email_subscription["primary"]
 }
