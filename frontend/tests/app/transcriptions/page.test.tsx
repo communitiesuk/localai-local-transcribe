@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import TranscriptionPage from '@/app/transcriptions/[transcriptionId]/page'
+import TranscriptionLayout from '@/app/transcriptions/[transcriptionId]/layout'
 import userEvent from '@testing-library/user-event/dist/cjs/index.js'
 import {
   QueryClient,
@@ -223,6 +224,42 @@ describe('<TranscriptionPage /> View quote', () => {
         'Quote [100] is not attributed to anything in the transcript'
       )
     ).toBeInTheDocument()
+  })
+})
+
+describe('<TranscriptionPage /> back link (TranscriptionLayout)', () => {
+  beforeAll(() => {
+    document.elementFromPoint = () => null
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    configureQueries()
+    vi.mocked(useMutation).mockReturnValue({
+      mutate: () => {},
+      isPending: false,
+    } as unknown as ReturnType<typeof useMutation>)
+    Element.prototype.scrollIntoView = () => {}
+
+    vi.mocked(useQueryClient).mockReturnValue({
+      setQueryData: vi.fn(),
+      invalidateQueries: vi.fn(),
+    } as unknown as QueryClient)
+  })
+
+  it('renders exactly one back link above the page content when wrapped in TranscriptionLayout', async () => {
+    await act(async () =>
+      render(
+        <TranscriptionLayout>
+          <TranscriptionPage
+            params={Promise.resolve({ transcriptionId: '1' })}
+          />
+        </TranscriptionLayout>
+      )
+    )
+
+    expect(screen.getAllByRole('link', { name: 'Back' })).toHaveLength(1)
+    expect(screen.getByRole('tab', { name: 'Transcript' })).toBeInTheDocument()
   })
 })
 

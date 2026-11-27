@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DeleteTranscriptionPage from '@/app/transcriptions/[transcriptionId]/delete/page'
+import TranscriptionLayout from '@/app/transcriptions/[transcriptionId]/layout'
 import { useBannerStore } from '@/stores/use-banner-store'
 
 vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
@@ -20,6 +21,7 @@ vi.mock('@/lib/client/@tanstack/react-query.gen', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn(),
+  usePathname: () => '/transcriptions/transcription-1/delete',
 }))
 
 vi.mock('@tanstack/react-query', async (importOriginal) => {
@@ -57,9 +59,11 @@ describe('<DeleteTranscriptionPage />', () => {
   const renderPage = async () =>
     act(async () =>
       render(
-        <DeleteTranscriptionPage
-          params={Promise.resolve({ transcriptionId: 'transcription-1' })}
-        />
+        <TranscriptionLayout>
+          <DeleteTranscriptionPage
+            params={Promise.resolve({ transcriptionId: 'transcription-1' })}
+          />
+        </TranscriptionLayout>
       )
     )
 
@@ -72,6 +76,12 @@ describe('<DeleteTranscriptionPage />', () => {
       })
     ).toBeInTheDocument()
     expect(screen.queryByText('Deleting recording…')).not.toBeInTheDocument()
+  })
+
+  it('does not render a back link on the delete confirmation interstitial', async () => {
+    await renderPage()
+
+    expect(screen.queryByRole('link', { name: 'Back' })).not.toBeInTheDocument()
   })
 
   it('keeps the pending page up after the recording has been deleted', async () => {
