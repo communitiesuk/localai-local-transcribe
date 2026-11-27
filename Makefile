@@ -3,7 +3,7 @@ export
 
 PY_VERSION := $(shell cat .python-version)
 
-.PHONY: build-pyenv install pre-commit-setup test test_cov test_e2e run_frontend run_backend run stop
+.PHONY: build-pyenv install pre-commit-setup test test_cov test_e2e run_frontend run_backend run seed stop
 
 build-pyenv:
 	pyenv install -s ${PY_VERSION}
@@ -43,6 +43,9 @@ run:
 
 run_watch:
 	docker compose up --watch
+
+seed:
+	poetry run python -m scripts.seed_local_database
 
 stop:
 	docker compose down

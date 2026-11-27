@@ -70,6 +70,17 @@ let nextConfig = {
       },
     ]
   },
+  turbopack: {
+    resolveAlias: {
+      // Use JSZip's prebuilt browser bundle. The JSZip package ships both a source bundle
+      // intended for Node environments and a prebuilt browser bundle. The former requests
+      // Node's `streams` feature, which is polyfilled by Turbopack when being packaged for
+      // a browser, and this polyfill evaluates a string as JavaScript on load, which violates
+      // our CSP (no 'unsafe-eval'). By explicitly requesting the browser bundle instead, this
+      // polyfill is not included and the distributed code no longer contains unsafe evaluation.
+      jszip: 'jszip/dist/jszip.min.js',
+    },
+  },
   sassOptions: {
     includePaths: ['./node_modules'],
     quietDeps: true,

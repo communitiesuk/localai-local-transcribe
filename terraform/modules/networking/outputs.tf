@@ -18,6 +18,11 @@ output "private_subnets" {
   description = "Private /22 subnets for ECS and bastian host"
 }
 
+output "private_route_table_id" {
+  value       = aws_route_table.to_nat_gateway.id
+  description = "Id of the route table that sends internet traffic from private subnets to the NAT gateway"
+}
+
 output "isolated_subnets" {
   value       = aws_subnet.isolated_subnet
   description = "var.number_of_isolated_subnets /22 subnets for db and redis - 2 required when using multi-AZ rds"

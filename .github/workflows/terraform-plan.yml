@@ -6,6 +6,13 @@ on:
       environment:
         required: true
         type: string
+      github-environment:
+        description: >-
+          GitHub environment to run the plan in. Staging and production use one with required
+          reviewers. Leave empty to run without an environment.
+        required: false
+        type: string
+        default: ""
     secrets:
       aws-account-id:
         required: true
@@ -22,12 +29,19 @@ jobs:
   terraform-plan:
     name: Terraform Plan — ${{ inputs.environment }}
     runs-on: ubuntu-26.04
+    environment: ${{ inputs.github-environment }}
     defaults:
       run:
         working-directory: terraform/${{ inputs.environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      # Must stay before the AWS credentials step, so that a workflow which could publish
+      # the saved plan is stopped before it can read anything.
+      - name: Check no workflow publishes a saved plan
+        working-directory: ${{ github.workspace }}
+        run: python3 scripts/check_terraform_plan_not_published.py
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
@@ -44,17 +58,19 @@ jobs:
         run: terraform init -input=false
 
       # Note this `tfplan` file contains secrets, do not upload it anywhere!
+      # It is written outside the repository folder so that uploading a folder cannot include it.
+      # scripts/check_terraform_plan_not_published.py fails the build if it is used anywhere else.
       - name: Terraform plan
         env:
           TF_VAR_alarm_email_address: ${{ secrets.alarm-email-address }}
           TF_VAR_alarm_email_addresses: ${{ secrets.alarm-email-addresses || '{}' }}
-        run: terraform plan -no-color -input=false -out=tfplan -lock=false -var="image_tag=${{ github.sha }}"
+        run: terraform plan -no-color -input=false -out="$RUNNER_TEMP/tfplan" -lock=false -var="image_tag=${{ github.sha }}"
 
       # terraform show will redact 'sensitive' values automatically as long as
       # the `-json` option is not used see:
       # https://developer.hashicorp.com/terraform/cli/commands/show
       - name: Terraform show
-        run: terraform show -no-color tfplan > tf_plan.txt
+        run: terraform show -no-color "$RUNNER_TEMP/tfplan" > tf_plan.txt
 
       - name: Upload readable plan
         uses: actions/upload-artifact@v7

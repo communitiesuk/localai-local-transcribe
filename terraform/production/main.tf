@@ -124,6 +124,7 @@ module "github_actions_access" {
 
   environment_name                   = local.environment_name
   deployment_branch                  = "production"
+  plan_github_environment            = "plan-production"
   push_frontend_ecr_image_policy_arn = module.ecr.push_frontend_ecr_image_policy_arn
   push_backend_ecr_image_policy_arn  = module.ecr.push_backend_ecr_image_policy_arn
   push_worker_ecr_image_policy_arn   = module.ecr.push_worker_ecr_image_policy_arn

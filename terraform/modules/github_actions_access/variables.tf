@@ -30,3 +30,19 @@ variable "deployment_branch" {
     error_message = "Deployment branch must be one of: development, staging, production"
   }
 }
+
+variable "allow_plan_from_pull_requests" {
+  description = "Let any pull request in this repository assume the Terraform plan role. A plan can read every secret in the environment's state, so this is only allowed in development"
+  type        = bool
+  default     = false
+  validation {
+    condition     = !var.allow_plan_from_pull_requests || var.environment_name == "development"
+    error_message = "Pull requests may only assume the plan role in development. Use plan_github_environment for staging and production."
+  }
+}
+
+variable "plan_github_environment" {
+  description = "Name of a GitHub environment whose jobs may assume the Terraform plan role. The environment must have required reviewers, because approving a run lets it read every secret in this environment's state"
+  type        = string
+  default     = null
+}
