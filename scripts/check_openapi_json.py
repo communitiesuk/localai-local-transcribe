@@ -46,4 +46,4 @@ shown = difference[:MAX_DIFF_LINES]
 if len(difference) > MAX_DIFF_LINES:
     shown.append(f"... and {len(difference) - MAX_DIFF_LINES} more lines of difference")
 
-sys.exit("\n".join(["frontend/openapi.json is out of date with the backend.", FIX, "", *shown]))
+sys.exit("\n".join([*shown, "", "frontend/openapi.json is out of date with the backend.", FIX]))
