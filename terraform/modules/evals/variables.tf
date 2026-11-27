@@ -22,3 +22,14 @@ variable "private_route_table_id" {
   type        = string
   description = "Id of the existing route table that sends internet traffic from private subnets to the NAT gateway"
 }
+
+variable "ecs_cluster_name" {
+  type        = string
+  description = "Name of the existing ECS cluster. The promotion Lambda starts the silver transcript task on it"
+}
+
+variable "alarm_email_address" {
+  type        = string
+  description = "Email address that receives an alert when a quarantine scan does not come back clean"
+  sensitive   = true
+}

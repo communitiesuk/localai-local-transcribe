@@ -73,6 +73,8 @@ module "evals" {
   vpc_cidr_block         = module.networking.vpc.cidr_block
   availability_zone      = module.networking.private_subnets[0].availability_zone
   private_route_table_id = module.networking.private_route_table_id
+  ecs_cluster_name       = module.ecs.ecs_cluster_name
+  alarm_email_address    = var.alarm_email_address
 }
 
 module "frontdoor" {
