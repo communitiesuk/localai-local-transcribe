@@ -9,7 +9,6 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-
 COST_MODELLING = Path(__file__).resolve().parent
 TERRAFORM = COST_MODELLING.parent
 MONTHLY_HOURS = Decimal(730)
@@ -29,13 +28,15 @@ DB_CLASS = r'"db\.[a-z0-9]+\.[a-z0-9]+"'
 
 
 def block_setting(source, header, argument, pattern):
-    blocks = list(re.finditer(rf'^{re.escape(header)} \{{\n(.*?)^\}}[ \t]*$', source, re.M | re.S))
+    blocks = list(re.finditer(rf"^{re.escape(header)} \{{\n(.*?)^\}}[ \t]*$", source, re.MULTILINE | re.DOTALL))
     if len(blocks) != 1:
-        raise ValueError(f"Expected exactly one {header} block in production/main.tf")
+        msg = f"Expected exactly one {header} block in production/main.tf"
+        raise ValueError(msg)
     block = blocks[0]
-    assignments = list(re.finditer(rf"^[ \t]+{argument}[ \t]*=[ \t]*(.*)$", block[1], re.M))
+    assignments = list(re.finditer(rf"^[ \t]+{argument}[ \t]*=[ \t]*(.*)$", block[1], re.MULTILINE))
     if len(assignments) != 1 or not re.fullmatch(pattern, assignments[0][1].rstrip()):
-        raise ValueError(f"Unexpected {argument} assignment in {header} in production/main.tf")
+        msg = f"Unexpected {argument} assignment in {header} in production/main.tf"
+        raise ValueError(msg)
     setting = assignments[0]
     start = block.start(1) + setting.start(1)
     value = setting[1].rstrip()
@@ -51,10 +52,13 @@ def capacity_options(source, config):
     for dimension, (module, argument, literal) in CAPACITY.items():
         baseline, start, end = module_setting(source, module, argument, literal)
         options = config[dimension]
-        if not isinstance(options, list) or not options or any(
-            not re.fullmatch(literal, json.dumps(option)) for option in options
+        if (
+            not isinstance(options, list)
+            or not options
+            or any(not re.fullmatch(literal, json.dumps(option)) for option in options)
         ):
-            raise ValueError(f"Invalid capacity options for {dimension}")
+            msg = f"Invalid capacity options for {dimension}"
+            raise ValueError(msg)
         for option in dict.fromkeys(options):
             if option != baseline:
                 yield f"{dimension}={option}", source[:start] + json.dumps(option) + source[end:]
@@ -67,10 +71,16 @@ def database_options(source, config):
     baseline_az, _, _ = block_setting(source, "locals", "multi_az", r"true|false")
     classes = config["database"]
     modes = config.get("database_multi_az", [json.loads(baseline_az)])
-    if not isinstance(classes, list) or not classes or any(not re.fullmatch(DB_CLASS, json.dumps(item)) for item in classes):
-        raise ValueError("Invalid database instance classes")
+    if (
+        not isinstance(classes, list)
+        or not classes
+        or any(not re.fullmatch(DB_CLASS, json.dumps(item)) for item in classes)
+    ):
+        msg = "Invalid database instance classes"
+        raise ValueError(msg)
     if not isinstance(modes, list) or not modes or any(type(mode) is not bool for mode in modes):
-        raise ValueError("database_multi_az must be a non-empty list of booleans")
+        msg = "database_multi_az must be a non-empty list of booleans"
+        raise ValueError(msg)
     for instance_class in dict.fromkeys(classes):
         for multi_az in dict.fromkeys(modes):
             az_literal = json.dumps(multi_az)
@@ -89,7 +99,8 @@ def database_options(source, config):
 def nonnegative(value):
     number = Decimal(str(value))
     if not number.is_finite() or number < 0:
-        raise ValueError(f"Expected a non-negative number, got {value!r}")
+        msg = f"Expected a non-negative number, got {value!r}"
+        raise ValueError(msg)
     return number
 
 
@@ -105,12 +116,14 @@ def regional_nat_hourly_adjustment(report, source):
         if component["unit"] == "hours"
     ]
     if not components:
-        raise ValueError(f"No hourly cost component found for {REGIONAL_NAT}")
+        msg = f"No hourly cost component found for {REGIONAL_NAT}"
+        raise ValueError(msg)
     billed_hours = sum(nonnegative(component["quantity"]) for component in components)
     if billed_hours == expected_hours:
         return Decimal(0)
     if len(components) != 1 or billed_hours != MONTHLY_HOURS:
-        raise ValueError(f"Unexpected regional NAT hours: {billed_hours}; expected {expected_hours}")
+        msg = f"Unexpected regional NAT hours: {billed_hours}; expected {expected_hours}"
+        raise ValueError(msg)
     rate = nonnegative(components[0]["price"])
     return (expected_hours - billed_hours) * rate
 
@@ -118,10 +131,17 @@ def regional_nat_hourly_adjustment(report, source):
 def fargate_architectures(source):
     architectures = {}
     for service in ("frontend", "backend", "worker"):
-        blocks = re.findall(rf'^resource "aws_ecs_task_definition" "{service}" \{{\n(.*?)^\}}', source, re.M | re.S)
-        architecture = re.findall(r'^\s*cpu_architecture\s*=\s*"(ARM64|X86_64)"\s*$', blocks[0], re.M) if len(blocks) == 1 else []
+        blocks = re.findall(
+            rf'^resource "aws_ecs_task_definition" "{service}" \{{\n(.*?)^\}}', source, re.MULTILINE | re.DOTALL
+        )
+        architecture = (
+            re.findall(r'^\s*cpu_architecture\s*=\s*"(ARM64|X86_64)"\s*$', blocks[0], re.MULTILINE)
+            if len(blocks) == 1
+            else []
+        )
         if len(architecture) != 1:
-            raise ValueError(f"Expected an explicit Fargate architecture for {service}")
+            msg = f"Expected an explicit Fargate architecture for {service}"
+            raise ValueError(msg)
         architectures[f"module.ecs.aws_ecs_service.{service}"] = architecture[0]
     return architectures
 
@@ -131,13 +151,17 @@ def fargate_adjustment(components, architecture, rates):
     for name, meter in FARGATE_COMPONENTS.items():
         matches = [component for component in components if component["name"] == name]
         if len(matches) != 1:
-            raise ValueError(f"Expected one Fargate component named {name!r}")
+            msg = f"Expected one Fargate component named {name!r}"
+            raise ValueError(msg)
         component = matches[0]
         prices = {arch: MONTHLY_HOURS * nonnegative(rate[meter]) for arch, rate in rates.items()}
         reported_price = nonnegative(component["price"])
         quantity = nonnegative(component["quantity"])
-        if reported_price not in prices.values() or reported_price * quantity != nonnegative(component["total_monthly_cost"]):
-            raise ValueError(f"Unexpected Infracost Fargate rate or quantity for {name}: {component}")
+        if reported_price not in prices.values() or reported_price * quantity != nonnegative(
+            component["total_monthly_cost"]
+        ):
+            msg = f"Unexpected Infracost Fargate rate or quantity for {name}: {component}"
+            raise ValueError(msg)
         adjustment += (prices[architecture] - reported_price) * quantity
     return adjustment
 
@@ -174,12 +198,18 @@ def forecast_prices(report, source, architectures, rates, scale_factor):
                 ):
                     scalable_cost += cost
     if services != architectures.keys():
-        raise ValueError(f"Missing Fargate services in scan: {sorted(architectures.keys() - services)}")
+        msg = f"Missing Fargate services in scan: {sorted(architectures.keys() - services)}"
+        raise ValueError(msg)
     return list_price, list_price - scalable_cost * (1 - scale_factor)
 
 
 def scan(label, source, usage_file, architectures, rates, scale_factor):
-    print(f"Scanning {label}...", file=sys.stderr, flush=True)
+    executable = shutil.which("infracost")
+    if executable is None:
+        msg = "Infracost CLI not found on PATH"
+        raise FileNotFoundError(msg)
+    sys.stderr.write(f"Scanning {label}...\n")
+    sys.stderr.flush()
     with TemporaryDirectory(prefix="infracost-production-") as temporary:
         staging = Path(temporary)
         for directory in ("production", "modules"):
@@ -191,8 +221,8 @@ def scan(label, source, usage_file, architectures, rates, scale_factor):
         (staging / "production/main.tf").write_text(source, encoding="utf-8")
         shutil.copyfile(COST_MODELLING / "infracost-scan.yml", staging / "infracost.yml")
         shutil.copyfile(usage_file, staging / "infracost-usage.yml")
-        result = subprocess.run(
-            ["infracost", "scan", ".", "--json", "--currency", "USD"],
+        result = subprocess.run(  # noqa: S603
+            [str(Path(executable).resolve()), "scan", ".", "--json", "--currency", "USD"],
             cwd=staging,
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
@@ -203,10 +233,12 @@ def scan(label, source, usage_file, architectures, rates, scale_factor):
         try:
             report = json.loads(result.stdout, parse_float=Decimal)
             if report["currency"] != "USD" or [project["path"] for project in report["projects"]] != ["production"]:
-                raise ValueError("Expected USD costs for the production project only")
+                msg = "Expected USD costs for the production project only"
+                raise ValueError(msg)
             return forecast_prices(report, source, architectures, rates, scale_factor)
         except (KeyError, TypeError, ValueError, InvalidOperation) as error:
-            raise ValueError(f"Unexpected Infracost JSON for {label}: {error}") from error
+            msg = f"Unexpected Infracost JSON for {label}: {error}"
+            raise ValueError(msg) from error
 
 
 def forecast(config_path, csv_path=None, scale_factor=None):
@@ -218,14 +250,16 @@ def forecast(config_path, csv_path=None, scale_factor=None):
     if scale_factor is None:
         scale_factor = Decimal(1)
     elif not scale_factor.is_finite() or not 0 <= scale_factor <= 1:
-        raise ValueError("rate scale factor must be between 0 and 1")
+        msg = "rate scale factor must be between 0 and 1"
+        raise ValueError(msg)
     idle = config_path.parent / config["idle_usage_file"]
     alternatives = [(label, changed, idle) for label, changed in capacity_options(source, config)]
     for name, usage in config["usage"].items():
         alternatives.append((f"usage={name}", source, config_path.parent / usage["file"]))
     for usage_path in {idle, *(option[2] for option in alternatives)}:
         if not usage_path.is_file():
-            raise ValueError(f"Usage file not found: {usage_path}")
+            msg = f"Usage file not found: {usage_path}"
+            raise ValueError(msg)
 
     baseline_list, baseline_scaled = scan("baseline", source, idle, architectures, rates, scale_factor)
     rows = [("baseline", baseline_list, baseline_scaled)]
@@ -248,19 +282,26 @@ def forecast(config_path, csv_path=None, scale_factor=None):
             writer.writerows((label, *(format(value, ".2f") for value in amounts)) for label, *amounts in matrix)
 
     label_width = max(len(label) for label, *_ in matrix)
-    print("Monthly costs (USD, pre-tax, excluding Shield):\n")
-    print(f"{headers[0]:<{label_width}}", *(f"{header:>12}" for header in headers[1:]))
+    sys.stdout.write("Monthly costs (USD, pre-tax, excluding Shield):\n\n")
+    header_line = " ".join((f"{headers[0]:<{label_width}}", *(f"{header:>12}" for header in headers[1:])))
+    sys.stdout.write(f"{header_line}\n")
     for label, *amounts in matrix:
         formats = (">12,.2f", ">+12,.2f") * (len(amounts) // 2)
-        print(f"{label:<{label_width}}", *(format(value, spec) for value, spec in zip(amounts, formats, strict=True)))
+        cells = (format(value, spec) for value, spec in zip(amounts, formats, strict=True))
+        row_line = " ".join((f"{label:<{label_width}}", *cells))
+        sys.stdout.write(f"{row_line}\n")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Forecast independent production AWS cost options")
     parser.add_argument("--config", type=Path, default=COST_MODELLING / "infracost-forecast.json")
     parser.add_argument("--csv", type=Path, metavar="PATH", help="Also write the pre-tax forecast matrix to a CSV file")
-    parser.add_argument("--rate-scale-factor", type=Decimal, metavar="FACTOR",
-                        help="Show scaled totals using this fraction of list price for eligible charges (0 to 1)")
+    parser.add_argument(
+        "--rate-scale-factor",
+        type=Decimal,
+        metavar="FACTOR",
+        help="Show scaled totals using this fraction of list price for eligible charges (0 to 1)",
+    )
     args = parser.parse_args()
     try:
         forecast(args.config.resolve(), csv_path=args.csv, scale_factor=args.rate_scale_factor)

@@ -1,6 +1,6 @@
 import argparse
 import json
-from decimal import Decimal, ROUND_CEILING
+from decimal import ROUND_CEILING, Decimal
 from pathlib import Path
 
 import yaml
@@ -12,7 +12,8 @@ NAT = "module.networking.aws_nat_gateway.regional_nat_gateway"
 def number(value):
     result = Decimal(str(value))
     if not result.is_finite() or result < 0:
-        raise ValueError(f"Expected a non-negative number, got {value!r}")
+        msg = f"Expected a non-negative number, got {value!r}"
+        raise ValueError(msg)
     return result
 
 
@@ -37,11 +38,13 @@ def request_count(value):
 
 
 def bucket_usage(storage, writes, reads=0):
-    return {"standard": {
-        "storage_gb": storage,
-        "monthly_tier_1_requests": request_count(writes),
-        "monthly_tier_2_requests": request_count(Decimal(reads)),
-    }}
+    return {
+        "standard": {
+            "storage_gb": storage,
+            "monthly_tier_1_requests": request_count(writes),
+            "monthly_tier_2_requests": request_count(Decimal(reads)),
+        }
+    }
 
 
 def resource_usage(workload, assumptions):
@@ -53,37 +56,50 @@ def resource_usage(workload, assumptions):
     mp3_gb = assumptions["converted_audio_kbps"] * minutes * 60 / 8000000
     audio_uploads = mp3_gb * transcriptions
     outbound = max(0, audio_uploads + assumptions["background_egress_gb"] - assumptions["free_egress_gb"])
-    usage = {"module.monitoring.aws_cloudtrail.main": {
-        "monthly_additional_management_events": assumptions["additional_management_events"],
-    }}
+    usage = {
+        "module.monitoring.aws_cloudtrail.main": {
+            "monthly_additional_management_events": assumptions["additional_management_events"],
+        }
+    }
     if outbound:
         usage["aws_data_transfer.internet_egress"] = {"region": "eu-west-2", "monthly_outbound_internet_gb": outbound}
     if not meetings:
         usage[NAT] = {"monthly_data_processed_gb": assumptions["background_nat_gb"]}
         return usage
 
-    requests = request_count(meetings * assumptions["https_requests_per_meeting"] + transcriptions * assumptions["status_requests_per_transcription"])
+    requests = request_count(
+        meetings * assumptions["https_requests_per_meeting"]
+        + transcriptions * assumptions["status_requests_per_transcription"]
+    )
     viewer_gb = meetings * assumptions["viewer_gb_per_meeting"]
-    usage.update({
-        "module.frontdoor.aws_cloudfront_distribution.main": {
-            "monthly_data_transfer_to_internet_gb": {"europe": viewer_gb},
-            "monthly_data_transfer_to_origin_gb": {"europe": meetings * assumptions["origin_gb_per_meeting"]},
-            "monthly_https_requests": {"europe": requests},
-        },
-        "module.frontdoor.aws_lb.main": {
-            "new_connections": meetings * assumptions["alb_new_connections_per_meeting"],
-            "active_connections": number(workload.get("alb_active_connections", assumptions["alb_active_connections"])),
-            "processed_bytes_gb": viewer_gb,
-            "rule_evaluations": 0,
-        },
-        "module.frontdoor.aws_wafv2_web_acl.main": {"monthly_requests": requests},
-        "module.frontdoor.aws_wafv2_web_acl.load_balancer": {"monthly_requests": requests},
-        "module.uploads_bucket.module.uploads_bucket.aws_s3_bucket.main": bucket_usage(
-            ((source_gb * meetings + mp3_gb * min(meetings, transcriptions)) * assumptions["audio_retention_days"] / 30).quantize(Decimal("0.1")),
-            meetings * assumptions["s3_writes_per_meeting"],
-            meetings * assumptions["s3_reads_per_meeting"],
-        ),
-    })
+    usage.update(
+        {
+            "module.frontdoor.aws_cloudfront_distribution.main": {
+                "monthly_data_transfer_to_internet_gb": {"europe": viewer_gb},
+                "monthly_data_transfer_to_origin_gb": {"europe": meetings * assumptions["origin_gb_per_meeting"]},
+                "monthly_https_requests": {"europe": requests},
+            },
+            "module.frontdoor.aws_lb.main": {
+                "new_connections": meetings * assumptions["alb_new_connections_per_meeting"],
+                "active_connections": number(
+                    workload.get("alb_active_connections", assumptions["alb_active_connections"])
+                ),
+                "processed_bytes_gb": viewer_gb,
+                "rule_evaluations": 0,
+            },
+            "module.frontdoor.aws_wafv2_web_acl.main": {"monthly_requests": requests},
+            "module.frontdoor.aws_wafv2_web_acl.load_balancer": {"monthly_requests": requests},
+            "module.uploads_bucket.module.uploads_bucket.aws_s3_bucket.main": bucket_usage(
+                (
+                    (source_gb * meetings + mp3_gb * min(meetings, transcriptions))
+                    * assumptions["audio_retention_days"]
+                    / 30
+                ).quantize(Decimal("0.1")),
+                meetings * assumptions["s3_writes_per_meeting"],
+                meetings * assumptions["s3_reads_per_meeting"],
+            ),
+        }
+    )
     for address, (storage, fixed_writes, writes) in assumptions["s3_logs"].items():
         usage[address] = bucket_usage(storage * meetings, fixed_writes + writes * meetings)
     drivers = {"meetings": meetings, "jobs": transcriptions + summaries}
@@ -96,8 +112,12 @@ def resource_usage(workload, assumptions):
         }
     other_nat = max(assumptions["background_nat_gb"], meetings * assumptions["other_nat_gb_per_meeting"])
     usage[NAT] = {"monthly_data_processed_gb": audio_uploads + other_nat}
-    usage["module.networking.aws_vpc_endpoint.vpc_endpoints[12]"] = {"monthly_data_processed_gb": meetings * assumptions["logs_endpoint_gb_per_meeting"]}
-    usage["module.networking.aws_vpc_endpoint.vpc_endpoints[5]"] = {"monthly_data_processed_gb": assumptions["ecr_endpoint_gb"]}
+    usage["module.networking.aws_vpc_endpoint.vpc_endpoints[12]"] = {
+        "monthly_data_processed_gb": meetings * assumptions["logs_endpoint_gb_per_meeting"]
+    }
+    usage["module.networking.aws_vpc_endpoint.vpc_endpoints[5]"] = {
+        "monthly_data_processed_gb": assumptions["ecr_endpoint_gb"]
+    }
     for queue, jobs, rate in (
         ("transcription_queue", transcriptions, assumptions["sqs_requests_per_transcription"]),
         ("llm_queue", summaries, assumptions["sqs_requests_per_summary"]),
@@ -112,9 +132,13 @@ def resource_usage(workload, assumptions):
 
 
 def generate(config, forecast):
-    filenames = {"idle": forecast["idle_usage_file"], **{name: option["file"] for name, option in forecast["usage"].items()}}
+    filenames = {
+        "idle": forecast["idle_usage_file"],
+        **{name: option["file"] for name, option in forecast["usage"].items()},
+    }
     if filenames.keys() != config["scenarios"].keys() or len(set(filenames.values())) != len(filenames):
-        raise ValueError("Workload and forecast scenarios must match and use distinct output paths")
+        msg = "Workload and forecast scenarios must match and use distinct output paths"
+        raise ValueError(msg)
     assumptions = config["assumptions"]
     defaults = config["resource_type_default_usage"]
     defaults["aws_sqs_queue"]["request_size_kb"] = assumptions["queue_request_size_kb"]
