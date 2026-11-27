@@ -42,8 +42,9 @@ export function GovukBackLinkWithLockNav({
           style={{
             background: 'none',
             border: 'none',
-            padding: 0,
-            font: 'inherit',
+            paddingTop: 0,
+            paddingRight: 0,
+            paddingBottom: 0,
             cursor: 'pointer',
             textAlign: 'left',
           }}
