@@ -1,0 +1,48 @@
+{
+    "workers": [
+        2,
+        3,
+        4
+    ],
+    "frontend": [
+        1,
+        2,
+        3
+    ],
+    "backend": [
+        1,
+        2,
+        3
+    ],
+    "database": [
+        "db.t4g.small",
+        "db.t4g.medium",
+        "db.t4g.large"
+    ],
+    "database_multi_az": [
+        false,
+        true
+    ],
+    "idle_usage_file": "infracost-usage-production-idle.yml",
+    "usage": {
+        "low": {
+            "file": "infracost-usage-production-low.yml"
+        },
+        "medium": {
+            "file": "infracost-usage-production-medium.yml"
+        },
+        "high": {
+            "file": "infracost-usage-production-high.yml"
+        }
+    },
+    "fargate_hourly_usd": {
+        "ARM64": {
+            "vcpu": 0.03725,
+            "memory_gb": 0.00409
+        },
+        "X86_64": {
+            "vcpu": 0.04656,
+            "memory_gb": 0.00511
+        }
+    }
+}
