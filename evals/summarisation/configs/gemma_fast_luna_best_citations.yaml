@@ -1,0 +1,26 @@
+# Luna supplies BEST summarisation and citations; Gemma is configured for other FAST-tier tasks.
+# The standard summarisation eval has no non-citation FAST stage, so this measures Luna quality.
+run:
+  eval_type: standard
+  output_dir: evals/summarisation/output/model_comparison/gemma_fast_luna_best_citations
+  seed: 0
+  split: test
+  limit: 20
+  prompt_version: dev
+  dataset_version: dialogsum-default
+
+dataset:
+  name: knkarthick/dialogsum
+  config: default
+  dialogue_field: dialogue
+  reference_summary_field: summary
+
+judge:
+  pass_threshold: 4
+
+prompts:
+  summarizer_template_name: General
+  judge_template_path: evals/summarisation/prompts/judge.j2
+
+hallucination:
+  enabled: true

@@ -9,6 +9,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
+from .schema import FeatureFlagsFile
+
 logger = logging.getLogger(__name__)
 
 # AWS-managed audit fields that AppConfig may stamp onto flags/values. They aren't part of
@@ -44,3 +48,18 @@ def validate_required_args(args: argparse.Namespace) -> None:
         logger.error("Missing required argument(s): %s", ", ".join(missing))
         write_github_output("status", "error")
         sys.exit(1)
+
+
+def validate_local_content(path: Path, content: dict[str, Any]) -> bool:
+    """Validate `content` (as loaded from `path`) against `FeatureFlagsFile`.
+
+    Returns True if valid. Otherwise logs the validation error, reports `status=error`,
+    and returns False.
+    """
+    try:
+        FeatureFlagsFile.model_validate(content)
+    except ValidationError:
+        logger.exception("%s failed schema validation.", path)
+        write_github_output("status", "error")
+        return False
+    return True

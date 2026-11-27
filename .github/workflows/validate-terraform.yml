@@ -27,9 +27,24 @@ jobs:
     with:
       environment: production
 
+  # A saved Terraform plan contains every secret in the environment's state. This stops the
+  # plan jobs below from starting if any workflow could upload, copy or print one.
+  check-plan-not-published:
+    name: Check no workflow publishes a saved plan
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check no workflow publishes a saved plan
+        run: python3 scripts/check_terraform_plan_not_published.py
+
+  # Any pull request into development may plan against development.
   plan-development:
     if: github.base_ref == 'development'
-    needs: validate-development
+    needs: [validate-development, check-plan-not-published]
     uses: ./.github/workflows/terraform-plan.yml
     with:
       environment: development
@@ -41,12 +56,15 @@ jobs:
       id-token: write
       pull-requests: write
 
+  # Plans against staging and production wait for a reviewer to approve them, through the
+  # plan-staging and plan-production GitHub environments.
   plan-staging:
     if: github.base_ref == 'staging'
-    needs: validate-staging
+    needs: [validate-staging, check-plan-not-published]
     uses: ./.github/workflows/terraform-plan.yml
     with:
       environment: staging
+      github-environment: plan-staging
     secrets:
       aws-account-id: ${{ secrets.STAGING_AWS_ACCOUNT_ID }}
       alarm-email-address: ${{ secrets.STAGING_ALARM_EMAIL_ADDRESS }}
@@ -57,10 +75,11 @@ jobs:
 
   plan-production:
     if: github.base_ref == 'production'
-    needs: validate-production
+    needs: [validate-production, check-plan-not-published]
     uses: ./.github/workflows/terraform-plan.yml
     with:
       environment: production
+      github-environment: plan-production
     secrets:
       aws-account-id: ${{ secrets.PROD_AWS_ACCOUNT_ID }}
       alarm-email-address: ${{ secrets.PROD_ALARM_EMAIL_ADDRESS }}

@@ -19,7 +19,7 @@ def _make_args(**overrides: str) -> argparse.Namespace:
 
 
 def test_validate_required_args_passes_when_all_fields_populated() -> None:
-    validate_required_args(_make_args())  
+    validate_required_args(_make_args())
 
 
 @patch("scripts.deploy_feature_flags.helpers.write_github_output")

@@ -10,7 +10,8 @@ Logic:
 1. Read the currently *deployed* hosted configuration version for the environment
    (`list_deployments` + `get_hosted_configuration_version`).
 2. Reconcile (structurally compare, ignoring `_createdAt`/`_updatedAt`) it against
-   `feature_flags.json`.
+   `feature_flags.json`. Those two fields are excluded because AWS stamps them dynamically on
+   each deployed version, whereas `feature_flags.json` is static and untracked by AppConfig.
 3. If they match, exit without making any changes.
 4. Otherwise, create a new hosted configuration version from `feature_flags.json` - first
    re-checking that the deployed version hasn't changed since step 1, to avoid clobbering a
