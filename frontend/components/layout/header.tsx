@@ -1,5 +1,3 @@
-import { API_PROXY_PATH } from '@/lib/constants'
-
 export function Header() {
   return (
     <header className="govuk-template__header">
@@ -39,14 +37,6 @@ export function Header() {
               </span>
             </a>
           </div>
-          <nav aria-label="Account">
-            <a
-              className="govuk-link govuk-link--inverse"
-              href={`${API_PROXY_PATH}/signout`}
-            >
-              Sign out
-            </a>
-          </nav>
         </div>
       </div>
     </header>
