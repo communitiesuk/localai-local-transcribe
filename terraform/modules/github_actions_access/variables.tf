@@ -31,6 +31,11 @@ variable "deployment_branch" {
   }
 }
 
+variable "app_config_deploy_policy_arn" {
+  description = "ARN of the IAM policy for deploying AppConfig feature flags"
+  type        = string
+}
+
 variable "allow_plan_from_pull_requests" {
   description = "Let any pull request in this repository assume the Terraform plan role. A plan can read every secret in the environment's state, so this is only allowed in development"
   type        = bool

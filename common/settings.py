@@ -53,6 +53,12 @@ class Settings(BaseSettings):
         description="OIDC client ID, used to validate the JWT audience claim", default=None
     )
 
+    APP_CONFIG_APPLICATION_ID: str | None = Field(description="AppConfig application ID", default=None)
+    APP_CONFIG_ENVIRONMENT_ID: str | None = Field(description="AppConfig environment ID", default=None)
+    APP_CONFIG_CONFIGURATION_PROFILE_ID: str | None = Field(
+        description="AppConfig configuration profile ID", default=None
+    )
+
     ENVIRONMENT: str = "local"
     SENTRY_DSN: str | None = Field(description="Sentry DSN if using Sentry for telemetry", default=None)
 

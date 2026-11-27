@@ -301,6 +301,18 @@ resource "aws_ecs_task_definition" "backend" {
         {
           name  = "APP_NAME"
           value = "local-transcribe-backend"
+        },
+        {
+          name  = "APP_CONFIG_APPLICATION_ID"
+          value = var.app_config_application_id
+        },
+        {
+          name  = "APP_CONFIG_ENVIRONMENT_ID"
+          value = var.app_config_environment_id
+        },
+        {
+          name  = "APP_CONFIG_CONFIGURATION_PROFILE_ID"
+          value = var.app_config_configuration_profile_id
         }
       ])
 

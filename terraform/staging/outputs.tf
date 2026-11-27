@@ -32,3 +32,23 @@ output "nat_gateway_ip" {
   value       = module.networking.nat_gateway_ips
   description = "The IP address of the NAT gateway"
 }
+
+output "app_config_application_id" {
+  value       = module.app_config.application_id
+  description = "The id of the AppConfig application"
+}
+
+output "app_config_environment_id" {
+  value       = module.app_config.environment_id
+  description = "The id of the AppConfig environment"
+}
+
+output "app_config_configuration_profile_id" {
+  value       = module.app_config.configuration_profile_id
+  description = "The id of the AppConfig configuration profile"
+}
+
+output "app_config_deployment_strategy_id" {
+  value       = module.app_config.deployment_strategy_id
+  description = "The id of the AppConfig deployment strategy"
+}

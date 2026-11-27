@@ -103,6 +103,45 @@ resource "aws_iam_role_policy_attachment" "github_actions_terraform_admin_access
   policy_arn = data.aws_iam_policy.administrator_access.arn
 }
 
+# Least-privilege role for the deploy-feature-flags CI job.
+resource "aws_iam_role" "github_actions_appconfig_deploy" {
+  name               = "github-actions-appconfig-deploy"
+  assume_role_policy = data.aws_iam_policy_document.github_actions_appconfig_deploy_assume_role.json
+}
+
+data "aws_iam_policy_document" "github_actions_appconfig_deploy_assume_role" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.main.arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      values   = ["sts.amazonaws.com"]
+      variable = "token.actions.githubusercontent.com:aud"
+    }
+
+    condition {
+      test     = "StringLike"
+      values   = ["repo:communitiesuk/localai-local-transcribe:ref:refs/heads/${var.deployment_branch}"]
+      variable = "token.actions.githubusercontent.com:sub"
+    }
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_appconfig_deploy_state_read" {
+  role       = aws_iam_role.github_actions_appconfig_deploy.name
+  policy_arn = data.aws_iam_policy.terraform_state_read_only.arn
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_appconfig_deploy_access" {
+  role       = aws_iam_role.github_actions_appconfig_deploy.name
+  policy_arn = var.app_config_deploy_policy_arn
+}
+
 # ECR Push role
 data "aws_iam_policy_document" "github_actions_push_ecr_assume_role" {
   statement {

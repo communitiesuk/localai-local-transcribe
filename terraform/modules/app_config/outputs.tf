@@ -32,3 +32,23 @@ output "read_policy_arn" {
   description = "ARN of the IAM policy granting read access to this AppConfig configuration"
   value       = aws_iam_policy.app_config_read.arn
 }
+
+output "deployment_strategy_id" {
+  description = "ID of the AppConfig deployment strategy"
+  value       = aws_appconfig_deployment_strategy.main.id
+}
+
+output "environment_arn" {
+  description = "ARN of the AppConfig environment"
+  value       = aws_appconfig_environment.main.arn
+}
+
+output "deployment_strategy_arn" {
+  description = "ARN of the AppConfig deployment strategy"
+  value       = aws_appconfig_deployment_strategy.main.arn
+}
+
+output "deploy_policy_arn" {
+  description = "ARN of the IAM policy granting least-privilege access to deploy feature flags"
+  value       = aws_iam_policy.app_config_deploy.arn
+}
