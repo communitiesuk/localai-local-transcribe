@@ -60,6 +60,12 @@ app.add_middleware(
 
 app.include_router(api_router)
 
+
+@app.get("/api/ci-demo")
+def ci_demo() -> dict[str, str]:
+    return {"demo": "remove me"}
+
+
 if settings.STORAGE_SERVICE_NAME == "local":
     from common.services.storage_services.local.mock_storage_service import mock_storage_app
 
