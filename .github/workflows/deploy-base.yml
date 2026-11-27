@@ -216,9 +216,13 @@ jobs:
           set -euo pipefail
 
           APPLICATION_ID=$(terraform -chdir="$TF_DIR" output -raw app_config_application_id)
+          echo "::add-mask::$APPLICATION_ID"
           ENVIRONMENT_ID=$(terraform -chdir="$TF_DIR" output -raw app_config_environment_id)
+          echo "::add-mask::$ENVIRONMENT_ID"
           CONFIGURATION_PROFILE_ID=$(terraform -chdir="$TF_DIR" output -raw app_config_configuration_profile_id)
+          echo "::add-mask::$CONFIGURATION_PROFILE_ID"
           DEPLOYMENT_STRATEGY_ID=$(terraform -chdir="$TF_DIR" output -raw app_config_deployment_strategy_id)
+          echo "::add-mask::$DEPLOYMENT_STRATEGY_ID"
 
           poetry run python -m deploy_feature_flags.main \
             --application-id "$APPLICATION_ID" \
