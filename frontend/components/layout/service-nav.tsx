@@ -21,6 +21,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useLockNavigationContext } from '@/hooks/use-lock-navigation-context'
 import { cn } from '@/lib/utils'
 import { useClearDisplayedBannerOnRouteChange } from '@/components/banner-notification'
+import { API_PROXY_PATH } from '@/lib/constants'
 
 interface NavItem {
   name: string
@@ -261,6 +262,14 @@ export function ServiceNav() {
                   </li>
                 )
               })}
+              <li className="govuk-service-navigation__item">
+                <a
+                  className="govuk-service-navigation__link"
+                  href={`${API_PROXY_PATH}/signout`}
+                >
+                  Sign out
+                </a>
+              </li>
             </ul>
           </nav>
         </div>

@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { ServiceNav } from '@/components/layout/service-nav'
+import { API_PROXY_PATH } from '@/lib/constants'
 
 let mockPathname = '/'
 const mockPush = vi.fn()
@@ -78,6 +79,7 @@ describe('<ServiceNav />', () => {
       'Templates',
       'Settings',
       'Support',
+      'Sign out',
     ])
   })
 
@@ -94,7 +96,16 @@ describe('<ServiceNav />', () => {
       'Settings',
       'Support',
       'User management',
+      'Sign out',
     ])
+  })
+
+  it('renders Sign out as a plain link to the proxy signout endpoint', () => {
+    mockUserRoles = ['standard_user']
+    render(<ServiceNav />)
+    const signOutLink = screen.getByRole('link', { name: 'Sign out' })
+    expect(signOutLink).toHaveAttribute('href', `${API_PROXY_PATH}/signout`)
+    expect(signOutLink).toHaveClass('govuk-service-navigation__link')
   })
 
   it('correctly sets active state for Home on exact / pathname', () => {
